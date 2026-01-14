@@ -1,9 +1,19 @@
 /**
  * LIFE SCORE™ City Selector Component
  * John E. Desautels & Associates
+ *
+ * Searchable dropdown with 200 metropolitan areas (100 NA + 100 EU)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  ALL_METROS,
+  NORTH_AMERICAN_METROS,
+  EUROPEAN_METROS,
+  formatMetro,
+  searchMetros,
+  type Metro
+} from '../data/metros';
 import './CitySelector.css';
 
 interface CitySelectorProps {
@@ -12,75 +22,210 @@ interface CitySelectorProps {
 }
 
 interface PopularComparison {
-  city1: string;
-  city2: string;
+  metro1: Metro;
+  metro2: Metro;
   label: string;
 }
 
+// Find metros by city name for popular comparisons
+const findMetro = (cityName: string): Metro | undefined => {
+  return ALL_METROS.find(m => m.city.toLowerCase() === cityName.toLowerCase());
+};
+
 const POPULAR_COMPARISONS: PopularComparison[] = [
-  { city1: 'Tampa Bay, Florida, USA', city2: 'London, England, UK', label: 'Tampa vs London' },
-  { city1: 'New York City, New York, USA', city2: 'Amsterdam, Netherlands', label: 'NYC vs Amsterdam' },
-  { city1: 'Los Angeles, California, USA', city2: 'Barcelona, Spain', label: 'LA vs Barcelona' },
-  { city1: 'Miami, Florida, USA', city2: 'Lisbon, Portugal', label: 'Miami vs Lisbon' },
-  { city1: 'Denver, Colorado, USA', city2: 'Berlin, Germany', label: 'Denver vs Berlin' },
-  { city1: 'Austin, Texas, USA', city2: 'Dublin, Ireland', label: 'Austin vs Dublin' },
-  { city1: 'San Francisco, California, USA', city2: 'Singapore', label: 'SF vs Singapore' },
-  { city1: 'Chicago, Illinois, USA', city2: 'Paris, France', label: 'Chicago vs Paris' },
-];
+  { metro1: findMetro('Tampa')!, metro2: findMetro('London')!, label: 'Tampa vs London' },
+  { metro1: findMetro('New York')!, metro2: findMetro('Amsterdam')!, label: 'NYC vs Amsterdam' },
+  { metro1: findMetro('Los Angeles')!, metro2: findMetro('Barcelona')!, label: 'LA vs Barcelona' },
+  { metro1: findMetro('Miami')!, metro2: findMetro('Lisbon')!, label: 'Miami vs Lisbon' },
+  { metro1: findMetro('Denver')!, metro2: findMetro('Berlin')!, label: 'Denver vs Berlin' },
+  { metro1: findMetro('Austin')!, metro2: findMetro('Dublin')!, label: 'Austin vs Dublin' },
+  { metro1: findMetro('San Francisco')!, metro2: findMetro('Stockholm')!, label: 'SF vs Stockholm' },
+  { metro1: findMetro('Chicago')!, metro2: findMetro('Paris')!, label: 'Chicago vs Paris' },
+].filter(c => c.metro1 && c.metro2);
+
+// Default selections
+const DEFAULT_METRO1 = findMetro('Tampa') || NORTH_AMERICAN_METROS[0];
+const DEFAULT_METRO2 = findMetro('London') || EUROPEAN_METROS[0];
+
+// Metro Dropdown Component
+interface MetroDropdownProps {
+  id: string;
+  label: string;
+  value: Metro | null;
+  onChange: (metro: Metro) => void;
+  disabled: boolean;
+}
+
+const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChange, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'na' | 'eu'>('all');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Get filtered metros based on tab and search
+  const getFilteredMetros = (): Metro[] => {
+    let metros: Metro[];
+    switch (activeTab) {
+      case 'na':
+        metros = NORTH_AMERICAN_METROS;
+        break;
+      case 'eu':
+        metros = EUROPEAN_METROS;
+        break;
+      default:
+        metros = ALL_METROS;
+    }
+    return searchQuery ? searchMetros(searchQuery, metros) : metros;
+  };
+
+  const filteredMetros = getFilteredMetros();
+
+  const handleSelect = (metro: Metro) => {
+    onChange(metro);
+    setIsOpen(false);
+    setSearchQuery('');
+  };
+
+  const handleOpen = () => {
+    if (!disabled) {
+      setIsOpen(true);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  };
+
+  return (
+    <div className="metro-dropdown" ref={dropdownRef}>
+      <label htmlFor={id}>{label}</label>
+      <button
+        type="button"
+        className={`metro-select-btn ${isOpen ? 'open' : ''}`}
+        onClick={handleOpen}
+        disabled={disabled}
+      >
+        <span className="metro-select-value">
+          {value ? formatMetro(value) : 'Select a city...'}
+        </span>
+        <span className="metro-select-arrow">{isOpen ? '▲' : '▼'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="metro-dropdown-menu">
+          <div className="metro-search-box">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search cities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="metro-search-input"
+            />
+          </div>
+
+          <div className="metro-tabs">
+            <button
+              type="button"
+              className={`metro-tab ${activeTab === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveTab('all')}
+            >
+              All (200)
+            </button>
+            <button
+              type="button"
+              className={`metro-tab ${activeTab === 'na' ? 'active' : ''}`}
+              onClick={() => setActiveTab('na')}
+            >
+              N. America (100)
+            </button>
+            <button
+              type="button"
+              className={`metro-tab ${activeTab === 'eu' ? 'active' : ''}`}
+              onClick={() => setActiveTab('eu')}
+            >
+              Europe (100)
+            </button>
+          </div>
+
+          <div className="metro-list">
+            {filteredMetros.length === 0 ? (
+              <div className="metro-no-results">No cities found</div>
+            ) : (
+              filteredMetros.map((metro, index) => (
+                <button
+                  key={`${metro.city}-${metro.country}-${index}`}
+                  type="button"
+                  className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''}`}
+                  onClick={() => handleSelect(metro)}
+                >
+                  <span className="metro-city">{metro.city}</span>
+                  <span className="metro-location">
+                    {metro.region ? `${metro.region}, ${metro.country}` : metro.country}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading }) => {
-  const [city1, setCity1] = useState('Tampa Bay, Florida, USA');
-  const [city2, setCity2] = useState('London, England, UK');
+  const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
+  const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (city1.trim() && city2.trim()) {
-      onCompare(city1.trim(), city2.trim());
+    if (metro1 && metro2) {
+      onCompare(formatMetro(metro1), formatMetro(metro2));
     }
   };
 
   const handlePopularClick = (comparison: PopularComparison) => {
-    setCity1(comparison.city1);
-    setCity2(comparison.city2);
+    setMetro1(comparison.metro1);
+    setMetro2(comparison.metro2);
   };
 
   return (
     <div className="city-selector-card card">
       <h2 className="section-title">Compare Legal Freedom Between Any Two Cities</h2>
-      
+      <p className="selector-subtitle">Choose from 200 major metropolitan areas across North America and Europe</p>
+
       <form onSubmit={handleSubmit}>
         <div className="city-inputs">
-          <div className="input-group">
-            <label htmlFor="city1">City 1</label>
-            <input
-              type="text"
-              id="city1"
-              value={city1}
-              onChange={(e) => setCity1(e.target.value)}
-              placeholder="e.g., Tampa Bay, Florida, USA"
-              disabled={isLoading}
-              required
-            />
-          </div>
-          
-          <div className="input-group">
-            <label htmlFor="city2">City 2</label>
-            <input
-              type="text"
-              id="city2"
-              value={city2}
-              onChange={(e) => setCity2(e.target.value)}
-              placeholder="e.g., London, England, UK"
-              disabled={isLoading}
-              required
-            />
-          </div>
+          <MetroDropdown
+            id="city1"
+            label="City 1"
+            value={metro1}
+            onChange={setMetro1}
+            disabled={isLoading}
+          />
+
+          <MetroDropdown
+            id="city2"
+            label="City 2"
+            value={metro2}
+            onChange={setMetro2}
+            disabled={isLoading}
+          />
         </div>
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           className="btn btn-primary btn-compare"
-          disabled={isLoading || !city1.trim() || !city2.trim()}
+          disabled={isLoading || !metro1 || !metro2}
         >
           {isLoading ? (
             <>
@@ -92,13 +237,13 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
           )}
         </button>
       </form>
-      
+
       <p className="info-text">
         Analysis uses Claude AI with real-time web search to verify all 100 legal freedom metrics.
         <br />
         <span className="info-highlight">No fabricated data - only verified facts.</span>
       </p>
-      
+
       <div className="popular-section">
         <h3>Popular Comparisons</h3>
         <div className="popular-grid">
