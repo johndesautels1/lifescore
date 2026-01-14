@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
-import { CATEGORIES } from '../data/metrics';
+import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
 import './EnhancedComparison.css';
 
@@ -248,7 +248,7 @@ interface EnhancedResultsProps {
 }
 
 export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
-  const [showDetails, setShowDetails] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -333,88 +333,80 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
         </div>
       </div>
 
-      {/* Category Breakdown */}
+      {/* Category Breakdown - Expandable */}
       <div className="enhanced-categories card">
-        <h3 className="section-title">Category Consensus</h3>
+        <h3 className="section-title">Category Breakdown</h3>
+        <p className="breakdown-subtitle">Click any category to see detailed metric scores</p>
 
         {CATEGORIES.map(category => {
           const city1Cat = result.city1.categories.find(c => c.categoryId === category.id);
           const city2Cat = result.city2.categories.find(c => c.categoryId === category.id);
           const catWinner = result.categoryWinners[category.id];
+          const isExpanded = expandedCategory === category.id;
+          const categoryMetrics = getMetricsByCategory(category.id);
 
           return (
             <div key={category.id} className="enhanced-category">
-              <div className="category-header">
-                <span className="category-icon">{category.icon}</span>
-                <span className="category-name">{category.name}</span>
-                <span className="category-weight">({category.weight}%)</span>
-              </div>
+              <button
+                className="category-header-btn"
+                onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+              >
+                <div className="category-header">
+                  <span className="category-icon">{category.icon}</span>
+                  <span className="category-name">{category.name}</span>
+                  <span className="category-weight">({category.weight}%)</span>
+                </div>
+                <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
+              </button>
 
               <div className="category-scores">
                 <div className={`cat-score ${catWinner === 'city1' ? 'winner' : ''}`}>
                   <span className="city-name">{result.city1.city}</span>
                   <span className="score-value">{city1Cat?.averageConsensusScore || 0}%</span>
-                  <span className="agreement-tag">
-                    {city1Cat?.agreementLevel || 0}% agree
-                  </span>
                 </div>
 
                 <div className={`cat-score ${catWinner === 'city2' ? 'winner' : ''}`}>
                   <span className="city-name">{result.city2.city}</span>
                   <span className="score-value">{city2Cat?.averageConsensusScore || 0}%</span>
-                  <span className="agreement-tag">
-                    {city2Cat?.agreementLevel || 0}% agree
-                  </span>
                 </div>
               </div>
+
+              {/* Expanded Metric Details */}
+              {isExpanded && city1Cat && city2Cat && (
+                <div className="metric-details">
+                  <div className="metric-details-header">
+                    <span>Metric</span>
+                    <span className="metric-header-city">{result.city1.city}</span>
+                    <span className="metric-header-city">{result.city2.city}</span>
+                  </div>
+
+                  {categoryMetrics.map(metric => {
+                    const city1Metric = city1Cat.metrics.find(m => m.metricId === metric.id);
+                    const city2Metric = city2Cat.metrics.find(m => m.metricId === metric.id);
+                    const score1 = city1Metric?.consensusScore ?? 0;
+                    const score2 = city2Metric?.consensusScore ?? 0;
+
+                    return (
+                      <div key={metric.id} className="metric-row">
+                        <div className="metric-info">
+                          <span className="metric-name" title={metric.description}>
+                            {metric.shortName}
+                          </span>
+                        </div>
+                        <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
+                          {Math.round(score1)}
+                        </div>
+                        <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
+                          {Math.round(score2)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
-      </div>
-
-      {/* Disagreement Summary */}
-      {result.disagreementSummary && (
-        <div className="disagreement-card card">
-          <h4>📊 LLM Analysis Notes</h4>
-          <p>{result.disagreementSummary}</p>
-        </div>
-      )}
-
-      {/* Processing Stats */}
-      <div className="processing-stats card">
-        <h4>Processing Statistics</h4>
-        <div className="stats-grid">
-          <div className="stat">
-            <span className="stat-label">Total Time</span>
-            <span className="stat-value">{(result.processingStats.totalTimeMs / 1000).toFixed(1)}s</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Metrics Evaluated</span>
-            <span className="stat-value">{result.processingStats.metricsEvaluated}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">LLMs Used</span>
-            <span className="stat-value">{result.llmsUsed.length}</span>
-          </div>
-        </div>
-
-        <button
-          className="btn btn-secondary btn-small"
-          onClick={() => setShowDetails(!showDetails)}
-        >
-          {showDetails ? 'Hide' : 'Show'} LLM Timing Details
-        </button>
-
-        {showDetails && (
-          <div className="timing-details">
-            {Object.entries(result.processingStats.llmTimings).map(([llm, time]) => (
-              <div key={llm} className="timing-row">
-                <span>{LLM_CONFIGS[llm as LLMProvider]?.icon} {LLM_CONFIGS[llm as LLMProvider]?.shortName}</span>
-                <span>{(time / 1000).toFixed(2)}s</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Footer */}

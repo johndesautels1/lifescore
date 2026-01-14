@@ -477,11 +477,41 @@
   border-bottom: none;
 }
 
+.breakdown-subtitle {
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.category-header-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--gray-50);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: background var(--transition-fast);
+}
+
+.category-header-btn:hover {
+  background: var(--gray-100);
+}
+
+.expand-icon {
+  font-size: 1.25rem;
+  color: var(--sapphire);
+  font-weight: bold;
+}
+
 .enhanced-category .category-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
 }
 
 .enhanced-category .category-icon {
@@ -531,6 +561,68 @@
 .cat-score .agreement-tag {
   font-size: 0.7rem;
   color: var(--success);
+}
+
+/* Metric Details - Expanded View */
+.metric-details {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+
+.metric-details-header {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-300);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+.metric-header-city {
+  text-align: center;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--gray-100);
+  align-items: center;
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-name {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+}
+
+.metric-score {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.metric-score.winning {
+  background: rgba(15, 76, 129, 0.1);
+  color: var(--sapphire);
 }
 
 /* Disagreement Card */
@@ -726,6 +818,41 @@
 }
 
 [data-theme="dark"] .cat-score .score-value {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .category-header-btn {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .category-header-btn:hover {
+  background: var(--gray-600);
+}
+
+[data-theme="dark"] .metric-details {
+  background: var(--gray-700);
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .metric-details-header {
+  border-color: var(--gray-600);
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .metric-row {
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .metric-name {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .metric-score {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .metric-score.winning {
+  background: rgba(15, 76, 129, 0.2);
   color: var(--sapphire-light);
 }
 
