@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE™ Main Application
  * Legal Independence & Freedom Evaluation
- * 
+ *
  * John E. Desautels & Associates
  * © 2025 All Rights Reserved
  */
@@ -13,7 +13,14 @@ import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
 import SavedComparisons from './components/SavedComparisons';
+import {
+  EnhancedModeToggle,
+  APIKeyModal,
+  EnhancedComparisonContainer
+} from './components/EnhancedComparison';
 import type { ComparisonResult } from './types/metrics';
+import type { LLMAPIKeys, EnhancedComparisonResult } from './types/enhancedComparison';
+import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
 import useComparison from './hooks/useComparison';
 import { ALL_METRICS } from './data/metrics';
 import './styles/globals.css';
@@ -23,8 +30,20 @@ const App: React.FC = () => {
   const { state, compare, reset, loadResult } = useComparison({ useDemoMode: true });
   const [savedKey, setSavedKey] = useState(0);
 
+  // Enhanced mode state
+  const [enhancedMode, setEnhancedMode] = useState(false);
+  const [showAPIKeyModal, setShowAPIKeyModal] = useState(false);
+  const [apiKeys, setApiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys());
+  const [enhancedStatus, setEnhancedStatus] = useState<'idle' | 'running' | 'complete'>('idle');
+  const [enhancedResult, setEnhancedResult] = useState<EnhancedComparisonResult | null>(null);
+  const [pendingCities, setPendingCities] = useState<{ city1: string; city2: string } | null>(null);
+
+  const availableLLMs = getAvailableLLMs(apiKeys);
+
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
     loadResult(result);
+    setEnhancedStatus('idle');
+    setEnhancedResult(null);
   }, [loadResult]);
 
   const handleSaved = useCallback(() => {
@@ -32,7 +51,30 @@ const App: React.FC = () => {
   }, []);
 
   const handleCompare = async (city1: string, city2: string) => {
-    await compare(city1, city2);
+    if (enhancedMode) {
+      // Run enhanced comparison
+      setEnhancedStatus('running');
+      setEnhancedResult(null);
+      setPendingCities({ city1, city2 });
+    } else {
+      await compare(city1, city2);
+    }
+  };
+
+  const handleEnhancedComplete = (result: EnhancedComparisonResult) => {
+    setEnhancedResult(result);
+    setEnhancedStatus('complete');
+  };
+
+  const handleReset = () => {
+    reset();
+    setEnhancedStatus('idle');
+    setEnhancedResult(null);
+    setPendingCities(null);
+  };
+
+  const handleSaveAPIKeys = (keys: LLMAPIKeys) => {
+    setApiKeys(keys);
   };
 
   return (
@@ -43,17 +85,25 @@ const App: React.FC = () => {
         <div className="container">
           {/* Demo Badge */}
           <div className="demo-badge">
-            ⚡ LIVE PREVIEW - 100 Freedom Metrics Defined 
+            ⚡ LIVE PREVIEW - 100 Freedom Metrics Defined
           </div>
 
-          {/* City Selector */}
-          <CitySelector 
-            onCompare={handleCompare}
-            isLoading={state.status === 'loading'}
+          {/* Enhanced Mode Toggle */}
+          <EnhancedModeToggle
+            enabled={enhancedMode}
+            onToggle={setEnhancedMode}
+            onConfigureKeys={() => setShowAPIKeyModal(true)}
+            availableLLMs={availableLLMs}
           />
 
-          {/* Loading State */}
-          {state.status === 'loading' && state.progress && (
+          {/* City Selector */}
+          <CitySelector
+            onCompare={handleCompare}
+            isLoading={state.status === 'loading' || enhancedStatus === 'running'}
+          />
+
+          {/* Standard Loading State */}
+          {!enhancedMode && state.status === 'loading' && state.progress && (
             <LoadingState
               currentCategory={state.progress.currentCategory}
               metricsProcessed={state.progress.metricsProcessed}
@@ -62,24 +112,51 @@ const App: React.FC = () => {
             />
           )}
 
+          {/* Enhanced Comparison Running */}
+          {enhancedMode && enhancedStatus === 'running' && pendingCities && (
+            <EnhancedComparisonContainer
+              city1={pendingCities.city1}
+              city2={pendingCities.city2}
+              onComplete={handleEnhancedComplete}
+              demoMode={true}
+            />
+          )}
+
+          {/* Enhanced Comparison Results */}
+          {enhancedMode && enhancedStatus === 'complete' && enhancedResult && (
+            <>
+              <EnhancedComparisonContainer
+                city1={pendingCities?.city1 || ''}
+                city2={pendingCities?.city2 || ''}
+                onComplete={handleEnhancedComplete}
+                demoMode={true}
+              />
+              <div className="new-comparison">
+                <button className="btn btn-secondary" onClick={handleReset}>
+                  ← New Comparison
+                </button>
+              </div>
+            </>
+          )}
+
           {/* Error State */}
           {state.status === 'error' && (
             <div className="error-card card">
               <div className="error-icon">❌</div>
               <h3>Analysis Failed</h3>
               <p>{state.error}</p>
-              <button className="btn btn-primary" onClick={reset}>
+              <button className="btn btn-primary" onClick={handleReset}>
                 Try Again
               </button>
             </div>
           )}
 
-          {/* Results */}
-          {state.status === 'success' && state.result && (
+          {/* Standard Results */}
+          {!enhancedMode && state.status === 'success' && state.result && (
             <>
               <Results result={state.result} onSaved={handleSaved} />
               <div className="new-comparison">
-                <button className="btn btn-secondary" onClick={reset}>
+                <button className="btn btn-secondary" onClick={handleReset}>
                   ← New Comparison
                 </button>
               </div>
@@ -188,6 +265,14 @@ const App: React.FC = () => {
       </main>
       
       <Footer />
+
+      {/* API Key Configuration Modal */}
+      <APIKeyModal
+        isOpen={showAPIKeyModal}
+        onClose={() => setShowAPIKeyModal(false)}
+        onSave={handleSaveAPIKeys}
+        initialKeys={apiKeys}
+      />
     </div>
   );
 };
