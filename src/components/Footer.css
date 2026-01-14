@@ -1,0 +1,130 @@
+/**
+ * Footer Component Styles
+ */
+
+.footer {
+  background: linear-gradient(90deg, var(--gray-600), var(--gray-500), var(--gray-600));
+  color: white;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.footer-section h3 {
+  color: var(--gold);
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.footer-section p,.footer-section small {  margin-bottom: 0.5rem;  font-size: 0.875rem;  display: block;  color: white !important;  font-weight: 500;}
+.footer-section small {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  display: block;
+}
+
+.footer-section .company-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.footer-section .address {
+  margin-top: 1rem;
+}
+
+.footer-section .license {
+  margin-top: 1rem;
+}
+
+.footer-section .experience {
+  font-style: italic;
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-section a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.5rem;
+  transition: color var(--transition-fast);
+}
+
+.footer-section a:hover {
+  color: var(--orange);
+}
+
+.footer-tech {
+  margin-top: 1rem;
+}
+
+.footer-tech .tech-name {
+  font-weight: 600;
+  color: var(--orange);
+  margin-bottom: 0.25rem;
+}
+
+.footer-tech small {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.footer-bottom p {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.footer-bottom small {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer-bottom .powered-by {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Facebook Link */
+.facebook-link {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.facebook-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #1877f2;
+  color: white;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 1rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.facebook-link:hover .facebook-icon {
+  background: #166fe5;
+}

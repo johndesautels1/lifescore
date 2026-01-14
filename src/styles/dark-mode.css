@@ -1,0 +1,200 @@
+/* Dark Mode Theme Override */
+[data-theme="dark"] body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .card {
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .input-group input,
+[data-theme="dark"] .input-group select,
+[data-theme="dark"] .input-group textarea {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .input-group label {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .score-box {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: #475569;
+}
+
+[data-theme="dark"] .score-box .score {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .category {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .category-name {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .bar-bg {
+  background: #475569;
+}
+
+[data-theme="dark"] .loading-text {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .about-content,
+[data-theme="dark"] .about-content p {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .cat-info span {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .cat-info strong {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] a {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] a:hover {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .category-item {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+[data-theme="dark"] .methodology {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .methodology .highlight {
+  color: #fb923c;
+}
+
+[data-theme="dark"] .demo-badge {
+  background: rgba(251, 191, 36, 0.9);
+  color: #1e293b;
+}
+
+[data-theme="dark"] .count-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .part-of {
+  color: #cbd5e1;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  transition: all 200ms ease;
+  backdrop-filter: blur(10px);
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* City Selector Dark Mode */
+[data-theme="dark"] .popular-btn {
+  background: rgba(51, 65, 85, 0.8);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .popular-btn:hover:not(:disabled) {
+  background: var(--sapphire);
+  color: white;
+}
+
+[data-theme="dark"] .popular-section {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .popular-section h3 {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .info-text {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .section-title {
+  color: #60a5fa;
+}
+
+/* Ensure small text is readable in dark mode */
+[data-theme="dark"] small,
+[data-theme="dark"] .text-small {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .cat-info span {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .count-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .methodology {
+  color: #fef3c7;
+}
+
+/* Results footer text white in dark mode */
+[data-theme="dark"] .results-footer p {
+  color: white !important;
+}
+
+/* Disclaimer cobalt blue in dark mode */
+[data-theme="dark"] .results-footer .disclaimer {
+  color: var(--sapphire) !important;
+}
