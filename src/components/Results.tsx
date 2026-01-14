@@ -3,9 +3,10 @@
  * Display comparison results between two cities
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ComparisonResult, CategoryScore, CategoryId } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
+import { saveComparisonLocal, isComparisonSaved } from '../services/savedComparisons';
 import './Results.css';
 
 // ============================================================================
@@ -259,15 +260,45 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
 
 interface ResultsProps {
   result: ComparisonResult;
+  onSaved?: () => void;
 }
 
-export const Results: React.FC<ResultsProps> = ({ result }) => {
+export const Results: React.FC<ResultsProps> = ({ result, onSaved }) => {
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsSaved(isComparisonSaved(result.comparisonId));
+  }, [result.comparisonId]);
+
+  const handleSave = () => {
+    saveComparisonLocal(result);
+    setIsSaved(true);
+    setSaveMessage('Comparison saved!');
+    setTimeout(() => setSaveMessage(null), 3000);
+    onSaved?.();
+  };
+
   return (
     <div className="results animate-slideUp">
       <WinnerHero result={result} />
       <ScoreGrid result={result} />
       <CategoryBreakdown result={result} />
-      
+
+      {/* Save Button */}
+      <div className="save-comparison-bar">
+        {saveMessage && (
+          <span className="save-message">{saveMessage}</span>
+        )}
+        <button
+          className={`btn save-btn ${isSaved ? 'saved' : ''}`}
+          onClick={handleSave}
+          disabled={isSaved}
+        >
+          {isSaved ? '✓ Saved' : '💾 Save Comparison'}
+        </button>
+      </div>
+
       <div className="results-footer card">
         <h4>About This Analysis</h4>
         <p>

@@ -388,3 +388,51 @@
 .category-header-btn:hover .category-weight {
   color: var(--sapphire);
 }
+
+/* Save Comparison Bar */
+.save-comparison-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.save-message {
+  color: var(--success-dark);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--sapphire) 0%, var(--sapphire-light) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.save-btn:disabled {
+  cursor: default;
+}
+
+.save-btn.saved {
+  background: var(--success);
+}
+
+[data-theme="dark"] .save-message {
+  color: #86efac;
+}

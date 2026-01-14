@@ -6,19 +6,30 @@
  * © 2025 All Rights Reserved
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
+import SavedComparisons from './components/SavedComparisons';
+import type { ComparisonResult } from './types/metrics';
 import useComparison from './hooks/useComparison';
 import { ALL_METRICS } from './data/metrics';
 import './styles/globals.css';
 import './App.css';
 
 const App: React.FC = () => {
-  const { state, compare, reset } = useComparison({ useDemoMode: true });
+  const { state, compare, reset, loadResult } = useComparison({ useDemoMode: true });
+  const [savedKey, setSavedKey] = useState(0);
+
+  const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
+    loadResult(result);
+  }, [loadResult]);
+
+  const handleSaved = useCallback(() => {
+    setSavedKey(prev => prev + 1);
+  }, []);
 
   const handleCompare = async (city1: string, city2: string) => {
     await compare(city1, city2);
@@ -66,7 +77,7 @@ const App: React.FC = () => {
           {/* Results */}
           {state.status === 'success' && state.result && (
             <>
-              <Results result={state.result} />
+              <Results result={state.result} onSaved={handleSaved} />
               <div className="new-comparison">
                 <button className="btn btn-secondary" onClick={reset}>
                   ← New Comparison
@@ -74,6 +85,13 @@ const App: React.FC = () => {
               </div>
             </>
           )}
+
+          {/* Saved Comparisons */}
+          <SavedComparisons
+            key={savedKey}
+            onLoadComparison={handleLoadSavedComparison}
+            currentComparisonId={state.result?.comparisonId}
+          />
 
           {/* About Section - Show when idle */}
           {state.status === 'idle' && (

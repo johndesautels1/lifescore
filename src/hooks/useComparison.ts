@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { ComparisonState, CategoryId } from '../types/metrics';
+import type { ComparisonState, CategoryId, ComparisonResult } from '../types/metrics';
 import { generateDemoComparison } from '../api/scoring';
 import { ALL_METRICS, CATEGORIES } from '../data/metrics';
 
@@ -21,6 +21,7 @@ interface UseComparisonReturn {
   state: ComparisonState;
   compare: (city1: string, city2: string) => Promise<void>;
   reset: () => void;
+  loadResult: (result: ComparisonResult) => void;
 }
 
 // ============================================================================
@@ -80,10 +81,21 @@ export function useComparison(options: UseComparisonOptions = {}): UseComparison
     setState({ status: 'idle' });
   }, []);
 
+  /**
+   * Load a saved comparison result directly
+   */
+  const loadResult = useCallback((result: ComparisonResult) => {
+    setState({
+      status: 'success',
+      result
+    });
+  }, []);
+
   return {
     state,
     compare,
-    reset
+    reset,
+    loadResult
   };
 }
 
