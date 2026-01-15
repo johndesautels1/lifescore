@@ -735,6 +735,16 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     const score2 = city2Metric?.consensusScore ?? 0;
                     const tooltip = getMetricTooltip(metric.shortName);
 
+                    // Calculate LLM agreement indicator
+                    const confidence1 = city1Metric?.confidenceLevel || 'moderate';
+                    const llmCount = city1Metric?.llmScores?.length || 5;
+                    const agreementText = confidence1 === 'unanimous' ? `${llmCount}/${llmCount}` :
+                                         confidence1 === 'strong' ? `${llmCount-1}/${llmCount}` :
+                                         confidence1 === 'moderate' ? `${llmCount-2}/${llmCount}` : `Split`;
+                    const agreementClass = confidence1 === 'unanimous' ? 'unanimous' :
+                                          confidence1 === 'strong' ? 'strong' :
+                                          confidence1 === 'moderate' ? 'moderate' : 'split';
+
                     return (
                       <div key={metric.id} className="metric-row">
                         <div className="metric-info">
@@ -752,6 +762,9 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                 </div>
                               </div>
                             )}
+                            <span className={`llm-agreement ${agreementClass}`} title={`${agreementText} LLMs agree`}>
+                              {agreementText}
+                            </span>
                           </div>
                         </div>
                         <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
