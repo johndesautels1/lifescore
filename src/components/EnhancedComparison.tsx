@@ -11,6 +11,8 @@ import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhan
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
+import { updateOGMetaTags } from '../hooks/useOGMeta';
+import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import './EnhancedComparison.css';
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
@@ -411,6 +413,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showTopDifferences, setShowTopDifferences] = useState(true);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -647,38 +650,48 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         />
       )}
 
-      {/* Top 5 Differences - Quick Summary */}
+      {/* Top 5 Differences - Collapsible Quick Summary */}
       <div className="top-differences card">
-        <h3 className="section-title">🎯 Top 5 Deciding Factors</h3>
-        <p className="breakdown-subtitle">The metrics with the biggest score differences</p>
+        <button
+          className="section-toggle"
+          onClick={() => setShowTopDifferences(!showTopDifferences)}
+        >
+          <h3 className="section-title">🎯 Top 5 Deciding Factors</h3>
+          <span className={`toggle-arrow ${showTopDifferences ? 'expanded' : ''}`}>▼</span>
+        </button>
 
-        <div className="differences-list">
-          {topDifferences.map((diff, index) => {
-            const favoredCityName = diff.favoredCity === 'city1' ? result.city1.city : result.city2.city;
-            return (
-              <div key={diff.metricId} className="difference-item">
-                <div className="diff-rank">#{index + 1}</div>
-                <div className="diff-metric">
-                  <span className="diff-icon">{diff.icon}</span>
-                  <span className="diff-name">{diff.shortName}</span>
-                </div>
-                <div className="diff-scores">
-                  <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
-                    {Math.round(diff.city1Score)}
-                  </span>
-                  <span className="diff-vs">vs</span>
-                  <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
-                    {Math.round(diff.city2Score)}
-                  </span>
-                </div>
-                <div className="diff-delta">
-                  <span className="delta-pill">+{Math.round(diff.difference)}</span>
-                  <span className="delta-city">{favoredCityName}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {showTopDifferences && (
+          <>
+            <p className="breakdown-subtitle">The metrics with the biggest score differences</p>
+            <div className="differences-list">
+              {topDifferences.map((diff, index) => {
+                const favoredCityName = diff.favoredCity === 'city1' ? result.city1.city : result.city2.city;
+                return (
+                  <div key={diff.metricId} className="difference-item">
+                    <div className="diff-rank">#{index + 1}</div>
+                    <div className="diff-metric">
+                      <span className="diff-icon">{diff.icon}</span>
+                      <span className="diff-name">{diff.shortName}</span>
+                    </div>
+                    <div className="diff-scores">
+                      <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
+                        {Math.round(diff.city1Score)}
+                      </span>
+                      <span className="diff-vs">vs</span>
+                      <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
+                        {Math.round(diff.city2Score)}
+                      </span>
+                    </div>
+                    <div className="diff-delta">
+                      <span className="delta-pill">+{Math.round(diff.difference)}</span>
+                      <span className="delta-city">{favoredCityName}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Category Breakdown - Expandable */}
@@ -812,7 +825,13 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
             📤 Share
           </button>
           <button className="btn action-btn export-btn" onClick={handleExport}>
-            📥 Export JSON
+            📥 JSON
+          </button>
+          <button className="btn action-btn export-btn" onClick={() => exportToCSV(result)}>
+            📊 CSV
+          </button>
+          <button className="btn action-btn export-btn" onClick={() => exportToPDF(result)}>
+            📄 PDF
           </button>
         </div>
       </div>
@@ -893,6 +912,20 @@ export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerPr
         setResult(demoResult);
         setStatus('complete');
         onComplete(demoResult);
+
+        // Update OG meta tags for social sharing
+        const score1Val = demoResult.city1.totalConsensusScore;
+        const score2Val = demoResult.city2.totalConsensusScore;
+        const delta = Math.abs(score1Val - score2Val);
+        const winnerName = demoResult.winner === 'city1' ? city1 : demoResult.winner === 'city2' ? city2 : 'Tie';
+        updateOGMetaTags({
+          city1,
+          city2,
+          score1: score1Val,
+          score2: score2Val,
+          winner: winnerName,
+          delta
+        });
       } else {
         const apiKeys = getStoredAPIKeys();
         const enhancedResult = await runEnhancedComparison({
@@ -904,6 +937,20 @@ export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerPr
         setResult(enhancedResult);
         setStatus('complete');
         onComplete(enhancedResult);
+
+        // Update OG meta tags for social sharing
+        const score1Val = enhancedResult.city1.totalConsensusScore;
+        const score2Val = enhancedResult.city2.totalConsensusScore;
+        const delta = Math.abs(score1Val - score2Val);
+        const winnerName = enhancedResult.winner === 'city1' ? city1 : enhancedResult.winner === 'city2' ? city2 : 'Tie';
+        updateOGMetaTags({
+          city1,
+          city2,
+          score1: score1Val,
+          score2: score2Val,
+          winner: winnerName,
+          delta
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');

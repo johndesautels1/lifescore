@@ -575,3 +575,63 @@ small, .text-small {
 p {
   color: var(--gray-700);
 }
+
+/* ============================================================================
+   Mobile Touch Optimizations
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  /* Ensure minimum touch target size (44px recommended) */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1.25rem;
+  }
+
+  /* Remove hover effects on touch devices */
+  @media (hover: none) {
+    .btn:hover {
+      transform: none;
+    }
+
+    .card:hover {
+      transform: none;
+    }
+  }
+
+  /* Improve tap highlight */
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: rgba(0, 71, 171, 0.1);
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Better scrolling on iOS */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Small mobile: Stack buttons */
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Reduce padding on very small screens */
+  .main-content {
+    padding: 1rem 0.5rem;
+  }
+
+  .container {
+    padding: 0 0.5rem;
+  }
+
+  /* Larger touch targets for links */
+  a {
+    padding: 0.25rem 0;
+  }
+}

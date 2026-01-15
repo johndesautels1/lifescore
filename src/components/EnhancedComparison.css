@@ -543,6 +543,41 @@
   margin-bottom: 1.5rem;
 }
 
+.section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.section-toggle .section-title {
+  margin: 0;
+}
+
+.section-toggle .toggle-arrow {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  transition: transform 0.3s ease;
+}
+
+.section-toggle .toggle-arrow.expanded {
+  transform: rotate(0deg);
+}
+
+.section-toggle .toggle-arrow:not(.expanded) {
+  transform: rotate(-90deg);
+}
+
+.section-toggle:hover .toggle-arrow {
+  color: #0047AB;
+}
+
 .differences-list {
   display: flex;
   flex-direction: column;
@@ -1558,5 +1593,149 @@
 
   .enhanced-winner-hero .winner-city {
     font-size: 1.5rem;
+  }
+
+  /* Mobile: Action buttons */
+  .result-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 100px;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  /* Mobile: Category headers */
+  .category-header {
+    padding: 1rem;
+  }
+
+  .category-header h4 {
+    font-size: 1rem;
+  }
+
+  /* Mobile: Metric rows */
+  .metric-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .metric-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .metric-scores {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .score-bar-container {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  /* Mobile: Freedom Delta badge */
+  .freedom-delta-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile: Explanation panel */
+  .explanation-panel {
+    padding: 1rem;
+  }
+
+  .explanation-text {
+    font-size: 0.95rem;
+  }
+
+  /* Mobile: Footer */
+  .enhanced-footer {
+    padding: 1.25rem;
+  }
+
+  .enhanced-footer h4 {
+    font-size: 1rem;
+  }
+
+  .enhanced-footer p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .enhanced-winner-hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .enhanced-winner-hero .winner-score {
+    font-size: 2.5rem;
+  }
+
+  .enhanced-winner-hero .winner-city {
+    font-size: 1.25rem;
+  }
+
+  .enhanced-winner-hero .loser-summary {
+    font-size: 0.9rem;
+  }
+
+  /* Small mobile: Action buttons stack */
+  .action-btn {
+    flex: 1 1 100%;
+  }
+
+  /* Small mobile: Stats grid */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Small mobile: LLM progress */
+  .llm-progress-grid {
+    flex-wrap: wrap;
+  }
+
+  .llm-progress-item {
+    flex: 1 1 calc(33% - 0.5rem);
+    min-width: 70px;
+  }
+
+  /* Small mobile: Section titles */
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  /* Small mobile: Cards */
+  .card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Small mobile: Top differences */
+  .difference-item {
+    padding: 0.75rem;
+  }
+
+  .diff-rank {
+    font-size: 1rem;
+  }
+
+  .diff-name {
+    font-size: 0.85rem;
+  }
+
+  /* Small mobile: Badges */
+  .agreement-badge,
+  .quality-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
   }
 }

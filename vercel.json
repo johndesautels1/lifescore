@@ -4,9 +4,18 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
+  "functions": {
+    "api/og.tsx": {
+      "runtime": "@vercel/edge"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/og",
+      "destination": "/api/og"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],

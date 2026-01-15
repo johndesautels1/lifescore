@@ -72,6 +72,41 @@
   margin-bottom: 1.5rem;
 }
 
+.section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.section-toggle .section-title {
+  margin: 0;
+}
+
+.section-toggle .toggle-arrow {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  transition: transform 0.3s ease;
+}
+
+.section-toggle .toggle-arrow.expanded {
+  transform: rotate(0deg);
+}
+
+.section-toggle .toggle-arrow:not(.expanded) {
+  transform: rotate(-90deg);
+}
+
+.section-toggle:hover .toggle-arrow {
+  color: var(--sapphire);
+}
+
 .about-content {
   color: var(--gray-700);
   line-height: 1.7;
@@ -176,6 +211,83 @@
   color: var(--gray-600);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* No Results State */
+.no-results {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.no-results-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-results h3 {
+  color: var(--gray-700);
+  margin-bottom: 0.5rem;
+}
+
+.no-results p {
+  color: var(--gray-500);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .about-section {
+  background: var(--gray-800);
+}
+
+[data-theme="dark"] .about-content p,
+[data-theme="dark"] .about-content {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .cat-info strong {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .cat-info span {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .category-item {
+  background: rgba(30, 30, 46, 0.7);
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .methodology {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .part-of {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .count-number {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .count-label {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .metrics-count {
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .no-results h3 {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .no-results p {
+  color: var(--gray-400);
 }
 
 /* Responsive */

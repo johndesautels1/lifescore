@@ -6,13 +6,15 @@
  * © 2025 All Rights Reserved
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import TabNavigation, { TabId } from './components/TabNavigation';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
 import SavedComparisons from './components/SavedComparisons';
+import AdvancedVisuals from './components/AdvancedVisuals';
 import {
   EnhancedModeToggle,
   APIKeyModal,
@@ -22,6 +24,7 @@ import type { ComparisonResult } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult } from './types/enhancedComparison';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
 import useComparison from './hooks/useComparison';
+import { resetOGMetaTags } from './hooks/useOGMeta';
 import { ALL_METRICS } from './data/metrics';
 import './styles/globals.css';
 import './App.css';
@@ -44,7 +47,37 @@ const App: React.FC = () => {
   // Custom weights state
   const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
 
+  // About section collapse state
+  const [showAboutSection, setShowAboutSection] = useState(true);
+
+  // Tab navigation state
+  const [activeTab, setActiveTab] = useState<TabId>('compare');
+  const [savedCount, setSavedCount] = useState(0);
+
   const availableLLMs = getAvailableLLMs(apiKeys);
+
+  // Check if we have results
+  const hasResults = enhancedStatus === 'complete' && enhancedResult !== null;
+
+  // Update saved count on mount and when savedKey changes
+  useEffect(() => {
+    const saved = localStorage.getItem('lifescore_comparisons');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSavedCount(Array.isArray(parsed) ? parsed.length : 0);
+      } catch {
+        setSavedCount(0);
+      }
+    }
+  }, [savedKey]);
+
+  // Auto-switch to results tab when comparison completes
+  useEffect(() => {
+    if (hasResults) {
+      setActiveTab('results');
+    }
+  }, [hasResults]);
 
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
     loadResult(result);
@@ -77,6 +110,7 @@ const App: React.FC = () => {
     setEnhancedStatus('idle');
     setEnhancedResult(null);
     setPendingCities(null);
+    resetOGMetaTags();
   };
 
   const handleSaveAPIKeys = (keys: LLMAPIKeys) => {
@@ -86,189 +120,247 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <Header />
-      
+
+      {/* Tab Navigation */}
+      <TabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        hasResults={hasResults}
+        savedCount={savedCount}
+      />
+
       <main className="main-content">
         <div className="container">
-          {/* Demo Badge */}
+          {/* Demo Badge - Always visible */}
           <div className="demo-badge">
             ⚡ LIVE PREVIEW - 100 Freedom Metrics Defined
           </div>
 
-          {/* Enhanced Mode Toggle */}
-          <EnhancedModeToggle
-            enabled={enhancedMode}
-            onToggle={setEnhancedMode}
-            onConfigureKeys={() => setShowAPIKeyModal(true)}
-            availableLLMs={availableLLMs}
-          />
-
-          {/* City Selector */}
-          <CitySelector
-            onCompare={handleCompare}
-            isLoading={state.status === 'loading' || enhancedStatus === 'running'}
-            onDealbreakersChange={setDealbreakers}
-            onWeightsChange={setCustomWeights}
-          />
-
-          {/* Standard Loading State */}
-          {!enhancedMode && state.status === 'loading' && state.progress && (
-            <LoadingState
-              currentCategory={state.progress.currentCategory}
-              metricsProcessed={state.progress.metricsProcessed}
-              totalMetrics={state.progress.totalMetrics}
-              currentMetric={state.progress.currentMetric}
-            />
-          )}
-
-          {/* Enhanced Comparison Running */}
-          {enhancedMode && enhancedStatus === 'running' && pendingCities && (
-            <EnhancedComparisonContainer
-              city1={pendingCities.city1}
-              city2={pendingCities.city2}
-              onComplete={handleEnhancedComplete}
-              demoMode={true}
-              dealbreakers={dealbreakers}
-            />
-          )}
-
-          {/* Enhanced Comparison Results */}
-          {enhancedMode && enhancedStatus === 'complete' && enhancedResult && (
+          {/* ============================================================
+              COMPARE TAB
+              ============================================================ */}
+          {activeTab === 'compare' && (
             <>
-              <EnhancedComparisonContainer
-                city1={pendingCities?.city1 || ''}
-                city2={pendingCities?.city2 || ''}
-                onComplete={handleEnhancedComplete}
-                demoMode={true}
-                dealbreakers={dealbreakers}
+              {/* Enhanced Mode Toggle */}
+              <EnhancedModeToggle
+                enabled={enhancedMode}
+                onToggle={setEnhancedMode}
+                onConfigureKeys={() => setShowAPIKeyModal(true)}
+                availableLLMs={availableLLMs}
               />
-              <div className="new-comparison">
-                <button className="btn btn-secondary" onClick={handleReset}>
-                  ← New Comparison
-                </button>
-              </div>
+
+              {/* City Selector */}
+              <CitySelector
+                onCompare={handleCompare}
+                isLoading={state.status === 'loading' || enhancedStatus === 'running'}
+                onDealbreakersChange={setDealbreakers}
+                onWeightsChange={setCustomWeights}
+              />
+
+              {/* Standard Loading State */}
+              {!enhancedMode && state.status === 'loading' && state.progress && (
+                <LoadingState
+                  currentCategory={state.progress.currentCategory}
+                  metricsProcessed={state.progress.metricsProcessed}
+                  totalMetrics={state.progress.totalMetrics}
+                  currentMetric={state.progress.currentMetric}
+                />
+              )}
+
+              {/* Enhanced Comparison Running */}
+              {enhancedMode && enhancedStatus === 'running' && pendingCities && (
+                <EnhancedComparisonContainer
+                  city1={pendingCities.city1}
+                  city2={pendingCities.city2}
+                  onComplete={handleEnhancedComplete}
+                  demoMode={true}
+                  dealbreakers={dealbreakers}
+                />
+              )}
+
+              {/* Error State */}
+              {state.status === 'error' && (
+                <div className="error-card card">
+                  <div className="error-icon">❌</div>
+                  <h3>Analysis Failed</h3>
+                  <p>{state.error}</p>
+                  <button className="btn btn-primary" onClick={handleReset}>
+                    Try Again
+                  </button>
+                </div>
+              )}
             </>
           )}
 
-          {/* Error State */}
-          {state.status === 'error' && (
-            <div className="error-card card">
-              <div className="error-icon">❌</div>
-              <h3>Analysis Failed</h3>
-              <p>{state.error}</p>
-              <button className="btn btn-primary" onClick={handleReset}>
-                Try Again
-              </button>
-            </div>
-          )}
-
-          {/* Standard Results */}
-          {!enhancedMode && state.status === 'success' && state.result && (
+          {/* ============================================================
+              RESULTS TAB
+              ============================================================ */}
+          {activeTab === 'results' && (
             <>
-              <Results result={state.result} onSaved={handleSaved} />
-              <div className="new-comparison">
-                <button className="btn btn-secondary" onClick={handleReset}>
-                  ← New Comparison
-                </button>
-              </div>
+              {/* Enhanced Comparison Results */}
+              {enhancedMode && enhancedStatus === 'complete' && enhancedResult && (
+                <>
+                  <EnhancedComparisonContainer
+                    city1={pendingCities?.city1 || ''}
+                    city2={pendingCities?.city2 || ''}
+                    onComplete={handleEnhancedComplete}
+                    demoMode={true}
+                    dealbreakers={dealbreakers}
+                  />
+                  <div className="new-comparison">
+                    <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
+                      ← New Comparison
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Standard Results */}
+              {!enhancedMode && state.status === 'success' && state.result && (
+                <>
+                  <Results result={state.result} onSaved={handleSaved} />
+                  <div className="new-comparison">
+                    <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
+                      ← New Comparison
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* No results yet */}
+              {!hasResults && !(state.status === 'success' && state.result) && (
+                <div className="no-results card">
+                  <div className="no-results-icon">📊</div>
+                  <h3>No Results Yet</h3>
+                  <p>Run a comparison to see results here</p>
+                  <button className="btn btn-primary" onClick={() => setActiveTab('compare')}>
+                    Go to Compare
+                  </button>
+                </div>
+              )}
             </>
           )}
 
-          {/* Saved Comparisons */}
-          <SavedComparisons
-            key={savedKey}
-            onLoadComparison={handleLoadSavedComparison}
-            currentComparisonId={state.result?.comparisonId}
-          />
+          {/* ============================================================
+              VISUALS TAB
+              ============================================================ */}
+          {activeTab === 'visuals' && (
+            <AdvancedVisuals result={enhancedResult} />
+          )}
 
-          {/* About Section - Show when idle */}
-          {state.status === 'idle' && (
+          {/* ============================================================
+              SAVED TAB
+              ============================================================ */}
+          {activeTab === 'saved' && (
+            <SavedComparisons
+              key={savedKey}
+              onLoadComparison={handleLoadSavedComparison}
+              currentComparisonId={state.result?.comparisonId}
+            />
+          )}
+
+          {/* ============================================================
+              ABOUT TAB
+              ============================================================ */}
+          {activeTab === 'about' && (
             <div className="about-section card">
-              <h3 className="section-title">About LIFE SCORE™</h3>
-              <div className="about-content">
-                <p>
-                  <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
-                  framework developed by John E. Desautels & Associates that analyzes legal freedom across
-                  <span className="highlight"> 100 specific metrics</span> in six key categories:
-                </p>
-                
-                <div className="category-summary">
-                  <div className="category-item">
-                    <span className="cat-icon">🗽</span>
-                    <div className="cat-info">
-                      <strong>Personal Autonomy</strong>
-                      <span>15 metrics - Vice laws, substance policies, personal choices</span>
+              <button
+                className="section-toggle"
+                onClick={() => setShowAboutSection(!showAboutSection)}
+              >
+                <h3 className="section-title">About LIFE SCORE™</h3>
+                <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`}>▼</span>
+              </button>
+
+              {showAboutSection && (
+                <>
+                  <div className="about-content">
+                    <p>
+                      <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
+                      framework developed by John E. Desautels & Associates that analyzes legal freedom across
+                      <span className="highlight"> 100 specific metrics</span> in six key categories:
+                    </p>
+
+                    <div className="category-summary">
+                      <div className="category-item">
+                        <span className="cat-icon">🗽</span>
+                        <div className="cat-info">
+                          <strong>Personal Autonomy</strong>
+                          <span>15 metrics - Vice laws, substance policies, personal choices</span>
+                        </div>
+                      </div>
+
+                      <div className="category-item">
+                        <span className="cat-icon">🏠</span>
+                        <div className="cat-info">
+                          <strong>Housing & Property Rights</strong>
+                          <span>20 metrics - HOA restrictions, property taxes, zoning</span>
+                        </div>
+                      </div>
+
+                      <div className="category-item">
+                        <span className="cat-icon">💼</span>
+                        <div className="cat-info">
+                          <strong>Business & Work Regulation</strong>
+                          <span>25 metrics - Licensing, employment laws, regulatory burden</span>
+                        </div>
+                      </div>
+
+                      <div className="category-item">
+                        <span className="cat-icon">🚇</span>
+                        <div className="cat-info">
+                          <strong>Transportation & Movement</strong>
+                          <span>15 metrics - Car dependency, public transit, mobility freedom</span>
+                        </div>
+                      </div>
+
+                      <div className="category-item">
+                        <span className="cat-icon">⚖️</span>
+                        <div className="cat-info">
+                          <strong>Policing & Legal System</strong>
+                          <span>15 metrics - Enforcement, incarceration, legal costs</span>
+                        </div>
+                      </div>
+
+                      <div className="category-item">
+                        <span className="cat-icon">🎭</span>
+                        <div className="cat-info">
+                          <strong>Speech & Lifestyle</strong>
+                          <span>10 metrics - Free expression, cultural norms, privacy</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="methodology">
+                      Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Multiple LLMs
+                      with our proprietary weighted average LIFE score technology to verify each metric with actual laws, regulations, and current data.
+                      <span className="highlight"> No fabricated data.</span> Every score
+                      is backed by verifiable sources.
+                    </p>
+
+                    <p className="part-of">
+                      This tool is part of the <strong className="brand-text">CLUES™</strong> (Comprehensive
+                      Location & Utility Evaluation System) platform, helping individuals make informed decisions
+                      about international relocation based on real data, not assumptions.
+                    </p>
+                  </div>
+
+                  <div className="metrics-count">
+                    <div className="count-box">
+                      <span className="count-number">{ALL_METRICS.length}</span>
+                      <span className="count-label">Total Metrics</span>
+                    </div>
+                    <div className="count-box">
+                      <span className="count-number">6</span>
+                      <span className="count-label">Categories</span>
+                    </div>
+                    <div className="count-box">
+                      <span className="count-number">∞</span>
+                      <span className="count-label">Cities Comparable</span>
                     </div>
                   </div>
-                  
-                  <div className="category-item">
-                    <span className="cat-icon">🏠</span>
-                    <div className="cat-info">
-                      <strong>Housing & Property Rights</strong>
-                      <span>20 metrics - HOA restrictions, property taxes, zoning</span>
-                    </div>
-                  </div>
-                  
-                  <div className="category-item">
-                    <span className="cat-icon">💼</span>
-                    <div className="cat-info">
-                      <strong>Business & Work Regulation</strong>
-                      <span>25 metrics - Licensing, employment laws, regulatory burden</span>
-                    </div>
-                  </div>
-                  
-                  <div className="category-item">
-                    <span className="cat-icon">🚇</span>
-                    <div className="cat-info">
-                      <strong>Transportation & Movement</strong>
-                      <span>15 metrics - Car dependency, public transit, mobility freedom</span>
-                    </div>
-                  </div>
-                  
-                  <div className="category-item">
-                    <span className="cat-icon">⚖️</span>
-                    <div className="cat-info">
-                      <strong>Policing & Legal System</strong>
-                      <span>15 metrics - Enforcement, incarceration, legal costs</span>
-                    </div>
-                  </div>
-                  
-                  <div className="category-item">
-                    <span className="cat-icon">🎭</span>
-                    <div className="cat-info">
-                      <strong>Speech & Lifestyle</strong>
-                      <span>10 metrics - Free expression, cultural norms, privacy</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <p className="methodology">
-                  Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Multiple LLMs
-                  with our proprietary weighted average LIFE score technology to verify each metric with actual laws, regulations, and current data.
-                  <span className="highlight"> No fabricated data.</span> Every score
-                  is backed by verifiable sources.
-                </p>
-                
-                <p className="part-of">
-                  This tool is part of the <strong className="brand-text">CLUES™</strong> (Comprehensive
-                  Location & Utility Evaluation System) platform, helping individuals make informed decisions
-                  about international relocation based on real data, not assumptions.
-                </p>
-              </div>
-              
-              <div className="metrics-count">
-                <div className="count-box">
-                  <span className="count-number">{ALL_METRICS.length}</span>
-                  <span className="count-label">Total Metrics</span>
-                </div>
-                <div className="count-box">
-                  <span className="count-number">6</span>
-                  <span className="count-label">Categories</span>
-                </div>
-                <div className="count-box">
-                  <span className="count-number">∞</span>
-                  <span className="count-label">Cities Comparable</span>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           )}
         </div>
