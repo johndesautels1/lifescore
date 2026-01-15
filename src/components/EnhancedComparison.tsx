@@ -414,6 +414,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showTopDifferences, setShowTopDifferences] = useState(true);
+  const [scoreViewMode, setScoreViewMode] = useState<'lived' | 'lawVsReality'>('lived');
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -693,8 +694,33 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
       {/* Category Breakdown - Expandable */}
       <div className="enhanced-categories card">
-        <h3 className="section-title">Category Breakdown</h3>
-        <p className="breakdown-subtitle">Click any category to see detailed metric scores</p>
+        <div className="category-header-row">
+          <div>
+            <h3 className="section-title">Category Breakdown</h3>
+            <p className="breakdown-subtitle">Click any category to see detailed metric scores</p>
+          </div>
+
+          {/* Law vs Reality Toggle */}
+          <div className="score-view-toggle">
+            <span className="toggle-label">View:</span>
+            <div className="toggle-buttons">
+              <button
+                className={`toggle-btn ${scoreViewMode === 'lived' ? 'active' : ''}`}
+                onClick={() => setScoreViewMode('lived')}
+                title="Blended score (50% Law + 50% Enforcement)"
+              >
+                Lived Freedom
+              </button>
+              <button
+                className={`toggle-btn ${scoreViewMode === 'lawVsReality' ? 'active' : ''}`}
+                onClick={() => setScoreViewMode('lawVsReality')}
+                title="See Law score vs Enforcement score separately"
+              >
+                Law vs Reality
+              </button>
+            </div>
+          </div>
+        </div>
 
         {CATEGORIES.map(category => {
           const city1Cat = result.city1.categories.find(c => c.categoryId === category.id);
@@ -731,12 +757,33 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
               {/* Expanded Metric Details */}
               {isExpanded && city1Cat && city2Cat && (
-                <div className="metric-details">
-                  <div className="metric-details-header">
-                    <span>Metric</span>
-                    <span className="metric-header-city">{result.city1.city}</span>
-                    <span className="metric-header-city">{result.city2.city}</span>
-                  </div>
+                <div className={`metric-details ${scoreViewMode === 'lawVsReality' ? 'dual-score-mode' : ''}`}>
+                  {/* Header changes based on view mode */}
+                  {scoreViewMode === 'lived' ? (
+                    <div className="metric-details-header">
+                      <span>Metric</span>
+                      <span className="metric-header-city">{result.city1.city}</span>
+                      <span className="metric-header-city">{result.city2.city}</span>
+                    </div>
+                  ) : (
+                    <div className="metric-details-header dual-header">
+                      <span>Metric</span>
+                      <div className="dual-header-city">
+                        <span className="city-name">{result.city1.city}</span>
+                        <div className="dual-labels">
+                          <span className="label-law">Law</span>
+                          <span className="label-enforce">Reality</span>
+                        </div>
+                      </div>
+                      <div className="dual-header-city">
+                        <span className="city-name">{result.city2.city}</span>
+                        <div className="dual-labels">
+                          <span className="label-law">Law</span>
+                          <span className="label-enforce">Reality</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {categoryMetrics.map(metric => {
                     const city1Metric = city1Cat.metrics.find(m => m.metricId === metric.id);
@@ -744,6 +791,12 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     const score1 = city1Metric?.consensusScore ?? 0;
                     const score2 = city2Metric?.consensusScore ?? 0;
                     const tooltip = getMetricTooltip(metric.shortName);
+
+                    // Dual scores
+                    const legal1 = city1Metric?.legalScore ?? score1;
+                    const enforce1 = city1Metric?.enforcementScore ?? score1;
+                    const legal2 = city2Metric?.legalScore ?? score2;
+                    const enforce2 = city2Metric?.enforcementScore ?? score2;
 
                     // Calculate LLM agreement indicator
                     const confidence1 = city1Metric?.confidenceLevel || 'moderate';
@@ -756,7 +809,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                           confidence1 === 'moderate' ? 'moderate' : 'split';
 
                     return (
-                      <div key={metric.id} className="metric-row">
+                      <div key={metric.id} className={`metric-row ${scoreViewMode === 'lawVsReality' ? 'dual-row' : ''}`}>
                         <div className="metric-info">
                           <span className="metric-icon">{getMetricIcon(metric.shortName)}</span>
                           <div className="metric-name-container">
@@ -777,24 +830,50 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                             </span>
                           </div>
                         </div>
-                        <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
-                          {Math.round(score1)}
-                          {city1Metric?.llmScores?.[0]?.confidence && (
-                            <span className={`data-quality ${city1Metric.llmScores[0].confidence}`}>
-                              {city1Metric.llmScores[0].confidence === 'high' ? '✓' :
-                               city1Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
-                            </span>
-                          )}
-                        </div>
-                        <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
-                          {Math.round(score2)}
-                          {city2Metric?.llmScores?.[0]?.confidence && (
-                            <span className={`data-quality ${city2Metric.llmScores[0].confidence}`}>
-                              {city2Metric.llmScores[0].confidence === 'high' ? '✓' :
-                               city2Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
-                            </span>
-                          )}
-                        </div>
+
+                        {/* Lived Freedom Mode - Single Score */}
+                        {scoreViewMode === 'lived' ? (
+                          <>
+                            <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
+                              {Math.round(score1)}
+                              {city1Metric?.llmScores?.[0]?.confidence && (
+                                <span className={`data-quality ${city1Metric.llmScores[0].confidence}`}>
+                                  {city1Metric.llmScores[0].confidence === 'high' ? '✓' :
+                                   city1Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
+                                </span>
+                              )}
+                            </div>
+                            <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
+                              {Math.round(score2)}
+                              {city2Metric?.llmScores?.[0]?.confidence && (
+                                <span className={`data-quality ${city2Metric.llmScores[0].confidence}`}>
+                                  {city2Metric.llmScores[0].confidence === 'high' ? '✓' :
+                                   city2Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          /* Law vs Reality Mode - Dual Scores */
+                          <>
+                            <div className="dual-score-cell">
+                              <span className={`law-score ${legal1 > legal2 ? 'winning' : ''}`} title="What the law says">
+                                {Math.round(legal1)}
+                              </span>
+                              <span className={`enforce-score ${enforce1 > enforce2 ? 'winning' : ''} ${enforce1 < legal1 - 10 ? 'gap-warning' : ''}`} title="How it's enforced">
+                                {Math.round(enforce1)}
+                              </span>
+                            </div>
+                            <div className="dual-score-cell">
+                              <span className={`law-score ${legal2 > legal1 ? 'winning' : ''}`} title="What the law says">
+                                {Math.round(legal2)}
+                              </span>
+                              <span className={`enforce-score ${enforce2 > enforce1 ? 'winning' : ''} ${enforce2 < legal2 - 10 ? 'gap-warning' : ''}`} title="How it's enforced">
+                                {Math.round(enforce2)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     );
                   })}

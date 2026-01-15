@@ -115,7 +115,12 @@ export interface LLMMetricScore extends MetricScore {
 export interface MetricConsensus {
   metricId: string;
   llmScores: LLMMetricScore[];
-  consensusScore: number;         // Final consensus score (0-100)
+  consensusScore: number;         // Final consensus score (0-100) - "Lived Freedom" blended score
+
+  // Dual Scoring: Law vs Enforcement Reality
+  legalScore: number;             // What the law technically says (0-100)
+  enforcementScore: number;       // How aggressively it's applied (0-100)
+
   confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
   standardDeviation: number;      // How much LLMs disagreed
   judgeExplanation: string;       // Claude Opus explanation of consensus

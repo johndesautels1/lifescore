@@ -354,6 +354,8 @@ function calculateConsensus(
       metricId,
       llmScores: [],
       consensusScore: 0,
+      legalScore: 0,
+      enforcementScore: 0,
       confidenceLevel: 'split',
       standardDeviation: 0,
       judgeExplanation: 'No scores available'
@@ -380,10 +382,15 @@ function calculateConsensus(
     confidenceLevel = 'split';
   }
 
+  // For now, default dual scores to consensus (can be enhanced with real LLM dual scoring later)
+  const consensusScore = Math.round(mean);
+
   return {
     metricId,
     llmScores: scores,
-    consensusScore: Math.round(mean),
+    consensusScore,
+    legalScore: consensusScore,      // TODO: Get from LLM dual scoring
+    enforcementScore: consensusScore, // TODO: Get from LLM dual scoring
     confidenceLevel,
     standardDeviation: Math.round(stdDev * 10) / 10,
     judgeExplanation: judgeExplanation || `Consensus based on ${scores.length} LLM evaluations`
@@ -682,10 +689,22 @@ export function generateDemoEnhancedComparison(
           explanation: 'Demo evaluation'
         }));
 
+        // Generate dual scores: Law vs Enforcement
+        // Legal score: What the law says (tends to be higher/more stable)
+        // Enforcement score: How it's actually applied (can vary significantly)
+        const legalScore = Math.round(Math.min(100, baseScore + 5 + random(offset++) * 15));
+        const enforcementVariance = (random(offset++) - 0.5) * 30; // Can be +/- 15 points from legal
+        const enforcementScore = Math.round(Math.max(0, Math.min(100, legalScore + enforcementVariance)));
+
+        // Lived Freedom (consensusScore) = 50% Legal + 50% Enforcement
+        const livedFreedomScore = Math.round((legalScore * 0.5) + (enforcementScore * 0.5));
+
         return {
           metricId: m.id,
           llmScores,
-          consensusScore: Math.round(baseScore),
+          consensusScore: livedFreedomScore,
+          legalScore,
+          enforcementScore,
           confidenceLevel: stdDev < 5 ? 'unanimous' : stdDev < 15 ? 'strong' : 'moderate',
           standardDeviation: Math.round(stdDev * 10) / 10,
           judgeExplanation: 'Demo consensus'

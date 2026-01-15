@@ -1739,3 +1739,304 @@
     padding: 0.15rem 0.4rem;
   }
 }
+
+/* ============================================================================
+   LAW VS REALITY DUAL SCORING
+   ============================================================================ */
+
+/* Category Header Row - Contains title and toggle */
+.category-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.category-header-row > div:first-child {
+  flex: 1;
+}
+
+/* Score View Toggle */
+.score-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.toggle-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.toggle-buttons {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggle-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--gray-600);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--gray-800);
+}
+
+.toggle-btn.active {
+  background: white;
+  color: var(--sapphire);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dual Score Mode Header */
+.metric-details-header.dual-header {
+  grid-template-columns: 1fr 140px 140px;
+}
+
+.dual-header-city {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dual-header-city .city-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--gray-800);
+}
+
+.dual-labels {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.label-law {
+  color: #0047AB;
+}
+
+.label-enforce {
+  color: #F7931E;
+}
+
+/* Dual Score Mode Row */
+.metric-row.dual-row {
+  grid-template-columns: 1fr 140px 140px;
+}
+
+/* Dual Score Cell */
+.dual-score-cell {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.law-score,
+.enforce-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.law-score {
+  background: rgba(0, 71, 171, 0.1);
+  color: #0047AB;
+  border: 1px solid rgba(0, 71, 171, 0.2);
+}
+
+.enforce-score {
+  background: rgba(247, 147, 30, 0.1);
+  color: #F7931E;
+  border: 1px solid rgba(247, 147, 30, 0.2);
+}
+
+.law-score.winning {
+  background: rgba(0, 71, 171, 0.2);
+  border-color: #0047AB;
+}
+
+.enforce-score.winning {
+  background: rgba(247, 147, 30, 0.2);
+  border-color: #F7931E;
+}
+
+/* Gap Warning - When enforcement is much lower than law */
+.enforce-score.gap-warning {
+  background: rgba(239, 68, 68, 0.15);
+  color: #DC2626;
+  border-color: rgba(239, 68, 68, 0.3);
+  position: relative;
+}
+
+.enforce-score.gap-warning::after {
+  content: '!';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  background: #DC2626;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .toggle-buttons {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .toggle-btn {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .toggle-btn.active {
+  background: var(--gray-600);
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .dual-header-city .city-name {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .label-law {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .label-enforce {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .law-score {
+  background: rgba(107, 163, 255, 0.15);
+  color: #6ba3ff;
+  border-color: rgba(107, 163, 255, 0.3);
+}
+
+[data-theme="dark"] .enforce-score {
+  background: rgba(247, 147, 30, 0.15);
+  color: #F7931E;
+  border-color: rgba(247, 147, 30, 0.3);
+}
+
+[data-theme="dark"] .law-score.winning {
+  background: rgba(107, 163, 255, 0.25);
+  border-color: #6ba3ff;
+}
+
+[data-theme="dark"] .enforce-score.winning {
+  background: rgba(247, 147, 30, 0.25);
+  border-color: #F7931E;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+  .category-header-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .score-view-toggle {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .metric-details-header.dual-header,
+  .metric-row.dual-row {
+    grid-template-columns: 1fr 100px 100px;
+  }
+
+  .dual-score-cell {
+    gap: 0.25rem;
+  }
+
+  .law-score,
+  .enforce-score {
+    min-width: 30px;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  .score-view-toggle {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toggle-label {
+    margin-bottom: 0.25rem;
+  }
+
+  .toggle-buttons {
+    width: 100%;
+  }
+
+  .toggle-btn {
+    padding: 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .metric-details-header.dual-header,
+  .metric-row.dual-row {
+    grid-template-columns: 1fr 80px 80px;
+  }
+
+  .dual-labels {
+    gap: 0.35rem;
+    font-size: 0.55rem;
+  }
+
+  .law-score,
+  .enforce-score {
+    min-width: 26px;
+    padding: 0.15rem 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .enforce-score.gap-warning::after {
+    width: 12px;
+    height: 12px;
+    font-size: 0.5rem;
+    top: -4px;
+    right: -4px;
+  }
+}
