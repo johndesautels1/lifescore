@@ -679,34 +679,51 @@ export function generateDemoEnhancedComparison(
         const baseScore = 40 + random(offset++) * 50;
         const stdDev = random(offset++) * 20;
 
-        // Generate fake LLM scores
-        const llmScores: LLMMetricScore[] = DEFAULT_ENHANCED_LLMS.map(llm => ({
-          metricId: m.id,
-          rawValue: baseScore + (random(offset++) - 0.5) * stdDev * 2,
-          normalizedScore: Math.round(baseScore + (random(offset++) - 0.5) * stdDev * 2),
-          confidence: random(offset++) > 0.3 ? 'high' : 'medium',
-          llmProvider: llm,
-          explanation: 'Demo evaluation'
-        }));
+        // Generate individual LLM scores with variance around base score
+        const llmScores: LLMMetricScore[] = DEFAULT_ENHANCED_LLMS.map(llm => {
+          // Each LLM gets a score that varies from base score
+          const variance = (random(offset++) - 0.5) * stdDev * 2;
+          const llmScore = Math.round(Math.max(0, Math.min(100, baseScore + variance)));
+          return {
+            metricId: m.id,
+            rawValue: llmScore,
+            normalizedScore: llmScore,
+            confidence: random(offset++) > 0.3 ? 'high' : 'medium',
+            llmProvider: llm,
+            explanation: 'Demo evaluation'
+          };
+        });
 
-        // Generate dual scores: Law vs Enforcement
-        // Legal score: What the law says (tends to be higher/more stable)
-        // Enforcement score: How it's actually applied (can vary significantly)
-        const legalScore = Math.round(Math.min(100, baseScore + 5 + random(offset++) * 15));
-        const enforcementVariance = (random(offset++) - 0.5) * 30; // Can be +/- 15 points from legal
+        // Consensus is the AVERAGE of all individual LLM scores (like real Opus judge would do)
+        const llmAverage = llmScores.reduce((sum, s) => sum + s.normalizedScore, 0) / llmScores.length;
+        const consensusScore = Math.round(llmAverage);
+
+        // Generate dual scores: Law vs Enforcement (derived from consensus)
+        // Legal score: What the law says (slightly higher than consensus)
+        // Enforcement score: How it's actually applied (slightly lower if there's enforcement gap)
+        const legalScore = Math.round(Math.min(100, consensusScore + 5 + random(offset++) * 10));
+        const enforcementVariance = (random(offset++) - 0.5) * 20; // Can be +/- 10 points from legal
         const enforcementScore = Math.round(Math.max(0, Math.min(100, legalScore + enforcementVariance)));
 
-        // Lived Freedom (consensusScore) = 50% Legal + 50% Enforcement
-        const livedFreedomScore = Math.round((legalScore * 0.5) + (enforcementScore * 0.5));
+        // Calculate actual standard deviation from LLM scores
+        const scores = llmScores.map(s => s.normalizedScore);
+        const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const actualStdDev = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length);
+
+        // Determine confidence level based on how much LLMs agreed
+        const confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split' =
+          actualStdDev < 5 ? 'unanimous' :
+          actualStdDev < 10 ? 'strong' :
+          actualStdDev < 15 ? 'moderate' : 'split';
 
         return {
           metricId: m.id,
           llmScores,
-          consensusScore: livedFreedomScore,
+          consensusScore,
           legalScore,
           enforcementScore,
-          confidenceLevel: stdDev < 5 ? 'unanimous' : stdDev < 15 ? 'strong' : 'moderate',
-          standardDeviation: Math.round(stdDev * 10) / 10,
+          confidenceLevel,
+          standardDeviation: Math.round(actualStdDev * 10) / 10,
           judgeExplanation: 'Demo consensus'
         } as MetricConsensus;
       });

@@ -396,7 +396,7 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
         // Build LLM scores array with icons
         const llmScores = metric1.llmScores.map(score => ({
           provider: score.llmProvider,
-          score: score.score,
+          score: score.normalizedScore,
           icon: LLM_CONFIGS[score.llmProvider]?.icon || '🤖'
         }));
 
@@ -529,22 +529,29 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result 
                     </div>
 
                     {/* Individual LLM Scores */}
-                    <div className="llm-scores-breakdown">
-                      {metric.llmScores.map((llm, i) => (
-                        <div
-                          key={i}
-                          className="llm-score-item"
-                          title={`${LLM_CONFIGS[llm.provider]?.name || llm.provider}: ${Math.round(llm.score)}`}
-                        >
-                          <span className="llm-mini-icon">{llm.icon}</span>
-                          <span className="llm-mini-score">{Math.round(llm.score)}</span>
-                        </div>
-                      ))}
+                    <div className="llm-scores-section">
+                      <div className="scores-section-label">Individual Scores:</div>
+                      <div className="llm-scores-breakdown">
+                        {metric.llmScores.map((llm, i) => {
+                          const config = LLM_CONFIGS[llm.provider];
+                          return (
+                            <div
+                              key={i}
+                              className="llm-score-item"
+                              title={`${config?.name || llm.provider}: ${Math.round(llm.score)}/100`}
+                            >
+                              <span className="llm-item-icon">{llm.icon}</span>
+                              <span className="llm-item-name">{config?.shortName || llm.provider}</span>
+                              <span className="llm-item-score">{Math.round(llm.score)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    {/* Consensus Score */}
+                    {/* Final Consensus Score - Average of all LLM scores */}
                     <div className="disputed-consensus">
-                      <span className="consensus-label">Consensus:</span>
+                      <span className="consensus-label">Final</span>
                       <span className="consensus-value">{Math.round(metric.city1Score)}</span>
                     </div>
                   </div>
