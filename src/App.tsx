@@ -41,6 +41,9 @@ const App: React.FC = () => {
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
 
+  // Custom weights state
+  const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
+
   const availableLLMs = getAvailableLLMs(apiKeys);
 
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
@@ -104,6 +107,7 @@ const App: React.FC = () => {
             onCompare={handleCompare}
             isLoading={state.status === 'loading' || enhancedStatus === 'running'}
             onDealbreakersChange={setDealbreakers}
+            onWeightsChange={setCustomWeights}
           />
 
           {/* Standard Loading State */}
