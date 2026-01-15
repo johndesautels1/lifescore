@@ -1214,6 +1214,555 @@
   font-size: 0.9rem;
 }
 
+/* ============================================================================
+   LLM DISAGREEMENT SECTION - Comprehensive Styles
+   ============================================================================ */
+
+.disagreement-section {
+  margin-bottom: 1.5rem;
+}
+
+.disagreement-section .section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(124, 58, 237, 0.02) 100%);
+  border: 2px solid rgba(124, 58, 237, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.disagreement-section .section-toggle:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(124, 58, 237, 0.04) 100%);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.disagreement-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+  color: #7C3AED;
+}
+
+.disagreement-section .title-icon {
+  font-size: 1.25rem;
+}
+
+.disagreement-section .toggle-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.disagreement-section .confidence-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.disagreement-section .confidence-badge.confidence-high {
+  background: linear-gradient(135deg, #D4AF37 0%, #F7931E 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+}
+
+.disagreement-section .confidence-badge.confidence-medium {
+  background: linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%);
+  color: white;
+}
+
+.disagreement-section .confidence-badge.confidence-low {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+}
+
+.disagreement-section .toggle-arrow {
+  color: #7C3AED;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.disagreement-section .toggle-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* Disagreement Content */
+.disagreement-content {
+  padding: 1.25rem;
+  border: 2px solid var(--gray-200);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: white;
+  animation: slideDown 0.3s ease;
+}
+
+/* Summary */
+.disagreement-summary {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(124, 58, 237, 0.02) 100%);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  margin-bottom: 1.25rem;
+}
+
+.disagreement-summary .summary-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.disagreement-summary .summary-text p {
+  color: var(--gray-700);
+  font-weight: 600;
+  margin: 0 0 0.35rem 0;
+}
+
+.disagreement-summary .summary-detail {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+/* Evaluators */
+.llm-evaluators {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.evaluators-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gray-600);
+}
+
+.evaluators-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.evaluator-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 50px;
+  font-size: 0.8rem;
+}
+
+.evaluator-chip .eval-icon {
+  font-size: 1rem;
+}
+
+.evaluator-chip .eval-name {
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.evaluator-chip.judge {
+  background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+  border-color: #7C3AED;
+}
+
+.evaluator-chip.judge .eval-name {
+  color: white;
+}
+
+/* Disputed Metrics */
+.disputed-metrics {
+  border-top: 2px solid var(--gray-200);
+  padding-top: 1.25rem;
+}
+
+.disputed-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #F7931E;
+  font-size: 1rem;
+  margin: 0 0 0.35rem 0;
+}
+
+.disputed-header .header-icon {
+  font-size: 1.1rem;
+}
+
+.disputed-subtitle {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin: 0 0 1rem 0;
+}
+
+.disputed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.disputed-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(251, 191, 36, 0.02) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.disputed-item:hover {
+  border-color: var(--orange);
+  transform: translateX(4px);
+}
+
+.disputed-rank {
+  font-weight: 800;
+  color: var(--orange);
+  font-size: 0.9rem;
+  width: 30px;
+}
+
+.disputed-info {
+  min-width: 0;
+}
+
+.disputed-metric-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.disputed-metric-name .metric-icon {
+  font-size: 1.1rem;
+}
+
+.disputed-metric-name .metric-name {
+  font-weight: 700;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+.confidence-tag {
+  padding: 0.15rem 0.5rem;
+  border-radius: 50px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.confidence-tag.unanimous {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.confidence-tag.strong {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
+}
+
+.confidence-tag.moderate {
+  background: rgba(251, 191, 36, 0.2);
+  color: #D97706;
+}
+
+.confidence-tag.split {
+  background: rgba(239, 68, 68, 0.15);
+  color: #DC2626;
+}
+
+.disputed-deviation {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+/* LLM Scores Breakdown */
+.llm-scores-breakdown {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.llm-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  min-width: 38px;
+  cursor: help;
+  transition: all var(--transition-fast);
+}
+
+.llm-score-item:hover {
+  border-color: #7C3AED;
+  background: rgba(124, 58, 237, 0.05);
+  transform: scale(1.05);
+}
+
+.llm-mini-icon {
+  font-size: 0.85rem;
+}
+
+.llm-mini-score {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--gray-700);
+}
+
+/* Consensus Display */
+.disputed-consensus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.75rem;
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  border-radius: var(--radius-md);
+  min-width: 65px;
+}
+
+.disputed-consensus .consensus-label {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.disputed-consensus .consensus-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: white;
+}
+
+/* Consensus Achieved - No Disagreement */
+.consensus-achieved {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+}
+
+.consensus-achieved .consensus-icon {
+  font-size: 2rem;
+}
+
+.consensus-achieved p {
+  margin: 0;
+  color: #059669;
+  font-weight: 600;
+}
+
+/* Dark Mode for Disagreement Section */
+[data-theme="dark"] .disagreement-section .section-toggle {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0.08) 100%);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+[data-theme="dark"] .disagreement-section .section-toggle:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25) 0%, rgba(124, 58, 237, 0.12) 100%);
+}
+
+[data-theme="dark"] .disagreement-section .section-title {
+  color: #A78BFA;
+}
+
+[data-theme="dark"] .disagreement-section .toggle-arrow {
+  color: #A78BFA;
+}
+
+[data-theme="dark"] .disagreement-content {
+  background: #1a1a2e;
+  border-color: #2d2d44;
+}
+
+[data-theme="dark"] .disagreement-summary {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(124, 58, 237, 0.05) 100%);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+[data-theme="dark"] .disagreement-summary .summary-text p {
+  color: #e0e0e8;
+}
+
+[data-theme="dark"] .disagreement-summary .summary-detail {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .llm-evaluators {
+  background: #252538;
+}
+
+[data-theme="dark"] .evaluators-label {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .evaluator-chip {
+  background: #1a1a2e;
+  border-color: #3d3d55;
+}
+
+[data-theme="dark"] .evaluator-chip .eval-name {
+  color: #e0e0e8;
+}
+
+[data-theme="dark"] .disputed-metrics {
+  border-top-color: #3d3d55;
+}
+
+[data-theme="dark"] .disputed-header {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .disputed-subtitle {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .disputed-item {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.04) 100%);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+[data-theme="dark"] .disputed-item:hover {
+  border-color: #F7931E;
+}
+
+[data-theme="dark"] .disputed-rank {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .disputed-metric-name .metric-name {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .disputed-deviation {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .llm-score-item {
+  background: #252538;
+  border-color: #3d3d55;
+}
+
+[data-theme="dark"] .llm-score-item:hover {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: #A78BFA;
+}
+
+[data-theme="dark"] .llm-mini-score {
+  color: #e0e0e8;
+}
+
+[data-theme="dark"] .consensus-achieved {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="dark"] .consensus-achieved p {
+  color: #10B981;
+}
+
+/* Responsive for Disagreement Section */
+@media (max-width: 768px) {
+  .disputed-item {
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem;
+  }
+
+  .llm-scores-breakdown {
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+    justify-content: flex-start;
+  }
+
+  .disputed-consensus {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .disputed-consensus .consensus-label {
+    font-size: 0.7rem;
+  }
+
+  .llm-evaluators {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .disagreement-section .section-toggle {
+    padding: 0.75rem 1rem;
+  }
+
+  .disagreement-section .section-title {
+    font-size: 0.9rem;
+  }
+
+  .disagreement-section .confidence-badge {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .disagreement-content {
+    padding: 1rem;
+  }
+
+  .disagreement-summary {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .disputed-rank {
+    width: 25px;
+    font-size: 0.8rem;
+  }
+
+  .disputed-metric-name .metric-name {
+    font-size: 0.85rem;
+  }
+
+  .llm-score-item {
+    min-width: 32px;
+    padding: 0.2rem 0.35rem;
+  }
+
+  .llm-mini-icon {
+    font-size: 0.75rem;
+  }
+
+  .llm-mini-score {
+    font-size: 0.65rem;
+  }
+}
+
 /* Processing Stats */
 .processing-stats {
   margin-bottom: 1.5rem;

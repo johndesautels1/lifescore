@@ -752,6 +752,28 @@ export function generateDemoEnhancedComparison(
     else categoryWinners[cat.id] = 'city2';
   });
 
+  // Find metrics where LLMs disagreed most (high standard deviation)
+  const allCity1Metrics = city1Categories.flatMap(c => c.metrics);
+  const disputedMetrics = allCity1Metrics
+    .filter(m => m.standardDeviation > 12)
+    .sort((a, b) => b.standardDeviation - a.standardDeviation)
+    .slice(0, 5)
+    .map(m => {
+      const metricDef = ALL_METRICS.find(met => met.id === m.metricId);
+      return metricDef?.shortName || m.metricId;
+    });
+
+  // Calculate overall agreement from actual data
+  const avgAgreement = city1Categories.reduce((sum, c) => sum + c.agreementLevel, 0) / city1Categories.length;
+  const overallAgreement = Math.round(avgAgreement);
+  const consensusConfidence: 'high' | 'medium' | 'low' =
+    overallAgreement > 80 ? 'high' : overallAgreement > 60 ? 'medium' : 'low';
+
+  // Generate disagreement summary
+  const disagreementSummary = disputedMetrics.length > 0
+    ? `LLMs showed varying assessments on: ${disputedMetrics.join(', ')}`
+    : 'LLMs showed strong consensus across all metrics';
+
   return {
     city1: {
       city: city1Info.city,
@@ -759,7 +781,7 @@ export function generateDemoEnhancedComparison(
       region: city1Info.region,
       categories: city1Categories,
       totalConsensusScore: Math.round(city1Total),
-      overallAgreement: 75
+      overallAgreement
     },
     city2: {
       city: city2Info.city,
@@ -767,7 +789,7 @@ export function generateDemoEnhancedComparison(
       region: city2Info.region,
       categories: city2Categories,
       totalConsensusScore: Math.round(city2Total),
-      overallAgreement: 75
+      overallAgreement
     },
     winner,
     scoreDifference: Math.round(scoreDiff),
@@ -776,8 +798,8 @@ export function generateDemoEnhancedComparison(
     generatedAt: new Date().toISOString(),
     llmsUsed: DEFAULT_ENHANCED_LLMS,
     judgeModel: 'claude-opus',
-    overallConsensusConfidence: 'high',
-    disagreementSummary: 'Demo mode - simulated LLM consensus',
+    overallConsensusConfidence: consensusConfidence,
+    disagreementSummary,
     processingStats: {
       totalTimeMs: 2500,
       llmTimings: {

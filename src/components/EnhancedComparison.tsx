@@ -358,6 +358,215 @@ export const EnhancedProgress: React.FC<EnhancedProgressProps> = ({ progress }) 
 };
 
 // ============================================================================
+// LLM DISAGREEMENT ANALYSIS SECTION
+// ============================================================================
+
+interface LLMDisagreementSectionProps {
+  result: EnhancedComparisonResult;
+}
+
+// Find metrics with highest disagreement
+interface DisputedMetric {
+  metricId: string;
+  shortName: string;
+  icon: string;
+  standardDeviation: number;
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
+  city1Score: number;
+  city2Score: number;
+  llmScores: { provider: LLMProvider; score: number; icon: string }[];
+}
+
+const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5): DisputedMetric[] => {
+  const disputed: DisputedMetric[] = [];
+
+  result.city1.categories.forEach((city1Cat, catIndex) => {
+    const city2Cat = result.city2.categories[catIndex];
+    if (!city2Cat) return;
+
+    city1Cat.metrics.forEach((metric1, metricIndex) => {
+      const metric2 = city2Cat.metrics[metricIndex];
+      if (!metric2) return;
+
+      // Only include metrics where LLMs had significant disagreement
+      if (metric1.standardDeviation > 10) {
+        const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
+        const shortName = metricDef?.shortName || metric1.metricId;
+
+        // Build LLM scores array with icons
+        const llmScores = metric1.llmScores.map(score => ({
+          provider: score.llmProvider,
+          score: score.score,
+          icon: LLM_CONFIGS[score.llmProvider]?.icon || '🤖'
+        }));
+
+        disputed.push({
+          metricId: metric1.metricId,
+          shortName,
+          icon: getMetricIcon(shortName),
+          standardDeviation: metric1.standardDeviation,
+          confidenceLevel: metric1.confidenceLevel,
+          city1Score: metric1.consensusScore,
+          city2Score: metric2.consensusScore,
+          llmScores
+        });
+      }
+    });
+  });
+
+  return disputed
+    .sort((a, b) => b.standardDeviation - a.standardDeviation)
+    .slice(0, count);
+};
+
+const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const disputedMetrics = findDisputedMetrics(result, 5);
+  const hasSignificantDisagreement = disputedMetrics.length > 0;
+
+  // Get confidence styling
+  const getConfidenceClass = (level: string): string => {
+    switch (level) {
+      case 'high': return 'confidence-high';
+      case 'medium': return 'confidence-medium';
+      case 'low': return 'confidence-low';
+      default: return 'confidence-medium';
+    }
+  };
+
+  const getConfidenceLabel = (level: string): string => {
+    switch (level) {
+      case 'high': return 'High Confidence';
+      case 'medium': return 'Moderate Confidence';
+      case 'low': return 'Lower Confidence';
+      default: return 'Unknown';
+    }
+  };
+
+  const getMetricConfidenceLabel = (level: 'unanimous' | 'strong' | 'moderate' | 'split'): string => {
+    switch (level) {
+      case 'unanimous': return 'Unanimous';
+      case 'strong': return 'Strong';
+      case 'moderate': return 'Moderate';
+      case 'split': return 'Split';
+    }
+  };
+
+  return (
+    <div className="disagreement-section card">
+      <button
+        className="section-toggle"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <h3 className="section-title">
+          <span className="title-icon">🧠</span>
+          LLM Consensus Analysis
+        </h3>
+        <div className="toggle-right">
+          <span className={`confidence-badge ${getConfidenceClass(result.overallConsensusConfidence)}`}>
+            {getConfidenceLabel(result.overallConsensusConfidence)}
+          </span>
+          <span className={`toggle-arrow ${isExpanded ? 'expanded' : ''}`}>▼</span>
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="disagreement-content">
+          {/* Overall Summary */}
+          <div className="disagreement-summary">
+            <div className="summary-icon">📊</div>
+            <div className="summary-text">
+              <p>{result.disagreementSummary}</p>
+              <span className="summary-detail">
+                Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
+              </span>
+            </div>
+          </div>
+
+          {/* LLM Panel - Show who evaluated */}
+          <div className="llm-evaluators">
+            <span className="evaluators-label">Evaluators:</span>
+            <div className="evaluators-list">
+              {result.llmsUsed.map(llm => (
+                <div key={llm} className="evaluator-chip">
+                  <span className="eval-icon">{LLM_CONFIGS[llm].icon}</span>
+                  <span className="eval-name">{LLM_CONFIGS[llm].shortName}</span>
+                </div>
+              ))}
+              <div className="evaluator-chip judge">
+                <span className="eval-icon">{LLM_CONFIGS['claude-opus'].icon}</span>
+                <span className="eval-name">Judge</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Disputed Metrics - Show where LLMs disagreed */}
+          {hasSignificantDisagreement && (
+            <div className="disputed-metrics">
+              <h4 className="disputed-header">
+                <span className="header-icon">⚡</span>
+                Where LLMs Disagreed Most
+              </h4>
+              <p className="disputed-subtitle">
+                These metrics had the highest variation in scores between AI evaluators
+              </p>
+
+              <div className="disputed-list">
+                {disputedMetrics.map((metric, index) => (
+                  <div key={metric.metricId} className="disputed-item">
+                    <div className="disputed-rank">#{index + 1}</div>
+                    <div className="disputed-info">
+                      <div className="disputed-metric-name">
+                        <span className="metric-icon">{metric.icon}</span>
+                        <span className="metric-name">{metric.shortName}</span>
+                        <span className={`confidence-tag ${metric.confidenceLevel}`}>
+                          {getMetricConfidenceLabel(metric.confidenceLevel)}
+                        </span>
+                      </div>
+                      <div className="disputed-deviation">
+                        σ = {Math.round(metric.standardDeviation)} points variance
+                      </div>
+                    </div>
+
+                    {/* Individual LLM Scores */}
+                    <div className="llm-scores-breakdown">
+                      {metric.llmScores.map((llm, i) => (
+                        <div
+                          key={i}
+                          className="llm-score-item"
+                          title={`${LLM_CONFIGS[llm.provider]?.name || llm.provider}: ${Math.round(llm.score)}`}
+                        >
+                          <span className="llm-mini-icon">{llm.icon}</span>
+                          <span className="llm-mini-score">{Math.round(llm.score)}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Consensus Score */}
+                    <div className="disputed-consensus">
+                      <span className="consensus-label">Consensus:</span>
+                      <span className="consensus-value">{Math.round(metric.city1Score)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No significant disagreement */}
+          {!hasSignificantDisagreement && (
+            <div className="consensus-achieved">
+              <span className="consensus-icon">✅</span>
+              <p>All AI models showed strong agreement across metrics. The consensus scores are highly reliable.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
 // ENHANCED RESULTS DISPLAY
 // ============================================================================
 
@@ -691,6 +900,9 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           </>
         )}
       </div>
+
+      {/* LLM Disagreement Analysis */}
+      <LLMDisagreementSection result={result} />
 
       {/* Category Breakdown - Expandable */}
       <div className="enhanced-categories card">
