@@ -10,14 +10,12 @@ import type { MetricScore, CategoryId } from './metrics';
 // ============================================================================
 
 export type LLMProvider =
-  | 'claude-opus'      // Anthropic Claude Opus (Primary Judge)
-  | 'claude-sonnet'    // Anthropic Claude Sonnet
-  | 'gpt-4'            // OpenAI GPT-4
-  | 'gpt-4-turbo'      // OpenAI GPT-4 Turbo
-  | 'gemini-pro'       // Google Gemini Pro
-  | 'gemini-ultra'     // Google Gemini Ultra
-  | 'mistral-large'    // Mistral Large
-  | 'llama-3'          // Meta Llama 3
+  | 'claude-opus'      // Anthropic Claude Opus 4.5 (Primary Judge)
+  | 'claude-sonnet'    // Anthropic Claude Sonnet 4
+  | 'gpt-4o'           // OpenAI GPT-4o
+  | 'gemini-3-pro'     // Google Gemini 3 Pro
+  | 'grok-4'           // xAI Grok 4
+  | 'perplexity'       // Perplexity Sonar Reasoning Pro
 
 export interface LLMConfig {
   id: LLMProvider;
@@ -51,69 +49,51 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
     icon: '📝',
     color: '#8B5CF6'
   },
-  'gpt-4': {
-    id: 'gpt-4',
-    name: 'GPT-4',
-    shortName: 'GPT-4',
+  'gpt-4o': {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    shortName: 'GPT-4o',
     vendor: 'OpenAI',
-    supportsWebSearch: false,
+    supportsWebSearch: true,
     icon: '🤖',
     color: '#10A37F'
   },
-  'gpt-4-turbo': {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    shortName: 'GPT-4T',
-    vendor: 'OpenAI',
-    supportsWebSearch: true,
-    icon: '⚡',
-    color: '#00A67E'
-  },
-  'gemini-pro': {
-    id: 'gemini-pro',
-    name: 'Gemini Pro',
+  'gemini-3-pro': {
+    id: 'gemini-3-pro',
+    name: 'Gemini 3 Pro',
     shortName: 'Gemini',
     vendor: 'Google',
     supportsWebSearch: true,
     icon: '💎',
     color: '#4285F4'
   },
-  'gemini-ultra': {
-    id: 'gemini-ultra',
-    name: 'Gemini Ultra',
-    shortName: 'Ultra',
-    vendor: 'Google',
+  'grok-4': {
+    id: 'grok-4',
+    name: 'Grok 4',
+    shortName: 'Grok',
+    vendor: 'xAI',
     supportsWebSearch: true,
-    icon: '🌟',
-    color: '#EA4335'
+    icon: '𝕏',
+    color: '#000000'
   },
-  'mistral-large': {
-    id: 'mistral-large',
-    name: 'Mistral Large',
-    shortName: 'Mistral',
-    vendor: 'Mistral AI',
-    supportsWebSearch: false,
-    icon: '🌀',
-    color: '#FF7000'
-  },
-  'llama-3': {
-    id: 'llama-3',
-    name: 'Llama 3 70B',
-    shortName: 'Llama',
-    vendor: 'Meta',
-    supportsWebSearch: false,
-    icon: '🦙',
-    color: '#0668E1'
+  'perplexity': {
+    id: 'perplexity',
+    name: 'Sonar Reasoning Pro',
+    shortName: 'Perplexity',
+    vendor: 'Perplexity',
+    supportsWebSearch: true,
+    icon: '🔮',
+    color: '#20B2AA'
   }
 };
 
-// Default 5 LLMs for enhanced comparison
+// Default 5 LLMs for enhanced comparison (Claude Opus is judge)
 export const DEFAULT_ENHANCED_LLMS: LLMProvider[] = [
+  'gpt-4o',
+  'gemini-3-pro',
+  'grok-4',
   'claude-sonnet',
-  'gpt-4-turbo',
-  'gemini-pro',
-  'mistral-large',
-  'llama-3'
+  'perplexity'
 ];
 
 // ============================================================================
@@ -192,11 +172,11 @@ export interface EnhancedComparisonResult {
 // ============================================================================
 
 export interface LLMAPIKeys {
-  anthropic?: string;
-  openai?: string;
-  google?: string;
-  mistral?: string;
-  together?: string;  // For Llama 3 via Together.ai
+  anthropic?: string;   // Claude Opus & Sonnet
+  openai?: string;      // GPT-4o
+  google?: string;      // Gemini 3 Pro
+  xai?: string;         // Grok 4
+  perplexity?: string;  // Sonar Reasoning Pro
 }
 
 export interface EnhancedComparisonConfig {

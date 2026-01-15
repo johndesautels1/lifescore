@@ -58,16 +58,16 @@ export function getAvailableLLMs(keys: LLMAPIKeys): LLMProvider[] {
     available.push('claude-opus', 'claude-sonnet');
   }
   if (keys.openai) {
-    available.push('gpt-4', 'gpt-4-turbo');
+    available.push('gpt-4o');
   }
   if (keys.google) {
-    available.push('gemini-pro', 'gemini-ultra');
+    available.push('gemini-3-pro');
   }
-  if (keys.mistral) {
-    available.push('mistral-large');
+  if (keys.xai) {
+    available.push('grok-4');
   }
-  if (keys.together) {
-    available.push('llama-3');
+  if (keys.perplexity) {
+    available.push('perplexity');
   }
 
   return available;
@@ -156,11 +156,8 @@ async function callAnthropicAPI(
  */
 async function callOpenAIAPI(
   apiKey: string,
-  model: 'gpt-4' | 'gpt-4-turbo',
   prompt: string
 ): Promise<string> {
-  const modelId = model === 'gpt-4-turbo' ? 'gpt-4-turbo-preview' : 'gpt-4';
-
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -168,7 +165,7 @@ async function callOpenAIAPI(
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: modelId,
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 8192,
       temperature: 0.3
@@ -188,13 +185,10 @@ async function callOpenAIAPI(
  */
 async function callGeminiAPI(
   apiKey: string,
-  model: 'gemini-pro' | 'gemini-ultra',
   prompt: string
 ): Promise<string> {
-  const modelId = model === 'gemini-ultra' ? 'gemini-ultra' : 'gemini-pro';
-
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -214,27 +208,27 @@ async function callGeminiAPI(
 }
 
 /**
- * Call Mistral API
+ * Call xAI Grok API
  */
-async function callMistralAPI(
+async function callGrokAPI(
   apiKey: string,
   prompt: string
 ): Promise<string> {
-  const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'mistral-large-latest',
+      model: 'grok-2',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 8192
     })
   });
 
   if (!response.ok) {
-    throw new Error(`Mistral API error: ${response.status}`);
+    throw new Error(`Grok API error: ${response.status}`);
   }
 
   const data = await response.json();
@@ -242,27 +236,27 @@ async function callMistralAPI(
 }
 
 /**
- * Call Together.ai API (for Llama 3)
+ * Call Perplexity API
  */
-async function callTogetherAPI(
+async function callPerplexityAPI(
   apiKey: string,
   prompt: string
 ): Promise<string> {
-  const response = await fetch('https://api.together.xyz/v1/chat/completions', {
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'meta-llama/Llama-3-70b-chat-hf',
+      model: 'sonar-reasoning-pro',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 8192
     })
   });
 
   if (!response.ok) {
-    throw new Error(`Together API error: ${response.status}`);
+    throw new Error(`Perplexity API error: ${response.status}`);
   }
 
   const data = await response.json();
@@ -283,23 +277,21 @@ async function callLLMAPI(
       if (!apiKeys.anthropic) throw new Error('Anthropic API key not configured');
       return callAnthropicAPI(apiKeys.anthropic, provider, prompt);
 
-    case 'gpt-4':
-    case 'gpt-4-turbo':
+    case 'gpt-4o':
       if (!apiKeys.openai) throw new Error('OpenAI API key not configured');
-      return callOpenAIAPI(apiKeys.openai, provider, prompt);
+      return callOpenAIAPI(apiKeys.openai, prompt);
 
-    case 'gemini-pro':
-    case 'gemini-ultra':
+    case 'gemini-3-pro':
       if (!apiKeys.google) throw new Error('Google API key not configured');
-      return callGeminiAPI(apiKeys.google, provider, prompt);
+      return callGeminiAPI(apiKeys.google, prompt);
 
-    case 'mistral-large':
-      if (!apiKeys.mistral) throw new Error('Mistral API key not configured');
-      return callMistralAPI(apiKeys.mistral, prompt);
+    case 'grok-4':
+      if (!apiKeys.xai) throw new Error('xAI API key not configured');
+      return callGrokAPI(apiKeys.xai, prompt);
 
-    case 'llama-3':
-      if (!apiKeys.together) throw new Error('Together API key not configured');
-      return callTogetherAPI(apiKeys.together, prompt);
+    case 'perplexity':
+      if (!apiKeys.perplexity) throw new Error('Perplexity API key not configured');
+      return callPerplexityAPI(apiKeys.perplexity, prompt);
 
     default:
       throw new Error(`Unknown LLM provider: ${provider}`);
@@ -770,11 +762,12 @@ export function generateDemoEnhancedComparison(
     processingStats: {
       totalTimeMs: 2500,
       llmTimings: {
+        'claude-opus': 550,
         'claude-sonnet': 500,
-        'gpt-4-turbo': 600,
-        'gemini-pro': 450,
-        'mistral-large': 480,
-        'llama-3': 470
+        'gpt-4o': 520,
+        'gemini-3-pro': 450,
+        'grok-4': 480,
+        'perplexity': 470
       } as Record<LLMProvider, number>,
       metricsEvaluated: ALL_METRICS.length
     }

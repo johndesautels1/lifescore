@@ -8,7 +8,122 @@ import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedCompari
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
+import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import './EnhancedComparison.css';
+
+// Metric icons mapping
+const METRIC_ICONS: Record<string, string> = {
+  // Personal Freedom
+  'Cannabis': '🌿',
+  'Alcohol Laws': '🍺',
+  'Gambling': '🎰',
+  'Sex Work Laws': '💋',
+  'Drug Penalties': '💊',
+  'Abortion Access': '⚕️',
+  'LGBTQ+ Rights': '🏳️‍🌈',
+  'Assisted Dying': '🕊️',
+  'Smoking Laws': '🚬',
+  'Public Drinking': '🍻',
+  'Helmet Laws': '⛑️',
+  'Seatbelt Laws': '🚗',
+  'Jaywalking': '🚶',
+  'Curfews': '🌙',
+  'Noise Laws': '🔊',
+  // Housing & Property
+  'HOA Prevalence': '🏘️',
+  'HOA Power': '📋',
+  'Property Tax Rate': '💰',
+  'Zoning Flexibility': '🗺️',
+  'Short-Term Rentals': '🏠',
+  'Rent Control': '🔒',
+  'Eviction Laws': '📜',
+  'ADU Rules': '🏗️',
+  'Home Business': '💼',
+  'Solar Rights': '☀️',
+  'Rainwater': '💧',
+  'Fence Rules': '🧱',
+  'Paint Colors': '🎨',
+  'Lawn Requirements': '🌱',
+  'Vehicle Parking': '🚙',
+  'Livestock': '🐔',
+  'Tree Removal': '🌳',
+  'Building Permits': '📝',
+  'Historic Rules': '🏛️',
+  'Eminent Domain': '⚖️',
+  // Business & Work
+  'Business License': '📄',
+  'Professional License': '🎓',
+  'Food Permits': '🍽️',
+  'Alcohol License': '🍷',
+  'Home Occupation': '🏡',
+  'Street Vending': '🛒',
+  'Signage Rules': '🪧',
+  'Operating Hours': '🕐',
+  'Hiring Freedom': '👥',
+  'Firing Freedom': '📤',
+  'Min Wage Gap': '💵',
+  'Benefits Mandates': '🏥',
+  'Union Rules': '✊',
+  'Non-Compete': '📑',
+  'Freelance Laws': '💻',
+  'Gig Economy': '📱',
+  'Child Labor': '👶',
+  'Overtime Rules': '⏰',
+  'Break Mandates': '☕',
+  'Leave Laws': '🏖️',
+  'Privacy Laws': '🔐',
+  'Drug Testing': '🧪',
+  'Tax Complexity': '📊',
+  'Regulatory Burden': '📚',
+  'Inspection Freq': '🔍',
+  // Transportation
+  'Car Dependency': '🚗',
+  'Public Transit': '🚇',
+  'Bike Infra': '🚲',
+  'Walkability': '👟',
+  'Ride Share': '🚕',
+  'E-Scooters': '🛴',
+  'License Ease': '🪪',
+  'Vehicle Inspect': '🔧',
+  'Emissions Rules': '💨',
+  'Parking Rules': '🅿️',
+  'Traffic Enforce': '🚨',
+  'Speed Limits': '⚡',
+  'DUI Threshold': '🍸',
+  'Phone Laws': '📵',
+  'Road Quality': '🛣️',
+  // Policing & Legal
+  'Police Presence': '👮',
+  'Civil Forfeiture': '💸',
+  'Incarceration': '🔒',
+  'Cash Bail': '🏦',
+  'Public Defender': '⚖️',
+  'Court Fees': '💳',
+  'Warrant Rules': '📃',
+  'Stop & Frisk': '🛑',
+  'Surveillance': '📹',
+  'Data Privacy': '🔏',
+  'Protest Rights': '✊',
+  'Qualified Immunity': '🛡️',
+  'Complaint Process': '📝',
+  'Body Cameras': '📷',
+  'Use of Force': '⚠️',
+  // Speech & Lifestyle
+  'Speech Laws': '🗣️',
+  'Press Freedom': '📰',
+  'Assembly Rights': '👥',
+  'Religious Freedom': '🙏',
+  'Gun Rights': '🔫',
+  'Knife Laws': '🔪',
+  'Dress Codes': '👔',
+  'Nudity Laws': '🩱',
+  'Homeschool': '📚',
+  'Curriculum': '🎒'
+};
+
+const getMetricIcon = (shortName: string): string => {
+  return METRIC_ICONS[shortName] || '📊';
+};
 
 // ============================================================================
 // API KEY CONFIGURATION MODAL
@@ -57,13 +172,13 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, anthropic: e.target.value })}
               placeholder="sk-ant-..."
             />
-            <span className="key-models">Claude Opus, Sonnet</span>
+            <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4</span>
           </div>
 
           <div className="api-key-group">
             <label>
               <span className="key-icon">🤖</span>
-              OpenAI (GPT)
+              OpenAI
             </label>
             <input
               type="password"
@@ -71,13 +186,13 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, openai: e.target.value })}
               placeholder="sk-..."
             />
-            <span className="key-models">GPT-4, GPT-4 Turbo</span>
+            <span className="key-models">GPT-4o</span>
           </div>
 
           <div className="api-key-group">
             <label>
               <span className="key-icon">💎</span>
-              Google (Gemini)
+              Google
             </label>
             <input
               type="password"
@@ -85,35 +200,35 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, google: e.target.value })}
               placeholder="AI..."
             />
-            <span className="key-models">Gemini Pro, Ultra</span>
+            <span className="key-models">Gemini 3 Pro</span>
           </div>
 
           <div className="api-key-group">
             <label>
-              <span className="key-icon">🌀</span>
-              Mistral AI
+              <span className="key-icon">𝕏</span>
+              xAI
             </label>
             <input
               type="password"
-              value={keys.mistral || ''}
-              onChange={e => setKeys({ ...keys, mistral: e.target.value })}
-              placeholder="..."
+              value={keys.xai || ''}
+              onChange={e => setKeys({ ...keys, xai: e.target.value })}
+              placeholder="xai-..."
             />
-            <span className="key-models">Mistral Large</span>
+            <span className="key-models">Grok 4</span>
           </div>
 
           <div className="api-key-group">
             <label>
-              <span className="key-icon">🦙</span>
-              Together.ai (Llama)
+              <span className="key-icon">🔮</span>
+              Perplexity
             </label>
             <input
               type="password"
-              value={keys.together || ''}
-              onChange={e => setKeys({ ...keys, together: e.target.value })}
-              placeholder="..."
+              value={keys.perplexity || ''}
+              onChange={e => setKeys({ ...keys, perplexity: e.target.value })}
+              placeholder="pplx-..."
             />
-            <span className="key-models">Llama 3 70B</span>
+            <span className="key-models">Sonar Reasoning Pro</span>
           </div>
         </div>
 
@@ -249,10 +364,55 @@ interface EnhancedResultsProps {
 
 export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
   const isTie = result.winner === 'tie';
+
+  useEffect(() => {
+    setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
+  }, [result.comparisonId]);
+
+  const handleSave = () => {
+    saveEnhancedComparisonLocal(result);
+    setIsSaved(true);
+    setSaveMessage('Comparison saved!');
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleShare = async () => {
+    const shareText = `LIFE SCORE™ Comparison: ${result.city1.city} (${result.city1.totalConsensusScore}) vs ${result.city2.city} (${result.city2.totalConsensusScore}) - Winner: ${winner.city}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'LIFE SCORE™ Comparison',
+          text: shareText,
+          url: window.location.href
+        });
+      } catch (err) {
+        // User cancelled or error
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(shareText);
+      setSaveMessage('Copied to clipboard!');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(result, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lifescore-${result.city1.city}-vs-${result.city2.city}-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="enhanced-results">
@@ -389,6 +549,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
                     return (
                       <div key={metric.id} className="metric-row">
                         <div className="metric-info">
+                          <span className="metric-icon">{getMetricIcon(metric.shortName)}</span>
                           <span className="metric-name" title={metric.description}>
                             {metric.shortName}
                           </span>
@@ -407,6 +568,28 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
             </div>
           );
         })}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="enhanced-actions card">
+        {saveMessage && (
+          <span className="save-message">{saveMessage}</span>
+        )}
+        <div className="action-buttons">
+          <button
+            className={`btn action-btn save-btn ${isSaved ? 'saved' : ''}`}
+            onClick={handleSave}
+            disabled={isSaved}
+          >
+            {isSaved ? '✓ Saved' : '💾 Save'}
+          </button>
+          <button className="btn action-btn share-btn" onClick={handleShare}>
+            📤 Share
+          </button>
+          <button className="btn action-btn export-btn" onClick={handleExport}>
+            📥 Export JSON
+          </button>
+        </div>
       </div>
 
       {/* Footer */}

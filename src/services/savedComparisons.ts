@@ -7,6 +7,7 @@
  */
 
 import type { ComparisonResult } from '../types/metrics';
+import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 
 // ============================================================================
 // TYPES
@@ -31,11 +32,19 @@ export interface StorageState {
   lastSyncedAt?: string;
 }
 
+export interface SavedEnhancedComparison {
+  id: string;
+  result: EnhancedComparisonResult;
+  savedAt: string;
+  nickname?: string;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const LOCAL_STORAGE_KEY = 'lifescore_saved_comparisons';
+const ENHANCED_STORAGE_KEY = 'lifescore_saved_enhanced';
 const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
@@ -168,6 +177,81 @@ export function isComparisonSaved(comparisonId: string): boolean {
  */
 export function clearAllLocal(): void {
   localStorage.removeItem(LOCAL_STORAGE_KEY);
+}
+
+// ============================================================================
+// ENHANCED COMPARISON STORAGE
+// ============================================================================
+
+/**
+ * Get all saved enhanced comparisons from localStorage
+ */
+export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
+  try {
+    const stored = localStorage.getItem(ENHANCED_STORAGE_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as SavedEnhancedComparison[];
+  } catch (error) {
+    console.error('Error loading enhanced comparisons:', error);
+    return [];
+  }
+}
+
+/**
+ * Save enhanced comparisons to localStorage
+ */
+function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): void {
+  localStorage.setItem(ENHANCED_STORAGE_KEY, JSON.stringify(comparisons));
+}
+
+/**
+ * Save an enhanced comparison locally
+ */
+export function saveEnhancedComparisonLocal(result: EnhancedComparisonResult, nickname?: string): SavedEnhancedComparison {
+  const comparisons = getLocalEnhancedComparisons();
+
+  const existingIndex = comparisons.findIndex(c => c.id === result.comparisonId);
+
+  const saved: SavedEnhancedComparison = {
+    id: result.comparisonId,
+    result,
+    savedAt: new Date().toISOString(),
+    nickname
+  };
+
+  if (existingIndex >= 0) {
+    comparisons[existingIndex] = saved;
+  } else {
+    comparisons.unshift(saved);
+    if (comparisons.length > MAX_SAVED) {
+      comparisons.pop();
+    }
+  }
+
+  saveLocalEnhancedComparisons(comparisons);
+  return saved;
+}
+
+/**
+ * Check if enhanced comparison is saved
+ */
+export function isEnhancedComparisonSaved(comparisonId: string): boolean {
+  return getLocalEnhancedComparisons().some(c => c.id === comparisonId);
+}
+
+/**
+ * Delete an enhanced comparison locally
+ */
+export function deleteEnhancedComparisonLocal(id: string): boolean {
+  const comparisons = getLocalEnhancedComparisons();
+  const filtered = comparisons.filter(c => c.id !== id);
+
+  if (filtered.length === comparisons.length) {
+    return false;
+  }
+
+  saveLocalEnhancedComparisons(filtered);
+  return true;
 }
 
 // ============================================================================

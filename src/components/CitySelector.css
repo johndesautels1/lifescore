@@ -35,10 +35,11 @@
 
 .metro-dropdown label {
   display: block;
-  font-weight: 600;
-  color: var(--gray-700);
+  font-weight: 700;
+  color: #D4AF37;
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .metro-select-btn {

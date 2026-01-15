@@ -43,9 +43,12 @@
 }
 
 .winner-difference {
-  font-size: 1.125rem;
+  font-size: 1.2rem;
   margin-top: 1rem;
-  opacity: 0.9;
+  color: #E8E8E8;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.02em;
 }
 
 .confidence-badge-hero {
@@ -228,18 +231,19 @@
   display: grid;
   grid-template-columns: 1fr 80px 80px;
   gap: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--gray-200);
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  border-radius: 8px 8px 0 0;
   margin-bottom: 0.5rem;
 }
 
 .metric-header-city {
   font-weight: 700;
-  color: var(--sapphire-dark) !important;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--gray-700);
+  font-size: 0.85rem;
+  color: #FFFFFF !important;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .metric-row {
@@ -262,32 +266,43 @@
 
 .metric-name {
   font-weight: 700;
-  color: var(--sapphire-dark) !important;
-  font-size: 0.8rem;
-  color: var(--gray-700);
+  font-style: normal;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #F7931E !important;
   cursor: help;
 }
 
 .metric-weight {
-  font-weight: 700;
-  color: var(--sapphire) !important;
-  font-size: 0.65rem;
-  color: var(--gray-700);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 0.7rem;
+  color: #F7931E !important;
 }
 
 .metric-score {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--gray-600);
+  font-size: 1rem;
+  font-style: normal;
+  font-family: inherit;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
 }
 
 .metric-score.winning {
-  color: var(--success-dark);
+  background: #0047AB;
+  color: white !important;
+  font-weight: 700;
+}
+
+.metric-score:not(.winning) {
+  background: white;
+  color: #DC2626 !important;
+  font-weight: 400;
 }
 
 .confidence-dot {

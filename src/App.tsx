@@ -232,8 +232,8 @@ const App: React.FC = () => {
                 </div>
                 
                 <p className="methodology">
-                  Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Claude AI
-                  with real-time web search to verify each metric with actual laws, regulations, and current data.
+                  Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Multiple LLMs
+                  with our proprietary weighted average LIFE score technology to verify each metric with actual laws, regulations, and current data.
                   <span className="highlight"> No fabricated data.</span> Every score
                   is backed by verifiable sources.
                 </p>

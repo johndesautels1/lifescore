@@ -34,7 +34,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
       <div className="loading-header">
         <div className="loading-icon">🔍</div>
         <h2>Analyzing Legal Freedom Metrics</h2>
-        <p>Using Claude AI with real-time web search verification</p>
+        <p>Using Multiple LLMs with proprietary weighted average LIFE score technology</p>
       </div>
       
       <div className="progress-section">

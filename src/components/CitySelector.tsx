@@ -239,7 +239,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
       </form>
 
       <p className="info-text">
-        Analysis uses Claude AI with real-time web search to verify all 100 legal freedom metrics.
+        Analysis uses Multiple LLMs with our proprietary weighted average LIFE score technology to verify all 100 legal freedom metrics.
         <br />
         <span className="info-highlight">No fabricated data - only verified facts.</span>
       </p>
