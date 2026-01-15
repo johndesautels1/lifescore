@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
-import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
+import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
@@ -384,11 +384,15 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
       const metric2 = city2Cat.metrics[metricIndex];
       if (!metric2) return;
 
+      // Look up the actual metric definition to get the real shortName
+      const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
+      const shortName = metricDef?.shortName || metric1.metricId;
+
       const diff = Math.abs(metric1.consensusScore - metric2.consensusScore);
       differences.push({
         metricId: metric1.metricId,
-        shortName: metric1.metricId.split('-').slice(1).join(' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()),
-        icon: getMetricIcon(metric1.metricId.split('-').slice(1).join(' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase())),
+        shortName: shortName,
+        icon: getMetricIcon(shortName),
         city1Score: metric1.consensusScore,
         city2Score: metric2.consensusScore,
         difference: diff,

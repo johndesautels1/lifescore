@@ -437,34 +437,36 @@
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  background: linear-gradient(135deg, #D4AF37 0%, #F7931E 100%);
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  border: 3px solid #D4AF37;
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
   margin: 1rem 0;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
-  animation: pulseGold 2s ease-in-out infinite;
+  box-shadow: 0 4px 15px rgba(0, 71, 171, 0.4);
+  animation: pulseDelta 2s ease-in-out infinite;
 }
 
-@keyframes pulseGold {
-  0%, 100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+@keyframes pulseDelta {
+  0%, 100% { box-shadow: 0 4px 15px rgba(0, 71, 171, 0.4); }
   50% { box-shadow: 0 4px 25px rgba(212, 175, 55, 0.6); }
 }
 
 .freedom-delta-badge .delta-icon {
   font-size: 1.5rem;
+  filter: brightness(1.2);
 }
 
 .freedom-delta-badge .delta-value {
   font-size: 2rem;
   font-weight: 800;
-  color: #1a1a1a;
-  text-shadow: none;
+  color: #D4AF37;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .freedom-delta-badge .delta-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
