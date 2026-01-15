@@ -699,27 +699,41 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
             <h3 className="section-title">Category Breakdown</h3>
             <p className="breakdown-subtitle">Click any category to see detailed metric scores</p>
           </div>
+        </div>
 
-          {/* Law vs Reality Toggle */}
-          <div className="score-view-toggle">
-            <span className="toggle-label">View:</span>
-            <div className="toggle-buttons">
-              <button
-                className={`toggle-btn ${scoreViewMode === 'lived' ? 'active' : ''}`}
-                onClick={() => setScoreViewMode('lived')}
-                title="Blended score (50% Law + 50% Enforcement)"
-              >
-                Lived Freedom
-              </button>
-              <button
-                className={`toggle-btn ${scoreViewMode === 'lawVsReality' ? 'active' : ''}`}
-                onClick={() => setScoreViewMode('lawVsReality')}
-                title="See Law score vs Enforcement score separately"
-              >
-                Law vs Reality
-              </button>
-            </div>
+        {/* Law vs Reality Toggle - Prominent */}
+        <div className={`score-view-toggle-container ${scoreViewMode === 'lawVsReality' ? 'reality-mode' : ''}`}>
+          <div className="toggle-header">
+            <span className="toggle-icon-large">{scoreViewMode === 'lived' ? '📊' : '⚖️'}</span>
+            <span className="toggle-title">Score Display Mode</span>
           </div>
+          <div className="toggle-buttons-large">
+            <button
+              className={`toggle-btn-large ${scoreViewMode === 'lived' ? 'active' : ''}`}
+              onClick={() => setScoreViewMode('lived')}
+            >
+              <span className="btn-icon">📊</span>
+              <span className="btn-label">Lived Freedom</span>
+              <span className="btn-desc">Blended score (50% Law + 50% Enforcement)</span>
+            </button>
+            <button
+              className={`toggle-btn-large ${scoreViewMode === 'lawVsReality' ? 'active' : ''}`}
+              onClick={() => setScoreViewMode('lawVsReality')}
+            >
+              <span className="btn-icon">⚖️</span>
+              <span className="btn-label">Law vs Reality</span>
+              <span className="btn-desc">See what the law says vs how it's enforced</span>
+            </button>
+          </div>
+          {scoreViewMode === 'lawVsReality' && (
+            <div className="mode-indicator">
+              <span className="indicator-badge law">Law</span> = What the law says
+              <span className="indicator-sep">|</span>
+              <span className="indicator-badge enforce">Reality</span> = How it's actually enforced
+              <span className="indicator-sep">|</span>
+              <span className="indicator-badge gap">!</span> = Enforcement gap warning
+            </div>
+          )}
         </div>
 
         {CATEGORIES.map(category => {
