@@ -363,6 +363,8 @@ export const EnhancedProgress: React.FC<EnhancedProgressProps> = ({ progress }) 
 
 interface LLMDisagreementSectionProps {
   result: EnhancedComparisonResult;
+  city1Name: string;
+  city2Name: string;
 }
 
 // Find metrics with highest disagreement
@@ -419,7 +421,7 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
     .slice(0, count);
 };
 
-const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result }) => {
+const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result, city1Name, city2Name }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const disputedMetrics = findDisputedMetrics(result, 5);
   const hasSignificantDisagreement = disputedMetrics.length > 0;
@@ -508,7 +510,8 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result 
                 Where LLMs Disagreed Most
               </h4>
               <p className="disputed-subtitle">
-                These metrics had the highest variation in scores between AI evaluators
+                These metrics for <strong>{city1Name}</strong> had the highest score variation between AI evaluators.
+                Each LLM scored independently, then the Final score was calculated as the average.
               </p>
 
               <div className="disputed-list">
@@ -909,7 +912,11 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       </div>
 
       {/* LLM Disagreement Analysis */}
-      <LLMDisagreementSection result={result} />
+      <LLMDisagreementSection
+        result={result}
+        city1Name={result.city1.city}
+        city2Name={result.city2.city}
+      />
 
       {/* Category Breakdown - Expandable */}
       <div className="enhanced-categories card">
