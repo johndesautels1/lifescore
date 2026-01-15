@@ -655,7 +655,7 @@ Metric: LGBTQ+ Rights
 | 2 | Implement "Law vs Enforcement" dual scoring | ✅ DONE | **GAME CHANGER** | ChatGPT |
 | 3 | 🆕 **Web search on ALL evaluators (native + Tavily)** | HIGH | **ANTI-HALLUCINATION** | Sonnet |
 | 4 | Progressive disclosure UI (3 levels) | ✅ DONE | Essential UX | All |
-| 5 | Tooltips + "Why this matters" on all metrics | MEDIUM | Trust + clarity | All |
+| 5 | Tooltips + "Why this matters" on all metrics | ✅ DONE | Trust + clarity | All |
 | 6 | "Freedom Delta" badge + "Top 5 Differences" | ✅ DONE | Quick win | Copilot |
 | 7 | URL parameter state for instant sharing | ✅ DONE | Virality | Gemini |
 | 8 | 🆕 **Aggressive caching (30-day TTL, per-metric)** | MEDIUM | Cost control | Sonnet |
@@ -669,18 +669,18 @@ Metric: LGBTQ+ Rights
 | 11 | Dynamic OG images for social sharing | ✅ DONE | Virality | Gemini |
 | 12 | "Explain the winner" narrative button | ✅ DONE | Clarity | ChatGPT |
 | 13 | 🆕 **LLM agreement + outlier indicators** | ✅ DONE | Transparency | Sonnet |
-| 14 | 🆕 **Data Quality badges (High/Med/Low)** | LOW | Trust | Sonnet |
+| 14 | 🆕 **Data Quality badges (High/Med/Low)** | ✅ DONE | Trust | Sonnet |
 
 ### Phase 3: Premium Features
 
 | Priority | Item | Effort | Impact | Source |
 |----------|------|--------|--------|--------|
 | 15 | Ask Olivia (contextual, floating button) | HIGH | Premium value | Gemini |
-| 16 | Evidence view + citations | MEDIUM | Trust | ChatGPT |
+| 16 | Evidence view + citations | ✅ DONE | Trust | ChatGPT |
 | 17 | Gamma PDF report integration | MEDIUM | Revenue | Existing |
 | 18 | Historical trend data | HIGH | Premium value | DeepSeek |
 | 19 | 🆕 **"View LLM disagreements" expandable** | ✅ DONE | Transparency | Sonnet |
-| 20 | 🆕 **Data Sources modal with links** | LOW | Trust | Sonnet |
+| 20 | 🆕 **Data Sources modal with links** | ✅ DONE | Trust | Sonnet |
 
 ### Phase 4: Expansion
 
