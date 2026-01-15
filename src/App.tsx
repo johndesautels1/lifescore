@@ -38,6 +38,9 @@ const App: React.FC = () => {
   const [enhancedResult, setEnhancedResult] = useState<EnhancedComparisonResult | null>(null);
   const [pendingCities, setPendingCities] = useState<{ city1: string; city2: string } | null>(null);
 
+  // Dealbreakers state
+  const [dealbreakers, setDealbreakers] = useState<string[]>([]);
+
   const availableLLMs = getAvailableLLMs(apiKeys);
 
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
@@ -100,6 +103,7 @@ const App: React.FC = () => {
           <CitySelector
             onCompare={handleCompare}
             isLoading={state.status === 'loading' || enhancedStatus === 'running'}
+            onDealbreakersChange={setDealbreakers}
           />
 
           {/* Standard Loading State */}
@@ -119,6 +123,7 @@ const App: React.FC = () => {
               city2={pendingCities.city2}
               onComplete={handleEnhancedComplete}
               demoMode={true}
+              dealbreakers={dealbreakers}
             />
           )}
 
@@ -130,6 +135,7 @@ const App: React.FC = () => {
                 city2={pendingCities?.city2 || ''}
                 onComplete={handleEnhancedComplete}
                 demoMode={true}
+                dealbreakers={dealbreakers}
               />
               <div className="new-comparison">
                 <button className="btn btn-secondary" onClick={handleReset}>

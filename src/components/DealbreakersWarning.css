@@ -1,0 +1,95 @@
+/**
+ * Dealbreakers Warning Styles
+ */
+
+.dealbreakers-warning {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(220, 38, 38, 0.05) 100%);
+  border: 2px solid #DC2626;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(220, 38, 38, 0.15); }
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.warning-icon {
+  font-size: 1.5rem;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.warning-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #DC2626;
+}
+
+.warning-text {
+  color: var(--gray-700);
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.failed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.failed-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #DC2626;
+  border-radius: 50px;
+}
+
+.failed-icon {
+  font-size: 1.1rem;
+}
+
+.failed-name {
+  font-weight: 700;
+  color: #DC2626;
+  font-size: 0.9rem;
+}
+
+.failed-score {
+  background: #DC2626;
+  color: white;
+  padding: 0.15rem 0.5rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .dealbreakers-warning {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%);
+}
+
+[data-theme="dark"] .warning-text {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .failed-item {
+  background: var(--gray-800);
+}

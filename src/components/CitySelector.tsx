@@ -15,6 +15,7 @@ import {
   type Metro
 } from '../data/metros';
 import { parseURLParams, updateURL } from '../hooks/useURLParams';
+import { DealbreakersPanel } from './DealbreakersPanel';
 import './CitySelector.css';
 
 // Helper to find metro by formatted string (e.g., "Tampa, Florida, USA")
@@ -27,6 +28,7 @@ const findMetroByFormatted = (formatted: string): Metro | undefined => {
 interface CitySelectorProps {
   onCompare: (city1: string, city2: string) => void;
   isLoading: boolean;
+  onDealbreakersChange?: (dealbreakers: string[]) => void;
 }
 
 interface PopularComparison {
@@ -190,7 +192,7 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
   );
 };
 
-export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading }) => {
+export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading, onDealbreakersChange }) => {
   const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
   const [showShareCopied, setShowShareCopied] = useState(false);
@@ -321,6 +323,11 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
           ))}
         </div>
       </div>
+
+      {/* Dealbreakers Panel */}
+      {onDealbreakersChange && (
+        <DealbreakersPanel onDealbreakersChange={onDealbreakersChange} />
+      )}
     </div>
   );
 };

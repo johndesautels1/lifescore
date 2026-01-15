@@ -10,6 +10,7 @@ import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
+import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
 import './EnhancedComparison.css';
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
@@ -360,6 +361,7 @@ export const EnhancedProgress: React.FC<EnhancedProgressProps> = ({ progress }) 
 
 interface EnhancedResultsProps {
   result: EnhancedComparisonResult;
+  dealbreakers?: string[];
 }
 
 // Helper to calculate top metric differences
@@ -404,7 +406,7 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
   return differences.sort((a, b) => b.difference - a.difference).slice(0, count);
 };
 
-export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
+export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [] }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -415,6 +417,12 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
 
   // Calculate top 5 differences for the summary
   const topDifferences = calculateTopDifferences(result, 5);
+
+  // Check for dealbreaker failures
+  const city1AllMetrics = result.city1.categories.flatMap(c => c.metrics);
+  const city2AllMetrics = result.city2.categories.flatMap(c => c.metrics);
+  const city1FailedDealbreakers = checkDealbreakers(dealbreakers, city1AllMetrics);
+  const city2FailedDealbreakers = checkDealbreakers(dealbreakers, city2AllMetrics);
 
   useEffect(() => {
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
@@ -545,6 +553,20 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
           </div>
         </div>
       </div>
+
+      {/* Dealbreaker Warnings */}
+      {city1FailedDealbreakers.length > 0 && (
+        <DealbreakersWarning
+          cityName={result.city1.city}
+          failedDealbreakers={city1FailedDealbreakers}
+        />
+      )}
+      {city2FailedDealbreakers.length > 0 && (
+        <DealbreakersWarning
+          cityName={result.city2.city}
+          failedDealbreakers={city2FailedDealbreakers}
+        />
+      )}
 
       {/* Top 5 Differences - Quick Summary */}
       <div className="top-differences card">
@@ -718,13 +740,15 @@ interface EnhancedComparisonContainerProps {
   city2: string;
   onComplete: (result: EnhancedComparisonResult) => void;
   demoMode?: boolean;
+  dealbreakers?: string[];
 }
 
 export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerProps> = ({
   city1,
   city2,
   onComplete,
-  demoMode = true
+  demoMode = true,
+  dealbreakers = []
 }) => {
   const [status, setStatus] = useState<'idle' | 'running' | 'complete' | 'error'>('idle');
   const [progress, setProgress] = useState<EnhancedComparisonProgress | null>(null);
@@ -800,7 +824,7 @@ export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerPr
   }
 
   if (status === 'complete' && result) {
-    return <EnhancedResults result={result} />;
+    return <EnhancedResults result={result} dealbreakers={dealbreakers} />;
   }
 
   return null;
