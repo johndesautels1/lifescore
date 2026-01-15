@@ -18,9 +18,9 @@ import type { Category, CategoryId, MetricDefinition } from '../types/metrics';
 export const CATEGORIES: Category[] = [
   {
     id: 'personal_freedom',
-    name: 'Personal Freedom & Morality',
-    shortName: 'Personal Freedom',
-    description: 'Laws governing personal choices, vice regulations, and moral autonomy',
+    name: 'Personal Autonomy',
+    shortName: 'Personal Autonomy',
+    description: 'Laws governing personal choices, bodily autonomy, and individual liberty',
     metricCount: 15,
     weight: 20,
     icon: '🗽'

@@ -14,7 +14,15 @@ import {
   searchMetros,
   type Metro
 } from '../data/metros';
+import { parseURLParams, updateURL } from '../hooks/useURLParams';
 import './CitySelector.css';
+
+// Helper to find metro by formatted string (e.g., "Tampa, Florida, USA")
+const findMetroByFormatted = (formatted: string): Metro | undefined => {
+  if (!formatted) return undefined;
+  const cityPart = formatted.split(',')[0].trim().toLowerCase();
+  return ALL_METROS.find(m => m.city.toLowerCase() === cityPart);
+};
 
 interface CitySelectorProps {
   onCompare: (city1: string, city2: string) => void;
@@ -185,11 +193,53 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
 export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading }) => {
   const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
+  const [showShareCopied, setShowShareCopied] = useState(false);
+
+  // Load cities from URL params on mount
+  useEffect(() => {
+    const params = parseURLParams();
+    if (params.cityA) {
+      const foundMetro = findMetroByFormatted(params.cityA);
+      if (foundMetro) setMetro1(foundMetro);
+    }
+    if (params.cityB) {
+      const foundMetro = findMetroByFormatted(params.cityB);
+      if (foundMetro) setMetro2(foundMetro);
+    }
+  }, []);
+
+  // Update URL when cities change
+  useEffect(() => {
+    if (metro1 && metro2) {
+      updateURL({
+        cityA: formatMetro(metro1),
+        cityB: formatMetro(metro2),
+      });
+    }
+  }, [metro1, metro2]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (metro1 && metro2) {
       onCompare(formatMetro(metro1), formatMetro(metro2));
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShowShareCopied(true);
+      setTimeout(() => setShowShareCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setShowShareCopied(true);
+      setTimeout(() => setShowShareCopied(false), 2000);
     }
   };
 
@@ -222,20 +272,31 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
           />
         </div>
 
-        <button
-          type="submit"
-          className="btn btn-primary btn-compare"
-          disabled={isLoading || !metro1 || !metro2}
-        >
-          {isLoading ? (
-            <>
-              <span className="btn-spinner"></span>
-              Analyzing 100 Metrics...
-            </>
-          ) : (
-            <>🔍 Compare LIFE SCORES</>
-          )}
-        </button>
+        <div className="compare-actions">
+          <button
+            type="submit"
+            className="btn btn-primary btn-compare"
+            disabled={isLoading || !metro1 || !metro2}
+          >
+            {isLoading ? (
+              <>
+                <span className="btn-spinner"></span>
+                Analyzing 100 Metrics...
+              </>
+            ) : (
+              <>🔍 Compare LIFE SCORES</>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-share"
+            onClick={handleCopyShareLink}
+            title="Copy shareable link"
+          >
+            {showShareCopied ? '✓ Copied!' : '🔗 Share Link'}
+          </button>
+        </div>
       </form>
 
       <p className="info-text">

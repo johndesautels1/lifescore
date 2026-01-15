@@ -185,7 +185,7 @@ const App: React.FC = () => {
                   <div className="category-item">
                     <span className="cat-icon">🗽</span>
                     <div className="cat-info">
-                      <strong>Personal Freedom & Morality</strong>
+                      <strong>Personal Autonomy</strong>
                       <span>15 metrics - Vice laws, substance policies, personal choices</span>
                     </div>
                   </div>

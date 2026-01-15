@@ -9,6 +9,7 @@ import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison'
 import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
+import { getMetricTooltip } from '../data/metricTooltips';
 import './EnhancedComparison.css';
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
@@ -361,6 +362,44 @@ interface EnhancedResultsProps {
   result: EnhancedComparisonResult;
 }
 
+// Helper to calculate top metric differences
+interface MetricDifference {
+  metricId: string;
+  shortName: string;
+  icon: string;
+  city1Score: number;
+  city2Score: number;
+  difference: number;
+  favoredCity: 'city1' | 'city2';
+}
+
+const calculateTopDifferences = (result: EnhancedComparisonResult, count: number = 5): MetricDifference[] => {
+  const differences: MetricDifference[] = [];
+
+  result.city1.categories.forEach((city1Cat, catIndex) => {
+    const city2Cat = result.city2.categories[catIndex];
+    if (!city2Cat) return;
+
+    city1Cat.metrics.forEach((metric1, metricIndex) => {
+      const metric2 = city2Cat.metrics[metricIndex];
+      if (!metric2) return;
+
+      const diff = Math.abs(metric1.consensusScore - metric2.consensusScore);
+      differences.push({
+        metricId: metric1.metricId,
+        shortName: metric1.metricId.split('-').slice(1).join(' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()),
+        icon: getMetricIcon(metric1.metricId.split('-').slice(1).join(' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase())),
+        city1Score: metric1.consensusScore,
+        city2Score: metric2.consensusScore,
+        difference: diff,
+        favoredCity: metric1.consensusScore > metric2.consensusScore ? 'city1' : 'city2'
+      });
+    });
+  });
+
+  return differences.sort((a, b) => b.difference - a.difference).slice(0, count);
+};
+
 export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
@@ -369,6 +408,9 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
   const isTie = result.winner === 'tie';
+
+  // Calculate top 5 differences for the summary
+  const topDifferences = calculateTopDifferences(result, 5);
 
   useEffect(() => {
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
@@ -431,8 +473,16 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
             <h2 className="winner-city">{winner.city}, {winner.country}</h2>
             <div className="winner-score">{winner.totalConsensusScore}</div>
             <p className="winner-label">CONSENSUS LIFE SCORE™</p>
+
+            {/* Freedom Delta Badge - Prominent display of score difference */}
+            <div className="freedom-delta-badge">
+              <span className="delta-icon">⚡</span>
+              <span className="delta-value">+{result.scoreDifference}</span>
+              <span className="delta-label">FREEDOM DELTA</span>
+            </div>
+
             <p className="winner-difference">
-              {result.scoreDifference} points ahead of {loser.city}
+              {winner.city} offers more freedom than {loser.city}
             </p>
           </>
         ) : (
@@ -492,6 +542,40 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
         </div>
       </div>
 
+      {/* Top 5 Differences - Quick Summary */}
+      <div className="top-differences card">
+        <h3 className="section-title">🎯 Top 5 Deciding Factors</h3>
+        <p className="breakdown-subtitle">The metrics with the biggest score differences</p>
+
+        <div className="differences-list">
+          {topDifferences.map((diff, index) => {
+            const favoredCityName = diff.favoredCity === 'city1' ? result.city1.city : result.city2.city;
+            return (
+              <div key={diff.metricId} className="difference-item">
+                <div className="diff-rank">#{index + 1}</div>
+                <div className="diff-metric">
+                  <span className="diff-icon">{diff.icon}</span>
+                  <span className="diff-name">{diff.shortName}</span>
+                </div>
+                <div className="diff-scores">
+                  <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
+                    {Math.round(diff.city1Score)}
+                  </span>
+                  <span className="diff-vs">vs</span>
+                  <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
+                    {Math.round(diff.city2Score)}
+                  </span>
+                </div>
+                <div className="diff-delta">
+                  <span className="delta-pill">+{Math.round(diff.difference)}</span>
+                  <span className="delta-city">{favoredCityName}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Category Breakdown - Expandable */}
       <div className="enhanced-categories card">
         <h3 className="section-title">Category Breakdown</h3>
@@ -544,14 +628,26 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result }) => {
                     const city2Metric = city2Cat.metrics.find(m => m.metricId === metric.id);
                     const score1 = city1Metric?.consensusScore ?? 0;
                     const score2 = city2Metric?.consensusScore ?? 0;
+                    const tooltip = getMetricTooltip(metric.shortName);
 
                     return (
                       <div key={metric.id} className="metric-row">
                         <div className="metric-info">
                           <span className="metric-icon">{getMetricIcon(metric.shortName)}</span>
-                          <span className="metric-name" title={metric.description}>
-                            {metric.shortName}
-                          </span>
+                          <div className="metric-name-container">
+                            <span className="metric-name">
+                              {metric.shortName}
+                            </span>
+                            {tooltip && (
+                              <div className="metric-tooltip">
+                                <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
+                                <div className="tooltip-content">
+                                  <strong>Why This Matters:</strong>
+                                  <p>{tooltip.whyMatters}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
                           {Math.round(score1)}

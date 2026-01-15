@@ -262,14 +262,36 @@
   color: var(--gray-400);
 }
 
+/* Compare Actions Container */
+.compare-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .btn-compare {
-  width: 100%;
+  flex: 1;
   font-size: 1.125rem;
   padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+}
+
+.btn-share {
+  padding: 1rem 1.5rem;
+  background: white;
+  color: var(--sapphire);
+  border: 2px solid var(--sapphire);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-share:hover {
+  background: var(--sapphire);
+  color: white;
+  transform: translateY(-1px);
 }
 
 .btn-spinner {

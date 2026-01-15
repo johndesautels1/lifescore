@@ -429,6 +429,198 @@
   letter-spacing: 0.02em;
 }
 
+/* ============================================================================
+   FREEDOM DELTA BADGE
+   ============================================================================ */
+
+.freedom-delta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #D4AF37 0%, #F7931E 100%);
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  margin: 1rem 0;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  animation: pulseGold 2s ease-in-out infinite;
+}
+
+@keyframes pulseGold {
+  0%, 100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+  50% { box-shadow: 0 4px 25px rgba(212, 175, 55, 0.6); }
+}
+
+.freedom-delta-badge .delta-icon {
+  font-size: 1.5rem;
+}
+
+.freedom-delta-badge .delta-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+.freedom-delta-badge .delta-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ============================================================================
+   TOP 5 DIFFERENCES
+   ============================================================================ */
+
+.top-differences {
+  margin-bottom: 1.5rem;
+}
+
+.differences-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.difference-item {
+  display: grid;
+  grid-template-columns: 40px 2fr 120px 100px;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(247, 147, 30, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-fast);
+}
+
+.difference-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--sapphire);
+}
+
+.diff-rank {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #D4AF37;
+}
+
+.diff-metric {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.diff-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.diff-name {
+  font-weight: 700;
+  color: #F7931E;
+  font-size: 1rem;
+}
+
+.diff-scores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.diff-score {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-width: 40px;
+  text-align: center;
+}
+
+.diff-score.favored {
+  background: #0047AB;
+  color: white;
+  font-weight: 700;
+}
+
+.diff-score:not(.favored) {
+  background: white;
+  color: #DC2626;
+  border: 1px solid var(--gray-200);
+}
+
+.diff-vs {
+  color: var(--gray-400);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.diff-delta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.delta-pill {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.delta-city {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Dark mode for Top 5 Differences */
+[data-theme="dark"] .difference-item {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.15) 0%, rgba(247, 147, 30, 0.1) 100%);
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .diff-icon {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .diff-score:not(.favored) {
+  background: var(--gray-700);
+  border-color: var(--gray-600);
+}
+
+/* Responsive for Top 5 Differences */
+@media (max-width: 768px) {
+  .difference-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .diff-metric {
+    justify-content: center;
+  }
+
+  .diff-scores {
+    justify-content: center;
+  }
+}
+
 .llms-used {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -704,12 +896,120 @@
   flex-shrink: 0;
 }
 
+.metric-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .metric-name {
   font-size: 0.95rem;
   font-weight: 700;
   font-style: normal;
   font-family: inherit;
   color: #F7931E;
+}
+
+/* Metric Tooltips */
+.metric-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 50%;
+  cursor: help;
+  transition: all var(--transition-fast);
+}
+
+.tooltip-trigger:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 71, 171, 0.4);
+}
+
+.tooltip-content {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: 280px;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #0047AB;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  text-align: left;
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #0047AB;
+}
+
+.tooltip-content strong {
+  display: block;
+  color: #0047AB;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tooltip-content p {
+  color: var(--gray-700);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.metric-tooltip:hover .tooltip-content {
+  display: block;
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Dark mode tooltips */
+[data-theme="dark"] .tooltip-content {
+  background: var(--gray-800);
+  border-color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .tooltip-content strong {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .tooltip-content p {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .tooltip-content::after {
+  border-top-color: var(--sapphire-light);
 }
 
 .metric-score {
