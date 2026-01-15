@@ -1912,6 +1912,23 @@
   margin-bottom: 0.5rem;
 }
 
+.data-sources-btn {
+  margin-top: 1rem;
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.data-sources-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
+}
+
 /* Error State */
 .enhanced-error {
   text-align: center;

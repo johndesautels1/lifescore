@@ -13,6 +13,7 @@ import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
 import { updateOGMetaTags } from '../hooks/useOGMeta';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
+import { DataSourcesModal } from './DataSourcesModal';
 import './EnhancedComparison.css';
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
@@ -634,6 +635,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [showExplanation, setShowExplanation] = useState(false);
   const [showTopDifferences, setShowTopDifferences] = useState(true);
   const [scoreViewMode, setScoreViewMode] = useState<'lived' | 'lawVsReality'>('lived');
+  const [showDataSources, setShowDataSources] = useState(false);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -1178,7 +1180,13 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           <br />
           <strong>Comparison ID:</strong> {result.comparisonId}
         </p>
+        <button className="btn data-sources-btn" onClick={() => setShowDataSources(true)}>
+          📚 View Data Sources
+        </button>
       </div>
+
+      {/* Data Sources Modal */}
+      <DataSourcesModal isOpen={showDataSources} onClose={() => setShowDataSources(false)} />
     </div>
   );
 };
