@@ -246,17 +246,19 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({ onWeightsChange })
               <div key={category.id} className="slider-row">
                 <div className="slider-label">
                   <span className="slider-icon">{category.icon}</span>
-                  <span className="slider-name">{category.shortName}</span>
+                  <span className="slider-name">{category.name}</span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  value={customWeights[category.id] || 0}
-                  onChange={(e) => handleSliderChange(category.id, parseInt(e.target.value))}
-                  className="weight-slider"
-                />
-                <span className="slider-value">{customWeights[category.id] || 0}%</span>
+                <div className="slider-control">
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    value={customWeights[category.id] || 0}
+                    onChange={(e) => handleSliderChange(category.id, parseInt(e.target.value))}
+                    className="weight-slider"
+                  />
+                  <span className="slider-value">{customWeights[category.id] || 0}%</span>
+                </div>
               </div>
             ))}
           </div>
