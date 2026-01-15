@@ -800,6 +800,19 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
             </span>
           </div>
         </div>
+
+        {/* Data Quality Badge */}
+        <div className="data-quality-badge-container">
+          <span className={`data-quality-badge quality-${result.overallConsensusConfidence}`}>
+            <span className="quality-icon">
+              {result.overallConsensusConfidence === 'high' ? '✓' : result.overallConsensusConfidence === 'medium' ? '~' : '?'}
+            </span>
+            <span className="quality-text">
+              {result.overallConsensusConfidence === 'high' ? 'High Data Quality' :
+               result.overallConsensusConfidence === 'medium' ? 'Moderate Data Quality' : 'Limited Data'}
+            </span>
+          </span>
+        </div>
       </div>
 
       {/* Winner Explanation */}
