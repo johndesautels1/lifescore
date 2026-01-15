@@ -652,7 +652,7 @@ Metric: LGBTQ+ Rights
 | Priority | Item | Effort | Impact | Source |
 |----------|------|--------|--------|--------|
 | 1 | 🆕 **Implement 5-LLM consensus with Opus judge** | HIGH | **GAME CHANGER** | Sonnet |
-| 2 | Implement "Law vs Enforcement" dual scoring | HIGH | **GAME CHANGER** | ChatGPT |
+| 2 | Implement "Law vs Enforcement" dual scoring | ✅ DONE | **GAME CHANGER** | ChatGPT |
 | 3 | 🆕 **Web search on ALL evaluators (native + Tavily)** | HIGH | **ANTI-HALLUCINATION** | Sonnet |
 | 4 | Progressive disclosure UI (3 levels) | MEDIUM | Essential UX | All |
 | 5 | Tooltips + "Why this matters" on all metrics | MEDIUM | Trust + clarity | All |
@@ -679,7 +679,7 @@ Metric: LGBTQ+ Rights
 | 16 | Evidence view + citations | MEDIUM | Trust | ChatGPT |
 | 17 | Gamma PDF report integration | MEDIUM | Revenue | Existing |
 | 18 | Historical trend data | HIGH | Premium value | DeepSeek |
-| 19 | 🆕 **"View LLM disagreements" expandable** | LOW | Transparency | Sonnet |
+| 19 | 🆕 **"View LLM disagreements" expandable** | ✅ DONE | Transparency | Sonnet |
 | 20 | 🆕 **Data Sources modal with links** | LOW | Trust | Sonnet |
 
 ### Phase 4: Expansion
