@@ -410,6 +410,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -423,6 +424,58 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const city2AllMetrics = result.city2.categories.flatMap(c => c.metrics);
   const city1FailedDealbreakers = checkDealbreakers(dealbreakers, city1AllMetrics);
   const city2FailedDealbreakers = checkDealbreakers(dealbreakers, city2AllMetrics);
+
+  // Generate winner explanation narrative
+  const generateExplanation = (): string => {
+    if (isTie) {
+      return `Both ${result.city1.city} and ${result.city2.city} scored equally at ${result.city1.totalConsensusScore} points. This is a rare outcome indicating both cities offer similar levels of legal freedom across our 100 metrics.`;
+    }
+
+    const winnerCats = winner.categories.sort((a, b) => b.averageConsensusScore - a.averageConsensusScore);
+    const topCategory = CATEGORIES.find(c => c.id === winnerCats[0].categoryId);
+
+    // Find categories where winner leads most
+    const categoryAdvantages = winner.categories.map((wCat, i) => {
+      const lCat = loser.categories[i];
+      return {
+        category: CATEGORIES.find(c => c.id === wCat.categoryId),
+        advantage: wCat.averageConsensusScore - (lCat?.averageConsensusScore || 0)
+      };
+    }).filter(c => c.advantage > 0).sort((a, b) => b.advantage - a.advantage);
+
+    const top3Advantages = categoryAdvantages.slice(0, 3);
+
+    let explanation = `**${winner.city}** emerges as the clear winner with a score of **${winner.totalConsensusScore}** vs ${loser.city}'s ${loser.totalConsensusScore} — a **${result.scoreDifference} point** advantage.\n\n`;
+
+    explanation += `**Where ${winner.city} Shines:**\n`;
+    top3Advantages.forEach((adv, i) => {
+      if (adv.category) {
+        explanation += `${i + 1}. **${adv.category.name}** (+${Math.round(adv.advantage)} points) — ${winner.city} offers significantly more freedom in ${adv.category.description.toLowerCase()}\n`;
+      }
+    });
+
+    // Find areas where loser does better
+    const loserAdvantages = loser.categories.map((lCat, i) => {
+      const wCat = winner.categories[i];
+      return {
+        category: CATEGORIES.find(c => c.id === lCat.categoryId),
+        advantage: lCat.averageConsensusScore - (wCat?.averageConsensusScore || 0)
+      };
+    }).filter(c => c.advantage > 0).sort((a, b) => b.advantage - a.advantage);
+
+    if (loserAdvantages.length > 0) {
+      explanation += `\n**Where ${loser.city} Wins:**\n`;
+      loserAdvantages.slice(0, 2).forEach((adv, i) => {
+        if (adv.category) {
+          explanation += `${i + 1}. **${adv.category.name}** (+${Math.round(adv.advantage)} points)\n`;
+        }
+      });
+    }
+
+    explanation += `\n**Bottom Line:** If you value overall legal freedom, ${winner.city} is your better choice. However, if ${loserAdvantages[0]?.category?.name.toLowerCase()} matters most to you, ${loser.city} might be worth considering.`;
+
+    return explanation;
+  };
 
   useEffect(() => {
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
@@ -496,6 +549,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
             <p className="winner-difference">
               {winner.city} offers more freedom than {loser.city}
             </p>
+
+            {/* Explain the Winner Button */}
+            <button
+              className="explain-btn"
+              onClick={() => setShowExplanation(!showExplanation)}
+            >
+              {showExplanation ? '📖 Hide Explanation' : '💡 Explain This Winner'}
+            </button>
           </>
         ) : (
           <>
@@ -520,6 +581,24 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           </div>
         </div>
       </div>
+
+      {/* Winner Explanation */}
+      {showExplanation && (
+        <div className="winner-explanation card">
+          <h3 className="section-title">💡 Why {winner.city} Wins</h3>
+          <div className="explanation-content">
+            {generateExplanation().split('\n').map((line, i) => {
+              if (line.startsWith('**') && line.includes(':**')) {
+                return <h4 key={i}>{line.replace(/\*\*/g, '')}</h4>;
+              }
+              if (line.match(/^\d\./)) {
+                return <p key={i} className="explanation-point">{line.replace(/\*\*/g, '')}</p>;
+              }
+              return <p key={i}>{line.replace(/\*\*/g, '')}</p>;
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Score Comparison */}
       <div className="enhanced-score-grid card">

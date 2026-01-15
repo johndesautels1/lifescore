@@ -471,6 +471,70 @@
   letter-spacing: 0.1em;
 }
 
+/* Explain the Winner Button */
+.explain-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all var(--transition-fast);
+}
+
+.explain-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Winner Explanation Panel */
+.winner-explanation {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.08) 0%, rgba(247, 147, 30, 0.05) 100%);
+  border: 2px solid var(--sapphire);
+  margin-bottom: 1.5rem;
+  animation: slideDown 0.3s ease;
+}
+
+.winner-explanation h4 {
+  color: #0047AB;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.winner-explanation h4:first-child {
+  margin-top: 0;
+}
+
+.explanation-content p {
+  color: var(--gray-700);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.explanation-content .explanation-point {
+  padding-left: 1rem;
+  border-left: 3px solid #D4AF37;
+  margin: 0.75rem 0;
+}
+
+[data-theme="dark"] .winner-explanation {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.15) 0%, rgba(247, 147, 30, 0.1) 100%);
+}
+
+[data-theme="dark"] .winner-explanation h4 {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .explanation-content p {
+  color: var(--gray-300);
+}
+
 /* ============================================================================
    TOP 5 DIFFERENCES
    ============================================================================ */
