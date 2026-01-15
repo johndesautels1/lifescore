@@ -91,7 +91,6 @@ export function exportToCSV(result: EnhancedComparisonResult): void {
  */
 export function exportToPDF(result: EnhancedComparisonResult): void {
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
-  const loser = result.winner === 'city1' ? result.city2 : result.city1;
   const delta = Math.abs(result.scoreDifference);
 
   // Build HTML content for PDF

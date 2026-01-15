@@ -3,7 +3,7 @@
  * Enables instant sharing via URL state
  */
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 
 export interface URLParamsState {
   cityA?: string;

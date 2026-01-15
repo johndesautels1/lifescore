@@ -434,9 +434,6 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       return `Both ${result.city1.city} and ${result.city2.city} scored equally at ${result.city1.totalConsensusScore} points. This is a rare outcome indicating both cities offer similar levels of legal freedom across our 100 metrics.`;
     }
 
-    const winnerCats = winner.categories.sort((a, b) => b.averageConsensusScore - a.averageConsensusScore);
-    const topCategory = CATEGORIES.find(c => c.id === winnerCats[0].categoryId);
-
     // Find categories where winner leads most
     const categoryAdvantages = winner.categories.map((wCat, i) => {
       const lCat = loser.categories[i];

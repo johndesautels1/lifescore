@@ -9,7 +9,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import TabNavigation, { TabId } from './components/TabNavigation';
+import TabNavigation, { type TabId } from './components/TabNavigation';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
@@ -44,8 +44,8 @@ const App: React.FC = () => {
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
 
-  // Custom weights state
-  const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
+  // Custom weights state (reserved for future weighted scoring)
+  const [, setCustomWeights] = useState<Record<string, number> | null>(null);
 
   // About section collapse state
   const [showAboutSection, setShowAboutSection] = useState(true);
