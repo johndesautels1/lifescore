@@ -636,6 +636,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [showTopDifferences, setShowTopDifferences] = useState(true);
   const [scoreViewMode, setScoreViewMode] = useState<'lived' | 'lawVsReality'>('lived');
   const [showDataSources, setShowDataSources] = useState(false);
+  const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -1063,28 +1064,42 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                           confidence1 === 'strong' ? 'strong' :
                                           confidence1 === 'moderate' ? 'moderate' : 'split';
 
+                    const isEvidenceExpanded = expandedEvidence === metric.id;
+
                     return (
-                      <div key={metric.id} className={`metric-row ${scoreViewMode === 'lawVsReality' ? 'dual-row' : ''}`}>
-                        <div className="metric-info">
-                          <span className="metric-icon">{getMetricIcon(metric.shortName)}</span>
-                          <div className="metric-name-container">
-                            <span className="metric-name">
-                              {metric.shortName}
-                            </span>
-                            {tooltip && (
-                              <div className="metric-tooltip">
-                                <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
-                                <div className="tooltip-content">
-                                  <strong>Why This Matters:</strong>
-                                  <p>{tooltip.whyMatters}</p>
+                      <div key={metric.id} className="metric-row-wrapper">
+                        <div className={`metric-row ${scoreViewMode === 'lawVsReality' ? 'dual-row' : ''}`}>
+                          <div className="metric-info">
+                            <span className="metric-icon">{getMetricIcon(metric.shortName)}</span>
+                            <div className="metric-name-container">
+                              <span className="metric-name">
+                                {metric.shortName}
+                              </span>
+                              {tooltip && (
+                                <div className="metric-tooltip">
+                                  <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
+                                  <div className="tooltip-content">
+                                    <strong>Why This Matters:</strong>
+                                    <p>{tooltip.whyMatters}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                            <span className={`llm-agreement ${agreementClass}`} title={`${agreementText} LLMs agree`}>
-                              {agreementText}
-                            </span>
+                              )}
+                              <span className={`llm-agreement ${agreementClass}`} title={`${agreementText} LLMs agree`}>
+                                {agreementText}
+                              </span>
+                            </div>
+                            {/* Evidence/Citation indicator */}
+                            <button
+                              className={`evidence-indicator ${isEvidenceExpanded ? 'active' : ''}`}
+                              title="View sources"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedEvidence(isEvidenceExpanded ? null : metric.id);
+                              }}
+                            >
+                              📄
+                            </button>
                           </div>
-                        </div>
 
                         {/* Lived Freedom Mode - Single Score */}
                         {scoreViewMode === 'lived' ? (
@@ -1128,6 +1143,36 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               </span>
                             </div>
                           </>
+                        )}
+                        </div>
+
+                        {/* Evidence Panel - Expanded */}
+                        {isEvidenceExpanded && (
+                          <div className="evidence-panel">
+                            <div className="evidence-header">
+                              <span className="evidence-title">📚 Data Sources for {metric.shortName}</span>
+                              <button className="evidence-close" onClick={() => setExpandedEvidence(null)}>×</button>
+                            </div>
+                            <div className="evidence-content">
+                              <div className="evidence-llms">
+                                <span className="evidence-label">Evaluated by:</span>
+                                <span className="evidence-models">
+                                  {city1Metric?.llmScores?.map(s => LLM_CONFIGS[s.llmProvider]?.icon).join(' ') || '🤖🤖🤖🤖🤖'}
+                                </span>
+                              </div>
+                              <div className="evidence-sources">
+                                <span className="evidence-label">Primary Sources:</span>
+                                <ul className="source-list">
+                                  <li><a href="https://freedomhouse.org" target="_blank" rel="noopener noreferrer">Freedom House</a></li>
+                                  <li><a href="https://www.cato.org/human-freedom-index" target="_blank" rel="noopener noreferrer">CATO Human Freedom Index</a></li>
+                                  <li><a href="https://data.worldbank.org" target="_blank" rel="noopener noreferrer">World Bank Open Data</a></li>
+                                </ul>
+                              </div>
+                              <p className="evidence-note">
+                                Scores derived from multi-LLM consensus using web search across authoritative databases.
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
