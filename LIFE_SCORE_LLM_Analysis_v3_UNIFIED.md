@@ -654,21 +654,21 @@ Metric: LGBTQ+ Rights
 | 1 | 🆕 **Implement 5-LLM consensus with Opus judge** | HIGH | **GAME CHANGER** | Sonnet |
 | 2 | Implement "Law vs Enforcement" dual scoring | ✅ DONE | **GAME CHANGER** | ChatGPT |
 | 3 | 🆕 **Web search on ALL evaluators (native + Tavily)** | HIGH | **ANTI-HALLUCINATION** | Sonnet |
-| 4 | Progressive disclosure UI (3 levels) | MEDIUM | Essential UX | All |
+| 4 | Progressive disclosure UI (3 levels) | ✅ DONE | Essential UX | All |
 | 5 | Tooltips + "Why this matters" on all metrics | MEDIUM | Trust + clarity | All |
-| 6 | "Freedom Delta" badge + "Top 5 Differences" | LOW | Quick win | Copilot |
-| 7 | URL parameter state for instant sharing | LOW | Virality | Gemini |
+| 6 | "Freedom Delta" badge + "Top 5 Differences" | ✅ DONE | Quick win | Copilot |
+| 7 | URL parameter state for instant sharing | ✅ DONE | Virality | Gemini |
 | 8 | 🆕 **Aggressive caching (30-day TTL, per-metric)** | MEDIUM | Cost control | Sonnet |
 
 ### Phase 2: Engagement Features (Post-Launch)
 
 | Priority | Item | Effort | Impact | Source |
 |----------|------|--------|--------|--------|
-| 9 | "Dealbreaker" toggle with visual warnings | MEDIUM | High value | Gemini |
-| 10 | User weight sliders + presets | MEDIUM | Personalization | ChatGPT |
-| 11 | Dynamic OG images for social sharing | MEDIUM | Virality | Gemini |
-| 12 | "Explain the winner" narrative button | LOW | Clarity | ChatGPT |
-| 13 | 🆕 **LLM agreement + outlier indicators** | MEDIUM | Transparency | Sonnet |
+| 9 | "Dealbreaker" toggle with visual warnings | ✅ DONE | High value | Gemini |
+| 10 | User weight sliders + presets | ✅ DONE | Personalization | ChatGPT |
+| 11 | Dynamic OG images for social sharing | ✅ DONE | Virality | Gemini |
+| 12 | "Explain the winner" narrative button | ✅ DONE | Clarity | ChatGPT |
+| 13 | 🆕 **LLM agreement + outlier indicators** | ✅ DONE | Transparency | Sonnet |
 | 14 | 🆕 **Data Quality badges (High/Med/Low)** | LOW | Trust | Sonnet |
 
 ### Phase 3: Premium Features
