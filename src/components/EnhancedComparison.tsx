@@ -769,9 +769,21 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                         </div>
                         <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
                           {Math.round(score1)}
+                          {city1Metric?.llmScores?.[0]?.confidence && (
+                            <span className={`data-quality ${city1Metric.llmScores[0].confidence}`}>
+                              {city1Metric.llmScores[0].confidence === 'high' ? '✓' :
+                               city1Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
+                            </span>
+                          )}
                         </div>
                         <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
                           {Math.round(score2)}
+                          {city2Metric?.llmScores?.[0]?.confidence && (
+                            <span className={`data-quality ${city2Metric.llmScores[0].confidence}`}>
+                              {city2Metric.llmScores[0].confidence === 'high' ? '✓' :
+                               city2Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );

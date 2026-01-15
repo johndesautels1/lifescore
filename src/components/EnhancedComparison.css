@@ -1110,6 +1110,36 @@
   color: white;
 }
 
+/* Data Quality Badges */
+.data-quality {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.data-quality.high {
+  background: #10B981;
+  color: white;
+}
+
+.data-quality.medium {
+  background: #F59E0B;
+  color: white;
+}
+
+.data-quality.low,
+.data-quality.unverified {
+  background: #6B7280;
+  color: white;
+}
+
 .metric-score {
   text-align: center;
   font-style: normal;
