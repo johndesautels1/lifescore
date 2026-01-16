@@ -921,9 +921,9 @@ async function evaluateCategoryBatch(
 
   console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
 
-  // Client-side timeout to prevent infinite waiting (90s, slightly under server's 120s max)
+  // Client-side timeout - 30s per category (faster failure, 6 categories can run in parallel)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 90000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     // Call Vercel serverless function which has access to env vars
@@ -1034,7 +1034,7 @@ async function evaluateCategoryBatch(
     // Provide clearer error message for timeout
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMsg = isTimeout
-      ? `Request timed out after 90 seconds for ${provider}/${categoryId}`
+      ? `Request timed out after 30 seconds for ${provider}/${categoryId}`
       : (error instanceof Error ? error.message : 'Unknown error');
 
     console.error(`[CLIENT] ${provider}/${categoryId} fetch error:`, errorMsg);
@@ -1048,8 +1048,8 @@ async function evaluateCategoryBatch(
   }
 }
 
-// Master timeout for entire batch operation (100s - gives room before server's 120s limit)
-const BATCH_MASTER_TIMEOUT_MS = 100000;
+// Master timeout for entire batch operation (35s - slightly more than per-category 30s timeout)
+const BATCH_MASTER_TIMEOUT_MS = 35000;
 
 /**
  * Run a single LLM evaluator with category batching (6 parallel requests)
@@ -1138,21 +1138,29 @@ export async function runSingleEvaluatorBatched(
   }>();
 
   const allScores: LLMMetricScore[] = [];
-  let overallSuccess = true;
+  let successCount = 0;
   const errors: string[] = [];
 
   results.forEach(({ categoryId, result }) => {
     categoryResults.set(categoryId, result);
     allScores.push(...result.scores);
-    if (!result.success) {
-      overallSuccess = false;
-      if (result.error) errors.push(`${categoryId}: ${result.error}`);
+    if (result.success) {
+      successCount++;
+    } else if (result.error) {
+      errors.push(`${categoryId}: ${result.error}`);
     }
   });
 
+  // PARTIAL SUCCESS: Count as success if at least 3/6 categories (50%) have scores
+  // This ensures partial results still render and count toward judging
+  const hasEnoughScores = allScores.length >= 30; // At least ~30 metrics worth of scores
+  const partialSuccess = successCount >= 3 || hasEnoughScores;
+
+  console.log(`[BATCH] ${provider}: ${successCount}/6 categories succeeded, ${allScores.length} scores, partialSuccess=${partialSuccess}`);
+
   return {
     provider,
-    success: overallSuccess,
+    success: partialSuccess,
     scores: allScores,
     latencyMs: Date.now() - startTime,
     error: errors.length > 0 ? errors.join('; ') : undefined,
