@@ -67,7 +67,7 @@ npm run preview
 - **Build Tool:** Vite 7
 - **Styling:** CSS with CSS Variables
 - **Deployment:** Vercel
-- **AI:** Claude Sonnet (for web search scoring)
+- **AI:** Multi-LLM Consensus (5 LLMs + Claude Opus Judge)
 
 ## Project Structure
 
@@ -110,16 +110,26 @@ src/
 
 ### API Architecture
 All LLM calls go through Vercel serverless functions:
-- `/api/evaluate` - LLM evaluations (Claude, GPT-4o, Gemini, Grok, Perplexity)
+- `/api/evaluate` - LLM evaluations (Claude Sonnet, GPT-5.2, Gemini 3 Pro, Grok 4, Perplexity)
 - `/api/judge` - Claude Opus 4.5 consensus building
+
+### Web Search Integration
+| LLM | Web Search Method | API/Service |
+|-----|-------------------|-------------|
+| Claude Sonnet | Tavily API | External search prepended to prompt |
+| GPT-5.2 | Built-in web_search | Native responses API tool |
+| Gemini 3 Pro | Google Search Grounding | googleSearchRetrieval tool |
+| Grok 4 | Native search | `search: true` parameter |
+| Perplexity | Native (Sonar) | `return_citations: true` |
 
 ### Environment Variables (Vercel)
 ```
-ANTHROPIC_API_KEY=your-key
-OPENAI_API_KEY=your-key
-GOOGLE_API_KEY=your-key
-XAI_API_KEY=your-key
-PERPLEXITY_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key    # Claude Sonnet & Opus
+OPENAI_API_KEY=your-key       # GPT-5.2 (built-in web search)
+GOOGLE_API_KEY=your-key       # Gemini 3 Pro (Google Search grounding)
+XAI_API_KEY=your-key          # Grok 4 (native search)
+PERPLEXITY_API_KEY=your-key   # Perplexity Sonar (native search)
+TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 ```
 
 ## NEXT PHASE TODO
@@ -130,8 +140,8 @@ PERPLEXITY_API_KEY=your-key
 | 1 | Single-LLM Selection UI | ✅ COMPLETE |
 | 2 | Category Batch Prompts (6 parallel batches per LLM) | ✅ COMPLETE |
 | 3 | Progressive Opus Judging | ⬅️ NEXT |
-| 4 | Targeted Tavily + Citation Requests | PENDING |
-| 5 | Source Evidence Panel | PENDING |
+| 4 | Targeted Tavily + Citation Requests | ✅ COMPLETE |
+| 5 | Source Evidence Panel | ✅ COMPLETE |
 
 ### Next Session Tasks
 1. **PHASE 3**: Progressive Opus Judging
@@ -140,17 +150,27 @@ PERPLEXITY_API_KEY=your-key
    - Re-call after each additional LLM
    - Show individual LLM opinions + judge consensus
 
-2. **AUDIT SCORING LOGIC**: Review all scoring calculations
-3. **AUDIT LLM PROMPTS**: Review all prompts in API files
-4. **HOME PAGE UI REARRANGEMENT**: Redesign main layout
+2. **HOME PAGE UI REARRANGEMENT**: Redesign main layout
 
-### Current State (Commit f549a14)
-- ✅ All demo mode code removed (379 lines deleted)
+### Current State (Commit 0cdb5bd)
+- ✅ All demo mode code removed
 - ✅ Real API routes working (`/api/evaluate`, `/api/judge`)
 - ✅ TypeScript compilation passing
-- ✅ 6 LLM providers configured (Claude Sonnet, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity, Claude Opus judge)
-- ✅ Model IDs verified and locked
-- ✅ Phase 1 & 2 complete
+- ✅ 5 LLM evaluators + Claude Opus judge configured
+- ✅ **GPT-5.2 upgrade complete** (replaced GPT-4o with responses API + built-in web search)
+- ✅ **Tavily integration** for Claude web search
+- ✅ **Google Search grounding** for Gemini
+- ✅ **Evidence Panel** created (collapseable citations above footer)
+- ✅ Phase 1, 2, 4, 5 complete
+
+### Recent Updates (This Session)
+| Commit | Description |
+|--------|-------------|
+| `0cdb5bd` | Fix missing Google Search grounding in api/evaluate.ts Gemini |
+| `e8e962c` | Fix 11 GPT-5.2 audit errors: field mapping, evidence capture, Tavily |
+| `80f1eb1` | Fix TypeScript and ESLint errors in GPT-5.2 implementation |
+| `8337811` | Replace GPT-4o with GPT-5.2 using new responses API |
+| `ca7beb9` | Fix LLM prompt issues, standardize system messages |
 
 ## License
 
