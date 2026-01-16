@@ -198,6 +198,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
   const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
   const [showShareCopied, setShowShareCopied] = useState(false);
+  const [activePopularIndex, setActivePopularIndex] = useState<number | null>(null);
 
   // Load cities from URL params on mount
   useEffect(() => {
@@ -247,9 +248,10 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
     }
   };
 
-  const handlePopularClick = (comparison: PopularComparison) => {
+  const handlePopularClick = (comparison: PopularComparison, index: number) => {
     setMetro1(comparison.metro1);
     setMetro2(comparison.metro2);
+    setActivePopularIndex(index);
   };
 
   return (
@@ -316,8 +318,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
             <button
               key={index}
               type="button"
-              className="popular-btn"
-              onClick={() => handlePopularClick(comparison)}
+              className={`popular-btn ${activePopularIndex === index ? 'active' : ''}`}
+              onClick={() => handlePopularClick(comparison, index)}
               disabled={isLoading}
             >
               {comparison.label}
