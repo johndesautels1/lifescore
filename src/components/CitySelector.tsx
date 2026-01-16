@@ -223,8 +223,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
     }
   }, [metro1, metro2]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
     if (metro1 && metro2) {
       onCompare(formatMetro(metro1), formatMetro(metro2));
     }
