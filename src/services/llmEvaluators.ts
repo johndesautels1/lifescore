@@ -1048,6 +1048,9 @@ async function evaluateCategoryBatch(
   }
 }
 
+// Master timeout for entire batch operation (100s - gives room before server's 120s limit)
+const BATCH_MASTER_TIMEOUT_MS = 100000;
+
 /**
  * Run a single LLM evaluator with category batching (6 parallel requests)
  * This is the Phase 2 implementation that prevents timeout by splitting work
@@ -1060,6 +1063,8 @@ export async function runSingleEvaluatorBatched(
   onCategoryProgress?: (progress: CategoryBatchProgress[]) => void
 ): Promise<BatchedEvaluatorResult> {
   const startTime = Date.now();
+
+  console.log(`[BATCH] Starting ${provider} batched evaluation`);
 
   // NOTE: API keys are stored in Vercel environment variables on the server
   // The /api/evaluate endpoint has access to them, so we don't validate client-side
@@ -1074,6 +1079,14 @@ export async function runSingleEvaluatorBatched(
 
   onCategoryProgress?.(progressState);
 
+  // Helper to wrap a promise with timeout
+  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, timeoutValue: T): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((resolve) => setTimeout(() => resolve(timeoutValue), timeoutMs))
+    ]);
+  };
+
   // Create batch promises for all 6 categories in parallel
   const categoryPromises = CATEGORIES.map(async (category) => {
     const categoryId = category.id as CategoryId;
@@ -1086,13 +1099,14 @@ export async function runSingleEvaluatorBatched(
       onCategoryProgress?.([...progressState]);
     }
 
-    const result = await evaluateCategoryBatch(
-      provider,
-      city1,
-      city2,
-      categoryId,
-      metrics
+    // Wrap in timeout to prevent hanging
+    const result = await withTimeout(
+      evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
+      BATCH_MASTER_TIMEOUT_MS,
+      { success: false, scores: [], latencyMs: BATCH_MASTER_TIMEOUT_MS, error: `Master timeout for ${categoryId}` }
     );
+
+    console.log(`[BATCH] ${provider}/${categoryId} done: success=${result.success}`);
 
     // Update progress to completed/failed
     if (idx >= 0) {
@@ -1103,8 +1117,17 @@ export async function runSingleEvaluatorBatched(
     return { categoryId, result };
   });
 
-  // Wait for all categories to complete
-  const results = await Promise.all(categoryPromises);
+  // Wait for all categories with master timeout
+  const results = await withTimeout(
+    Promise.all(categoryPromises),
+    BATCH_MASTER_TIMEOUT_MS + 5000, // Extra 5s buffer for Promise.all overhead
+    CATEGORIES.map(cat => ({
+      categoryId: cat.id as CategoryId,
+      result: { success: false, scores: [], latencyMs: BATCH_MASTER_TIMEOUT_MS, error: 'Master batch timeout' }
+    }))
+  );
+
+  console.log(`[BATCH] ${provider} all categories done in ${Date.now() - startTime}ms`);
 
   // Aggregate results
   const categoryResults = new Map<CategoryId, {
