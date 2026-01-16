@@ -33,6 +33,18 @@ interface MetricScore {
   sources?: string[];
 }
 
+// Parsed LLM evaluation structure
+interface ParsedEvaluation {
+  metricId: string;
+  city1LegalScore?: number;
+  city1EnforcementScore?: number;
+  city2LegalScore?: number;
+  city2EnforcementScore?: number;
+  confidence?: string;
+  reasoning?: string;
+  sources?: string[];
+}
+
 interface EvaluationResponse {
   provider: LLMProvider;
   success: boolean;
@@ -104,8 +116,8 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
       }
     }
 
-    const parsed = JSON.parse(jsonStr);
-    return (parsed.evaluations || []).map((e: any) => ({
+    const parsed = JSON.parse(jsonStr) as { evaluations?: ParsedEvaluation[] };
+    return (parsed.evaluations || []).map((e: ParsedEvaluation) => ({
       metricId: e.metricId,
       city1LegalScore: e.city1LegalScore || 50,
       city1EnforcementScore: e.city1EnforcementScore || 50,

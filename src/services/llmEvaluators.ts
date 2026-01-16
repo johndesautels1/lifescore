@@ -29,6 +29,20 @@ export interface LLMEvaluation {
   confidence: 'high' | 'medium' | 'low';
   reasoning: string;
   sources?: string[];
+  city1Evidence?: Array<{ title: string; url: string; snippet: string }>;
+  city2Evidence?: Array<{ title: string; url: string; snippet: string }>;
+}
+
+// API response score format (from /api/evaluate)
+interface APIMetricScore {
+  metricId: string;
+  city1LegalScore: number;
+  city1EnforcementScore: number;
+  city2LegalScore: number;
+  city2EnforcementScore: number;
+  confidence: string;
+  reasoning?: string;
+  sources?: string[];
 }
 
 // ============================================================================
@@ -821,8 +835,8 @@ async function evaluateCategoryBatch(
   city1: string,
   city2: string,
   _categoryId: CategoryId,
-  metrics: MetricDefinition[],
-  _apiKeys: LLMAPIKeys & { tavily?: string } // Not used - keys are in env vars
+  metrics: MetricDefinition[]
+  // API keys not needed here - keys are in env vars on server
 ): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
   const startTime = Date.now();
 
@@ -855,32 +869,44 @@ async function evaluateCategoryBatch(
       };
     }
 
-    const result = await response.json();
+    const result = await response.json() as { success: boolean; scores: APIMetricScore[]; error?: string };
+
+    // Helper to convert confidence string to proper type
+    const parseConfidence = (conf: string): 'high' | 'medium' | 'low' => {
+      if (conf === 'high') return 'high';
+      if (conf === 'medium') return 'medium';
+      return 'low';
+    };
 
     // Convert API response scores to LLMMetricScore format
-    const scores: LLMMetricScore[] = (result.scores || []).map((s: any) => ({
+    const apiScores: APIMetricScore[] = result.scores || [];
+    const city1Scores: LLMMetricScore[] = apiScores.map((s: APIMetricScore) => ({
       metricId: s.metricId,
       rawValue: null,
       normalizedScore: Math.round((s.city1LegalScore + s.city1EnforcementScore) / 2),
-      confidence: s.confidence === 'high' ? 'high' : s.confidence === 'medium' ? 'medium' : 'low',
+      confidence: parseConfidence(s.confidence),
       llmProvider: provider,
       legalScore: s.city1LegalScore,
       enforcementScore: s.city1EnforcementScore,
       explanation: s.reasoning,
       sources: s.sources,
       city: 'city1' as const
-    })).concat((result.scores || []).map((s: any) => ({
+    }));
+
+    const city2Scores: LLMMetricScore[] = apiScores.map((s: APIMetricScore) => ({
       metricId: s.metricId,
       rawValue: null,
       normalizedScore: Math.round((s.city2LegalScore + s.city2EnforcementScore) / 2),
-      confidence: s.confidence === 'high' ? 'high' : s.confidence === 'medium' ? 'medium' : 'low',
+      confidence: parseConfidence(s.confidence),
       llmProvider: provider,
       legalScore: s.city2LegalScore,
       enforcementScore: s.city2EnforcementScore,
       explanation: s.reasoning,
       sources: s.sources,
       city: 'city2' as const
-    })));
+    }));
+
+    const scores: LLMMetricScore[] = [...city1Scores, ...city2Scores];
 
     return {
       success: result.success,
@@ -960,8 +986,7 @@ export async function runSingleEvaluatorBatched(
       city1,
       city2,
       categoryId,
-      metrics,
-      apiKeys
+      metrics
     );
 
     // Update progress to completed/failed
