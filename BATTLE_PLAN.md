@@ -124,7 +124,7 @@ These files contain model references and must stay synchronized:
 
 ### Phase 2: Category Batch Prompts ✅ COMPLETE
 **Goal**: Split 100 metrics into 6 category batches, run in parallel per LLM
-**Commit**: TBD
+**Commit**: `4db8294`
 **Files modified**:
 - `src/services/llmEvaluators.ts` - Added `runSingleEvaluatorBatched()` function
 - `src/components/EnhancedComparison.tsx` - Updated LLMSelector to use batched evaluation
