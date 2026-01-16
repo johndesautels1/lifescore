@@ -182,18 +182,29 @@ const App: React.FC = () => {
                   <LLMSelector
                     city1={pendingCities.city1}
                     city2={pendingCities.city2}
-                    onResultsUpdate={(_results, judgeResult) => {
-                      if (judgeResult) {
-                        // When judge completes, we can proceed to show results
-                        // For now, just log - will integrate with full results in Phase 2
-                        console.log('Judge result received:', judgeResult);
+                    onResultsUpdate={(llmResults, judgeResult) => {
+                      if (judgeResult && llmResults.size > 0) {
+                        // Build EnhancedComparisonResult from LLM results and judge output
+                        console.log('Judge result received, building enhanced result...');
+
+                        // Import the builder function and construct result
+                        import('./services/opusJudge').then(({ buildEnhancedResultFromJudge }) => {
+                          const result = buildEnhancedResultFromJudge(
+                            pendingCities.city1,
+                            pendingCities.city2,
+                            Array.from(llmResults.values()),
+                            judgeResult
+                          );
+                          setEnhancedResult(result);
+                          setEnhancedStatus('complete');
+                        });
                       }
                     }}
                     onStatusChange={(status) => {
-                      if (status === 'complete') {
-                        // Trigger full comparison to build final result
-                        // For Phase 1, we show the existing EnhancedComparisonContainer
-                        setEnhancedStatus('complete');
+                      console.log('LLM status changed:', status);
+                      if (status === 'complete' && !enhancedResult) {
+                        // If complete but no result yet, judge may still be processing
+                        console.log('Waiting for judge result...');
                       }
                     }}
                   />

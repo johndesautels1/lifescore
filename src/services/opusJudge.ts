@@ -492,3 +492,137 @@ export function buildCategoryConsensuses(
     };
   });
 }
+
+// ============================================================================
+// BUILD ENHANCED RESULT FROM JUDGE OUTPUT
+// ============================================================================
+
+import type { EnhancedComparisonResult, CityConsensusScore, LLMProvider } from '../types/enhancedComparison';
+
+/**
+ * Build a complete EnhancedComparisonResult from LLM evaluator results and judge output.
+ * This is called when the judge completes to construct the final result for the UI.
+ */
+export function buildEnhancedResultFromJudge(
+  city1: string,
+  city2: string,
+  evaluatorResults: EvaluatorResult[],
+  judgeOutput: JudgeOutput
+): EnhancedComparisonResult {
+  // Parse city names
+  const parseCity = (cityStr: string) => {
+    const parts = cityStr.split(',').map(s => s.trim());
+    return {
+      city: parts[0],
+      region: parts.length > 2 ? parts[1] : undefined,
+      country: parts[parts.length - 1] || 'Unknown'
+    };
+  };
+
+  const city1Info = parseCity(city1);
+  const city2Info = parseCity(city2);
+
+  // Build category consensuses
+  const city1Categories = buildCategoryConsensuses(judgeOutput.city1Consensuses);
+  const city2Categories = buildCategoryConsensuses(judgeOutput.city2Consensuses);
+
+  // Calculate weighted total scores
+  const city1Total = city1Categories.reduce((sum, cat) => {
+    const catDef = CATEGORIES.find(c => c.id === cat.categoryId);
+    return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
+  }, 0);
+
+  const city2Total = city2Categories.reduce((sum, cat) => {
+    const catDef = CATEGORIES.find(c => c.id === cat.categoryId);
+    return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
+  }, 0);
+
+  // Determine winner
+  const city1FinalScore = Math.round(city1Total);
+  const city2FinalScore = Math.round(city2Total);
+  const scoreDiff = Math.abs(city1FinalScore - city2FinalScore);
+
+  let winner: 'city1' | 'city2' | 'tie';
+  if (scoreDiff === 0) {
+    winner = 'tie';
+  } else if (city1FinalScore > city2FinalScore) {
+    winner = 'city1';
+  } else {
+    winner = 'city2';
+  }
+
+  // Category winners
+  const categoryWinners: Record<CategoryId, 'city1' | 'city2' | 'tie'> = {} as Record<CategoryId, 'city1' | 'city2' | 'tie'>;
+  CATEGORIES.forEach(cat => {
+    const c1 = city1Categories.find(c => c.categoryId === cat.id);
+    const c2 = city2Categories.find(c => c.categoryId === cat.id);
+    const diff = (c1?.averageConsensusScore || 0) - (c2?.averageConsensusScore || 0);
+    if (Math.abs(diff) < 5) {
+      categoryWinners[cat.id] = 'tie';
+    } else if (diff > 0) {
+      categoryWinners[cat.id] = 'city1';
+    } else {
+      categoryWinners[cat.id] = 'city2';
+    }
+  });
+
+  // Get LLMs that were used
+  const llmsUsed: LLMProvider[] = evaluatorResults
+    .filter(r => r.success)
+    .map(r => r.provider);
+
+  // Build disagreement summary
+  const disagreementSummary = judgeOutput.disagreementAreas.length > 0
+    ? `LLMs disagreed most on: ${judgeOutput.disagreementAreas.join(', ')}`
+    : 'LLMs showed strong agreement across all metrics';
+
+  // Determine overall confidence
+  const overallConfidence: 'high' | 'medium' | 'low' =
+    judgeOutput.overallAgreement > 75 ? 'high' :
+    judgeOutput.overallAgreement > 50 ? 'medium' : 'low';
+
+  // Build city consensus scores
+  const city1Result: CityConsensusScore = {
+    city: city1Info.city,
+    country: city1Info.country,
+    region: city1Info.region,
+    categories: city1Categories,
+    totalConsensusScore: city1FinalScore,
+    overallAgreement: judgeOutput.overallAgreement
+  };
+
+  const city2Result: CityConsensusScore = {
+    city: city2Info.city,
+    country: city2Info.country,
+    region: city2Info.region,
+    categories: city2Categories,
+    totalConsensusScore: city2FinalScore,
+    overallAgreement: judgeOutput.overallAgreement
+  };
+
+  // Build processing stats
+  const llmTimings: Record<LLMProvider, number> = {} as Record<LLMProvider, number>;
+  evaluatorResults.forEach(r => {
+    llmTimings[r.provider] = r.latencyMs;
+  });
+  llmTimings['claude-opus'] = judgeOutput.judgeLatencyMs;
+
+  return {
+    city1: city1Result,
+    city2: city2Result,
+    winner,
+    scoreDifference: scoreDiff,
+    categoryWinners,
+    comparisonId: `LIFE-ENH-${Date.now().toString(36).toUpperCase()}`,
+    generatedAt: new Date().toISOString(),
+    llmsUsed,
+    judgeModel: 'claude-opus',
+    overallConsensusConfidence: overallConfidence,
+    disagreementSummary,
+    processingStats: {
+      totalTimeMs: evaluatorResults.reduce((sum, r) => sum + r.latencyMs, 0) + judgeOutput.judgeLatencyMs,
+      llmTimings,
+      metricsEvaluated: ALL_METRICS.length
+    }
+  };
+}
