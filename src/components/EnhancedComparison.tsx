@@ -9,7 +9,7 @@ import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison'
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
 import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress } from '../services/llmEvaluators';
-import { runOpusJudge, type JudgeOutput } from '../services/opusJudge';
+import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
@@ -158,7 +158,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   city2,
   onResultsUpdate,
   onStatusChange,
-  demoMode = false
+  _demoMode = false
 }) => {
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
     new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
