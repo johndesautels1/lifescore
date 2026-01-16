@@ -31,6 +31,9 @@ interface MetricScore {
   confidence: string;
   reasoning?: string;
   sources?: string[];
+  // FIX #1: Add evidence fields that parseResponse() returns
+  city1Evidence?: Array<{ title: string; url: string; snippet: string }>;
+  city2Evidence?: Array<{ title: string; url: string; snippet: string }>;
 }
 
 // Evidence item from GPT-5.2 web search
@@ -126,16 +129,21 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
     }
 
     const parsed = JSON.parse(jsonStr) as { evaluations?: ParsedEvaluation[] };
+    // FIX #11: Clamp all scores to 0-100 range
+    const clampScore = (score: number | undefined): number => {
+      const s = score ?? 50;
+      return Math.max(0, Math.min(100, Math.round(s)));
+    };
     return (parsed.evaluations || []).map((e: ParsedEvaluation) => ({
       metricId: e.metricId,
-      city1LegalScore: e.city1LegalScore || 50,
-      city1EnforcementScore: e.city1EnforcementScore || 50,
-      city2LegalScore: e.city2LegalScore || 50,
-      city2EnforcementScore: e.city2EnforcementScore || 50,
+      city1LegalScore: clampScore(e.city1LegalScore),
+      city1EnforcementScore: clampScore(e.city1EnforcementScore),
+      city2LegalScore: clampScore(e.city2LegalScore),
+      city2EnforcementScore: clampScore(e.city2EnforcementScore),
       confidence: e.confidence || 'medium',
       reasoning: e.reasoning,
       sources: e.sources,
-      // FIX: Include evidence from GPT-5.2 web search
+      // Include evidence from GPT-5.2 web search
       city1Evidence: e.city1Evidence || [],
       city2Evidence: e.city2Evidence || []
     }));

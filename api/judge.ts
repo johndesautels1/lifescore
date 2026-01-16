@@ -16,10 +16,15 @@ import {
 } from '../src/constants/scoringThresholds';
 
 // Opus API types
+// FIX #2: Add legalScore/enforcementScore fields to match opusJudge.ts
 interface OpusJudgment {
   metricId: string;
   city1ConsensusScore: number;
+  city1LegalScore?: number;
+  city1EnforcementScore?: number;
   city2ConsensusScore: number;
+  city2LegalScore?: number;
+  city2EnforcementScore?: number;
   confidence: 'unanimous' | 'strong' | 'moderate' | 'split';
   explanation: string;
 }
@@ -41,6 +46,14 @@ interface LLMMetricScore {
   confidence?: string;
   llmProvider?: string;
   city?: 'city1' | 'city2';
+  // FIX #9: Add evidence field to match types/enhancedComparison.ts
+  evidence?: Array<{
+    city: string;
+    title: string;
+    url: string;
+    snippet: string;
+    retrieved_at: string;
+  }>;
 }
 
 interface EvaluatorResult {
@@ -80,8 +93,10 @@ interface JudgeOutput {
 // STATISTICAL FUNCTIONS
 // ============================================================================
 
-function calculateMean(values: number[]): number {
-  if (values.length === 0) return 0;
+// FIX #4: calculateMean now accepts optional default for empty arrays
+// For score calculations, use 50 (neutral); for stdDev, use 0
+function calculateMean(values: number[], defaultValue: number = 0): number {
+  if (values.length === 0) return defaultValue;
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
@@ -297,22 +312,30 @@ function mergeOpusJudgments(
 ): void {
   if (!opusResponse.judgments) return;
 
-  opusResponse.judgments.forEach(judgment => {
-    // FIX: Validate score ranges (0-100)
-    const c1Score = Math.max(0, Math.min(100, Math.round(judgment.city1ConsensusScore || 50)));
-    const c2Score = Math.max(0, Math.min(100, Math.round(judgment.city2ConsensusScore || 50)));
+  // FIX #3: Helper to validate and clamp scores to 0-100 range
+  const clampScore = (score: number | undefined, fallback: number): number => {
+    if (typeof score !== 'number' || isNaN(score)) return fallback;
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
 
+  opusResponse.judgments.forEach(judgment => {
     const c1 = city1Consensuses.find(c => c.metricId === judgment.metricId);
     const c2 = city2Consensuses.find(c => c.metricId === judgment.metricId);
 
     if (c1) {
-      c1.consensusScore = c1Score;
+      c1.consensusScore = clampScore(judgment.city1ConsensusScore, c1.consensusScore);
+      // FIX #3: Now also update legalScore and enforcementScore from Opus
+      c1.legalScore = clampScore(judgment.city1LegalScore, c1.legalScore);
+      c1.enforcementScore = clampScore(judgment.city1EnforcementScore, c1.enforcementScore);
       c1.confidenceLevel = judgment.confidence || c1.confidenceLevel;
       c1.judgeExplanation = judgment.explanation || c1.judgeExplanation;
     }
 
     if (c2) {
-      c2.consensusScore = c2Score;
+      c2.consensusScore = clampScore(judgment.city2ConsensusScore, c2.consensusScore);
+      // FIX #3: Now also update legalScore and enforcementScore from Opus
+      c2.legalScore = clampScore(judgment.city2LegalScore, c2.legalScore);
+      c2.enforcementScore = clampScore(judgment.city2EnforcementScore, c2.enforcementScore);
       c2.confidenceLevel = judgment.confidence || c2.confidenceLevel;
       c2.judgeExplanation = judgment.explanation || c2.judgeExplanation;
     }
@@ -346,8 +369,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     aggregateAndBuildConsensuses(evaluatorResults || []);
 
   // Step 2: FIX - Actually call Opus API for enhanced judging
+  // FIX #8: Also verify that there are actual scores, not just success flags
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (anthropicKey && city1 && city2 && evaluatorResults?.some(r => r.success)) {
+  const hasActualScores = evaluatorResults?.some(r => r.success && r.scores && r.scores.length > 0);
+  if (anthropicKey && city1 && city2 && hasActualScores) {
     try {
       const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses);
 

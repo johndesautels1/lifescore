@@ -89,8 +89,9 @@ function aggregateScoresByMetric(
 // STATISTICAL FUNCTIONS
 // ============================================================================
 
-function calculateMean(values: number[]): number {
-  if (values.length === 0) return 0;
+// FIX #5: calculateMean now accepts optional default for empty arrays
+function calculateMean(values: number[], defaultValue: number = 0): number {
+  if (values.length === 0) return defaultValue;
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
@@ -148,7 +149,8 @@ function buildMetricConsensus(
   const confidenceLevel: ConfidenceLevel = getConfidenceLevel(stdDev);
 
   // Build judge explanation
-  const providers = scores.map(s => s.llmProvider);
+  // FIX #10: Filter out undefined providers before creating unique set
+  const providers = scores.map(s => s.llmProvider).filter(Boolean);
   const uniqueProviders = [...new Set(providers)];
   const scoreRange = Math.max(...normalizedScores) - Math.min(...normalizedScores);
 
@@ -259,12 +261,15 @@ export async function runOpusJudge(
   });
 
   // Calculate overall agreement
+  // FIX #6: Handle empty stdDevs with DEFAULT_AVG_STDDEV like api/judge.ts does
   const allStdDevs = [...city1Consensuses, ...city2Consensuses].map(c => c.standardDeviation);
-  const avgStdDev = calculateMean(allStdDevs);
+  const avgStdDev = allStdDevs.length > 0 ? calculateMean(allStdDevs) : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
   const overallAgreement = Math.max(0, Math.min(100, Math.round(100 - avgStdDev * 2)));
 
   // If we have Anthropic key, enhance with actual Opus judgment
-  if (anthropicKey && input.evaluatorResults.some(r => r.success)) {
+  // FIX #7: Sync with api/judge.ts - also verify non-empty scores
+  const hasActualScores = input.evaluatorResults.some(r => r.success && r.scores && r.scores.length > 0);
+  if (anthropicKey && hasActualScores) {
     try {
       // Build summary of evaluations for Opus to judge
       const evaluationSummary = buildEvaluationSummary(aggregated);

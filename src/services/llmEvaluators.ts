@@ -961,11 +961,13 @@ async function evaluateCategoryBatch(
 
     const scores: LLMMetricScore[] = [...city1Scores, ...city2Scores];
 
+    // FIX #12: Only mark as success if we actually have scores
+    // API might return success:true but empty scores array
     return {
-      success: result.success,
+      success: result.success && scores.length > 0,
       scores,
       latencyMs: Date.now() - startTime,
-      error: result.error
+      error: scores.length === 0 && result.success ? 'No scores returned from API' : result.error
     };
   } catch (error) {
     return {
