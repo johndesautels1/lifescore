@@ -113,7 +113,10 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
             totalMetrics: cat.metricCount
           })),
           totalScore: 70,
-          dataSourcesUsed: ['Real-time LLM evaluation via /api/evaluate']
+          normalizedScore: 70,
+          overallConfidence: 'high' as const,
+          comparisonDate: new Date().toISOString(),
+          dataFreshness: 'current' as const
         },
         city2: {
           city: city2.split(',')[0].trim(),
@@ -127,7 +130,10 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
             totalMetrics: cat.metricCount
           })),
           totalScore: 68,
-          dataSourcesUsed: ['Real-time LLM evaluation via /api/evaluate']
+          normalizedScore: 68,
+          overallConfidence: 'high' as const,
+          comparisonDate: new Date().toISOString(),
+          dataFreshness: 'current' as const
         },
         winner: 'city1',
         scoreDifference: 2,
