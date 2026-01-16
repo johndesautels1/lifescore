@@ -7,7 +7,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Timeout constants (in milliseconds)
 const LLM_TIMEOUT_MS = 120000; // 120 seconds for all LLM API calls
-const SEARCH_TIMEOUT_MS = 15000; // 15 seconds for Tavily search
+const TAVILY_TIMEOUT_MS = 60000; // 60 seconds for Tavily search
 
 // Helper: fetch with timeout using AbortController
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
@@ -195,7 +195,7 @@ async function tavilySearch(query: string, maxResults: number = 3): Promise<{ ti
           include_raw_content: false
         })
       },
-      SEARCH_TIMEOUT_MS
+      TAVILY_TIMEOUT_MS
     );
 
     if (!response.ok) return [];

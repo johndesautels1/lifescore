@@ -9,6 +9,30 @@ import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
 import { withRetry, isCircuitOpen, recordSuccess, recordFailure } from './rateLimiter';
 
 // ============================================================================
+// TIMEOUT CONSTANTS
+// ============================================================================
+const LLM_TIMEOUT_MS = 120000; // 120 seconds for ALL LLM API calls
+const TAVILY_TIMEOUT_MS = 60000; // 60 seconds for Tavily search
+
+// Helper: fetch with timeout using AbortController
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timed out after ${timeoutMs / 1000} seconds`);
+    }
+    throw error;
+  }
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -148,20 +172,24 @@ export async function tavilySearch(
   query: string,
   maxResults: number = 5
 ): Promise<{ title: string; url: string; content: string }[]> {
-  const response = await fetch('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const response = await fetchWithTimeout(
+    'https://api.tavily.com/search',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: 'advanced',
+        max_results: maxResults,
+        include_answer: false,
+        include_raw_content: false
+      })
     },
-    body: JSON.stringify({
-      api_key: apiKey,
-      query,
-      search_depth: 'advanced',
-      max_results: maxResults,
-      include_answer: false,
-      include_raw_content: false
-    })
-  });
+    TAVILY_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     throw new Error(`Tavily search failed: ${response.status}`);
@@ -223,19 +251,23 @@ Use these search results to inform your evaluation.
 
     // Use retry logic for API call
     const content = await withRetry(provider, async () => {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2025-01-01'
+      const response = await fetchWithTimeout(
+        'https://api.anthropic.com/v1/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2025-01-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-5-20250514',
+            max_tokens: 16384,
+            messages: [{ role: 'user', content: prompt }]
+          })
         },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5-20250514',
-          max_tokens: 16384,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
+        LLM_TIMEOUT_MS
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -361,24 +393,28 @@ Return JSON exactly matching the schema provided.`;
 
   try {
     // GPT-5.2 uses the responses API with built-in web search
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+    const response = await fetchWithTimeout(
+      'https://api.openai.com/v1/responses',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-5.2',
+          reasoning: { effort: 'medium' },
+          tools: [{ type: 'web_search' }],
+          tool_choice: 'auto',
+          input: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: JSON.stringify(userPayload) }
+          ],
+          text: { format: outputSchema }
+        })
       },
-      body: JSON.stringify({
-        model: 'gpt-5.2',
-        reasoning: { effort: 'medium' },
-        tools: [{ type: 'web_search' }],
-        tool_choice: 'auto',
-        input: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: JSON.stringify(userPayload) }
-        ],
-        text: { format: outputSchema }
-      })
-    });
+      LLM_TIMEOUT_MS
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -423,7 +459,7 @@ export async function evaluateWithGemini(
   try {
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
@@ -444,7 +480,8 @@ export async function evaluateWithGemini(
             }
           }]
         })
-      }
+      },
+      LLM_TIMEOUT_MS
     );
 
     if (!response.ok) {
@@ -488,27 +525,31 @@ export async function evaluateWithGrok(
   try {
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+    const response = await fetchWithTimeout(
+      'https://api.x.ai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'grok-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.'
+            },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 16384,
+          temperature: 0.3,
+          // Grok has native web search
+          search: true
+        })
       },
-      body: JSON.stringify({
-        model: 'grok-4',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.'
-          },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 16384,
-        temperature: 0.3,
-        // Grok has native web search
-        search: true
-      })
-    });
+      LLM_TIMEOUT_MS
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -551,27 +592,31 @@ export async function evaluateWithPerplexity(
   try {
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+    const response = await fetchWithTimeout(
+      'https://api.perplexity.ai/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'sonar-reasoning-pro',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.'
+            },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 16384,
+          temperature: 0.3,
+          // Perplexity has native search
+          return_citations: true
+        })
       },
-      body: JSON.stringify({
-        model: 'sonar-reasoning-pro',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.'
-          },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 16384,
-        temperature: 0.3,
-        // Perplexity has native search
-        return_citations: true
-      })
-    });
+      LLM_TIMEOUT_MS
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

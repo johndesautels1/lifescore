@@ -14,6 +14,27 @@ import {
   type ConfidenceLevel
 } from '../constants/scoringThresholds';
 
+// Timeout constant for Opus API (90s)
+const OPUS_TIMEOUT_MS = 90000;
+
+// Helper: fetch with timeout using AbortController
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Opus API timed out after ${timeoutMs / 1000} seconds`);
+    }
+    throw error;
+  }
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -279,19 +300,23 @@ export async function runOpusJudge(
         .replace('{{CITY1}}', input.city1)
         .replace('{{CITY2}}', input.city2);
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2025-01-01'
+      const response = await fetchWithTimeout(
+        'https://api.anthropic.com/v1/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2025-01-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-opus-4-5-20251101',
+            max_tokens: 16384,
+            messages: [{ role: 'user', content: prompt }]
+          })
         },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5-20251101',
-          max_tokens: 16384,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
+        OPUS_TIMEOUT_MS
+      );
 
       if (response.ok) {
         const data = await response.json();
