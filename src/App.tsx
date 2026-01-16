@@ -21,6 +21,7 @@ import {
   EnhancedComparisonContainer,
   LLMSelector
 } from './components/EnhancedComparison';
+import EvidencePanel from './components/EvidencePanel';
 import type { ComparisonResult } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult } from './types/enhancedComparison';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
@@ -41,6 +42,7 @@ const App: React.FC = () => {
   const [enhancedStatus, setEnhancedStatus] = useState<'idle' | 'running' | 'complete'>('idle');
   const [enhancedResult, setEnhancedResult] = useState<EnhancedComparisonResult | null>(null);
   const [pendingCities, setPendingCities] = useState<{ city1: string; city2: string } | null>(null);
+  const [showEvidencePanel, setShowEvidencePanel] = useState(true); // Evidence panel visibility
 
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
@@ -111,6 +113,7 @@ const App: React.FC = () => {
     setEnhancedStatus('idle');
     setEnhancedResult(null);
     setPendingCities(null);
+    setShowEvidencePanel(true); // Reset panel visibility for next comparison
     resetOGMetaTags();
   };
 
@@ -382,7 +385,14 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
-      
+
+      {/* Evidence Panel - GPT-5.2 Web Search Citations */}
+      <EvidencePanel
+        result={enhancedResult}
+        isVisible={showEvidencePanel && enhancedMode && enhancedStatus === 'complete'}
+        onClose={() => setShowEvidencePanel(false)}
+      />
+
       <Footer />
 
       {/* API Key Configuration Modal */}

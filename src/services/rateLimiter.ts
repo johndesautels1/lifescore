@@ -29,7 +29,7 @@ const RATE_LIMITS: Record<LLMProvider, RateLimitConfig> = {
     retryAfterMs: 30000,
     maxRetries: 3
   },
-  'gpt-4o': {
+  'gpt-5.2': {
     requestsPerMinute: 60,
     tokensPerMinute: 90000,
     retryAfterMs: 60000,

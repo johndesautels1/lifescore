@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // LLM Provider types
-type LLMProvider = 'claude-sonnet' | 'gpt-4o' | 'gemini-3-pro' | 'grok-4' | 'perplexity';
+type LLMProvider = 'claude-sonnet' | 'gpt-5.2' | 'gemini-3-pro' | 'grok-4' | 'perplexity';
 
 interface EvaluationRequest {
   provider: LLMProvider;
@@ -161,46 +161,122 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
   }
 }
 
-// GPT-4o evaluation
-async function evaluateWithGPT4o(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
+// GPT-5.2 evaluation (with built-in web search via responses API)
+async function evaluateWithGPT5(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: 0, error: 'OPENAI_API_KEY not configured' };
+    return { provider: 'gpt-5.2', success: false, scores: [], latencyMs: 0, error: 'OPENAI_API_KEY not configured' };
   }
 
   const startTime = Date.now();
-  const prompt = buildPrompt(city1, city2, metrics);
+
+  // Build system prompt for GPT-5.2
+  const systemPrompt = `You are an impartial analyst comparing two cities using factual web data only.
+Use the built-in web_search tool automatically.
+Cite every claim. If evidence is missing, set confidence="low" and explain why.
+Return JSON exactly matching the schema provided.`;
+
+  // Build user payload (JSON format for GPT-5.2)
+  const userPayload = {
+    category_id: metrics[0]?.categoryId || 'general',
+    category_name: 'Freedom Metrics Evaluation',
+    cityA: city1,
+    cityB: city2,
+    metrics: metrics.map(m => ({
+      metric_id: m.id,
+      metric_name: m.name,
+      prompt: m.description
+    })),
+    now: new Date().toISOString()
+  };
+
+  // JSON Schema for structured output (matching GPT's schema but with our 0-100 scoring)
+  const outputSchema = {
+    type: "json_schema",
+    name: "freedom_evaluation",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        evaluations: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              metricId: { type: "string" },
+              city1LegalScore: { type: "number", minimum: 0, maximum: 100 },
+              city1EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
+              city2LegalScore: { type: "number", minimum: 0, maximum: 100 },
+              city2EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
+              confidence: { type: "string", enum: ["high", "medium", "low"] },
+              reasoning: { type: "string" },
+              city1Evidence: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    url: { type: "string" },
+                    snippet: { type: "string" }
+                  },
+                  required: ["title", "url", "snippet"]
+                }
+              },
+              city2Evidence: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    url: { type: "string" },
+                    snippet: { type: "string" }
+                  },
+                  required: ["title", "url", "snippet"]
+                }
+              }
+            },
+            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning"]
+          }
+        }
+      },
+      required: ["evaluations"]
+    }
+  };
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // GPT-5.2 uses the responses API with built-in web search
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Provide accurate assessments based on your knowledge of current laws and regulations.' },
-          { role: 'user', content: prompt }
+        model: 'gpt-5.2',
+        reasoning: { effort: 'medium' },
+        tools: [{ type: 'web_search' }],
+        tool_choice: 'auto',
+        input: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: JSON.stringify(userPayload) }
         ],
-        max_tokens: 16384,
-        temperature: 0.3
+        text: { format: outputSchema }
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+      return { provider: 'gpt-5.2', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
-    const scores = parseResponse(content, 'gpt-4o');
+    // GPT-5.2 responses API returns output_text instead of choices[0].message.content
+    const content = data.output_text;
+    const scores = parseResponse(content, 'gpt-5.2');
 
-    return { provider: 'gpt-4o', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'gpt-5.2', success: true, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    return { provider: 'gpt-5.2', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }
 }
 
@@ -357,8 +433,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     case 'claude-sonnet':
       result = await evaluateWithClaude(city1, city2, metrics);
       break;
-    case 'gpt-4o':
-      result = await evaluateWithGPT4o(city1, city2, metrics);
+    case 'gpt-5.2':
+      result = await evaluateWithGPT5(city1, city2, metrics);
       break;
     case 'gemini-3-pro':
       result = await evaluateWithGemini(city1, city2, metrics);

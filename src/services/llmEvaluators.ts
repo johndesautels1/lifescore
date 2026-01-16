@@ -251,10 +251,10 @@ Use these search results to inform your evaluation.
 }
 
 // ============================================================================
-// OPENAI GPT-4o EVALUATOR (with native web browsing)
+// OPENAI GPT-5.2 EVALUATOR (with built-in web search via responses API)
 // ============================================================================
 
-export async function evaluateWithGPT4o(
+export async function evaluateWithGPT5(
   apiKey: string,
   city1: string,
   city2: string,
@@ -262,27 +262,97 @@ export async function evaluateWithGPT4o(
 ): Promise<EvaluatorResult> {
   const startTime = Date.now();
 
-  try {
-    const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
+  // Build system prompt for GPT-5.2
+  const systemPrompt = `You are an impartial analyst comparing two cities using factual web data only.
+Use the built-in web_search tool automatically.
+Cite every claim. If evidence is missing, set confidence="low" and explain why.
+Return JSON exactly matching the schema provided.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  // Build user payload (JSON format for GPT-5.2)
+  const userPayload = {
+    category_id: metrics[0]?.categoryId || 'general',
+    category_name: 'Freedom Metrics Evaluation',
+    cityA: city1,
+    cityB: city2,
+    metrics: metrics.map(m => ({
+      metric_id: m.id,
+      metric_name: m.name,
+      prompt: m.description
+    })),
+    now: new Date().toISOString()
+  };
+
+  // JSON Schema for structured output (using our 0-100 scoring)
+  const outputSchema = {
+    type: "json_schema",
+    name: "freedom_evaluation",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        evaluations: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              metricId: { type: "string" },
+              city1LegalScore: { type: "number", minimum: 0, maximum: 100 },
+              city1EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
+              city2LegalScore: { type: "number", minimum: 0, maximum: 100 },
+              city2EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
+              confidence: { type: "string", enum: ["high", "medium", "low"] },
+              reasoning: { type: "string" },
+              city1Evidence: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    url: { type: "string" },
+                    snippet: { type: "string" }
+                  },
+                  required: ["title", "url", "snippet"]
+                }
+              },
+              city2Evidence: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    url: { type: "string" },
+                    snippet: { type: "string" }
+                  },
+                  required: ["title", "url", "snippet"]
+                }
+              }
+            },
+            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning"]
+          }
+        }
+      },
+      required: ["evaluations"]
+    }
+  };
+
+  try {
+    // GPT-5.2 uses the responses API with built-in web search
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert legal analyst evaluating freedom metrics. Provide accurate assessments based on your knowledge of current laws and regulations.'
-          },
-          { role: 'user', content: prompt }
+        model: 'gpt-5.2',
+        reasoning: { effort: 'medium' },
+        tools: [{ type: 'web_search' }],
+        tool_choice: 'auto',
+        input: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: JSON.stringify(userPayload) }
         ],
-        max_tokens: 16384,
-        temperature: 0.3
-        // Note: GPT-4o API does not have native web search - relies on training data
+        text: { format: outputSchema }
       })
     });
 
@@ -292,18 +362,19 @@ export async function evaluateWithGPT4o(
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
-    const scores = parseEvaluationResponse(content, 'gpt-4o');
+    // GPT-5.2 responses API returns output_text instead of choices[0].message.content
+    const content = data.output_text;
+    const scores = parseEvaluationResponse(content, 'gpt-5.2');
 
     return {
-      provider: 'gpt-4o',
+      provider: 'gpt-5.2',
       success: true,
       scores,
       latencyMs: Date.now() - startTime
     };
   } catch (error) {
     return {
-      provider: 'gpt-4o',
+      provider: 'gpt-5.2',
       success: false,
       scores: [],
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -599,10 +670,10 @@ export async function runAllEvaluators(
   }
 
   if (apiKeys.openai) {
-    onProgress?.('gpt-4o', 'started');
+    onProgress?.('gpt-5.2', 'started');
     evaluatorPromises.push(
-      evaluateWithGPT4o(apiKeys.openai, city1, city2, metrics)
-        .then(r => { onProgress?.('gpt-4o', r.success ? 'completed' : 'failed'); return r; })
+      evaluateWithGPT5(apiKeys.openai, city1, city2, metrics)
+        .then(r => { onProgress?.('gpt-5.2', r.success ? 'completed' : 'failed'); return r; })
     );
   }
 
@@ -666,12 +737,12 @@ export async function runSingleEvaluator(
         result = await evaluateWithClaude(apiKeys.anthropic, apiKeys.tavily, city1, city2, metrics);
         break;
 
-      case 'gpt-4o':
+      case 'gpt-5.2':
         if (!apiKeys.openai) {
           throw new Error('OpenAI API key not configured');
         }
         onProgress?.('evaluating');
-        result = await evaluateWithGPT4o(apiKeys.openai, city1, city2, metrics);
+        result = await evaluateWithGPT5(apiKeys.openai, city1, city2, metrics);
         break;
 
       case 'gemini-3-pro':
@@ -844,7 +915,7 @@ export async function runSingleEvaluatorBatched(
   const keyMap: Record<LLMProvider, keyof LLMAPIKeys> = {
     'claude-opus': 'anthropic',
     'claude-sonnet': 'anthropic',
-    'gpt-4o': 'openai',
+    'gpt-5.2': 'openai',
     'gemini-3-pro': 'google',
     'grok-4': 'xai',
     'perplexity': 'perplexity'
