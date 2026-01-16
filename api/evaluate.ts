@@ -352,7 +352,7 @@ Return JSON exactly matching the schema provided.`;
   }
 }
 
-// Gemini 3 Pro evaluation
+// Gemini 3 Pro evaluation (with Google Search grounding)
 async function evaluateWithGemini(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
@@ -370,7 +370,16 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 16384, temperature: 0.3 }
+          generationConfig: { maxOutputTokens: 16384, temperature: 0.3 },
+          // Enable Google Search grounding for real-time web data
+          tools: [{
+            googleSearchRetrieval: {
+              dynamicRetrievalConfig: {
+                mode: 'MODE_DYNAMIC',
+                dynamicThreshold: 0.3
+              }
+            }
+          }]
         })
       }
     );
