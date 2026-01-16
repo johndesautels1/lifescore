@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
-import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
+import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison } from '../services/enhancedComparison';
 import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress } from '../services/llmEvaluators';
 import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
@@ -1524,7 +1524,6 @@ interface EnhancedComparisonContainerProps {
   city1: string;
   city2: string;
   onComplete: (result: EnhancedComparisonResult) => void;
-  demoMode?: boolean;
   dealbreakers?: string[];
 }
 
@@ -1532,7 +1531,6 @@ export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerPr
   city1,
   city2,
   onComplete,
-  demoMode = true,
   dealbreakers = []
 }) => {
   const [status, setStatus] = useState<'idle' | 'running' | 'complete' | 'error'>('idle');
@@ -1549,71 +1547,31 @@ export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerPr
     setError(null);
 
     try {
-      if (demoMode) {
-        // Simulate progress for demo
-        for (let i = 0; i < DEFAULT_ENHANCED_LLMS.length; i++) {
-          setProgress({
-            phase: 'evaluating',
-            currentLLM: DEFAULT_ENHANCED_LLMS[i],
-            llmsCompleted: DEFAULT_ENHANCED_LLMS.slice(0, i),
-            metricsProcessed: i * 20,
-            totalMetrics: 100
-          });
-          await new Promise(r => setTimeout(r, 400));
-        }
+      // Always use real API - keys are in Vercel env vars
+      const apiKeys = getStoredAPIKeys();
+      const enhancedResult = await runEnhancedComparison({
+        city1,
+        city2,
+        apiKeys,
+        onProgress: setProgress
+      });
+      setResult(enhancedResult);
+      setStatus('complete');
+      onComplete(enhancedResult);
 
-        setProgress({
-          phase: 'judging',
-          llmsCompleted: DEFAULT_ENHANCED_LLMS,
-          metricsProcessed: 100,
-          totalMetrics: 100
-        });
-        await new Promise(r => setTimeout(r, 600));
-
-        const demoResult = generateDemoEnhancedComparison(city1, city2);
-        setResult(demoResult);
-        setStatus('complete');
-        onComplete(demoResult);
-
-        // Update OG meta tags for social sharing
-        const score1Val = demoResult.city1.totalConsensusScore;
-        const score2Val = demoResult.city2.totalConsensusScore;
-        const delta = Math.abs(score1Val - score2Val);
-        const winnerName = demoResult.winner === 'city1' ? city1 : demoResult.winner === 'city2' ? city2 : 'Tie';
-        updateOGMetaTags({
-          city1,
-          city2,
-          score1: score1Val,
-          score2: score2Val,
-          winner: winnerName,
-          delta
-        });
-      } else {
-        const apiKeys = getStoredAPIKeys();
-        const enhancedResult = await runEnhancedComparison({
-          city1,
-          city2,
-          apiKeys,
-          onProgress: setProgress
-        });
-        setResult(enhancedResult);
-        setStatus('complete');
-        onComplete(enhancedResult);
-
-        // Update OG meta tags for social sharing
-        const score1Val = enhancedResult.city1.totalConsensusScore;
-        const score2Val = enhancedResult.city2.totalConsensusScore;
-        const delta = Math.abs(score1Val - score2Val);
-        const winnerName = enhancedResult.winner === 'city1' ? city1 : enhancedResult.winner === 'city2' ? city2 : 'Tie';
-        updateOGMetaTags({
-          city1,
-          city2,
-          score1: score1Val,
-          score2: score2Val,
-          winner: winnerName,
-          delta
-        });
-      }
+      // Update OG meta tags for social sharing
+      const score1Val = enhancedResult.city1.totalConsensusScore;
+      const score2Val = enhancedResult.city2.totalConsensusScore;
+      const delta = Math.abs(score1Val - score2Val);
+      const winnerName = enhancedResult.winner === 'city1' ? city1 : enhancedResult.winner === 'city2' ? city2 : 'Tie';
+      updateOGMetaTags({
+        city1,
+        city2,
+        score1: score1Val,
+        score2: score2Val,
+        winner: winnerName,
+        delta
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('error');

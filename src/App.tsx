@@ -31,7 +31,7 @@ import './styles/globals.css';
 import './App.css';
 
 const App: React.FC = () => {
-  const { state, compare, reset, loadResult } = useComparison({ useDemoMode: true });
+  const { state, compare, reset, loadResult } = useComparison({ useDemoMode: false });
   const [savedKey, setSavedKey] = useState(0);
 
   // Enhanced mode state
@@ -192,7 +192,6 @@ const App: React.FC = () => {
                         setEnhancedStatus('complete');
                       }
                     }}
-                    demoMode={availableLLMs.length === 0}
                   />
                 </div>
               )}
@@ -223,7 +222,6 @@ const App: React.FC = () => {
                     city1={pendingCities?.city1 || ''}
                     city2={pendingCities?.city2 || ''}
                     onComplete={handleEnhancedComplete}
-                    demoMode={availableLLMs.length === 0}
                     dealbreakers={dealbreakers}
                   />
                   <div className="new-comparison">
