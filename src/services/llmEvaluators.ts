@@ -913,11 +913,13 @@ async function evaluateCategoryBatch(
   provider: LLMProvider,
   city1: string,
   city2: string,
-  _categoryId: CategoryId,
+  categoryId: CategoryId,
   metrics: MetricDefinition[]
   // API keys not needed here - keys are in env vars on server
 ): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
   const startTime = Date.now();
+
+  console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
 
   // Client-side timeout to prevent infinite waiting (90s, slightly under server's 120s max)
   const controller = new AbortController();
@@ -945,8 +947,11 @@ async function evaluateCategoryBatch(
 
     clearTimeout(timeoutId);
 
+    console.log(`[CLIENT] ${provider}/${categoryId} response status: ${response.status}`);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`[CLIENT] ${provider}/${categoryId} API error: ${response.status} - ${errorText}`);
       return {
         success: false,
         scores: [],
@@ -956,6 +961,8 @@ async function evaluateCategoryBatch(
     }
 
     const result = await response.json() as { success: boolean; scores: APIMetricScore[]; error?: string };
+
+    console.log(`[CLIENT] ${provider}/${categoryId} result: success=${result.success}, scores=${result.scores?.length || 0}, error=${result.error || 'none'}`);
 
     // Helper to convert confidence string to proper type
     const parseConfidence = (conf: string): 'high' | 'medium' | 'low' => {
@@ -1026,13 +1033,17 @@ async function evaluateCategoryBatch(
 
     // Provide clearer error message for timeout
     const isTimeout = error instanceof Error && error.name === 'AbortError';
+    const errorMsg = isTimeout
+      ? `Request timed out after 90 seconds for ${provider}/${categoryId}`
+      : (error instanceof Error ? error.message : 'Unknown error');
+
+    console.error(`[CLIENT] ${provider}/${categoryId} fetch error:`, errorMsg);
+
     return {
       success: false,
       scores: [],
       latencyMs: Date.now() - startTime,
-      error: isTimeout
-        ? `Request timed out after 90 seconds for ${provider}`
-        : (error instanceof Error ? error.message : 'Unknown error')
+      error: errorMsg
     };
   }
 }

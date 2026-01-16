@@ -543,6 +543,8 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
 // Main handler
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const startTime = Date.now();
+
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -556,33 +558,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { provider, city1, city2, metrics } = req.body as EvaluationRequest;
+  try {
+    const { provider, city1, city2, metrics } = req.body as EvaluationRequest;
 
-  if (!provider || !city1 || !city2 || !metrics) {
-    return res.status(400).json({ error: 'Missing required fields: provider, city1, city2, metrics' });
+    console.log(`[EVALUATE] Starting ${provider} evaluation for ${city1} vs ${city2}, ${metrics?.length || 0} metrics`);
+
+    if (!provider || !city1 || !city2 || !metrics) {
+      console.error('[EVALUATE] Missing required fields');
+      return res.status(400).json({ error: 'Missing required fields: provider, city1, city2, metrics' });
+    }
+
+    let result: EvaluationResponse;
+
+    switch (provider) {
+      case 'claude-sonnet':
+        console.log('[EVALUATE] Calling Claude Sonnet...');
+        result = await evaluateWithClaude(city1, city2, metrics);
+        break;
+      case 'gpt-5.2':
+        console.log('[EVALUATE] Calling GPT-5.2...');
+        result = await evaluateWithGPT5(city1, city2, metrics);
+        break;
+      case 'gemini-3-pro':
+        console.log('[EVALUATE] Calling Gemini 3 Pro...');
+        result = await evaluateWithGemini(city1, city2, metrics);
+        break;
+      case 'grok-4':
+        console.log('[EVALUATE] Calling Grok 4...');
+        result = await evaluateWithGrok(city1, city2, metrics);
+        break;
+      case 'perplexity':
+        console.log('[EVALUATE] Calling Perplexity...');
+        result = await evaluateWithPerplexity(city1, city2, metrics);
+        break;
+      default:
+        console.error(`[EVALUATE] Unknown provider: ${provider}`);
+        return res.status(400).json({ error: `Unknown provider: ${provider}` });
+    }
+
+    console.log(`[EVALUATE] ${provider} completed in ${Date.now() - startTime}ms, success: ${result.success}, scores: ${result.scores?.length || 0}`);
+
+    if (!result.success) {
+      console.error(`[EVALUATE] ${provider} failed: ${result.error}`);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    // Catch any uncaught errors to prevent hanging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`[EVALUATE] Uncaught error after ${Date.now() - startTime}ms:`, errorMessage);
+
+    return res.status(500).json({
+      provider: 'unknown',
+      success: false,
+      scores: [],
+      latencyMs: Date.now() - startTime,
+      error: `Server error: ${errorMessage}`
+    });
   }
-
-  let result: EvaluationResponse;
-
-  switch (provider) {
-    case 'claude-sonnet':
-      result = await evaluateWithClaude(city1, city2, metrics);
-      break;
-    case 'gpt-5.2':
-      result = await evaluateWithGPT5(city1, city2, metrics);
-      break;
-    case 'gemini-3-pro':
-      result = await evaluateWithGemini(city1, city2, metrics);
-      break;
-    case 'grok-4':
-      result = await evaluateWithGrok(city1, city2, metrics);
-      break;
-    case 'perplexity':
-      result = await evaluateWithPerplexity(city1, city2, metrics);
-      break;
-    default:
-      return res.status(400).json({ error: `Unknown provider: ${provider}` });
-  }
-
-  return res.status(200).json(result);
 }
