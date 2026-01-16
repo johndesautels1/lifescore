@@ -3,7 +3,7 @@
  * Final consensus builder from multiple LLM evaluations
  */
 
-import type { LLMProvider, LLMMetricScore, MetricConsensus, CategoryConsensus } from '../types/enhancedComparison';
+import type { LLMMetricScore, MetricConsensus, CategoryConsensus } from '../types/enhancedComparison';
 import type { CategoryId } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES } from '../data/metrics';
 import type { EvaluatorResult } from './llmEvaluators';
@@ -119,7 +119,7 @@ function buildMetricConsensus(
   const enforcementScores = scores.map(s => (s as any).enforcementScore ?? s.normalizedScore);
 
   // Calculate statistics
-  const mean = calculateMean(normalizedScores);
+  const _mean = calculateMean(normalizedScores); // Reserved for future weighted average
   const median = calculateMedian(normalizedScores);
   const stdDev = calculateStdDev(normalizedScores);
 

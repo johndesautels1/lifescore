@@ -5,7 +5,6 @@
 
 import type { LLMProvider, LLMAPIKeys, LLMMetricScore } from '../types/enhancedComparison';
 import type { MetricDefinition } from '../types/metrics';
-import { ALL_METRICS } from '../data/metrics';
 import { withRetry, isCircuitOpen, recordSuccess, recordFailure } from './rateLimiter';
 
 // ============================================================================

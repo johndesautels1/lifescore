@@ -436,7 +436,7 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
     .slice(0, count);
 };
 
-const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result, city1Name, city2Name }) => {
+const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result, city1Name, city2Name: _city2Name }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const disputedMetrics = findDisputedMetrics(result, 5);
   const hasSignificantDisagreement = disputedMetrics.length > 0;
