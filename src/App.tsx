@@ -173,7 +173,7 @@ const App: React.FC = () => {
                   city1={pendingCities.city1}
                   city2={pendingCities.city2}
                   onComplete={handleEnhancedComplete}
-                  demoMode={true}
+                  demoMode={availableLLMs.length === 0}
                   dealbreakers={dealbreakers}
                 />
               )}
@@ -204,7 +204,7 @@ const App: React.FC = () => {
                     city1={pendingCities?.city1 || ''}
                     city2={pendingCities?.city2 || ''}
                     onComplete={handleEnhancedComplete}
-                    demoMode={true}
+                    demoMode={availableLLMs.length === 0}
                     dealbreakers={dealbreakers}
                   />
                   <div className="new-comparison">
