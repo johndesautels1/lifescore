@@ -124,17 +124,33 @@ PERPLEXITY_API_KEY=your-key
 
 ## NEXT PHASE TODO
 
-### Phase 2 Tasks (Next Session)
-1. **AUDIT SCORING LOGIC**: Review all scoring calculations across the codebase
-2. **AUDIT LLM PROMPTS**: Review all prompts in `/api/evaluate.ts`, `/api/judge.ts`, `llmEvaluators.ts`, `opusJudge.ts`
-3. **HOME PAGE UI REARRANGEMENT**: Redesign/reorganize the main UI layout
+### 5-Phase Implementation Plan (from BATTLE_PLAN.md)
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Single-LLM Selection UI | ✅ COMPLETE |
+| 2 | Category Batch Prompts (6 parallel batches per LLM) | ✅ COMPLETE |
+| 3 | Progressive Opus Judging | ⬅️ NEXT |
+| 4 | Targeted Tavily + Citation Requests | PENDING |
+| 5 | Source Evidence Panel | PENDING |
 
-### Current State (Commit 3a6064b)
+### Next Session Tasks
+1. **PHASE 3**: Progressive Opus Judging
+   - Opus compares whatever LLMs completed, updates as more added
+   - Auto-call after 2 LLMs complete
+   - Re-call after each additional LLM
+   - Show individual LLM opinions + judge consensus
+
+2. **AUDIT SCORING LOGIC**: Review all scoring calculations
+3. **AUDIT LLM PROMPTS**: Review all prompts in API files
+4. **HOME PAGE UI REARRANGEMENT**: Redesign main layout
+
+### Current State (Commit f549a14)
 - ✅ All demo mode code removed (379 lines deleted)
 - ✅ Real API routes working (`/api/evaluate`, `/api/judge`)
 - ✅ TypeScript compilation passing
 - ✅ 6 LLM providers configured (Claude Sonnet, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity, Claude Opus judge)
 - ✅ Model IDs verified and locked
+- ✅ Phase 1 & 2 complete
 
 ## License
 
