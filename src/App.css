@@ -305,3 +305,32 @@
     font-size: 2rem;
   }
 }
+
+/* Enhanced Comparison Flow */
+.enhanced-comparison-flow {
+  margin-bottom: 1.5rem;
+}
+
+.comparison-cities-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-cities-header h2 {
+  font-size: 1.75rem;
+  color: var(--sapphire);
+  margin-bottom: 0.25rem;
+}
+
+.cities-subtitle {
+  color: var(--gray-500);
+  font-size: 0.95rem;
+}
+
+[data-theme="dark"] .comparison-cities-header h2 {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .cities-subtitle {
+  color: var(--gray-400);
+}

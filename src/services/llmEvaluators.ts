@@ -34,16 +34,35 @@ export interface LLMEvaluation {
 // EVALUATION PROMPT - SHARED ACROSS ALL LLMS
 // ============================================================================
 
+// Authoritative data sources that LLMs should prioritize
+const AUTHORITATIVE_SOURCES = [
+  'Freedom House (freedomhouse.org) - Political rights, civil liberties',
+  'CATO Human Freedom Index (cato.org) - Personal & economic freedom rankings',
+  'World Bank Open Data (data.worldbank.org) - Business regulations, ease of doing business',
+  'Transparency International (transparency.org) - Corruption Perception Index',
+  'Reporters Without Borders (rsf.org) - Press Freedom Index',
+  'Numbeo (numbeo.com) - Cost of living, crime rates, quality of life',
+  'OECD Data (data.oecd.org) - Employment, education, health statistics',
+  'Official government websites - State/local laws, municipal codes'
+];
+
 export function buildEvaluationPrompt(
   city1: string,
   city2: string,
   metrics: MetricDefinition[],
   includeSearchInstructions: boolean = false
 ): string {
+  const sourcesList = AUTHORITATIVE_SOURCES.map(s => `  - ${s}`).join('\n');
+
   const searchPreamble = includeSearchInstructions ? `
 IMPORTANT: Use your web search capabilities to find current, accurate data about these cities' laws and regulations.
-Search for official government sources, legal databases, and reputable research organizations.
-Cite your sources in the "sources" field.
+
+## PRIORITIZED DATA SOURCES
+Search these authoritative sources FIRST:
+${sourcesList}
+
+Also search official government websites for the specific cities/regions being compared.
+You MUST cite your sources in the "sources" field with actual URLs.
 
 ` : '';
 
@@ -619,4 +638,82 @@ export async function runAllEvaluators(
     totalLatencyMs: Date.now() - startTime,
     successCount: results.filter(r => r.success).length
   };
+}
+
+// ============================================================================
+// RUN SINGLE LLM EVALUATOR
+// For progressive evaluation - user selects one LLM at a time
+// ============================================================================
+
+export async function runSingleEvaluator(
+  provider: LLMProvider,
+  city1: string,
+  city2: string,
+  metrics: MetricDefinition[],
+  apiKeys: LLMAPIKeys & { tavily?: string },
+  onProgress?: (phase: 'starting' | 'evaluating' | 'completed' | 'failed') => void
+): Promise<EvaluatorResult> {
+  onProgress?.('starting');
+
+  try {
+    let result: EvaluatorResult;
+
+    switch (provider) {
+      case 'claude-sonnet':
+        if (!apiKeys.anthropic) {
+          throw new Error('Anthropic API key not configured');
+        }
+        onProgress?.('evaluating');
+        result = await evaluateWithClaude(apiKeys.anthropic, apiKeys.tavily, city1, city2, metrics);
+        break;
+
+      case 'gpt-4o':
+        if (!apiKeys.openai) {
+          throw new Error('OpenAI API key not configured');
+        }
+        onProgress?.('evaluating');
+        result = await evaluateWithGPT4o(apiKeys.openai, city1, city2, metrics);
+        break;
+
+      case 'gemini-3-pro':
+        if (!apiKeys.google) {
+          throw new Error('Google API key not configured');
+        }
+        onProgress?.('evaluating');
+        result = await evaluateWithGemini(apiKeys.google, city1, city2, metrics);
+        break;
+
+      case 'grok-4':
+        if (!apiKeys.xai) {
+          throw new Error('xAI API key not configured');
+        }
+        onProgress?.('evaluating');
+        result = await evaluateWithGrok(apiKeys.xai, city1, city2, metrics);
+        break;
+
+      case 'perplexity':
+        if (!apiKeys.perplexity) {
+          throw new Error('Perplexity API key not configured');
+        }
+        onProgress?.('evaluating');
+        result = await evaluateWithPerplexity(apiKeys.perplexity, city1, city2, metrics);
+        break;
+
+      default:
+        throw new Error(`Unknown provider: ${provider}`);
+    }
+
+    onProgress?.(result.success ? 'completed' : 'failed');
+    return result;
+
+  } catch (error) {
+    onProgress?.('failed');
+    return {
+      provider,
+      success: false,
+      scores: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+      latencyMs: 0
+    };
+  }
 }

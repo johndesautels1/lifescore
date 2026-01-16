@@ -18,7 +18,8 @@ import AdvancedVisuals from './components/AdvancedVisuals';
 import {
   EnhancedModeToggle,
   APIKeyModal,
-  EnhancedComparisonContainer
+  EnhancedComparisonContainer,
+  LLMSelector
 } from './components/EnhancedComparison';
 import type { ComparisonResult } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult } from './types/enhancedComparison';
@@ -167,15 +168,33 @@ const App: React.FC = () => {
                 />
               )}
 
-              {/* Enhanced Comparison Running */}
+              {/* Enhanced Comparison - LLM Selector */}
               {enhancedMode && enhancedStatus === 'running' && pendingCities && (
-                <EnhancedComparisonContainer
-                  city1={pendingCities.city1}
-                  city2={pendingCities.city2}
-                  onComplete={handleEnhancedComplete}
-                  demoMode={availableLLMs.length === 0}
-                  dealbreakers={dealbreakers}
-                />
+                <div className="enhanced-comparison-flow">
+                  <div className="comparison-cities-header">
+                    <h2>{pendingCities.city1.split(',')[0]} vs {pendingCities.city2.split(',')[0]}</h2>
+                    <p className="cities-subtitle">Select AI models to evaluate this comparison</p>
+                  </div>
+                  <LLMSelector
+                    city1={pendingCities.city1}
+                    city2={pendingCities.city2}
+                    onResultsUpdate={(_results, judgeResult) => {
+                      if (judgeResult) {
+                        // When judge completes, we can proceed to show results
+                        // For now, just log - will integrate with full results in Phase 2
+                        console.log('Judge result received:', judgeResult);
+                      }
+                    }}
+                    onStatusChange={(status) => {
+                      if (status === 'complete') {
+                        // Trigger full comparison to build final result
+                        // For Phase 1, we show the existing EnhancedComparisonContainer
+                        setEnhancedStatus('complete');
+                      }
+                    }}
+                    demoMode={availableLLMs.length === 0}
+                  />
+                </div>
               )}
 
               {/* Error State */}

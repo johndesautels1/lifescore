@@ -7,7 +7,9 @@ import React, { useState, useEffect } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
-import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison } from '../services/enhancedComparison';
+import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison, getAvailableLLMs } from '../services/enhancedComparison';
+import { runSingleEvaluator, type EvaluatorResult } from '../services/llmEvaluators';
+import { runOpusJudge, buildCategoryConsensuses } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
@@ -127,6 +129,221 @@ const METRIC_ICONS: Record<string, string> = {
 
 const getMetricIcon = (shortName: string): string => {
   return METRIC_ICONS[shortName] || '📊';
+};
+
+// ============================================================================
+// LLM SELECTOR - Progressive Evaluation
+// User selects one LLM at a time, results accumulate
+// ============================================================================
+
+// Evaluator LLMs (not including Opus which is judge-only)
+const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
+
+interface LLMSelectorProps {
+  city1: string;
+  city2: string;
+  onResultsUpdate: (results: Map<LLMProvider, EvaluatorResult>, judgeResult: any | null) => void;
+  onStatusChange: (status: 'idle' | 'running' | 'judging' | 'complete') => void;
+  demoMode?: boolean;
+}
+
+interface LLMButtonState {
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  result?: EvaluatorResult;
+}
+
+export const LLMSelector: React.FC<LLMSelectorProps> = ({
+  city1,
+  city2,
+  onResultsUpdate,
+  onStatusChange,
+  demoMode = false
+}) => {
+  const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
+    new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
+  );
+  const [judgeResult, setJudgeResult] = useState<any | null>(null);
+  const [isJudging, setIsJudging] = useState(false);
+  const apiKeys = getStoredAPIKeys();
+
+  // Count completed LLMs
+  const completedCount = Array.from(llmStates.values()).filter(s => s.status === 'completed').length;
+  const hasEnoughForJudge = completedCount >= 2;
+
+  // Auto-run Opus judge when 2+ LLMs complete
+  useEffect(() => {
+    if (hasEnoughForJudge && !judgeResult && !isJudging) {
+      runJudge();
+    }
+  }, [completedCount]);
+
+  const runJudge = async () => {
+    if (!apiKeys.anthropic || demoMode) return;
+
+    setIsJudging(true);
+    onStatusChange('judging');
+
+    try {
+      // Gather all completed evaluator results
+      const evaluatorResults: EvaluatorResult[] = [];
+      llmStates.forEach((state, _provider) => {
+        if (state.status === 'completed' && state.result) {
+          evaluatorResults.push(state.result);
+        }
+      });
+
+      const result = await runOpusJudge(apiKeys.anthropic, {
+        city1,
+        city2,
+        evaluatorResults
+      });
+
+      setJudgeResult(result);
+      onResultsUpdate(
+        new Map(Array.from(llmStates.entries()).filter(([_, s]) => s.result).map(([k, s]) => [k, s.result!])),
+        result
+      );
+      onStatusChange('complete');
+    } catch (error) {
+      console.error('Judge failed:', error);
+    } finally {
+      setIsJudging(false);
+    }
+  };
+
+  const runLLM = async (provider: LLMProvider) => {
+    // Update state to running
+    setLLMStates(prev => {
+      const next = new Map(prev);
+      next.set(provider, { status: 'running' });
+      return next;
+    });
+    onStatusChange('running');
+
+    if (demoMode) {
+      // Simulate for demo
+      await new Promise(r => setTimeout(r, 1500));
+      setLLMStates(prev => {
+        const next = new Map(prev);
+        next.set(provider, {
+          status: 'completed',
+          result: {
+            provider,
+            success: true,
+            scores: [],
+            latencyMs: 1500
+          }
+        });
+        return next;
+      });
+      return;
+    }
+
+    try {
+      const result = await runSingleEvaluator(
+        provider,
+        city1,
+        city2,
+        ALL_METRICS,
+        apiKeys
+      );
+
+      setLLMStates(prev => {
+        const next = new Map(prev);
+        next.set(provider, {
+          status: result.success ? 'completed' : 'failed',
+          result
+        });
+        return next;
+      });
+
+      // Update parent with current results
+      const currentResults = new Map<LLMProvider, EvaluatorResult>();
+      llmStates.forEach((state, llm) => {
+        if (state.result) currentResults.set(llm, state.result);
+      });
+      if (result.success) currentResults.set(provider, result);
+      onResultsUpdate(currentResults, judgeResult);
+
+    } catch (error) {
+      setLLMStates(prev => {
+        const next = new Map(prev);
+        next.set(provider, { status: 'failed' });
+        return next;
+      });
+    }
+  };
+
+  const isAnyRunning = Array.from(llmStates.values()).some(s => s.status === 'running');
+
+  return (
+    <div className="llm-selector">
+      <div className="llm-selector-header">
+        <h3>Select AI Models to Evaluate</h3>
+        <p className="llm-selector-subtitle">
+          Click each model to run. After 2+ complete, Opus Judge will build consensus.
+        </p>
+      </div>
+
+      <div className="llm-button-grid">
+        {EVALUATOR_LLMS.map(llm => {
+          const config = LLM_CONFIGS[llm];
+          const state = llmStates.get(llm) || { status: 'idle' };
+          const isRunning = state.status === 'running';
+          const isCompleted = state.status === 'completed';
+          const isFailed = state.status === 'failed';
+          const isDisabled = isRunning || isAnyRunning || isJudging;
+
+          return (
+            <button
+              key={llm}
+              className={`llm-btn ${state.status}`}
+              onClick={() => runLLM(llm)}
+              disabled={isDisabled || isCompleted}
+              style={{ '--llm-color': config.color } as React.CSSProperties}
+            >
+              <span className="llm-icon">{config.icon}</span>
+              <span className="llm-name">{config.shortName}</span>
+              <span className="llm-status">
+                {isRunning && <span className="spinner"></span>}
+                {isCompleted && '✓'}
+                {isFailed && '✗'}
+                {state.status === 'idle' && 'Click to run'}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Progress indicator */}
+      <div className="llm-progress">
+        <div className="progress-bar">
+          <div
+            className="progress-fill"
+            style={{ width: `${(completedCount / EVALUATOR_LLMS.length) * 100}%` }}
+          />
+        </div>
+        <span className="progress-text">
+          {completedCount}/{EVALUATOR_LLMS.length} models completed
+          {hasEnoughForJudge && !judgeResult && ' • Ready for Opus Judge'}
+          {isJudging && ' • Opus Judge analyzing...'}
+          {judgeResult && ' • Consensus built!'}
+        </span>
+      </div>
+
+      {/* Judge status */}
+      {hasEnoughForJudge && (
+        <div className={`judge-status ${judgeResult ? 'complete' : isJudging ? 'running' : 'ready'}`}>
+          <span className="judge-icon">🎭</span>
+          <span className="judge-text">
+            {isJudging && 'Claude Opus 4.5 is building consensus...'}
+            {judgeResult && `Consensus complete! Agreement: ${judgeResult.overallAgreement}%`}
+            {!isJudging && !judgeResult && 'Opus Judge will auto-run when ready'}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // ============================================================================
