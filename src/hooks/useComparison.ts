@@ -1,14 +1,24 @@
 /**
  * LIFE SCORE™ Comparison Hook
  * Manages comparison state and API calls - REAL API MODE ONLY
+ *
+ * FIX: Now properly uses API response data to calculate real scores
+ * instead of random/hardcoded values
  */
 
 import { useState, useCallback } from 'react';
-import type { ComparisonState, CategoryId, ComparisonResult } from '../types/metrics';
-import { ALL_METRICS, CATEGORIES } from '../data/metrics';
+import type {
+  ComparisonState,
+  CategoryId,
+  ComparisonResult,
+  MetricScore,
+  CategoryScore,
+  CityScore
+} from '../types/metrics';
+import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../data/metrics';
 
 // ============================================================================
-// HOOK CONFIGURATION
+// TYPES
 // ============================================================================
 
 interface UseComparisonOptions {
@@ -22,6 +32,131 @@ interface UseComparisonReturn {
   loadResult: (result: ComparisonResult) => void;
 }
 
+interface APIEvaluationScore {
+  metricId: string;
+  city1LegalScore: number;
+  city1EnforcementScore: number;
+  city2LegalScore: number;
+  city2EnforcementScore: number;
+  confidence: string;
+  reasoning?: string;
+  sources?: string[];
+}
+
+interface APIEvaluationResponse {
+  provider: string;
+  success: boolean;
+  scores: APIEvaluationScore[];
+  latencyMs: number;
+  error?: string;
+}
+
+// ============================================================================
+// SCORING HELPERS
+// ============================================================================
+
+/**
+ * Calculate weighted average score for a category
+ */
+function calculateCategoryScore(
+  categoryId: CategoryId,
+  metricScores: MetricScore[]
+): CategoryScore {
+  const categoryMetrics = getMetricsByCategory(categoryId);
+
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+  let verifiedCount = 0;
+
+  const metricsForCategory: MetricScore[] = [];
+
+  for (const metricDef of categoryMetrics) {
+    const metricScore = metricScores.find(ms => ms.metricId === metricDef.id);
+
+    if (metricScore) {
+      metricsForCategory.push(metricScore);
+      totalWeightedScore += metricScore.normalizedScore * metricDef.weight;
+      totalWeight += metricDef.weight;
+
+      if (metricScore.confidence !== 'unverified') {
+        verifiedCount++;
+      }
+    } else {
+      // Create placeholder for missing metric with neutral score
+      metricsForCategory.push({
+        metricId: metricDef.id,
+        rawValue: null,
+        normalizedScore: 50, // Neutral score, not 0
+        confidence: 'unverified'
+      });
+      totalWeightedScore += 50 * metricDef.weight;
+      totalWeight += metricDef.weight;
+    }
+  }
+
+  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
+
+  // Get category weight for contribution to total
+  const category = CATEGORIES.find(c => c.id === categoryId);
+  const categoryWeight = category?.weight ?? 0;
+  const weightedScore = (averageScore * categoryWeight) / 100;
+
+  return {
+    categoryId,
+    metrics: metricsForCategory,
+    averageScore: Math.round(averageScore * 10) / 10,
+    weightedScore: Math.round(weightedScore * 10) / 10,
+    verifiedMetrics: verifiedCount,
+    totalMetrics: categoryMetrics.length
+  };
+}
+
+/**
+ * Calculate total city score from all category scores
+ */
+function calculateCityScore(
+  city: string,
+  country: string,
+  metricScores: MetricScore[],
+  region?: string
+): CityScore {
+  const categories: CategoryScore[] = [];
+  let totalScore = 0;
+  let totalVerified = 0;
+  let totalMetrics = 0;
+
+  for (const category of CATEGORIES) {
+    const categoryScore = calculateCategoryScore(category.id, metricScores);
+    categories.push(categoryScore);
+    totalScore += categoryScore.weightedScore;
+    totalVerified += categoryScore.verifiedMetrics;
+    totalMetrics += categoryScore.totalMetrics;
+  }
+
+  // Determine overall confidence
+  const verificationRate = totalMetrics > 0 ? totalVerified / totalMetrics : 0;
+  let overallConfidence: 'high' | 'medium' | 'low';
+  if (verificationRate >= 0.8) {
+    overallConfidence = 'high';
+  } else if (verificationRate >= 0.5) {
+    overallConfidence = 'medium';
+  } else {
+    overallConfidence = 'low';
+  }
+
+  return {
+    city,
+    country,
+    region,
+    categories,
+    totalScore: Math.round(totalScore),
+    normalizedScore: Math.round(totalScore),
+    overallConfidence,
+    comparisonDate: new Date().toISOString(),
+    dataFreshness: 'current'
+  };
+}
+
 // ============================================================================
 // MAIN HOOK - REAL API MODE ONLY
 // ============================================================================
@@ -33,6 +168,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
 
   /**
    * Run comparison between two cities using real LLM APIs
+   * FIX: Now properly collects and uses API response data
    */
   const compare = useCallback(async (city1: string, city2: string) => {
     // Start loading
@@ -46,36 +182,41 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
     });
 
     try {
-      // Call real API through Vercel serverless function
-      const metrics = ALL_METRICS.map(m => ({
-        id: m.id,
-        name: m.name,
-        description: m.description,
-        categoryId: m.categoryId,
-        scoringDirection: m.scoringDirection
-      }));
+      // Collect all metric scores from API responses
+      const city1MetricScores: MetricScore[] = [];
+      const city2MetricScores: MetricScore[] = [];
 
-      // Update progress through categories
+      // Process each category
       for (let i = 0; i < CATEGORIES.length; i++) {
         const category = CATEGORIES[i];
+
         setState(prev => ({
           ...prev,
           progress: {
             currentCategory: category.id as CategoryId,
-            metricsProcessed: i * 17, // ~17 metrics per category
+            metricsProcessed: city1MetricScores.length,
             totalMetrics: ALL_METRICS.length,
             currentMetric: `Evaluating ${category.shortName}...`
           }
         }));
 
-        // Call API for this category's metrics
-        const categoryMetrics = metrics.filter(m => m.categoryId === category.id);
+        // Get metrics for this category
+        const categoryMetrics = ALL_METRICS
+          .filter(m => m.categoryId === category.id)
+          .map(m => ({
+            id: m.id,
+            name: m.name,
+            description: m.description,
+            categoryId: m.categoryId,
+            scoringDirection: m.scoringDirection
+          }));
 
+        // Call API for this category's metrics
         const response = await fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            provider: 'claude-sonnet', // Use Claude Sonnet for standard mode
+            provider: 'claude-sonnet',
             city1,
             city2,
             metrics: categoryMetrics
@@ -84,6 +225,46 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
 
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
+        }
+
+        const apiResponse: APIEvaluationResponse = await response.json();
+
+        // FIX: Actually parse and store the scores from API response
+        if (apiResponse.success && apiResponse.scores) {
+          for (const score of apiResponse.scores) {
+            // Calculate normalized score as average of legal and enforcement
+            const city1NormalizedScore = Math.round(
+              (score.city1LegalScore + score.city1EnforcementScore) / 2
+            );
+            const city2NormalizedScore = Math.round(
+              (score.city2LegalScore + score.city2EnforcementScore) / 2
+            );
+
+            // Map confidence string to type
+            let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'medium';
+            if (score.confidence === 'high') confidence = 'high';
+            else if (score.confidence === 'low') confidence = 'low';
+
+            // City 1 score
+            city1MetricScores.push({
+              metricId: score.metricId,
+              rawValue: score.city1LegalScore,
+              normalizedScore: city1NormalizedScore,
+              confidence,
+              source: 'LLM Evaluation',
+              notes: score.reasoning
+            });
+
+            // City 2 score
+            city2MetricScores.push({
+              metricId: score.metricId,
+              rawValue: score.city2LegalScore,
+              normalizedScore: city2NormalizedScore,
+              confidence,
+              source: 'LLM Evaluation',
+              notes: score.reasoning
+            });
+          }
         }
       }
 
@@ -98,46 +279,59 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         }
       }));
 
-      // Build result from API responses
-      // For standard mode, we create a simplified result
+      // Parse city names
+      const city1Parts = city1.split(',').map(s => s.trim());
+      const city2Parts = city2.split(',').map(s => s.trim());
+
+      const city1Name = city1Parts[0];
+      const city1Country = city1Parts[city1Parts.length - 1] || 'Unknown';
+      const city1Region = city1Parts.length > 2 ? city1Parts[1] : undefined;
+
+      const city2Name = city2Parts[0];
+      const city2Country = city2Parts[city2Parts.length - 1] || 'Unknown';
+      const city2Region = city2Parts.length > 2 ? city2Parts[1] : undefined;
+
+      // FIX: Calculate real scores from collected API data
+      const city1Score = calculateCityScore(city1Name, city1Country, city1MetricScores, city1Region);
+      const city2Score = calculateCityScore(city2Name, city2Country, city2MetricScores, city2Region);
+
+      // Determine winner
+      const scoreDifference = Math.abs(city1Score.totalScore - city2Score.totalScore);
+      let winner: 'city1' | 'city2' | 'tie';
+      if (scoreDifference < 1) {
+        winner = 'tie';
+      } else if (city1Score.totalScore > city2Score.totalScore) {
+        winner = 'city1';
+      } else {
+        winner = 'city2';
+      }
+
+      // Determine category winners
+      const categoryWinners: Record<CategoryId, 'city1' | 'city2' | 'tie'> = {} as Record<CategoryId, 'city1' | 'city2' | 'tie'>;
+
+      for (const category of CATEGORIES) {
+        const cat1 = city1Score.categories.find(c => c.categoryId === category.id);
+        const cat2 = city2Score.categories.find(c => c.categoryId === category.id);
+
+        const score1 = cat1?.averageScore ?? 0;
+        const score2 = cat2?.averageScore ?? 0;
+
+        if (Math.abs(score1 - score2) < 2) {
+          categoryWinners[category.id] = 'tie';
+        } else if (score1 > score2) {
+          categoryWinners[category.id] = 'city1';
+        } else {
+          categoryWinners[category.id] = 'city2';
+        }
+      }
+
+      // Build final result with real scores
       const result: ComparisonResult = {
-        city1: {
-          city: city1.split(',')[0].trim(),
-          country: city1.split(',').pop()?.trim() || 'Unknown',
-          categories: CATEGORIES.map(cat => ({
-            categoryId: cat.id as CategoryId,
-            metrics: [],
-            averageScore: 65 + Math.random() * 20,
-            weightedScore: (65 + Math.random() * 20) * (cat.weight / 100),
-            verifiedMetrics: cat.metricCount,
-            totalMetrics: cat.metricCount
-          })),
-          totalScore: 70,
-          normalizedScore: 70,
-          overallConfidence: 'high' as const,
-          comparisonDate: new Date().toISOString(),
-          dataFreshness: 'current' as const
-        },
-        city2: {
-          city: city2.split(',')[0].trim(),
-          country: city2.split(',').pop()?.trim() || 'Unknown',
-          categories: CATEGORIES.map(cat => ({
-            categoryId: cat.id as CategoryId,
-            metrics: [],
-            averageScore: 65 + Math.random() * 20,
-            weightedScore: (65 + Math.random() * 20) * (cat.weight / 100),
-            verifiedMetrics: cat.metricCount,
-            totalMetrics: cat.metricCount
-          })),
-          totalScore: 68,
-          normalizedScore: 68,
-          overallConfidence: 'high' as const,
-          comparisonDate: new Date().toISOString(),
-          dataFreshness: 'current' as const
-        },
-        winner: 'city1',
-        scoreDifference: 2,
-        categoryWinners: {} as Record<CategoryId, 'city1' | 'city2' | 'tie'>,
+        city1: city1Score,
+        city2: city2Score,
+        winner,
+        scoreDifference: Math.round(scoreDifference),
+        categoryWinners,
         comparisonId: `LIFE-STD-${Date.now().toString(36).toUpperCase()}`,
         generatedAt: new Date().toISOString()
       };

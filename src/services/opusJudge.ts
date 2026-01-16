@@ -409,13 +409,24 @@ export function buildCategoryConsensuses(
       return metric?.categoryId === category.id;
     });
 
-    const avgScore = categoryMetrics.length > 0
-      ? categoryMetrics.reduce((sum, m) => sum + m.consensusScore, 0) / categoryMetrics.length
-      : 0;
+    // FIX: Apply metric weights when calculating category average
+    // Each metric has a weight (1-10) defined in metrics.ts
+    let totalWeightedScore = 0;
+    let totalWeight = 0;
+    let totalWeightedStdDev = 0;
 
-    const avgStdDev = categoryMetrics.length > 0
-      ? categoryMetrics.reduce((sum, m) => sum + m.standardDeviation, 0) / categoryMetrics.length
-      : 50;
+    categoryMetrics.forEach(m => {
+      const metricDef = ALL_METRICS.find(am => am.id === m.metricId);
+      const weight = metricDef?.weight || 1;
+      totalWeightedScore += m.consensusScore * weight;
+      totalWeightedStdDev += m.standardDeviation * weight;
+      totalWeight += weight;
+    });
+
+    // FIX: Return neutral score (50) for empty categories, not 0
+    // This prevents entire categories from dragging down scores when data is missing
+    const avgScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
+    const avgStdDev = totalWeight > 0 ? totalWeightedStdDev / totalWeight : 25;
 
     return {
       categoryId: category.id as CategoryId,

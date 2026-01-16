@@ -1,14 +1,31 @@
 /**
  * LIFE SCORE™ Opus Judge API
  * Vercel Serverless Function - Claude Opus 4.5 consensus builder
+ *
+ * FIX: Now properly computes consensus scores from evaluator results
+ * instead of returning empty arrays
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface LLMMetricScore {
+  metricId: string;
+  normalizedScore: number;
+  legalScore?: number;
+  enforcementScore?: number;
+  confidence?: string;
+  llmProvider?: string;
+  city?: 'city1' | 'city2';
+}
+
 interface EvaluatorResult {
   provider: string;
   success: boolean;
-  scores: any[];
+  scores: LLMMetricScore[];
   latencyMs: number;
   error?: string;
 }
@@ -19,38 +36,170 @@ interface JudgeRequest {
   evaluatorResults: EvaluatorResult[];
 }
 
+interface MetricConsensus {
+  metricId: string;
+  llmScores: LLMMetricScore[];
+  consensusScore: number;
+  legalScore: number;
+  enforcementScore: number;
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
+  standardDeviation: number;
+  judgeExplanation: string;
+}
+
 interface JudgeOutput {
-  city1Consensuses: any[];
-  city2Consensuses: any[];
+  city1Consensuses: MetricConsensus[];
+  city2Consensuses: MetricConsensus[];
   overallAgreement: number;
   disagreementAreas: string[];
   judgeLatencyMs: number;
 }
 
-const JUDGE_PROMPT = `You are Claude Opus 4.5, serving as the final judge for LIFE SCORE™ city comparisons.
+// ============================================================================
+// STATISTICAL FUNCTIONS
+// ============================================================================
 
-## YOUR ROLE
-Review evaluations from multiple AI models and build the final consensus scores.
+function calculateMean(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
 
-## EVALUATIONS
-{{EVALUATIONS}}
+function calculateStdDev(values: number[]): number {
+  if (values.length < 2) return 0;
+  const mean = calculateMean(values);
+  const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
+  return Math.sqrt(squaredDiffs.reduce((a, b) => a + b, 0) / values.length);
+}
 
-## CITIES
-- City 1: {{CITY1}}
-- City 2: {{CITY2}}
+function calculateMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
 
-## TASK
-Analyze the evaluator scores and provide:
-1. Overall agreement level (0-100%)
-2. Top disagreement areas
-3. Final verdict
+// ============================================================================
+// CONSENSUS BUILDING
+// ============================================================================
 
-Return JSON:
-{
-  "overallAgreement": 85,
-  "disagreementAreas": ["metric1", "metric2"],
-  "verdict": "City 1 scores higher on personal freedom..."
-}`;
+function buildMetricConsensus(
+  metricId: string,
+  scores: LLMMetricScore[]
+): MetricConsensus {
+  if (scores.length === 0) {
+    return {
+      metricId,
+      llmScores: [],
+      consensusScore: 50,
+      legalScore: 50,
+      enforcementScore: 50,
+      confidenceLevel: 'split',
+      standardDeviation: 0,
+      judgeExplanation: 'No LLM evaluations available for this metric'
+    };
+  }
+
+  const normalizedScores = scores.map(s => s.normalizedScore);
+  const legalScores = scores.map(s => s.legalScore ?? s.normalizedScore);
+  const enforcementScores = scores.map(s => s.enforcementScore ?? s.normalizedScore);
+
+  const median = calculateMedian(normalizedScores);
+  const stdDev = calculateStdDev(normalizedScores);
+
+  const consensusScore = Math.round(median);
+  const legalScore = Math.round(calculateMedian(legalScores));
+  const enforcementScore = Math.round(calculateMedian(enforcementScores));
+
+  let confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
+  if (stdDev < 5) {
+    confidenceLevel = 'unanimous';
+  } else if (stdDev < 12) {
+    confidenceLevel = 'strong';
+  } else if (stdDev < 20) {
+    confidenceLevel = 'moderate';
+  } else {
+    confidenceLevel = 'split';
+  }
+
+  const providers = scores.map(s => s.llmProvider).filter(Boolean);
+  const uniqueProviders = [...new Set(providers)];
+
+  let explanation = `Consensus from ${uniqueProviders.length} LLM${uniqueProviders.length > 1 ? 's' : ''}: `;
+  if (confidenceLevel === 'unanimous') {
+    explanation += `Strong agreement (σ=${stdDev.toFixed(1)}).`;
+  } else if (confidenceLevel === 'strong') {
+    explanation += `Good agreement (σ=${stdDev.toFixed(1)}).`;
+  } else if (confidenceLevel === 'moderate') {
+    explanation += `Some disagreement (σ=${stdDev.toFixed(1)}).`;
+  } else {
+    explanation += `Significant disagreement (σ=${stdDev.toFixed(1)}).`;
+  }
+
+  return {
+    metricId,
+    llmScores: scores,
+    consensusScore,
+    legalScore,
+    enforcementScore,
+    confidenceLevel,
+    standardDeviation: Math.round(stdDev * 10) / 10,
+    judgeExplanation: explanation
+  };
+}
+
+function aggregateAndBuildConsensuses(
+  evaluatorResults: EvaluatorResult[]
+): { city1Consensuses: MetricConsensus[]; city2Consensuses: MetricConsensus[]; disagreementMetrics: string[] } {
+  // Aggregate scores by metric and city
+  const city1ByMetric = new Map<string, LLMMetricScore[]>();
+  const city2ByMetric = new Map<string, LLMMetricScore[]>();
+
+  evaluatorResults.forEach(result => {
+    if (!result.success) return;
+
+    result.scores.forEach(score => {
+      if (score.city === 'city1') {
+        const existing = city1ByMetric.get(score.metricId) || [];
+        existing.push(score);
+        city1ByMetric.set(score.metricId, existing);
+      } else if (score.city === 'city2') {
+        const existing = city2ByMetric.get(score.metricId) || [];
+        existing.push(score);
+        city2ByMetric.set(score.metricId, existing);
+      }
+    });
+  });
+
+  // Build consensuses
+  const city1Consensuses: MetricConsensus[] = [];
+  const city2Consensuses: MetricConsensus[] = [];
+  const disagreementMetrics: string[] = [];
+
+  // Get all unique metric IDs
+  const allMetricIds = new Set([...city1ByMetric.keys(), ...city2ByMetric.keys()]);
+
+  allMetricIds.forEach(metricId => {
+    const c1Scores = city1ByMetric.get(metricId) || [];
+    const c2Scores = city2ByMetric.get(metricId) || [];
+
+    const c1Consensus = buildMetricConsensus(metricId, c1Scores);
+    const c2Consensus = buildMetricConsensus(metricId, c2Scores);
+
+    city1Consensuses.push(c1Consensus);
+    city2Consensuses.push(c2Consensus);
+
+    // Track high disagreement
+    if (c1Consensus.standardDeviation > 15 || c2Consensus.standardDeviation > 15) {
+      disagreementMetrics.push(metricId);
+    }
+  });
+
+  return { city1Consensuses, city2Consensuses, disagreementMetrics };
+}
+
+// ============================================================================
+// MAIN HANDLER
+// ============================================================================
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
@@ -66,97 +215,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { city1, city2, evaluatorResults } = req.body as JudgeRequest;
+  const { evaluatorResults } = req.body as JudgeRequest;
   const startTime = Date.now();
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    // Return basic consensus without Opus if no key
-    const output: JudgeOutput = {
-      city1Consensuses: [],
-      city2Consensuses: [],
-      overallAgreement: 75,
-      disagreementAreas: [],
-      judgeLatencyMs: Date.now() - startTime
-    };
-    return res.status(200).json(output);
-  }
+  // FIX: Actually compute consensus scores from evaluator results
+  const { city1Consensuses, city2Consensuses, disagreementMetrics } =
+    aggregateAndBuildConsensuses(evaluatorResults || []);
 
-  try {
-    // Build evaluation summary
-    const evalSummary = evaluatorResults
-      .filter(r => r.success)
-      .map(r => `${r.provider}: ${r.scores.length} scores evaluated`)
-      .join('\n');
+  // Calculate overall agreement from standard deviations
+  const allStdDevs = [...city1Consensuses, ...city2Consensuses].map(c => c.standardDeviation);
+  const avgStdDev = allStdDevs.length > 0 ? calculateMean(allStdDevs) : 25;
+  const overallAgreement = Math.max(0, Math.min(100, Math.round(100 - avgStdDev * 2)));
 
-    const prompt = JUDGE_PROMPT
-      .replace('{{EVALUATIONS}}', evalSummary || 'No evaluations available')
-      .replace('{{CITY1}}', city1)
-      .replace('{{CITY2}}', city2);
+  const output: JudgeOutput = {
+    city1Consensuses,
+    city2Consensuses,
+    overallAgreement,
+    disagreementAreas: disagreementMetrics.slice(0, 5),
+    judgeLatencyMs: Date.now() - startTime
+  };
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5-20251101',
-        max_tokens: 8192,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      console.error('Opus API error:', await response.text());
-      // Return basic result on error
-      const output: JudgeOutput = {
-        city1Consensuses: [],
-        city2Consensuses: [],
-        overallAgreement: 70,
-        disagreementAreas: [],
-        judgeLatencyMs: Date.now() - startTime
-      };
-      return res.status(200).json(output);
-    }
-
-    const data = await response.json();
-    const content = data.content[0].text;
-
-    // Parse Opus response
-    let overallAgreement = 80;
-    let disagreementAreas: string[] = [];
-
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        overallAgreement = parsed.overallAgreement || 80;
-        disagreementAreas = parsed.disagreementAreas || [];
-      }
-    } catch {
-      // Use defaults if parsing fails
-    }
-
-    const output: JudgeOutput = {
-      city1Consensuses: [],
-      city2Consensuses: [],
-      overallAgreement,
-      disagreementAreas,
-      judgeLatencyMs: Date.now() - startTime
-    };
-
-    return res.status(200).json(output);
-  } catch (error) {
-    console.error('Judge error:', error);
-    const output: JudgeOutput = {
-      city1Consensuses: [],
-      city2Consensuses: [],
-      overallAgreement: 65,
-      disagreementAreas: [],
-      judgeLatencyMs: Date.now() - startTime
-    };
-    return res.status(200).json(output);
-  }
+  return res.status(200).json(output);
 }

@@ -110,27 +110,32 @@ export function calculateCategoryScore(
 
   for (const metricDef of categoryMetrics) {
     const metricScore = metricScores.find(ms => ms.metricId === metricDef.id);
-    
+
     if (metricScore) {
       metricsForCategory.push(metricScore);
       totalWeightedScore += metricScore.normalizedScore * metricDef.weight;
       totalWeight += metricDef.weight;
-      
+
       if (metricScore.confidence !== 'unverified') {
         verifiedCount++;
       }
     } else {
-      // Create placeholder for missing metric
+      // FIX: Create placeholder for missing metric with NEUTRAL score (50), not 0
+      // This prevents missing metrics from unfairly dragging down scores
       metricsForCategory.push({
         metricId: metricDef.id,
         rawValue: null,
-        normalizedScore: 0,
+        normalizedScore: 50, // Neutral score instead of 0
         confidence: 'unverified'
       });
+      // FIX: Include placeholder in weighted calculation with neutral score
+      totalWeightedScore += 50 * metricDef.weight;
+      totalWeight += metricDef.weight;
     }
   }
 
-  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+  // FIX: Return neutral score (50) when no weights, not 0
+  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
   
   // Get category weight for contribution to total
   const category = CATEGORIES.find(c => c.id === categoryId);
@@ -269,10 +274,13 @@ export function parseAPIResponse(
   const metric = METRICS_MAP[metricId];
   
   if (!metric) {
+    // FIX: Return neutral score (50) for unknown metrics, not 0
+    // This prevents unknown metrics from unfairly penalizing scores
+    console.warn(`Unknown metric ID: ${metricId}`);
     return {
       metricId,
       rawValue: null,
-      normalizedScore: 0,
+      normalizedScore: 50, // Neutral score instead of 0
       confidence: 'unverified',
       notes: 'Unknown metric'
     };
