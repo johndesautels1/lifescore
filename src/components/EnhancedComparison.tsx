@@ -603,6 +603,7 @@ interface EnhancedResultsProps {
 // Helper to calculate top metric differences
 interface MetricDifference {
   metricId: string;
+  name: string;
   shortName: string;
   icon: string;
   city1Score: number;
@@ -622,13 +623,15 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
       const metric2 = city2Cat.metrics[metricIndex];
       if (!metric2) return;
 
-      // Look up the actual metric definition to get the real shortName
+      // Look up the actual metric definition to get the real name
       const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
+      const name = metricDef?.name || metric1.metricId;
       const shortName = metricDef?.shortName || metric1.metricId;
 
       const diff = Math.abs(metric1.consensusScore - metric2.consensusScore);
       differences.push({
         metricId: metric1.metricId,
+        name: name,
         shortName: shortName,
         icon: getMetricIcon(shortName),
         city1Score: metric1.consensusScore,
@@ -918,7 +921,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     <div className="diff-rank">#{index + 1}</div>
                     <div className="diff-metric">
                       <span className="diff-icon">{diff.icon}</span>
-                      <span className="diff-name">{diff.shortName}</span>
+                      <span className="diff-name">{diff.name}</span>
                     </div>
                     <div className="diff-scores">
                       <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
@@ -936,6 +939,16 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                   </div>
                 );
               })}
+            </div>
+
+            {/* Score Legend */}
+            <div className="score-legend">
+              <span className="legend-title">Score Guide:</span>
+              <span className="legend-item legend-excellent">90-100 Very Free</span>
+              <span className="legend-item legend-good">70-89 Generally Free</span>
+              <span className="legend-item legend-moderate">50-69 Moderate</span>
+              <span className="legend-item legend-restricted">30-49 Restricted</span>
+              <span className="legend-item legend-poor">0-29 Very Restricted</span>
             </div>
           </>
         )}
