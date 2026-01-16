@@ -167,7 +167,16 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 - ✅ **Phase 3 Progressive Judging** complete - Opus re-judges as LLMs finish
 - ✅ All 5 phases complete!
 
-### Recent Updates (This Session)
+### Recent Updates (January 16, 2026 Session)
+| Commit | Description |
+|--------|-------------|
+| `e453046` | **FIX: Anthropic 404** - Updated API version header from 2023-06-01 to 2025-01-01 |
+| `7461241` | **FIX: LLM buttons not firing** - Removed client-side API key validation (keys are in Vercel env vars) |
+| `eb045fd` | **FIX: Silent failure UX** - Added clear messaging for users to click LLM buttons |
+| `d8121fc` | **FIX: handleSubmit** - Accept both FormEvent and MouseEvent for button click |
+| `3822fac` | **UI: Move buttons** - Compare LIFE SCORES button and Share Link moved below Dealbreakers |
+
+### Previous Session Updates
 | Commit | Description |
 |--------|-------------|
 | `6caf460` | Fix 12 Codex CLI audit: field IDs, data flow, LLM call logic |
@@ -179,6 +188,78 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 | `80f1eb1` | Fix TypeScript and ESLint errors in GPT-5.2 implementation |
 | `8337811` | Replace GPT-4o with GPT-5.2 using new responses API |
 | `ca7beb9` | Fix LLM prompt issues, standardize system messages |
+
+---
+
+## AGENT HANDOFF DOCUMENT
+
+### Current Status (January 16, 2026)
+**BLOCKING ISSUE:** LLM API calls may still be failing. Need to test each LLM button individually.
+
+### What Was Fixed This Session
+1. **Anthropic 404 Error** - The `anthropic-version` header was set to `2023-06-01` which couldn't access Claude 4.5 models. Updated to `2025-01-01` in both `api/evaluate.ts` and `api/judge.ts`.
+
+2. **LLM Buttons Not Firing** - `runSingleEvaluatorBatched()` in `src/services/llmEvaluators.ts` was checking for API keys in localStorage, but keys are stored in Vercel environment variables. Removed client-side validation.
+
+3. **Silent Failure UX** - Users didn't realize they needed to click LLM buttons after clicking "Compare". Updated button text and added clear instructions.
+
+### Files Modified This Session
+- `api/evaluate.ts` - Anthropic API version header fix
+- `api/judge.ts` - Anthropic API version header fix
+- `src/services/llmEvaluators.ts` - Removed client-side API key validation
+- `src/components/EnhancedComparison.tsx` - UX messaging improvements
+- `src/components/CitySelector.tsx` - Added `enhancedWaiting` prop, button text updates
+- `src/App.tsx` - Pass `enhancedWaiting` prop to CitySelector
+
+### Known Issues / Next Steps
+1. **TEST ALL 5 LLMs** - Click each LLM button individually and check Vercel logs for errors:
+   - Claude Sonnet 4.5 (`claude-sonnet-4-5-20250514`) - uses Tavily for web search
+   - GPT-5.2 (`gpt-5.2`) - uses `/v1/responses` API with built-in web_search
+   - Gemini 3 Pro (`gemini-3-pro`) - uses Google Search grounding
+   - Grok 4 (`grok-4`) - uses `search: true` parameter
+   - Perplexity (`sonar-reasoning-pro`) - uses `return_citations: true`
+
+2. **API Version Headers** - Only Anthropic uses version headers. Other APIs (OpenAI, Google, xAI, Perplexity) use URL versioning or are backward compatible.
+
+3. **Vercel Environment Variables Required:**
+   ```
+   ANTHROPIC_API_KEY    # Claude Sonnet & Opus
+   OPENAI_API_KEY       # GPT-5.2
+   GOOGLE_API_KEY       # Gemini 3 Pro
+   XAI_API_KEY          # Grok 4
+   PERPLEXITY_API_KEY   # Perplexity Sonar
+   TAVILY_API_KEY       # Web search for Claude
+   ```
+
+### Data Flow Architecture
+```
+User clicks "Compare LIFE SCORES"
+    ↓
+App.tsx sets enhancedStatus='running', pendingCities={city1, city2}
+    ↓
+LLMSelector renders with 5 LLM buttons
+    ↓
+User clicks LLM button (e.g., Claude)
+    ↓
+runLLM() → runSingleEvaluatorBatched() [src/services/llmEvaluators.ts]
+    ↓
+evaluateCategoryBatch() calls POST /api/evaluate with {provider, city1, city2, metrics}
+    ↓
+api/evaluate.ts routes to correct LLM function based on provider
+    ↓
+LLM returns scores → parsed → returned to client
+    ↓
+After 2+ LLMs complete → auto-triggers POST /api/judge
+    ↓
+Opus builds consensus → results displayed
+```
+
+### Naming Conventions (NOT a bug)
+- `metro1`/`metro2` - Internal Metro objects in CitySelector.tsx only
+- `city1`/`city2` - String values and field names everywhere else
+- `cityA`/`cityB` - URL parameter names only
+
+---
 
 ## License
 
