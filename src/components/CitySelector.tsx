@@ -278,38 +278,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
           />
         </div>
 
-        <div className="compare-actions">
-          <button
-            type="submit"
-            className="btn btn-primary btn-compare"
-            disabled={isLoading || !metro1 || !metro2}
-          >
-            {isLoading ? (
-              <>
-                <span className="btn-spinner"></span>
-                Analyzing 100 Metrics...
-              </>
-            ) : (
-              <>🔍 Compare LIFE SCORES</>
-            )}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-share"
-            onClick={handleCopyShareLink}
-            title="Copy shareable link"
-          >
-            {showShareCopied ? '✓ Copied!' : '🔗 Share Link'}
-          </button>
-        </div>
       </form>
-
-      <p className="info-text">
-        Analysis uses Multiple LLMs with our proprietary weighted average LIFE score technology to verify all 100 legal freedom metrics.
-        <br />
-        <span className="info-highlight">No fabricated data - only verified facts.</span>
-      </p>
 
       <div className="popular-section">
         <h3>Popular Comparisons</h3>
@@ -337,6 +306,40 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
       {onDealbreakersChange && (
         <DealbreakersPanel onDealbreakersChange={onDealbreakersChange} />
       )}
+
+      {/* Compare Actions - Moved below Dealbreakers */}
+      <div className="compare-actions bottom-actions">
+        <button
+          type="button"
+          className="btn btn-primary btn-compare"
+          disabled={isLoading || !metro1 || !metro2}
+          onClick={handleSubmit}
+        >
+          {isLoading ? (
+            <>
+              <span className="btn-spinner"></span>
+              Analyzing 100 Metrics...
+            </>
+          ) : (
+            <>🔍 Compare LIFE SCORES</>
+          )}
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-share"
+          onClick={handleCopyShareLink}
+          title="Copy shareable link"
+        >
+          {showShareCopied ? '✓ Copied!' : '🔗 Share Link'}
+        </button>
+      </div>
+
+      <p className="info-text bottom-info">
+        Analysis uses Multiple LLMs with our proprietary weighted average LIFE score technology to verify all 100 legal freedom metrics.
+        <br />
+        <span className="info-highlight">No fabricated data - only verified facts.</span>
+      </p>
     </div>
   );
 };
