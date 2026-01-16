@@ -213,7 +213,7 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2025-01-01'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250514',
