@@ -987,32 +987,13 @@ export async function runSingleEvaluatorBatched(
   provider: LLMProvider,
   city1: string,
   city2: string,
-  apiKeys: LLMAPIKeys & { tavily?: string },
+  _apiKeys: LLMAPIKeys & { tavily?: string }, // Keys are in Vercel env vars, not used client-side
   onCategoryProgress?: (progress: CategoryBatchProgress[]) => void
 ): Promise<BatchedEvaluatorResult> {
   const startTime = Date.now();
 
-  // Validate API key for provider
-  const keyMap: Record<LLMProvider, keyof LLMAPIKeys> = {
-    'claude-opus': 'anthropic',
-    'claude-sonnet': 'anthropic',
-    'gpt-5.2': 'openai',
-    'gemini-3-pro': 'google',
-    'grok-4': 'xai',
-    'perplexity': 'perplexity'
-  };
-
-  const requiredKey = keyMap[provider];
-  if (!apiKeys[requiredKey]) {
-    return {
-      provider,
-      success: false,
-      scores: [],
-      error: `${provider} API key not configured`,
-      latencyMs: 0,
-      categoryResults: new Map()
-    };
-  }
+  // NOTE: API keys are stored in Vercel environment variables on the server
+  // The /api/evaluate endpoint has access to them, so we don't validate client-side
 
   // Initialize progress for all 6 categories
   const progressState: CategoryBatchProgress[] = CATEGORIES.map(cat => ({
