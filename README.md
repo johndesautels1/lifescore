@@ -170,7 +170,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 ### Recent Updates (January 16, 2026 Session)
 | Commit | Description |
 |--------|-------------|
-| `e453046` | **FIX: Anthropic 404** - Updated API version header from 2023-06-01 to 2025-01-01 |
+| `e453046` | **FIX: Anthropic 404** - API version header (note: correct version is `2023-06-01`) |
 | `7461241` | **FIX: LLM buttons not firing** - Removed client-side API key validation (keys are in Vercel env vars) |
 | `eb045fd` | **FIX: Silent failure UX** - Added clear messaging for users to click LLM buttons |
 | `d8121fc` | **FIX: handleSubmit** - Accept both FormEvent and MouseEvent for button click |
