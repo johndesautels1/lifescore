@@ -99,7 +99,7 @@
   color: #fb923c;
 }
 
-[data-theme="dark"] .demo-badge {
+[data-theme="dark"] .live-badge {
   background: rgba(251, 191, 36, 0.9);
   color: #1e293b;
 }

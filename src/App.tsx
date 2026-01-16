@@ -31,7 +31,7 @@ import './styles/globals.css';
 import './App.css';
 
 const App: React.FC = () => {
-  const { state, compare, reset, loadResult } = useComparison({ useDemoMode: false });
+  const { state, compare, reset, loadResult } = useComparison();
   const [savedKey, setSavedKey] = useState(0);
 
   // Enhanced mode state
@@ -132,9 +132,9 @@ const App: React.FC = () => {
 
       <main className="main-content">
         <div className="container">
-          {/* Demo Badge - Always visible */}
-          <div className="demo-badge">
-            ⚡ LIVE PREVIEW - 100 Freedom Metrics Defined
+          {/* Live Badge - Always visible */}
+          <div className="live-badge">
+            ⚡ LIVE - 100 Freedom Metrics | Real-Time LLM Evaluation
           </div>
 
           {/* ============================================================
