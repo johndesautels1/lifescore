@@ -58,6 +58,7 @@ function aggregateScoresByMetric(
 
   // Aggregate scores from all evaluators
   // FIX: Removed unnecessary type casts - LLMMetricScore already has city field
+  // FIX: Added LLM deduplication - same LLM shouldn't be counted twice per metric
   evaluatorResults.forEach(result => {
     if (!result.success) return;
 
@@ -66,9 +67,17 @@ function aggregateScoresByMetric(
       if (!agg) return;
 
       if (score.city === 'city1') {
-        agg.city1Scores.push(score);
+        // FIX: Check if this LLM already contributed to this metric
+        const alreadyHasLLM = agg.city1Scores.some(s => s.llmProvider === score.llmProvider);
+        if (!alreadyHasLLM) {
+          agg.city1Scores.push(score);
+        }
       } else if (score.city === 'city2') {
-        agg.city2Scores.push(score);
+        // FIX: Check if this LLM already contributed to this metric
+        const alreadyHasLLM = agg.city2Scores.some(s => s.llmProvider === score.llmProvider);
+        if (!alreadyHasLLM) {
+          agg.city2Scores.push(score);
+        }
       }
     });
   });
@@ -361,8 +370,21 @@ function parseOpusResponse(response: string): OpusResponse | null {
         jsonStr = rawMatch[0];
       }
     }
-    return JSON.parse(jsonStr);
-  } catch {
+    const parsed = JSON.parse(jsonStr);
+    // FIX: Validate required structure
+    if (typeof parsed !== 'object' || parsed === null) {
+      console.error('opusJudge: Parsed response is not an object');
+      return null;
+    }
+    if (!Array.isArray(parsed.judgments)) {
+      console.error('opusJudge: Response missing judgments array');
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    // FIX: Log parse errors instead of silent failure
+    console.error('opusJudge: Failed to parse Opus response:', error);
+    console.error('opusJudge: Raw response (first 500 chars):', response.slice(0, 500));
     return null;
   }
 }
@@ -372,24 +394,30 @@ function mergeOpusJudgments(
   city2Consensuses: MetricConsensus[],
   opusResponse: OpusResponse
 ): void {
+  // FIX: Validate score ranges and handle missing fields
+  const clampScore = (score: number | undefined, fallback: number): number => {
+    if (typeof score !== 'number' || isNaN(score)) return fallback;
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
+
   opusResponse.judgments.forEach(judgment => {
     const c1 = city1Consensuses.find(c => c.metricId === judgment.metricId);
     const c2 = city2Consensuses.find(c => c.metricId === judgment.metricId);
 
     if (c1) {
-      c1.consensusScore = judgment.city1ConsensusScore;
-      c1.legalScore = judgment.city1LegalScore;
-      c1.enforcementScore = judgment.city1EnforcementScore;
-      c1.confidenceLevel = judgment.confidence;
-      c1.judgeExplanation = judgment.explanation;
+      c1.consensusScore = clampScore(judgment.city1ConsensusScore, c1.consensusScore);
+      c1.legalScore = clampScore(judgment.city1LegalScore, c1.legalScore);
+      c1.enforcementScore = clampScore(judgment.city1EnforcementScore, c1.enforcementScore);
+      c1.confidenceLevel = judgment.confidence || c1.confidenceLevel;
+      c1.judgeExplanation = judgment.explanation || c1.judgeExplanation;
     }
 
     if (c2) {
-      c2.consensusScore = judgment.city2ConsensusScore;
-      c2.legalScore = judgment.city2LegalScore;
-      c2.enforcementScore = judgment.city2EnforcementScore;
-      c2.confidenceLevel = judgment.confidence;
-      c2.judgeExplanation = judgment.explanation;
+      c2.consensusScore = clampScore(judgment.city2ConsensusScore, c2.consensusScore);
+      c2.legalScore = clampScore(judgment.city2LegalScore, c2.legalScore);
+      c2.enforcementScore = clampScore(judgment.city2EnforcementScore, c2.enforcementScore);
+      c2.confidenceLevel = judgment.confidence || c2.confidenceLevel;
+      c2.judgeExplanation = judgment.explanation || c2.judgeExplanation;
     }
   });
 }

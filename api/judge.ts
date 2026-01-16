@@ -3,7 +3,8 @@
  * Vercel Serverless Function - Claude Opus 4.5 consensus builder
  *
  * FIX: Now properly computes consensus scores from evaluator results
- * instead of returning empty arrays
+ * FIX: Now actually calls Opus API for enhanced judging (not just statistical)
+ * FIX: Uses city1/city2 from request for Opus prompt
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -13,6 +14,20 @@ import {
   isDisagreementArea,
   type ConfidenceLevel
 } from '../src/constants/scoringThresholds';
+
+// Opus API types
+interface OpusJudgment {
+  metricId: string;
+  city1ConsensusScore: number;
+  city2ConsensusScore: number;
+  confidence: 'unanimous' | 'strong' | 'moderate' | 'split';
+  explanation: string;
+}
+
+interface OpusResponse {
+  judgments?: OpusJudgment[];
+  disagreementAreas?: string[];
+}
 
 // ============================================================================
 // TYPES
@@ -149,6 +164,7 @@ function aggregateAndBuildConsensuses(
   evaluatorResults: EvaluatorResult[]
 ): { city1Consensuses: MetricConsensus[]; city2Consensuses: MetricConsensus[]; disagreementMetrics: string[] } {
   // Aggregate scores by metric and city
+  // FIX: Added LLM deduplication - same LLM shouldn't be counted twice per metric
   const city1ByMetric = new Map<string, LLMMetricScore[]>();
   const city2ByMetric = new Map<string, LLMMetricScore[]>();
 
@@ -158,12 +174,20 @@ function aggregateAndBuildConsensuses(
     result.scores.forEach(score => {
       if (score.city === 'city1') {
         const existing = city1ByMetric.get(score.metricId) || [];
-        existing.push(score);
-        city1ByMetric.set(score.metricId, existing);
+        // FIX: Check if this LLM already contributed to this metric
+        const alreadyHasLLM = existing.some(s => s.llmProvider === score.llmProvider);
+        if (!alreadyHasLLM) {
+          existing.push(score);
+          city1ByMetric.set(score.metricId, existing);
+        }
       } else if (score.city === 'city2') {
         const existing = city2ByMetric.get(score.metricId) || [];
-        existing.push(score);
-        city2ByMetric.set(score.metricId, existing);
+        // FIX: Check if this LLM already contributed to this metric
+        const alreadyHasLLM = existing.some(s => s.llmProvider === score.llmProvider);
+        if (!alreadyHasLLM) {
+          existing.push(score);
+          city2ByMetric.set(score.metricId, existing);
+        }
       }
     });
   });
@@ -196,6 +220,106 @@ function aggregateAndBuildConsensuses(
 }
 
 // ============================================================================
+// OPUS API CALL HELPERS
+// ============================================================================
+
+function buildOpusPrompt(
+  city1: string,
+  city2: string,
+  city1Consensuses: MetricConsensus[],
+  city2Consensuses: MetricConsensus[]
+): string {
+  // Build summary of statistical consensuses for Opus to review
+  const summaries: string[] = [];
+
+  city1Consensuses.forEach((c1, idx) => {
+    const c2 = city2Consensuses[idx];
+    if (c1.llmScores.length === 0 && c2?.llmScores.length === 0) return;
+
+    const c1LLMs = c1.llmScores.map(s => `${s.llmProvider}:${s.normalizedScore}`).join(', ');
+    const c2LLMs = c2?.llmScores.map(s => `${s.llmProvider}:${s.normalizedScore}`).join(', ') || 'N/A';
+
+    summaries.push(`${c1.metricId}: ${city1}=[${c1LLMs}] vs ${city2}=[${c2LLMs}]`);
+  });
+
+  return `You are Claude Opus 4.5, the final judge for LIFE SCORE™ city comparisons.
+
+## CITIES
+- City 1: ${city1}
+- City 2: ${city2}
+
+## LLM EVALUATIONS (format: LLM:score)
+${summaries.slice(0, 30).join('\n')}
+
+## TASK
+Review these evaluations and for metrics with high disagreement (σ>10), provide your judgment.
+Return JSON with ONLY metrics you want to override:
+{
+  "judgments": [
+    {"metricId": "...", "city1ConsensusScore": N, "city2ConsensusScore": N, "confidence": "strong", "explanation": "..."}
+  ],
+  "disagreementAreas": ["metric1", "metric2"]
+}
+
+Return empty judgments array if you agree with statistical consensus.`;
+}
+
+function parseOpusResponse(content: string): OpusResponse | null {
+  try {
+    let jsonStr = content;
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1];
+    } else {
+      const rawMatch = content.match(/\{[\s\S]*\}/);
+      if (rawMatch) {
+        jsonStr = rawMatch[0];
+      }
+    }
+    const parsed = JSON.parse(jsonStr);
+    // FIX: Validate required structure
+    if (typeof parsed !== 'object' || parsed === null) {
+      console.error('Opus response is not an object');
+      return null;
+    }
+    return parsed as OpusResponse;
+  } catch (error) {
+    // FIX: Log parse errors instead of silent failure
+    console.error('Failed to parse Opus response:', error);
+    return null;
+  }
+}
+
+function mergeOpusJudgments(
+  city1Consensuses: MetricConsensus[],
+  city2Consensuses: MetricConsensus[],
+  opusResponse: OpusResponse
+): void {
+  if (!opusResponse.judgments) return;
+
+  opusResponse.judgments.forEach(judgment => {
+    // FIX: Validate score ranges (0-100)
+    const c1Score = Math.max(0, Math.min(100, Math.round(judgment.city1ConsensusScore || 50)));
+    const c2Score = Math.max(0, Math.min(100, Math.round(judgment.city2ConsensusScore || 50)));
+
+    const c1 = city1Consensuses.find(c => c.metricId === judgment.metricId);
+    const c2 = city2Consensuses.find(c => c.metricId === judgment.metricId);
+
+    if (c1) {
+      c1.consensusScore = c1Score;
+      c1.confidenceLevel = judgment.confidence || c1.confidenceLevel;
+      c1.judgeExplanation = judgment.explanation || c1.judgeExplanation;
+    }
+
+    if (c2) {
+      c2.consensusScore = c2Score;
+      c2.confidenceLevel = judgment.confidence || c2.confidenceLevel;
+      c2.judgeExplanation = judgment.explanation || c2.judgeExplanation;
+    }
+  });
+}
+
+// ============================================================================
 // MAIN HANDLER
 // ============================================================================
 
@@ -213,12 +337,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { evaluatorResults } = req.body as JudgeRequest;
+  // FIX: Extract city1/city2 from request (previously ignored)
+  const { city1, city2, evaluatorResults } = req.body as JudgeRequest;
   const startTime = Date.now();
 
-  // FIX: Actually compute consensus scores from evaluator results
+  // Step 1: Build statistical consensus from evaluator results
   const { city1Consensuses, city2Consensuses, disagreementMetrics } =
     aggregateAndBuildConsensuses(evaluatorResults || []);
+
+  // Step 2: FIX - Actually call Opus API for enhanced judging
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (anthropicKey && city1 && city2 && evaluatorResults?.some(r => r.success)) {
+    try {
+      const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses);
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5-20251101',
+          max_tokens: 4096,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.content?.[0]?.text;
+        if (content) {
+          const opusJudgments = parseOpusResponse(content);
+          if (opusJudgments) {
+            mergeOpusJudgments(city1Consensuses, city2Consensuses, opusJudgments);
+            // Override disagreement areas if Opus provided them
+            if (opusJudgments.disagreementAreas && opusJudgments.disagreementAreas.length > 0) {
+              disagreementMetrics.length = 0;
+              disagreementMetrics.push(...opusJudgments.disagreementAreas);
+            }
+          }
+        }
+      } else {
+        console.error('Opus API error:', response.status, await response.text());
+      }
+    } catch (error) {
+      console.error('Opus judge API call failed, using statistical consensus:', error);
+    }
+  }
 
   // Calculate overall agreement from standard deviations
   const allStdDevs = [...city1Consensuses, ...city2Consensuses].map(c => c.standardDeviation);
