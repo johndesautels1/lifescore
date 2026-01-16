@@ -288,9 +288,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   return (
     <div className="llm-selector">
       <div className="llm-selector-header">
-        <h3>Select AI Models to Evaluate</h3>
+        <h3>Select AI Models to Begin</h3>
         <p className="llm-selector-subtitle">
-          Click each model to run. After 2+ complete, Opus Judge will build consensus.
+          <strong>Click one or more AI models below to start the comparison.</strong> After 2+ complete, Opus Judge will build consensus.
         </p>
       </div>
 

@@ -29,6 +29,7 @@ const findMetroByFormatted = (formatted: string): Metro | undefined => {
 interface CitySelectorProps {
   onCompare: (city1: string, city2: string) => void;
   isLoading: boolean;
+  enhancedWaiting?: boolean; // True when enhanced mode is waiting for user to click LLM buttons
   onDealbreakersChange?: (dealbreakers: string[]) => void;
   onWeightsChange?: (weights: CategoryWeights) => void;
 }
@@ -194,7 +195,7 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
   );
 };
 
-export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading, onDealbreakersChange, onWeightsChange }) => {
+export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading, enhancedWaiting, onDealbreakersChange, onWeightsChange }) => {
   const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
   const [showShareCopied, setShowShareCopied] = useState(false);
@@ -315,7 +316,9 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
           disabled={isLoading || !metro1 || !metro2}
           onClick={handleSubmit}
         >
-          {isLoading ? (
+          {enhancedWaiting ? (
+            <>⬇️ Select AI Models Below to Begin</>
+          ) : isLoading ? (
             <>
               <span className="btn-spinner"></span>
               Analyzing 100 Metrics...

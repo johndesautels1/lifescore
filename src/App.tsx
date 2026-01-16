@@ -157,6 +157,7 @@ const App: React.FC = () => {
               <CitySelector
                 onCompare={handleCompare}
                 isLoading={state.status === 'loading' || enhancedStatus === 'running'}
+                enhancedWaiting={enhancedMode && enhancedStatus === 'running' && pendingCities !== null}
                 onDealbreakersChange={setDealbreakers}
                 onWeightsChange={setCustomWeights}
               />
