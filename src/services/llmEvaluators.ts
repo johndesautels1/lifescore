@@ -283,43 +283,49 @@ Cite every claim. If evidence is missing, set confidence="low" and explain why.
 Return JSON exactly matching the schema provided.`;
 
   // Build user payload (JSON format for GPT-5.2)
+  // Field names must match output schema expectations (camelCase, city1/city2)
   const userPayload = {
-    category_id: metrics[0]?.categoryId || 'general',
-    category_name: 'Freedom Metrics Evaluation',
-    cityA: city1,
-    cityB: city2,
+    categoryId: metrics[0]?.categoryId || 'general',
+    categoryName: 'Freedom Metrics Evaluation',
+    city1: city1,
+    city2: city2,
     metrics: metrics.map(m => ({
-      metric_id: m.id,
-      metric_name: m.name,
-      prompt: m.description
+      metricId: m.id,
+      metricName: m.name,
+      description: m.description,
+      scoringDirection: m.scoringDirection === 'higher_is_better' ? 'Higher score = more freedom' : 'Lower score = more freedom'
     })),
-    now: new Date().toISOString()
+    currentDate: new Date().toISOString()
   };
 
   // JSON Schema for structured output (using our 0-100 scoring)
+  // Note: additionalProperties: false is required for strict mode
   const outputSchema = {
     type: "json_schema",
     name: "freedom_evaluation",
     strict: true,
     schema: {
       type: "object",
+      additionalProperties: false,
       properties: {
         evaluations: {
           type: "array",
           items: {
             type: "object",
+            additionalProperties: false,
             properties: {
               metricId: { type: "string" },
-              city1LegalScore: { type: "number", minimum: 0, maximum: 100 },
-              city1EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
-              city2LegalScore: { type: "number", minimum: 0, maximum: 100 },
-              city2EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
+              city1LegalScore: { type: "number" },
+              city1EnforcementScore: { type: "number" },
+              city2LegalScore: { type: "number" },
+              city2EnforcementScore: { type: "number" },
               confidence: { type: "string", enum: ["high", "medium", "low"] },
               reasoning: { type: "string" },
               city1Evidence: {
                 type: "array",
                 items: {
                   type: "object",
+                  additionalProperties: false,
                   properties: {
                     title: { type: "string" },
                     url: { type: "string" },
@@ -332,6 +338,7 @@ Return JSON exactly matching the schema provided.`;
                 type: "array",
                 items: {
                   type: "object",
+                  additionalProperties: false,
                   properties: {
                     title: { type: "string" },
                     url: { type: "string" },
@@ -341,7 +348,7 @@ Return JSON exactly matching the schema provided.`;
                 }
               }
             },
-            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning"]
+            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning", "city1Evidence", "city2Evidence"]
           }
         }
       },
@@ -378,7 +385,8 @@ Return JSON exactly matching the schema provided.`;
     const data = await response.json();
     // GPT-5.2 responses API returns output_text instead of choices[0].message.content
     const content = data.output_text;
-    const scores = parseEvaluationResponse(content, 'gpt-5.2');
+    // Pass city names so evidence items can be properly tagged
+    const scores = parseEvaluationResponse(content, 'gpt-5.2', city1, city2);
 
     return {
       provider: 'gpt-5.2',
@@ -594,7 +602,9 @@ export async function evaluateWithPerplexity(
 
 function parseEvaluationResponse(
   response: string,
-  provider: LLMProvider
+  provider: LLMProvider,
+  city1Name?: string,
+  city2Name?: string
 ): LLMMetricScore[] {
   try {
     // Extract JSON from response (may have markdown code blocks)
@@ -612,11 +622,30 @@ function parseEvaluationResponse(
 
     const parsed = JSON.parse(jsonStr);
     const evaluations: LLMEvaluation[] = parsed.evaluations || [];
+    const now = new Date().toISOString();
 
     // Convert to LLMMetricScore format (one per city per metric)
     const scores: LLMMetricScore[] = [];
 
     evaluations.forEach((eval_: LLMEvaluation) => {
+      // Convert GPT-5.2 evidence to EvidenceItem format for city1
+      const city1Evidence = (eval_.city1Evidence || []).map(e => ({
+        city: city1Name || 'city1',
+        title: e.title,
+        url: e.url,
+        snippet: e.snippet,
+        retrieved_at: now
+      }));
+
+      // Convert GPT-5.2 evidence to EvidenceItem format for city2
+      const city2Evidence = (eval_.city2Evidence || []).map(e => ({
+        city: city2Name || 'city2',
+        title: e.title,
+        url: e.url,
+        snippet: e.snippet,
+        retrieved_at: now
+      }));
+
       // City 1 scores
       scores.push({
         metricId: eval_.metricId,
@@ -628,6 +657,7 @@ function parseEvaluationResponse(
         llmProvider: provider,
         explanation: eval_.reasoning,
         sources: eval_.sources,
+        evidence: city1Evidence.length > 0 ? city1Evidence : undefined,
         city: 'city1'
       });
 
@@ -642,6 +672,7 @@ function parseEvaluationResponse(
         llmProvider: provider,
         explanation: eval_.reasoning,
         sources: eval_.sources,
+        evidence: city2Evidence.length > 0 ? city2Evidence : undefined,
         city: 'city2'
       });
     });

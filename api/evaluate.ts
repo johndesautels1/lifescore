@@ -33,6 +33,13 @@ interface MetricScore {
   sources?: string[];
 }
 
+// Evidence item from GPT-5.2 web search
+interface EvidenceSource {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
 // Parsed LLM evaluation structure
 interface ParsedEvaluation {
   metricId: string;
@@ -43,6 +50,8 @@ interface ParsedEvaluation {
   confidence?: string;
   reasoning?: string;
   sources?: string[];
+  city1Evidence?: EvidenceSource[];
+  city2Evidence?: EvidenceSource[];
 }
 
 interface EvaluationResponse {
@@ -133,7 +142,34 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   }
 }
 
-// Claude Sonnet 4.5 evaluation
+// Tavily web search helper for Claude
+async function tavilySearch(query: string, maxResults: number = 3): Promise<{ title: string; url: string; content: string }[]> {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: 'advanced',
+        max_results: maxResults,
+        include_answer: false,
+        include_raw_content: false
+      })
+    });
+
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.results || [];
+  } catch {
+    return [];
+  }
+}
+
+// Claude Sonnet 4.5 evaluation (with optional Tavily web search)
 async function evaluateWithClaude(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -141,7 +177,24 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
   }
 
   const startTime = Date.now();
-  const prompt = buildPrompt(city1, city2, metrics);
+
+  // Optionally fetch web search context via Tavily
+  let searchContext = '';
+  if (process.env.TAVILY_API_KEY) {
+    const searchQueries = [
+      `${city1} laws regulations freedom`,
+      `${city2} laws regulations freedom`
+    ];
+    const searchResults = await Promise.all(
+      searchQueries.map(q => tavilySearch(q, 3))
+    );
+    const results = searchResults.flat();
+    if (results.length > 0) {
+      searchContext = `\n\n## WEB SEARCH RESULTS\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\nUse these search results to inform your evaluation.\n`;
+    }
+  }
+
+  const prompt = searchContext + buildPrompt(city1, city2, metrics);
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -189,43 +242,49 @@ Cite every claim. If evidence is missing, set confidence="low" and explain why.
 Return JSON exactly matching the schema provided.`;
 
   // Build user payload (JSON format for GPT-5.2)
+  // Field names must match output schema expectations (camelCase, city1/city2)
   const userPayload = {
-    category_id: metrics[0]?.categoryId || 'general',
-    category_name: 'Freedom Metrics Evaluation',
-    cityA: city1,
-    cityB: city2,
+    categoryId: metrics[0]?.categoryId || 'general',
+    categoryName: 'Freedom Metrics Evaluation',
+    city1: city1,
+    city2: city2,
     metrics: metrics.map(m => ({
-      metric_id: m.id,
-      metric_name: m.name,
-      prompt: m.description
+      metricId: m.id,
+      metricName: m.name,
+      description: m.description,
+      scoringDirection: m.scoringDirection === 'higher_is_better' ? 'Higher score = more freedom' : 'Lower score = more freedom'
     })),
-    now: new Date().toISOString()
+    currentDate: new Date().toISOString()
   };
 
   // JSON Schema for structured output (matching GPT's schema but with our 0-100 scoring)
+  // Note: additionalProperties: false is required for strict mode
   const outputSchema = {
     type: "json_schema",
     name: "freedom_evaluation",
     strict: true,
     schema: {
       type: "object",
+      additionalProperties: false,
       properties: {
         evaluations: {
           type: "array",
           items: {
             type: "object",
+            additionalProperties: false,
             properties: {
               metricId: { type: "string" },
-              city1LegalScore: { type: "number", minimum: 0, maximum: 100 },
-              city1EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
-              city2LegalScore: { type: "number", minimum: 0, maximum: 100 },
-              city2EnforcementScore: { type: "number", minimum: 0, maximum: 100 },
+              city1LegalScore: { type: "number" },
+              city1EnforcementScore: { type: "number" },
+              city2LegalScore: { type: "number" },
+              city2EnforcementScore: { type: "number" },
               confidence: { type: "string", enum: ["high", "medium", "low"] },
               reasoning: { type: "string" },
               city1Evidence: {
                 type: "array",
                 items: {
                   type: "object",
+                  additionalProperties: false,
                   properties: {
                     title: { type: "string" },
                     url: { type: "string" },
@@ -238,6 +297,7 @@ Return JSON exactly matching the schema provided.`;
                 type: "array",
                 items: {
                   type: "object",
+                  additionalProperties: false,
                   properties: {
                     title: { type: "string" },
                     url: { type: "string" },
@@ -247,7 +307,7 @@ Return JSON exactly matching the schema provided.`;
                 }
               }
             },
-            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning"]
+            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning", "city1Evidence", "city2Evidence"]
           }
         }
       },
