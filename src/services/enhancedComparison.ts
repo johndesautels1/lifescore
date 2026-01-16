@@ -16,6 +16,10 @@ import { DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import type { CategoryId, MetricDefinition } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../data/metrics';
 
+// Real LLM evaluators and Opus judge
+import { runAllEvaluators } from './llmEvaluators';
+import { runOpusJudge, buildCategoryConsensuses } from './opusJudge';
+
 // ============================================================================
 // STORAGE KEYS
 // ============================================================================
@@ -441,15 +445,26 @@ export interface EnhancedComparisonOptions {
 
 /**
  * Run enhanced comparison with multiple LLMs
+ * Now uses real API calls with web search capabilities
  */
 export async function runEnhancedComparison(
   options: EnhancedComparisonOptions
 ): Promise<EnhancedComparisonResult> {
   const { city1, city2, apiKeys, onProgress } = options;
-  const llmsToUse = options.llmsToUse || DEFAULT_ENHANCED_LLMS;
-
   const startTime = Date.now();
-  const llmTimings: Record<string, number> = {};
+
+  // Helper to parse city string
+  const parseCity = (cityStr: string) => {
+    const parts = cityStr.split(',').map(s => s.trim());
+    return {
+      city: parts[0],
+      region: parts.length > 2 ? parts[1] : undefined,
+      country: parts[parts.length - 1] || 'Unknown'
+    };
+  };
+
+  const city1Info = parseCity(city1);
+  const city2Info = parseCity(city2);
 
   // Initialize progress
   const updateProgress = (progress: Partial<EnhancedComparisonProgress>) => {
@@ -464,85 +479,69 @@ export async function runEnhancedComparison(
 
   updateProgress({ phase: 'evaluating' });
 
-  // Collect all LLM responses
-  const allCity1Scores: Map<string, LLMMetricScore[]> = new Map();
-  const allCity2Scores: Map<string, LLMMetricScore[]> = new Map();
-
-  // Initialize maps for each metric
-  ALL_METRICS.forEach(m => {
-    allCity1Scores.set(m.id, []);
-    allCity2Scores.set(m.id, []);
-  });
-
   const llmsCompleted: LLMProvider[] = [];
+  const llmTimings: Record<string, number> = {};
 
-  // Process each LLM (could be parallelized)
-  for (const provider of llmsToUse) {
-    updateProgress({
-      phase: 'evaluating',
-      currentLLM: provider,
-      llmsCompleted: [...llmsCompleted]
-    });
+  // =========================================================================
+  // PHASE 1: Run all LLM evaluators in parallel
+  // =========================================================================
 
-    const llmStart = Date.now();
-
-    try {
-      // Build prompt for all metrics
-      const prompt = buildEvaluationPrompt(city1, city2, ALL_METRICS);
-
-      // Call LLM API
-      const response = await callLLMAPI(provider, apiKeys, prompt);
-
-      // Parse response for both cities
-      const city1Scores = parseLLMResponse(response, provider, 'city1');
-      const city2Scores = parseLLMResponse(response, provider, 'city2');
-
-      // Add to collections
-      city1Scores.forEach(score => {
-        const existing = allCity1Scores.get(score.metricId) || [];
-        existing.push(score);
-        allCity1Scores.set(score.metricId, existing);
+  const evaluatorResults = await runAllEvaluators(
+    city1,
+    city2,
+    ALL_METRICS,
+    apiKeys,
+    (provider, status) => {
+      if (status === 'completed') {
+        llmsCompleted.push(provider);
+      }
+      updateProgress({
+        phase: 'evaluating',
+        currentLLM: status === 'started' ? provider : undefined,
+        llmsCompleted: [...llmsCompleted],
+        metricsProcessed: llmsCompleted.length * 20
       });
-
-      city2Scores.forEach(score => {
-        const existing = allCity2Scores.get(score.metricId) || [];
-        existing.push(score);
-        allCity2Scores.set(score.metricId, existing);
-      });
-
-      llmTimings[provider] = Date.now() - llmStart;
-      llmsCompleted.push(provider);
-    } catch (error) {
-      console.error(`Error with ${provider}:`, error);
-      llmTimings[provider] = Date.now() - llmStart;
     }
-  }
+  );
 
-  // Phase 2: Claude Opus Judging
-  updateProgress({ phase: 'judging', llmsCompleted });
-
-  // Calculate consensus for each metric
-  const city1Consensuses: MetricConsensus[] = [];
-  const city2Consensuses: MetricConsensus[] = [];
-
-  allCity1Scores.forEach((scores, metricId) => {
-    city1Consensuses.push(calculateConsensus(metricId, scores));
+  // Collect timings
+  evaluatorResults.results.forEach(r => {
+    llmTimings[r.provider] = r.latencyMs;
+    if (r.success && !llmsCompleted.includes(r.provider)) {
+      llmsCompleted.push(r.provider);
+    }
   });
 
-  allCity2Scores.forEach((scores, metricId) => {
-    city2Consensuses.push(calculateConsensus(metricId, scores));
+  // =========================================================================
+  // PHASE 2: Claude Opus Judge builds consensus
+  // =========================================================================
+
+  updateProgress({
+    phase: 'judging',
+    llmsCompleted,
+    metricsProcessed: ALL_METRICS.length
   });
+
+  const judgeOutput = await runOpusJudge(
+    apiKeys.anthropic || '',
+    {
+      city1,
+      city2,
+      evaluatorResults: evaluatorResults.results
+    }
+  );
+
+  llmTimings['claude-opus'] = judgeOutput.judgeLatencyMs;
+
+  // =========================================================================
+  // PHASE 3: Build final results
+  // =========================================================================
 
   // Build category consensuses
-  const city1Categories: CategoryConsensus[] = CATEGORIES.map(cat =>
-    calculateCategoryConsensus(cat.id, city1Consensuses)
-  );
+  const city1Categories = buildCategoryConsensuses(judgeOutput.city1Consensuses);
+  const city2Categories = buildCategoryConsensuses(judgeOutput.city2Consensuses);
 
-  const city2Categories: CategoryConsensus[] = CATEGORIES.map(cat =>
-    calculateCategoryConsensus(cat.id, city2Consensuses)
-  );
-
-  // Calculate total scores
+  // Calculate weighted total scores
   const city1Total = city1Categories.reduce((sum, cat) => {
     const catDef = CATEGORIES.find(c => c.id === cat.categoryId);
     return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
@@ -553,14 +552,9 @@ export async function runEnhancedComparison(
     return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
   }, 0);
 
-  // Calculate overall agreement
-  const allStdDevs = [...city1Consensuses, ...city2Consensuses].map(c => c.standardDeviation);
-  const avgStdDev = allStdDevs.reduce((a, b) => a + b, 0) / allStdDevs.length;
-  const overallAgreement = Math.max(0, Math.min(100, 100 - avgStdDev * 2));
-
   // Determine winner
-  let winner: 'city1' | 'city2' | 'tie';
   const scoreDiff = Math.abs(city1Total - city2Total);
+  let winner: 'city1' | 'city2' | 'tie';
   if (scoreDiff < 2) {
     winner = 'tie';
   } else if (city1Total > city2Total) {
@@ -584,24 +578,15 @@ export async function runEnhancedComparison(
     }
   });
 
-  // Parse city info
-  const parseCity = (cityStr: string) => {
-    const parts = cityStr.split(',').map(s => s.trim());
-    return {
-      city: parts[0],
-      region: parts.length > 2 ? parts[1] : undefined,
-      country: parts[parts.length - 1] || 'Unknown'
-    };
-  };
+  // Build disagreement summary
+  const disagreementSummary = judgeOutput.disagreementAreas.length > 0
+    ? `LLMs disagreed most on: ${judgeOutput.disagreementAreas.join(', ')}`
+    : 'LLMs showed strong agreement across all metrics';
 
-  const city1Info = parseCity(city1);
-  const city2Info = parseCity(city2);
-
-  // Find disagreement areas
-  const disagreementAreas = city1Consensuses
-    .filter(c => c.standardDeviation > 20)
-    .map(c => ALL_METRICS.find(m => m.id === c.metricId)?.name || c.metricId)
-    .slice(0, 5);
+  // Determine overall confidence
+  const overallConfidence: 'high' | 'medium' | 'low' =
+    judgeOutput.overallAgreement > 75 ? 'high' :
+    judgeOutput.overallAgreement > 50 ? 'medium' : 'low';
 
   updateProgress({ phase: 'complete', llmsCompleted });
 
@@ -612,7 +597,7 @@ export async function runEnhancedComparison(
       region: city1Info.region,
       categories: city1Categories,
       totalConsensusScore: Math.round(city1Total),
-      overallAgreement: Math.round(overallAgreement)
+      overallAgreement: judgeOutput.overallAgreement
     },
     city2: {
       city: city2Info.city,
@@ -620,7 +605,7 @@ export async function runEnhancedComparison(
       region: city2Info.region,
       categories: city2Categories,
       totalConsensusScore: Math.round(city2Total),
-      overallAgreement: Math.round(overallAgreement)
+      overallAgreement: judgeOutput.overallAgreement
     },
     winner,
     scoreDifference: Math.round(scoreDiff),
@@ -629,10 +614,8 @@ export async function runEnhancedComparison(
     generatedAt: new Date().toISOString(),
     llmsUsed: llmsCompleted,
     judgeModel: 'claude-opus',
-    overallConsensusConfidence: overallAgreement > 75 ? 'high' : overallAgreement > 50 ? 'medium' : 'low',
-    disagreementSummary: disagreementAreas.length > 0
-      ? `LLMs disagreed most on: ${disagreementAreas.join(', ')}`
-      : 'LLMs showed strong agreement across all metrics',
+    overallConsensusConfidence: overallConfidence,
+    disagreementSummary,
     processingStats: {
       totalTimeMs: Date.now() - startTime,
       llmTimings: llmTimings as Record<LLMProvider, number>,

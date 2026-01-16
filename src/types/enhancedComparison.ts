@@ -107,6 +107,13 @@ export interface LLMMetricScore extends MetricScore {
   llmProvider: LLMProvider;
   processingTimeMs?: number;
   explanation?: string;
+  // Dual scoring fields (from real LLM evaluation)
+  legalScore?: number;
+  enforcementScore?: number;
+  // Source tracking for citations
+  sources?: string[];
+  // Which city this score is for (used during aggregation)
+  city?: 'city1' | 'city2';
 }
 
 /**
@@ -182,6 +189,7 @@ export interface LLMAPIKeys {
   google?: string;      // Gemini 3 Pro
   xai?: string;         // Grok 4
   perplexity?: string;  // Sonar Reasoning Pro
+  tavily?: string;      // Tavily Search API (for Claude web search)
 }
 
 export interface EnhancedComparisonConfig {

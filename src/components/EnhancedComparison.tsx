@@ -234,6 +234,20 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
             />
             <span className="key-models">Sonar Reasoning Pro</span>
           </div>
+
+          <div className="api-key-group optional">
+            <label>
+              <span className="key-icon">🔍</span>
+              Tavily (Optional)
+            </label>
+            <input
+              type="password"
+              value={keys.tavily || ''}
+              onChange={e => setKeys({ ...keys, tavily: e.target.value })}
+              placeholder="tvly-..."
+            />
+            <span className="key-models">Web search for Claude (enhances accuracy)</span>
+          </div>
         </div>
 
         <div className="modal-actions">
