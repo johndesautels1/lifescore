@@ -248,12 +248,14 @@ export async function runEnhancedComparison(
     return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
   }, 0);
 
-  // Determine winner
-  const scoreDiff = Math.abs(city1Total - city2Total);
+  // Determine winner - use rounded scores so display matches logic
+  const city1FinalScore = Math.round(city1Total);
+  const city2FinalScore = Math.round(city2Total);
+  const scoreDiff = Math.abs(city1FinalScore - city2FinalScore);
   let winner: 'city1' | 'city2' | 'tie';
-  if (scoreDiff < 2) {
+  if (scoreDiff === 0) {
     winner = 'tie';
-  } else if (city1Total > city2Total) {
+  } else if (city1FinalScore > city2FinalScore) {
     winner = 'city1';
   } else {
     winner = 'city2';
@@ -459,10 +461,13 @@ export function generateDemoEnhancedComparison(
     return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
   }, 0);
 
-  const scoreDiff = Math.abs(city1Total - city2Total);
+  // Determine winner - use rounded scores so display matches logic
+  const city1FinalScore = Math.round(city1Total);
+  const city2FinalScore = Math.round(city2Total);
+  const scoreDiff = Math.abs(city1FinalScore - city2FinalScore);
   let winner: 'city1' | 'city2' | 'tie';
-  if (scoreDiff < 2) winner = 'tie';
-  else if (city1Total > city2Total) winner = 'city1';
+  if (scoreDiff === 0) winner = 'tie';
+  else if (city1FinalScore > city2FinalScore) winner = 'city1';
   else winner = 'city2';
 
   const categoryWinners: Record<CategoryId, 'city1' | 'city2' | 'tie'> = {} as Record<CategoryId, 'city1' | 'city2' | 'tie'>;
