@@ -170,7 +170,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 ### Recent Updates (This Session)
 | Commit | Description |
 |--------|-------------|
-| `5fdc5fd` | Phase 3: Progressive Opus Judging with individual LLM opinions |
+| `dc3dc87` | Phase 3: Progressive Opus Judging with individual LLM opinions |
 | `0cdb5bd` | Fix missing Google Search grounding in api/evaluate.ts Gemini |
 | `e8e962c` | Fix 11 GPT-5.2 audit errors: field mapping, evidence capture, Tavily |
 | `80f1eb1` | Fix TypeScript and ESLint errors in GPT-5.2 implementation |
