@@ -181,7 +181,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert legal analyst. Use web browsing to research current laws.' },
+          { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Provide accurate assessments based on your knowledge of current laws and regulations.' },
           { role: 'user', content: prompt }
         ],
         max_tokens: 16384,
@@ -262,7 +262,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
       body: JSON.stringify({
         model: 'grok-4',
         messages: [
-          { role: 'system', content: 'You are an expert legal analyst with real-time web access.' },
+          { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.' },
           { role: 'user', content: prompt }
         ],
         max_tokens: 16384,
@@ -306,7 +306,7 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
       body: JSON.stringify({
         model: 'sonar-reasoning-pro',
         messages: [
-          { role: 'system', content: 'You are an expert legal analyst. Use web search to find accurate data.' },
+          { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.' },
           { role: 'user', content: prompt }
         ],
         max_tokens: 16384,

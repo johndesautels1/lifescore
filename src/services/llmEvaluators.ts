@@ -276,15 +276,13 @@ export async function evaluateWithGPT4o(
         messages: [
           {
             role: 'system',
-            content: 'You are an expert legal analyst. Use web browsing to research current laws and regulations.'
+            content: 'You are an expert legal analyst evaluating freedom metrics. Provide accurate assessments based on your knowledge of current laws and regulations.'
           },
           { role: 'user', content: prompt }
         ],
         max_tokens: 16384,
-        temperature: 0.3,
-        // Enable web browsing tool
-        tools: [{ type: 'web_search' }],
-        tool_choice: 'auto'
+        temperature: 0.3
+        // Note: GPT-4o API does not have native web search - relies on training data
       })
     });
 
@@ -405,7 +403,7 @@ export async function evaluateWithGrok(
         messages: [
           {
             role: 'system',
-            content: 'You are an expert legal analyst with real-time web access. Research current laws thoroughly.'
+            content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.'
           },
           { role: 'user', content: prompt }
         ],
@@ -468,7 +466,7 @@ export async function evaluateWithPerplexity(
         messages: [
           {
             role: 'system',
-            content: 'You are an expert legal analyst. Use your web search capabilities to find accurate, current data.'
+            content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.'
           },
           { role: 'user', content: prompt }
         ],
