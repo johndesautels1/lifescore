@@ -244,7 +244,7 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5-20250514',
+          model: 'claude-sonnet-4-20250514',
           max_tokens: 16384,
           messages: [{ role: 'user', content: prompt }]
         })
