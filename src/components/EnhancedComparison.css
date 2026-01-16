@@ -1806,6 +1806,132 @@
   border-top: 1px dashed var(--gray-200);
 }
 
+/* Phase 3: LLM Opinions Section in Evidence Panel */
+.llm-opinions-section {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid rgba(0, 71, 171, 0.1);
+}
+
+.opinions-city-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(0, 71, 171, 0.1);
+}
+
+.city-label {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #0047AB;
+}
+
+.consensus-label {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  font-weight: 600;
+}
+
+.llm-opinions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.llm-opinion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: white;
+  border: 1px solid rgba(0, 71, 171, 0.2);
+  border-radius: 20px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.llm-opinion-icon {
+  font-size: 0.9rem;
+}
+
+.llm-opinion-name {
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.llm-opinion-score {
+  font-weight: 700;
+  color: #0047AB;
+  background: rgba(0, 71, 171, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+}
+
+.no-opinions {
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  font-style: italic;
+}
+
+.deviation-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 71, 171, 0.05);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.deviation-label {
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.deviation-value {
+  font-weight: 700;
+  color: #0047AB;
+  font-family: monospace;
+}
+
+.deviation-level {
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+}
+
+.deviation-level.unanimous {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.deviation-level.strong {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.deviation-level.moderate {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.deviation-level.split {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+/* Judge hint in LLM selector */
+.judge-hint {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
 /* Dark mode evidence panel */
 [data-theme="dark"] .evidence-panel {
   background: linear-gradient(135deg, rgba(107, 163, 255, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%);
@@ -1847,6 +1973,54 @@
 [data-theme="dark"] .evidence-note {
   color: #9090a0;
   border-top-color: #3d3d55;
+}
+
+/* Dark mode for Phase 3 LLM Opinions Section */
+[data-theme="dark"] .llm-opinions-section {
+  background: rgba(30, 30, 50, 0.5);
+  border-color: rgba(107, 163, 255, 0.2);
+}
+
+[data-theme="dark"] .opinions-city-header {
+  border-bottom-color: rgba(107, 163, 255, 0.15);
+}
+
+[data-theme="dark"] .city-label {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .consensus-label {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .llm-opinion-item {
+  background: #252538;
+  border-color: rgba(107, 163, 255, 0.25);
+}
+
+[data-theme="dark"] .llm-opinion-name {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .llm-opinion-score {
+  color: #6ba3ff;
+  background: rgba(107, 163, 255, 0.15);
+}
+
+[data-theme="dark"] .deviation-info {
+  background: rgba(107, 163, 255, 0.08);
+}
+
+[data-theme="dark"] .deviation-label {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .deviation-value {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .judge-hint {
+  color: #7070a0;
 }
 
 .metric-score {

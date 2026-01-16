@@ -164,11 +164,15 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   const [judgeResult, setJudgeResult] = useState<JudgeOutput | null>(null);
   const [isJudging, setIsJudging] = useState(false);
   const [currentLLMProgress, setCurrentLLMProgress] = useState<{ provider: LLMProvider; progress: CategoryBatchProgress[] } | null>(null);
+  // Phase 3: Track how many LLMs were included in the last judge call
+  const [lastJudgedCount, setLastJudgedCount] = useState(0);
   const apiKeys = getStoredAPIKeys();
 
   // Count completed LLMs
   const completedCount = Array.from(llmStates.values()).filter(s => s.status === 'completed').length;
   const hasEnoughForJudge = completedCount >= 2;
+  // Phase 3: Check if we need to re-judge (new LLM completed since last judge)
+  const needsReJudge = hasEnoughForJudge && completedCount > lastJudgedCount;
 
   // Memoized runJudge to prevent stale closures
   const runJudge = useCallback(async () => {
@@ -198,6 +202,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       const result = await response.json();
 
       setJudgeResult(result);
+      // Phase 3: Track how many LLMs were included in this judge call
+      setLastJudgedCount(completedCount);
       onResultsUpdate(
         new Map(Array.from(llmStates.entries()).filter(([, s]) => s.result).map(([k, s]) => [k, s.result!])),
         result
@@ -210,14 +216,14 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
     } finally {
       setIsJudging(false);
     }
-  }, [llmStates, city1, city2, onResultsUpdate, onStatusChange]);
+  }, [llmStates, city1, city2, onResultsUpdate, onStatusChange, completedCount]);
 
-  // Auto-run Opus judge when 2+ LLMs complete
+  // Phase 3: Progressive Opus judging - auto-run when 2+ LLMs complete, re-run when more complete
   useEffect(() => {
-    if (hasEnoughForJudge && !judgeResult && !isJudging) {
+    if (needsReJudge && !isJudging) {
       runJudge();
     }
-  }, [hasEnoughForJudge, judgeResult, isJudging, runJudge]);
+  }, [needsReJudge, isJudging, runJudge]);
 
   const runLLM = async (provider: LLMProvider) => {
     // Update state to running
@@ -328,9 +334,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         </div>
         <span className="progress-text">
           {completedCount}/{EVALUATOR_LLMS.length} models completed
-          {hasEnoughForJudge && !judgeResult && ' • Ready for Opus Judge'}
-          {isJudging && ' • Opus Judge analyzing...'}
-          {judgeResult && ' • Consensus built!'}
+          {hasEnoughForJudge && !judgeResult && !isJudging && ' • Ready for Opus Judge'}
+          {isJudging && !judgeResult && ' • Opus Judge analyzing...'}
+          {isJudging && judgeResult && ' • Updating consensus...'}
+          {judgeResult && !isJudging && ` • Consensus from ${lastJudgedCount} LLMs`}
         </span>
       </div>
 
@@ -359,15 +366,19 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         </div>
       )}
 
-      {/* Judge status */}
+      {/* Judge status - Phase 3: Progressive judging */}
       {hasEnoughForJudge && (
         <div className={`judge-status ${judgeResult ? 'complete' : isJudging ? 'running' : 'ready'}`}>
           <span className="judge-icon">🎭</span>
           <span className="judge-text">
-            {isJudging && 'Claude Opus 4.5 is building consensus...'}
-            {judgeResult && `Consensus complete! Agreement: ${judgeResult.overallAgreement}%`}
+            {isJudging && !judgeResult && 'Claude Opus 4.5 is building initial consensus...'}
+            {isJudging && judgeResult && `Claude Opus 4.5 is updating consensus with ${completedCount} LLMs...`}
+            {judgeResult && !isJudging && `Consensus from ${lastJudgedCount} LLMs • Agreement: ${judgeResult.overallAgreement}%`}
             {!isJudging && !judgeResult && 'Opus Judge will auto-run when ready'}
           </span>
+          {judgeResult && !isJudging && completedCount > lastJudgedCount && (
+            <span className="judge-hint">(will update when new LLM completes)</span>
+          )}
         </div>
       )}
     </div>
@@ -1418,20 +1429,67 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                         )}
                         </div>
 
-                        {/* Evidence Panel - Expanded */}
+                        {/* Evidence Panel - Expanded with Individual LLM Opinions (Phase 3) */}
                         {isEvidenceExpanded && (
                           <div className="evidence-panel">
                             <div className="evidence-header">
-                              <span className="evidence-title">📚 Data Sources for {metric.shortName}</span>
+                              <span className="evidence-title">📚 {metric.shortName} - LLM Opinions & Sources</span>
                               <button className="evidence-close" onClick={() => setExpandedEvidence(null)}>×</button>
                             </div>
                             <div className="evidence-content">
-                              <div className="evidence-llms">
-                                <span className="evidence-label">Evaluated by:</span>
-                                <span className="evidence-models">
-                                  {city1Metric?.llmScores?.map(s => LLM_CONFIGS[s.llmProvider]?.icon).join(' ') || '🤖🤖🤖🤖🤖'}
-                                </span>
+                              {/* Phase 3: Individual LLM Opinions for City 1 */}
+                              <div className="llm-opinions-section">
+                                <div className="opinions-city-header">
+                                  <span className="city-label">{result.city1.city}</span>
+                                  <span className="consensus-label">Consensus: {Math.round(score1)}</span>
+                                </div>
+                                <div className="llm-opinions-grid">
+                                  {city1Metric?.llmScores?.map((llmScore, idx) => {
+                                    const config = LLM_CONFIGS[llmScore.llmProvider];
+                                    return (
+                                      <div key={idx} className="llm-opinion-item">
+                                        <span className="llm-opinion-icon">{config?.icon || '🤖'}</span>
+                                        <span className="llm-opinion-name">{config?.shortName || llmScore.llmProvider}</span>
+                                        <span className="llm-opinion-score">{Math.round(llmScore.normalizedScore)}</span>
+                                      </div>
+                                    );
+                                  }) || <span className="no-opinions">No LLM data</span>}
+                                </div>
                               </div>
+
+                              {/* Phase 3: Individual LLM Opinions for City 2 */}
+                              <div className="llm-opinions-section">
+                                <div className="opinions-city-header">
+                                  <span className="city-label">{result.city2.city}</span>
+                                  <span className="consensus-label">Consensus: {Math.round(score2)}</span>
+                                </div>
+                                <div className="llm-opinions-grid">
+                                  {city2Metric?.llmScores?.map((llmScore, idx) => {
+                                    const config = LLM_CONFIGS[llmScore.llmProvider];
+                                    return (
+                                      <div key={idx} className="llm-opinion-item">
+                                        <span className="llm-opinion-icon">{config?.icon || '🤖'}</span>
+                                        <span className="llm-opinion-name">{config?.shortName || llmScore.llmProvider}</span>
+                                        <span className="llm-opinion-score">{Math.round(llmScore.normalizedScore)}</span>
+                                      </div>
+                                    );
+                                  }) || <span className="no-opinions">No LLM data</span>}
+                                </div>
+                              </div>
+
+                              {/* Standard Deviation Info */}
+                              {city1Metric?.standardDeviation !== undefined && (
+                                <div className="deviation-info">
+                                  <span className="deviation-label">Score Variance:</span>
+                                  <span className="deviation-value">σ = {city1Metric.standardDeviation.toFixed(1)}</span>
+                                  <span className={`deviation-level ${city1Metric.confidenceLevel}`}>
+                                    {city1Metric.confidenceLevel === 'unanimous' ? 'High Agreement' :
+                                     city1Metric.confidenceLevel === 'strong' ? 'Good Agreement' :
+                                     city1Metric.confidenceLevel === 'moderate' ? 'Some Disagreement' : 'Split Opinions'}
+                                  </span>
+                                </div>
+                              )}
+
                               <div className="evidence-sources">
                                 <span className="evidence-label">Primary Sources:</span>
                                 <ul className="source-list">
@@ -1441,7 +1499,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                 </ul>
                               </div>
                               <p className="evidence-note">
-                                Scores derived from multi-LLM consensus using web search across authoritative databases.
+                                Individual LLM scores combined into consensus by Claude Opus 4.5 Judge.
                               </p>
                             </div>
                           </div>

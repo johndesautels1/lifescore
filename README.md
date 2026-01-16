@@ -139,20 +139,23 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 |-------|-------------|--------|
 | 1 | Single-LLM Selection UI | ✅ COMPLETE |
 | 2 | Category Batch Prompts (6 parallel batches per LLM) | ✅ COMPLETE |
-| 3 | Progressive Opus Judging | ⬅️ NEXT |
+| 3 | Progressive Opus Judging | ✅ COMPLETE |
 | 4 | Targeted Tavily + Citation Requests | ✅ COMPLETE |
 | 5 | Source Evidence Panel | ✅ COMPLETE |
 
+### All 5 Phases Complete!
+
+**Phase 3 Implementation Details:**
+- ✅ Opus auto-triggers after 2 LLMs complete
+- ✅ Re-judges when additional LLMs finish (progressive consensus)
+- ✅ UI shows individual LLM opinions in expanded evidence panel
+- ✅ Consensus status updates: "Consensus from N LLMs" with agreement %
+- ✅ Standard deviation and confidence level displayed per metric
+
 ### Next Session Tasks
-1. **PHASE 3**: Progressive Opus Judging
-   - Opus compares whatever LLMs completed, updates as more added
-   - Auto-call after 2 LLMs complete
-   - Re-call after each additional LLM
-   - Show individual LLM opinions + judge consensus
+1. **HOME PAGE UI REARRANGEMENT**: Redesign main layout
 
-2. **HOME PAGE UI REARRANGEMENT**: Redesign main layout
-
-### Current State (Commit 0cdb5bd)
+### Current State
 - ✅ All demo mode code removed
 - ✅ Real API routes working (`/api/evaluate`, `/api/judge`)
 - ✅ TypeScript compilation passing
@@ -161,11 +164,13 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 - ✅ **Tavily integration** for Claude web search
 - ✅ **Google Search grounding** for Gemini
 - ✅ **Evidence Panel** created (collapseable citations above footer)
-- ✅ Phase 1, 2, 4, 5 complete
+- ✅ **Phase 3 Progressive Judging** complete - Opus re-judges as LLMs finish
+- ✅ All 5 phases complete!
 
 ### Recent Updates (This Session)
 | Commit | Description |
 |--------|-------------|
+| `5fdc5fd` | Phase 3: Progressive Opus Judging with individual LLM opinions |
 | `0cdb5bd` | Fix missing Google Search grounding in api/evaluate.ts Gemini |
 | `e8e962c` | Fix 11 GPT-5.2 audit errors: field mapping, evidence capture, Tavily |
 | `80f1eb1` | Fix TypeScript and ESLint errors in GPT-5.2 implementation |
