@@ -322,6 +322,7 @@
 
 .popular-section {
   margin-top: 1.5rem;
+  margin-bottom: 2.25rem; /* 36px buffer before Customize Priorities/Dealbreakers */
   padding-top: 1.5rem;
   border-top: 1px solid var(--gray-200);
 }
