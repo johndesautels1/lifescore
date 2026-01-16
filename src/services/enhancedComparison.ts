@@ -13,7 +13,7 @@ import type {
   CategoryConsensus
 } from '../types/enhancedComparison';
 import { DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
-import type { CategoryId, MetricDefinition } from '../types/metrics';
+import type { CategoryId } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../data/metrics';
 
 // Real LLM evaluators and Opus judge

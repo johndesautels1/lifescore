@@ -119,7 +119,7 @@ function buildMetricConsensus(
   const enforcementScores = scores.map(s => (s as any).enforcementScore ?? s.normalizedScore);
 
   // Calculate statistics
-  const _mean = calculateMean(normalizedScores); // Reserved for future weighted average
+  calculateMean(normalizedScores); // Reserved for future weighted average
   const median = calculateMedian(normalizedScores);
   const stdDev = calculateStdDev(normalizedScores);
 
