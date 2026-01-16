@@ -197,7 +197,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 **BLOCKING ISSUE:** LLM API calls may still be failing. Need to test each LLM button individually.
 
 ### What Was Fixed This Session
-1. **Anthropic 404 Error** - The `anthropic-version` header was set to `2023-06-01` which couldn't access Claude 4.5 models. Updated to `2025-01-01` in both `api/evaluate.ts` and `api/judge.ts`.
+1. **Anthropic API Version** - The `anthropic-version` header must be `2023-06-01` (the valid API version). Using invalid versions like `2025-01-01` causes 400 errors.
 
 2. **LLM Buttons Not Firing** - `runSingleEvaluatorBatched()` in `src/services/llmEvaluators.ts` was checking for API keys in localStorage, but keys are stored in Vercel environment variables. Removed client-side validation.
 

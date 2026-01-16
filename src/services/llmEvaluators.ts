@@ -258,7 +258,7 @@ Use these search results to inform your evaluation.
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
-            'anthropic-version': '2025-01-01'
+            'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
             model: 'claude-sonnet-4-5-20250514',
