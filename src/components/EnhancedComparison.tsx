@@ -174,33 +174,6 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
 
   // Memoized runJudge to prevent stale closures
   const runJudge = useCallback(async () => {
-    // Demo mode: simulate judge with short delay
-    if (demoMode || !apiKeys.anthropic) {
-      setIsJudging(true);
-      onStatusChange('judging');
-
-      // Simulate judge processing
-      await new Promise(r => setTimeout(r, 800));
-
-      // Create mock judge result for demo
-      const mockJudgeResult: JudgeOutput = {
-        city1Consensuses: [],
-        city2Consensuses: [],
-        overallAgreement: 85,
-        disagreementAreas: [],
-        judgeLatencyMs: 800
-      };
-
-      setJudgeResult(mockJudgeResult);
-      onResultsUpdate(
-        new Map(Array.from(llmStates.entries()).filter(([, s]) => s.result).map(([k, s]) => [k, s.result!])),
-        mockJudgeResult
-      );
-      setIsJudging(false);
-      onStatusChange('complete');
-      return;
-    }
-
     setIsJudging(true);
     onStatusChange('judging');
 
@@ -213,11 +186,18 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         }
       });
 
-      const result = await runOpusJudge(apiKeys.anthropic, {
-        city1,
-        city2,
-        evaluatorResults
+      // Call Opus judge API (will use env vars for API key)
+      const response = await fetch('/api/judge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city1, city2, evaluatorResults })
       });
+
+      if (!response.ok) {
+        throw new Error(`Judge API error: ${response.status}`);
+      }
+
+      const result = await response.json();
 
       setJudgeResult(result);
       onResultsUpdate(
@@ -227,10 +207,12 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       onStatusChange('complete');
     } catch (error) {
       console.error('Judge failed:', error);
+      // Still mark as complete so UI doesn't hang
+      onStatusChange('complete');
     } finally {
       setIsJudging(false);
     }
-  }, [apiKeys.anthropic, demoMode, llmStates, city1, city2, onResultsUpdate, onStatusChange]);
+  }, [llmStates, city1, city2, onResultsUpdate, onStatusChange]);
 
   // Auto-run Opus judge when 2+ LLMs complete
   useEffect(() => {
@@ -247,41 +229,6 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       return next;
     });
     onStatusChange('running');
-
-    if (demoMode) {
-      // Simulate category batching for demo
-      const demoCategories: CategoryBatchProgress[] = CATEGORIES.map(cat => ({
-        categoryId: cat.id as any,
-        categoryName: cat.name,
-        status: 'pending' as const,
-        metricsCount: cat.metricCount
-      }));
-
-      // Simulate progress through categories
-      for (let i = 0; i < demoCategories.length; i++) {
-        demoCategories[i].status = 'running';
-        setCurrentLLMProgress({ provider, progress: [...demoCategories] });
-        await new Promise(r => setTimeout(r, 250));
-        demoCategories[i].status = 'completed';
-        setCurrentLLMProgress({ provider, progress: [...demoCategories] });
-      }
-
-      setLLMStates(prev => {
-        const next = new Map(prev);
-        next.set(provider, {
-          status: 'completed',
-          result: {
-            provider,
-            success: true,
-            scores: [],
-            latencyMs: 1500
-          }
-        });
-        return next;
-      });
-      setCurrentLLMProgress(null);
-      return;
-    }
 
     try {
       // Phase 2: Use batched evaluator with 6 parallel category requests

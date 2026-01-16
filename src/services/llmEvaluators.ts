@@ -743,42 +743,79 @@ export interface BatchedEvaluatorResult extends EvaluatorResult {
 /**
  * Evaluate a single category's metrics with a specific LLM provider
  */
+/**
+ * Evaluate a single category's metrics via Vercel API route
+ * This calls /api/evaluate which has access to env vars with API keys
+ */
 async function evaluateCategoryBatch(
   provider: LLMProvider,
   city1: string,
   city2: string,
-  _categoryId: CategoryId, // Reserved for future logging/debugging
+  _categoryId: CategoryId,
   metrics: MetricDefinition[],
-  apiKeys: LLMAPIKeys & { tavily?: string }
+  _apiKeys: LLMAPIKeys & { tavily?: string } // Not used - keys are in env vars
 ): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
   const startTime = Date.now();
 
   try {
-    let result: EvaluatorResult;
+    // Call Vercel serverless function which has access to env vars
+    const response = await fetch('/api/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider,
+        city1,
+        city2,
+        metrics: metrics.map(m => ({
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          categoryId: m.categoryId,
+          scoringDirection: m.scoringDirection
+        }))
+      })
+    });
 
-    switch (provider) {
-      case 'claude-sonnet':
-        result = await evaluateWithClaude(apiKeys.anthropic!, apiKeys.tavily, city1, city2, metrics);
-        break;
-      case 'gpt-4o':
-        result = await evaluateWithGPT4o(apiKeys.openai!, city1, city2, metrics);
-        break;
-      case 'gemini-3-pro':
-        result = await evaluateWithGemini(apiKeys.google!, city1, city2, metrics);
-        break;
-      case 'grok-4':
-        result = await evaluateWithGrok(apiKeys.xai!, city1, city2, metrics);
-        break;
-      case 'perplexity':
-        result = await evaluateWithPerplexity(apiKeys.perplexity!, city1, city2, metrics);
-        break;
-      default:
-        throw new Error(`Unknown provider: ${provider}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        scores: [],
+        latencyMs: Date.now() - startTime,
+        error: `API error: ${response.status} - ${errorText}`
+      };
     }
+
+    const result = await response.json();
+
+    // Convert API response scores to LLMMetricScore format
+    const scores: LLMMetricScore[] = (result.scores || []).map((s: any) => ({
+      metricId: s.metricId,
+      rawValue: null,
+      normalizedScore: Math.round((s.city1LegalScore + s.city1EnforcementScore) / 2),
+      confidence: s.confidence === 'high' ? 'high' : s.confidence === 'medium' ? 'medium' : 'low',
+      llmProvider: provider,
+      legalScore: s.city1LegalScore,
+      enforcementScore: s.city1EnforcementScore,
+      explanation: s.reasoning,
+      sources: s.sources,
+      city: 'city1' as const
+    })).concat((result.scores || []).map((s: any) => ({
+      metricId: s.metricId,
+      rawValue: null,
+      normalizedScore: Math.round((s.city2LegalScore + s.city2EnforcementScore) / 2),
+      confidence: s.confidence === 'high' ? 'high' : s.confidence === 'medium' ? 'medium' : 'low',
+      llmProvider: provider,
+      legalScore: s.city2LegalScore,
+      enforcementScore: s.city2EnforcementScore,
+      explanation: s.reasoning,
+      sources: s.sources,
+      city: 'city2' as const
+    })));
 
     return {
       success: result.success,
-      scores: result.scores,
+      scores,
       latencyMs: Date.now() - startTime,
       error: result.error
     };
