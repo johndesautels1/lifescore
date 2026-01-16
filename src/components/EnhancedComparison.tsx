@@ -174,7 +174,32 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
 
   // Memoized runJudge to prevent stale closures
   const runJudge = useCallback(async () => {
-    if (!apiKeys.anthropic || demoMode) return;
+    // Demo mode: simulate judge with short delay
+    if (demoMode || !apiKeys.anthropic) {
+      setIsJudging(true);
+      onStatusChange('judging');
+
+      // Simulate judge processing
+      await new Promise(r => setTimeout(r, 800));
+
+      // Create mock judge result for demo
+      const mockJudgeResult: JudgeOutput = {
+        city1Consensuses: [],
+        city2Consensuses: [],
+        overallAgreement: 85,
+        disagreementAreas: [],
+        judgeLatencyMs: 800
+      };
+
+      setJudgeResult(mockJudgeResult);
+      onResultsUpdate(
+        new Map(Array.from(llmStates.entries()).filter(([, s]) => s.result).map(([k, s]) => [k, s.result!])),
+        mockJudgeResult
+      );
+      setIsJudging(false);
+      onStatusChange('complete');
+      return;
+    }
 
     setIsJudging(true);
     onStatusChange('judging');
