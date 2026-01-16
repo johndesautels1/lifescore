@@ -170,6 +170,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 ### Recent Updates (This Session)
 | Commit | Description |
 |--------|-------------|
+| `0add7d5` | Fix 7 Copilot audit issues: Opus API call, parse logic, LLM deduplication |
 | `ae30073` | Fix 6 judge production cycle errors (Codex audit) - evidence data flow |
 | `dc3dc87` | Phase 3: Progressive Opus Judging with individual LLM opinions |
 | `0cdb5bd` | Fix missing Google Search grounding in api/evaluate.ts Gemini |
