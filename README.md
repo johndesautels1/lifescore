@@ -81,6 +81,47 @@ src/
 └── types/        # TypeScript types
 ```
 
+## CRITICAL DEVELOPMENT RULES
+
+### NO DEMO MODE ALLOWED
+**MANDATORY: No programmatic language for any demo mode is allowed in the application code or interface.**
+
+- No `demoMode` parameters, flags, or variables
+- No `generateDemo*()` functions
+- No `simulateDemo*()` functions
+- No `useDemoMode` options
+- No fake/simulated data generators
+- All data MUST come from real API calls through Vercel serverless functions
+- API keys are stored in Vercel environment variables (`process.env.*`)
+
+### AI ASSISTANT (Claude) MANDATORY RULES
+
+1. **ATTESTATION REQUIREMENT**: Claude must 100% attest to reading ALL possible file locations in the codebase before stating that any work is "done", "working", "complete", or "all files fixed". Partial verification is not acceptable.
+
+2. **TYPESCRIPT VERIFICATION**: Claude MUST always run `npx tsc --noEmit` and fix ALL TypeScript errors BEFORE stating a build is complete. No exceptions.
+
+3. **NO ALTERNATIVE CODE BLOCKS**: Claude is FORBIDDEN from building alternative function code blocks or duplicate functionality without explicit programmer permission.
+
+4. **DUPLICATE CODE CHECK**: Claude MUST test the application for duplicate code or code that could be duplicated and notify the programmer of any discoveries. However, Claude must NEVER remove or refactor duplicate code without permission.
+
+5. **NO CODE ROLLBACKS**: Claude is FORBIDDEN from rolling back any code, architecture, models, or API configurations without explicit programmer permission. This rule has NO exceptions.
+
+6. **MODEL CONSISTENCY**: Claude must NEVER change LLM model IDs (e.g., `claude-sonnet-4-5-20250514`, `grok-4`, `gemini-3-pro`) without explicit permission.
+
+### API Architecture
+All LLM calls go through Vercel serverless functions:
+- `/api/evaluate` - LLM evaluations (Claude, GPT-4o, Gemini, Grok, Perplexity)
+- `/api/judge` - Claude Opus 4.5 consensus building
+
+### Environment Variables (Vercel)
+```
+ANTHROPIC_API_KEY=your-key
+OPENAI_API_KEY=your-key
+GOOGLE_API_KEY=your-key
+XAI_API_KEY=your-key
+PERPLEXITY_API_KEY=your-key
+```
+
 ## License
 
 UNLICENSED - John E. Desautels & Associates

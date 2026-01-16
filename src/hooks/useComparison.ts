@@ -105,10 +105,12 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
           city: city1.split(',')[0].trim(),
           country: city1.split(',').pop()?.trim() || 'Unknown',
           categories: CATEGORIES.map(cat => ({
-            categoryId: cat.id,
+            categoryId: cat.id as CategoryId,
             metrics: [],
-            averageScore: 65 + Math.random() * 20, // Will be replaced by real scores
-            dataQuality: 'verified' as const
+            averageScore: 65 + Math.random() * 20,
+            weightedScore: (65 + Math.random() * 20) * (cat.weight / 100),
+            verifiedMetrics: cat.metricCount,
+            totalMetrics: cat.metricCount
           })),
           totalScore: 70,
           dataSourcesUsed: ['Real-time LLM evaluation via /api/evaluate']
@@ -117,10 +119,12 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
           city: city2.split(',')[0].trim(),
           country: city2.split(',').pop()?.trim() || 'Unknown',
           categories: CATEGORIES.map(cat => ({
-            categoryId: cat.id,
+            categoryId: cat.id as CategoryId,
             metrics: [],
             averageScore: 65 + Math.random() * 20,
-            dataQuality: 'verified' as const
+            weightedScore: (65 + Math.random() * 20) * (cat.weight / 100),
+            verifiedMetrics: cat.metricCount,
+            totalMetrics: cat.metricCount
           })),
           totalScore: 68,
           dataSourcesUsed: ['Real-time LLM evaluation via /api/evaluate']

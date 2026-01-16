@@ -14,7 +14,7 @@ import type {
   CategoryId,
   ComparisonResult
 } from '../types/metrics';
-import { ALL_METRICS, CATEGORIES, METRICS_MAP, getMetricsByCategory } from '../data/metrics';
+import { CATEGORIES, METRICS_MAP, getMetricsByCategory } from '../data/metrics';
 
 // ============================================================================
 // SCORE CALCULATION FUNCTIONS

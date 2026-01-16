@@ -7,14 +7,11 @@ import type {
   LLMProvider,
   LLMAPIKeys,
   EnhancedComparisonResult,
-  EnhancedComparisonProgress,
-  LLMMetricScore,
-  MetricConsensus,
-  CategoryConsensus
+  EnhancedComparisonProgress
 } from '../types/enhancedComparison';
 import { DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import type { CategoryId } from '../types/metrics';
-import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../data/metrics';
+import { ALL_METRICS, CATEGORIES } from '../data/metrics';
 
 // Real LLM evaluators and Opus judge
 import { runAllEvaluators } from './llmEvaluators';
