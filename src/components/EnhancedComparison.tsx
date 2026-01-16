@@ -144,7 +144,6 @@ interface LLMSelectorProps {
   city2: string;
   onResultsUpdate: (results: Map<LLMProvider, EvaluatorResult>, judgeResult: JudgeOutput | null) => void;
   onStatusChange: (status: 'idle' | 'running' | 'judging' | 'complete') => void;
-  demoMode?: boolean;
 }
 
 interface LLMButtonState {
@@ -157,8 +156,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   city1,
   city2,
   onResultsUpdate,
-  onStatusChange,
-  _demoMode = false
+  onStatusChange
 }) => {
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
     new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
