@@ -170,6 +170,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 ### Recent Updates (This Session)
 | Commit | Description |
 |--------|-------------|
+| `ae30073` | Fix 6 judge production cycle errors (Codex audit) - evidence data flow |
 | `dc3dc87` | Phase 3: Progressive Opus Judging with individual LLM opinions |
 | `0cdb5bd` | Fix missing Google Search grounding in api/evaluate.ts Gemini |
 | `e8e962c` | Fix 11 GPT-5.2 audit errors: field mapping, evidence capture, Tavily |
