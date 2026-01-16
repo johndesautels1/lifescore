@@ -48,6 +48,25 @@ const ENHANCED_STORAGE_KEY = 'lifescore_saved_enhanced';
 const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
+const GITHUB_TIMEOUT_MS = 30000; // 30 seconds for GitHub API calls
+
+// Helper: fetch with timeout using AbortController
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`GitHub API timed out after ${timeoutMs / 1000} seconds`);
+    }
+    throw error;
+  }
+}
 const MAX_SAVED = 100;
 
 // ============================================================================
@@ -262,23 +281,27 @@ export function deleteEnhancedComparisonLocal(id: string): boolean {
  * Create a new GitHub Gist for storing comparisons
  */
 async function createGist(token: string, comparisons: SavedComparison[]): Promise<string> {
-  const response = await fetch('https://api.github.com/gists', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.github+json'
-    },
-    body: JSON.stringify({
-      description: GIST_DESCRIPTION,
-      public: false, // Secret gist
-      files: {
-        [GIST_FILENAME]: {
-          content: JSON.stringify({ comparisons, lastUpdated: new Date().toISOString() }, null, 2)
+  const response = await fetchWithTimeout(
+    'https://api.github.com/gists',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github+json'
+      },
+      body: JSON.stringify({
+        description: GIST_DESCRIPTION,
+        public: false, // Secret gist
+        files: {
+          [GIST_FILENAME]: {
+            content: JSON.stringify({ comparisons, lastUpdated: new Date().toISOString() }, null, 2)
+          }
         }
-      }
-    })
-  });
+      })
+    },
+    GITHUB_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const error = await response.json();
@@ -293,21 +316,25 @@ async function createGist(token: string, comparisons: SavedComparison[]): Promis
  * Update existing GitHub Gist
  */
 async function updateGist(token: string, gistId: string, comparisons: SavedComparison[]): Promise<void> {
-  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.github+json'
-    },
-    body: JSON.stringify({
-      files: {
-        [GIST_FILENAME]: {
-          content: JSON.stringify({ comparisons, lastUpdated: new Date().toISOString() }, null, 2)
+  const response = await fetchWithTimeout(
+    `https://api.github.com/gists/${gistId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github+json'
+      },
+      body: JSON.stringify({
+        files: {
+          [GIST_FILENAME]: {
+            content: JSON.stringify({ comparisons, lastUpdated: new Date().toISOString() }, null, 2)
+          }
         }
-      }
-    })
-  });
+      })
+    },
+    GITHUB_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const error = await response.json();
@@ -319,12 +346,16 @@ async function updateGist(token: string, gistId: string, comparisons: SavedCompa
  * Fetch comparisons from GitHub Gist
  */
 async function fetchGist(token: string, gistId: string): Promise<SavedComparison[]> {
-  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/vnd.github+json'
-    }
-  });
+  const response = await fetchWithTimeout(
+    `https://api.github.com/gists/${gistId}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json'
+      }
+    },
+    GITHUB_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -349,13 +380,17 @@ async function fetchGist(token: string, gistId: string): Promise<SavedComparison
  * Delete GitHub Gist
  */
 async function deleteGist(token: string, gistId: string): Promise<void> {
-  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/vnd.github+json'
-    }
-  });
+  const response = await fetchWithTimeout(
+    `https://api.github.com/gists/${gistId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json'
+      }
+    },
+    GITHUB_TIMEOUT_MS
+  );
 
   if (!response.ok && response.status !== 404) {
     const error = await response.json();

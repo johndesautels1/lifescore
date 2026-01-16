@@ -6,7 +6,7 @@
       "maxDuration": 120
     },
     "api/judge.ts": {
-      "maxDuration": 60
+      "maxDuration": 90
     }
   },
   "buildCommand": "npm run build",

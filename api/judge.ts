@@ -15,6 +15,27 @@ import {
   type ConfidenceLevel
 } from '../src/constants/scoringThresholds';
 
+// Timeout constant for Opus API (80s to fit within 90s Vercel function limit)
+const OPUS_TIMEOUT_MS = 80000;
+
+// Helper: fetch with timeout using AbortController
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Opus API timed out after ${timeoutMs / 1000} seconds`);
+    }
+    throw error;
+  }
+}
+
 // Opus API types
 // FIX #2: Add legalScore/enforcementScore fields to match opusJudge.ts
 interface OpusJudgment {
@@ -376,19 +397,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses);
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2025-01-01'
+      const response = await fetchWithTimeout(
+        'https://api.anthropic.com/v1/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2025-01-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-opus-4-5-20251101',
+            max_tokens: 4096,
+            messages: [{ role: 'user', content: prompt }]
+          })
         },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5-20251101',
-          max_tokens: 4096,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
+        OPUS_TIMEOUT_MS
+      );
 
       if (response.ok) {
         const data = await response.json();

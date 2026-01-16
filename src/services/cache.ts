@@ -26,8 +26,26 @@ const CACHE_CONFIG = {
 
   // Cache key prefixes
   PREFIX: 'lifescore',
-  VERSION: 'v1'
+  VERSION: 'v1',
+
+  // Timeout for KV operations (10 seconds)
+  KV_TIMEOUT_MS: 10000
 };
+
+// Helper: fetch with timeout using AbortController
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
 
 // ============================================================================
 // TYPES
@@ -206,9 +224,11 @@ class VercelKVCache implements CacheStorage {
     if (!this.isConfigured) return null;
 
     try {
-      const response = await fetch(`${this.baseUrl}/get/${key}`, {
-        headers: { Authorization: `Bearer ${this.token}` }
-      });
+      const response = await fetchWithTimeout(
+        `${this.baseUrl}/get/${key}`,
+        { headers: { Authorization: `Bearer ${this.token}` } },
+        CACHE_CONFIG.KV_TIMEOUT_MS
+      );
 
       if (!response.ok) return null;
 
@@ -234,17 +254,21 @@ class VercelKVCache implements CacheStorage {
 
     try {
       const ttlSeconds = Math.ceil(entry.ttl / 1000);
-      await fetch(`${this.baseUrl}/set/${key}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          'Content-Type': 'application/json'
+      await fetchWithTimeout(
+        `${this.baseUrl}/set/${key}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            value: JSON.stringify(entry),
+            ex: ttlSeconds // TTL in seconds for Redis
+          })
         },
-        body: JSON.stringify({
-          value: JSON.stringify(entry),
-          ex: ttlSeconds // TTL in seconds for Redis
-        })
-      });
+        CACHE_CONFIG.KV_TIMEOUT_MS
+      );
     } catch (error) {
       console.warn('Failed to write to Vercel KV:', error);
     }
@@ -254,10 +278,14 @@ class VercelKVCache implements CacheStorage {
     if (!this.isConfigured) return;
 
     try {
-      await fetch(`${this.baseUrl}/del/${key}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${this.token}` }
-      });
+      await fetchWithTimeout(
+        `${this.baseUrl}/del/${key}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${this.token}` }
+        },
+        CACHE_CONFIG.KV_TIMEOUT_MS
+      );
     } catch {
       // Ignore deletion errors
     }
