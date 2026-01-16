@@ -7,6 +7,12 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import {
+  CONFIDENCE_THRESHOLDS,
+  getConfidenceLevel,
+  isDisagreementArea,
+  type ConfidenceLevel
+} from '../src/constants/scoringThresholds';
 
 // ============================================================================
 // TYPES
@@ -110,16 +116,8 @@ function buildMetricConsensus(
   const legalScore = Math.round(calculateMedian(legalScores));
   const enforcementScore = Math.round(calculateMedian(enforcementScores));
 
-  let confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
-  if (stdDev < 5) {
-    confidenceLevel = 'unanimous';
-  } else if (stdDev < 12) {
-    confidenceLevel = 'strong';
-  } else if (stdDev < 20) {
-    confidenceLevel = 'moderate';
-  } else {
-    confidenceLevel = 'split';
-  }
+  // Use centralized threshold constants
+  const confidenceLevel: ConfidenceLevel = getConfidenceLevel(stdDev);
 
   const providers = scores.map(s => s.llmProvider).filter(Boolean);
   const uniqueProviders = [...new Set(providers)];
@@ -188,8 +186,8 @@ function aggregateAndBuildConsensuses(
     city1Consensuses.push(c1Consensus);
     city2Consensuses.push(c2Consensus);
 
-    // Track high disagreement
-    if (c1Consensus.standardDeviation > 15 || c2Consensus.standardDeviation > 15) {
+    // Track high disagreement using centralized threshold
+    if (isDisagreementArea(c1Consensus.standardDeviation) || isDisagreementArea(c2Consensus.standardDeviation)) {
       disagreementMetrics.push(metricId);
     }
   });
@@ -224,7 +222,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Calculate overall agreement from standard deviations
   const allStdDevs = [...city1Consensuses, ...city2Consensuses].map(c => c.standardDeviation);
-  const avgStdDev = allStdDevs.length > 0 ? calculateMean(allStdDevs) : 25;
+  const avgStdDev = allStdDevs.length > 0 ? calculateMean(allStdDevs) : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
   const overallAgreement = Math.max(0, Math.min(100, Math.round(100 - avgStdDev * 2)));
 
   const output: JudgeOutput = {

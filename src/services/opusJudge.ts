@@ -7,6 +7,12 @@ import type { LLMMetricScore, MetricConsensus, CategoryConsensus } from '../type
 import type { CategoryId } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES } from '../data/metrics';
 import type { EvaluatorResult } from './llmEvaluators';
+import {
+  CONFIDENCE_THRESHOLDS,
+  getConfidenceLevel,
+  isDisagreementArea,
+  type ConfidenceLevel
+} from '../constants/scoringThresholds';
 
 // ============================================================================
 // TYPES
@@ -128,17 +134,8 @@ function buildMetricConsensus(
   const legalScore = Math.round(calculateMedian(legalScores));
   const enforcementScore = Math.round(calculateMedian(enforcementScores));
 
-  // Determine confidence level
-  let confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
-  if (stdDev < 5) {
-    confidenceLevel = 'unanimous';
-  } else if (stdDev < 12) {
-    confidenceLevel = 'strong';
-  } else if (stdDev < 20) {
-    confidenceLevel = 'moderate';
-  } else {
-    confidenceLevel = 'split';
-  }
+  // Determine confidence level using centralized threshold constants
+  const confidenceLevel: ConfidenceLevel = getConfidenceLevel(stdDev);
 
   // Build judge explanation
   const providers = scores.map(s => s.llmProvider);
@@ -244,8 +241,8 @@ export async function runOpusJudge(
     city1Consensuses.push(c1);
     city2Consensuses.push(c2);
 
-    // Track high-disagreement metrics
-    if (c1.standardDeviation > 15 || c2.standardDeviation > 15) {
+    // Track high-disagreement metrics using centralized threshold
+    if (isDisagreementArea(c1.standardDeviation) || isDisagreementArea(c2.standardDeviation)) {
       const metric = ALL_METRICS.find(m => m.id === metricId);
       if (metric) disagreementMetrics.push(metric.shortName);
     }
@@ -426,7 +423,7 @@ export function buildCategoryConsensuses(
     // FIX: Return neutral score (50) for empty categories, not 0
     // This prevents entire categories from dragging down scores when data is missing
     const avgScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
-    const avgStdDev = totalWeight > 0 ? totalWeightedStdDev / totalWeight : 25;
+    const avgStdDev = totalWeight > 0 ? totalWeightedStdDev / totalWeight : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
 
     return {
       categoryId: category.id as CategoryId,
