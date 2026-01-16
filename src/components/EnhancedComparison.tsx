@@ -3,13 +3,13 @@
  * Multi-LLM consensus UI
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison, getAvailableLLMs } from '../services/enhancedComparison';
 import { runSingleEvaluator, type EvaluatorResult } from '../services/llmEvaluators';
-import { runOpusJudge, buildCategoryConsensuses } from '../services/opusJudge';
+import { runOpusJudge, buildCategoryConsensuses, type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
@@ -142,7 +142,7 @@ const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro'
 interface LLMSelectorProps {
   city1: string;
   city2: string;
-  onResultsUpdate: (results: Map<LLMProvider, EvaluatorResult>, judgeResult: any | null) => void;
+  onResultsUpdate: (results: Map<LLMProvider, EvaluatorResult>, judgeResult: JudgeOutput | null) => void;
   onStatusChange: (status: 'idle' | 'running' | 'judging' | 'complete') => void;
   demoMode?: boolean;
 }
@@ -162,7 +162,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
     new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
   );
-  const [judgeResult, setJudgeResult] = useState<any | null>(null);
+  const [judgeResult, setJudgeResult] = useState<JudgeOutput | null>(null);
   const [isJudging, setIsJudging] = useState(false);
   const apiKeys = getStoredAPIKeys();
 
@@ -170,14 +170,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   const completedCount = Array.from(llmStates.values()).filter(s => s.status === 'completed').length;
   const hasEnoughForJudge = completedCount >= 2;
 
-  // Auto-run Opus judge when 2+ LLMs complete
-  useEffect(() => {
-    if (hasEnoughForJudge && !judgeResult && !isJudging) {
-      runJudge();
-    }
-  }, [completedCount]);
-
-  const runJudge = async () => {
+  // Memoized runJudge to prevent stale closures
+  const runJudge = useCallback(async () => {
     if (!apiKeys.anthropic || demoMode) return;
 
     setIsJudging(true);
@@ -186,7 +180,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
     try {
       // Gather all completed evaluator results
       const evaluatorResults: EvaluatorResult[] = [];
-      llmStates.forEach((state, _provider) => {
+      llmStates.forEach((state) => {
         if (state.status === 'completed' && state.result) {
           evaluatorResults.push(state.result);
         }
@@ -200,7 +194,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
 
       setJudgeResult(result);
       onResultsUpdate(
-        new Map(Array.from(llmStates.entries()).filter(([_, s]) => s.result).map(([k, s]) => [k, s.result!])),
+        new Map(Array.from(llmStates.entries()).filter(([, s]) => s.result).map(([k, s]) => [k, s.result!])),
         result
       );
       onStatusChange('complete');
@@ -209,7 +203,14 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
     } finally {
       setIsJudging(false);
     }
-  };
+  }, [apiKeys.anthropic, demoMode, llmStates, city1, city2, onResultsUpdate, onStatusChange]);
+
+  // Auto-run Opus judge when 2+ LLMs complete
+  useEffect(() => {
+    if (hasEnoughForJudge && !judgeResult && !isJudging) {
+      runJudge();
+    }
+  }, [hasEnoughForJudge, judgeResult, isJudging, runJudge]);
 
   const runLLM = async (provider: LLMProvider) => {
     // Update state to running
@@ -393,7 +394,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, anthropic: e.target.value })}
               placeholder="sk-ant-..."
             />
-            <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4</span>
+            <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4.5</span>
           </div>
 
           <div className="api-key-group">

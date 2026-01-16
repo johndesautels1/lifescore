@@ -213,7 +213,7 @@ Use these search results to inform your evaluation.
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5-20250514',
           max_tokens: 16384,
           messages: [{ role: 'user', content: prompt }]
         })
@@ -329,7 +329,7 @@ export async function evaluateWithGemini(
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -400,7 +400,7 @@ export async function evaluateWithGrok(
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'grok-3',
+        model: 'grok-4',
         messages: [
           {
             role: 'system',

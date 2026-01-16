@@ -76,14 +76,27 @@
 - DO NOT add or remove metrics without updating category counts
 - Each metric has `searchQueries` array for web search
 
-### LLM Providers (5 total)
-| Provider | Model | Web Search Method |
-|----------|-------|-------------------|
-| Claude (Anthropic) | claude-sonnet-4 | Tavily API |
-| GPT-4o (OpenAI) | gpt-4o | Native web_search tool |
-| Gemini (Google) | gemini-2.0-flash | Google Search grounding |
-| Grok (xAI) | grok-3 | Native search: true |
-| Perplexity | sonar-reasoning-pro | Native (return_citations) |
+### LLM Providers (5 Evaluators + 1 Judge)
+
+⚠️ **CRITICAL: DO NOT CHANGE MODEL IDs WITHOUT USER PERMISSION** ⚠️
+
+| Provider | Type ID | Actual API Model | Web Search Method | Status |
+|----------|---------|------------------|-------------------|--------|
+| Claude Sonnet 4.5 | `claude-sonnet` | `claude-sonnet-4-5-20250514` | Tavily API | ✅ |
+| GPT-4o | `gpt-4o` | `gpt-4o` | Native web_search tool | ✅ |
+| Gemini 3 Pro | `gemini-3-pro` | `gemini-3-pro` | Google Search grounding | ✅ |
+| Grok 4 | `grok-4` | `grok-4` | Native search: true | ✅ |
+| Perplexity | `perplexity` | `sonar-reasoning-pro` | Native (return_citations) | ✅ |
+| **Judge** | `claude-opus` | `claude-opus-4-5-20251101` | N/A (judge only) | ✅ |
+
+**Last Verified**: 2026-01-16 - All models 100% consistent across codebase
+
+### Model Consistency Files
+These files contain model references and must stay synchronized:
+- `src/types/enhancedComparison.ts` - Type definitions (SOURCE OF TRUTH for Type IDs)
+- `src/services/llmEvaluators.ts` - Actual API model strings
+- `src/services/opusJudge.ts` - Opus judge model string
+- `src/services/rateLimiter.ts` - Rate limit configs per provider
 
 ### Judge
 - **Claude Opus 4.5** (`claude-opus-4-5-20251101`) for final consensus
@@ -249,3 +262,10 @@ When starting a new conversation:
 4. **DO NOT** mark tasks complete without verifying git commit exists
 5. **DO NOT** continue coding past 85% context without saving state
 6. **DO NOT** ask user about API keys - they are all configured in Vercel
+7. **DO NOT** change LLM model IDs or API model strings without explicit user permission
+   - NEVER rollback to deprecated models
+   - NEVER suggest "fixing" model names to older versions
+   - Type IDs in `enhancedComparison.ts` are the SOURCE OF TRUTH
+   - If Type ID says `grok-4`, do NOT change API call to `grok-3` (it's intentional)
+   - If Type ID says `gemini-3-pro`, do NOT change API call to older Gemini models
+   - User must explicitly approve ANY model changes
