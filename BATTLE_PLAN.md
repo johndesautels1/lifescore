@@ -93,21 +93,23 @@
 
 ## 🚀 IMPLEMENTATION PLAN (5 PHASES)
 
-### Phase 1: Single-LLM Selection UI ⬅️ CURRENT
+### Phase 1: Single-LLM Selection UI ✅ COMPLETE
 **Goal**: Let user select and run ONE LLM at a time
-**Files to modify**:
-- `src/components/EnhancedComparison.tsx` - Add LLM selector buttons
-- `src/components/EnhancedComparison.css` - Style the selector
-- `src/App.tsx` - Update state management for progressive LLM calls
+**Commit**: `6ef12e7`
+**Files modified**:
+- `src/components/EnhancedComparison.tsx` - Added LLMSelector component
+- `src/components/EnhancedComparison.css` - Added LLM selector styles
+- `src/App.tsx` - Integrated LLMSelector into enhanced mode flow
+- `src/services/llmEvaluators.ts` - Added runSingleEvaluator function
 
 **Acceptance Criteria**:
-- [ ] 5 LLM buttons displayed (Claude, GPT-4o, Gemini, Grok, Perplexity)
-- [ ] User clicks one → that LLM evaluates → results shown
-- [ ] User can click another → adds to results
-- [ ] After ≥2 LLMs → Opus judge auto-called
-- [ ] Each LLM's individual scores visible
+- [x] 5 LLM buttons displayed (Claude, GPT-4o, Gemini, Grok, Perplexity)
+- [x] User clicks one → that LLM evaluates → results shown
+- [x] User can click another → adds to results
+- [x] After ≥2 LLMs → Opus judge auto-called
+- [x] Progress bar shows evaluation status
 
-### Phase 2: Category Batch Prompts
+### Phase 2: Category Batch Prompts ⬅️ NEXT
 **Goal**: Split 100 metrics into 6 category batches, run in parallel per LLM
 **Files to modify**:
 - `src/services/llmEvaluators.ts` - Add batch evaluation functions
