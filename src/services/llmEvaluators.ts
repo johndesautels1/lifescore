@@ -43,6 +43,9 @@ interface APIMetricScore {
   confidence: string;
   reasoning?: string;
   sources?: string[];
+  // FIX: Include evidence fields from GPT-5.2 web search
+  city1Evidence?: Array<{ title: string; url: string; snippet: string }>;
+  city2Evidence?: Array<{ title: string; url: string; snippet: string }>;
 }
 
 // ============================================================================
@@ -910,7 +913,10 @@ async function evaluateCategoryBatch(
     };
 
     // Convert API response scores to LLMMetricScore format
+    // FIX: Now includes evidence from GPT-5.2 web search
     const apiScores: APIMetricScore[] = result.scores || [];
+    const now = new Date().toISOString();
+
     const city1Scores: LLMMetricScore[] = apiScores.map((s: APIMetricScore) => ({
       metricId: s.metricId,
       rawValue: null,
@@ -921,6 +927,14 @@ async function evaluateCategoryBatch(
       enforcementScore: s.city1EnforcementScore,
       explanation: s.reasoning,
       sources: s.sources,
+      // FIX: Include evidence with proper EvidenceItem format
+      evidence: s.city1Evidence?.map(e => ({
+        city: city1,
+        title: e.title,
+        url: e.url,
+        snippet: e.snippet,
+        retrieved_at: now
+      })),
       city: 'city1' as const
     }));
 
@@ -934,6 +948,14 @@ async function evaluateCategoryBatch(
       enforcementScore: s.city2EnforcementScore,
       explanation: s.reasoning,
       sources: s.sources,
+      // FIX: Include evidence with proper EvidenceItem format
+      evidence: s.city2Evidence?.map(e => ({
+        city: city2,
+        title: e.title,
+        url: e.url,
+        snippet: e.snippet,
+        retrieved_at: now
+      })),
       city: 'city2' as const
     }));
 

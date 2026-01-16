@@ -134,7 +134,10 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
       city2EnforcementScore: e.city2EnforcementScore || 50,
       confidence: e.confidence || 'medium',
       reasoning: e.reasoning,
-      sources: e.sources
+      sources: e.sources,
+      // FIX: Include evidence from GPT-5.2 web search
+      city1Evidence: e.city1Evidence || [],
+      city2Evidence: e.city2Evidence || []
     }));
   } catch (error) {
     console.error(`Failed to parse ${provider} response:`, error);

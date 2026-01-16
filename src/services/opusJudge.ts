@@ -57,6 +57,7 @@ function aggregateScoresByMetric(
   });
 
   // Aggregate scores from all evaluators
+  // FIX: Removed unnecessary type casts - LLMMetricScore already has city field
   evaluatorResults.forEach(result => {
     if (!result.success) return;
 
@@ -64,9 +65,9 @@ function aggregateScoresByMetric(
       const agg = aggregated.get(score.metricId);
       if (!agg) return;
 
-      if ((score as any).city === 'city1') {
+      if (score.city === 'city1') {
         agg.city1Scores.push(score);
-      } else if ((score as any).city === 'city2') {
+      } else if (score.city === 'city2') {
         agg.city2Scores.push(score);
       }
     });
@@ -120,12 +121,12 @@ function buildMetricConsensus(
   }
 
   // Extract scores
+  // FIX: Removed unnecessary type casts - LLMMetricScore already has legalScore and enforcementScore
   const normalizedScores = scores.map(s => s.normalizedScore);
-  const legalScores = scores.map(s => (s as any).legalScore ?? s.normalizedScore);
-  const enforcementScores = scores.map(s => (s as any).enforcementScore ?? s.normalizedScore);
+  const legalScores = scores.map(s => s.legalScore ?? s.normalizedScore);
+  const enforcementScores = scores.map(s => s.enforcementScore ?? s.normalizedScore);
 
   // Calculate statistics
-  calculateMean(normalizedScores); // Reserved for future weighted average
   const median = calculateMedian(normalizedScores);
   const stdDev = calculateStdDev(normalizedScores);
 
