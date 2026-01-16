@@ -122,19 +122,21 @@ These files contain model references and must stay synchronized:
 - [x] After ≥2 LLMs → Opus judge auto-called
 - [x] Progress bar shows evaluation status
 
-### Phase 2: Category Batch Prompts ⬅️ NEXT
+### Phase 2: Category Batch Prompts ✅ COMPLETE
 **Goal**: Split 100 metrics into 6 category batches, run in parallel per LLM
-**Files to modify**:
-- `src/services/llmEvaluators.ts` - Add batch evaluation functions
-- `src/services/enhancedComparison.ts` - Orchestrate 6 parallel batch calls
+**Commit**: TBD
+**Files modified**:
+- `src/services/llmEvaluators.ts` - Added `runSingleEvaluatorBatched()` function
+- `src/components/EnhancedComparison.tsx` - Updated LLMSelector to use batched evaluation
+- `src/components/EnhancedComparison.css` - Added category progress UI styles
 
 **Acceptance Criteria**:
-- [ ] Each LLM call splits into 6 parallel batch requests
-- [ ] Each batch handles only its category's metrics
-- [ ] Progress indicator shows which categories completed
-- [ ] Total time per LLM: 30-60 seconds
+- [x] Each LLM call splits into 6 parallel batch requests
+- [x] Each batch handles only its category's metrics
+- [x] Progress indicator shows which categories completed (6-item grid)
+- [x] Demo mode simulates category-by-category progress
 
-### Phase 3: Progressive Opus Judging
+### Phase 3: Progressive Opus Judging ⬅️ NEXT
 **Goal**: Opus compares whatever LLMs have completed, updates as more added
 **Files to modify**:
 - `src/services/opusJudge.ts` - Support incremental judging

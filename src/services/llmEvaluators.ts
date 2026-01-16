@@ -4,7 +4,8 @@
  */
 
 import type { LLMProvider, LLMAPIKeys, LLMMetricScore } from '../types/enhancedComparison';
-import type { MetricDefinition } from '../types/metrics';
+import type { MetricDefinition, CategoryId } from '../types/metrics';
+import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
 import { withRetry, isCircuitOpen, recordSuccess, recordFailure } from './rateLimiter';
 
 // ============================================================================
@@ -716,4 +717,186 @@ export async function runSingleEvaluator(
       latencyMs: 0
     };
   }
+}
+
+// ============================================================================
+// PHASE 2: CATEGORY BATCH EVALUATION
+// Splits 100 metrics into 6 category batches, runs in parallel
+// ============================================================================
+
+export interface CategoryBatchProgress {
+  categoryId: CategoryId;
+  categoryName: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  metricsCount: number;
+}
+
+export interface BatchedEvaluatorResult extends EvaluatorResult {
+  categoryResults: Map<CategoryId, {
+    success: boolean;
+    scores: LLMMetricScore[];
+    latencyMs: number;
+    error?: string;
+  }>;
+}
+
+/**
+ * Evaluate a single category's metrics with a specific LLM provider
+ */
+async function evaluateCategoryBatch(
+  provider: LLMProvider,
+  city1: string,
+  city2: string,
+  categoryId: CategoryId,
+  metrics: MetricDefinition[],
+  apiKeys: LLMAPIKeys & { tavily?: string }
+): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
+  const startTime = Date.now();
+
+  try {
+    let result: EvaluatorResult;
+
+    switch (provider) {
+      case 'claude-sonnet':
+        result = await evaluateWithClaude(apiKeys.anthropic!, apiKeys.tavily, city1, city2, metrics);
+        break;
+      case 'gpt-4o':
+        result = await evaluateWithGPT4o(apiKeys.openai!, city1, city2, metrics);
+        break;
+      case 'gemini-3-pro':
+        result = await evaluateWithGemini(apiKeys.google!, city1, city2, metrics);
+        break;
+      case 'grok-4':
+        result = await evaluateWithGrok(apiKeys.xai!, city1, city2, metrics);
+        break;
+      case 'perplexity':
+        result = await evaluateWithPerplexity(apiKeys.perplexity!, city1, city2, metrics);
+        break;
+      default:
+        throw new Error(`Unknown provider: ${provider}`);
+    }
+
+    return {
+      success: result.success,
+      scores: result.scores,
+      latencyMs: Date.now() - startTime,
+      error: result.error
+    };
+  } catch (error) {
+    return {
+      success: false,
+      scores: [],
+      latencyMs: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Run a single LLM evaluator with category batching (6 parallel requests)
+ * This is the Phase 2 implementation that prevents timeout by splitting work
+ */
+export async function runSingleEvaluatorBatched(
+  provider: LLMProvider,
+  city1: string,
+  city2: string,
+  apiKeys: LLMAPIKeys & { tavily?: string },
+  onCategoryProgress?: (progress: CategoryBatchProgress[]) => void
+): Promise<BatchedEvaluatorResult> {
+  const startTime = Date.now();
+
+  // Validate API key for provider
+  const keyMap: Record<LLMProvider, keyof LLMAPIKeys> = {
+    'claude-opus': 'anthropic',
+    'claude-sonnet': 'anthropic',
+    'gpt-4o': 'openai',
+    'gemini-3-pro': 'google',
+    'grok-4': 'xai',
+    'perplexity': 'perplexity'
+  };
+
+  const requiredKey = keyMap[provider];
+  if (!apiKeys[requiredKey]) {
+    return {
+      provider,
+      success: false,
+      scores: [],
+      error: `${provider} API key not configured`,
+      latencyMs: 0,
+      categoryResults: new Map()
+    };
+  }
+
+  // Initialize progress for all 6 categories
+  const progressState: CategoryBatchProgress[] = CATEGORIES.map(cat => ({
+    categoryId: cat.id as CategoryId,
+    categoryName: cat.name,
+    status: 'pending',
+    metricsCount: cat.metricCount
+  }));
+
+  onCategoryProgress?.(progressState);
+
+  // Create batch promises for all 6 categories in parallel
+  const categoryPromises = CATEGORIES.map(async (category) => {
+    const categoryId = category.id as CategoryId;
+    const metrics = getMetricsByCategory(categoryId);
+
+    // Update progress to running
+    const idx = progressState.findIndex(p => p.categoryId === categoryId);
+    if (idx >= 0) {
+      progressState[idx].status = 'running';
+      onCategoryProgress?.([...progressState]);
+    }
+
+    const result = await evaluateCategoryBatch(
+      provider,
+      city1,
+      city2,
+      categoryId,
+      metrics,
+      apiKeys
+    );
+
+    // Update progress to completed/failed
+    if (idx >= 0) {
+      progressState[idx].status = result.success ? 'completed' : 'failed';
+      onCategoryProgress?.([...progressState]);
+    }
+
+    return { categoryId, result };
+  });
+
+  // Wait for all categories to complete
+  const results = await Promise.all(categoryPromises);
+
+  // Aggregate results
+  const categoryResults = new Map<CategoryId, {
+    success: boolean;
+    scores: LLMMetricScore[];
+    latencyMs: number;
+    error?: string;
+  }>();
+
+  const allScores: LLMMetricScore[] = [];
+  let overallSuccess = true;
+  const errors: string[] = [];
+
+  results.forEach(({ categoryId, result }) => {
+    categoryResults.set(categoryId, result);
+    allScores.push(...result.scores);
+    if (!result.success) {
+      overallSuccess = false;
+      if (result.error) errors.push(`${categoryId}: ${result.error}`);
+    }
+  });
+
+  return {
+    provider,
+    success: overallSuccess,
+    scores: allScores,
+    latencyMs: Date.now() - startTime,
+    error: errors.length > 0 ? errors.join('; ') : undefined,
+    categoryResults
+  };
 }

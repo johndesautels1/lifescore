@@ -8,7 +8,7 @@ import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedCompari
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison, generateDemoEnhancedComparison, getAvailableLLMs } from '../services/enhancedComparison';
-import { runSingleEvaluator, type EvaluatorResult } from '../services/llmEvaluators';
+import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress, type BatchedEvaluatorResult } from '../services/llmEvaluators';
 import { runOpusJudge, buildCategoryConsensuses, type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
@@ -150,6 +150,7 @@ interface LLMSelectorProps {
 interface LLMButtonState {
   status: 'idle' | 'running' | 'completed' | 'failed';
   result?: EvaluatorResult;
+  categoryProgress?: CategoryBatchProgress[];
 }
 
 export const LLMSelector: React.FC<LLMSelectorProps> = ({
@@ -164,6 +165,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   );
   const [judgeResult, setJudgeResult] = useState<JudgeOutput | null>(null);
   const [isJudging, setIsJudging] = useState(false);
+  const [currentLLMProgress, setCurrentLLMProgress] = useState<{ provider: LLMProvider; progress: CategoryBatchProgress[] } | null>(null);
   const apiKeys = getStoredAPIKeys();
 
   // Count completed LLMs
@@ -222,8 +224,23 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
     onStatusChange('running');
 
     if (demoMode) {
-      // Simulate for demo
-      await new Promise(r => setTimeout(r, 1500));
+      // Simulate category batching for demo
+      const demoCategories: CategoryBatchProgress[] = CATEGORIES.map(cat => ({
+        categoryId: cat.id as any,
+        categoryName: cat.name,
+        status: 'pending' as const,
+        metricsCount: cat.metricCount
+      }));
+
+      // Simulate progress through categories
+      for (let i = 0; i < demoCategories.length; i++) {
+        demoCategories[i].status = 'running';
+        setCurrentLLMProgress({ provider, progress: [...demoCategories] });
+        await new Promise(r => setTimeout(r, 250));
+        demoCategories[i].status = 'completed';
+        setCurrentLLMProgress({ provider, progress: [...demoCategories] });
+      }
+
       setLLMStates(prev => {
         const next = new Map(prev);
         next.set(provider, {
@@ -237,18 +254,32 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         });
         return next;
       });
+      setCurrentLLMProgress(null);
       return;
     }
 
     try {
-      const result = await runSingleEvaluator(
+      // Phase 2: Use batched evaluator with 6 parallel category requests
+      const result = await runSingleEvaluatorBatched(
         provider,
         city1,
         city2,
-        ALL_METRICS,
-        apiKeys
+        apiKeys,
+        (progress) => {
+          setCurrentLLMProgress({ provider, progress });
+          // Also update the LLM state with category progress
+          setLLMStates(prev => {
+            const next = new Map(prev);
+            const current = next.get(provider);
+            if (current) {
+              next.set(provider, { ...current, categoryProgress: progress });
+            }
+            return next;
+          });
+        }
       );
 
+      setCurrentLLMProgress(null);
       setLLMStates(prev => {
         const next = new Map(prev);
         next.set(provider, {
@@ -267,6 +298,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       onResultsUpdate(currentResults, judgeResult);
 
     } catch (error) {
+      setCurrentLLMProgress(null);
       setLLMStates(prev => {
         const next = new Map(prev);
         next.set(provider, { status: 'failed' });
@@ -331,6 +363,31 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
           {judgeResult && ' • Consensus built!'}
         </span>
       </div>
+
+      {/* Category batch progress - Phase 2 */}
+      {currentLLMProgress && (
+        <div className="category-batch-progress">
+          <div className="category-progress-header">
+            <span className="llm-icon">{LLM_CONFIGS[currentLLMProgress.provider].icon}</span>
+            <span>{LLM_CONFIGS[currentLLMProgress.provider].shortName} - Evaluating Categories</span>
+          </div>
+          <div className="category-progress-grid">
+            {currentLLMProgress.progress.map(cat => (
+              <div key={cat.categoryId} className={`category-progress-item ${cat.status}`}>
+                <span className="cat-icon">{CATEGORIES.find(c => c.id === cat.categoryId)?.icon}</span>
+                <span className="cat-name">{cat.categoryName}</span>
+                <span className="cat-status">
+                  {cat.status === 'pending' && '⏳'}
+                  {cat.status === 'running' && <span className="spinner-small"></span>}
+                  {cat.status === 'completed' && '✓'}
+                  {cat.status === 'failed' && '✗'}
+                </span>
+                <span className="cat-metrics">{cat.metricsCount} metrics</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Judge status */}
       {hasEnoughForJudge && (
