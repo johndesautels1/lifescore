@@ -1238,6 +1238,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           <strong>Generated:</strong> {new Date(result.generatedAt).toLocaleString()}
           <br />
           <strong>Comparison ID:</strong> {result.comparisonId}
+          {result.processingStats.fromCache && (
+            <>
+              <br />
+              <span className="cache-badge">
+                ⚡ Cached Result (saved ~$22 in API costs)
+              </span>
+            </>
+          )}
         </p>
         <button className="btn data-sources-btn" onClick={() => setShowDataSources(true)}>
           📚 View Data Sources

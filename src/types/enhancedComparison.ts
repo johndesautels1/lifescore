@@ -176,6 +176,9 @@ export interface EnhancedComparisonResult {
     totalTimeMs: number;
     llmTimings: Record<LLMProvider, number>;
     metricsEvaluated: number;
+    // Cache indicators
+    fromCache?: boolean;
+    cachedAt?: string;
   };
 }
 

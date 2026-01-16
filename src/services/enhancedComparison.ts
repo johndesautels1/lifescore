@@ -19,6 +19,7 @@ import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../data/metrics';
 // Real LLM evaluators and Opus judge
 import { runAllEvaluators } from './llmEvaluators';
 import { runOpusJudge, buildCategoryConsensuses } from './opusJudge';
+import { cache } from './cache';
 
 // ============================================================================
 // STORAGE KEYS
@@ -446,11 +447,13 @@ export interface EnhancedComparisonOptions {
 /**
  * Run enhanced comparison with multiple LLMs
  * Now uses real API calls with web search capabilities
+ * Includes aggressive caching to reduce API costs (~$22/comparison)
  */
 export async function runEnhancedComparison(
   options: EnhancedComparisonOptions
 ): Promise<EnhancedComparisonResult> {
   const { city1, city2, apiKeys, onProgress } = options;
+  const llmsToUse = options.llmsToUse || DEFAULT_ENHANCED_LLMS;
   const startTime = Date.now();
 
   // Helper to parse city string
@@ -476,6 +479,53 @@ export async function runEnhancedComparison(
       ...progress
     } as EnhancedComparisonProgress);
   };
+
+  // =========================================================================
+  // CHECK CACHE FIRST - Returns cached result if available (saves ~$22)
+  // =========================================================================
+
+  const cacheKey = { city1, city2, llmsUsed: llmsToUse };
+
+  try {
+    const cachedResult = await cache.getComparison(cacheKey);
+
+    // VALIDATE cached result before using - never return incomplete data
+    if (cachedResult &&
+        cachedResult.city1 &&
+        cachedResult.city2 &&
+        cachedResult.city1.categories &&
+        cachedResult.city1.categories.length > 0 &&
+        cachedResult.city2.categories &&
+        cachedResult.city2.categories.length > 0 &&
+        typeof cachedResult.city1.totalConsensusScore === 'number' &&
+        typeof cachedResult.city2.totalConsensusScore === 'number') {
+
+      console.log(`[CACHE HIT] Valid cached comparison for ${city1} vs ${city2}`);
+
+      // Update progress to show completion
+      updateProgress({
+        phase: 'complete',
+        llmsCompleted: cachedResult.llmsUsed,
+        metricsProcessed: ALL_METRICS.length
+      });
+
+      return {
+        ...cachedResult,
+        // Add cache indicator to the result
+        processingStats: {
+          ...cachedResult.processingStats,
+          fromCache: true,
+          cachedAt: cachedResult.generatedAt
+        }
+      } as EnhancedComparisonResult;
+    } else if (cachedResult) {
+      // Cached result exists but is invalid - clear it
+      console.warn(`[CACHE] Invalid cached result for ${city1} vs ${city2}, fetching fresh data`);
+    }
+  } catch (cacheError) {
+    // Cache error should not block the comparison - just log and continue
+    console.warn('[CACHE] Error reading cache, proceeding with fresh data:', cacheError);
+  }
 
   updateProgress({ phase: 'evaluating' });
 
@@ -590,7 +640,8 @@ export async function runEnhancedComparison(
 
   updateProgress({ phase: 'complete', llmsCompleted });
 
-  return {
+  // Build the final result object
+  const result: EnhancedComparisonResult = {
     city1: {
       city: city1Info.city,
       country: city1Info.country,
@@ -622,6 +673,32 @@ export async function runEnhancedComparison(
       metricsEvaluated: ALL_METRICS.length
     }
   };
+
+  // =========================================================================
+  // CACHE THE RESULT - Only cache valid, complete results
+  // =========================================================================
+
+  // Validate result before caching - NEVER cache incomplete/invalid data
+  const isValidResult =
+    result.city1.categories.length > 0 &&
+    result.city2.categories.length > 0 &&
+    result.city1.totalConsensusScore > 0 &&
+    result.city2.totalConsensusScore > 0 &&
+    llmsCompleted.length > 0;
+
+  if (isValidResult) {
+    try {
+      await cache.setComparison(cacheKey, result);
+      console.log(`[CACHE SET] Stored valid comparison for ${city1} vs ${city2}`);
+    } catch (cacheError) {
+      // Cache write failure should not affect the return
+      console.warn('[CACHE] Failed to store result:', cacheError);
+    }
+  } else {
+    console.warn(`[CACHE SKIP] Not caching incomplete result for ${city1} vs ${city2}`);
+  }
+
+  return result;
 }
 
 // ============================================================================

@@ -3059,3 +3059,41 @@
     right: -4px;
   }
 }
+
+/* ============================================================================
+   CACHE INDICATOR BADGE
+   ============================================================================ */
+
+.cache-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 20px;
+  margin-top: 0.5rem;
+  animation: cachePulse 2s ease-in-out;
+}
+
+@keyframes cachePulse {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.cache-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: cacheDot 1.5s ease-in-out infinite;
+}
+
+@keyframes cacheDot {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
