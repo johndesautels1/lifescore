@@ -747,7 +747,7 @@ async function evaluateCategoryBatch(
   provider: LLMProvider,
   city1: string,
   city2: string,
-  categoryId: CategoryId,
+  _categoryId: CategoryId, // Reserved for future logging/debugging
   metrics: MetricDefinition[],
   apiKeys: LLMAPIKeys & { tavily?: string }
 ): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
