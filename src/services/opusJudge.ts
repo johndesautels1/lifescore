@@ -284,7 +284,7 @@ export async function runOpusJudge(
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01'
+          'anthropic-version': '2025-01-01'
         },
         body: JSON.stringify({
           model: 'claude-opus-4-5-20251101',

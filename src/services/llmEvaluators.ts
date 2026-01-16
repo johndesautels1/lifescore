@@ -228,7 +228,7 @@ Use these search results to inform your evaluation.
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
+          'anthropic-version': '2025-01-01'
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-5-20250514',
@@ -874,11 +874,16 @@ async function evaluateCategoryBatch(
 ): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
   const startTime = Date.now();
 
+  // Client-side timeout to prevent infinite waiting (90s, slightly under server's 120s max)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
+
   try {
     // Call Vercel serverless function which has access to env vars
     const response = await fetch('/api/evaluate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         provider,
         city1,
@@ -892,6 +897,8 @@ async function evaluateCategoryBatch(
         }))
       })
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -970,11 +977,17 @@ async function evaluateCategoryBatch(
       error: scores.length === 0 && result.success ? 'No scores returned from API' : result.error
     };
   } catch (error) {
+    clearTimeout(timeoutId);
+
+    // Provide clearer error message for timeout
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
     return {
       success: false,
       scores: [],
       latencyMs: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: isTimeout
+        ? `Request timed out after 90 seconds for ${provider}`
+        : (error instanceof Error ? error.message : 'Unknown error')
     };
   }
 }
