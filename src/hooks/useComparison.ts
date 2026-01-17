@@ -211,17 +211,26 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
             scoringDirection: m.scoringDirection
           }));
 
-        // Call API for this category's metrics
-        const response = await fetch('/api/evaluate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            provider: 'claude-sonnet',
-            city1,
-            city2,
-            metrics: categoryMetrics
-          })
-        });
+        // Call API for this category's metrics with 90s timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+        let response: Response;
+        try {
+          response = await fetch('/api/evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              provider: 'claude-sonnet',
+              city1,
+              city2,
+              metrics: categoryMetrics
+            }),
+            signal: controller.signal
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
