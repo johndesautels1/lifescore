@@ -483,12 +483,12 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
           <div className="api-key-group">
             <label>
               <span className="key-icon">💎</span>
-              Google
+              Gemini
             </label>
             <input
               type="password"
-              value={keys.google || ''}
-              onChange={e => setKeys({ ...keys, google: e.target.value })}
+              value={keys.gemini || ''}
+              onChange={e => setKeys({ ...keys, gemini: e.target.value })}
               placeholder="AI..."
             />
             <span className="key-models">Gemini 3 Pro</span>

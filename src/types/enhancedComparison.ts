@@ -203,7 +203,7 @@ export interface EnhancedComparisonResult {
 export interface LLMAPIKeys {
   anthropic?: string;   // Claude Opus & Sonnet
   openai?: string;      // LLM (built-in web search, no Tavily needed)
-  google?: string;      // Gemini 3 Pro
+  gemini?: string;      // Gemini 3 Pro
   xai?: string;         // Grok 4
   perplexity?: string;  // Sonar Reasoning Pro
   tavily?: string;      // Tavily Search API (for Claude web search)

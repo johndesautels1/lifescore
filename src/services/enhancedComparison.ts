@@ -62,7 +62,7 @@ export function getAvailableLLMs(keys: LLMAPIKeys): LLMProvider[] {
   if (keys.openai) {
     available.push('gpt-4o');
   }
-  if (keys.google) {
+  if (keys.gemini) {
     available.push('gemini-3-pro');
   }
   if (keys.xai) {

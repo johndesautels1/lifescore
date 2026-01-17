@@ -770,10 +770,10 @@ export async function runAllEvaluators(
     );
   }
 
-  if (apiKeys.google) {
+  if (apiKeys.gemini) {
     onProgress?.('gemini-3-pro', 'started');
     evaluatorPromises.push(
-      evaluateWithGemini(apiKeys.google, city1, city2, metrics)
+      evaluateWithGemini(apiKeys.gemini, city1, city2, metrics)
         .then(r => { onProgress?.('gemini-3-pro', r.success ? 'completed' : 'failed'); return r; })
     );
   }
@@ -839,11 +839,11 @@ export async function runSingleEvaluator(
         break;
 
       case 'gemini-3-pro':
-        if (!apiKeys.google) {
-          throw new Error('Google API key not configured');
+        if (!apiKeys.gemini) {
+          throw new Error('Gemini API key not configured');
         }
         onProgress?.('evaluating');
-        result = await evaluateWithGemini(apiKeys.google, city1, city2, metrics);
+        result = await evaluateWithGemini(apiKeys.gemini, city1, city2, metrics);
         break;
 
       case 'grok-4':
