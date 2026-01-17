@@ -533,10 +533,84 @@ Keep 6 category batches (one prompt per category):
 | Question | Answer |
 |----------|--------|
 | Keep dual-score (Legal + Enforcement)? | YES - existing architecture, no change |
-| Use A/B/C/D/E letter codes? | NO - keep numeric 0-100 with anchors |
+| Use A/B/C/D/E letter codes? | **YES** - LLMs return letters, we convert to 0-100 |
 | All 100 metrics in one prompt? | NO - keep 6 category batches |
 | Where to store anchors? | In `src/data/metrics.ts` alongside metric definitions |
 | Does Opus need anchors? | YES - but only for disagreement metrics (σ>10) |
+
+---
+
+## GEMINI 3 PRO ARCHITECTURE RECOMMENDATIONS (January 17, 2026)
+
+### Validated Architecture Decisions
+
+| Decision | Status | Gemini's Recommendation |
+|----------|--------|------------------------|
+| 6 Category Batches | ✅ CORRECT | Prevents "Lost in the Middle" attention drift |
+| `Promise.all()` Parallel | ✅ CORRECT | 45s monolithic → 12s parallel |
+| Sharded Retries | ✅ CORRECT | Retry only failed module, not all 100 fields |
+| Dual Legal/Enforcement | ✅ CORRECT | Captures law vs reality nuance |
+
+### A/B/C/D/E Letter Grade System (TO IMPLEMENT)
+
+**Why Letters Instead of Numbers:**
+- LLMs understand discrete choices better than picking "73 vs 77"
+- 5 grades map directly to scoring anchors (100/75/50/25/0)
+- Reduces inconsistency across 5 LLMs
+- Easier validation (invalid = not A/B/C/D/E)
+
+**Conversion:**
+| Grade | Score | Meaning |
+|-------|-------|---------|
+| A | 100 | Most Free / Never Enforced |
+| B | 75 | Generally Free / Rarely Enforced |
+| C | 50 | Moderate / Selectively Enforced |
+| D | 25 | Restricted / Usually Enforced |
+| E | 0 | Very Restricted / Strictly Enforced |
+
+### Timeout Thresholds (TO IMPLEMENT)
+
+| Query Type | Current | Recommended |
+|------------|---------|-------------|
+| Standard Comparison | 30s | **60s** |
+| Thinking Mode / Deep Research | 120s | **300s** (Vercel Pro limit) |
+| Batch Report Generation | N/A | 600s (background worker) |
+
+### GEMINI-SPECIFIC EXTRAS (Future Enhancement)
+
+These features are Gemini 3 Pro specific and can be added later:
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| **"Thinking" Mode** | Enable via API config for complex modules (Policing & Legal) | HIGH |
+| **Prompt Caching** | Cache scoring anchors across requests for cost savings | MEDIUM |
+| **Flash/Pro Hybrid** | Use Gemini Flash for simple metrics (sales tax), Pro for nuanced | LOW |
+| **TTFT Monitor** | Time-To-First-Token - if no chunk in 60s, retry | MEDIUM |
+| **Streaming** | `streamGenerateContent` for faster perceived response | LOW |
+
+### LLM-Specific Prompt Strategy
+
+The architecture supports **LLM-specific prompt sections** while sharing a common base:
+
+```
+┌─────────────────────────────────────────┐
+│          COMMON BASE PROMPT             │
+│  - City names + Year 2026               │
+│  - Metrics list with A/B/C/D/E anchors  │
+│  - JSON output format                   │
+└─────────────────────────────────────────┘
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+┌───────┐ ┌───────┐ ┌───────┐
+│Claude │ │Gemini │ │ GPT   │
+│Addendum│ │Addendum│ │Addendum│
+│- Tavily│ │- Think│ │- Tavily│
+│context │ │ mode  │ │context │
+└───────┘ └───────┘ └───────┘
+```
+
+**Implementation:** Each `evaluateWith[LLM]()` function can append provider-specific instructions to the base prompt.
 
 ---
 
