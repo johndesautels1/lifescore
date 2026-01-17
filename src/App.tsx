@@ -103,11 +103,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleEnhancedComplete = (result: EnhancedComparisonResult) => {
-    setEnhancedResult(result);
-    setEnhancedStatus('complete');
-  };
-
   const handleReset = () => {
     reset();
     setEnhancedStatus('idle');
