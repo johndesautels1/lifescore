@@ -1,5 +1,115 @@
 # CLUES LIFE SCORE
 
+---
+## ⚠️ COURT ORDER INJUNCTION - CLAUDE CODE RESTRICTIONS ⚠️
+
+**CLAUDE CODE IS FORBIDDEN FROM MAKING THE FOLLOWING CHANGES WITHOUT DIRECT OWNER APPROVAL:**
+
+1. **TIMEOUT VALUES** - Any modification to timeout constants, setTimeout durations, or timeout-related logic
+2. **API MODEL NAMES** - Any changes to LLM model identifiers (e.g., gemini-3-pro-preview, claude-sonnet-4-5-20250929, grok-4)
+3. **API KEY NAMES** - Any changes to environment variable names (GEMINI_API_KEY, ANTHROPIC_API_KEY, etc.)
+
+**BEFORE ANY CODE CHANGES, CLAUDE MUST:**
+1. Run a complete timeout audit
+2. Run a complete API key/model name audit
+3. Present findings to owner for approval
+4. NOT proceed without explicit written permission
+
+**VIOLATION OF THIS INJUNCTION WILL RESULT IN IMMEDIATE TERMINATION OF CLAUDE CODE SESSION.**
+
+---
+
+## 📋 COMPLETE TIMEOUT AUDIT (As of 2026-01-17)
+
+| File | Line | Constant | Value | Purpose |
+|------|------|----------|-------|---------|
+| `api/evaluate.ts` | 9 | `LLM_TIMEOUT_MS` | 120000ms (120s) | All LLM API calls |
+| `api/evaluate.ts` | 10 | `TAVILY_TIMEOUT_MS` | 60000ms (60s) | Tavily search |
+| `api/judge.ts` | 35 | `OPUS_TIMEOUT_MS` | 90000ms (90s) | Opus judge API |
+| `api/test-llm.ts` | 9 | `TEST_TIMEOUT_MS` | 15000ms (15s) | Quick LLM tests |
+| `src/services/llmEvaluators.ts` | 14 | `LLM_TIMEOUT_MS` | 120000ms (120s) | Client LLM calls |
+| `src/services/llmEvaluators.ts` | 15 | `TAVILY_TIMEOUT_MS` | 60000ms (60s) | Client Tavily |
+| `src/services/llmEvaluators.ts` | 926 | `setTimeout` | 90000ms (90s) | Per-category batch |
+| `src/services/llmEvaluators.ts` | 1105 | `withTimeout` | 90000ms (90s) | Category wrapper |
+| `src/services/llmEvaluators.ts` | 1133 | `setTimeout` | 1000ms (1s) | Wave delay |
+| `src/services/opusJudge.ts` | 18 | `OPUS_TIMEOUT_MS` | 90000ms (90s) | Client Opus |
+| `src/services/cache.ts` | 32 | `KV_TIMEOUT_MS` | 10000ms (10s) | KV cache |
+| `src/services/savedComparisons.ts` | 51 | `GITHUB_TIMEOUT_MS` | 30000ms (30s) | GitHub API |
+| `src/hooks/useComparison.ts` | 216 | `setTimeout` | 90000ms (90s) | Simple mode |
+| `vercel.json` | 6 | `maxDuration` | 120s | evaluate.ts |
+| `vercel.json` | 9 | `maxDuration` | 90s | judge.ts |
+
+---
+
+## 📋 COMPLETE API KEY & MODEL AUDIT (As of 2026-01-17)
+
+### Environment Variable Names
+| Variable | Used In | Purpose |
+|----------|---------|---------|
+| `ANTHROPIC_API_KEY` | api/evaluate.ts, api/judge.ts, api/test-llm.ts, api/health.ts | Claude Sonnet & Opus |
+| `OPENAI_API_KEY` | api/evaluate.ts, api/test-llm.ts, api/health.ts | GPT-4o |
+| `GEMINI_API_KEY` | api/evaluate.ts, api/test-llm.ts, api/health.ts | Gemini 3 Pro |
+| `XAI_API_KEY` | api/evaluate.ts, api/test-llm.ts, api/health.ts | Grok 4 |
+| `PERPLEXITY_API_KEY` | api/evaluate.ts, api/test-llm.ts, api/health.ts | Perplexity Sonar |
+| `TAVILY_API_KEY` | api/evaluate.ts, api/health.ts | Web search for Claude/GPT |
+
+### Client-Side Key Names (in LLMAPIKeys type)
+| Property | File | Line |
+|----------|------|------|
+| `anthropic` | src/types/enhancedComparison.ts | 204 |
+| `openai` | src/types/enhancedComparison.ts | 205 |
+| `gemini` | src/types/enhancedComparison.ts | 206 |
+| `xai` | src/types/enhancedComparison.ts | 207 |
+| `perplexity` | src/types/enhancedComparison.ts | 208 |
+| `tavily` | src/types/enhancedComparison.ts | 209 |
+
+### LLM Model Identifiers
+| Provider | Model ID | API Endpoint | Files |
+|----------|----------|--------------|-------|
+| Claude Sonnet | `claude-sonnet-4-5-20250929` | api.anthropic.com | api/evaluate.ts:311, api/test-llm.ts:45 |
+| Claude Opus | `claude-opus-4-5-20251101` | api.anthropic.com | api/judge.ts:411 |
+| GPT-4o | `gpt-4o` | api.openai.com | api/evaluate.ts:385 |
+| Gemini | `gemini-3-pro-preview` | generativelanguage.googleapis.com | api/evaluate.ts:439, api/test-llm.ts:111, src/services/llmEvaluators.ts:463 |
+| Grok | `grok-4` | api.x.ai | api/evaluate.ts:509 |
+| Perplexity | `sonar-reasoning-pro` | api.perplexity.ai | api/evaluate.ts:573 |
+
+### LLMProvider Type Values
+| Value | Display Name | File |
+|-------|--------------|------|
+| `claude-opus` | Claude Opus 4.5 | src/types/enhancedComparison.ts:13 |
+| `claude-sonnet` | Claude Sonnet 4.5 | src/types/enhancedComparison.ts:14 |
+| `gpt-4o` | GPT-4o | src/types/enhancedComparison.ts:15 |
+| `gemini-3-pro` | Gemini 3 Pro | src/types/enhancedComparison.ts:16 |
+| `grok-4` | Grok 4 | src/types/enhancedComparison.ts:17 |
+| `perplexity` | Sonar Reasoning Pro | src/types/enhancedComparison.ts:18 |
+
+---
+
+## 📋 TAVILY PROMPT (from api/evaluate.ts)
+
+```
+Tavily Search Query Format:
+- Query 1: "${city1} laws regulations freedom 2024 2025"
+- Query 2: "${city2} laws regulations freedom 2024 2025"
+
+Tavily API Call:
+POST https://api.tavily.com/search
+{
+  "api_key": process.env.TAVILY_API_KEY,
+  "query": <query>,
+  "search_depth": "advanced",
+  "max_results": 3,
+  "include_answer": false,
+  "include_raw_content": false
+}
+
+Results injected as:
+## WEB SEARCH RESULTS (from Tavily)
+- {title}: {content.slice(0, 400)}
+```
+
+---
+
 **Legal Independence & Freedom Evaluation**
 
 Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Comprehensive Location & Utility Evaluation System) platform.
