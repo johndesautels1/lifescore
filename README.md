@@ -582,11 +582,40 @@ These features are Gemini 3 Pro specific and can be added later:
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| **"Thinking" Mode** | Enable via API config for complex modules (Policing & Legal) | HIGH |
+| **"Thinking" Mode** | ✅ DONE - Encouraged via prompt addendum | HIGH |
 | **Prompt Caching** | Cache scoring anchors across requests for cost savings | MEDIUM |
 | **Flash/Pro Hybrid** | Use Gemini Flash for simple metrics (sales tax), Pro for nuanced | LOW |
 | **TTFT Monitor** | Time-To-First-Token - if no chunk in 60s, retry | MEDIUM |
 | **Streaming** | `streamGenerateContent` for faster perceived response | LOW |
+
+### PROMPT CACHING (Future Enhancement)
+
+**Applies to:** Claude (Anthropic) and Gemini (Google)
+
+**Problem:** Every API call sends the full A/B/C/D/E anchor definitions (~2000 tokens)
+
+**Solution:** Cache the static anchor text, only send city-specific data
+
+**Claude Implementation:**
+```typescript
+messages: [{
+  role: 'user',
+  content: [
+    { type: 'text', text: anchorsText, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: cityPrompt }
+  ]
+}]
+```
+
+**Gemini Implementation:**
+```typescript
+// 1. Create cache once
+const cache = await createCachedContent({ contents: [anchors], ttl: '3600s' });
+// 2. Reference in requests
+body: { cachedContent: cache.name, contents: [cityPrompt] }
+```
+
+**ROI:** ~90% token cost reduction on cached portion (~$0.006 → $0.0006 per call)
 
 ### LLM-Specific Prompt Strategy
 
