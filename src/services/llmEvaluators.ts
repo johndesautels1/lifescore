@@ -921,9 +921,9 @@ async function evaluateCategoryBatch(
 
   console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
 
-  // Client-side timeout - 30s per category (faster failure, 6 categories can run in parallel)
+  // Client-side timeout - 90s per category (Gemini recommends 60s+ for web search + reasoning)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
 
   try {
     // Call Vercel serverless function which has access to env vars
@@ -1048,8 +1048,8 @@ async function evaluateCategoryBatch(
   }
 }
 
-// Master timeout for entire batch operation (35s - slightly more than per-category 30s timeout)
-const BATCH_MASTER_TIMEOUT_MS = 35000;
+// Master timeout for entire batch operation (100s - slightly more than per-category 90s timeout)
+const BATCH_MASTER_TIMEOUT_MS = 100000;
 
 /**
  * Run a single LLM evaluator with category batching (6 parallel requests)

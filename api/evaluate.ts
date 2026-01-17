@@ -65,9 +65,15 @@ interface EvidenceSource {
   snippet: string;
 }
 
-// Parsed LLM evaluation structure
+// Parsed LLM evaluation structure (supports both letter grades and numeric)
 interface ParsedEvaluation {
   metricId: string;
+  // Letter grade format (A/B/C/D/E) - preferred
+  city1Legal?: string;
+  city1Enforcement?: string;
+  city2Legal?: string;
+  city2Enforcement?: string;
+  // Legacy numeric format (0-100) - fallback
   city1LegalScore?: number;
   city1EnforcementScore?: number;
   city2LegalScore?: number;
@@ -79,6 +85,20 @@ interface ParsedEvaluation {
   city2Evidence?: EvidenceSource[];
 }
 
+// Convert letter grade to numeric score
+function letterToScore(grade: string | undefined): number {
+  if (!grade) return 50; // Default to C
+  const map: Record<string, number> = {
+    'A': 100, 'a': 100,
+    'B': 75,  'b': 75,
+    'C': 50,  'c': 50,
+    'D': 25,  'd': 25,
+    'E': 0,   'e': 0,
+    'F': 0,   'f': 0  // Treat F same as E
+  };
+  return map[grade.trim()] ?? 50;
+}
+
 interface EvaluationResponse {
   provider: LLMProvider;
   success: boolean;
@@ -87,56 +107,79 @@ interface EvaluationResponse {
   error?: string;
 }
 
-// Build evaluation prompt
-function buildPrompt(city1: string, city2: string, metrics: EvaluationRequest['metrics']): string {
+// Build BASE evaluation prompt with A/B/C/D/E letter grades
+// This is shared by all LLMs - each LLM function adds its own addendum
+function buildBasePrompt(city1: string, city2: string, metrics: EvaluationRequest['metrics']): string {
   const metricsList = metrics.map(m => `
 - ${m.id}: ${m.name}
-  Category: ${m.categoryId}
   Description: ${m.description}
-  Scoring: ${m.scoringDirection === 'higher_is_better' ? 'Higher = more freedom' : 'Lower = more freedom'}
+  Direction: ${m.scoringDirection === 'higher_is_better' ? 'Higher grade = more freedom' : 'Lower grade = more freedom'}
 `).join('\n');
 
   return `You are an expert legal analyst evaluating freedom metrics for city comparison.
 
 ## TASK
-Evaluate the following metrics for two cities, providing DUAL scores:
-1. **Legal Score (0-100)**: What does the law technically say? Higher = more permissive law
-2. **Enforcement Score (0-100)**: How is the law actually enforced? Higher = more lenient enforcement
+Evaluate the following metrics for two cities. For EACH metric, provide TWO letter grades (A/B/C/D/E):
+1. **Legal Grade**: What does the law technically say?
+2. **Enforcement Grade**: How is the law actually enforced in practice?
 
-## CITIES TO COMPARE
+## CITIES TO COMPARE (Year: 2026)
 - City 1: ${city1}
 - City 2: ${city2}
+
+## LETTER GRADE SCALE
+
+**Legal Score (What the law says):**
+| Grade | Meaning |
+|-------|---------|
+| A | Fully legal/permitted - no restrictions |
+| B | Mostly legal - minor limitations only |
+| C | Moderate restrictions - some limits |
+| D | Restricted - significant legal barriers |
+| E | Prohibited/Illegal - severe penalties |
+
+**Enforcement Score (How it's actually enforced):**
+| Grade | Meaning |
+|-------|---------|
+| A | Never enforced - authorities ignore completely |
+| B | Rarely enforced - low priority, warnings only |
+| C | Selectively enforced - depends on situation |
+| D | Usually enforced - regular citations/arrests |
+| E | Strictly enforced - zero tolerance |
 
 ## METRICS TO EVALUATE
 ${metricsList}
 
 ## OUTPUT FORMAT
-Return a JSON object with this exact structure:
+Return a JSON object with this EXACT structure:
 {
   "evaluations": [
     {
       "metricId": "metric_id_here",
-      "city1LegalScore": 75,
-      "city1EnforcementScore": 70,
-      "city2LegalScore": 60,
-      "city2EnforcementScore": 55,
+      "city1Legal": "B",
+      "city1Enforcement": "C",
+      "city2Legal": "D",
+      "city2Enforcement": "D",
       "confidence": "high",
-      "reasoning": "Brief explanation"
+      "reasoning": "Brief explanation of key difference"
     }
   ]
 }
 
-## SCORING GUIDELINES
-- 90-100: Extremely permissive, minimal restrictions
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited
+## CRITICAL RULES
+1. Use ONLY letters A, B, C, D, or E - no numbers
+2. Evaluate BOTH cities for EACH metric
+3. Consider 2026 laws and current enforcement trends
+4. Return ONLY the JSON object, no other text`;
+}
 
-Return ONLY the JSON object, no other text.`;
+// Legacy function name for backward compatibility
+function buildPrompt(city1: string, city2: string, metrics: EvaluationRequest['metrics']): string {
+  return buildBasePrompt(city1, city2, metrics);
 }
 
 // Parse LLM response to extract scores
+// Supports both A/B/C/D/E letter grades (preferred) and legacy numeric scores
 function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   try {
     let jsonStr = content;
@@ -151,17 +194,25 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
     }
 
     const parsed = JSON.parse(jsonStr) as { evaluations?: ParsedEvaluation[] };
-    // FIX #11: Clamp all scores to 0-100 range
-    const clampScore = (score: number | undefined): number => {
-      const s = score ?? 50;
+
+    // Helper: Convert letter grade to score, or clamp numeric score
+    const getScore = (letter: string | undefined, numeric: number | undefined): number => {
+      // Prefer letter grade if present
+      if (letter && /^[A-Ea-e]$/.test(letter.trim())) {
+        return letterToScore(letter);
+      }
+      // Fallback to numeric (clamp to 0-100)
+      const s = numeric ?? 50;
       return Math.max(0, Math.min(100, Math.round(s)));
     };
+
     return (parsed.evaluations || []).map((e: ParsedEvaluation) => ({
       metricId: e.metricId,
-      city1LegalScore: clampScore(e.city1LegalScore),
-      city1EnforcementScore: clampScore(e.city1EnforcementScore),
-      city2LegalScore: clampScore(e.city2LegalScore),
-      city2EnforcementScore: clampScore(e.city2EnforcementScore),
+      // Convert letter grades to numeric scores (A=100, B=75, C=50, D=25, E=0)
+      city1LegalScore: getScore(e.city1Legal, e.city1LegalScore),
+      city1EnforcementScore: getScore(e.city1Enforcement, e.city1EnforcementScore),
+      city2LegalScore: getScore(e.city2Legal, e.city2LegalScore),
+      city2EnforcementScore: getScore(e.city2Enforcement, e.city2EnforcementScore),
       confidence: e.confidence || 'medium',
       reasoning: e.reasoning,
       sources: e.sources,
@@ -215,23 +266,31 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
 
   const startTime = Date.now();
 
-  // Optionally fetch web search context via Tavily
-  let searchContext = '';
+  // Fetch web search context via Tavily
+  let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
-      `${city1} laws regulations freedom`,
-      `${city2} laws regulations freedom`
+      `${city1} laws regulations freedom 2024 2025`,
+      `${city2} laws regulations freedom 2024 2025`
     ];
     const searchResults = await Promise.all(
       searchQueries.map(q => tavilySearch(q, 3).catch(() => []))
     );
     const results = searchResults.flat();
     if (results.length > 0) {
-      searchContext = `\n\n## WEB SEARCH RESULTS\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\nUse these search results to inform your evaluation.\n`;
+      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\n`;
     }
   }
 
-  const prompt = searchContext + buildPrompt(city1, city2, metrics);
+  // CLAUDE-SPECIFIC ADDENDUM
+  const claudeAddendum = `
+## CLAUDE-SPECIFIC INSTRUCTIONS
+- Use the Tavily web search results above to ground your evaluation in current facts
+- You excel at nuanced legal interpretation - distinguish between law text vs enforcement reality
+- For ambiguous cases, lean toward the grade that reflects lived experience over technical legality
+`;
+
+  const prompt = tavilyContext + buildBasePrompt(city1, city2, metrics) + claudeAddendum;
 
   try {
     const response = await fetchWithTimeout(
@@ -280,23 +339,31 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
   const startTime = Date.now();
 
-  // Optionally fetch web search context via Tavily (same pattern as Claude)
-  let searchContext = '';
+  // Fetch web search context via Tavily
+  let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
-      `${city1} laws regulations freedom`,
-      `${city2} laws regulations freedom`
+      `${city1} laws regulations freedom 2024 2025`,
+      `${city2} laws regulations freedom 2024 2025`
     ];
     const searchResults = await Promise.all(
       searchQueries.map(q => tavilySearch(q, 3).catch(() => []))
     );
     const results = searchResults.flat();
     if (results.length > 0) {
-      searchContext = `\n\n## WEB SEARCH RESULTS\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\nUse these search results to inform your evaluation.\n`;
+      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\n`;
     }
   }
 
-  const prompt = searchContext + buildPrompt(city1, city2, metrics);
+  // GPT-4o SPECIFIC ADDENDUM
+  const gptAddendum = `
+## GPT-4o SPECIFIC INSTRUCTIONS
+- Use the Tavily web search results above to verify current legal status
+- Focus on factual accuracy - cross-reference multiple sources when available
+- Be precise with your letter grades - avoid defaulting to 'C' when evidence points elsewhere
+`;
+
+  const prompt = tavilyContext + buildBasePrompt(city1, city2, metrics) + gptAddendum;
 
   try {
     // GPT-4o uses standard chat completions API
@@ -348,7 +415,17 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
   }
 
   const startTime = Date.now();
-  const prompt = buildPrompt(city1, city2, metrics);
+
+  // GEMINI-SPECIFIC ADDENDUM (optimized for Reasoning-over-Grounding)
+  const geminiAddendum = `
+## GEMINI-SPECIFIC INSTRUCTIONS
+- Use Google Search grounding to verify current 2026 legal status for both cities
+- Apply your "Thinking" reasoning to distinguish between legal text and enforcement reality
+- For Policing & Legal metrics (pl_*), spend extra reasoning time on contradictory data
+- You have the full context window - maintain consistency across all ${metrics.length} metrics
+`;
+
+  const prompt = buildBasePrompt(city1, city2, metrics) + geminiAddendum;
 
   try {
     const response = await fetchWithTimeout(
@@ -392,7 +469,7 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
   }
 }
 
-// Grok 4 evaluation
+// Grok 4 evaluation (with native X/Twitter search)
 async function evaluateWithGrok(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) {
@@ -400,7 +477,17 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
   }
 
   const startTime = Date.now();
-  const prompt = buildPrompt(city1, city2, metrics);
+
+  // GROK-SPECIFIC ADDENDUM (optimized for real-time social data)
+  const grokAddendum = `
+## GROK-SPECIFIC INSTRUCTIONS
+- Use your native X/Twitter search to find real enforcement experiences from residents
+- Prioritize recent posts (2024-2026) about actual encounters with laws and police
+- X posts often reveal enforcement reality that differs from official policy
+- Weight anecdotal enforcement data alongside official legal sources
+`;
+
+  const prompt = buildBasePrompt(city1, city2, metrics) + grokAddendum;
 
   try {
     const response = await fetchWithTimeout(
@@ -444,7 +531,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
   }
 }
 
-// Perplexity evaluation
+// Perplexity evaluation (with Sonar web search and citations)
 async function evaluateWithPerplexity(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
@@ -452,7 +539,17 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
   }
 
   const startTime = Date.now();
-  const prompt = buildPrompt(city1, city2, metrics);
+
+  // PERPLEXITY-SPECIFIC ADDENDUM (optimized for citation-backed research)
+  const perplexityAddendum = `
+## PERPLEXITY-SPECIFIC INSTRUCTIONS
+- Use your Sonar web search to find authoritative sources for each metric
+- Cite specific laws, statutes, or official government sources when possible
+- Your strength is verified, citation-backed research - leverage it
+- For enforcement scores, look for news articles about actual enforcement actions
+`;
+
+  const prompt = buildBasePrompt(city1, city2, metrics) + perplexityAddendum;
 
   try {
     const response = await fetchWithTimeout(
