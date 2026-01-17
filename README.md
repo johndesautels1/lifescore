@@ -513,18 +513,35 @@ Keep 6 category batches (one prompt per category):
 
 ---
 
-### NEXT SESSION CHECKLIST
+### NEXT SESSION CHECKLIST (Updated January 17, 2026)
 
-1. [ ] Read `freedom-index-scoring-anchors (1).json` to verify anchor data
-2. [ ] Update `src/types/metrics.ts` with new type fields
-3. [ ] Add anchors to all 100 metrics in `src/data/metrics.ts`
-4. [ ] Update `buildPrompt()` in `api/evaluate.ts`
-5. [ ] Verify if `src/services/llmEvaluators.ts:buildEvaluationPrompt()` is used - if not, delete
-6. [ ] Update `buildOpusPrompt()` in `api/judge.ts` for disagreement metrics
-7. [ ] Verify if `src/services/opusJudge.ts` is used - decide consolidate vs delete
-8. [ ] Increase timeout in `llmEvaluators.ts:926` from 30s to 90s
-9. [ ] Run `npx tsc --noEmit` to verify TypeScript
-10. [ ] Test with 2 cities to verify LLM consistency improves
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Read `freedom-index-scoring-anchors (1).json` | ⏳ OPTIONAL | Generic A/B/C/D/E anchors now in prompt |
+| 2 | Update `src/types/metrics.ts` with new type fields | ⏳ OPTIONAL | Not needed for basic A/B/C/D/E |
+| 3 | Add anchors to all 100 metrics in `src/data/metrics.ts` | ⏳ OPTIONAL | Not needed for basic A/B/C/D/E |
+| 4 | Update `buildPrompt()` in `api/evaluate.ts` | ✅ DONE | Now `buildBasePrompt()` with A/B/C/D/E |
+| 5 | Verify `buildEvaluationPrompt()` usage | ✅ CHECKED | **NOT dead** - used by old client path |
+| 6 | Update `buildOpusPrompt()` for disagreement | ⏳ FUTURE | Add anchors for σ>10 metrics |
+| 7 | Verify `opusJudge.ts` usage | ✅ CHECKED | **BOTH used** - see duplication note |
+| 8 | Increase timeout 30s→90s | ✅ DONE | `llmEvaluators.ts:926` |
+| 9 | Run `npx tsc --noEmit` | ✅ DONE | TypeScript passes |
+| 10 | Test with 2 cities | ⏳ USER | Test A/B/C/D/E consistency |
+
+### ⚠️ ARCHITECTURE DUPLICATION ISSUE
+
+**Finding:** TWO parallel evaluation/judge paths exist:
+
+| Component | Path 1 (New - Serverless) | Path 2 (Old - Client-side) |
+|-----------|---------------------------|---------------------------|
+| **Evaluator** | `/api/evaluate` | `llmEvaluators.ts:evaluateWith*()` |
+| **Judge** | `/api/judge` | `opusJudge.ts:runOpusJudge()` |
+| **Prompt** | `api/evaluate.ts:buildBasePrompt()` | `llmEvaluators.ts:buildEvaluationPrompt()` |
+| **Trigger** | `LLMSelector` → `runLLM()` | `EnhancedComparisonContainer` useEffect |
+
+**Impact:** When `EnhancedComparisonContainer` renders, it runs a SECOND evaluation via the old path.
+
+**Fix (Future):** Remove useEffect from `EnhancedComparisonContainer` or pass result as prop instead of re-running.
 
 ---
 
