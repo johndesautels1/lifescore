@@ -381,6 +381,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  try {
   // FIX: Extract city1/city2 from request (previously ignored)
   const { city1, city2, evaluatorResults } = req.body as JudgeRequest;
   const startTime = Date.now();
@@ -451,4 +452,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   return res.status(200).json(output);
+  } catch (error) {
+    console.error('Judge handler error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown judge error';
+    return res.status(500).json({ error: errorMsg });
+  }
 }
