@@ -18,7 +18,7 @@ import AdvancedVisuals from './components/AdvancedVisuals';
 import {
   EnhancedModeToggle,
   APIKeyModal,
-  EnhancedComparisonContainer,
+  EnhancedResults,
   LLMSelector
 } from './components/EnhancedComparison';
 import EvidencePanel from './components/EvidencePanel';
@@ -230,13 +230,11 @@ const App: React.FC = () => {
               ============================================================ */}
           {activeTab === 'results' && (
             <>
-              {/* Enhanced Comparison Results */}
+              {/* Enhanced Comparison Results - FIX: Use EnhancedResults directly to avoid duplicate evaluation */}
               {enhancedMode && enhancedStatus === 'complete' && enhancedResult && (
                 <>
-                  <EnhancedComparisonContainer
-                    city1={pendingCities?.city1 || ''}
-                    city2={pendingCities?.city2 || ''}
-                    onComplete={handleEnhancedComplete}
+                  <EnhancedResults
+                    result={enhancedResult}
                     dealbreakers={dealbreakers}
                   />
                   <div className="new-comparison">

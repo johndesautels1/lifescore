@@ -528,9 +528,9 @@ Keep 6 category batches (one prompt per category):
 | 9 | Run `npx tsc --noEmit` | ✅ DONE | TypeScript passes |
 | 10 | Test with 2 cities | ⏳ USER | Test A/B/C/D/E consistency |
 
-### ⚠️ ARCHITECTURE DUPLICATION ISSUE
+### ✅ ARCHITECTURE DUPLICATION ISSUE - FIXED
 
-**Finding:** TWO parallel evaluation/judge paths exist:
+**Finding:** TWO parallel evaluation/judge paths existed:
 
 | Component | Path 1 (New - Serverless) | Path 2 (Old - Client-side) |
 |-----------|---------------------------|---------------------------|
@@ -539,9 +539,14 @@ Keep 6 category batches (one prompt per category):
 | **Prompt** | `api/evaluate.ts:buildBasePrompt()` | `llmEvaluators.ts:buildEvaluationPrompt()` |
 | **Trigger** | `LLMSelector` → `runLLM()` | `EnhancedComparisonContainer` useEffect |
 
-**Impact:** When `EnhancedComparisonContainer` renders, it runs a SECOND evaluation via the old path.
+**Impact:** When `EnhancedComparisonContainer` rendered, it ran a SECOND evaluation via the old path.
 
-**Fix (Future):** Remove useEffect from `EnhancedComparisonContainer` or pass result as prop instead of re-running.
+**FIX APPLIED (2025-01-17):**
+- Removed `EnhancedComparisonContainer` from `App.tsx` imports
+- Replaced with `EnhancedResults` component that displays results WITHOUT re-running evaluation
+- Flow now: `LLMSelector` → `/api/evaluate` → `/api/judge` → `EnhancedResults` (display only)
+- The `EnhancedComparisonContainer` component still exists in `EnhancedComparison.tsx` but is NO LONGER USED
+- TypeScript check: ✅ PASSED
 
 ---
 
