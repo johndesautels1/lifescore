@@ -326,10 +326,34 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
                 {isFailed && '✗'}
                 {state.status === 'idle' && 'Click to run'}
               </span>
+              {/* Show error message on hover/click */}
+              {isFailed && state.result?.error && (
+                <span className="llm-error-tooltip" title={state.result.error}>
+                  ⚠️ {state.result.error.slice(0, 50)}...
+                </span>
+              )}
             </button>
           );
         })}
       </div>
+
+      {/* Error Summary - Show all failed LLMs and their errors */}
+      {Array.from(llmStates.entries()).some(([, s]) => s.status === 'failed' && s.result?.error) && (
+        <div className="llm-error-summary" style={{ background: '#fee2e2', border: '1px solid #dc2626', borderRadius: '8px', padding: '12px', marginTop: '12px' }}>
+          <h4 style={{ color: '#dc2626', margin: '0 0 8px 0' }}>⚠️ LLM Errors:</h4>
+          {Array.from(llmStates.entries())
+            .filter(([, s]) => s.status === 'failed' && s.result?.error)
+            .map(([provider, s]) => (
+              <div key={provider} style={{ color: '#7f1d1d', fontSize: '0.9em', marginBottom: '4px' }}>
+                <strong>{LLM_CONFIGS[provider].shortName}:</strong> {s.result?.error}
+              </div>
+            ))
+          }
+          <p style={{ color: '#7f1d1d', fontSize: '0.85em', margin: '8px 0 0 0' }}>
+            Check that API keys are configured in Vercel Environment Variables.
+          </p>
+        </div>
+      )}
 
       {/* Progress indicator */}
       <div className="llm-progress">

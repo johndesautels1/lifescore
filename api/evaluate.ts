@@ -161,7 +161,10 @@ Return a JSON object with this EXACT structure:
       "city2Legal": "D",
       "city2Enforcement": "D",
       "confidence": "high",
-      "reasoning": "Brief explanation of key difference"
+      "reasoning": "Brief explanation of key difference",
+      "sources": ["https://example.com/law-source"],
+      "city1Evidence": [{"title": "Source Title", "url": "https://...", "snippet": "Relevant quote"}],
+      "city2Evidence": [{"title": "Source Title", "url": "https://...", "snippet": "Relevant quote"}]
     }
   ]
 }
@@ -170,7 +173,9 @@ Return a JSON object with this EXACT structure:
 1. Use ONLY letters A, B, C, D, or E - no numbers
 2. Evaluate BOTH cities for EACH metric
 3. Consider 2026 laws and current enforcement trends
-4. Return ONLY the JSON object, no other text`;
+4. Return ONLY the JSON object, no other text
+5. MUST include sources - URLs to laws, government sites, news articles backing your evaluation
+6. Include city1Evidence and city2Evidence with title, url, and relevant snippet for each city`;
 }
 
 // Legacy function name for backward compatibility
