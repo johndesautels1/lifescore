@@ -102,8 +102,8 @@ async function testGPT4o(): Promise<{ success: boolean; message: string; latency
 
 // Test Gemini 3 Pro
 async function testGemini(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  const apiKey = process.env.GOOGLE_API_KEY;
-  if (!apiKey) return { success: false, message: 'GOOGLE_API_KEY not set', latencyMs: 0 };
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { success: false, message: 'GEMINI_API_KEY not set', latencyMs: 0 };
 
   const startTime = Date.now();
   try {

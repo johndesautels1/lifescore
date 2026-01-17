@@ -126,7 +126,7 @@ All LLM calls go through Vercel serverless functions:
 ```
 ANTHROPIC_API_KEY=your-key    # Claude Sonnet & Opus
 OPENAI_API_KEY=your-key       # GPT-4o (with Tavily web search)
-GOOGLE_API_KEY=your-key       # Gemini 3 Pro (Google Search grounding)
+GEMINI_API_KEY=your-key       # Gemini 3 Pro (Google Search grounding)
 XAI_API_KEY=your-key          # Grok 4 (native search)
 PERPLEXITY_API_KEY=your-key   # Perplexity Sonar (native search)
 TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
@@ -225,7 +225,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
    ```
    ANTHROPIC_API_KEY    # Claude Sonnet & Opus
    OPENAI_API_KEY       # GPT-4o
-   GOOGLE_API_KEY       # Gemini 3 Pro
+   GEMINI_API_KEY       # Gemini 3 Pro
    XAI_API_KEY          # Grok 4
    PERPLEXITY_API_KEY   # Perplexity Sonar
    TAVILY_API_KEY       # Web search for Claude

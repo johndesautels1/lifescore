@@ -18,7 +18,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   const envStatus = {
     ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-    GOOGLE_API_KEY: !!process.env.GOOGLE_API_KEY,
+    GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
     XAI_API_KEY: !!process.env.XAI_API_KEY,
     PERPLEXITY_API_KEY: !!process.env.PERPLEXITY_API_KEY,
     TAVILY_API_KEY: !!process.env.TAVILY_API_KEY

@@ -443,7 +443,7 @@ Metric: LGBTQ+ Rights
 |----------|---------|---------|
 | ANTHROPIC_API_KEY | Claude Sonnet + Opus | Primary LLM + Judge |
 | PERPLEXITY_API_KEY | Perplexity Sonar | Native web search LLM |
-| GOOGLE_API_KEY | Gemini | Native web search LLM |
+| GEMINI_API_KEY | Gemini | Native web search LLM |
 | OPENAI_API_KEY | GPT-5.2 | Tavily-enhanced LLM |
 | XAI_API_KEY | Grok | Tavily-enhanced LLM |
 | TAVILY_API_KEY | Tavily | Web search for GPT/Grok |
