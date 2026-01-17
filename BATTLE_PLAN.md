@@ -84,12 +84,12 @@
 |----------|---------|------------------|-------------------|--------|
 | Claude Sonnet 4.5 | `claude-sonnet` | `claude-sonnet-4-5-20250929` | Tavily API | ✅ |
 | GPT-5.2 | `gpt-5.2` | `gpt-5.2` | Native web_search tool | ✅ |
-| Gemini 3 Pro | `gemini-3-pro` | `gemini-3-pro` | Google Search grounding | ✅ |
+| Gemini 3 Pro | `gemini-3-pro` | `gemini-3-pro-preview` | Google Search grounding | ✅ |
 | Grok 4 | `grok-4` | `grok-4` | Native search: true | ✅ |
 | Perplexity | `perplexity` | `sonar-reasoning-pro` | Native (return_citations) | ✅ |
 | **Judge** | `claude-opus` | `claude-opus-4-5-20251101` | N/A (judge only) | ✅ |
 
-**Last Verified**: 2026-01-16 - All models 100% consistent across codebase
+**Last Verified**: 2026-01-18 - Gemini API model corrected to `gemini-3-pro-preview`
 
 ### Model Consistency Files
 These files contain model references and must stay synchronized:
