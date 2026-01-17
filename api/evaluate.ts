@@ -28,7 +28,7 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: nu
 }
 
 // LLM Provider types
-type LLMProvider = 'claude-sonnet' | 'gpt-5.2' | 'gemini-3-pro' | 'grok-4' | 'perplexity';
+type LLMProvider = 'claude-sonnet' | 'gpt-4o' | 'gemini-3-pro' | 'grok-4' | 'perplexity';
 
 interface EvaluationRequest {
   provider: LLMProvider;
@@ -58,7 +58,7 @@ interface MetricScore {
   city2Evidence?: Array<{ title: string; url: string; snippet: string }>;
 }
 
-// Evidence item from GPT-5.2 web search
+// Evidence item from LLM web search
 interface EvidenceSource {
   title: string;
   url: string;
@@ -165,7 +165,7 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
       confidence: e.confidence || 'medium',
       reasoning: e.reasoning,
       sources: e.sources,
-      // Include evidence from GPT-5.2 web search
+      // Include evidence from LLM web search
       city1Evidence: e.city1Evidence || [],
       city2Evidence: e.city2Evidence || []
     }));
@@ -267,99 +267,37 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
   }
 }
 
-// GPT-5.2 evaluation (with built-in web search via responses API)
-async function evaluateWithGPT5(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
+// GPT-4o evaluation (with Tavily web search - same pattern as Claude Sonnet)
+async function evaluateWithGPT4o(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return { provider: 'gpt-5.2', success: false, scores: [], latencyMs: 0, error: 'OPENAI_API_KEY not configured' };
+    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: 0, error: 'OPENAI_API_KEY not configured' };
   }
 
   const startTime = Date.now();
 
-  // Build system prompt for GPT-5.2
-  const systemPrompt = `You are an impartial analyst comparing two cities using factual web data only.
-Use the built-in web_search tool automatically.
-Cite every claim. If evidence is missing, set confidence="low" and explain why.
-Return JSON exactly matching the schema provided.`;
-
-  // Build user payload (JSON format for GPT-5.2)
-  // Field names must match output schema expectations (camelCase, city1/city2)
-  const userPayload = {
-    categoryId: metrics[0]?.categoryId || 'general',
-    categoryName: 'Freedom Metrics Evaluation',
-    city1: city1,
-    city2: city2,
-    metrics: metrics.map(m => ({
-      metricId: m.id,
-      metricName: m.name,
-      description: m.description,
-      scoringDirection: m.scoringDirection === 'higher_is_better' ? 'Higher score = more freedom' : 'Lower score = more freedom'
-    })),
-    currentDate: new Date().toISOString()
-  };
-
-  // JSON Schema for structured output (matching GPT's schema but with our 0-100 scoring)
-  // Note: additionalProperties: false is required for strict mode
-  const outputSchema = {
-    type: "json_schema",
-    name: "freedom_evaluation",
-    strict: true,
-    schema: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        evaluations: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              metricId: { type: "string" },
-              city1LegalScore: { type: "number" },
-              city1EnforcementScore: { type: "number" },
-              city2LegalScore: { type: "number" },
-              city2EnforcementScore: { type: "number" },
-              confidence: { type: "string", enum: ["high", "medium", "low"] },
-              reasoning: { type: "string" },
-              city1Evidence: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    title: { type: "string" },
-                    url: { type: "string" },
-                    snippet: { type: "string" }
-                  },
-                  required: ["title", "url", "snippet"]
-                }
-              },
-              city2Evidence: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    title: { type: "string" },
-                    url: { type: "string" },
-                    snippet: { type: "string" }
-                  },
-                  required: ["title", "url", "snippet"]
-                }
-              }
-            },
-            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning", "city1Evidence", "city2Evidence"]
-          }
-        }
-      },
-      required: ["evaluations"]
+  // Optionally fetch web search context via Tavily (same pattern as Claude)
+  let searchContext = '';
+  if (process.env.TAVILY_API_KEY) {
+    const searchQueries = [
+      `${city1} laws regulations freedom`,
+      `${city2} laws regulations freedom`
+    ];
+    const searchResults = await Promise.all(
+      searchQueries.map(q => tavilySearch(q, 3).catch(() => []))
+    );
+    const results = searchResults.flat();
+    if (results.length > 0) {
+      searchContext = `\n\n## WEB SEARCH RESULTS\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\nUse these search results to inform your evaluation.\n`;
     }
-  };
+  }
+
+  const prompt = searchContext + buildPrompt(city1, city2, metrics);
 
   try {
-    // GPT-5.2 uses the responses API with built-in web search
+    // GPT-4o uses standard chat completions API
     const response = await fetchWithTimeout(
-      'https://api.openai.com/v1/responses',
+      'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
         headers: {
@@ -367,15 +305,13 @@ Return JSON exactly matching the schema provided.`;
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-5.2',
-          reasoning: { effort: 'medium' },
-          tools: [{ type: 'web_search' }],
-          tool_choice: 'auto',
-          input: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: JSON.stringify(userPayload) }
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Use the provided web search results to inform your evaluation. Return only valid JSON.' },
+            { role: 'user', content: prompt }
           ],
-          text: { format: outputSchema }
+          max_tokens: 16384,
+          temperature: 0.3
         })
       },
       LLM_TIMEOUT_MS
@@ -383,17 +319,16 @@ Return JSON exactly matching the schema provided.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      return { provider: 'gpt-5.2', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+      return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
     }
 
     const data = await response.json();
-    // GPT-5.2 responses API returns output_text instead of choices[0].message.content
-    const content = data.output_text;
-    const scores = parseResponse(content, 'gpt-5.2');
+    const content = data.choices[0].message.content;
+    const scores = parseResponse(content, 'gpt-4o');
 
-    return { provider: 'gpt-5.2', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'gpt-4o', success: true, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'gpt-5.2', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }
 }
 
@@ -575,9 +510,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('[EVALUATE] Calling Claude Sonnet...');
         result = await evaluateWithClaude(city1, city2, metrics);
         break;
-      case 'gpt-5.2':
-        console.log('[EVALUATE] Calling GPT-5.2...');
-        result = await evaluateWithGPT5(city1, city2, metrics);
+      case 'gpt-4o':
+        console.log('[EVALUATE] Calling GPT-4o...');
+        result = await evaluateWithGPT4o(city1, city2, metrics);
         break;
       case 'gemini-3-pro':
         console.log('[EVALUATE] Calling Gemini 3 Pro...');

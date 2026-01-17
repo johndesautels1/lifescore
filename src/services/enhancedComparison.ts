@@ -60,7 +60,7 @@ export function getAvailableLLMs(keys: LLMAPIKeys): LLMProvider[] {
     available.push('claude-opus', 'claude-sonnet');
   }
   if (keys.openai) {
-    available.push('gpt-5.2');
+    available.push('gpt-4o');
   }
   if (keys.google) {
     available.push('gemini-3-pro');

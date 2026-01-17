@@ -137,7 +137,7 @@ const getMetricIcon = (shortName: string): string => {
 // ============================================================================
 
 // Evaluator LLMs (not including Opus which is judge-only)
-const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-5.2', 'gemini-3-pro', 'grok-4', 'perplexity'];
+const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
 
 interface LLMSelectorProps {
   city1: string;
@@ -256,10 +256,14 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       );
 
       setCurrentLLMProgress(null);
+
+      // PARTIAL SUCCESS FIX: Accept results if either success flag OR we have scores
+      const hasUsableData = result.success || (result.scores && result.scores.length > 0);
+
       setLLMStates(prev => {
         const next = new Map(prev);
         next.set(provider, {
-          status: result.success ? 'completed' : 'failed',
+          status: hasUsableData ? 'completed' : 'failed',
           result
         });
         return next;
@@ -270,7 +274,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       llmStates.forEach((state, llm) => {
         if (state.result) currentResults.set(llm, state.result);
       });
-      if (result.success) currentResults.set(provider, result);
+      // PARTIAL SUCCESS FIX: Include results with ANY usable data
+      if (hasUsableData) currentResults.set(provider, result);
       onResultsUpdate(currentResults, judgeResult);
 
     } catch (error) {
@@ -446,7 +451,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, openai: e.target.value })}
               placeholder="sk-..."
             />
-            <span className="key-models">GPT-5.2</span>
+            <span className="key-models">GPT-4o</span>
           </div>
 
           <div className="api-key-group">

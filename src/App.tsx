@@ -398,7 +398,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Evidence Panel - GPT-5.2 Web Search Citations */}
+      {/* Evidence Panel - LLM Web Search Citations */}
       <EvidencePanel
         result={enhancedResult}
         isVisible={showEvidencePanel && enhancedMode && enhancedStatus === 'complete'}

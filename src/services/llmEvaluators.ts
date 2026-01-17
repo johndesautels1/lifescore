@@ -67,7 +67,7 @@ interface APIMetricScore {
   confidence: string;
   reasoning?: string;
   sources?: string[];
-  // FIX: Include evidence fields from GPT-5.2 web search
+  // FIX: Include evidence fields from GPT-4o web search
   city1Evidence?: Array<{ title: string; url: string; snippet: string }>;
   city2Evidence?: Array<{ title: string; url: string; snippet: string }>;
 }
@@ -300,10 +300,10 @@ Use these search results to inform your evaluation.
 }
 
 // ============================================================================
-// OPENAI GPT-5.2 EVALUATOR (with built-in web search via responses API)
+// OPENAI GPT-4o EVALUATOR (with built-in web search via responses API)
 // ============================================================================
 
-export async function evaluateWithGPT5(
+export async function evaluateWithGPT4o(
   apiKey: string,
   city1: string,
   city2: string,
@@ -311,13 +311,13 @@ export async function evaluateWithGPT5(
 ): Promise<EvaluatorResult> {
   const startTime = Date.now();
 
-  // Build system prompt for GPT-5.2
+  // Build system prompt for GPT-4o
   const systemPrompt = `You are an impartial analyst comparing two cities using factual web data only.
 Use the built-in web_search tool automatically.
 Cite every claim. If evidence is missing, set confidence="low" and explain why.
 Return JSON exactly matching the schema provided.`;
 
-  // Build user payload (JSON format for GPT-5.2)
+  // Build user payload (JSON format for GPT-4o)
   // Field names must match output schema expectations (camelCase, city1/city2)
   const userPayload = {
     categoryId: metrics[0]?.categoryId || 'general',
@@ -392,7 +392,7 @@ Return JSON exactly matching the schema provided.`;
   };
 
   try {
-    // GPT-5.2 uses the responses API with built-in web search
+    // GPT-4o uses the responses API with built-in web search
     const response = await fetchWithTimeout(
       'https://api.openai.com/v1/responses',
       {
@@ -402,7 +402,7 @@ Return JSON exactly matching the schema provided.`;
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-5.2',
+          model: 'gpt-4o',
           reasoning: { effort: 'medium' },
           tools: [{ type: 'web_search' }],
           tool_choice: 'auto',
@@ -422,20 +422,20 @@ Return JSON exactly matching the schema provided.`;
     }
 
     const data = await response.json();
-    // GPT-5.2 responses API returns output_text instead of choices[0].message.content
+    // GPT-4o responses API returns output_text instead of choices[0].message.content
     const content = data.output_text;
     // Pass city names so evidence items can be properly tagged
-    const scores = parseEvaluationResponse(content, 'gpt-5.2', city1, city2);
+    const scores = parseEvaluationResponse(content, 'gpt-4o', city1, city2);
 
     return {
-      provider: 'gpt-5.2',
+      provider: 'gpt-4o',
       success: true,
       scores,
       latencyMs: Date.now() - startTime
     };
   } catch (error) {
     return {
-      provider: 'gpt-5.2',
+      provider: 'gpt-4o',
       success: false,
       scores: [],
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -676,7 +676,7 @@ function parseEvaluationResponse(
     const scores: LLMMetricScore[] = [];
 
     evaluations.forEach((eval_: LLMEvaluation) => {
-      // Convert GPT-5.2 evidence to EvidenceItem format for city1
+      // Convert GPT-4o evidence to EvidenceItem format for city1
       const city1Evidence = (eval_.city1Evidence || []).map(e => ({
         city: city1Name || 'city1',
         title: e.title,
@@ -685,7 +685,7 @@ function parseEvaluationResponse(
         retrieved_at: now
       }));
 
-      // Convert GPT-5.2 evidence to EvidenceItem format for city2
+      // Convert GPT-4o evidence to EvidenceItem format for city2
       const city2Evidence = (eval_.city2Evidence || []).map(e => ({
         city: city2Name || 'city2',
         title: e.title,
@@ -763,10 +763,10 @@ export async function runAllEvaluators(
   }
 
   if (apiKeys.openai) {
-    onProgress?.('gpt-5.2', 'started');
+    onProgress?.('gpt-4o', 'started');
     evaluatorPromises.push(
-      evaluateWithGPT5(apiKeys.openai, city1, city2, metrics)
-        .then(r => { onProgress?.('gpt-5.2', r.success ? 'completed' : 'failed'); return r; })
+      evaluateWithGPT4o(apiKeys.openai, city1, city2, metrics)
+        .then(r => { onProgress?.('gpt-4o', r.success ? 'completed' : 'failed'); return r; })
     );
   }
 
@@ -830,12 +830,12 @@ export async function runSingleEvaluator(
         result = await evaluateWithClaude(apiKeys.anthropic, apiKeys.tavily, city1, city2, metrics);
         break;
 
-      case 'gpt-5.2':
+      case 'gpt-4o':
         if (!apiKeys.openai) {
           throw new Error('OpenAI API key not configured');
         }
         onProgress?.('evaluating');
-        result = await evaluateWithGPT5(apiKeys.openai, city1, city2, metrics);
+        result = await evaluateWithGPT4o(apiKeys.openai, city1, city2, metrics);
         break;
 
       case 'gemini-3-pro':
@@ -972,7 +972,7 @@ async function evaluateCategoryBatch(
     };
 
     // Convert API response scores to LLMMetricScore format
-    // FIX: Now includes evidence from GPT-5.2 web search
+    // FIX: Now includes evidence from GPT-4o web search
     const apiScores: APIMetricScore[] = result.scores || [];
     const now = new Date().toISOString();
 

@@ -1,6 +1,6 @@
 /**
  * LIFE SCORE™ Evidence Panel
- * Collapseable panel displaying GPT-5.2 web search citations
+ * Collapseable panel displaying LLM web search citations
  */
 
 import React, { useState } from 'react';
@@ -164,7 +164,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result, isVisible, onClos
             <div className="no-evidence">
               <p>No evidence citations available yet.</p>
               <p className="no-evidence-hint">
-                Evidence will appear here after GPT-5.2 evaluations complete with web search results.
+                Evidence will appear here after LLM evaluations complete with web search results.
               </p>
             </div>
           )}
@@ -172,7 +172,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result, isVisible, onClos
           {/* Summary footer */}
           <div className="evidence-summary">
             <span className="summary-text">
-              GPT-5.2 with built-in web search provides real-time citations for all evaluations.
+              LLM with built-in web search provides real-time citations for all evaluations.
             </span>
           </div>
         </div>

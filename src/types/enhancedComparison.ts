@@ -12,13 +12,13 @@ import type { MetricScore, CategoryId } from './metrics';
 export type LLMProvider =
   | 'claude-opus'      // Anthropic Claude Opus 4.5 (Primary Judge)
   | 'claude-sonnet'    // Anthropic Claude Sonnet 4.5
-  | 'gpt-5.2'          // OpenAI GPT-5.2 (with built-in web search)
+  | 'gpt-4o'           // OpenAI GPT-4o (with Tavily web search)
   | 'gemini-3-pro'     // Google Gemini 3 Pro
   | 'grok-4'           // xAI Grok 4
   | 'perplexity'       // Perplexity Sonar Reasoning Pro
 
 // ============================================================================
-// EVIDENCE TYPE - Citations from GPT-5.2 web search
+// EVIDENCE TYPE - Citations from LLM web search
 // ============================================================================
 
 export interface EvidenceItem {
@@ -61,12 +61,12 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
     icon: '📝',
     color: '#8B5CF6'
   },
-  'gpt-5.2': {
-    id: 'gpt-5.2',
-    name: 'GPT-5.2',
-    shortName: 'GPT-5.2',
+  'gpt-4o': {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    shortName: 'GPT-4o',
     vendor: 'OpenAI',
-    supportsWebSearch: true,  // Built-in web search via responses API
+    supportsWebSearch: true,  // Web search via Tavily API
     icon: '🤖',
     color: '#10A37F'
   },
@@ -101,7 +101,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
 
 // Default 5 LLMs for enhanced comparison (Claude Opus is judge)
 export const DEFAULT_ENHANCED_LLMS: LLMProvider[] = [
-  'gpt-5.2',
+  'gpt-4o',
   'gemini-3-pro',
   'grok-4',
   'claude-sonnet',
@@ -124,7 +124,7 @@ export interface LLMMetricScore extends MetricScore {
   enforcementScore?: number;
   // Source tracking for citations (legacy string[] format)
   sources?: string[];
-  // Evidence items with full citation data (GPT-5.2 format)
+  // Evidence items with full citation data (LLM format)
   evidence?: EvidenceItem[];
   // Which city this score is for (used during aggregation)
   city?: 'city1' | 'city2';
@@ -202,7 +202,7 @@ export interface EnhancedComparisonResult {
 
 export interface LLMAPIKeys {
   anthropic?: string;   // Claude Opus & Sonnet
-  openai?: string;      // GPT-5.2 (built-in web search, no Tavily needed)
+  openai?: string;      // LLM (built-in web search, no Tavily needed)
   google?: string;      // Gemini 3 Pro
   xai?: string;         // Grok 4
   perplexity?: string;  // Sonar Reasoning Pro

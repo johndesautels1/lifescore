@@ -63,15 +63,15 @@ async function testClaude(): Promise<{ success: boolean; message: string; latenc
   }
 }
 
-// Test GPT-5.2
-async function testGPT5(): Promise<{ success: boolean; message: string; latencyMs: number }> {
+// Test GPT-4o
+async function testGPT4o(): Promise<{ success: boolean; message: string; latencyMs: number }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return { success: false, message: 'OPENAI_API_KEY not set', latencyMs: 0 };
 
   const startTime = Date.now();
   try {
     const response = await fetchWithTimeout(
-      'https://api.openai.com/v1/responses',
+      'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
         headers: {
@@ -79,8 +79,9 @@ async function testGPT5(): Promise<{ success: boolean; message: string; latencyM
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-5.2',
-          input: [{ role: 'user', content: 'Say "ok"' }]
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: 'Say "ok"' }],
+          max_tokens: 10
         })
       },
       TEST_TIMEOUT_MS
@@ -93,7 +94,7 @@ async function testGPT5(): Promise<{ success: boolean; message: string; latencyM
     }
 
     const data = await response.json();
-    return { success: true, message: `Response: ${data.output_text?.slice(0, 50) || 'ok'}`, latencyMs };
+    return { success: true, message: `Response: ${data.choices?.[0]?.message?.content?.slice(0, 50) || 'ok'}`, latencyMs };
   } catch (error) {
     return { success: false, message: String(error), latencyMs: Date.now() - startTime };
   }
@@ -226,7 +227,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     results.claude = await testClaude();
   }
   if (!provider || provider === 'gpt') {
-    results.gpt = await testGPT5();
+    results.gpt = await testGPT4o();
   }
   if (!provider || provider === 'gemini') {
     results.gemini = await testGemini();
