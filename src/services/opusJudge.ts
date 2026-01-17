@@ -566,9 +566,9 @@ export function buildEnhancedResultFromJudge(
     }
   });
 
-  // Get LLMs that were used
+  // Get LLMs that were used (include partial successes with scores)
   const llmsUsed: LLMProvider[] = evaluatorResults
-    .filter(r => r.success)
+    .filter(r => r.success || (r.scores && r.scores.length > 0))
     .map(r => r.provider);
 
   // Build disagreement summary

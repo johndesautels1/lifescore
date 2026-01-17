@@ -258,10 +258,14 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
     }
 
     const data = await response.json();
-    const content = data.content[0].text;
+    // FIX #8: Defensive parsing - handle missing/malformed response
+    const content = data?.content?.[0]?.text;
+    if (!content) {
+      return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Claude' };
+    }
     const scores = parseResponse(content, 'claude-sonnet');
 
-    return { provider: 'claude-sonnet', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'claude-sonnet', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
     return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }
@@ -323,10 +327,14 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    // FIX #8: Defensive parsing - handle missing/malformed response
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from GPT-4o' };
+    }
     const scores = parseResponse(content, 'gpt-4o');
 
-    return { provider: 'gpt-4o', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'gpt-4o', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
     return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }
@@ -371,10 +379,14 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // FIX #8: Defensive parsing - handle missing/malformed response
+    const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!content) {
+      return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Gemini' };
+    }
     const scores = parseResponse(content, 'gemini-3-pro');
 
-    return { provider: 'gemini-3-pro', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'gemini-3-pro', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
     return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }
@@ -419,10 +431,14 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    // FIX #8: Defensive parsing - handle missing/malformed response
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Grok' };
+    }
     const scores = parseResponse(content, 'grok-4');
 
-    return { provider: 'grok-4', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'grok-4', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
     return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }
@@ -467,10 +483,14 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    // FIX #8: Defensive parsing - handle missing/malformed response
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Perplexity' };
+    }
     const scores = parseResponse(content, 'perplexity');
 
-    return { provider: 'perplexity', success: true, scores, latencyMs: Date.now() - startTime };
+    return { provider: 'perplexity', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
     return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
   }

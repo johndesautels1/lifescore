@@ -170,7 +170,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
 
   // Count completed LLMs
   const completedCount = Array.from(llmStates.values()).filter(s => s.status === 'completed').length;
-  const hasEnoughForJudge = completedCount >= 2;
+  // FIX #7: Allow judge to run with just 1 LLM (was >= 2, now >= 1)
+  // This allows results to display even if only one LLM (like Grok) completes
+  const hasEnoughForJudge = completedCount >= 1;
   // Phase 3: Check if we need to re-judge (new LLM completed since last judge)
   const needsReJudge = hasEnoughForJudge && completedCount > lastJudgedCount;
 
