@@ -211,9 +211,9 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
             scoringDirection: m.scoringDirection
           }));
 
-        // Call API for this category's metrics with 90s timeout
+        // Call API for this category's metrics with 240s timeout (must exceed server 180s)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
+        const timeoutId = setTimeout(() => controller.abort(), 240000);
 
         let response: Response;
         try {

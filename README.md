@@ -19,25 +19,90 @@
 
 ---
 
-## 📋 COMPLETE TIMEOUT AUDIT (As of 2026-01-17)
+## **⛔ NO FUTURE AGENT MAY CHANGE ANY TIMEOUT WITHOUT THE ADMIN JOHN DESAUTELS EXPLICIT APPROVAL OF SUCH CHANGES ⛔**
 
-| File | Line | Constant | Value | Purpose |
-|------|------|----------|-------|---------|
-| `api/evaluate.ts` | 9 | `LLM_TIMEOUT_MS` | 120000ms (120s) | All LLM API calls |
-| `api/evaluate.ts` | 10 | `TAVILY_TIMEOUT_MS` | 60000ms (60s) | Tavily search |
-| `api/judge.ts` | 35 | `OPUS_TIMEOUT_MS` | 90000ms (90s) | Opus judge API |
-| `api/test-llm.ts` | 9 | `TEST_TIMEOUT_MS` | 15000ms (15s) | Quick LLM tests |
-| `src/services/llmEvaluators.ts` | 14 | `LLM_TIMEOUT_MS` | 120000ms (120s) | Client LLM calls |
-| `src/services/llmEvaluators.ts` | 15 | `TAVILY_TIMEOUT_MS` | 60000ms (60s) | Client Tavily |
-| `src/services/llmEvaluators.ts` | 926 | `setTimeout` | 90000ms (90s) | Per-category batch |
-| `src/services/llmEvaluators.ts` | 1105 | `withTimeout` | 90000ms (90s) | Category wrapper |
-| `src/services/llmEvaluators.ts` | 1133 | `setTimeout` | 1000ms (1s) | Wave delay |
-| `src/services/opusJudge.ts` | 18 | `OPUS_TIMEOUT_MS` | 90000ms (90s) | Client Opus |
-| `src/services/cache.ts` | 32 | `KV_TIMEOUT_MS` | 10000ms (10s) | KV cache |
-| `src/services/savedComparisons.ts` | 51 | `GITHUB_TIMEOUT_MS` | 30000ms (30s) | GitHub API |
-| `src/hooks/useComparison.ts` | 216 | `setTimeout` | 90000ms (90s) | Simple mode |
-| `vercel.json` | 6 | `maxDuration` | 120s | evaluate.ts |
-| `vercel.json` | 9 | `maxDuration` | 90s | judge.ts |
+---
+
+## 📋 COMPLETE TIMEOUT AUDIT (Updated 2026-01-17 by Claude Opus 4.5)
+
+**Vercel Pro Limit: 300 seconds**
+
+### Current Timeout Structure
+
+| Layer | Constant | Value | File | Line |
+|-------|----------|-------|------|------|
+| **Vercel Hard Limit** | `maxDuration` | **300s** | `vercel.json` | 6 |
+| **Vercel Hard Limit** | `maxDuration` | **300s** | `vercel.json` | 9 |
+| **Server LLM Calls** | `LLM_TIMEOUT_MS` | **180s** | `api/evaluate.ts` | 9 |
+| **Server Opus Judge** | `OPUS_TIMEOUT_MS` | **180s** | `api/judge.ts` | 35 |
+| **Server Test** | `TEST_TIMEOUT_MS` | **15s** | `api/test-llm.ts` | 9 |
+| **Client LLM** | `LLM_TIMEOUT_MS` | **180s** | `src/services/llmEvaluators.ts` | 14 |
+| **Client Fetch** | `CLIENT_TIMEOUT_MS` | **240s** | `src/services/llmEvaluators.ts` | 15 |
+| **Client Category Batch** | `setTimeout` | **240s** | `src/services/llmEvaluators.ts` | 926 |
+| **Client withTimeout** | `withTimeout` | **240s** | `src/services/llmEvaluators.ts` | 1105 |
+| **Client Wave Delay** | `setTimeout` | **1s** | `src/services/llmEvaluators.ts` | 1133 |
+| **Client Opus** | `OPUS_TIMEOUT_MS` | **180s** | `src/services/opusJudge.ts` | 18 |
+| **Simple Mode Fetch** | `setTimeout` | **240s** | `src/hooks/useComparison.ts` | 216 |
+| **KV Cache** | `KV_TIMEOUT_MS` | **10s** | `src/services/cache.ts` | 32 |
+| **GitHub API** | `GITHUB_TIMEOUT_MS` | **30s** | `src/services/savedComparisons.ts` | 51 |
+
+### Timeout Hierarchy
+
+```
+VERCEL PRO HARD LIMIT: 300s
+    │
+    ├── Server LLM Timeout: 180s (all 5 LLMs + Opus)
+    │   ├── Claude Sonnet + Tavily: 180s
+    │   ├── GPT-4o + Tavily: 180s
+    │   ├── Gemini + Google Search: 180s
+    │   ├── Grok + Native Search: 180s
+    │   ├── Perplexity + Native Search: 180s
+    │   └── Opus Judge: 180s
+    │
+    └── Client Timeout: 240s (must exceed server)
+        ├── Category batch fetch: 240s
+        ├── withTimeout wrapper: 240s
+        └── Simple mode fetch: 240s
+```
+
+### Changes Made 2026-01-17 (Conversation ID: LS-2026-0117-001)
+
+| # | File | Line | Before | After |
+|---|------|------|--------|-------|
+| 1 | `vercel.json` | 6 | 120s | **300s** |
+| 2 | `vercel.json` | 9 | 90s | **300s** |
+| 3 | `api/evaluate.ts` | 9 | 120000ms | **180000ms** |
+| 4 | `api/evaluate.ts` | 253 | TAVILY_TIMEOUT_MS | **LLM_TIMEOUT_MS** |
+| 5 | `api/judge.ts` | 35 | 90000ms | **180000ms** |
+| 6 | `src/services/llmEvaluators.ts` | 14 | 120000ms | **180000ms** |
+| 7 | `src/services/llmEvaluators.ts` | 15 | TAVILY_TIMEOUT_MS=60000 | **CLIENT_TIMEOUT_MS=240000** |
+| 8 | `src/services/llmEvaluators.ts` | 191 | TAVILY_TIMEOUT_MS | **LLM_TIMEOUT_MS** |
+| 9 | `src/services/llmEvaluators.ts` | 926 | 90000 | **CLIENT_TIMEOUT_MS** |
+| 10 | `src/services/llmEvaluators.ts` | 1105-1106 | 90000 | **CLIENT_TIMEOUT_MS** |
+| 11 | `src/hooks/useComparison.ts` | 216 | 90000 | **240000** |
+| 12 | `src/services/opusJudge.ts` | 18 | 90000ms | **180000ms** |
+
+**TypeScript Check: PASSED**
+**Build: PASSED**
+
+---
+
+## 🤖 NEXT AGENT HANDOFF
+
+**Conversation ID for continuation: LS-2026-0117-001**
+
+**NEXT TASK:** Audit the entire codebase to create a comprehensive table of all LLM model names, prefixes, suffixes, their file locations, line numbers, and API endpoints. This includes:
+
+1. All 6 LLM model identifiers (Claude Sonnet, Claude Opus, GPT-4o, Gemini, Grok, Perplexity)
+2. Tavily API configuration
+3. All API endpoint URLs
+4. All places where model names appear in the code
+5. Any mismatches between files
+
+**Known issues to investigate:**
+- Perplexity returns "undefined" error
+- Grok times out (may be fixed now with 180s timeout)
+- Gemini model `gemini-3-pro-preview` may still 404
 
 ---
 

@@ -14,8 +14,8 @@ import {
   type ConfidenceLevel
 } from '../constants/scoringThresholds';
 
-// Timeout constant for Opus API (90s)
-const OPUS_TIMEOUT_MS = 90000;
+// Timeout constant for Opus API (180s - within Vercel Pro 300s limit)
+const OPUS_TIMEOUT_MS = 180000;
 
 // Helper: fetch with timeout using AbortController
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {

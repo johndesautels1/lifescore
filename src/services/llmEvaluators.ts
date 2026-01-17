@@ -11,8 +11,8 @@ import { withRetry, isCircuitOpen, recordSuccess, recordFailure } from './rateLi
 // ============================================================================
 // TIMEOUT CONSTANTS
 // ============================================================================
-const LLM_TIMEOUT_MS = 120000; // 120 seconds for ALL LLM API calls
-const TAVILY_TIMEOUT_MS = 60000; // 60 seconds for Tavily search
+const LLM_TIMEOUT_MS = 180000; // 180 seconds for ALL LLM API calls
+const CLIENT_TIMEOUT_MS = 240000; // 240 seconds for client-side fetch (must exceed server)
 
 // Helper: fetch with timeout using AbortController
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
@@ -188,7 +188,7 @@ export async function tavilySearch(
         include_raw_content: false
       })
     },
-    TAVILY_TIMEOUT_MS
+    LLM_TIMEOUT_MS
   );
 
   if (!response.ok) {
@@ -921,9 +921,9 @@ async function evaluateCategoryBatch(
 
   console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
 
-  // Client-side timeout - 90s per category (Gemini recommends 60s+ for web search + reasoning)
+  // Client-side timeout - 240s per category (must exceed server 180s timeout)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 90000);
+  const timeoutId = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
 
   try {
     // Call Vercel serverless function which has access to env vars
@@ -1099,11 +1099,11 @@ export async function runSingleEvaluatorBatched(
       onCategoryProgress?.([...progressState]);
     }
 
-    // Wrap in timeout to prevent hanging (90s per category)
+    // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
     const result = await withTimeout(
       evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
-      90000,
-      { success: false, scores: [], latencyMs: 90000, error: `Timeout for ${categoryId}` }
+      CLIENT_TIMEOUT_MS,
+      { success: false, scores: [], latencyMs: CLIENT_TIMEOUT_MS, error: `Timeout for ${categoryId}` }
     );
 
     console.log(`[BATCH] ${provider}/${categoryId} done: success=${result.success}, scores=${result.scores.length}`);

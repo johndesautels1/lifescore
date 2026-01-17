@@ -3,10 +3,10 @@
   "framework": "vite",
   "functions": {
     "api/evaluate.ts": {
-      "maxDuration": 120
+      "maxDuration": 300
     },
     "api/judge.ts": {
-      "maxDuration": 90
+      "maxDuration": 300
     }
   },
   "buildCommand": "npm run build",
