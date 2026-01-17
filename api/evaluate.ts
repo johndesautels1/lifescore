@@ -416,9 +416,9 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
 // Gemini 3 Pro evaluation (with Google Search grounding)
 async function evaluateWithGemini(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
-  const apiKey = process.env.GOOGLE_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: 0, error: 'GOOGLE_API_KEY not configured' };
+    return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: 0, error: 'GEMINI_API_KEY not configured' };
   }
 
   const startTime = Date.now();
