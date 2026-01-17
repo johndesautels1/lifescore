@@ -331,7 +331,8 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
 
     return { provider: 'claude-sonnet', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
+    return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
 }
 
@@ -408,7 +409,8 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
     return { provider: 'gpt-4o', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
+    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
 }
 
@@ -470,7 +472,8 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 
     return { provider: 'gemini-3-pro', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
+    return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
 }
 
@@ -532,7 +535,8 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 
     return { provider: 'grok-4', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
+    return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
 }
 
@@ -594,7 +598,8 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
     return { provider: 'perplexity', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
-    return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: String(error) };
+    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key and network');
+    return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
 }
 
