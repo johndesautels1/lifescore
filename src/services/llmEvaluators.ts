@@ -460,7 +460,7 @@ export async function evaluateWithGemini(
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
     const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1034,7 +1034,7 @@ async function evaluateCategoryBatch(
     // Provide clearer error message for timeout
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMsg = isTimeout
-      ? `Request timed out after 30 seconds for ${provider}/${categoryId}`
+      ? `Request timed out after 90 seconds for ${provider}/${categoryId}`
       : (error instanceof Error ? error.message : 'Unknown error');
 
     console.error(`[CLIENT] ${provider}/${categoryId} fetch error:`, errorMsg);

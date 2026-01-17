@@ -8,12 +8,28 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import {
-  CONFIDENCE_THRESHOLDS,
-  getConfidenceLevel,
-  isDisagreementArea,
-  type ConfidenceLevel
-} from '../src/constants/scoringThresholds';
+
+// INLINED from src/constants/scoringThresholds.ts to fix Vercel import error
+const CONFIDENCE_THRESHOLDS = {
+  UNANIMOUS: 5,
+  STRONG: 12,
+  MODERATE: 20,
+  DISAGREEMENT_FLAG: 15,
+  DEFAULT_AVG_STDDEV: 25
+} as const;
+
+type ConfidenceLevel = 'unanimous' | 'strong' | 'moderate' | 'split';
+
+function getConfidenceLevel(stdDev: number): ConfidenceLevel {
+  if (stdDev < CONFIDENCE_THRESHOLDS.UNANIMOUS) return 'unanimous';
+  if (stdDev < CONFIDENCE_THRESHOLDS.STRONG) return 'strong';
+  if (stdDev < CONFIDENCE_THRESHOLDS.MODERATE) return 'moderate';
+  return 'split';
+}
+
+function isDisagreementArea(stdDev: number): boolean {
+  return stdDev > CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG;
+}
 
 // Timeout constant for Opus API (90s - matches Vercel function limit)
 const OPUS_TIMEOUT_MS = 90000;

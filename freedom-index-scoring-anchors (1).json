@@ -1,0 +1,1900 @@
+{
+  "version": "1.0.0",
+  "description": "Scoring anchors for Freedom Index metrics. Include these in buildPrompt() so LLMs understand what 0-100 means for both Legal and Enforcement scores.",
+  
+  "scoringAnchors": {
+    
+    "pf_01_cannabis_legal": {
+      "name": "Cannabis Legality",
+      "description": "Legal status of recreational cannabis use and possession",
+      "legalScore": {
+        "100": "Fully legal - recreational sales permitted, licensed dispensaries",
+        "75": "Medical program with broad access, decriminalized recreational",
+        "50": "Medical only (strict program) OR decriminalized possession",
+        "25": "Illegal - misdemeanor penalties, small fines",
+        "0": "Illegal - felony charges, prison time possible"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - police ignore cannabis completely",
+        "75": "Rarely enforced - low priority, warnings only",
+        "50": "Selectively enforced - depends on quantity/location",
+        "25": "Usually enforced - regular arrests and citations",
+        "0": "Strictly enforced - zero tolerance, active prosecution"
+      }
+    },
+
+    "pf_02_alcohol_restrictions": {
+      "name": "Alcohol Purchase Restrictions",
+      "description": "Restrictions on alcohol sales hours, locations, and types",
+      "legalScore": {
+        "100": "No restrictions - 24/7 sales, all venues, all types",
+        "75": "Minor restrictions - limited late night hours only",
+        "50": "Moderate restrictions - Sunday limits, some venue restrictions",
+        "25": "Heavy restrictions - state-controlled stores, limited hours",
+        "0": "Severe restrictions - dry counties, near-prohibition"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - sales occur outside legal hours freely",
+        "75": "Rarely enforced - occasional warnings",
+        "50": "Moderately enforced - periodic compliance checks",
+        "25": "Usually enforced - regular inspections, fines issued",
+        "0": "Strictly enforced - immediate penalties, license revocations"
+      }
+    },
+
+    "pf_03_gambling_legal": {
+      "name": "Gambling Legality",
+      "description": "Legal status of gambling including casinos, sports betting, online",
+      "legalScore": {
+        "100": "Fully legal - casinos, sports betting, online all permitted",
+        "75": "Mostly legal - casinos and sports betting, limited online",
+        "50": "Partially legal - tribal casinos, state lottery only",
+        "25": "Limited - lottery only, no casinos or sports betting",
+        "0": "Illegal - all gambling prohibited"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - illegal gambling operates openly",
+        "75": "Rarely enforced - home games and small operations ignored",
+        "50": "Selectively enforced - large operations targeted",
+        "25": "Usually enforced - regular raids on illegal gambling",
+        "0": "Strictly enforced - aggressive prosecution"
+      }
+    },
+
+    "pf_04_prostitution_status": {
+      "name": "Sex Work Legal Status",
+      "description": "Legal status of adult consensual sex work",
+      "legalScore": {
+        "100": "Legal and regulated - licensed, health requirements, protections",
+        "75": "Decriminalized - not criminal for workers or clients",
+        "50": "Nordic model - selling legal, buying illegal",
+        "25": "Illegal - misdemeanor, light statutory penalties",
+        "0": "Illegal - felony charges, severe penalties"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - operates openly without interference",
+        "75": "Rarely enforced - known areas tolerated",
+        "50": "Selectively enforced - street work targeted, indoor ignored",
+        "25": "Usually enforced - regular stings and arrests",
+        "0": "Strictly enforced - aggressive prosecution of all parties"
+      }
+    },
+
+    "pf_05_drug_possession": {
+      "name": "Drug Possession Policy",
+      "description": "Approach to personal possession of controlled substances",
+      "legalScore": {
+        "100": "Decriminalized - all substances, treatment focus, no penalties",
+        "75": "Partial decrim - some substances decriminalized, diversion programs",
+        "50": "Mixed - fines and probation, incarceration rare",
+        "25": "Punitive - incarceration common for possession",
+        "0": "Severe - mandatory minimum prison terms"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - possession effectively legal in practice",
+        "75": "Rarely enforced - treatment referrals, no arrests",
+        "50": "Selectively enforced - depends on substance, quantity, location",
+        "25": "Usually enforced - regular arrests for possession",
+        "0": "Strictly enforced - zero tolerance, mandatory prosecution"
+      }
+    },
+
+    "pf_06_abortion_access": {
+      "name": "Reproductive Healthcare Access",
+      "description": "Legal framework for abortion and reproductive healthcare",
+      "legalScore": {
+        "100": "Unrestricted - no gestational limit, on request",
+        "75": "Broad access - legal to 24+ weeks, few barriers",
+        "50": "Moderate access - 15-24 week limit, some requirements",
+        "25": "Restricted - under 15 weeks, waiting periods, mandatory counseling",
+        "0": "Near-total ban - life of mother only or complete ban"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - restrictions on books ignored",
+        "75": "Rarely enforced - violations rarely prosecuted",
+        "50": "Selectively enforced - depends on circumstances",
+        "25": "Usually enforced - providers monitored, violations prosecuted",
+        "0": "Strictly enforced - aggressive prosecution, bounty laws"
+      }
+    },
+
+    "pf_07_lgbtq_rights": {
+      "name": "LGBTQ+ Rights & Protections",
+      "description": "Legal protections for sexual orientation and gender identity",
+      "legalScore": {
+        "100": "Full rights - marriage, adoption, comprehensive anti-discrimination",
+        "75": "Strong rights - marriage legal, employment protections",
+        "50": "Moderate - civil unions, some protections",
+        "25": "Limited - no marriage, few legal protections",
+        "0": "No protections or criminalized"
+      },
+      "enforcementScore": {
+        "100": "Proactively protected - discrimination actively prosecuted",
+        "75": "Well enforced - complaints investigated, remedies available",
+        "50": "Moderately enforced - some enforcement of protections",
+        "25": "Weakly enforced - protections exist but rarely applied",
+        "0": "Not enforced - or anti-LGBTQ laws actively enforced"
+      }
+    },
+
+    "pf_08_euthanasia_status": {
+      "name": "End-of-Life Autonomy",
+      "description": "Legal status of medical aid in dying / euthanasia",
+      "legalScore": {
+        "100": "Legal - broad eligibility, includes non-terminal conditions",
+        "75": "Legal - terminal illness with 6+ month prognosis",
+        "50": "Limited - passive measures only (DNR, withdrawal)",
+        "25": "Very limited - only in extreme circumstances",
+        "0": "Illegal - all forms prohibited"
+      },
+      "enforcementScore": {
+        "100": "Facilitated - clear process, accessible",
+        "75": "Supported - medical community participates",
+        "50": "Neutral - legal but difficult to access",
+        "25": "Discouraged - legal barriers, few providers",
+        "0": "Prosecuted - violations criminally charged"
+      }
+    },
+
+    "pf_09_smoking_regulations": {
+      "name": "Tobacco Smoking Restrictions",
+      "description": "Restrictions on tobacco smoking in public places",
+      "legalScore": {
+        "100": "Minimal - smoking allowed most places",
+        "75": "Light - some indoor venue restrictions",
+        "50": "Moderate - indoor public spaces banned, outdoor ok",
+        "25": "Heavy - extensive indoor and outdoor bans",
+        "0": "Severe - near-total public ban, beaches, parks, sidewalks"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - people smoke freely despite bans",
+        "75": "Rarely enforced - occasional complaints addressed",
+        "50": "Moderately enforced - visible violations addressed",
+        "25": "Usually enforced - regular citations issued",
+        "0": "Strictly enforced - immediate fines, repeat offender penalties"
+      }
+    },
+
+    "pf_10_public_drinking": {
+      "name": "Public Alcohol Consumption",
+      "description": "Legality of drinking alcohol in public spaces",
+      "legalScore": {
+        "100": "Legal - no open container restrictions",
+        "75": "Mostly legal - few restricted zones (schools, etc.)",
+        "50": "Restricted - designated areas, events, parks only",
+        "25": "Mostly illegal - limited exceptions",
+        "0": "Illegal - strict open container laws everywhere"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - open drinking everywhere",
+        "75": "Rarely enforced - only if causing problems",
+        "50": "Selectively enforced - certain areas, times, events",
+        "25": "Usually enforced - citations common",
+        "0": "Strictly enforced - immediate tickets, pour-outs"
+      }
+    },
+
+    "pf_11_helmet_laws": {
+      "name": "Motorcycle Helmet Requirements",
+      "description": "Mandatory helmet laws for adult motorcyclists",
+      "legalScore": {
+        "100": "No requirement - adults can choose",
+        "50": "Partial - age restrictions (under 18/21) or insurance requirement",
+        "0": "Mandatory - all riders must wear helmets"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - riders without helmets ignored",
+        "75": "Rarely enforced - only during specific campaigns",
+        "50": "Moderately enforced - secondary offense",
+        "25": "Usually enforced - primary offense, tickets issued",
+        "0": "Strictly enforced - checkpoints, heavy fines"
+      }
+    },
+
+    "pf_12_seatbelt_enforcement": {
+      "name": "Seatbelt Enforcement",
+      "description": "How seatbelt laws are enforced",
+      "legalScore": {
+        "100": "No seatbelt law for adults",
+        "75": "Secondary enforcement only",
+        "50": "Primary enforcement, low fines",
+        "25": "Primary enforcement, moderate fines",
+        "0": "Primary enforcement, high fines, points on license"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - seatbelt use optional in practice",
+        "75": "Rarely enforced - low priority",
+        "50": "Moderately enforced - periodic campaigns",
+        "25": "Usually enforced - regular traffic stops",
+        "0": "Strictly enforced - click-it-or-ticket campaigns, checkpoints"
+      }
+    },
+
+    "pf_13_jaywalking": {
+      "name": "Jaywalking Enforcement",
+      "description": "Enforcement of pedestrian crossing laws",
+      "legalScore": {
+        "100": "No jaywalking law - pedestrians can cross anywhere",
+        "75": "Law exists but minimal penalties",
+        "50": "Moderate penalties - small fines",
+        "25": "Significant penalties - larger fines",
+        "0": "Strict penalties - high fines, potential arrest"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - everyone jaywalks freely",
+        "75": "Rarely enforced - almost never ticketed",
+        "50": "Selectively enforced - busy intersections, campaigns",
+        "25": "Usually enforced - regular citations",
+        "0": "Strictly enforced - officers actively ticket jaywalkers"
+      }
+    },
+
+    "pf_14_curfew_laws": {
+      "name": "Adult Curfew Laws",
+      "description": "Nighttime movement restrictions for adults",
+      "legalScore": {
+        "100": "No adult curfews - 24/7 freedom of movement",
+        "75": "Emergency curfews only - rare circumstances",
+        "50": "Occasional curfews - special events, areas",
+        "25": "Regular curfews - specific neighborhoods",
+        "0": "Widespread curfews - routine restrictions"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - curfews ignored",
+        "75": "Rarely enforced - warnings only",
+        "50": "Selectively enforced - certain areas",
+        "25": "Usually enforced - citations issued",
+        "0": "Strictly enforced - arrests, heavy fines"
+      }
+    },
+
+    "pf_15_noise_ordinances": {
+      "name": "Noise Ordinance Strictness",
+      "description": "Residential noise regulations",
+      "legalScore": {
+        "100": "Very relaxed - no quiet hours, high decibel limits",
+        "75": "Relaxed - late quiet hours (11pm+)",
+        "50": "Moderate - standard quiet hours (10pm-7am)",
+        "25": "Strict - early quiet hours (9pm), daytime limits",
+        "0": "Very strict - extensive restrictions, low decibel limits"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - loud parties go unaddressed",
+        "75": "Rarely enforced - only extreme cases",
+        "50": "Moderately enforced - responds to complaints",
+        "25": "Usually enforced - proactive patrols",
+        "0": "Strictly enforced - immediate response, heavy fines"
+      }
+    },
+
+    "hp_01_hoa_prevalence": {
+      "name": "HOA Prevalence",
+      "description": "Percentage of housing under HOA governance",
+      "legalScore": {
+        "100": "Under 10% - HOAs rare, easy to avoid",
+        "75": "10-25% - HOAs exist but alternatives available",
+        "50": "25-40% - HOAs common",
+        "25": "40-60% - HOAs dominant in many areas",
+        "0": "Over 60% - HOAs nearly unavoidable"
+      },
+      "enforcementScore": {
+        "100": "HOAs inactive - rules not enforced",
+        "75": "Loosely enforced - major violations only",
+        "50": "Moderately enforced - regular inspections",
+        "25": "Strictly enforced - active violation hunting",
+        "0": "Aggressively enforced - immediate fines, liens"
+      }
+    },
+
+    "hp_02_hoa_power": {
+      "name": "HOA Legal Authority",
+      "description": "Powers HOAs have over homeowners",
+      "legalScore": {
+        "100": "Very limited - no foreclosure, capped fines, oversight",
+        "75": "Limited - restricted powers, homeowner protections",
+        "50": "Moderate - standard powers, some limits",
+        "25": "Strong - can lien and foreclose for dues",
+        "0": "Very strong - extensive unchecked powers"
+      },
+      "enforcementScore": {
+        "100": "Powers never used - paper tiger",
+        "75": "Powers rarely used - negotiation preferred",
+        "50": "Powers sometimes used - depends on board",
+        "25": "Powers frequently used - active enforcement",
+        "0": "Powers aggressively used - maximum penalties common"
+      }
+    },
+
+    "hp_03_property_tax_rate": {
+      "name": "Property Tax Burden",
+      "description": "Effective property tax rate as percentage of value",
+      "legalScore": {
+        "100": "Under 0.5% effective rate",
+        "75": "0.5-1.0% effective rate",
+        "50": "1.0-1.5% effective rate",
+        "25": "1.5-2.5% effective rate",
+        "0": "Over 2.5% effective rate"
+      },
+      "enforcementScore": {
+        "100": "Loose collection - long grace periods, easy appeals",
+        "75": "Lenient - payment plans readily available",
+        "50": "Standard - normal collection procedures",
+        "25": "Strict - quick liens, penalties",
+        "0": "Aggressive - rapid foreclosure for non-payment"
+      }
+    },
+
+    "hp_04_rent_control": {
+      "name": "Rent Control Laws",
+      "description": "Rent stabilization and control regulations",
+      "legalScore": {
+        "100": "No rent control - market determines rents",
+        "75": "Weak controls - narrow applicability, high caps",
+        "50": "Moderate stabilization - some limits on increases",
+        "25": "Strong controls - strict caps, broad coverage",
+        "0": "Very strong - strict caps, vacancy control"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - landlords ignore limits",
+        "75": "Weakly enforced - tenant must complain",
+        "50": "Moderately enforced - some monitoring",
+        "25": "Well enforced - regular audits",
+        "0": "Strictly enforced - proactive compliance, heavy fines"
+      }
+    },
+
+    "hp_05_eviction_protection": {
+      "name": "Tenant Eviction Protections",
+      "description": "Protections tenants have against eviction",
+      "legalScore": {
+        "100": "Minimal - quick eviction, short notice (landlord freedom)",
+        "75": "Light - 14-30 day notice, few protections",
+        "50": "Moderate - 30 day notice, some just cause",
+        "25": "Strong - 60+ day notice, just cause required",
+        "0": "Very strong - extensive protections, long process"
+      },
+      "enforcementScore": {
+        "100": "Tenant protections not enforced - easy evictions",
+        "75": "Weakly enforced - process favors landlords",
+        "50": "Moderately enforced - balanced process",
+        "25": "Well enforced - tenant rights protected",
+        "0": "Strictly enforced - very difficult to evict"
+      }
+    },
+
+    "hp_06_zoning_strictness": {
+      "name": "Land Use Zoning Flexibility",
+      "description": "How restrictive zoning regulations are",
+      "legalScore": {
+        "100": "Very flexible - mixed-use, minimal restrictions",
+        "75": "Flexible - liberal variances, accessory uses allowed",
+        "50": "Moderate - standard zoning with variance process",
+        "25": "Strict - rigid categories, difficult variances",
+        "0": "Very strict - single-use only, near impossible variances"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - violations widespread and ignored",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - periodic reviews",
+        "25": "Well enforced - regular inspections",
+        "0": "Strictly enforced - immediate stop-work orders"
+      }
+    },
+
+    "hp_07_building_permits": {
+      "name": "Building Permit Complexity",
+      "description": "Difficulty of obtaining building permits",
+      "legalScore": {
+        "100": "Very easy - online, same-day, minimal requirements",
+        "75": "Easy - simple process, quick approval",
+        "50": "Moderate - standard requirements, reasonable timeline",
+        "25": "Difficult - complex process, multiple reviews",
+        "0": "Very difficult - extensive bureaucracy, months/years"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - unpermitted work common and ignored",
+        "75": "Loosely enforced - only major work checked",
+        "50": "Moderately enforced - spot checks, complaint response",
+        "25": "Well enforced - regular inspections required",
+        "0": "Strictly enforced - no work without permits, heavy fines"
+      }
+    },
+
+    "hp_08_short_term_rental": {
+      "name": "Short-Term Rental Regulations",
+      "description": "Restrictions on Airbnb/VRBO rentals",
+      "legalScore": {
+        "100": "Unrestricted - no regulations",
+        "75": "Light - simple registration only",
+        "50": "Moderate - permits, some limits",
+        "25": "Heavy - strict caps, primary residence only",
+        "0": "Banned or near-banned"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - illegal rentals operate freely",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - some monitoring",
+        "25": "Well enforced - active listing monitoring",
+        "0": "Strictly enforced - fines, platform cooperation"
+      }
+    },
+
+    "hp_09_adu_laws": {
+      "name": "ADU/Granny Flat Laws",
+      "description": "Ability to build accessory dwelling units",
+      "legalScore": {
+        "100": "By-right - allowed everywhere, easy approval",
+        "75": "Allowed - moderate process, most zones",
+        "50": "Restricted - limited zones, conditions",
+        "25": "Very difficult - extensive requirements",
+        "0": "Prohibited - not allowed"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - illegal ADUs common and ignored",
+        "75": "Loosely enforced - existing ADUs grandfathered",
+        "50": "Moderately enforced - new construction checked",
+        "25": "Well enforced - inspections, compliance required",
+        "0": "Strictly enforced - illegal ADUs demolished"
+      }
+    },
+
+    "hp_10_home_business": {
+      "name": "Home-Based Business Rules",
+      "description": "Ability to operate businesses from home",
+      "legalScore": {
+        "100": "Very permissive - almost any business allowed",
+        "75": "Permissive - most businesses, few limits",
+        "50": "Moderate - standard restrictions (no retail, employees)",
+        "25": "Restrictive - many limitations",
+        "0": "Very restrictive - near-prohibition"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - businesses operate freely",
+        "75": "Loosely enforced - only complaints addressed",
+        "50": "Moderately enforced - visible violations addressed",
+        "25": "Well enforced - regular monitoring",
+        "0": "Strictly enforced - active searches, immediate fines"
+      }
+    },
+
+    "hp_11_eminent_domain": {
+      "name": "Eminent Domain Protections",
+      "description": "Protection against government property seizure",
+      "legalScore": {
+        "100": "Very strong - public use only, above-market compensation",
+        "75": "Strong - strict limits, fair compensation",
+        "50": "Moderate - standard protections",
+        "25": "Weak - broad government power",
+        "0": "Very weak - private benefit allowed, low compensation"
+      },
+      "enforcementScore": {
+        "100": "Protections strongly upheld - seizures rare",
+        "75": "Well protected - courts favor owners",
+        "50": "Moderately protected - case by case",
+        "25": "Weakly protected - government usually wins",
+        "0": "Not protected - seizures rubber-stamped"
+      }
+    },
+
+    "hp_12_squatter_rights": {
+      "name": "Adverse Possession Laws",
+      "description": "How protected owners are from squatters",
+      "legalScore": {
+        "100": "Owner protected - 15+ years, strict requirements",
+        "75": "Mostly protected - 10-15 years, clear standards",
+        "50": "Balanced - 7-10 years",
+        "25": "Squatter favored - 5-7 years",
+        "0": "Very squatter favored - under 5 years"
+      },
+      "enforcementScore": {
+        "100": "Owners strongly protected - quick removal",
+        "75": "Owners usually protected - police assist",
+        "50": "Balanced - civil process required",
+        "25": "Squatters often protected - lengthy process",
+        "0": "Squatters protected - very difficult removal"
+      }
+    },
+
+    "hp_13_historic_preservation": {
+      "name": "Historic Preservation Restrictions",
+      "description": "Restrictions in historic districts",
+      "legalScore": {
+        "100": "Minimal - few restrictions, easy modifications",
+        "75": "Light - basic guidelines, flexible",
+        "50": "Moderate - reasonable restrictions, process",
+        "25": "Heavy - significant limits on changes",
+        "0": "Very heavy - extensive restrictions, costly compliance"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - owners modify freely",
+        "75": "Loosely enforced - major changes only",
+        "50": "Moderately enforced - visible changes reviewed",
+        "25": "Well enforced - all work inspected",
+        "0": "Strictly enforced - fines for violations, forced restoration"
+      }
+    },
+
+    "hp_14_foreign_ownership": {
+      "name": "Foreign Property Ownership",
+      "description": "Ability of non-citizens to own property",
+      "legalScore": {
+        "100": "Unrestricted - same rights as citizens",
+        "75": "Mostly allowed - minor restrictions",
+        "50": "Some restrictions - certain types/areas limited",
+        "25": "Heavily restricted - permits required, limits",
+        "0": "Prohibited or very limited"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - restrictions ignored",
+        "75": "Loosely enforced - easy workarounds",
+        "50": "Moderately enforced - some compliance",
+        "25": "Well enforced - verification required",
+        "0": "Strictly enforced - active monitoring, penalties"
+      }
+    },
+
+    "hp_15_transfer_taxes": {
+      "name": "Property Transfer Taxes",
+      "description": "Taxes when buying/selling property",
+      "legalScore": {
+        "100": "None or under 0.5%",
+        "75": "Low - 0.5-1.0%",
+        "50": "Moderate - 1.0-2.0%",
+        "25": "High - 2.0-3.5%",
+        "0": "Very high - over 3.5%"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - underreporting common",
+        "75": "Loosely enforced - minimal audits",
+        "50": "Moderately enforced - some verification",
+        "25": "Well enforced - values verified",
+        "0": "Strictly enforced - all transactions audited"
+      }
+    },
+
+    "hp_16_lawn_regulations": {
+      "name": "Lawn & Landscaping Requirements",
+      "description": "Rules governing residential landscaping",
+      "legalScore": {
+        "100": "Very flexible - any landscaping, xeriscaping encouraged",
+        "75": "Flexible - native plants allowed, minimal rules",
+        "50": "Moderate - basic maintenance standards",
+        "25": "Strict - grass required, species restrictions",
+        "0": "Very strict - detailed requirements, specific species"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - any yard condition allowed",
+        "75": "Loosely enforced - extreme cases only",
+        "50": "Moderately enforced - responds to complaints",
+        "25": "Well enforced - regular inspections",
+        "0": "Strictly enforced - frequent citations, fines"
+      }
+    },
+
+    "hp_17_exterior_colors": {
+      "name": "Exterior Appearance Regulations",
+      "description": "Rules on home exterior colors/styles",
+      "legalScore": {
+        "100": "No rules - any colors/style allowed",
+        "75": "Minimal - basic guidelines only",
+        "50": "Moderate - approval process for major changes",
+        "25": "Strict - limited approved colors/styles",
+        "0": "Very strict - rigid palette, detailed requirements"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - any appearance allowed",
+        "75": "Loosely enforced - egregious cases only",
+        "50": "Moderately enforced - visible violations addressed",
+        "25": "Well enforced - changes monitored",
+        "0": "Strictly enforced - forced repainting, liens"
+      }
+    },
+
+    "hp_18_fence_rules": {
+      "name": "Fence Regulations",
+      "description": "Restrictions on residential fences",
+      "legalScore": {
+        "100": "Very permissive - no limits",
+        "75": "Permissive - 8ft+ allowed",
+        "50": "Moderate - 6ft typical limit",
+        "25": "Restrictive - 4ft limits, style rules",
+        "0": "Very restrictive - minimal fencing allowed"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - any fence built freely",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - visible violations addressed",
+        "25": "Well enforced - permits required, inspected",
+        "0": "Strictly enforced - non-conforming fences removed"
+      }
+    },
+
+    "hp_19_vehicle_parking": {
+      "name": "Residential Vehicle Parking",
+      "description": "Rules on parking vehicles on property",
+      "legalScore": {
+        "100": "Very permissive - RVs, boats, commercial vehicles ok",
+        "75": "Permissive - few restrictions",
+        "50": "Moderate - standard rules on visible storage",
+        "25": "Restrictive - RV/boat limits, approved vehicles only",
+        "0": "Very restrictive - garage-only, strict rules"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - any vehicle parked freely",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - visible violations addressed",
+        "25": "Well enforced - regular patrols",
+        "0": "Strictly enforced - immediate towing/fines"
+      }
+    },
+
+    "hp_20_pet_restrictions": {
+      "name": "Pet Ownership Restrictions",
+      "description": "Housing-related pet restrictions",
+      "legalScore": {
+        "100": "Very permissive - no breed/number limits",
+        "75": "Permissive - minimal limits",
+        "50": "Moderate - some breed/number limits",
+        "25": "Restrictive - many restrictions",
+        "0": "Very restrictive - breed bans, strict limits"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - any pets allowed in practice",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - visible violations addressed",
+        "25": "Well enforced - regular monitoring",
+        "0": "Strictly enforced - pet removal, fines"
+      }
+    },
+
+    "bw_01_business_license": {
+      "name": "Business License Requirements",
+      "description": "Ease of obtaining a general business license",
+      "legalScore": {
+        "100": "Very easy - online, same-day, minimal cost",
+        "75": "Easy - simple process, quick approval",
+        "50": "Moderate - standard requirements, reasonable time",
+        "25": "Difficult - complex process, multiple agencies",
+        "0": "Very difficult - extensive bureaucracy, months"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - unlicensed businesses operate freely",
+        "75": "Loosely enforced - major businesses only",
+        "50": "Moderately enforced - some compliance checks",
+        "25": "Well enforced - regular inspections",
+        "0": "Strictly enforced - immediate shutdown without license"
+      }
+    },
+
+    "bw_02_occupational_licensing": {
+      "name": "Occupational Licensing Burden",
+      "description": "How many occupations require state licenses",
+      "legalScore": {
+        "100": "Very light - few occupations require licenses",
+        "75": "Light - below average requirements",
+        "50": "Moderate - average licensing burden",
+        "25": "Heavy - many occupations licensed",
+        "0": "Very heavy - extensive licensing for most trades"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - unlicensed workers common",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - some verification",
+        "25": "Well enforced - regular checks",
+        "0": "Strictly enforced - active prosecution of unlicensed work"
+      }
+    },
+
+    "bw_03_minimum_wage": {
+      "name": "Minimum Wage Level",
+      "description": "Local minimum wage (scored for business flexibility)",
+      "legalScore": {
+        "100": "No minimum or under $10/hr",
+        "75": "$10-12/hr",
+        "50": "$12-15/hr",
+        "25": "$15-18/hr",
+        "0": "Over $18/hr"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - wage theft common",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - some audits",
+        "25": "Well enforced - regular investigations",
+        "0": "Strictly enforced - proactive audits, heavy fines"
+      }
+    },
+
+    "bw_04_right_to_work": {
+      "name": "Right-to-Work Status",
+      "description": "Whether employees can be required to join unions",
+      "legalScore": {
+        "100": "Right-to-work state - no mandatory union membership",
+        "0": "Non-right-to-work - union security agreements allowed"
+      },
+      "enforcementScore": {
+        "100": "Strongly enforced - union coercion prohibited",
+        "50": "Moderately enforced",
+        "0": "Not applicable or not enforced"
+      }
+    },
+
+    "bw_05_at_will_employment": {
+      "name": "Employment Termination Rules",
+      "description": "Balance of employer/employee termination rights",
+      "legalScore": {
+        "100": "Pure at-will - fire for any non-discriminatory reason",
+        "75": "Standard at-will - typical US protections",
+        "50": "Balanced - some just cause protections",
+        "25": "Pro-employee - notice required, some just cause",
+        "0": "Very pro-employee - extensive termination protections"
+      },
+      "enforcementScore": {
+        "100": "Pro-employer - wrongful termination claims rarely succeed",
+        "75": "Balanced enforcement",
+        "50": "Moderate employee protections enforced",
+        "25": "Pro-employee - courts favor workers",
+        "0": "Very pro-employee - terminations heavily scrutinized"
+      }
+    },
+
+    "bw_06_paid_leave_mandate": {
+      "name": "Mandatory Paid Leave",
+      "description": "Required paid vacation/sick days",
+      "legalScore": {
+        "100": "No mandate - market determines",
+        "75": "Light - under 5 days mandated",
+        "50": "Moderate - 5-14 days mandated",
+        "25": "Significant - 15-24 days mandated",
+        "0": "Heavy - 25+ days mandated"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - employers ignore mandates",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced - some audits",
+        "25": "Well enforced - regular compliance checks",
+        "0": "Strictly enforced - proactive audits, penalties"
+      }
+    },
+
+    "bw_07_parental_leave": {
+      "name": "Parental Leave Requirements",
+      "description": "Mandated parental leave",
+      "legalScore": {
+        "100": "No mandate",
+        "75": "Light - under 6 weeks unpaid",
+        "50": "Moderate - 6-12 weeks (FMLA style)",
+        "25": "Significant - 12-26 weeks paid",
+        "0": "Heavy - 26+ weeks paid"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - retaliation common",
+        "75": "Loosely enforced - complaints only",
+        "50": "Moderately enforced",
+        "25": "Well enforced - rights protected",
+        "0": "Strictly enforced - employer violations heavily penalized"
+      }
+    },
+
+    "bw_08_non_compete": {
+      "name": "Non-Compete Enforceability",
+      "description": "Are non-compete agreements enforced",
+      "legalScore": {
+        "100": "Banned/Unenforceable - worker freedom",
+        "75": "Very limited - narrow circumstances only",
+        "50": "Limited - reasonable time/scope enforced",
+        "25": "Standard - generally enforceable",
+        "0": "Strongly enforced - broad agreements upheld"
+      },
+      "enforcementScore": {
+        "100": "Never enforced - employers don't pursue",
+        "75": "Rarely enforced - only high-level executives",
+        "50": "Sometimes enforced - depends on case",
+        "25": "Usually enforced - courts uphold agreements",
+        "0": "Strictly enforced - aggressive employer litigation"
+      }
+    },
+
+    "bw_09_corporate_tax": {
+      "name": "Corporate Tax Rate",
+      "description": "Effective corporate income tax rate",
+      "legalScore": {
+        "100": "Very low - under 15% combined",
+        "75": "Low - 15-20%",
+        "50": "Moderate - 20-25%",
+        "25": "High - 25-30%",
+        "0": "Very high - over 30%"
+      },
+      "enforcementScore": {
+        "100": "Loose - many loopholes, minimal audits",
+        "75": "Light enforcement",
+        "50": "Moderate enforcement",
+        "25": "Strong enforcement - regular audits",
+        "0": "Strict enforcement - aggressive audits, penalties"
+      }
+    },
+
+    "bw_10_income_tax": {
+      "name": "Personal Income Tax Rate",
+      "description": "Top marginal state/local income tax rate",
+      "legalScore": {
+        "100": "No income tax",
+        "75": "Low - under 5%",
+        "50": "Moderate - 5-8%",
+        "25": "High - 8-12%",
+        "0": "Very high - over 12%"
+      },
+      "enforcementScore": {
+        "100": "Not applicable or very loose",
+        "75": "Light enforcement",
+        "50": "Moderate enforcement",
+        "25": "Strong enforcement",
+        "0": "Strict enforcement - aggressive audits"
+      }
+    },
+
+    "bw_11_sales_tax": {
+      "name": "Sales/VAT Tax Rate",
+      "description": "Combined sales tax rate",
+      "legalScore": {
+        "100": "No sales tax",
+        "75": "Low - under 6%",
+        "50": "Moderate - 6-8%",
+        "25": "High - 8-10%",
+        "0": "Very high - over 10% or VAT system"
+      },
+      "enforcementScore": {
+        "100": "Loose - cash businesses avoid easily",
+        "75": "Light enforcement",
+        "50": "Moderate enforcement",
+        "25": "Strong enforcement",
+        "0": "Strict enforcement - comprehensive audits"
+      }
+    },
+
+    "bw_12_freelance_regs": {
+      "name": "Freelance/Gig Worker Regulations",
+      "description": "Regulatory environment for independent contractors",
+      "legalScore": {
+        "100": "Very flexible - easy IC classification",
+        "75": "Flexible - clear IC standards",
+        "50": "Moderate - standard tests (IRS guidelines)",
+        "25": "Restrictive - AB5 style presumption of employment",
+        "0": "Very restrictive - most gig workers are employees"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - IC misclassification common",
+        "75": "Loosely enforced - big cases only",
+        "50": "Moderately enforced",
+        "25": "Well enforced - audits common",
+        "0": "Strictly enforced - aggressive reclassification"
+      }
+    },
+
+    "bw_13_work_visa": {
+      "name": "Work Visa Accessibility",
+      "description": "Ease of foreigners obtaining work permits",
+      "legalScore": {
+        "100": "Very easy - open work permits",
+        "75": "Easy - accessible visa programs",
+        "50": "Moderate - standard process",
+        "25": "Difficult - complex requirements, quotas",
+        "0": "Very difficult - highly restricted"
+      },
+      "enforcementScore": {
+        "100": "Loose - undocumented work common",
+        "75": "Light enforcement",
+        "50": "Moderate enforcement",
+        "25": "Strong enforcement - workplace audits",
+        "0": "Strict enforcement - aggressive ICE raids"
+      }
+    },
+
+    "bw_14_remote_work": {
+      "name": "Remote Work Framework",
+      "description": "Legal support for remote work",
+      "legalScore": {
+        "100": "Very supportive - right to request, tax benefits",
+        "75": "Supportive - favorable framework",
+        "50": "Neutral - no specific laws",
+        "25": "Unsupportive - barriers exist",
+        "0": "Restrictive - remote work discouraged by law"
+      },
+      "enforcementScore": {
+        "100": "Worker rights strongly protected",
+        "75": "Moderately protected",
+        "50": "Neutral",
+        "25": "Employer-favored enforcement",
+        "0": "Remote work restrictions enforced"
+      }
+    },
+
+    "bw_15_overtime_rules": {
+      "name": "Overtime Requirements",
+      "description": "Overtime pay requirements",
+      "legalScore": {
+        "100": "Minimal - few requirements, many exemptions",
+        "75": "Light - federal FLSA standard",
+        "50": "Moderate - some state additions",
+        "25": "Strong - strict requirements, daily OT",
+        "0": "Very strong - comprehensive requirements"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - wage theft common",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - proactive audits"
+      }
+    },
+
+    "bw_16_union_rights": {
+      "name": "Union Formation Rights",
+      "description": "Protection of right to unionize",
+      "legalScore": {
+        "100": "Minimal - limited union protections",
+        "75": "Light - standard NLRA only",
+        "50": "Moderate - some state additions",
+        "25": "Strong - extensive protections",
+        "0": "Very strong - card check, mandatory recognition"
+      },
+      "enforcementScore": {
+        "100": "Pro-employer - union busting tolerated",
+        "75": "Light enforcement of union rights",
+        "50": "Moderate enforcement",
+        "25": "Strong enforcement - NLRB active",
+        "0": "Very strong - employer violations heavily penalized"
+      }
+    },
+
+    "bw_17_workplace_safety": {
+      "name": "Workplace Safety Standards",
+      "description": "Occupational safety requirements",
+      "legalScore": {
+        "100": "Minimal - OSHA federal minimum only",
+        "75": "Light - basic standards",
+        "50": "Moderate - state OSHA additions",
+        "25": "Strict - comprehensive requirements",
+        "0": "Very strict - rigorous Cal/OSHA style"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - violations widespread",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - frequent inspections, heavy fines"
+      }
+    },
+
+    "bw_18_discrimination_law": {
+      "name": "Employment Discrimination Protections",
+      "description": "Workplace discrimination protections scope",
+      "legalScore": {
+        "100": "Minimal - federal Title VII only",
+        "75": "Light - basic protections",
+        "50": "Moderate - additional state classes",
+        "25": "Broad - many protected characteristics",
+        "0": "Very comprehensive - extensive protections"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - discrimination common",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced - EEOC active",
+        "0": "Strictly enforced - aggressive prosecution"
+      }
+    },
+
+    "bw_19_startup_ease": {
+      "name": "Business Formation Ease",
+      "description": "How easy to register a new business",
+      "legalScore": {
+        "100": "Very easy - online, 1-2 days",
+        "75": "Easy - simple process",
+        "50": "Moderate - standard bureaucracy",
+        "25": "Difficult - complex process, weeks",
+        "0": "Very difficult - extensive requirements"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - unregistered businesses operate",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - immediate penalties"
+      }
+    },
+
+    "bw_20_food_truck": {
+      "name": "Food Truck Regulations",
+      "description": "Ease of operating mobile food vendors",
+      "legalScore": {
+        "100": "Very easy - simple permits, few restrictions",
+        "75": "Easy - accessible licensing",
+        "50": "Moderate - standard requirements",
+        "25": "Restrictive - many limits, zones",
+        "0": "Very restrictive - near impossible"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - trucks operate freely",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - constant monitoring, fines"
+      }
+    },
+
+    "bw_21_contractor_license": {
+      "name": "Contractor Licensing Burden",
+      "description": "Requirements for home improvement contractors",
+      "legalScore": {
+        "100": "Minimal - low thresholds, easy licensing",
+        "75": "Light - simple requirements",
+        "50": "Moderate - standard requirements",
+        "25": "Strict - extensive requirements",
+        "0": "Very strict - heavy burden, exams, bonds"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - unlicensed contractors common",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - stings, heavy fines"
+      }
+    },
+
+    "bw_22_health_insurance": {
+      "name": "Employer Healthcare Mandate",
+      "description": "Health insurance requirements for employers",
+      "legalScore": {
+        "100": "No requirements - employer decides",
+        "75": "Minimal - small employer exemptions",
+        "50": "ACA-style - 50+ employee mandate",
+        "25": "Strong mandate - broader coverage required",
+        "0": "Universal - employer payroll taxes"
+      },
+      "enforcementScore": {
+        "100": "Not enforced",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - penalties collected"
+      }
+    },
+
+    "bw_23_tip_credit": {
+      "name": "Tipped Worker Wage Structure",
+      "description": "Tip credit allowance",
+      "legalScore": {
+        "100": "Large tip credit - $2.13/hr base allowed",
+        "75": "Moderate tip credit",
+        "50": "Small tip credit - higher base required",
+        "25": "Minimal tip credit",
+        "0": "No tip credit - full minimum + tips"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - tip theft common",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - audits, back pay orders"
+      }
+    },
+
+    "bw_24_banking_access": {
+      "name": "Business Banking Access",
+      "description": "Ease of opening business bank accounts",
+      "legalScore": {
+        "100": "Very easy - online, minimal docs",
+        "75": "Easy - standard process",
+        "50": "Moderate - some requirements",
+        "25": "Difficult - extensive documentation",
+        "0": "Very difficult - major barriers"
+      },
+      "enforcementScore": {
+        "100": "Loose - banks flexible on requirements",
+        "75": "Light verification",
+        "50": "Moderate verification",
+        "25": "Strict verification",
+        "0": "Very strict - extensive KYC/AML"
+      }
+    },
+
+    "bw_25_crypto_regulation": {
+      "name": "Cryptocurrency Regulatory Environment",
+      "description": "Regulatory stance on cryptocurrency",
+      "legalScore": {
+        "100": "Very favorable - crypto-friendly laws",
+        "75": "Favorable - supportive environment",
+        "50": "Neutral - standard regulations",
+        "25": "Restrictive - burdensome rules",
+        "0": "Hostile - bans or severe limits"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - crypto operates freely",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Well enforced",
+        "0": "Strictly enforced - aggressive prosecution"
+      }
+    },
+
+    "tr_01_public_transit_quality": {
+      "name": "Public Transit Quality",
+      "description": "Quality of public transportation system",
+      "legalScore": {
+        "100": "Excellent - world-class, comprehensive metro/bus",
+        "75": "Good - solid system, frequent service",
+        "50": "Adequate - basic coverage, some gaps",
+        "25": "Poor - limited routes, infrequent",
+        "0": "Very poor - minimal or no public transit"
+      },
+      "enforcementScore": {
+        "100": "Well maintained - reliable, clean, safe",
+        "75": "Good maintenance",
+        "50": "Moderate maintenance",
+        "25": "Poor maintenance - delays, issues",
+        "0": "Very poor - unreliable, unsafe"
+      }
+    },
+
+    "tr_02_walkability": {
+      "name": "Walkability",
+      "description": "How walkable the city is",
+      "legalScore": {
+        "100": "Very walkable - Walk Score 90+",
+        "75": "Walkable - Walk Score 70-89",
+        "50": "Somewhat walkable - Walk Score 50-69",
+        "25": "Car-dependent - Walk Score 25-49",
+        "0": "Very car-dependent - Walk Score under 25"
+      },
+      "enforcementScore": {
+        "100": "Pedestrian-priority enforcement",
+        "75": "Pedestrian-friendly enforcement",
+        "50": "Balanced enforcement",
+        "25": "Car-priority enforcement",
+        "0": "Pedestrians deprioritized"
+      }
+    },
+
+    "tr_03_bike_infrastructure": {
+      "name": "Bicycle Infrastructure",
+      "description": "Quality of cycling infrastructure",
+      "legalScore": {
+        "100": "Excellent - protected lanes, bike-share, Dutch-style",
+        "75": "Good - connected network",
+        "50": "Moderate - some lanes, gaps",
+        "25": "Poor - limited infrastructure",
+        "0": "Very poor - dangerous, no infrastructure"
+      },
+      "enforcementScore": {
+        "100": "Cyclist rights strongly protected",
+        "75": "Good cyclist protections",
+        "50": "Moderate protections",
+        "25": "Car-favored enforcement",
+        "0": "Cyclists deprioritized, harassed"
+      }
+    },
+
+    "tr_04_car_dependency": {
+      "name": "Car Dependency Level",
+      "description": "Whether a car is necessary for daily life",
+      "legalScore": {
+        "100": "Car optional - easy car-free life",
+        "75": "Low dependency - car helpful not required",
+        "50": "Moderate - car often needed",
+        "25": "High dependency - car usually required",
+        "0": "Car essential - impossible without car"
+      },
+      "enforcementScore": {
+        "100": "Alternatives supported - transit/bike prioritized",
+        "75": "Alternatives available",
+        "50": "Balanced",
+        "25": "Car-centric planning",
+        "0": "Car-only infrastructure"
+      }
+    },
+
+    "tr_05_rideshare_legal": {
+      "name": "Rideshare Availability",
+      "description": "Status of Uber/Lyft services",
+      "legalScore": {
+        "100": "Fully legal - no restrictions",
+        "75": "Legal with light regulations",
+        "50": "Restricted - permits, area limits",
+        "25": "Very limited - heavy restrictions",
+        "0": "Banned/unavailable"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - services operate freely",
+        "75": "Light enforcement",
+        "50": "Moderate enforcement",
+        "25": "Strict enforcement",
+        "0": "Aggressively enforced - drivers arrested"
+      }
+    },
+
+    "tr_06_speed_limits": {
+      "name": "Speed Limit Reasonableness",
+      "description": "Are posted limits appropriate for conditions",
+      "legalScore": {
+        "100": "Very reasonable - appropriate for roads",
+        "75": "Reasonable - generally fair",
+        "50": "Moderate - some artificially slow",
+        "25": "Slow - often too slow",
+        "0": "Very slow - frustratingly slow limits"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - everyone speeds freely",
+        "75": "Rarely enforced - 10+ over ok",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - zero tolerance"
+      }
+    },
+
+    "tr_07_speed_camera": {
+      "name": "Automated Traffic Enforcement",
+      "description": "Prevalence of speed/red light cameras",
+      "legalScore": {
+        "100": "None/banned - no automated enforcement",
+        "75": "Very few - minimal use",
+        "50": "Some - limited locations",
+        "25": "Many - widespread cameras",
+        "0": "Extensive - cameras everywhere"
+      },
+      "enforcementScore": {
+        "100": "Not operational - cameras inactive",
+        "75": "Loosely enforced - warnings mostly",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - all violations ticketed"
+      }
+    },
+
+    "tr_08_parking_regs": {
+      "name": "Parking Enforcement Strictness",
+      "description": "How strict parking enforcement is",
+      "legalScore": {
+        "100": "Very relaxed - plentiful, cheap, long limits",
+        "75": "Relaxed - easy parking",
+        "50": "Moderate - standard meters/limits",
+        "25": "Strict - limited, expensive",
+        "0": "Very strict - scarce, very expensive"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - violations ignored",
+        "75": "Rarely enforced",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - immediate tickets/towing"
+      }
+    },
+
+    "tr_09_toll_roads": {
+      "name": "Toll Road Prevalence",
+      "description": "Extent of toll roads",
+      "legalScore": {
+        "100": "None - no toll roads",
+        "75": "Minimal - few toll roads",
+        "50": "Moderate - some major tolls",
+        "25": "Many - extensive toll network",
+        "0": "Extensive - heavy toll burden"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - tolls easily avoided",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - heavy fines, collections"
+      }
+    },
+
+    "tr_10_vehicle_inspection": {
+      "name": "Vehicle Inspection Requirements",
+      "description": "Required vehicle inspections",
+      "legalScore": {
+        "100": "None required",
+        "75": "Safety only OR emissions only",
+        "50": "Safety + emissions, annual",
+        "25": "Comprehensive, frequent",
+        "0": "Strict - detailed inspections"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - expired stickers ignored",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - vehicles impounded"
+      }
+    },
+
+    "tr_11_drivers_license": {
+      "name": "Driver's License Difficulty",
+      "description": "Difficulty of obtaining a license",
+      "legalScore": {
+        "100": "Very easy - simple test, easy process",
+        "75": "Easy - standard US process",
+        "50": "Moderate - some difficulty",
+        "25": "Difficult - extensive requirements",
+        "0": "Very difficult - German-style training"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - unlicensed driving common",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - checkpoints, impound"
+      }
+    },
+
+    "tr_12_dui_laws": {
+      "name": "DUI/DWI Laws",
+      "description": "Strictness of drunk driving laws",
+      "legalScore": {
+        "100": "Lenient - high BAC limit, light penalties",
+        "75": "Moderate - 0.08 BAC, standard penalties",
+        "50": "Strict - 0.05-0.08, enhanced penalties",
+        "25": "Very strict - low BAC, harsh penalties",
+        "0": "Extreme - near-zero tolerance"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - drunk driving ignored",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced - checkpoints common",
+        "0": "Aggressively enforced - zero tolerance"
+      }
+    },
+
+    "tr_13_scooter_ebike": {
+      "name": "E-Scooter/E-Bike Regulations",
+      "description": "Rules for electric micromobility",
+      "legalScore": {
+        "100": "Unrestricted - few rules",
+        "75": "Light regulation - basic rules",
+        "50": "Moderate - helmets, speed limits",
+        "25": "Restrictive - many limitations",
+        "0": "Banned or heavily restricted"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - riders do as they please",
+        "75": "Loosely enforced",
+        "50": "Moderately enforced",
+        "25": "Strictly enforced",
+        "0": "Aggressively enforced - confiscation"
+      }
+    },
+
+    "tr_14_airport_access": {
+      "name": "Airport Accessibility",
+      "description": "Quality of airport access",
+      "legalScore": {
+        "100": "Excellent - major hub, many destinations",
+        "75": "Good - many flights, good connections",
+        "50": "Adequate - decent options",
+        "25": "Limited - few direct flights",
+        "0": "Poor - remote, minimal service"
+      },
+      "enforcementScore": {
+        "100": "Well-run - efficient security, operations",
+        "75": "Good operations",
+        "50": "Average operations",
+        "25": "Poor operations - delays common",
+        "0": "Very poor - chaos, long waits"
+      }
+    },
+
+    "tr_15_traffic_congestion": {
+      "name": "Traffic Congestion",
+      "description": "Severity of traffic congestion",
+      "legalScore": {
+        "100": "Very light - minimal congestion",
+        "75": "Light - below average",
+        "50": "Moderate - average congestion",
+        "25": "Heavy - above average",
+        "0": "Severe - extreme congestion"
+      },
+      "enforcementScore": {
+        "100": "Traffic flow prioritized - good management",
+        "75": "Good traffic management",
+        "50": "Average management",
+        "25": "Poor management",
+        "0": "No effective management"
+      }
+    },
+
+    "pl_01_incarceration_rate": {
+      "name": "Incarceration Rate",
+      "description": "Imprisonment rate per 100,000",
+      "legalScore": {
+        "100": "Under 100 per 100k (Nordic level)",
+        "75": "100-200 per 100k",
+        "50": "200-400 per 100k",
+        "25": "400-600 per 100k",
+        "0": "Over 600 per 100k (US average)"
+      },
+      "enforcementScore": {
+        "100": "Rehabilitation focus - alternatives to prison",
+        "75": "Some alternatives",
+        "50": "Standard incarceration practices",
+        "25": "Incarceration-heavy approach",
+        "0": "Maximum incarceration - prison first"
+      }
+    },
+
+    "pl_02_police_per_capita": {
+      "name": "Police Density",
+      "description": "Police officers per 1,000 residents",
+      "legalScore": {
+        "100": "Under 1.5 per 1,000",
+        "75": "1.5-2.0 per 1,000",
+        "50": "2.0-3.0 per 1,000",
+        "25": "3.0-4.0 per 1,000",
+        "0": "Over 4.0 per 1,000"
+      },
+      "enforcementScore": {
+        "100": "Light touch policing - community oriented",
+        "75": "Moderate policing",
+        "50": "Standard policing",
+        "25": "Heavy policing",
+        "0": "Aggressive policing - constant presence"
+      }
+    },
+
+    "pl_03_civil_forfeiture": {
+      "name": "Civil Asset Forfeiture Protections",
+      "description": "Protection against seizure without conviction",
+      "legalScore": {
+        "100": "Abolished or conviction required",
+        "75": "Strong protections - high burden",
+        "50": "Moderate protections",
+        "25": "Weak protections",
+        "0": "No protections - easy seizure"
+      },
+      "enforcementScore": {
+        "100": "Forfeiture never used",
+        "75": "Rarely used",
+        "50": "Sometimes used",
+        "25": "Frequently used",
+        "0": "Aggressively used - policing for profit"
+      }
+    },
+
+    "pl_04_mandatory_minimum": {
+      "name": "Mandatory Minimum Sentencing",
+      "description": "Extent of mandatory minimums",
+      "legalScore": {
+        "100": "None - full judicial discretion",
+        "75": "Limited - few offenses",
+        "50": "Moderate use",
+        "25": "Extensive use",
+        "0": "Pervasive - many offenses"
+      },
+      "enforcementScore": {
+        "100": "Judges find ways around minimums",
+        "75": "Some flexibility",
+        "50": "Generally applied",
+        "25": "Strictly applied",
+        "0": "Maximally applied - no mercy"
+      }
+    },
+
+    "pl_05_bail_system": {
+      "name": "Bail/Pretrial System",
+      "description": "Fairness of pretrial detention",
+      "legalScore": {
+        "100": "No cash bail - risk-based release",
+        "75": "Reformed - reduced cash bail reliance",
+        "50": "Standard - cash bail with options",
+        "25": "Cash-based - wealth determines freedom",
+        "0": "Harsh - high bail, easy detention"
+      },
+      "enforcementScore": {
+        "100": "Presumption of release",
+        "75": "Release favored",
+        "50": "Balanced",
+        "25": "Detention favored",
+        "0": "Presumption of detention"
+      }
+    },
+
+    "pl_06_police_accountability": {
+      "name": "Police Oversight Mechanisms",
+      "description": "Mechanisms for police accountability",
+      "legalScore": {
+        "100": "Excellent - civilian oversight, body cams, transparency",
+        "75": "Good - solid mechanisms",
+        "50": "Moderate - some oversight",
+        "25": "Weak - limited accountability",
+        "0": "Very weak - no effective oversight"
+      },
+      "enforcementScore": {
+        "100": "Accountability enforced - officers disciplined",
+        "75": "Some accountability",
+        "50": "Inconsistent accountability",
+        "25": "Rarely held accountable",
+        "0": "Never held accountable"
+      }
+    },
+
+    "pl_07_qualified_immunity": {
+      "name": "Qualified Immunity Status",
+      "description": "Can citizens sue police officers",
+      "legalScore": {
+        "100": "Abolished - officers can be sued",
+        "75": "Limited - narrowed protections",
+        "50": "Standard - qualified immunity applies",
+        "25": "Broad - extensive protections",
+        "0": "Near-absolute immunity"
+      },
+      "enforcementScore": {
+        "100": "Citizens regularly win suits",
+        "75": "Some successful suits",
+        "50": "Mixed outcomes",
+        "25": "Officers usually protected",
+        "0": "Citizens never win"
+      }
+    },
+
+    "pl_08_legal_costs": {
+      "name": "Legal System Affordability",
+      "description": "Cost of accessing the legal system",
+      "legalScore": {
+        "100": "Very affordable - free legal aid, low fees",
+        "75": "Affordable - reasonable costs",
+        "50": "Moderate - average costs",
+        "25": "Expensive - high legal costs",
+        "0": "Very expensive - prohibitive"
+      },
+      "enforcementScore": {
+        "100": "Legal aid well-funded and accessible",
+        "75": "Decent legal aid",
+        "50": "Limited legal aid",
+        "25": "Poor legal aid",
+        "0": "No meaningful legal aid"
+      }
+    },
+
+    "pl_09_court_efficiency": {
+      "name": "Court System Efficiency",
+      "description": "Speed of court proceedings",
+      "legalScore": {
+        "100": "Very efficient - fast resolution",
+        "75": "Efficient - reasonable timelines",
+        "50": "Moderate - some delays",
+        "25": "Slow - significant backlogs",
+        "0": "Very slow - years of delays"
+      },
+      "enforcementScore": {
+        "100": "Cases processed quickly",
+        "75": "Reasonable processing",
+        "50": "Average processing",
+        "25": "Slow processing",
+        "0": "Cases languish for years"
+      }
+    },
+
+    "pl_10_jury_trial": {
+      "name": "Jury Trial Access",
+      "description": "Access to trial by jury",
+      "legalScore": {
+        "100": "Full rights - guaranteed for all cases",
+        "75": "Broad access - most cases",
+        "50": "Limited - serious crimes only",
+        "25": "Rare - restricted availability",
+        "0": "No jury system"
+      },
+      "enforcementScore": {
+        "100": "Jury trials readily granted",
+        "75": "Usually available",
+        "50": "Sometimes available",
+        "25": "Rarely granted",
+        "0": "Effectively unavailable"
+      }
+    },
+
+    "pl_11_surveillance": {
+      "name": "Government Surveillance Level",
+      "description": "Extent of government monitoring",
+      "legalScore": {
+        "100": "Minimal - strong privacy laws",
+        "75": "Low - limited surveillance powers",
+        "50": "Moderate - standard monitoring",
+        "25": "High - extensive powers",
+        "0": "Very high - pervasive monitoring allowed"
+      },
+      "enforcementScore": {
+        "100": "Privacy protected - surveillance rare",
+        "75": "Limited surveillance in practice",
+        "50": "Moderate surveillance",
+        "25": "Extensive surveillance",
+        "0": "Pervasive surveillance - always watching"
+      }
+    },
+
+    "pl_12_search_seizure": {
+      "name": "Search & Seizure Protections",
+      "description": "4th Amendment-style protections",
+      "legalScore": {
+        "100": "Very strong - strict warrant requirements",
+        "75": "Strong - good protections",
+        "50": "Moderate - standard 4th Amendment",
+        "25": "Weak - many exceptions",
+        "0": "Very weak - easy searches"
+      },
+      "enforcementScore": {
+        "100": "Illegal searches suppressed, officers punished",
+        "75": "Evidence usually suppressed",
+        "50": "Sometimes suppressed",
+        "25": "Rarely suppressed",
+        "0": "Illegal searches tolerated"
+      }
+    },
+
+    "pl_13_death_penalty": {
+      "name": "Death Penalty Status",
+      "description": "Capital punishment status",
+      "legalScore": {
+        "100": "Abolished",
+        "75": "Moratorium - not currently used",
+        "50": "Legal but rare",
+        "25": "Legal and occasionally used",
+        "0": "Actively used"
+      },
+      "enforcementScore": {
+        "100": "Never executed",
+        "75": "Executions extremely rare",
+        "50": "Occasional executions",
+        "25": "Regular executions",
+        "0": "Frequent executions"
+      }
+    },
+
+    "pl_14_prison_conditions": {
+      "name": "Prison Conditions",
+      "description": "Quality of correctional facilities",
+      "legalScore": {
+        "100": "Excellent - rehabilitation focus, humane",
+        "75": "Good - decent conditions",
+        "50": "Adequate - basic standards met",
+        "25": "Poor - below standard",
+        "0": "Very poor - inhumane conditions"
+      },
+      "enforcementScore": {
+        "100": "Standards strictly enforced",
+        "75": "Standards mostly enforced",
+        "50": "Standards sometimes enforced",
+        "25": "Standards rarely enforced",
+        "0": "No enforcement - abuse common"
+      }
+    },
+
+    "pl_15_record_expungement": {
+      "name": "Criminal Record Expungement",
+      "description": "Ability to clear criminal records",
+      "legalScore": {
+        "100": "Very accessible - automatic for many offenses",
+        "75": "Accessible - good options",
+        "50": "Moderate - some options, process required",
+        "25": "Limited - difficult process",
+        "0": "Very limited - near impossible"
+      },
+      "enforcementScore": {
+        "100": "Expungements readily granted",
+        "75": "Usually granted",
+        "50": "Sometimes granted",
+        "25": "Rarely granted",
+        "0": "Almost never granted"
+      }
+    },
+
+    "sl_01_free_speech": {
+      "name": "Free Speech Protections",
+      "description": "Protection of free expression",
+      "legalScore": {
+        "100": "Excellent - 1st Amendment style, near-absolute",
+        "75": "Good - strong protections",
+        "50": "Moderate - standard protections",
+        "25": "Limited - some speech restricted",
+        "0": "Weak - significant speech limits"
+      },
+      "enforcementScore": {
+        "100": "Speech rights vigorously protected",
+        "75": "Generally protected",
+        "50": "Sometimes protected",
+        "25": "Inconsistently protected",
+        "0": "Not protected - speech suppressed"
+      }
+    },
+
+    "sl_02_press_freedom": {
+      "name": "Press Freedom",
+      "description": "Freedom of the press",
+      "legalScore": {
+        "100": "Excellent - top RSF ranking, strong shield laws",
+        "75": "Good - strong protections",
+        "50": "Moderate - some issues",
+        "25": "Limited - notable restrictions",
+        "0": "Poor - severe press restrictions"
+      },
+      "enforcementScore": {
+        "100": "Press operates freely - no harassment",
+        "75": "Generally free press",
+        "50": "Some press intimidation",
+        "25": "Frequent press harassment",
+        "0": "Journalists persecuted"
+      }
+    },
+
+    "sl_03_internet_freedom": {
+      "name": "Internet Freedom",
+      "description": "Level of internet censorship",
+      "legalScore": {
+        "100": "Free - no censorship",
+        "75": "Mostly free - minimal blocking",
+        "50": "Partly free - some restrictions",
+        "25": "Not free - significant censorship",
+        "0": "Very restricted - heavy censorship"
+      },
+      "enforcementScore": {
+        "100": "No censorship in practice",
+        "75": "Minimal censorship",
+        "50": "Some censorship",
+        "25": "Significant censorship",
+        "0": "Pervasive censorship - Great Firewall style"
+      }
+    },
+
+    "sl_04_hate_speech_laws": {
+      "name": "Hate Speech Law Scope",
+      "description": "Breadth of speech restrictions",
+      "legalScore": {
+        "100": "No hate speech laws - full speech protection",
+        "75": "Narrow - only direct incitement",
+        "50": "Moderate - some hate speech laws",
+        "25": "Broad - extensive restrictions",
+        "0": "Very broad - heavy speech limits"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - speech freely expressed",
+        "75": "Rarely enforced",
+        "50": "Sometimes enforced",
+        "25": "Frequently enforced",
+        "0": "Aggressively enforced - arrests common"
+      }
+    },
+
+    "sl_05_protest_rights": {
+      "name": "Protest/Assembly Rights",
+      "description": "Protection of right to protest",
+      "legalScore": {
+        "100": "Very strong - minimal restrictions",
+        "75": "Strong - good protections",
+        "50": "Moderate - permits required",
+        "25": "Limited - significant hurdles",
+        "0": "Restricted - protests suppressed"
+      },
+      "enforcementScore": {
+        "100": "Protests fully protected",
+        "75": "Generally protected",
+        "50": "Sometimes dispersed",
+        "25": "Often dispersed/arrested",
+        "0": "Brutally suppressed"
+      }
+    },
+
+    "sl_06_religious_freedom": {
+      "name": "Religious Freedom",
+      "description": "Protection of religious practice",
+      "legalScore": {
+        "100": "Excellent - full freedom, no state religion",
+        "75": "Good - strong protections",
+        "50": "Moderate - some issues",
+        "25": "Limited - state religion influence",
+        "0": "Restricted - religious persecution"
+      },
+      "enforcementScore": {
+        "100": "All religions freely practiced",
+        "75": "Most religions freely practiced",
+        "50": "Some religious restrictions",
+        "25": "Minority religions restricted",
+        "0": "Religious persecution active"
+      }
+    },
+
+    "sl_07_data_privacy": {
+      "name": "Data Privacy Protections",
+      "description": "Personal data protection laws",
+      "legalScore": {
+        "100": "GDPR-level - comprehensive rights",
+        "75": "Strong - good privacy laws",
+        "50": "Moderate - some laws (CCPA-level)",
+        "25": "Weak - limited protections",
+        "0": "Minimal - no meaningful protections"
+      },
+      "enforcementScore": {
+        "100": "Privacy strictly enforced - heavy fines",
+        "75": "Generally enforced",
+        "50": "Sometimes enforced",
+        "25": "Rarely enforced",
+        "0": "Not enforced - companies do as they please"
+      }
+    },
+
+    "sl_08_dress_code": {
+      "name": "Personal Appearance Freedom",
+      "description": "Dress code or modesty requirements",
+      "legalScore": {
+        "100": "Very permissive - few restrictions",
+        "75": "Permissive - minimal requirements",
+        "50": "Standard - basic public decency",
+        "25": "Restrictive - modesty requirements",
+        "0": "Very restrictive - strict dress codes"
+      },
+      "enforcementScore": {
+        "100": "Not enforced - any dress allowed",
+        "75": "Rarely enforced",
+        "50": "Sometimes enforced",
+        "25": "Often enforced",
+        "0": "Strictly enforced - morality police"
+      }
+    },
+
+    "sl_09_cultural_tolerance": {
+      "name": "Cultural Tolerance",
+      "description": "Tolerance of diverse lifestyles",
+      "legalScore": {
+        "100": "Very tolerant - diversity protected",
+        "75": "Tolerant - generally accepting",
+        "50": "Moderate - mixed attitudes",
+        "25": "Intolerant - conservative culture",
+        "0": "Very intolerant - hostile to differences"
+      },
+      "enforcementScore": {
+        "100": "Diversity protected and celebrated",
+        "75": "Generally accepted",
+        "50": "Mixed acceptance",
+        "25": "Discrimination common",
+        "0": "Active persecution of minorities"
+      }
+    },
+
+    "sl_10_defamation_laws": {
+      "name": "Defamation Law Balance",
+      "description": "Balance between reputation and speech",
+      "legalScore": {
+        "100": "Speech-friendly - high plaintiff burden (US model)",
+        "75": "Balanced - fair standards",
+        "50": "Moderate - standard laws",
+        "25": "Plaintiff-friendly - easy to sue",
+        "0": "Chilling - suppresses speech"
+      },
+      "enforcementScore": {
+        "100": "Defendants usually win",
+        "75": "Balanced outcomes",
+        "50": "Mixed outcomes",
+        "25": "Plaintiffs often win",
+        "0": "Plaintiffs almost always win - SLAPP suits common"
+      }
+    }
+  }
+}
