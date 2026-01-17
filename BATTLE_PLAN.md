@@ -20,7 +20,7 @@
 
 **ALL API KEYS ARE ALREADY SET IN VERCEL ENVIRONMENT VARIABLES.**
 - Anthropic (Claude) ✓
-- OpenAI (GPT-4o) ✓
+- OpenAI (GPT-5.2) ✓
 - Google (Gemini) ✓
 - xAI (Grok) ✓
 - Perplexity ✓
@@ -82,8 +82,8 @@
 
 | Provider | Type ID | Actual API Model | Web Search Method | Status |
 |----------|---------|------------------|-------------------|--------|
-| Claude Sonnet 4.5 | `claude-sonnet` | `claude-sonnet-4-5-20250514` | Tavily API | ✅ |
-| GPT-4o | `gpt-4o` | `gpt-4o` | Native web_search tool | ✅ |
+| Claude Sonnet 4.5 | `claude-sonnet` | `claude-sonnet-4-5-20250929` | Tavily API | ✅ |
+| GPT-5.2 | `gpt-5.2` | `gpt-5.2` | Native web_search tool | ✅ |
 | Gemini 3 Pro | `gemini-3-pro` | `gemini-3-pro` | Google Search grounding | ✅ |
 | Grok 4 | `grok-4` | `grok-4` | Native search: true | ✅ |
 | Perplexity | `perplexity` | `sonar-reasoning-pro` | Native (return_citations) | ✅ |
@@ -116,7 +116,7 @@ These files contain model references and must stay synchronized:
 - `src/services/llmEvaluators.ts` - Added runSingleEvaluator function
 
 **Acceptance Criteria**:
-- [x] 5 LLM buttons displayed (Claude, GPT-4o, Gemini, Grok, Perplexity)
+- [x] 5 LLM buttons displayed (Claude, GPT-5.2, Gemini, Grok, Perplexity)
 - [x] User clicks one → that LLM evaluates → results shown
 - [x] User can click another → adds to results
 - [x] After ≥2 LLMs → Opus judge auto-called

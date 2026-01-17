@@ -203,7 +203,7 @@ Metric: LGBTQ+ Rights
 | **Evaluator 1** | Score metrics | Claude Sonnet 4.5 | Native ✅ |
 | **Evaluator 2** | Score metrics | Perplexity Sonar Pro | Native ✅ |
 | **Evaluator 3** | Score metrics | Gemini 2.0 Flash | Native ✅ |
-| **Evaluator 4** | Score metrics | GPT-4o | Tavily ✅ |
+| **Evaluator 4** | Score metrics | GPT-5.2 | Tavily ✅ |
 | **Evaluator 5** | Score metrics | Grok | Tavily ✅ |
 | **Final Judge** | Synthesize consensus | Claude Opus 4.5 | None (judges evaluators) |
 
@@ -255,7 +255,7 @@ Metric: LGBTQ+ Rights
 │       │  └──────────────────┘    │                         │
 │       │             │             │                         │
 │  ┌────┴─────┐  ┌────┴─────┐  ┌───┴──────┐                  │
-│  │  GPT-4o  │  │   Grok   │  │ Tavily   │  (Tavily First)  │
+│  │  GPT-5.2  │  │   Grok   │  │ Tavily   │  (Tavily First)  │
 │  └────┬─────┘  └────┬─────┘  │ Search   │                  │
 │       │             │        └──────────┘                  │
 │       └──────┬──────┘                                       │
@@ -282,7 +282,7 @@ Metric: LGBTQ+ Rights
 | Claude Sonnet | 1 | 90 | ~$0.90 |
 | Perplexity | 1 | 90 | ~$0.90 |
 | Gemini | 1 | 90 | ~$0.45 |
-| GPT-4o | 1 | 90 | ~$2.70 |
+| GPT-5.2 | 1 | 90 | ~$2.70 |
 | Grok | 1 | 90 | ~$0.90 |
 | Tavily (2 cities × 3 results × 2 LLMs) | ~540 | 540 | ~$2.70 |
 | Opus Judge | 1 | 90 | ~$13.50 |
@@ -341,7 +341,7 @@ Metric: LGBTQ+ Rights
 | **"Law vs Reality" toggle** | ChatGPT | 🔴 HIGH | Core differentiator |
 | 🆕 **LLM Agreement indicator** (5/5, 4/5, 3/5) | **Sonnet** | ✅ HIGH | Shows consensus |
 | 🆕 **Data Quality badge** (High/Med/Low) | **Sonnet** | ✅ HIGH | Trust signal |
-| 🆕 **Outlier flag** ("GPT-4o scored 30 points higher") | **Sonnet** | ✅ MEDIUM | Transparency |
+| 🆕 **Outlier flag** ("GPT-5.2 scored 30 points higher") | **Sonnet** | ✅ MEDIUM | Transparency |
 
 ### 7C. Actionable Summaries
 
@@ -444,7 +444,7 @@ Metric: LGBTQ+ Rights
 | ANTHROPIC_API_KEY | Claude Sonnet + Opus | Primary LLM + Judge |
 | PERPLEXITY_API_KEY | Perplexity Sonar | Native web search LLM |
 | GOOGLE_API_KEY | Gemini | Native web search LLM |
-| OPENAI_API_KEY | GPT-4o | Tavily-enhanced LLM |
+| OPENAI_API_KEY | GPT-5.2 | Tavily-enhanced LLM |
 | XAI_API_KEY | Grok | Tavily-enhanced LLM |
 | TAVILY_API_KEY | Tavily | Web search for GPT/Grok |
 | VITE_CLERK_PUBLISHABLE_KEY | Clerk | Auth (frontend) |
@@ -743,7 +743,7 @@ Metric: LGBTQ+ Rights
 
 | Item | Note |
 |------|------|
-| Opus model string | Currently `claude-opus-4-20250514` — verify this is correct |
+| Opus model string | `claude-opus-4-5-20251101` (verified correct) |
 | console.log syntax error | `console.log\`` should be `console.log(\`` in enhancedComparison.ts |
 | Tavily free tier | 1000 calls/month — may need paid tier at scale |
 | Claude Sonnet service | Not provided — need to create `services/llm/claudeSonnet.ts` |

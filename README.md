@@ -106,7 +106,7 @@ src/
 
 5. **NO CODE ROLLBACKS**: Claude is FORBIDDEN from rolling back any code, architecture, models, or API configurations without explicit programmer permission. This rule has NO exceptions.
 
-6. **MODEL CONSISTENCY**: Claude must NEVER change LLM model IDs (e.g., `claude-sonnet-4-5-20250514`, `grok-4`, `gemini-3-pro`) without explicit permission.
+6. **MODEL CONSISTENCY**: Claude must NEVER change LLM model IDs (e.g., `claude-sonnet-4-5-20250929`, `grok-4`, `gemini-3-pro`) without explicit permission.
 
 ### API Architecture
 All LLM calls go through Vercel serverless functions:
@@ -213,7 +213,7 @@ TAVILY_API_KEY=your-key       # Tavily web search (for Claude)
 
 ### Known Issues / Next Steps
 1. **TEST ALL 5 LLMs** - Click each LLM button individually and check Vercel logs for errors:
-   - Claude Sonnet 4.5 (`claude-sonnet-4-5-20250514`) - uses Tavily for web search
+   - Claude Sonnet 4.5 (`claude-sonnet-4-5-20250929`) - uses Tavily for web search
    - GPT-5.2 (`gpt-5.2`) - uses `/v1/responses` API with built-in web_search
    - Gemini 3 Pro (`gemini-3-pro`) - uses Google Search grounding
    - Grok 4 (`grok-4`) - uses `search: true` parameter

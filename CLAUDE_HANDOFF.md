@@ -28,10 +28,10 @@
 ### 6 LLM Providers Configured
 | Provider | Model | API Endpoint |
 |----------|-------|--------------|
-| OpenAI | GPT-4o | api.openai.com |
+| OpenAI | GPT-5.2 | api.openai.com |
 | Google | Gemini 3 Pro | generativelanguage.googleapis.com |
 | xAI | Grok 4 | api.x.ai |
-| Anthropic | Claude Sonnet 4 | api.anthropic.com |
+| Anthropic | Claude Sonnet 4.5 | api.anthropic.com |
 | Perplexity | Sonar Reasoning Pro | api.perplexity.ai |
 | Anthropic | Claude Opus 4.5 (Judge) | api.anthropic.com |
 
