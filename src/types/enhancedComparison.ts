@@ -201,12 +201,12 @@ export interface EnhancedComparisonResult {
 // ============================================================================
 
 export interface LLMAPIKeys {
-  anthropic?: string;   // Claude Opus & Sonnet
-  openai?: string;      // LLM (built-in web search, no Tavily needed)
-  gemini?: string;      // Gemini 3 Pro
-  xai?: string;         // Grok 4
-  perplexity?: string;  // Sonar Reasoning Pro
-  tavily?: string;      // Tavily Search API (for Claude web search)
+  anthropic?: string;   // Claude Opus & Sonnet (Sonnet uses Tavily for web search)
+  openai?: string;      // GPT-4o (uses Tavily for web search)
+  gemini?: string;      // Gemini 3 Pro (native Google Search grounding)
+  xai?: string;         // Grok 4 (native X/Twitter search)
+  perplexity?: string;  // Sonar Reasoning Pro (native web search)
+  tavily?: string;      // Tavily Search API (for Claude Sonnet + GPT-4o web search)
 }
 
 export interface EnhancedComparisonConfig {

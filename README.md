@@ -150,28 +150,55 @@ VERCEL PRO HARD LIMIT: 300s
 
 ---
 
-## 📋 TAVILY PROMPT (from api/evaluate.ts)
+## 📋 TAVILY CONFIGURATION (Updated 2026-01-18)
 
+**12 Category-Level Queries** (6 categories × 2 cities):
 ```
-Tavily Search Query Format:
-- Query 1: "${city1} laws regulations freedom 2024 2025"
-- Query 2: "${city2} laws regulations freedom 2024 2025"
+// personal_freedom (15 metrics)
+${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025
+${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025
 
-Tavily API Call:
-POST https://api.tavily.com/search
+// housing_property (20 metrics)
+${city1} property rights zoning HOA land use housing regulations 2025
+${city2} property rights zoning HOA land use housing regulations 2025
+
+// business_work (25 metrics)
+${city1} business regulations taxes licensing employment labor laws 2025
+${city2} business regulations taxes licensing employment labor laws 2025
+
+// transportation (15 metrics)
+${city1} transportation vehicle regulations transit parking driving laws 2025
+${city2} transportation vehicle regulations transit parking driving laws 2025
+
+// policing_legal (15 metrics)
+${city1} criminal justice police enforcement legal rights civil liberties 2025
+${city2} criminal justice police enforcement legal rights civil liberties 2025
+
+// speech_lifestyle (10 metrics)
+${city1} freedom speech expression privacy lifestyle regulations 2025
+${city2} freedom speech expression privacy lifestyle regulations 2025
+```
+
+**Tavily API Configuration:**
+```json
 {
-  "api_key": process.env.TAVILY_API_KEY,
-  "query": <query>,
+  "api_key": "process.env.TAVILY_API_KEY",
+  "query": "<category query>",
   "search_depth": "advanced",
-  "max_results": 3,
-  "include_answer": false,
-  "include_raw_content": false
+  "max_results": 5,
+  "include_answer": true,
+  "include_raw_content": false,
+  "chunks_per_source": 3,
+  "topic": "general",
+  "start_date": "2024-01-01",
+  "end_date": "2026-01-17",
+  "include_domains": ["freedomhouse.org", "heritage.org", "cato.org", "fraserinstitute.org"],
+  "country": "US",
+  "include_usage": true
 }
-
-Results injected as:
-## WEB SEARCH RESULTS (from Tavily)
-- {title}: {content.slice(0, 400)}
 ```
+
+**Credit Usage:** 48 credits per comparison (12 queries × 2 credits × 2 LLMs)
 
 ---
 
