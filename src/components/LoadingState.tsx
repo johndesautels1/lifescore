@@ -89,7 +89,6 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
       
       <div className="loading-disclaimer">
         <p>
-          <strong>No fabricated data.</strong> Each metric is verified through web search.
           Results may take 2-5 minutes for comprehensive analysis.
         </p>
       </div>
