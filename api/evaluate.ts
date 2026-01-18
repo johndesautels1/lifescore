@@ -4,9 +4,15 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Phase 2: Import shared metrics for category-based scoring
+import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from '../src/shared/metrics';
+import type { ScoreResult } from '../src/shared/types';
 
 // Timeout constant (in milliseconds) - unified for all API calls
 const LLM_TIMEOUT_MS = 180000; // 180 seconds for all LLM API calls including Tavily
+
+// Phase 2: Environment variable toggle for gradual rollout
+const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
 
 // Helper: fetch with timeout using AbortController
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
@@ -72,6 +78,9 @@ interface ParsedEvaluation {
   city1Enforcement?: string;
   city2Legal?: string;
   city2Enforcement?: string;
+  // Phase 2: Category-based format
+  city1Category?: string;
+  city2Category?: string;
   // Legacy numeric format (0-100) - fallback
   city1LegalScore?: number;
   city1EnforcementScore?: number;
@@ -82,6 +91,23 @@ interface ParsedEvaluation {
   sources?: string[];
   city1Evidence?: EvidenceSource[];
   city2Evidence?: EvidenceSource[];
+}
+
+// Extended metric interface with scoringCriteria for category-based scoring
+interface MetricWithCriteria {
+  id: string;
+  name: string;
+  description: string;
+  categoryId: string;
+  scoringDirection: string;
+  scoringCriteria?: {
+    type: string;
+    options?: Array<{
+      value: string;
+      label: string;
+      score: number;
+    }>;
+  };
 }
 
 // Convert letter grade to numeric score
@@ -175,6 +201,56 @@ Return a JSON object with this EXACT structure:
 4. Return ONLY the JSON object, no other text
 5. MUST include sources - URLs to laws, government sites, news articles backing your evaluation
 6. Include city1Evidence and city2Evidence with title, url, and relevant snippet for each city`;
+}
+
+
+// Phase 2: Build category-based prompt that asks LLM to return category VALUE KEYS
+function buildCategoryPrompt(city1: string, city2: string, metrics: MetricWithCriteria[]): string {
+  const metricsList = metrics.map(m => {
+    const options = getCategoryOptionsForPrompt(m.id);
+    return `
+- ${m.id}: ${m.name}
+  Description: ${m.description}
+  Direction: ${m.scoringDirection === 'higher_is_better' ? 'Higher = more freedom' : 'Lower = more freedom'}
+  **CATEGORY OPTIONS (choose EXACTLY one value for each city):**
+${options}`;
+  }).join('\n');
+
+  return `You are an expert legal analyst evaluating freedom metrics for city comparison.
+
+## TASK
+Evaluate the following metrics for two cities. For EACH metric, select the CATEGORY VALUE that best describes the current legal status.
+
+## CITIES TO COMPARE (Year: ${new Date().getFullYear()})
+- City 1: ${city1}
+- City 2: ${city2}
+
+## METRICS TO EVALUATE
+${metricsList}
+
+## OUTPUT FORMAT
+Return a JSON object with this EXACT structure:
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id_here",
+      "city1Category": "the_value_key",
+      "city2Category": "the_value_key",
+      "confidence": "high",
+      "reasoning": "Brief explanation of key difference",
+      "sources": ["https://example.com/law-source"],
+      "city1Evidence": [{"title": "Source Title", "url": "https://...", "snippet": "Relevant quote"}],
+      "city2Evidence": [{"title": "Source Title", "url": "https://...", "snippet": "Relevant quote"}]
+    }
+  ]
+}
+
+## CRITICAL RULES
+1. Use ONLY the exact category value keys listed for each metric (e.g., "fully_legal", "medical_only")
+2. Evaluate BOTH cities for EACH metric
+3. Consider 2026 laws and current status
+4. Return ONLY the JSON object, no other text
+5. MUST include sources - URLs to laws, government sites, news articles backing your evaluation`;
 }
 
 // Legacy function name for backward compatibility
