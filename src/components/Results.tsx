@@ -198,7 +198,8 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
   city2Name
 }) => {
   const categoryMetrics = getMetricsByCategory(category.id);
-  
+  const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
+
   return (
     <div className="metric-details">
       <div className="metric-details-header">
@@ -206,42 +207,75 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
         <span className="metric-header-city">{city1Name}</span>
         <span className="metric-header-city">{city2Name}</span>
       </div>
-      
+
       {categoryMetrics.map((metric) => {
         const city1Score = city1Metrics.metrics.find(m => m.metricId === metric.id);
         const city2Score = city2Metrics.metrics.find(m => m.metricId === metric.id);
-        
+
         const score1 = city1Score?.normalizedScore ?? 0;
         const score2 = city2Score?.normalizedScore ?? 0;
-        
+        const isExpanded = expandedMetric === metric.id;
+        const hasNotes = city1Score?.notes || city2Score?.notes;
+
         return (
-          <div key={metric.id} className="metric-row">
-            <div className="metric-info">
-              <span className="metric-name" title={metric.description}>
-                {metric.shortName}
-              </span>
-              <span className="metric-weight">(wt: {metric.weight})</span>
+          <div key={metric.id} className="metric-row-container">
+            <div
+              className={`metric-row ${hasNotes ? 'clickable' : ''}`}
+              onClick={() => hasNotes && setExpandedMetric(isExpanded ? null : metric.id)}
+              style={{ cursor: hasNotes ? 'pointer' : 'default' }}
+            >
+              <div className="metric-info">
+                <span className="metric-name" title={metric.description}>
+                  {metric.shortName}
+                  {hasNotes && <span className="expand-indicator">{isExpanded ? ' ▼' : ' ▶'}</span>}
+                </span>
+                <span className="metric-weight">(wt: {metric.weight})</span>
+              </div>
+
+              <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
+                {Math.round(score1)}
+                {city1Score?.confidence && (
+                  <span className={`confidence-dot confidence-${city1Score.confidence}`}
+                        title={`Confidence: ${city1Score.confidence}`} />
+                )}
+              </div>
+
+              <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
+                {Math.round(score2)}
+                {city2Score?.confidence && (
+                  <span className={`confidence-dot confidence-${city2Score.confidence}`}
+                        title={`Confidence: ${city2Score.confidence}`} />
+                )}
+              </div>
             </div>
-            
-            <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
-              {Math.round(score1)}
-              {city1Score?.confidence && (
-                <span className={`confidence-dot confidence-${city1Score.confidence}`} 
-                      title={`Confidence: ${city1Score.confidence}`} />
-              )}
-            </div>
-            
-            <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
-              {Math.round(score2)}
-              {city2Score?.confidence && (
-                <span className={`confidence-dot confidence-${city2Score.confidence}`}
-                      title={`Confidence: ${city2Score.confidence}`} />
-              )}
-            </div>
+
+            {isExpanded && hasNotes && (
+              <div className="metric-reasoning" style={{
+                backgroundColor: '#f8f9fa',
+                padding: '12px 16px',
+                marginTop: '4px',
+                borderRadius: '6px',
+                fontSize: '0.9em',
+                lineHeight: '1.5',
+                borderLeft: '3px solid #4a90d9'
+              }}>
+                <strong style={{ display: 'block', marginBottom: '8px', color: '#333' }}>
+                  LLM Analysis:
+                </strong>
+                <p style={{ margin: 0, color: '#555' }}>
+                  {city1Score?.notes || city2Score?.notes}
+                </p>
+                {city1Score?.source && (
+                  <p style={{ margin: '8px 0 0', fontSize: '0.85em', color: '#777' }}>
+                    Source: {city1Score.source}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
-      
+
       <div className="metric-details-footer">
         <div className="confidence-legend">
           <span>Confidence:</span>
@@ -249,6 +283,15 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
           <span className="confidence-dot confidence-medium" /> Medium
           <span className="confidence-dot confidence-low" /> Low
         </div>
+        {categoryMetrics.some(m => {
+          const s1 = city1Metrics.metrics.find(x => x.metricId === m.id);
+          const s2 = city2Metrics.metrics.find(x => x.metricId === m.id);
+          return s1?.notes || s2?.notes;
+        }) && (
+          <p style={{ fontSize: '0.85em', color: '#666', marginTop: '8px' }}>
+            Click any metric with ▶ to see detailed LLM analysis
+          </p>
+        )}
       </div>
     </div>
   );
