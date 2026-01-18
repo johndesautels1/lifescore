@@ -3,10 +3,12 @@
   "framework": "vite",
   "functions": {
     "api/evaluate.ts": {
-      "maxDuration": 300
+      "maxDuration": 300,
+      "includeFiles": "src/shared/**"
     },
     "api/judge.ts": {
-      "maxDuration": 300
+      "maxDuration": 300,
+      "includeFiles": "src/shared/**"
     },
     "api/health.ts": {
       "maxDuration": 30

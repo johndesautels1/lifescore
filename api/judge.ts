@@ -5,9 +5,15 @@
  * FIX: Now properly computes consensus scores from evaluator results
  * FIX: Now actually calls Opus API for enhanced judging (not just statistical)
  * FIX: Uses city1/city2 from request for Opus prompt
+ * Phase 3: Updated for category-based scoring validation
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Phase 3: Import shared metrics for category-based scoring context
+import { METRICS_MAP, getCategoryOptionsForPrompt } from '../src/shared/metrics';
+
+// Phase 3: Environment variable toggle (matches api/evaluate.ts)
+const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
 
 // INLINED from src/constants/scoringThresholds.ts to fix Vercel import error
 const CONFIDENCE_THRESHOLDS = {
@@ -279,10 +285,13 @@ function buildOpusPrompt(
   city1: string,
   city2: string,
   city1Consensuses: MetricConsensus[],
-  city2Consensuses: MetricConsensus[]
+  city2Consensuses: MetricConsensus[],
+  disagreementMetrics: string[]
 ): string {
   // Build summary of statistical consensuses for Opus to review
   const summaries: string[] = [];
+  // Phase 3: Build category context for disagreement metrics
+  const categoryContext: string[] = [];
 
   city1Consensuses.forEach((c1, idx) => {
     const c2 = city2Consensuses[idx];
@@ -291,8 +300,27 @@ function buildOpusPrompt(
     const c1LLMs = c1.llmScores.map(s => `${s.llmProvider}:${s.normalizedScore}`).join(', ');
     const c2LLMs = c2?.llmScores.map(s => `${s.llmProvider}:${s.normalizedScore}`).join(', ') || 'N/A';
 
-    summaries.push(`${c1.metricId}: ${city1}=[${c1LLMs}] vs ${city2}=[${c2LLMs}]`);
+    const isDisagreement = disagreementMetrics.includes(c1.metricId);
+    const marker = isDisagreement ? ' [HIGH DISAGREEMENT]' : '';
+    summaries.push(`${c1.metricId}${marker}: ${city1}=[${c1LLMs}] vs ${city2}=[${c2LLMs}]`);
+
+    // Phase 3: Add category context for disagreement metrics when category scoring is enabled
+    if (USE_CATEGORY_SCORING && isDisagreement) {
+      const metric = METRICS_MAP[c1.metricId];
+      if (metric) {
+        const options = getCategoryOptionsForPrompt(c1.metricId);
+        if (options.length > 0) {
+          const optionsStr = options.map(o => `    ${o.value} (${o.label}) = ${o.score}`).join('\n');
+          categoryContext.push(`\n### ${c1.metricId}: ${metric.name}\nCategory options:\n${optionsStr}`);
+        }
+      }
+    }
   });
+
+  // Phase 3: Include category context section if available
+  const categorySection = categoryContext.length > 0
+    ? `\n## SCORING CRITERIA FOR DISAGREEMENT METRICS\nThese metrics use category-based scoring. Use this context to resolve disagreements:\n${categoryContext.join('\n')}\n`
+    : '';
 
   return `You are Claude Opus 4.5, the final judge for LIFE SCORE™ city comparisons.
 
@@ -302,9 +330,10 @@ function buildOpusPrompt(
 
 ## LLM EVALUATIONS (format: LLM:score)
 ${summaries.slice(0, 30).join('\n')}
-
+${categorySection}
 ## TASK
-Review these evaluations and for metrics with high disagreement (σ>10), provide your judgment.
+Review these evaluations and for metrics marked [HIGH DISAGREEMENT] (σ>15), provide your judgment.
+${USE_CATEGORY_SCORING ? 'Use the scoring criteria above to determine the correct category and score.' : ''}
 Return JSON with ONLY metrics you want to override:
 {
   "judgments": [
@@ -420,7 +449,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const hasActualScores = evaluatorResults?.some(r => r.success && r.scores && r.scores.length > 0);
   if (anthropicKey && city1 && city2 && hasActualScores) {
     try {
-      const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses);
+      const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses, disagreementMetrics);
 
       const response = await fetchWithTimeout(
         'https://api.anthropic.com/v1/messages',
