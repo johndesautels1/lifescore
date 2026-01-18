@@ -201,7 +201,14 @@ async function testPerplexity(): Promise<{ success: boolean; message: string; la
     }
 
     const data = await response.json();
-    return { success: true, message: `Response: ${data.choices?.[0]?.message?.content || 'ok'}`, latencyMs };
+    // Handle new output[] format or legacy choices[] format
+    const messages = data.output ?? [];
+    const last = messages[messages.length - 1];
+    const textPart = last?.content?.find((c: { type: string }) => c.type === 'text');
+    let content = textPart?.text || data.choices?.[0]?.message?.content || 'ok';
+    // Strip <think> tags from reasoning models
+    content = content.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+    return { success: true, message: `Response: ${content.slice(0, 50)}`, latencyMs };
   } catch (error) {
     return { success: false, message: String(error), latencyMs: Date.now() - startTime };
   }
