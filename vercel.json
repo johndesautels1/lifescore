@@ -4,11 +4,11 @@
   "functions": {
     "api/evaluate.ts": {
       "maxDuration": 300,
-      "includeFiles": "src/shared/**"
+      "includeFiles": "api/shared/**"
     },
     "api/judge.ts": {
       "maxDuration": 300,
-      "includeFiles": "src/shared/**"
+      "includeFiles": "api/shared/**"
     },
     "api/health.ts": {
       "maxDuration": 30
