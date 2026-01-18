@@ -617,7 +617,11 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 - Avoid defaulting to 'C' when evidence points elsewhere
 `;
 
-  const prompt = tavilyContext + buildBasePrompt(city1, city2, metrics) + gptAddendum;
+  // Phase 2: Use category prompt when enabled
+  const basePrompt = USE_CATEGORY_SCORING
+    ? buildCategoryPrompt(city1, city2, metrics as MetricWithCriteria[])
+    : buildBasePrompt(city1, city2, metrics);
+  const prompt = tavilyContext + basePrompt + gptAddendum;
 
   try {
     // GPT-4o uses standard chat completions API
@@ -680,7 +684,11 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 - You have the full context window - maintain consistency across all ${metrics.length} metrics
 `;
 
-  const prompt = buildBasePrompt(city1, city2, metrics) + geminiAddendum;
+  // Phase 2: Use category prompt when enabled
+  const basePrompt = USE_CATEGORY_SCORING
+    ? buildCategoryPrompt(city1, city2, metrics as MetricWithCriteria[])
+    : buildBasePrompt(city1, city2, metrics);
+  const prompt = basePrompt + geminiAddendum;
 
   try {
     const response = await fetchWithTimeout(
@@ -743,7 +751,11 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 - Weight anecdotal enforcement data alongside official legal sources
 `;
 
-  const prompt = buildBasePrompt(city1, city2, metrics) + grokAddendum;
+  // Phase 2: Use category prompt when enabled
+  const basePrompt = USE_CATEGORY_SCORING
+    ? buildCategoryPrompt(city1, city2, metrics as MetricWithCriteria[])
+    : buildBasePrompt(city1, city2, metrics);
+  const prompt = basePrompt + grokAddendum;
 
   try {
     const response = await fetchWithTimeout(
@@ -806,7 +818,11 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 - For enforcement scores, look for news articles about actual enforcement actions
 `;
 
-  const prompt = buildBasePrompt(city1, city2, metrics) + perplexityAddendum;
+  // Phase 2: Use category prompt when enabled
+  const basePrompt = USE_CATEGORY_SCORING
+    ? buildCategoryPrompt(city1, city2, metrics as MetricWithCriteria[])
+    : buildBasePrompt(city1, city2, metrics);
+  const prompt = basePrompt + perplexityAddendum;
 
   try {
     const response = await fetchWithTimeout(
@@ -937,6 +953,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { provider, city1, city2, metrics } = req.body as EvaluationRequest;
 
     console.log(`[EVALUATE] Starting ${provider} evaluation for ${city1} vs ${city2}, ${metrics?.length || 0} metrics`);
+    console.log(`[EVALUATE] USE_CATEGORY_SCORING=${USE_CATEGORY_SCORING}`);
 
     if (!provider || !city1 || !city2 || !metrics) {
       console.error('[EVALUATE] Missing required fields');
