@@ -557,7 +557,7 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
     // Run Research + Search in parallel for speed
     const [researchResult, ...searchResults] = await Promise.all([
       tavilyResearch(city1, city2).catch(() => null),
-      ...searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
+      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
     ]);
 
     const allResults = searchResults.flatMap(r => r.results);
@@ -686,7 +686,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
     // Run Research + Search in parallel for speed
     const [researchResult, ...searchResults] = await Promise.all([
       tavilyResearch(city1, city2).catch(() => null),
-      ...searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
+      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
     ]);
 
     const allResults = searchResults.flatMap(r => r.results);
