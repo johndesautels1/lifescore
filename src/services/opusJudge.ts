@@ -5,7 +5,7 @@
 
 import type { LLMMetricScore, MetricConsensus, CategoryConsensus } from '../types/enhancedComparison';
 import type { CategoryId } from '../types/metrics';
-import { ALL_METRICS, CATEGORIES } from '../data/metrics';
+import { ALL_METRICS, CATEGORIES } from '../shared/metrics';
 import type { EvaluatorResult } from './llmEvaluators';
 import {
   CONFIDENCE_THRESHOLDS,

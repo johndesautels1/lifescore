@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CATEGORIES } from '../data/metrics';
+import { CATEGORIES } from '../shared/metrics';
 import type { CategoryId } from '../types/metrics';
 import './WeightPresets.css';
 

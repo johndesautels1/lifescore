@@ -15,7 +15,7 @@ import type {
   CategoryScore,
   CityScore
 } from '../types/metrics';
-import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../data/metrics';
+import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 
 // ============================================================================
 // TYPES

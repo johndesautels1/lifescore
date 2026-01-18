@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { ComparisonResult, CategoryScore, CategoryId } from '../types/metrics';
-import { CATEGORIES, getMetricsByCategory } from '../data/metrics';
+import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { saveComparisonLocal, isComparisonSaved } from '../services/savedComparisons';
 import './Results.css';
 

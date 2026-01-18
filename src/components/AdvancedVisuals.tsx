@@ -13,7 +13,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
-import { CATEGORIES } from '../data/metrics';
+import { CATEGORIES } from '../shared/metrics';
 import './AdvancedVisuals.css';
 
 // ============================================================================

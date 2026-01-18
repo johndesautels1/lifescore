@@ -11,7 +11,7 @@ import type {
 } from '../types/enhancedComparison';
 import { DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import type { CategoryId } from '../types/metrics';
-import { ALL_METRICS, CATEGORIES } from '../data/metrics';
+import { ALL_METRICS, CATEGORIES } from '../shared/metrics';
 
 // Real LLM evaluators and Opus judge
 import { runAllEvaluators } from './llmEvaluators';

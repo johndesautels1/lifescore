@@ -5,7 +5,7 @@
 
 import React from 'react';
 import type { CategoryId } from '../types/metrics';
-import { CATEGORIES } from '../data/metrics';
+import { CATEGORIES } from '../shared/metrics';
 import './LoadingState.css';
 
 interface LoadingStateProps {

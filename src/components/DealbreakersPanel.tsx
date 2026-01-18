@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CATEGORIES, ALL_METRICS } from '../data/metrics';
+import { CATEGORIES, ALL_METRICS } from '../shared/metrics';
 import './DealbreakersPanel.css';
 
 // Metric icons mapping

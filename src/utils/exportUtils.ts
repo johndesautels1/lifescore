@@ -4,7 +4,7 @@
  */
 
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
-import { CATEGORIES } from '../data/metrics';
+import { CATEGORIES } from '../shared/metrics';
 
 /**
  * Export comparison result to CSV format

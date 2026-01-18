@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
-import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../data/metrics';
+import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
 import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison } from '../services/enhancedComparison';
 import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress } from '../services/llmEvaluators';
 import { type JudgeOutput } from '../services/opusJudge';

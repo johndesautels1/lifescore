@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { ALL_METRICS } from '../data/metrics';
+import { ALL_METRICS } from '../shared/metrics';
 import './DealbreakersWarning.css';
 
 // Metric icons mapping

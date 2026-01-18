@@ -27,7 +27,7 @@ import type { LLMAPIKeys, EnhancedComparisonResult } from './types/enhancedCompa
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
-import { ALL_METRICS } from './data/metrics';
+import { ALL_METRICS } from './shared/metrics';
 import './styles/globals.css';
 import './App.css';
 
