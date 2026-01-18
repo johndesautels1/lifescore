@@ -164,14 +164,17 @@ Return ONLY the JSON object, no other text.`;
 }
 
 // ============================================================================
-// TAVILY WEB SEARCH (for Claude)
+// TAVILY WEB SEARCH (for Claude) - Optimized per Tavily recommendations (2026-01-18)
 // ============================================================================
+
+interface TavilyResult { title: string; url: string; content: string }
+interface TavilyResponse { results: TavilyResult[]; answer?: string }
 
 export async function tavilySearch(
   apiKey: string,
   query: string,
   maxResults: number = 5
-): Promise<{ title: string; url: string; content: string }[]> {
+): Promise<TavilyResponse> {
   const response = await fetchWithTimeout(
     'https://api.tavily.com/search',
     {
@@ -184,8 +187,20 @@ export async function tavilySearch(
         query,
         search_depth: 'advanced',
         max_results: maxResults,
-        include_answer: false,
-        include_raw_content: false
+        include_answer: true,           // LLM-generated answer for synthesis
+        include_raw_content: false,     // Keep false, use chunks instead
+        chunks_per_source: 3,           // Pre-chunked relevant snippets
+        topic: 'general',
+        start_date: '2024-01-01',       // Recent data only
+        end_date: '2026-01-17',
+        include_domains: [              // Target authoritative sources
+          'freedomhouse.org',
+          'heritage.org',
+          'cato.org',
+          'fraserinstitute.org'
+        ],
+        country: 'US',                  // Boost US results
+        include_usage: true             // Track credit consumption
       })
     },
     LLM_TIMEOUT_MS
@@ -196,7 +211,7 @@ export async function tavilySearch(
   }
 
   const data = await response.json();
-  return data.results || [];
+  return { results: data.results || [], answer: data.answer };
 }
 
 // ============================================================================
@@ -227,21 +242,39 @@ export async function evaluateWithClaude(
   try {
     let searchContext = '';
 
-    // If Tavily key available, perform searches for context
+    // If Tavily key available, perform category-level searches for context (12 total)
     if (tavilyKey) {
       const searchQueries = [
-        `${city1} laws regulations freedom index`,
-        `${city2} laws regulations freedom index`,
-        `${city1} vs ${city2} legal comparison`
+        // personal_freedom (15 metrics)
+        `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+        `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+        // housing_property (20 metrics)
+        `${city1} property rights zoning HOA land use housing regulations 2025`,
+        `${city2} property rights zoning HOA land use housing regulations 2025`,
+        // business_work (25 metrics)
+        `${city1} business regulations taxes licensing employment labor laws 2025`,
+        `${city2} business regulations taxes licensing employment labor laws 2025`,
+        // transportation (15 metrics)
+        `${city1} transportation vehicle regulations transit parking driving laws 2025`,
+        `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+        // policing_legal (15 metrics)
+        `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
+        `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+        // speech_lifestyle (10 metrics)
+        `${city1} freedom speech expression privacy lifestyle regulations 2025`,
+        `${city2} freedom speech expression privacy lifestyle regulations 2025`,
       ];
 
       const searchResults = await Promise.all(
-        searchQueries.map(q => tavilySearch(tavilyKey, q, 3).catch(() => []))
+        searchQueries.map(q => tavilySearch(tavilyKey, q, 5).catch(() => ({ results: [] })))
       );
+      const allResults = searchResults.flatMap(r => r.results);
+      const answers = searchResults.map(r => r.answer).filter(Boolean);
 
       searchContext = `
-## WEB SEARCH RESULTS
-${searchResults.flat().map(r => `- ${r.title}: ${r.content.slice(0, 500)}`).join('\n')}
+## WEB SEARCH RESULTS (from Tavily)
+${answers.length > 0 ? `**Summary:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
 Use these search results to inform your evaluation.
 `;

@@ -4,42 +4,67 @@
 
 ---
 
-## CRITICAL: FIRST ACTION FOR NEXT CLAUDE SESSION
+## STATUS: TAVILY OPTIMIZATIONS IMPLEMENTED ✅
 
-**IMMEDIATELY ASK THE USER:**
-> "Please paste or provide Tavily's feedback files/review. I need to see their specific recommendations before making any changes to the Tavily integration."
-
-**DO NOT** make any changes to Tavily code without first receiving and reading Tavily's feedback.
+**Implemented:** 2026-01-18 (Conversation ID: LS-2026-0117-001)
 
 ---
 
-## CURRENT TAVILY INTEGRATION SUMMARY
+## UPDATED TAVILY INTEGRATION SUMMARY
 
-### Files Containing Tavily Code:
-| File | Lines | Purpose |
+### Files Modified:
+| File | Lines | Changes |
 |------|-------|---------|
-| `api/evaluate.ts` | 233-262 | Main Tavily search function (server) |
-| `api/evaluate.ts` | 273-287 | Claude Sonnet Tavily integration |
-| `api/evaluate.ts` | 347-361 | GPT-4o Tavily integration |
-| `api/health.ts` | 24 | Environment variable check |
-| `src/services/llmEvaluators.ts` | 167-200 | Tavily search function (client) |
-| `src/services/llmEvaluators.ts` | 230-248 | Claude Tavily context injection |
-| `src/types/enhancedComparison.ts` | 209 | LLMAPIKeys.tavily type definition |
-| `src/components/EnhancedComparison.tsx` | 530-535 | Tavily API key input field |
+| `api/evaluate.ts` | 233-277 | Updated tavilySearch with new parameters |
+| `api/evaluate.ts` | 288-333 | Claude Sonnet: 12 category-level queries + new context injection |
+| `api/evaluate.ts` | 385-430 | GPT-4o: 12 category-level queries + new context injection |
+| `src/services/llmEvaluators.ts` | 166-215 | Updated tavilySearch with new parameters |
+| `src/services/llmEvaluators.ts` | 245-281 | Claude: 12 category-level queries + new context injection |
 
-### Current Tavily API Configuration:
+### NEW Tavily API Configuration:
 - **Endpoint:** `https://api.tavily.com/search`
 - **Search Depth:** `advanced`
-- **Max Results:** 3 (server) / 5 (client)
-- **Include Answer:** false
-- **Include Raw Content:** false
-- **Timeout:** 180000ms (LLM_TIMEOUT_MS)
+- **Max Results:** 5 (standardized)
+- **Include Answer:** `true` ← NEW (LLM-generated synthesis)
+- **Include Raw Content:** `false`
+- **Chunks Per Source:** 3 ← NEW (pre-chunked snippets)
+- **Topic:** `general`
+- **Date Range:** 2024-01-01 to 2026-01-17 ← NEW
+- **Include Domains:** freedomhouse.org, heritage.org, cato.org, fraserinstitute.org ← NEW
+- **Country:** US ← NEW
+- **Include Usage:** `true` ← NEW (credit tracking)
+- **Timeout:** 180000ms (LLM_TIMEOUT_MS) - UNCHANGED per user request
 
-### Current Search Queries:
+### NEW Category-Level Search Queries (12 total per LLM):
+```typescript
+// personal_freedom (15 metrics)
+`${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`
+`${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`
+
+// housing_property (20 metrics)
+`${city1} property rights zoning HOA land use housing regulations 2025`
+`${city2} property rights zoning HOA land use housing regulations 2025`
+
+// business_work (25 metrics)
+`${city1} business regulations taxes licensing employment labor laws 2025`
+`${city2} business regulations taxes licensing employment labor laws 2025`
+
+// transportation (15 metrics)
+`${city1} transportation vehicle regulations transit parking driving laws 2025`
+`${city2} transportation vehicle regulations transit parking driving laws 2025`
+
+// policing_legal (15 metrics)
+`${city1} criminal justice police enforcement legal rights civil liberties 2025`
+`${city2} criminal justice police enforcement legal rights civil liberties 2025`
+
+// speech_lifestyle (10 metrics)
+`${city1} freedom speech expression privacy lifestyle regulations 2025`
+`${city2} freedom speech expression privacy lifestyle regulations 2025`
 ```
-${city1} laws regulations freedom 2024 2025
-${city2} laws regulations freedom 2024 2025
-```
+
+### Credit Usage:
+- **Per LLM:** 12 queries × 2 credits (advanced) = 24 credits
+- **Per Comparison:** 48 credits total (Claude Sonnet + GPT-4o)
 
 ### LLMs Using Tavily:
 - Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
@@ -123,24 +148,39 @@ const gptAddendum = `
 
 ---
 
-## TAVILY'S FEEDBACK
+## TAVILY'S FEEDBACK (Received 2026-01-18)
 
-**[PASTE TAVILY'S FEEDBACK BELOW THIS LINE]**
+### Key Recommendations Implemented:
+1. **API Configuration Updates:**
+   - `include_answer: true` - Get LLM-generated synthesis
+   - `chunks_per_source: 3` - Pre-chunked relevant snippets
+   - `start_date`/`end_date` - Recent data only
+   - `include_domains` - Target authoritative freedom sources
+   - `country: 'US'` - Boost US results
+   - `include_usage: true` - Track credit consumption
+
+2. **Query Optimization:**
+   - Changed from 2 broad queries to 12 category-level focused queries
+   - Queries aligned with existing 6-category schema (100 metrics)
+   - Under 400 characters per query (Tavily best practice)
+
+3. **Context Injection Improvement:**
+   - Removed manual `.slice()` truncation (chunks_per_source handles it)
+   - Added Tavily's LLM-generated summary (`data.answer`)
+   - Include full URLs for citation tracking
+
+4. **LLM Addendum Updates:**
+   - Both Claude and GPT-4o addendums now reference "summary answer above"
+   - Cross-reference instructions added
+
+### NOT Implemented (User Decision):
+- **Timeout:** Kept at 180000ms (user explicitly declined Tavily's 60s recommendation)
 
 ---
 
-## CHANGES TO IMPLEMENT
+## IMPLEMENTATION COMPLETE ✅
 
-**[TO BE FILLED AFTER RECEIVING TAVILY'S FEEDBACK]**
-
----
-
-## APPROVAL REQUIRED
-
-Per README.md court order:
-> **NO TIMEOUT OR API CHANGES** may be made without explicit approval from **John Desautels**.
-
-If Tavily's feedback includes timeout changes, API endpoint changes, or model changes, these require John's explicit approval before implementation.
+All changes implemented 2026-01-18. Ready for testing.
 
 ---
 
@@ -149,5 +189,6 @@ If Tavily's feedback includes timeout changes, API endpoint changes, or model ch
 | Commit | Description |
 |--------|-------------|
 | `8a1d440` | Fix Gemini model mismatch: gemini-3-pro → gemini-3-pro-preview |
+| (pending) | Tavily optimization: category-level queries + new API parameters |
 
 ---

@@ -230,10 +230,13 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   }
 }
 
-// Tavily web search helper for Claude
-async function tavilySearch(query: string, maxResults: number = 3): Promise<{ title: string; url: string; content: string }[]> {
+// Tavily web search helper for Claude - Optimized per Tavily recommendations (2026-01-18)
+interface TavilyResult { title: string; url: string; content: string }
+interface TavilyResponse { results: TavilyResult[]; answer?: string }
+
+async function tavilySearch(query: string, maxResults: number = 5): Promise<TavilyResponse> {
   const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) return [];
+  if (!apiKey) return { results: [] };
 
   try {
     const response = await fetchWithTimeout(
@@ -246,18 +249,30 @@ async function tavilySearch(query: string, maxResults: number = 3): Promise<{ ti
           query,
           search_depth: 'advanced',
           max_results: maxResults,
-          include_answer: false,
-          include_raw_content: false
+          include_answer: true,           // LLM-generated answer for synthesis
+          include_raw_content: false,     // Keep false, use chunks instead
+          chunks_per_source: 3,           // Pre-chunked relevant snippets
+          topic: 'general',
+          start_date: '2024-01-01',       // Recent data only
+          end_date: '2026-01-17',
+          include_domains: [              // Target authoritative sources
+            'freedomhouse.org',
+            'heritage.org',
+            'cato.org',
+            'fraserinstitute.org'
+          ],
+          country: 'US',                  // Boost US results
+          include_usage: true             // Track credit consumption
         })
       },
       LLM_TIMEOUT_MS
     );
 
-    if (!response.ok) return [];
+    if (!response.ok) return { results: [] };
     const data = await response.json();
-    return data.results || [];
+    return { results: data.results || [], answer: data.answer };
   } catch {
-    return [];
+    return { results: [] };
   }
 }
 
@@ -270,26 +285,49 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
 
   const startTime = Date.now();
 
-  // Fetch web search context via Tavily
+  // Fetch web search context via Tavily - Category-level queries (12 total)
   let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
-      `${city1} laws regulations freedom 2024 2025`,
-      `${city2} laws regulations freedom 2024 2025`
+      // personal_freedom (15 metrics)
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      // housing_property (20 metrics)
+      `${city1} property rights zoning HOA land use housing regulations 2025`,
+      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      // business_work (25 metrics)
+      `${city1} business regulations taxes licensing employment labor laws 2025`,
+      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      // transportation (15 metrics)
+      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      // policing_legal (15 metrics)
+      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      // speech_lifestyle (10 metrics)
+      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
     ];
     const searchResults = await Promise.all(
-      searchQueries.map(q => tavilySearch(q, 3).catch(() => []))
+      searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
     );
-    const results = searchResults.flat();
-    if (results.length > 0) {
-      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\n`;
+    const allResults = searchResults.flatMap(r => r.results);
+    const answers = searchResults.map(r => r.answer).filter(Boolean);
+    if (allResults.length > 0) {
+      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)
+${answers.length > 0 ? `**Summary:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+
+Use these search results to inform your evaluation.
+`;
     }
   }
 
   // CLAUDE-SPECIFIC ADDENDUM
   const claudeAddendum = `
 ## CLAUDE-SPECIFIC INSTRUCTIONS
-- Use the Tavily web search results above to ground your evaluation in current facts
+- Use the Tavily web search results AND the summary answer above to ground your evaluation
+- Cross-reference the Tavily answer with individual sources for accuracy
 - You excel at nuanced legal interpretation - distinguish between law text vs enforcement reality
 - For ambiguous cases, lean toward the grade that reflects lived experience over technical legality
 `;
@@ -344,28 +382,51 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
   const startTime = Date.now();
 
-  // Fetch web search context via Tavily
+  // Fetch web search context via Tavily - Category-level queries (12 total)
   let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
-      `${city1} laws regulations freedom 2024 2025`,
-      `${city2} laws regulations freedom 2024 2025`
+      // personal_freedom (15 metrics)
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      // housing_property (20 metrics)
+      `${city1} property rights zoning HOA land use housing regulations 2025`,
+      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      // business_work (25 metrics)
+      `${city1} business regulations taxes licensing employment labor laws 2025`,
+      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      // transportation (15 metrics)
+      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      // policing_legal (15 metrics)
+      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      // speech_lifestyle (10 metrics)
+      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
     ];
     const searchResults = await Promise.all(
-      searchQueries.map(q => tavilySearch(q, 3).catch(() => []))
+      searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
     );
-    const results = searchResults.flat();
-    if (results.length > 0) {
-      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)\n${results.map(r => `- ${r.title}: ${r.content.slice(0, 400)}`).join('\n')}\n\n`;
+    const allResults = searchResults.flatMap(r => r.results);
+    const answers = searchResults.map(r => r.answer).filter(Boolean);
+    if (allResults.length > 0) {
+      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)
+${answers.length > 0 ? `**Summary:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+
+Use these search results to inform your evaluation.
+`;
     }
   }
 
   // GPT-4o SPECIFIC ADDENDUM
   const gptAddendum = `
 ## GPT-4o SPECIFIC INSTRUCTIONS
-- Use the Tavily web search results above to verify current legal status
-- Focus on factual accuracy - cross-reference multiple sources when available
-- Be precise with your letter grades - avoid defaulting to 'C' when evidence points elsewhere
+- Use the Tavily web search results AND the summary answer above to verify current legal status
+- Cross-reference multiple sources when available - prioritize government and legal sources
+- Focus on factual accuracy - be precise with letter grades
+- Avoid defaulting to 'C' when evidence points elsewhere
 `;
 
   const prompt = tavilyContext + buildBasePrompt(city1, city2, metrics) + gptAddendum;
