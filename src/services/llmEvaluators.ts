@@ -308,7 +308,7 @@ export async function evaluateWithClaude(
       // Run Research + Search in parallel for speed
       const [researchResult, ...searchResults] = await Promise.all([
         tavilyResearch(tavilyKey, city1, city2).catch(() => null),
-        ...searchQueries.map(q => tavilySearch(tavilyKey, q, 5).catch(() => ({ results: [] })))
+        ...searchQueries.map(q => tavilySearch(tavilyKey, q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
       ]);
 
       const allResults = searchResults.flatMap(r => r.results);
@@ -966,7 +966,7 @@ function parseEvaluationResponse(
         normalizedScore: calculateNormalizedScore(eval_.city1LegalScore, eval_.city1EnforcementScore),
         legalScore: city1Legal,
         enforcementScore: city1Enforcement,
-        confidence: clampScore(eval_.confidence) / 100, // Normalize confidence to 0-1
+        confidence: eval_.confidence || 'medium',
         llmProvider: provider,
         explanation: eval_.reasoning || '',
         sources: allSources,
@@ -983,7 +983,7 @@ function parseEvaluationResponse(
         normalizedScore: calculateNormalizedScore(eval_.city2LegalScore, eval_.city2EnforcementScore),
         legalScore: city2Legal,
         enforcementScore: city2Enforcement,
-        confidence: clampScore(eval_.confidence) / 100, // Normalize confidence to 0-1
+        confidence: eval_.confidence || 'medium',
         llmProvider: provider,
         explanation: eval_.reasoning || '',
         sources: allSources,
