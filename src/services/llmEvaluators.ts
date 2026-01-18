@@ -840,19 +840,36 @@ export async function evaluateWithPerplexity(
 
       const data = await response.json();
 
-      // Null checks for response structure
-      if (!data.choices || data.choices.length === 0) {
-        throw new Error('Perplexity returned no choices');
-      }
-      if (!data.choices[0].message || !data.choices[0].message.content) {
-        throw new Error('Perplexity returned empty or malformed response');
+      // Perplexity API uses 'output' array (new format) or 'choices' (legacy)
+      const messages = data.output ?? [];
+      const last = messages[messages.length - 1];
+      const contentArr = last?.content ?? [];
+      const textPart = contentArr.find((c: { type: string }) => c.type === 'text');
+      let rawText = textPart?.text ?? '';
+
+      // Fallback to legacy choices format
+      if (!rawText && data.choices?.[0]?.message?.content) {
+        rawText = data.choices[0].message.content;
       }
 
-      // Extract citations from response (Perplexity returns these separately)
+      if (!rawText) {
+        throw new Error('Perplexity returned empty response - no output or choices');
+      }
+
+      // Strip <think>...</think> from reasoning models
+      const jsonText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+
+      // Extract JSON block
+      const match = jsonText.match(/\{[\s\S]*\}$/);
+      if (!match) {
+        throw new Error('No JSON object found in Perplexity output');
+      }
+
+      // Extract citations from response
       const extractedCitations: string[] = data.citations || [];
 
       return {
-        content: data.choices[0].message.content,
+        content: match[0],
         citations: extractedCitations
       };
     });

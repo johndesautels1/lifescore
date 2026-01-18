@@ -727,12 +727,39 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
     }
 
     const data = await response.json();
-    // FIX #8: Defensive parsing - handle missing/malformed response
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) {
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Perplexity' };
+
+    // Perplexity API uses 'output' array (new format) or 'choices' (legacy)
+    // 1) Get the final text from the last output message
+    const messages = data.output ?? [];
+    const last = messages[messages.length - 1];
+    const contentArr = last?.content ?? [];
+    const textPart = contentArr.find((c: any) => c.type === 'text');
+    let rawText = textPart?.text ?? '';
+
+    // Fallback to legacy choices format if output is empty
+    if (!rawText && data.choices?.[0]?.message?.content) {
+      rawText = data.choices[0].message.content;
     }
-    const scores = parseResponse(content, 'perplexity');
+
+    if (!rawText) {
+      console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
+      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity - no output or choices' };
+    }
+
+    // 2) Strip <think>...</think> if using reasoning models
+    const jsonText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+
+    // 3) Extract JSON block (grab the last {...} block)
+    const match = jsonText.match(/\{[\s\S]*\}$/);
+    if (!match) {
+      console.error('[PERPLEXITY] No JSON object found. Text preview:', jsonText.slice(0, 300));
+      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output' };
+    }
+
+    const scores = parseResponse(match[0], 'perplexity');
+    if (scores.length === 0) {
+      console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', match[0].slice(0, 300));
+    }
 
     return { provider: 'perplexity', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
   } catch (error) {
