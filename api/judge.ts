@@ -384,8 +384,11 @@ function mergeOpusJudgments(
 // ============================================================================
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS headers - restrict to Vercel deployment domain
+  const allowedOrigin = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'https://lifescore.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

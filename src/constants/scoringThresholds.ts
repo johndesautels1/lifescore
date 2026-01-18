@@ -19,8 +19,8 @@ export const CONFIDENCE_THRESHOLDS = {
   /** StdDev < 20 = moderate agreement between LLMs */
   MODERATE: 20,
 
-  /** StdDev > 15 = flag as disagreement area */
-  DISAGREEMENT_FLAG: 15,
+  /** StdDev >= 20 = flag as disagreement area (aligned with MODERATE threshold) */
+  DISAGREEMENT_FLAG: 20,
 
   /** Default avgStdDev when no data available */
   DEFAULT_AVG_STDDEV: 25

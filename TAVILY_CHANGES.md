@@ -70,9 +70,9 @@ const TAVILY_HEADERS = {
   include_raw_content: false,
   chunks_per_source: 3,
   topic: 'general',
-  start_date: '2024-01-01',
-  end_date: '2026-01-17',
-  include_domains: ['freedomhouse.org', 'heritage.org', 'cato.org', 'fraserinstitute.org'],
+  start_date: '2024-01-01',  // Fixed start for historical context
+  end_date: new Date().toISOString().split('T')[0],  // Dynamic: always current date
+  exclude_domains: ['pinterest.com', 'facebook.com', 'twitter.com', 'instagram.com', 'tiktok.com', 'reddit.com', 'quora.com', 'yelp.com', 'tripadvisor.com'],
   country: 'US',
   include_usage: true
 }
@@ -206,8 +206,8 @@ const gptAddendum = `
 1. **API Configuration Updates:**
    - `include_answer: true` - Get LLM-generated synthesis
    - `chunks_per_source: 3` - Pre-chunked relevant snippets
-   - `start_date`/`end_date` - Recent data only
-   - `include_domains` - Target authoritative freedom sources
+   - `start_date`/`end_date` - Dynamic end_date (always current), fixed start
+   - `exclude_domains` - Block low-quality/opinion-based sources
    - `country: 'US'` - Boost US results
    - `include_usage: true` - Track credit consumption
 

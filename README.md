@@ -191,8 +191,8 @@ ${city2} freedom speech expression privacy lifestyle regulations 2025
   "chunks_per_source": 3,
   "topic": "general",
   "start_date": "2024-01-01",
-  "end_date": "2026-01-17",
-  "include_domains": ["freedomhouse.org", "heritage.org", "cato.org", "fraserinstitute.org"],
+  "end_date": "dynamic (current date)",
+  "exclude_domains": ["pinterest.com", "facebook.com", "twitter.com", "instagram.com", "tiktok.com", "reddit.com", "quora.com", "yelp.com", "tripadvisor.com"],
   "country": "US",
   "include_usage": true
 }

@@ -289,13 +289,18 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
           include_raw_content: false,     // Keep false, use chunks instead
           chunks_per_source: 3,           // Pre-chunked relevant snippets
           topic: 'general',
-          start_date: '2024-01-01',       // Recent data only
-          end_date: '2026-01-17',
-          include_domains: [              // Target authoritative sources
-            'freedomhouse.org',
-            'heritage.org',
-            'cato.org',
-            'fraserinstitute.org'
+          start_date: '2024-01-01',       // Fixed start for historical context
+          end_date: new Date().toISOString().split('T')[0],  // Dynamic: always current date
+          exclude_domains: [              // Block low-quality/opinion-based sources
+            'pinterest.com',
+            'facebook.com',
+            'twitter.com',
+            'instagram.com',
+            'tiktok.com',
+            'reddit.com',
+            'quora.com',
+            'yelp.com',
+            'tripadvisor.com'
           ],
           country: 'US',                  // Boost US results
           include_usage: true             // Track credit consumption
@@ -740,8 +745,11 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
 
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS headers - restrict to Vercel deployment domain
+  const allowedOrigin = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'https://lifescore.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

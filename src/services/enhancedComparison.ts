@@ -324,11 +324,12 @@ export async function runEnhancedComparison(
   // =========================================================================
 
   // Validate result before caching - NEVER cache incomplete/invalid data
+  // FIX: Use typeof check to allow valid zero scores (edge case but technically valid)
   const isValidResult =
     result.city1.categories.length > 0 &&
     result.city2.categories.length > 0 &&
-    result.city1.totalConsensusScore > 0 &&
-    result.city2.totalConsensusScore > 0 &&
+    typeof result.city1.totalConsensusScore === 'number' &&
+    typeof result.city2.totalConsensusScore === 'number' &&
     llmsCompleted.length > 0;
 
   if (isValidResult) {
