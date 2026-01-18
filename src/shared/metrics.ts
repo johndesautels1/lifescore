@@ -13,7 +13,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import type { Category, CategoryId, MetricDefinition, CategoricalOption, ScaleLevel } from '../types/metrics';
+import type { Category, CategoryId, MetricDefinition, CategoricalOption } from '../types/metrics';
 import type { ScoreResult } from './types';
 
 // ============================================================================
@@ -46,11 +46,6 @@ function addFallbackOptions(options: CategoricalOption[] | undefined): Categoric
   return [...options, ...FALLBACK_OPTIONS];
 }
 
-function addFallbackLevels(levels: ScaleLevel[] | undefined): ScaleLevel[] {
-  if (!levels) return [];
-  // For scale types, we add fallback as options (converted from levels)
-  return levels;
-}
 
 // ============================================================================
 // CATEGORY DEFINITIONS
@@ -126,8 +121,8 @@ export const CATEGORIES_MAP: Record<CategoryId, Category> = CATEGORIES.reduce(
 // Import original metrics
 import {
   ALL_METRICS as ORIGINAL_ALL_METRICS,
-  METRICS_MAP as ORIGINAL_METRICS_MAP,
-  getMetricsByCategory as originalGetMetricsByCategory,
+  METRICS_MAP as _ORIGINAL_METRICS_MAP,
+  getMetricsByCategory as _originalGetMetricsByCategory,
   validateMetricCounts
 } from '../data/metrics';
 

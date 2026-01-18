@@ -410,32 +410,34 @@ class CacheManager {
 
     console.log(`[CACHE SET] Comparison: ${key.city1} vs ${key.city2}`);
   }
-
   /**
    * Phase 4: Swap city1 and city2 data in a comparison result
    * Used when cache hit is for reversed city order
    */
   private swapCityOrder(result: EnhancedComparisonResult): EnhancedComparisonResult {
+    // Swap winner value
+    const swapWinner = (w: 'city1' | 'city2' | 'tie'): 'city1' | 'city2' | 'tie' => {
+      if (w === 'city1') return 'city2';
+      if (w === 'city2') return 'city1';
+      return 'tie';
+    };
+
+    // Swap categoryWinners values
+    const swappedCategoryWinners: Record<string, 'city1' | 'city2' | 'tie'> = {};
+    for (const [key, value] of Object.entries(result.categoryWinners)) {
+      swappedCategoryWinners[key] = swapWinner(value);
+    }
+
     return {
       ...result,
       city1: result.city2,
       city2: result.city1,
-      city1Score: result.city2Score,
-      city2Score: result.city1Score,
-      categories: result.categories.map(cat => ({
-        ...cat,
-        city1Score: cat.city2Score,
-        city2Score: cat.city1Score,
-        metrics: cat.metrics?.map(m => ({
-          ...m,
-          city1Score: m.city2Score,
-          city2Score: m.city1Score,
-          city1Evidence: m.city2Evidence,
-          city2Evidence: m.city1Evidence
-        }))
-      }))
+      winner: swapWinner(result.winner),
+      categoryWinners: swappedCategoryWinners as typeof result.categoryWinners
     };
   }
+
+
 
 
   // ----- LLM RESPONSE CACHING -----
