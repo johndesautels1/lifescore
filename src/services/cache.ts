@@ -70,6 +70,15 @@ export interface ComparisonCacheKey {
   llmsUsed: LLMProvider[];
 }
 
+// Phase 4: Extended cache entry that tracks original city order
+// This fixes the bug where "Austin vs Denver" and "Denver vs Austin"
+// would return the same cached result with wrong city order
+interface ComparisonCacheEntry {
+  data: EnhancedComparisonResult;
+  originalCity1: string;  // City as city1 when cached
+  originalCity2: string;  // City as city2 when cached
+}
+
 export interface CacheStats {
   hits: number;
   misses: number;
@@ -358,12 +367,22 @@ class CacheManager {
   async getComparison(key: ComparisonCacheKey): Promise<EnhancedComparisonResult | null> {
     const storage = await this.getStorage();
     const cacheKey = generateComparisonKey(key);
-    const entry = await storage.get<EnhancedComparisonResult>(cacheKey);
+    const entry = await storage.get<ComparisonCacheEntry>(cacheKey);
 
     if (entry) {
       this.stats.hits++;
       console.log(`[CACHE HIT] Comparison: ${key.city1} vs ${key.city2}`);
-      return entry.data;
+
+      // Phase 4: Check if city order matches, swap if needed
+      const cached = entry.data;
+      const needsSwap = cached.originalCity1 !== key.city1;
+
+      if (needsSwap) {
+        console.log(`[CACHE] Swapping cities: cached was ${cached.originalCity1} vs ${cached.originalCity2}`);
+        return this.swapCityOrder(cached.data);
+      }
+
+      return cached.data;
     }
 
     this.stats.misses++;
@@ -375,8 +394,15 @@ class CacheManager {
     const storage = await this.getStorage();
     const cacheKey = generateComparisonKey(key);
 
-    await storage.set(cacheKey, {
+    // Phase 4: Store original city order with the result
+    const cacheEntry: ComparisonCacheEntry = {
       data: result,
+      originalCity1: key.city1,
+      originalCity2: key.city2
+    };
+
+    await storage.set(cacheKey, {
+      data: cacheEntry,
       timestamp: Date.now(),
       ttl: CACHE_CONFIG.COMPARISON_TTL,
       version: CACHE_CONFIG.VERSION
@@ -384,6 +410,33 @@ class CacheManager {
 
     console.log(`[CACHE SET] Comparison: ${key.city1} vs ${key.city2}`);
   }
+
+  /**
+   * Phase 4: Swap city1 and city2 data in a comparison result
+   * Used when cache hit is for reversed city order
+   */
+  private swapCityOrder(result: EnhancedComparisonResult): EnhancedComparisonResult {
+    return {
+      ...result,
+      city1: result.city2,
+      city2: result.city1,
+      city1Score: result.city2Score,
+      city2Score: result.city1Score,
+      categories: result.categories.map(cat => ({
+        ...cat,
+        city1Score: cat.city2Score,
+        city2Score: cat.city1Score,
+        metrics: cat.metrics?.map(m => ({
+          ...m,
+          city1Score: m.city2Score,
+          city2Score: m.city1Score,
+          city1Evidence: m.city2Evidence,
+          city2Evidence: m.city1Evidence
+        }))
+      }))
+    };
+  }
+
 
   // ----- LLM RESPONSE CACHING -----
 
