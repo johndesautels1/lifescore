@@ -5,14 +5,14 @@
  * This file imports from local api/shared/ files only - no src/ dependencies
  */
 
-import type { MetricDefinition, CategoricalOption, CategoryId } from './types';
+import type { MetricDefinition, CategoricalOption, CategoryId } from './types.js';
 import {
   ALL_METRICS,
   METRICS_MAP as ORIGINAL_METRICS_MAP,
   CATEGORIES,
   CATEGORIES_MAP,
   validateMetricCounts
-} from './metrics-data';
+} from './metrics-data.js';
 
 // Re-export what we need
 export { CATEGORIES, CATEGORIES_MAP, validateMetricCounts };

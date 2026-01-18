@@ -5,8 +5,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
-import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics';
-import type { ScoreResult } from './shared/metrics';
+import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
+import type { ScoreResult } from './shared/metrics.js';
 
 // Timeout constant (in milliseconds) - unified for all API calls
 const LLM_TIMEOUT_MS = 180000; // 180 seconds for all LLM API calls including Tavily

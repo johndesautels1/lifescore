@@ -9,7 +9,7 @@
  * Each metric has specific search queries for verification via Claude API + Web Search
  */
 
-import type { Category, CategoryId, MetricDefinition } from './types';
+import type { Category, CategoryId, MetricDefinition } from './types.js';
 
 // ============================================================================
 // CATEGORY DEFINITIONS
