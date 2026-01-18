@@ -1,6 +1,48 @@
 # CLUES LIFE SCORE
 
 ---
+## 🚨 CRITICAL: API BROKEN - IMMEDIATE FIX REQUIRED (2026-01-18)
+
+**Problem:** `api/evaluate.ts` imports from `../src/shared/metrics` which doesn't exist in Vercel serverless runtime. Serverless functions only have access to files in `api/` folder.
+
+**Error:** `Cannot find module '/var/task/src/shared/metrics'`
+
+**Root Cause:** Phase 2 category scoring added imports that Vercel can't resolve:
+```typescript
+import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from '../src/shared/metrics';
+import type { ScoreResult } from '../src/shared/types';
+```
+
+### Solutions (Pick One)
+
+**Option 1: Vercel includeFiles (Recommended)**
+Add to `vercel.json`:
+```json
+{
+  "functions": {
+    "api/evaluate.ts": {
+      "maxDuration": 300,
+      "includeFiles": "src/shared/**"
+    }
+  }
+}
+```
+
+**Option 2: Copy shared code to api/ folder**
+- Create `api/shared/metrics.ts` with the scoring logic
+- Update imports in `api/evaluate.ts` to use `./shared/metrics`
+
+**Option 3: Remove Phase 2 imports (Quick Fix)**
+- Remove the broken imports from `api/evaluate.ts`
+- Keep legacy A-E letter grading (USE_CATEGORY_SCORING stays false)
+- Revisit category scoring later
+
+### Files Affected
+- `api/evaluate.ts` - Lines 7-9 (the broken imports)
+- `vercel.json` - Needs includeFiles if using Option 1
+
+---
+
 ## ⚠️ COURT ORDER INJUNCTION - CLAUDE CODE RESTRICTIONS ⚠️
 
 **CLAUDE CODE IS FORBIDDEN FROM MAKING THE FOLLOWING CHANGES WITHOUT DIRECT OWNER APPROVAL:**
