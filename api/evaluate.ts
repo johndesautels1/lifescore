@@ -701,12 +701,7 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
           generationConfig: { maxOutputTokens: 16384, temperature: 0.3 },
           // Enable Google Search grounding for real-time web data
           tools: [{
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: 'MODE_DYNAMIC',
-                dynamicThreshold: 0.3
-              }
-            }
+            google_search: {}
           }]
         })
       },
