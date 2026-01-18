@@ -710,12 +710,42 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
         body: JSON.stringify({
           model: 'sonar-reasoning-pro',
           messages: [
-            { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.' },
+            { role: 'system', content: 'You are a scoring engine. Return ONLY valid JSON with no additional text.' },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
           temperature: 0.3,
-          return_citations: true
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'freedom_evaluations',
+              schema: {
+                type: 'object',
+                properties: {
+                  evaluations: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        metricId: { type: 'string' },
+                        city1LegalScore: { type: 'number' },
+                        city1EnforcementScore: { type: 'number' },
+                        city2LegalScore: { type: 'number' },
+                        city2EnforcementScore: { type: 'number' },
+                        confidence: { type: 'string' },
+                        reasoning: { type: 'string' },
+                        sources: { type: 'array', items: { type: 'string' } }
+                      },
+                      required: ['metricId', 'city1LegalScore', 'city1EnforcementScore', 'city2LegalScore', 'city2EnforcementScore', 'confidence', 'reasoning']
+                    }
+                  }
+                },
+                required: ['evaluations'],
+                additionalProperties: false
+              },
+              strict: true
+            }
+          }
         })
       },
       LLM_TIMEOUT_MS
@@ -729,11 +759,11 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
     const data = await response.json();
 
     // Perplexity API uses 'output' array (new format) or 'choices' (legacy)
-    // 1) Get the final text from the last output message
     const messages = data.output ?? [];
     const last = messages[messages.length - 1];
     const contentArr = last?.content ?? [];
-    const textPart = contentArr.find((c: any) => c.type === 'text');
+    // Look for both 'text' and 'output_text' content types
+    const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
     let rawText = textPart?.text ?? '';
 
     // Fallback to legacy choices format if output is empty
@@ -743,22 +773,27 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
     if (!rawText) {
       console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
+      console.error('[PERPLEXITY] Full response:', JSON.stringify(data).slice(0, 1000));
       return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity - no output or choices' };
     }
 
-    // 2) Strip <think>...</think> if using reasoning models
-    const jsonText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+    // Strip <think>...</think> blocks from reasoning models
+    rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
-    // 3) Extract JSON block (grab the last {...} block)
-    const match = jsonText.match(/\{[\s\S]*\}$/);
-    if (!match) {
-      console.error('[PERPLEXITY] No JSON object found. Text preview:', jsonText.slice(0, 300));
+    // Check for JSON in code blocks first
+    const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
+    const candidate = codeMatch ? codeMatch[1].trim() : rawText;
+
+    // Extract JSON object
+    const jsonMatch = candidate.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('[PERPLEXITY] No JSON object found. Text preview:', rawText.slice(0, 500));
       return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output' };
     }
 
-    const scores = parseResponse(match[0], 'perplexity');
+    const scores = parseResponse(jsonMatch[0], 'perplexity');
     if (scores.length === 0) {
-      console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', match[0].slice(0, 300));
+      console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', jsonMatch[0].slice(0, 300));
     }
 
     return { provider: 'perplexity', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };

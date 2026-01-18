@@ -818,16 +818,42 @@ export async function evaluateWithPerplexity(
           body: JSON.stringify({
             model: 'sonar-reasoning-pro',
             messages: [
-              {
-                role: 'system',
-                content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.'
-              },
+              { role: 'system', content: 'You are a scoring engine. Return ONLY valid JSON with no additional text.' },
               { role: 'user', content: prompt }
             ],
             max_tokens: 16384,
             temperature: 0.3,
-            // Perplexity has native search
-            return_citations: true
+            response_format: {
+              type: 'json_schema',
+              json_schema: {
+                name: 'freedom_evaluations',
+                schema: {
+                  type: 'object',
+                  properties: {
+                    evaluations: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          metricId: { type: 'string' },
+                          city1LegalScore: { type: 'number' },
+                          city1EnforcementScore: { type: 'number' },
+                          city2LegalScore: { type: 'number' },
+                          city2EnforcementScore: { type: 'number' },
+                          confidence: { type: 'string' },
+                          reasoning: { type: 'string' },
+                          sources: { type: 'array', items: { type: 'string' } }
+                        },
+                        required: ['metricId', 'city1LegalScore', 'city1EnforcementScore', 'city2LegalScore', 'city2EnforcementScore', 'confidence', 'reasoning']
+                      }
+                    }
+                  },
+                  required: ['evaluations'],
+                  additionalProperties: false
+                },
+                strict: true
+              }
+            }
           })
         },
         LLM_TIMEOUT_MS
@@ -844,7 +870,8 @@ export async function evaluateWithPerplexity(
       const messages = data.output ?? [];
       const last = messages[messages.length - 1];
       const contentArr = last?.content ?? [];
-      const textPart = contentArr.find((c: { type: string }) => c.type === 'text');
+      // Look for both 'text' and 'output_text' content types
+      const textPart = contentArr.find((c: { type: string }) => c.type === 'text' || c.type === 'output_text');
       let rawText = textPart?.text ?? '';
 
       // Fallback to legacy choices format
@@ -857,11 +884,15 @@ export async function evaluateWithPerplexity(
       }
 
       // Strip <think>...</think> from reasoning models
-      const jsonText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+      rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+      // Check for JSON in code blocks first
+      const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
+      const candidate = codeMatch ? codeMatch[1].trim() : rawText;
 
       // Extract JSON block
-      const match = jsonText.match(/\{[\s\S]*\}$/);
-      if (!match) {
+      const jsonMatch = candidate.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
         throw new Error('No JSON object found in Perplexity output');
       }
 
@@ -869,7 +900,7 @@ export async function evaluateWithPerplexity(
       const extractedCitations: string[] = data.citations || [];
 
       return {
-        content: match[0],
+        content: jsonMatch[0],
         citations: extractedCitations
       };
     });
