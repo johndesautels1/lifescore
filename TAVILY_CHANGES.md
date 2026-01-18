@@ -4,35 +4,87 @@
 
 ---
 
-## STATUS: TAVILY OPTIMIZATIONS IMPLEMENTED ✅
+## STATUS: TAVILY FULL INTEGRATION COMPLETE ✅
 
-**Implemented:** 2026-01-18 (Conversation ID: LS-2026-0117-001)
+**Phase 1 Implemented:** 2026-01-18 - Category-level queries + API optimization
+**Phase 2 Implemented:** 2026-01-18 - Research API + Project Tracking + Advanced Answer
 
 ---
 
-## UPDATED TAVILY INTEGRATION SUMMARY
+## CURRENT TAVILY ARCHITECTURE
 
-### Files Modified:
-| File | Lines | Changes |
-|------|-------|---------|
-| `api/evaluate.ts` | 233-277 | Updated tavilySearch with new parameters |
-| `api/evaluate.ts` | 288-333 | Claude Sonnet: 12 category-level queries + new context injection |
-| `api/evaluate.ts` | 385-430 | GPT-4o: 12 category-level queries + new context injection |
-| `src/services/llmEvaluators.ts` | 166-215 | Updated tavilySearch with new parameters |
-| `src/services/llmEvaluators.ts` | 245-281 | Claude: 12 category-level queries + new context injection |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. TAVILY RESEARCH (once per comparison)                   │
+│     → Comprehensive baseline report for both cities         │
+│     → Model: mini (4-110 credits)                           │
+├─────────────────────────────────────────────────────────────┤
+│  2. TAVILY SEARCH (per category, 12 queries)                │
+│     → Focused queries for each of 6 schema categories       │
+│     → 24 credits per LLM (48 total)                         │
+├─────────────────────────────────────────────────────────────┤
+│  3. LLM CASCADE (Claude Sonnet, GPT-4o)                     │
+│     → Process Tavily context + generate evaluations         │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### NEW Tavily API Configuration:
-- **Endpoint:** `https://api.tavily.com/search`
-- **Search Depth:** `advanced`
-- **Max Results:** 5 (standardized)
-- **Include Answer:** `true` ← NEW (LLM-generated synthesis)
-- **Include Raw Content:** `false`
-- **Chunks Per Source:** 3 ← NEW (pre-chunked snippets)
-- **Topic:** `general`
-- **Date Range:** 2024-01-01 to 2026-01-17 ← NEW
-- **Include Domains:** freedomhouse.org, heritage.org, cato.org, fraserinstitute.org ← NEW
-- **Country:** US ← NEW
-- **Include Usage:** `true` ← NEW (credit tracking)
+---
+
+## FILES MODIFIED
+
+| File | Changes |
+|------|---------|
+| `api/evaluate.ts` | tavilyResearch(), tavilySearch(), TAVILY_HEADERS, Claude + GPT-4o context |
+| `src/services/llmEvaluators.ts` | tavilyResearch(), tavilySearch(), TAVILY_HEADERS, Claude context |
+
+---
+
+## TAVILY API CONFIGURATION
+
+### Project Tracking Header (ALL requests):
+```typescript
+const TAVILY_HEADERS = {
+  'Content-Type': 'application/json',
+  'X-Project-ID': 'lifescore-freedom-app'
+};
+```
+
+### Research API (`/research`):
+```typescript
+{
+  api_key: apiKey,
+  input: "Compare freedom laws...",
+  model: 'mini',           // Cost-effective: 4-110 credits
+  citation_format: 'numbered'
+}
+```
+
+### Search API (`/search`):
+```typescript
+{
+  api_key: apiKey,
+  query: "<category query>",
+  search_depth: 'advanced',
+  max_results: 5,
+  include_answer: 'advanced',  // ← Upgraded from 'true'
+  include_raw_content: false,
+  chunks_per_source: 3,
+  topic: 'general',
+  start_date: '2024-01-01',
+  end_date: '2026-01-17',
+  include_domains: ['freedomhouse.org', 'heritage.org', 'cato.org', 'fraserinstitute.org'],
+  country: 'US',
+  include_usage: true
+}
+```
+
+### Credit Usage Per Comparison:
+| Component | Credits |
+|-----------|---------|
+| Research API (mini) | 4-110 |
+| Search (12 × 2 credits × 2 LLMs) | 48 |
+| **Total** | **52-158** |
+
 - **Timeout:** 180000ms (LLM_TIMEOUT_MS) - UNCHANGED per user request
 
 ### NEW Category-Level Search Queries (12 total per LLM):

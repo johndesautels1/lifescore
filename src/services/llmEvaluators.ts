@@ -164,12 +164,49 @@ Return ONLY the JSON object, no other text.`;
 }
 
 // ============================================================================
-// TAVILY WEB SEARCH (for Claude) - Optimized per Tavily recommendations (2026-01-18)
+// TAVILY API HELPERS - Optimized per Tavily recommendations (2026-01-18)
 // ============================================================================
 
 interface TavilyResult { title: string; url: string; content: string }
 interface TavilyResponse { results: TavilyResult[]; answer?: string }
+interface TavilyResearchResponse { report: string; sources: { title: string; url: string }[] }
 
+const TAVILY_HEADERS = {
+  'Content-Type': 'application/json',
+  'X-Project-ID': 'lifescore-freedom-app'  // Project tracking for usage analytics
+};
+
+// Tavily Research API - Comprehensive baseline report for city comparison
+export async function tavilyResearch(
+  apiKey: string,
+  city1: string,
+  city2: string
+): Promise<TavilyResearchResponse | null> {
+  try {
+    const response = await fetchWithTimeout(
+      'https://api.tavily.com/research',
+      {
+        method: 'POST',
+        headers: TAVILY_HEADERS,
+        body: JSON.stringify({
+          api_key: apiKey,
+          input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
+          model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
+          citation_format: 'numbered'
+        })
+      },
+      LLM_TIMEOUT_MS
+    );
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    return { report: data.report || '', sources: data.sources || [] };
+  } catch {
+    return null;
+  }
+}
+
+// Tavily Search API - Category-level focused queries
 export async function tavilySearch(
   apiKey: string,
   query: string,
@@ -179,15 +216,13 @@ export async function tavilySearch(
     'https://api.tavily.com/search',
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: TAVILY_HEADERS,
       body: JSON.stringify({
         api_key: apiKey,
         query,
         search_depth: 'advanced',
         max_results: maxResults,
-        include_answer: true,           // LLM-generated answer for synthesis
+        include_answer: 'advanced',     // Advanced LLM-generated answer for better synthesis
         include_raw_content: false,     // Keep false, use chunks instead
         chunks_per_source: 3,           // Pre-chunked relevant snippets
         topic: 'general',
@@ -242,7 +277,7 @@ export async function evaluateWithClaude(
   try {
     let searchContext = '';
 
-    // If Tavily key available, perform category-level searches for context (12 total)
+    // If Tavily key available, perform Research + category-level searches (in parallel)
     if (tavilyKey) {
       const searchQueries = [
         // personal_freedom (15 metrics)
@@ -265,19 +300,36 @@ export async function evaluateWithClaude(
         `${city2} freedom speech expression privacy lifestyle regulations 2025`,
       ];
 
-      const searchResults = await Promise.all(
-        searchQueries.map(q => tavilySearch(tavilyKey, q, 5).catch(() => ({ results: [] })))
-      );
+      // Run Research + Search in parallel for speed
+      const [researchResult, ...searchResults] = await Promise.all([
+        tavilyResearch(tavilyKey, city1, city2).catch(() => null),
+        ...searchQueries.map(q => tavilySearch(tavilyKey, q, 5).catch(() => ({ results: [] })))
+      ]);
+
       const allResults = searchResults.flatMap(r => r.results);
       const answers = searchResults.map(r => r.answer).filter(Boolean);
 
-      searchContext = `
-## WEB SEARCH RESULTS (from Tavily)
-${answers.length > 0 ? `**Summary:** ${answers.join(' | ')}\n\n` : ''}
-${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+      // Build context: Research report first, then category searches
+      let contextParts: string[] = [];
 
-Use these search results to inform your evaluation.
-`;
+      if (researchResult?.report) {
+        contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
+${researchResult.report}
+
+**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
+`);
+      }
+
+      if (allResults.length > 0) {
+        contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
+${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+`);
+      }
+
+      if (contextParts.length > 0) {
+        searchContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
+      }
     }
 
     const prompt = searchContext + buildEvaluationPrompt(city1, city2, metrics, false);

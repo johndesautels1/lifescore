@@ -230,10 +230,46 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   }
 }
 
-// Tavily web search helper for Claude - Optimized per Tavily recommendations (2026-01-18)
+// Tavily API helpers - Optimized per Tavily recommendations (2026-01-18)
 interface TavilyResult { title: string; url: string; content: string }
 interface TavilyResponse { results: TavilyResult[]; answer?: string }
+interface TavilyResearchResponse { report: string; sources: { title: string; url: string }[] }
 
+const TAVILY_HEADERS = {
+  'Content-Type': 'application/json',
+  'X-Project-ID': 'lifescore-freedom-app'  // Project tracking for usage analytics
+};
+
+// Tavily Research API - Comprehensive baseline report for city comparison
+async function tavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetchWithTimeout(
+      'https://api.tavily.com/research',
+      {
+        method: 'POST',
+        headers: TAVILY_HEADERS,
+        body: JSON.stringify({
+          api_key: apiKey,
+          input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
+          model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
+          citation_format: 'numbered'
+        })
+      },
+      LLM_TIMEOUT_MS
+    );
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    return { report: data.report || '', sources: data.sources || [] };
+  } catch {
+    return null;
+  }
+}
+
+// Tavily Search API - Category-level focused queries
 async function tavilySearch(query: string, maxResults: number = 5): Promise<TavilyResponse> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) return { results: [] };
@@ -243,13 +279,13 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
       'https://api.tavily.com/search',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: TAVILY_HEADERS,
         body: JSON.stringify({
           api_key: apiKey,
           query,
           search_depth: 'advanced',
           max_results: maxResults,
-          include_answer: true,           // LLM-generated answer for synthesis
+          include_answer: 'advanced',     // Advanced LLM-generated answer for better synthesis
           include_raw_content: false,     // Keep false, use chunks instead
           chunks_per_source: 3,           // Pre-chunked relevant snippets
           topic: 'general',
@@ -285,9 +321,10 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
 
   const startTime = Date.now();
 
-  // Fetch web search context via Tavily - Category-level queries (12 total)
+  // Fetch Tavily context: Research baseline + Category searches (in parallel)
   let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
+    // Step 1: Research API for comprehensive baseline (runs in parallel with searches)
     const searchQueries = [
       // personal_freedom (15 metrics)
       `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
@@ -308,26 +345,44 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
       `${city1} freedom speech expression privacy lifestyle regulations 2025`,
       `${city2} freedom speech expression privacy lifestyle regulations 2025`,
     ];
-    const searchResults = await Promise.all(
-      searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
-    );
+
+    // Run Research + Search in parallel for speed
+    const [researchResult, ...searchResults] = await Promise.all([
+      tavilyResearch(city1, city2).catch(() => null),
+      ...searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
+    ]);
+
     const allResults = searchResults.flatMap(r => r.results);
     const answers = searchResults.map(r => r.answer).filter(Boolean);
-    if (allResults.length > 0) {
-      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)
-${answers.length > 0 ? `**Summary:** ${answers.join(' | ')}\n\n` : ''}
-${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
-Use these search results to inform your evaluation.
-`;
+    // Build context: Research report first, then category searches
+    let contextParts: string[] = [];
+
+    if (researchResult?.report) {
+      contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
+${researchResult.report}
+
+**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
+`);
+    }
+
+    if (allResults.length > 0) {
+      contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
+${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+`);
+    }
+
+    if (contextParts.length > 0) {
+      tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
     }
   }
 
   // CLAUDE-SPECIFIC ADDENDUM
   const claudeAddendum = `
 ## CLAUDE-SPECIFIC INSTRUCTIONS
-- Use the Tavily web search results AND the summary answer above to ground your evaluation
-- Cross-reference the Tavily answer with individual sources for accuracy
+- Use the Tavily Research Report as your primary baseline for comparing ${city1} vs ${city2}
+- Cross-reference with category-specific search results for detailed metrics
 - You excel at nuanced legal interpretation - distinguish between law text vs enforcement reality
 - For ambiguous cases, lean toward the grade that reflects lived experience over technical legality
 `;
@@ -382,7 +437,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
   const startTime = Date.now();
 
-  // Fetch web search context via Tavily - Category-level queries (12 total)
+  // Fetch Tavily context: Research baseline + Category searches (in parallel)
   let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
@@ -405,26 +460,44 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
       `${city1} freedom speech expression privacy lifestyle regulations 2025`,
       `${city2} freedom speech expression privacy lifestyle regulations 2025`,
     ];
-    const searchResults = await Promise.all(
-      searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
-    );
+
+    // Run Research + Search in parallel for speed
+    const [researchResult, ...searchResults] = await Promise.all([
+      tavilyResearch(city1, city2).catch(() => null),
+      ...searchQueries.map(q => tavilySearch(q, 5).catch(() => ({ results: [] })))
+    ]);
+
     const allResults = searchResults.flatMap(r => r.results);
     const answers = searchResults.map(r => r.answer).filter(Boolean);
-    if (allResults.length > 0) {
-      tavilyContext = `## WEB SEARCH RESULTS (from Tavily)
-${answers.length > 0 ? `**Summary:** ${answers.join(' | ')}\n\n` : ''}
-${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
-Use these search results to inform your evaluation.
-`;
+    // Build context: Research report first, then category searches
+    let contextParts: string[] = [];
+
+    if (researchResult?.report) {
+      contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
+${researchResult.report}
+
+**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
+`);
+    }
+
+    if (allResults.length > 0) {
+      contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
+${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+`);
+    }
+
+    if (contextParts.length > 0) {
+      tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
     }
   }
 
   // GPT-4o SPECIFIC ADDENDUM
   const gptAddendum = `
 ## GPT-4o SPECIFIC INSTRUCTIONS
-- Use the Tavily web search results AND the summary answer above to verify current legal status
-- Cross-reference multiple sources when available - prioritize government and legal sources
+- Use the Tavily Research Report as your primary baseline for comparing ${city1} vs ${city2}
+- Cross-reference with category-specific search results for detailed metrics
 - Focus on factual accuracy - be precise with letter grades
 - Avoid defaulting to 'C' when evidence points elsewhere
 `;
