@@ -286,17 +286,17 @@ export async function evaluateWithClaude(
     if (tavilyKey) {
       const searchQueries = [
         // personal_freedom (15 metrics)
-        `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-        `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+        `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025 2026`,
+        `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025 2026`,
         // housing_property (20 metrics)
         `${city1} property rights zoning HOA land use housing regulations 2025`,
         `${city2} property rights zoning HOA land use housing regulations 2025`,
         // business_work (25 metrics)
-        `${city1} business regulations taxes licensing employment labor laws 2025`,
-        `${city2} business regulations taxes licensing employment labor laws 2025`,
+        `${city1} business regulations taxes licensing employment labor laws 2025 2026`,
+        `${city2} business regulations taxes licensing employment labor laws 2025 2026`,
         // transportation (15 metrics)
-        `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-        `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+        `${city1} transportation vehicle regulations transit parking driving laws 2025 2026`,
+        `${city2} transportation vehicle regulations transit parking driving laws 2025 2026`,
         // policing_legal (15 metrics)
         `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
         `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
@@ -333,7 +333,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       }
 
       if (contextParts.length > 0) {
-        searchContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
+        searchContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n\n---\n\n';
       }
     }
 
@@ -365,6 +365,9 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       }
 
       const data = await response.json();
+      if (!data.content || !data.content[0] || !data.content[0].text) {
+        throw new Error('Anthropic returned empty or malformed response');
+      }
       return data.content[0].text;
     });
 
@@ -400,12 +403,40 @@ export async function evaluateWithGPT4o(
   metrics: MetricDefinition[]
 ): Promise<EvaluatorResult> {
   const startTime = Date.now();
+  const provider: LLMProvider = 'gpt-4o';
 
-  // Build system prompt for GPT-4o
-  const systemPrompt = `You are an impartial analyst comparing two cities using factual web data only.
-Use the built-in web_search tool automatically.
-Cite every claim. If evidence is missing, set confidence="low" and explain why.
-Return JSON exactly matching the schema provided.`;
+  // Check circuit breaker
+  if (isCircuitOpen(provider)) {
+    return {
+      provider,
+      success: false,
+      scores: [],
+      error: 'Circuit breaker open - too many recent failures',
+      latencyMs: Date.now() - startTime
+    };
+  }
+
+  // Build system prompt for GPT-4o with full scoring context
+  const systemPrompt = `You are an expert legal analyst comparing two cities on freedom metrics.
+Use the built-in web_search tool to find current, accurate data about laws and regulations.
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
+
+## DUAL SCORING SYSTEM
+For each metric, provide TWO scores:
+1. **Legal Score**: What does the law technically say? Higher = more permissive law
+2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
+
+## IMPORTANT
+- Cite every claim with actual URLs
+- Note differences between federal/state/local laws
+- If evidence is missing, set confidence="low" and explain why
+- Return JSON exactly matching the schema provided`;
 
   // Build user payload (JSON format for GPT-4o)
   // Field names must match output schema expectations (camelCase, city1/city2)
@@ -473,7 +504,7 @@ Return JSON exactly matching the schema provided.`;
                 }
               }
             },
-            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning", "city1Evidence", "city2Evidence"]
+            required: ["metricId", "city1LegalScore", "city1EnforcementScore", "city2LegalScore", "city2EnforcementScore", "confidence", "reasoning"]
           }
         }
       },
@@ -482,50 +513,58 @@ Return JSON exactly matching the schema provided.`;
   };
 
   try {
-    // GPT-4o uses the responses API with built-in web search
-    const response = await fetchWithTimeout(
-      'https://api.openai.com/v1/responses',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+    // GPT-4o uses the responses API with built-in web search (with retry logic)
+    const content = await withRetry(provider, async () => {
+      const response = await fetchWithTimeout(
+        'https://api.openai.com/v1/responses',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            reasoning: { effort: 'medium' },
+            tools: [{ type: 'web_search' }],
+            tool_choice: 'auto',
+            input: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: JSON.stringify(userPayload) }
+            ],
+            text: { format: outputSchema }
+          })
         },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          reasoning: { effort: 'medium' },
-          tools: [{ type: 'web_search' }],
-          tool_choice: 'auto',
-          input: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: JSON.stringify(userPayload) }
-          ],
-          text: { format: outputSchema }
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenAI API error ${response.status}: ${errorText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenAI API error ${response.status}: ${errorText}`);
+      }
 
-    const data = await response.json();
-    // GPT-4o responses API returns output_text instead of choices[0].message.content
-    const content = data.output_text;
+      const data = await response.json();
+      // GPT-4o responses API returns output_text instead of choices[0].message.content
+      if (!data.output_text) {
+        throw new Error('OpenAI returned empty or malformed response');
+      }
+      return data.output_text;
+    });
+
     // Pass city names so evidence items can be properly tagged
-    const scores = parseEvaluationResponse(content, 'gpt-4o', city1, city2);
+    const scores = parseEvaluationResponse(content, provider, city1, city2);
+    recordSuccess(provider);
 
     return {
-      provider: 'gpt-4o',
+      provider,
       success: true,
       scores,
       latencyMs: Date.now() - startTime
     };
   } catch (error) {
+    recordFailure(provider);
     return {
-      provider: 'gpt-4o',
+      provider,
       success: false,
       scores: [],
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -545,53 +584,100 @@ export async function evaluateWithGemini(
   metrics: MetricDefinition[]
 ): Promise<EvaluatorResult> {
   const startTime = Date.now();
+  const provider: LLMProvider = 'gemini-3-pro';
+
+  // Check circuit breaker
+  if (isCircuitOpen(provider)) {
+    return {
+      provider,
+      success: false,
+      scores: [],
+      error: 'Circuit breaker open - too many recent failures',
+      latencyMs: Date.now() - startTime
+    };
+  }
 
   try {
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
-    const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            maxOutputTokens: 16384,
-            temperature: 0.3
-          },
-          // Enable Google Search grounding
-          tools: [{
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: 'MODE_DYNAMIC',
-                dynamicThreshold: 0.3
+    // System instruction for Gemini
+    const systemInstruction = {
+      parts: [{
+        text: 'You are an expert legal analyst evaluating freedom metrics for city comparison. Use Google Search grounding to find current, accurate data about laws and regulations. Be factual and cite sources.'
+      }]
+    };
+
+    const content = await withRetry(provider, async () => {
+      const response = await fetchWithTimeout(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction,
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              maxOutputTokens: 16384,
+              temperature: 0.3
+            },
+            // Safety settings - allow freedom-related content
+            safetySettings: [
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' }
+            ],
+            // Enable Google Search grounding
+            tools: [{
+              googleSearchRetrieval: {
+                dynamicRetrievalConfig: {
+                  mode: 'MODE_DYNAMIC',
+                  dynamicThreshold: 0.3
+                }
               }
-            }
-          }]
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+            }]
+          })
+        },
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini API error ${response.status}: ${errorText}`);
+      }
 
-    const data = await response.json();
-    const content = data.candidates[0].content.parts[0].text;
-    const scores = parseEvaluationResponse(content, 'gemini-3-pro');
+      const data = await response.json();
+
+      // Null checks for Gemini response structure
+      if (!data.candidates || data.candidates.length === 0) {
+        throw new Error('Gemini returned no candidates (possibly blocked by safety filters)');
+      }
+
+      const candidate = data.candidates[0];
+      if (candidate.finishReason === 'SAFETY') {
+        throw new Error('Gemini response blocked by safety filters');
+      }
+
+      if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
+        throw new Error('Gemini returned empty or malformed response');
+      }
+
+      return candidate.content.parts[0].text;
+    });
+
+    const scores = parseEvaluationResponse(content, provider);
+    recordSuccess(provider);
 
     return {
-      provider: 'gemini-3-pro',
+      provider,
       success: true,
       scores,
       latencyMs: Date.now() - startTime
     };
   } catch (error) {
+    recordFailure(provider);
     return {
-      provider: 'gemini-3-pro',
+      provider,
       success: false,
       scores: [],
       error: error instanceof Error ? error.message : 'Unknown error',
