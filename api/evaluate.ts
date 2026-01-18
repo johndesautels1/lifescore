@@ -286,20 +286,48 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
       return Math.max(0, Math.min(100, Math.round(s)));
     };
 
-    return (parsed.evaluations || []).map((e: ParsedEvaluation) => ({
-      metricId: e.metricId,
-      // Convert letter grades to numeric scores (A=100, B=75, C=50, D=25, E=0)
-      city1LegalScore: getScore(e.city1Legal, e.city1LegalScore),
-      city1EnforcementScore: getScore(e.city1Enforcement, e.city1EnforcementScore),
-      city2LegalScore: getScore(e.city2Legal, e.city2LegalScore),
-      city2EnforcementScore: getScore(e.city2Enforcement, e.city2EnforcementScore),
-      confidence: e.confidence || 'medium',
-      reasoning: e.reasoning,
-      sources: e.sources,
-      // Include evidence from LLM web search
-      city1Evidence: e.city1Evidence || [],
-      city2Evidence: e.city2Evidence || []
-    }));
+    // Phase 2: Helper to convert category to score using shared metrics
+    const getCategoryScore = (metricId: string, category: string | undefined): number => {
+      if (!category) return 50;
+      const result = categoryToScore(metricId, category);
+      return result.score ?? 50;
+    };
+
+    return (parsed.evaluations || []).map((e: ParsedEvaluation) => {
+      // Phase 2: If category-based response, use categoryToScore()
+      if (USE_CATEGORY_SCORING && e.city1Category && e.city2Category) {
+        const city1Score = getCategoryScore(e.metricId, e.city1Category);
+        const city2Score = getCategoryScore(e.metricId, e.city2Category);
+        return {
+          metricId: e.metricId,
+          city1LegalScore: city1Score,
+          city1EnforcementScore: city1Score,
+          city2LegalScore: city2Score,
+          city2EnforcementScore: city2Score,
+          confidence: e.confidence || 'medium',
+          reasoning: e.reasoning,
+          sources: e.sources,
+          city1Evidence: e.city1Evidence || [],
+          city2Evidence: e.city2Evidence || []
+        };
+      }
+
+      // Legacy: letter grades or numeric scores
+      return {
+        metricId: e.metricId,
+        // Convert letter grades to numeric scores (A=100, B=75, C=50, D=25, E=0)
+        city1LegalScore: getScore(e.city1Legal, e.city1LegalScore),
+        city1EnforcementScore: getScore(e.city1Enforcement, e.city1EnforcementScore),
+        city2LegalScore: getScore(e.city2Legal, e.city2LegalScore),
+        city2EnforcementScore: getScore(e.city2Enforcement, e.city2EnforcementScore),
+        confidence: e.confidence || 'medium',
+        reasoning: e.reasoning,
+        sources: e.sources,
+        // Include evidence from LLM web search
+        city1Evidence: e.city1Evidence || [],
+        city2Evidence: e.city2Evidence || []
+      };
+    });
   } catch (error) {
     console.error(`Failed to parse ${provider} response:`, error);
     return [];
@@ -468,7 +496,13 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 - For ambiguous cases, lean toward the grade that reflects lived experience over technical legality
 `;
 
-  const prompt = tavilyContext + buildBasePrompt(city1, city2, metrics) + claudeAddendum;
+  // Phase 2: Use category prompt when enabled
+  const basePrompt = USE_CATEGORY_SCORING
+    ? buildCategoryPrompt(city1, city2, metrics as MetricWithCriteria[])
+    : buildBasePrompt(city1, city2, metrics);
+  const prompt = tavilyContext + basePrompt + claudeAddendum;
+
+  console.log(`[EVALUATE] USE_CATEGORY_SCORING=${USE_CATEGORY_SCORING}`);
 
   try {
     const response = await fetchWithTimeout(
