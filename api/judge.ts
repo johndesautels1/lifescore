@@ -9,8 +9,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// Phase 3: Import shared metrics for category-based scoring context
-import { METRICS_MAP, getCategoryOptionsForPrompt } from '../src/shared/metrics';
+// Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
+import { METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics';
 
 // Phase 3: Environment variable toggle (matches api/evaluate.ts)
 const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
