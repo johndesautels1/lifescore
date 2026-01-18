@@ -697,54 +697,80 @@ export async function evaluateWithGrok(
   metrics: MetricDefinition[]
 ): Promise<EvaluatorResult> {
   const startTime = Date.now();
+  const provider: LLMProvider = 'grok-4';
+
+  // Check circuit breaker
+  if (isCircuitOpen(provider)) {
+    return {
+      provider,
+      success: false,
+      scores: [],
+      error: 'Circuit breaker open - too many recent failures',
+      latencyMs: Date.now() - startTime
+    };
+  }
 
   try {
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
-    const response = await fetchWithTimeout(
-      'https://api.x.ai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+    const content = await withRetry(provider, async () => {
+      const response = await fetchWithTimeout(
+        'https://api.x.ai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'grok-4',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.'
+              },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 16384,
+            temperature: 0.3,
+            // Grok has native web search
+            search: true
+          })
         },
-        body: JSON.stringify({
-          model: 'grok-4',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.'
-            },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 16384,
-          temperature: 0.3,
-          // Grok has native web search
-          search: true
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Grok API error ${response.status}: ${errorText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Grok API error ${response.status}: ${errorText}`);
+      }
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    const scores = parseEvaluationResponse(content, 'grok-4');
+      const data = await response.json();
+
+      // Null checks for response structure
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error('Grok returned no choices');
+      }
+      if (!data.choices[0].message || !data.choices[0].message.content) {
+        throw new Error('Grok returned empty or malformed response');
+      }
+
+      return data.choices[0].message.content;
+    });
+
+    const scores = parseEvaluationResponse(content, provider);
+    recordSuccess(provider);
 
     return {
-      provider: 'grok-4',
+      provider,
       success: true,
       scores,
       latencyMs: Date.now() - startTime
     };
   } catch (error) {
+    recordFailure(provider);
     return {
-      provider: 'grok-4',
+      provider,
       success: false,
       scores: [],
       error: error instanceof Error ? error.message : 'Unknown error',
