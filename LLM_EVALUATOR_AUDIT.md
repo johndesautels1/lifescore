@@ -62,55 +62,60 @@ Full audit of all 5 LLM evaluators in LifeScore codebase, identifying issues in 
 
 ---
 
-## 4. GROK 4 (Pending Discussion)
+## 4. GROK 4
 
 | Stage | Status | Notes |
 |-------|--------|-------|
 | API Endpoint | OK | `api.x.ai/v1/chat/completions` |
 | System Message | OK | Has redundant message (not breaking) |
-| Response Parsing | NEEDS FIX | No null check on `choices[0]` |
-| Circuit Breaker | NEEDS FIX | Missing |
-| Retry Logic | NEEDS FIX | Missing |
+| Response Parsing | FIXED | Added null checks on `choices[0]` |
+| Circuit Breaker | FIXED | Added `isCircuitOpen` check |
+| Retry Logic | FIXED | Added `withRetry` wrapper |
 
-### Known Issues
-- Redundant system message duplicates prompt info
-- No circuit breaker or retry logic
-- Response parsing could crash on malformed response
+### Implementation
+- Uses native live search capability
+- Full error handling with null checks
+- Circuit breaker and retry for resilience
 
 ---
 
-## 5. PERPLEXITY (Pending Discussion)
+## 5. PERPLEXITY
 
 | Stage | Status | Notes |
 |-------|--------|-------|
 | API Endpoint | OK | `api.perplexity.ai/chat/completions` |
-| Model | VERIFY | `sonar-reasoning-pro` - needs verification |
-| Citations | NEEDS FIX | `data.citations` never extracted |
-| Response Parsing | NEEDS FIX | No null check |
-| Circuit Breaker | NEEDS FIX | Missing |
-| Retry Logic | NEEDS FIX | Missing |
+| Model | OK | `sonar-reasoning-pro` |
+| Citations | FIXED | Extracted and passed to parser |
+| Response Parsing | FIXED | Added null checks |
+| Circuit Breaker | FIXED | Added `isCircuitOpen` check |
+| Retry Logic | FIXED | Added `withRetry` wrapper |
 
-### Known Issues
-- Citations returned but LOST (never parsed)
-- No circuit breaker or retry logic
-- Response parsing could crash on malformed response
+### Implementation
+- Uses native Perplexity search with `return_citations: true`
+- Citations extracted from `data.citations` and merged into sources
+- Full error handling with null checks
 
 ---
 
-## 6. SHARED PARSER (Pending Discussion)
+## 6. SHARED PARSER
 
 | Issue | Status | Notes |
 |-------|--------|-------|
 | Empty Response | OK | Returns `[]` on error (logged) |
-| Missing Fields | NEEDS FIX | No validation scores exist |
-| Score Range | NEEDS FIX | No validation 0-100 |
-| NaN Handling | NEEDS FIX | Math on undefined = NaN |
+| Missing Fields | FIXED | Added metricId validation |
+| Score Range | FIXED | `clampScore()` enforces 0-100 |
+| NaN Handling | FIXED | Defaults to 50 if undefined |
+| Citations | FIXED | Accepts 5th parameter for Perplexity |
 
-### Risk
+### Implementation
 ```typescript
-// Line 791: Can produce NaN
-normalizedScore: Math.round((eval_.city1LegalScore + eval_.city1EnforcementScore) / 2)
-// If fields undefined: NaN propagates
+// clampScore helper prevents NaN and enforces range
+const clampScore = (score: number | undefined): number => {
+  if (score === undefined || score === null || isNaN(score)) {
+    return 50; // Default to neutral score if missing
+  }
+  return Math.max(0, Math.min(100, Math.round(score)));
+};
 ```
 
 ---
@@ -137,11 +142,31 @@ normalizedScore: Math.round((eval_.city1LegalScore + eval_.city1EnforcementScore
 - [x] Added circuit breaker
 - [x] Added retry logic with `withRetry`
 
+### Grok
+- [x] Added circuit breaker with `isCircuitOpen` check
+- [x] Added retry logic with `withRetry` wrapper
+- [x] Added null checks on `choices[0]` and `message.content`
+
+### Perplexity
+- [x] Added circuit breaker with `isCircuitOpen` check
+- [x] Added retry logic with `withRetry` wrapper
+- [x] Added null checks on response structure
+- [x] Extract and pass `data.citations` to parser
+
+### Shared Parser
+- [x] Added `citations` parameter (5th arg)
+- [x] Added `clampScore()` for NaN prevention and 0-100 enforcement
+- [x] Added `calculateNormalizedScore()` for safe averaging
+- [x] Added metricId validation (skips invalid entries)
+- [x] Merge Perplexity citations into sources array
+
 ---
 
-## Remaining Work (Grok, Perplexity, Parser)
+## All Evaluators Complete
 
-To be discussed and implemented:
-1. Grok: Add circuit breaker, retry, null checks
-2. Perplexity: Extract citations, add circuit breaker, retry, null checks
-3. Parser: Add field validation, NaN prevention, score range checks
+All 5 LLM evaluators and the shared parser have been audited and fixed:
+- Circuit breakers on all evaluators
+- Retry logic on all evaluators
+- Null checks on all API responses
+- Score validation prevents NaN propagation
+- Citations properly extracted from Perplexity

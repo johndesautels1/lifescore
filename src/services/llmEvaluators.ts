@@ -790,54 +790,87 @@ export async function evaluateWithPerplexity(
   metrics: MetricDefinition[]
 ): Promise<EvaluatorResult> {
   const startTime = Date.now();
+  const provider: LLMProvider = 'perplexity';
+
+  // Check circuit breaker
+  if (isCircuitOpen(provider)) {
+    return {
+      provider,
+      success: false,
+      scores: [],
+      error: 'Circuit breaker open - too many recent failures',
+      latencyMs: Date.now() - startTime
+    };
+  }
 
   try {
     const prompt = buildEvaluationPrompt(city1, city2, metrics, true);
 
-    const response = await fetchWithTimeout(
-      'https://api.perplexity.ai/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+    const { content, citations } = await withRetry(provider, async () => {
+      const response = await fetchWithTimeout(
+        'https://api.perplexity.ai/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'sonar-reasoning-pro',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.'
+              },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 16384,
+            temperature: 0.3,
+            // Perplexity has native search
+            return_citations: true
+          })
         },
-        body: JSON.stringify({
-          model: 'sonar-reasoning-pro',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert legal analyst evaluating freedom metrics. Use your web search capabilities to find current laws and regulations.'
-            },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 16384,
-          temperature: 0.3,
-          // Perplexity has native search
-          return_citations: true
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Perplexity API error ${response.status}: ${errorText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Perplexity API error ${response.status}: ${errorText}`);
+      }
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    const scores = parseEvaluationResponse(content, 'perplexity');
+      const data = await response.json();
+
+      // Null checks for response structure
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error('Perplexity returned no choices');
+      }
+      if (!data.choices[0].message || !data.choices[0].message.content) {
+        throw new Error('Perplexity returned empty or malformed response');
+      }
+
+      // Extract citations from response (Perplexity returns these separately)
+      const extractedCitations: string[] = data.citations || [];
+
+      return {
+        content: data.choices[0].message.content,
+        citations: extractedCitations
+      };
+    });
+
+    // Pass citations to parser so they can be attached to scores
+    const scores = parseEvaluationResponse(content, provider, city1, city2, citations);
+    recordSuccess(provider);
 
     return {
-      provider: 'perplexity',
+      provider,
       success: true,
       scores,
       latencyMs: Date.now() - startTime
     };
   } catch (error) {
+    recordFailure(provider);
     return {
-      provider: 'perplexity',
+      provider,
       success: false,
       scores: [],
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -854,7 +887,8 @@ function parseEvaluationResponse(
   response: string,
   provider: LLMProvider,
   city1Name?: string,
-  city2Name?: string
+  city2Name?: string,
+  citations?: string[]
 ): LLMMetricScore[] {
   try {
     // Extract JSON from response (may have markdown code blocks)
@@ -874,10 +908,31 @@ function parseEvaluationResponse(
     const evaluations: LLMEvaluation[] = parsed.evaluations || [];
     const now = new Date().toISOString();
 
+    // Helper: clamp score to 0-100 range and handle NaN
+    const clampScore = (score: number | undefined): number => {
+      if (score === undefined || score === null || isNaN(score)) {
+        return 50; // Default to neutral score if missing
+      }
+      return Math.max(0, Math.min(100, Math.round(score)));
+    };
+
+    // Helper: safely calculate normalized score with NaN prevention
+    const calculateNormalizedScore = (legal: number | undefined, enforcement: number | undefined): number => {
+      const safeLegal = clampScore(legal);
+      const safeEnforcement = clampScore(enforcement);
+      return Math.round((safeLegal + safeEnforcement) / 2);
+    };
+
     // Convert to LLMMetricScore format (one per city per metric)
     const scores: LLMMetricScore[] = [];
 
     evaluations.forEach((eval_: LLMEvaluation) => {
+      // Validate required fields exist
+      if (!eval_.metricId) {
+        console.warn(`Skipping evaluation with missing metricId from ${provider}`);
+        return;
+      }
+
       // Convert GPT-4o evidence to EvidenceItem format for city1
       const city1Evidence = (eval_.city1Evidence || []).map(e => ({
         city: city1Name || 'city1',
@@ -896,32 +951,42 @@ function parseEvaluationResponse(
         retrieved_at: now
       }));
 
-      // City 1 scores
+      // Build sources array, including Perplexity citations if provided
+      let allSources = eval_.sources || [];
+      if (citations && citations.length > 0 && provider === 'perplexity') {
+        allSources = [...allSources, ...citations];
+      }
+
+      // City 1 scores with validation
+      const city1Legal = clampScore(eval_.city1LegalScore);
+      const city1Enforcement = clampScore(eval_.city1EnforcementScore);
       scores.push({
         metricId: eval_.metricId,
-        rawValue: eval_.city1LegalScore,
-        normalizedScore: Math.round((eval_.city1LegalScore + eval_.city1EnforcementScore) / 2),
-        legalScore: eval_.city1LegalScore,
-        enforcementScore: eval_.city1EnforcementScore,
-        confidence: eval_.confidence,
+        rawValue: city1Legal,
+        normalizedScore: calculateNormalizedScore(eval_.city1LegalScore, eval_.city1EnforcementScore),
+        legalScore: city1Legal,
+        enforcementScore: city1Enforcement,
+        confidence: clampScore(eval_.confidence) / 100, // Normalize confidence to 0-1
         llmProvider: provider,
-        explanation: eval_.reasoning,
-        sources: eval_.sources,
+        explanation: eval_.reasoning || '',
+        sources: allSources,
         evidence: city1Evidence.length > 0 ? city1Evidence : undefined,
         city: 'city1'
       });
 
-      // City 2 scores
+      // City 2 scores with validation
+      const city2Legal = clampScore(eval_.city2LegalScore);
+      const city2Enforcement = clampScore(eval_.city2EnforcementScore);
       scores.push({
         metricId: eval_.metricId,
-        rawValue: eval_.city2LegalScore,
-        normalizedScore: Math.round((eval_.city2LegalScore + eval_.city2EnforcementScore) / 2),
-        legalScore: eval_.city2LegalScore,
-        enforcementScore: eval_.city2EnforcementScore,
-        confidence: eval_.confidence,
+        rawValue: city2Legal,
+        normalizedScore: calculateNormalizedScore(eval_.city2LegalScore, eval_.city2EnforcementScore),
+        legalScore: city2Legal,
+        enforcementScore: city2Enforcement,
+        confidence: clampScore(eval_.confidence) / 100, // Normalize confidence to 0-1
         llmProvider: provider,
-        explanation: eval_.reasoning,
-        sources: eval_.sources,
+        explanation: eval_.reasoning || '',
+        sources: allSources,
         evidence: city2Evidence.length > 0 ? city2Evidence : undefined,
         city: 'city2'
       });
