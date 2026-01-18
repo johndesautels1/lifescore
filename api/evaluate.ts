@@ -124,6 +124,95 @@ function letterToScore(grade: string | undefined): number {
   return map[grade.trim()] ?? 50;
 }
 
+// Authoritative sources for LLM web search
+const AUTHORITATIVE_SOURCES = [
+  'norml.org (cannabis laws)',
+  'gunlaws.com (firearm regulations)',
+  'ncsl.org (state legislation)',
+  'ballotpedia.org (ballot measures)',
+  'findlaw.com (legal information)',
+  'justia.com (case law)',
+  'state legislature websites',
+  'city/county government websites'
+];
+
+// Build evaluation prompt with full scoring guidelines (0-100 scale)
+function buildEvaluationPromptWithScoring(
+  city1: string,
+  city2: string,
+  metrics: EvaluationRequest['metrics'],
+  includeSearchInstructions: boolean = false
+): string {
+  const sourcesList = AUTHORITATIVE_SOURCES.map(s => `  - ${s}`).join('\n');
+
+  const searchPreamble = includeSearchInstructions ? `
+IMPORTANT: Use your web search capabilities to find current, accurate data about these cities' laws and regulations.
+
+## PRIORITIZED DATA SOURCES
+Search these authoritative sources FIRST:
+${sourcesList}
+
+Also search official government websites for the specific cities/regions being compared.
+You MUST cite your sources in the "sources" field with actual URLs.
+
+` : '';
+
+  const metricsList = metrics.map(m => `
+- ${m.id}: ${m.name}
+  Category: ${m.categoryId}
+  Description: ${m.description}
+  Scoring: ${m.scoringDirection === 'higher_is_better' ? 'Higher = more freedom' : 'Lower = more freedom'}
+`).join('\n');
+
+  return `${searchPreamble}You are an expert legal analyst evaluating freedom metrics for city comparison.
+
+## TASK
+Evaluate the following metrics for two cities, providing DUAL scores:
+1. **Legal Score (0-100)**: What does the law technically say? Higher = more permissive law
+2. **Enforcement Score (0-100)**: How is the law actually enforced? Higher = more lenient enforcement
+
+## CITIES TO COMPARE
+- City 1: ${city1}
+- City 2: ${city2}
+
+## METRICS TO EVALUATE
+${metricsList}
+
+## OUTPUT FORMAT
+Return a JSON object with this exact structure:
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id_here",
+      "city1LegalScore": 75,
+      "city1EnforcementScore": 70,
+      "city2LegalScore": 60,
+      "city2EnforcementScore": 55,
+      "confidence": "high",
+      "reasoning": "Brief explanation with specific legal references",
+      "sources": ["URL1", "URL2"]
+    }
+  ]
+}
+
+## SCORING GUIDELINES
+- 90-100: Extremely permissive, minimal restrictions (MOST FREE)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (LEAST FREE)
+
+## IMPORTANT
+- Be specific about laws and regulations
+- Note differences between federal/national and local laws
+- Consider recent changes (last 2 years)
+- If uncertain, set confidence to "low" but still provide best estimate
+- Enforcement score may differ significantly from legal score (e.g., law exists but rarely enforced)
+- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+
+Return ONLY the JSON object, no other text.`;
+}
+
 interface EvaluationResponse {
   provider: LLMProvider;
   success: boolean;
@@ -213,7 +302,7 @@ function buildCategoryPrompt(city1: string, city2: string, metrics: MetricWithCr
   Description: ${m.description}
   Direction: ${m.scoringDirection === 'higher_is_better' ? 'Higher = more freedom' : 'Lower = more freedom'}
   **CATEGORY OPTIONS (choose EXACTLY one value for each city):**
-${options}`;
+${options.map(o => `    - "${o.value}": ${o.label} → ${o.score} points`).join('\n')}`;
   }).join('\n');
 
   return `You are an expert legal analyst evaluating freedom metrics for city comparison.
@@ -262,6 +351,9 @@ function buildPrompt(city1: string, city2: string, metrics: EvaluationRequest['m
 // Supports both A/B/C/D/E letter grades (preferred) and legacy numeric scores
 function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   try {
+    // Log first 500 chars of raw response for debugging
+    console.log(`[PARSE] ${provider} raw response (first 500):`, content.substring(0, 500));
+
     let jsonStr = content;
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -274,6 +366,13 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
     }
 
     const parsed = JSON.parse(jsonStr) as { evaluations?: ParsedEvaluation[] };
+
+    // Log what format was detected
+    const hasCategories = parsed.evaluations?.some(e => e.city1Category && e.city2Category);
+    const hasLetters = parsed.evaluations?.some(e => e.city1Legal || e.city2Legal);
+    const hasNumbers = parsed.evaluations?.some(e => typeof e.city1LegalScore === 'number');
+    console.log(`[PARSE] ${provider} format: categories=${hasCategories}, letters=${hasLetters}, numbers=${hasNumbers}`);
+    console.log(`[PARSE] ${provider} returned ${parsed.evaluations?.length || 0} evaluations`);
 
     // Helper: Convert letter grade to score, or clamp numeric score
     const getScore = (letter: string | undefined, numeric: number | undefined): number => {
@@ -494,6 +593,14 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 - Cross-reference with category-specific search results for detailed metrics
 - You excel at nuanced legal interpretation - distinguish between law text vs enforcement reality
 - For ambiguous cases, lean toward the grade that reflects lived experience over technical legality
+- You MUST return evaluations for ALL ${metrics.length} metrics
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -608,13 +715,25 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     }
   }
 
-  // GPT-4o SPECIFIC ADDENDUM
+  // GPT-4o SPECIFIC ADDENDUM with full scoring guidelines
   const gptAddendum = `
 ## GPT-4o SPECIFIC INSTRUCTIONS
 - Use the Tavily Research Report as your primary baseline for comparing ${city1} vs ${city2}
 - Cross-reference with category-specific search results for detailed metrics
-- Focus on factual accuracy - be precise with letter grades
-- Avoid defaulting to 'C' when evidence points elsewhere
+- Focus on factual accuracy - be precise with scores
+- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
+
+## DUAL SCORING SYSTEM
+For each metric, provide TWO scores:
+1. **Legal Score**: What does the law technically say? Higher = more permissive law
+2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -636,7 +755,26 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
         body: JSON.stringify({
           model: 'gpt-4o',
           messages: [
-            { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Use the provided web search results to inform your evaluation. Return only valid JSON.' },
+            { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
+Use the provided web search results to find current, accurate data about laws and regulations.
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
+
+## DUAL SCORING SYSTEM
+For each metric, provide TWO scores:
+1. **Legal Score**: What does the law technically say? Higher = more permissive law
+2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
+
+## IMPORTANT
+- Cite every claim with actual URLs
+- Note differences between federal/state/local laws
+- If evidence is missing, set confidence="low" and explain why
+- Return JSON exactly matching the schema provided` },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
@@ -682,7 +820,22 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 - Apply your "Thinking" reasoning to distinguish between legal text and enforcement reality
 - For Policing & Legal metrics (pl_*), spend extra reasoning time on contradictory data
 - You have the full context window - maintain consistency across all ${metrics.length} metrics
+- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
 `;
+
+  // Gemini system instruction
+  const systemInstruction = {
+    parts: [{
+      text: 'You are an expert legal analyst evaluating freedom metrics for city comparison. Use Google Search grounding to find current, accurate data about laws and regulations. Be factual and cite sources. You MUST evaluate ALL metrics provided.'
+    }]
+  };
 
   // Phase 2: Use category prompt when enabled
   const basePrompt = USE_CATEGORY_SCORING
@@ -697,8 +850,16 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          systemInstruction,
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { maxOutputTokens: 16384, temperature: 0.3 },
+          // Safety settings - allow freedom-related content
+          safetySettings: [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' }
+          ],
           // Enable Google Search grounding for real-time web data
           tools: [{
             google_search: {}
@@ -744,6 +905,14 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 - Prioritize recent posts (2024-2026) about actual encounters with laws and police
 - X posts often reveal enforcement reality that differs from official policy
 - Weight anecdotal enforcement data alongside official legal sources
+- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -764,7 +933,19 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
         body: JSON.stringify({
           model: 'grok-4',
           messages: [
-            { role: 'system', content: 'You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.' },
+            {
+              role: 'system',
+              content: `You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
+
+You MUST evaluate ALL metrics provided and return valid JSON.`
+            },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
@@ -811,6 +992,14 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 - Cite specific laws, statutes, or official government sources when possible
 - Your strength is verified, citation-backed research - leverage it
 - For enforcement scores, look for news articles about actual enforcement actions
+- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive, minimal restrictions (most free)
+- 70-89: Generally permissive with some limitations
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive or prohibited (least free)
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -831,7 +1020,19 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
         body: JSON.stringify({
           model: 'sonar-reasoning-pro',
           messages: [
-            { role: 'system', content: 'You are a scoring engine. Return ONLY valid JSON with no additional text.' },
+            {
+              role: 'system',
+              content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
+
+## SCORING SCALE (0-100)
+- 90-100: Extremely permissive (most free)
+- 70-89: Generally permissive
+- 50-69: Moderate restrictions
+- 30-49: Significant restrictions
+- 0-29: Highly restrictive (least free)
+
+Return ONLY valid JSON matching the exact format requested. Evaluate ALL metrics.`
+            },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
