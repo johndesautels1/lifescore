@@ -299,10 +299,23 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved }) => {
         </button>
       </div>
 
+      {result.warning && (
+        <div className="results-warning card" style={{
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffc107',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '16px'
+        }}>
+          <strong style={{ color: '#856404' }}>Note:</strong>{' '}
+          <span style={{ color: '#856404' }}>{result.warning}</span>
+        </div>
+      )}
+
       <div className="results-footer card">
         <h4>About This Analysis</h4>
         <p>
-          This LIFE SCORE™ comparison analyzed <strong>100 legal freedom metrics</strong> across 
+          This LIFE SCORE™ comparison analyzed <strong>100 legal freedom metrics</strong> across
           6 categories. Each metric was verified using real-time web search to ensure accuracy.
         </p>
         <p>

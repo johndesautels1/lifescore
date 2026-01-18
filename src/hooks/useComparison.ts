@@ -203,8 +203,9 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
       // Collect all metric scores from API responses
       const city1MetricScores: MetricScore[] = [];
       const city2MetricScores: MetricScore[] = [];
+      const failedCategories: string[] = [];
 
-      // Process each category
+      // Process each category - continue even if one fails
       for (let i = 0; i < CATEGORIES.length; i++) {
         // Check if this comparison was cancelled before starting category
         if (currentController.signal.aborted) {
@@ -242,9 +243,8 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         const abortHandler = () => fetchController.abort();
         currentController.signal.addEventListener('abort', abortHandler);
 
-        let response: Response;
         try {
-          response = await fetch('/api/evaluate', {
+          const response = await fetch('/api/evaluate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -255,54 +255,78 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
             }),
             signal: fetchController.signal
           });
-        } finally {
+
           clearTimeout(timeoutId);
           currentController.signal.removeEventListener('abort', abortHandler);
-        }
 
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const apiResponse: APIEvaluationResponse = await response.json();
-
-        // FIX: Actually parse and store the scores from API response
-        if (apiResponse.success && apiResponse.scores) {
-          for (const score of apiResponse.scores) {
-            // Calculate normalized score as average of legal and enforcement
-            const city1NormalizedScore = Math.round(
-              (score.city1LegalScore + score.city1EnforcementScore) / 2
-            );
-            const city2NormalizedScore = Math.round(
-              (score.city2LegalScore + score.city2EnforcementScore) / 2
-            );
-
-            // Map confidence string to type
-            let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'medium';
-            if (score.confidence === 'high') confidence = 'high';
-            else if (score.confidence === 'low') confidence = 'low';
-
-            // City 1 score
-            city1MetricScores.push({
-              metricId: score.metricId,
-              rawValue: score.city1LegalScore,
-              normalizedScore: city1NormalizedScore,
-              confidence,
-              source: 'LLM Evaluation',
-              notes: score.reasoning
-            });
-
-            // City 2 score
-            city2MetricScores.push({
-              metricId: score.metricId,
-              rawValue: score.city2LegalScore,
-              normalizedScore: city2NormalizedScore,
-              confidence,
-              source: 'LLM Evaluation',
-              notes: score.reasoning
-            });
+          if (!response.ok) {
+            console.warn(`Category ${category.shortName} API error: ${response.status}`);
+            failedCategories.push(category.shortName);
+            continue; // Continue to next category
           }
+
+          const apiResponse: APIEvaluationResponse = await response.json();
+
+          // Parse and store the scores from API response
+          if (apiResponse.success && apiResponse.scores) {
+            for (const score of apiResponse.scores) {
+              // Calculate normalized score as average of legal and enforcement
+              const city1NormalizedScore = Math.round(
+                (score.city1LegalScore + score.city1EnforcementScore) / 2
+              );
+              const city2NormalizedScore = Math.round(
+                (score.city2LegalScore + score.city2EnforcementScore) / 2
+              );
+
+              // Map confidence string to type
+              let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'medium';
+              if (score.confidence === 'high') confidence = 'high';
+              else if (score.confidence === 'low') confidence = 'low';
+
+              // City 1 score
+              city1MetricScores.push({
+                metricId: score.metricId,
+                rawValue: score.city1LegalScore,
+                normalizedScore: city1NormalizedScore,
+                confidence,
+                source: 'LLM Evaluation',
+                notes: score.reasoning
+              });
+
+              // City 2 score
+              city2MetricScores.push({
+                metricId: score.metricId,
+                rawValue: score.city2LegalScore,
+                normalizedScore: city2NormalizedScore,
+                confidence,
+                source: 'LLM Evaluation',
+                notes: score.reasoning
+              });
+            }
+          } else {
+            console.warn(`Category ${category.shortName} returned no scores`);
+            failedCategories.push(category.shortName);
+          }
+        } catch (categoryError) {
+          clearTimeout(timeoutId);
+          currentController.signal.removeEventListener('abort', abortHandler);
+
+          // If user cancelled, exit completely
+          if (currentController.signal.aborted) {
+            return;
+          }
+
+          // Log error but continue to next category
+          const errorMsg = categoryError instanceof Error ? categoryError.message : 'Unknown error';
+          console.warn(`Category ${category.shortName} failed: ${errorMsg}`);
+          failedCategories.push(category.shortName);
+          // Continue to next category instead of throwing
         }
+      }
+
+      // Check if we have ANY data to show
+      if (city1MetricScores.length === 0) {
+        throw new Error(`All categories failed: ${failedCategories.join(', ')}`);
       }
 
       // Final progress update
@@ -370,7 +394,11 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         scoreDifference: Math.round(scoreDifference),
         categoryWinners,
         comparisonId: `LIFE-STD-${Date.now().toString(36).toUpperCase()}`,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        // Add warning if some categories failed
+        ...(failedCategories.length > 0 && {
+          warning: `Partial results: ${failedCategories.join(', ')} category(s) failed or timed out. Showing ${city1MetricScores.length}/${ALL_METRICS.length} metrics.`
+        })
       };
 
       // Only update state if this comparison wasn't cancelled

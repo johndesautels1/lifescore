@@ -117,6 +117,7 @@ export interface ComparisonResult {
   categoryWinners: Record<CategoryId, 'city1' | 'city2' | 'tie'>;
   comparisonId: string;
   generatedAt: string;
+  warning?: string; // Optional warning about partial data or failures
 }
 
 // ============================================================================
