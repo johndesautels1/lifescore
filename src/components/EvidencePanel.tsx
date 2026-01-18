@@ -9,8 +9,6 @@ import './EvidencePanel.css';
 
 interface EvidencePanelProps {
   result: EnhancedComparisonResult | null;
-  isVisible: boolean;
-  onClose: () => void;
 }
 
 interface CollectedEvidence {
@@ -20,11 +18,11 @@ interface CollectedEvidence {
   evidence: EvidenceItem[];
 }
 
-const EvidencePanel: React.FC<EvidencePanelProps> = ({ result, isVisible, onClose }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
+  const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed
   const [filterCity, setFilterCity] = useState<'all' | 'city1' | 'city2'>('all');
 
-  if (!isVisible || !result) return null;
+  if (!result) return null;
 
   // Collect all evidence from the result
   const collectEvidence = (): CollectedEvidence[] => {
@@ -81,7 +79,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result, isVisible, onClos
 
   return (
     <div className={`evidence-panel-container ${isCollapsed ? 'collapsed' : ''}`}>
-      {/* Header - Always visible */}
+      {/* Header - Always visible, click to expand/collapse */}
       <div className="evidence-panel-header">
         <button
           className="evidence-toggle-btn"
@@ -92,10 +90,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result, isVisible, onClos
             Evidence & Citations
             <span className="evidence-count">({uniqueUrls.size} sources)</span>
           </span>
-          <span className={`collapse-arrow ${isCollapsed ? '' : 'expanded'}`}>▲</span>
-        </button>
-        <button className="evidence-close-btn" onClick={onClose} title="Close panel">
-          ✕
+          <span className={`collapse-arrow ${isCollapsed ? '' : 'expanded'}`}>▼</span>
         </button>
       </div>
 

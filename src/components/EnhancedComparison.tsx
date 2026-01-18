@@ -16,6 +16,7 @@ import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
 import { updateOGMetaTags } from '../hooks/useOGMeta';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { DataSourcesModal } from './DataSourcesModal';
+import EvidencePanel from './EvidencePanel';
 import './EnhancedComparison.css';
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
@@ -887,6 +888,8 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
 interface EnhancedResultsProps {
   result: EnhancedComparisonResult;
   dealbreakers?: string[];
+  showEvidence?: boolean;
+  onToggleEvidence?: () => void;
 }
 
 // Helper to calculate top metric differences
@@ -1546,6 +1549,9 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           );
         })}
       </div>
+
+      {/* Evidence & Citations Panel - Collapsible */}
+      <EvidencePanel result={result} />
 
       {/* Action Buttons */}
       <div className="enhanced-actions card">
