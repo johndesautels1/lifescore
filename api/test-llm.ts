@@ -204,10 +204,11 @@ async function testPerplexity(): Promise<{ success: boolean; message: string; la
     // Handle new output[] format or legacy choices[] format
     const messages = data.output ?? [];
     const last = messages[messages.length - 1];
-    const textPart = last?.content?.find((c: { type: string }) => c.type === 'text');
+    // Check for both 'text' and 'output_text' content types
+    const textPart = last?.content?.find((c: { type: string }) => c.type === 'text' || c.type === 'output_text');
     let content = textPart?.text || data.choices?.[0]?.message?.content || 'ok';
     // Strip <think> tags from reasoning models
-    content = content.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+    content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
     return { success: true, message: `Response: ${content.slice(0, 50)}`, latencyMs };
   } catch (error) {
     return { success: false, message: String(error), latencyMs: Date.now() - startTime };
