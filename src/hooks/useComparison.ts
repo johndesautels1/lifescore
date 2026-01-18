@@ -6,7 +6,7 @@
  * instead of random/hardcoded values
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   ComparisonState,
   CategoryId,
@@ -166,11 +166,29 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
     status: 'idle'
   });
 
+  // Track current comparison's abort controller for cleanup
+  const comparisonControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup: abort any in-progress comparison when component unmounts
+  useEffect(() => {
+    return () => {
+      comparisonControllerRef.current?.abort();
+    };
+  }, []);
+
   /**
    * Run comparison between two cities using real LLM APIs
    * FIX: Now properly collects and uses API response data
+   * FIX: Added AbortController cleanup for unmount and new comparison scenarios
    */
   const compare = useCallback(async (city1: string, city2: string) => {
+    // Abort any previous comparison in progress (prevents race conditions)
+    comparisonControllerRef.current?.abort();
+
+    // Create new abort controller for this comparison
+    const currentController = new AbortController();
+    comparisonControllerRef.current = currentController;
+
     // Start loading
     setState({
       status: 'loading',
@@ -188,6 +206,11 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
 
       // Process each category
       for (let i = 0; i < CATEGORIES.length; i++) {
+        // Check if this comparison was cancelled before starting category
+        if (currentController.signal.aborted) {
+          return; // Silent return - new comparison taking over or unmounting
+        }
+
         const category = CATEGORIES[i];
 
         setState(prev => ({
@@ -212,8 +235,12 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
           }));
 
         // Call API for this category's metrics with 240s timeout (must exceed server 180s)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 240000);
+        const fetchController = new AbortController();
+        const timeoutId = setTimeout(() => fetchController.abort(), 240000);
+
+        // Link: if comparison is cancelled, also abort this fetch
+        const abortHandler = () => fetchController.abort();
+        currentController.signal.addEventListener('abort', abortHandler);
 
         let response: Response;
         try {
@@ -226,10 +253,11 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
               city2,
               metrics: categoryMetrics
             }),
-            signal: controller.signal
+            signal: fetchController.signal
           });
         } finally {
           clearTimeout(timeoutId);
+          currentController.signal.removeEventListener('abort', abortHandler);
         }
 
         if (!response.ok) {
@@ -345,15 +373,22 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         generatedAt: new Date().toISOString()
       };
 
-      setState({
-        status: 'success',
-        result
-      });
+      // Only update state if this comparison wasn't cancelled
+      if (!currentController.signal.aborted) {
+        setState({
+          status: 'success',
+          result
+        });
+      }
     } catch (error) {
-      setState({
-        status: 'error',
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      });
+      // Only show error if this comparison wasn't intentionally cancelled
+      // (cancelled = user started new comparison or navigated away)
+      if (!currentController.signal.aborted) {
+        setState({
+          status: 'error',
+          error: error instanceof Error ? error.message : 'An unexpected error occurred'
+        });
+      }
     }
   }, []);
 
