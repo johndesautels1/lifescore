@@ -334,6 +334,11 @@ function parseOpusResponse(content: string): OpusResponse | null {
       console.error('Opus response is not an object');
       return null;
     }
+    // FIX: Validate judgments is an array if present
+    if (parsed.judgments !== undefined && !Array.isArray(parsed.judgments)) {
+      console.error('Opus response judgments is not an array');
+      return null;
+    }
     return parsed as OpusResponse;
   } catch (error) {
     // FIX: Log parse errors instead of silent failure

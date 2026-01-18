@@ -92,7 +92,7 @@ const PERSONAL_FREEDOM_METRICS: MetricDefinition[] = [
     scoringDirection: 'higher_is_better',
     dataType: 'categorical',
     searchQueries: [
-      '{city} cannabis marijuana legal status 2024 2025',
+      '{city} cannabis marijuana legal status 2024 2025 2026',
       '{city} recreational marijuana laws current'
     ],
     scoringCriteria: {
@@ -967,7 +967,7 @@ const BUSINESS_WORK_METRICS: MetricDefinition[] = [
     dataType: 'numeric',
     unit: 'currency_per_hour',
     searchQueries: [
-      '{city} {state} minimum wage current 2024 2025',
+      '{city} {state} minimum wage current 2024 2025 2026',
       '{city} hourly minimum wage rate'
     ],
     scoringCriteria: {

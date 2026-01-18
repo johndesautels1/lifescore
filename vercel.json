@@ -7,6 +7,12 @@
     },
     "api/judge.ts": {
       "maxDuration": 300
+    },
+    "api/health.ts": {
+      "maxDuration": 30
+    },
+    "api/test-llm.ts": {
+      "maxDuration": 60
     }
   },
   "buildCommand": "npm run build",

@@ -122,7 +122,7 @@ Evaluate the following metrics for two cities. For EACH metric, provide TWO lett
 1. **Legal Grade**: What does the law technically say?
 2. **Enforcement Grade**: How is the law actually enforced in practice?
 
-## CITIES TO COMPARE (Year: 2026)
+## CITIES TO COMPARE (Year: ${new Date().getFullYear()})
 - City 1: ${city1}
 - City 2: ${city2}
 

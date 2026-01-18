@@ -1124,7 +1124,7 @@ async function evaluateCategoryBatch(
     // Provide clearer error message for timeout
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMsg = isTimeout
-      ? `Request timed out after 90 seconds for ${provider}/${categoryId}`
+      ? `Request timed out after ${CLIENT_TIMEOUT_MS / 1000} seconds for ${provider}/${categoryId}`
       : (error instanceof Error ? error.message : 'Unknown error');
 
     console.error(`[CLIENT] ${provider}/${categoryId} fetch error:`, errorMsg);
