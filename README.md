@@ -292,6 +292,61 @@ ea7537c Fix Vercel serverless import issue
 
 ---
 
+## ISSUE #9: Duplicate Judge Code - DETAILED ANALYSIS
+
+**Root Cause Identified: 2026-01-20**
+
+### Problem: Two Separate Judge Implementations
+
+| Path | File | How Called | Lines |
+|------|------|------------|-------|
+| Server | `api/judge.ts` | `fetch('/api/judge')` | ~500 |
+| Client | `src/services/opusJudge.ts` | `runOpusJudge()` direct | ~629 |
+
+### Duplicated Functions (~600 lines)
+- `fetchWithTimeout()`
+- `calculateMean/StdDev/Median()`
+- `buildMetricConsensus()`
+- `aggregateScoresByMetric()` variants
+- `JUDGE_PROMPT_TEMPLATE`
+- `parseOpusResponse()`
+- `mergeOpusJudgments()`
+
+### Current Usage
+- `EnhancedComparison.tsx:195` → calls `/api/judge` (server)
+- `enhancedComparison.ts:218` → calls `runOpusJudge()` (client direct)
+
+### Chosen Fix: Option A - Server-Only Judge
+
+**Changes Required:**
+1. Modify `src/services/opusJudge.ts`:
+   - Remove duplicate logic (fetchWithTimeout, stats functions, API call)
+   - Replace `runOpusJudge()` to call `/api/judge` endpoint instead
+   - Keep `buildCategoryConsensuses()` (needed client-side for result building)
+   - Keep `buildEnhancedResultFromJudge()` (needed client-side for result building)
+
+2. Ensure `api/judge.ts` returns all data needed by client
+
+3. Update `src/services/enhancedComparison.ts:218` to use new pattern
+
+### Files to Modify
+- `src/services/opusJudge.ts` - Major refactor
+- `src/services/enhancedComparison.ts` - Update call pattern
+- `api/judge.ts` - Verify response shape
+
+### Testing Requirements (MANDATORY)
+- [ ] TypeScript compiles with zero errors (`npx tsc --noEmit`)
+- [ ] All 5 LLM buttons work in EnhancedComparison UI
+- [ ] enhancedComparison.ts service flow works
+- [ ] Judge returns correct consensus scores
+- [ ] No runtime errors in browser console
+- [ ] Vercel deployment succeeds
+- [ ] Full attestation required before merge
+
+**Priority:** MEDIUM - Tech debt, risk of code drift
+
+---
+
 ## LICENSE
 
 UNLICENSED - Clues Intelligence LTD
