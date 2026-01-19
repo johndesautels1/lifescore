@@ -85,7 +85,69 @@ curl --request GET \
 ```
 
 ### 3. GET /themes - List Available Themes
+
+```bash
+curl -X GET https://public-api.gamma.app/v1.0/themes \
+     -H "X-API-KEY: sk-gamma-xxxxxxxx"
+```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string (optional) | Search by name (case-insensitive) |
+| `limit` | integer (optional) | Items per page (max 50) |
+| `after` | string (optional) | Cursor for pagination |
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "abcdefghi",
+      "name": "Prism",
+      "type": "custom",
+      "colorKeywords": ["light", "blue", "pink"],
+      "toneKeywords": ["playful", "friendly"]
+    }
+  ],
+  "hasMore": true,
+  "nextCursor": "abc123def456"
+}
+```
+
+**Theme types:**
+- `standard` - Global themes available to all
+- `custom` - Workspace-specific themes
+
 ### 4. GET /folders - List Folders
+
+```bash
+curl -X GET https://public-api.gamma.app/v1.0/folders \
+     -H "X-API-KEY: sk-gamma-xxxxxxxx"
+```
+
+**Query Parameters:** Same as themes (`query`, `limit`, `after`)
+
+**Response:**
+```json
+{
+  "data": [
+    { "id": "abc123def456", "name": "LIFE SCORE Reports" }
+  ],
+  "hasMore": false,
+  "nextCursor": null
+}
+```
+
+### 5. POST /generations/from-template - Create from Template (BETA)
+
+```bash
+curl --request POST \
+     --url https://public-api.gamma.app/v1.0/generations/from-template \
+     --header 'Content-Type: application/json' \
+     --header 'X-API-KEY: sk-gamma-xxxxxxxx' \
+     --data '{ "gammaId": "g_xxx", "prompt": "..." }'
+```
 
 ---
 
@@ -162,6 +224,89 @@ curl --request GET \
 | `externalAccess` | `noAccess`, `view`, `comment`, `edit` | External access |
 | `emailOptions.recipients` | string[] | Email addresses to share with |
 | `emailOptions.access` | `view`, `comment`, `edit`, `fullAccess` | Recipient access level |
+
+---
+
+## TEMPLATES API (BETA) - RECOMMENDED FOR LIFE SCORE
+
+The Templates API allows us to create a master template once, then inject data for consistent reports.
+
+### Endpoint
+
+```bash
+POST https://public-api.gamma.app/v1.0/generations/from-template
+```
+
+### Why Templates > Regular API
+
+| Aspect | Regular API | Templates API |
+|--------|-------------|---------------|
+| Structure | AI decides layout | **Template defines layout** |
+| Consistency | Varies each time | **Uniform every report** |
+| Branding | Must specify each call | **Locked into template** |
+| Speed | More AI processing | **Faster generation** |
+| Token usage | Higher | **Lower (structure pre-defined)** |
+
+### Template API Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `gammaId` | **Yes** | Template ID (from Gamma app) |
+| `prompt` | **Yes** | Data + instructions to inject |
+| `themeId` | No | Override template theme |
+| `folderIds` | No | Storage folders |
+| `exportAs` | No | `pdf` or `pptx` |
+| `imageOptions.model` | No | AI image model |
+| `imageOptions.style` | No | Image style (1-500 chars) |
+| `sharingOptions` | No | Same as regular API |
+
+### Finding gammaId
+
+1. Open template in Gamma app
+2. Copy from URL or settings panel
+3. Format: `g_abcdef123456ghi`
+
+### Example Request
+
+```json
+{
+  "gammaId": "g_lifescore_comparison_v1",
+  "prompt": "Create LIFE SCORE comparison report:\n\nCities: Austin, TX vs Miami, FL\nWinner: Austin (72 vs 65)\n\nPersonal Freedom: Austin 78, Miami 71\n- Cannabis: Austin 85, Miami 45\n- Alcohol: Austin 70, Miami 75\n\nHousing & Property: Austin 65, Miami 58\n...\n\nUse these city images:\nhttps://example.com/austin.jpg\nhttps://example.com/miami.jpg",
+  "exportAs": "pdf",
+  "imageOptions": {
+    "model": "imagen-4-pro",
+    "style": "professional infographics, data visualization"
+  }
+}
+```
+
+### Master Template Design (Create in Gamma App)
+
+**Card 1: Hero**
+- Title placeholder: "[City1] vs [City2]"
+- Winner badge area
+- Overall scores display
+- City imagery slots
+
+**Card 2: Radar Chart**
+- All 6 categories compared
+- Visual legend
+
+**Cards 3-8: Category Breakdowns**
+- Category name + scores
+- Top 3 metrics highlighted
+- Bar chart comparison
+- Evidence sources
+
+**Card 9: Winner Summary**
+- Final verdict
+- Key takeaways
+- Score differential
+
+**Card 10: Clues CTA**
+- "Ask Olivia" prompt
+- More reports available
+- Clues ecosystem links
 
 ---
 
