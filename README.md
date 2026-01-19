@@ -39,8 +39,8 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 | Per-metric evidence displays correctly | NEEDS TEST |
 
 ### Next Session - Remaining Items
-See Master Issue Table below for items #19-52:
-- #19: Saved button persistence
+See Master Issue Table below for items #23-52:
+- ~~#19: Saved button persistence~~ **FIXED** (commit 1e94321)
 - #23-29: Branding to "Clues Intelligence LTD"
 - #30-36: Olivia AI features
 - #37-39: Reports (Gamma API)
@@ -267,6 +267,7 @@ ea7537c Fix Vercel serverless import issue
 | **#11 opusJudge.ts divergence** | ✅ FIXED | Covered by #9 - duplicate code removed |
 | **#12 LLMProvider type** | NO ISSUE | Type is correct |
 | **#13 EnhancedComparison hardcoded** | ✅ FIXED | Covered by #5 fix - commit 427baa4 |
+| **#19 Saved button persistence** | ✅ FIXED | Deterministic IDs based on city pair - commit 1e94321 |
 
 ---
 
