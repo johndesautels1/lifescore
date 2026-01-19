@@ -249,6 +249,8 @@ ea7537c Fix Vercel serverless import issue
 | Perplexity fails | FIX DEPLOYED | Removed strict JSON schema |
 | Opus runs too fast | DEBUG ADDED | Check [JUDGE] logs |
 | Only ~25% metrics returned | MONITORING | Added debug logging |
+| **Per-metric evidence hardcoded** | BUG | EnhancedComparison.tsx:1529-1536 shows same sources for all metrics instead of actual LLM-cited sources |
+| **Identical Law/Reality scores** | BUG | LLM returning identical Legal Score and Enforcement Score for all 100 fields - should vary per metric |
 
 ---
 
