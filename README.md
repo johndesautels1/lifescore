@@ -6,9 +6,148 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
-## CURRENT STATUS (January 19, 2026)
+## CURRENT STATUS (January 20, 2026)
 
-### Latest Session: 2026-01-19
+### Latest Session: 2026-01-20
+**Conversation ID:** `LIFESCORE-2026-0120-PERPLEXITY-INCREMENTAL`
+
+---
+
+## 🚨 HANDOFF: INCREMENTAL LLM ADDITION FEATURE 🚨
+
+**Date:** 2026-01-20
+**Issue:** User cannot add more LLMs after initial results display
+**Status:** DESIGN COMPLETE, IMPLEMENTATION PENDING
+
+### Problem Statement
+
+After running Enhanced Mode comparison:
+1. User selects cities → clicks LLM(s) → results appear
+2. App auto-switches to Results tab
+3. **LLMSelector disappears** - only exists on Compare tab
+4. User cannot add more LLMs without starting over
+5. Completed LLM states are lost when switching tabs
+6. No visual indication of which LLMs contributed to current results
+
+### CRITICAL: Gamma Timing Issue
+
+⚠️ **Gamma reports cost money per generation** ⚠️
+
+If we allow incremental LLM addition:
+- Adding each new LLM could trigger a new Gamma report
+- This would be EXTREMELY expensive
+- Need explicit user control over when Gamma generates
+
+**Proposed Solution:**
+1. Do NOT auto-trigger Gamma on LLM completion
+2. Add explicit "Generate Report" button on Results tab
+3. Only call Gamma when user clicks that button
+4. Show clear indicator: "Report will include results from X LLMs"
+
+### Affected Files (MORE than initially thought)
+
+| File | Impact | Changes Needed |
+|------|--------|----------------|
+| `src/App.tsx` | HIGH | Lift `llmStates` to App level, pass to Results tab |
+| `src/components/EnhancedComparison.tsx` | HIGH | Extract `AddMoreLLMs` component, modify `LLMSelector` |
+| `src/components/EnhancedResults.tsx` (inside EnhancedComparison.tsx) | HIGH | Add "Add More Models" section |
+| `src/services/llmEvaluators.ts` | MEDIUM | May need to expose state merging logic |
+| `src/services/opusJudge.ts` | LOW | Judge already re-runs when more LLMs complete |
+| `src/components/VisualsTab.tsx` | HIGH | **MUST NOT auto-trigger Gamma** |
+| `src/services/gammaService.ts` | LOW | No change, but timing matters |
+| `api/gamma.ts` | LOW | No change needed |
+
+### State That Needs Lifting to App.tsx
+
+Currently in `LLMSelector` (local state):
+```typescript
+const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>()
+const [judgeResult, setJudgeResult] = useState<JudgeOutput | null>(null)
+const [lastJudgedCount, setLastJudgedCount] = useState(0)
+```
+
+This state MUST be lifted to `App.tsx` so it persists across tab switches.
+
+### Proposed UX Flow
+
+1. **Compare Tab:** User runs initial LLM(s)
+2. **Results Tab:** Shows results with "Evaluated by: [icons]" section
+3. **Results Tab:** Below icons, show "+ Add More Models" button
+4. **Click "+":** Expands mini-selector showing remaining LLMs
+5. **Run new LLM:** Merges with existing, judge re-runs
+6. **Results update:** In-place, no page refresh
+7. **Gamma:** ONLY generates when user clicks explicit "Generate Report" button
+
+### Implementation Order
+
+1. Lift `llmStates`, `judgeResult`, `lastJudgedCount` to App.tsx
+2. Pass as props to both Compare and Results tabs
+3. Create `AddMoreLLMs` component (simplified LLMSelector)
+4. Add to EnhancedResults component
+5. Ensure VisualsTab does NOT auto-trigger Gamma
+6. Add explicit "Generate Report" button with confirmation
+
+### Testing Requirements
+
+- [ ] Can add LLM after initial results
+- [ ] Completed LLM buttons stay "lit" when returning to Compare tab
+- [ ] Judge re-runs with combined results
+- [ ] Results update in-place
+- [ ] Gamma does NOT auto-generate
+- [ ] Gamma only generates on explicit button click
+- [ ] No duplicate Gamma calls
+
+---
+
+## 🚨 HANDOFF: PERPLEXITY FIX DEPLOYED 🚨
+
+**Date:** 2026-01-20
+**Commit:** `f3a9dd1`
+**Issue:** Perplexity only returning 3-4 of 6 categories, hero scores nearly identical
+
+### Root Cause Analysis
+
+**Why Perplexity was failing:**
+1. Claude and GPT-4o get **Tavily pre-fetch** (12 searches + Research API report)
+2. Gemini has **Google Search grounding**
+3. Grok has **native X search**
+4. Perplexity had **NOTHING** - relied entirely on Sonar web search during inference
+5. With 6 category calls, later waves were timing out
+
+**Why hero scores were similar:**
+1. When category times out, it returns empty
+2. Empty categories default to score 50 in `opusJudge.ts:86`
+3. If 2-3 categories = 50 for ALL cities, scores converge
+
+### Fix Applied
+
+Added same Tavily pre-fetch to Perplexity that Claude/GPT-4o have:
+- 12 category searches (6 categories × 2 cities)
+- Tavily Research API baseline report
+- Prepended to prompt as context
+
+**File changed:** `api/evaluate.ts` (lines 1015-1093)
+**No other files affected**
+
+### Web Search Matrix (Updated)
+
+| LLM | Web Search Method |
+|-----|-------------------|
+| Claude Sonnet | Tavily pre-fetch ✅ |
+| GPT-4o | Tavily pre-fetch ✅ |
+| Gemini 3 Pro | Google Search grounding |
+| Grok 4 | Native X search |
+| Perplexity | Tavily pre-fetch ✅ + Sonar |
+
+### Testing Needed
+
+- [ ] Perplexity now returns all 6 categories
+- [ ] Hero scores now vary appropriately between city pairs
+- [ ] No timeout errors in Vercel logs
+
+---
+
+## Previous Session: 2026-01-19
 **Conversation ID:** `LIFESCORE-2026-0120-GAMMA`
 
 ### Gamma Integration Status
@@ -207,14 +346,14 @@ PERPLEXITY_API_KEY   # Perplexity Sonar
 TAVILY_API_KEY       # Web search for Claude/GPT
 ```
 
-### Web Search Integration
+### Web Search Integration (Updated 2026-01-20)
 | LLM | Web Search Method |
 |-----|-------------------|
 | Claude Sonnet | Tavily API (prepended to prompt) |
 | GPT-4o | Tavily API (prepended to prompt) |
 | Gemini 3 Pro | Google Search Grounding (google_search tool) |
 | Grok 4 | Native (`search: true`) |
-| Perplexity | Native Sonar |
+| Perplexity | Tavily API + Native Sonar (commit f3a9dd1) |
 
 ---
 
