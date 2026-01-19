@@ -1,6 +1,7 @@
 /**
  * LIFE SCORE™ Gamma Service
  * Client-side service for generating visual reports via Gamma API
+ * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
 import type {
@@ -8,6 +9,7 @@ import type {
   CategoryConsensus,
   MetricConsensus
 } from '../types/enhancedComparison';
+import type { ComparisonResult, CategoryScore } from '../types/metrics';
 import type {
   VisualReportResponse,
   VisualReportState,
@@ -21,14 +23,37 @@ import type {
 const POLL_INTERVAL_MS = 5000;  // Poll every 5 seconds as recommended by Gamma
 const MAX_POLL_ATTEMPTS = 60;   // 5 minutes max wait time
 
+// Union type for both result types
+export type AnyComparisonResult = EnhancedComparisonResult | ComparisonResult;
+
+// Type guard to check if result is EnhancedComparisonResult
+function isEnhancedResult(result: AnyComparisonResult): result is EnhancedComparisonResult {
+  return 'llmsUsed' in result;
+}
+
 // ============================================================================
 // FORMAT COMPARISON DATA FOR GAMMA
 // ============================================================================
 
+// Map category IDs to display names (works for both modes)
+const CATEGORY_NAMES: Record<string, string> = {
+  'personal-freedom': 'Personal Freedom',
+  'personal_freedom': 'Personal Freedom',
+  'housing-property': 'Housing & Property',
+  'housing_property': 'Housing & Property',
+  'business-work': 'Business & Work',
+  'business_work': 'Business & Work',
+  'transportation': 'Transportation',
+  'policing-courts': 'Policing & Courts',
+  'policing_legal': 'Policing & Courts',
+  'speech-lifestyle': 'Speech & Lifestyle',
+  'speech_lifestyle': 'Speech & Lifestyle'
+};
+
 /**
- * Format a category consensus into readable text for Gamma prompt
+ * Format a category for ENHANCED mode (CategoryConsensus)
  */
-function formatCategory(
+function formatEnhancedCategory(
   categoryName: string,
   city1Name: string,
   city2Name: string,
@@ -57,43 +82,66 @@ ${topEvidence.length > 0 ? `\nKey Evidence:\n${topEvidence.map(e => `- ${e}`).jo
 }
 
 /**
- * Transform EnhancedComparisonResult into a Gamma-ready prompt string
+ * Format a category for SIMPLE mode (CategoryScore)
  */
-export function formatComparisonForGamma(result: EnhancedComparisonResult): string {
-  const city1Name = result.city1.city;
-  const city2Name = result.city2.city;
-  const city1Score = Math.round(result.city1.totalConsensusScore);
-  const city2Score = Math.round(result.city2.totalConsensusScore);
-  const winner = result.winner === 'city1' ? city1Name : result.winner === 'city2' ? city2Name : 'Tie';
+function formatSimpleCategory(
+  categoryName: string,
+  city1Name: string,
+  city2Name: string,
+  city1Category: CategoryScore,
+  city2Category: CategoryScore
+): string {
+  const city1Score = Math.round(city1Category.averageScore);
+  const city2Score = Math.round(city2Category.averageScore);
+  const winner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'Tie';
 
-  // Map category IDs to display names
-  const categoryNames: Record<string, string> = {
-    'personal-freedom': 'Personal Freedom',
-    'housing-property': 'Housing & Property',
-    'business-work': 'Business & Work',
-    'transportation': 'Transportation',
-    'policing-courts': 'Policing & Courts',
-    'speech-lifestyle': 'Speech & Lifestyle'
-  };
-
-  // Build category sections
-  const categorySections: string[] = [];
-  result.city1.categories.forEach((city1Cat, index) => {
-    const city2Cat = result.city2.categories[index];
-    if (city1Cat && city2Cat) {
-      const displayName = categoryNames[city1Cat.categoryId] || city1Cat.categoryId;
-      categorySections.push(formatCategory(
-        displayName,
-        city1Name,
-        city2Name,
-        city1Cat,
-        city2Cat
-      ));
+  // Get sample evidence from metrics with notes
+  const topEvidence: string[] = [];
+  city1Category.metrics.slice(0, 3).forEach((metric) => {
+    if (metric.notes) {
+      topEvidence.push(metric.notes.slice(0, 150));
     }
   });
 
-  // Build the full prompt
   return `
+## ${categoryName}
+- ${city1Name}: ${city1Score}/100
+- ${city2Name}: ${city2Score}/100
+- Winner: ${winner}
+${topEvidence.length > 0 ? `\nKey Evidence:\n${topEvidence.map(e => `- ${e}`).join('\n')}` : ''}
+`;
+}
+
+/**
+ * Transform any comparison result into a Gamma-ready prompt string
+ */
+export function formatComparisonForGamma(result: AnyComparisonResult): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const winner = result.winner === 'city1' ? city1Name : result.winner === 'city2' ? city2Name : 'Tie';
+
+  if (isEnhancedResult(result)) {
+    // ENHANCED MODE
+    const city1Score = Math.round(result.city1.totalConsensusScore);
+    const city2Score = Math.round(result.city2.totalConsensusScore);
+
+    // Build category sections
+    const categorySections: string[] = [];
+    result.city1.categories.forEach((city1Cat, index) => {
+      const city2Cat = result.city2.categories[index];
+      if (city1Cat && city2Cat) {
+        const displayName = CATEGORY_NAMES[city1Cat.categoryId] || city1Cat.categoryId;
+        categorySections.push(formatEnhancedCategory(
+          displayName,
+          city1Name,
+          city2Name,
+          city1Cat,
+          city2Cat
+        ));
+      }
+    });
+
+    return `
 # LIFE SCORE City Comparison: ${city1Name} vs ${city2Name}
 
 ## OVERALL RESULTS
@@ -117,6 +165,51 @@ ${result.disagreementSummary || 'LLMs showed strong agreement across most metric
 Please populate all 10 cards with this data, using appropriate charts and visualizations.
 Replace [City1] with "${city1Name}" and [City2] with "${city2Name}" throughout.
 `.trim();
+  } else {
+    // SIMPLE MODE
+    const city1Score = Math.round(result.city1.totalScore);
+    const city2Score = Math.round(result.city2.totalScore);
+
+    // Build category sections
+    const categorySections: string[] = [];
+    result.city1.categories.forEach((city1Cat, index) => {
+      const city2Cat = result.city2.categories[index];
+      if (city1Cat && city2Cat) {
+        const displayName = CATEGORY_NAMES[city1Cat.categoryId] || city1Cat.categoryId;
+        categorySections.push(formatSimpleCategory(
+          displayName,
+          city1Name,
+          city2Name,
+          city1Cat,
+          city2Cat
+        ));
+      }
+    });
+
+    // Count total metrics
+    const totalMetrics = result.city1.categories.reduce((sum, cat) => sum + cat.metrics.length, 0);
+
+    return `
+# LIFE SCORE City Comparison: ${city1Name} vs ${city2Name}
+
+## OVERALL RESULTS
+- **WINNER: ${winner}**
+- ${city1Name} Total Score: ${city1Score}/100
+- ${city2Name} Total Score: ${city2Score}/100
+- Score Difference: ${Math.abs(result.scoreDifference)} points
+- Data Confidence: ${result.city1.overallConfidence}
+
+${categorySections.join('\n')}
+
+## METHODOLOGY
+- Evaluated by Claude Sonnet AI
+- ${totalMetrics} metrics analyzed
+- Generated: ${result.generatedAt}
+
+Please populate all 10 cards with this data, using appropriate charts and visualizations.
+Replace [City1] with "${city1Name}" and [City2] with "${city2Name}" throughout.
+`.trim();
+  }
 }
 
 // ============================================================================
@@ -127,7 +220,7 @@ Replace [City1] with "${city1Name}" and [City2] with "${city2Name}" throughout.
  * Generate a visual report via our API endpoint
  */
 export async function generateVisualReport(
-  result: EnhancedComparisonResult,
+  result: AnyComparisonResult,
   exportFormat: 'pdf' | 'pptx' = 'pdf'
 ): Promise<VisualReportResponse> {
   const prompt = formatComparisonForGamma(result);
@@ -219,7 +312,7 @@ export async function pollUntilComplete(
  * Full generation flow: generate + poll until complete
  */
 export async function generateAndWaitForReport(
-  result: EnhancedComparisonResult,
+  result: AnyComparisonResult,
   exportFormat: 'pdf' | 'pptx' = 'pdf',
   onProgress?: (state: VisualReportState) => void
 ): Promise<VisualReportResponse> {

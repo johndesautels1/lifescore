@@ -1,17 +1,28 @@
 /**
  * LIFE SCORE™ Visuals Tab
  * Combined view of in-app charts and Gamma visual report generation
+ * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
 import React, { useState, useCallback } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
+import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
-import { generateAndWaitForReport, getStatusMessage } from '../services/gammaService';
+import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
 import AdvancedVisuals from './AdvancedVisuals';
 import './VisualsTab.css';
 
 interface VisualsTabProps {
-  result: EnhancedComparisonResult | null;
+  result: AnyComparisonResult | null;
+  // Optional: for backward compatibility, accept enhanced result separately
+  enhancedResult?: EnhancedComparisonResult | null;
+  simpleResult?: ComparisonResult | null;
+}
+
+// Type guard to check if result is EnhancedComparisonResult
+function isEnhancedResult(result: AnyComparisonResult | null): result is EnhancedComparisonResult {
+  if (!result) return false;
+  return 'llmsUsed' in result;
 }
 
 const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
@@ -178,14 +189,27 @@ const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
         )}
       </div>
 
-      {/* In-App Visualizations */}
-      <div className="in-app-visuals">
-        <h3 className="section-title">
-          <span className="section-icon">📈</span>
-          Interactive Charts
-        </h3>
-        <AdvancedVisuals result={result} />
-      </div>
+      {/* In-App Visualizations - Only for Enhanced mode */}
+      {isEnhancedResult(result) ? (
+        <div className="in-app-visuals">
+          <h3 className="section-title">
+            <span className="section-icon">📈</span>
+            Interactive Charts
+          </h3>
+          <AdvancedVisuals result={result} />
+        </div>
+      ) : (
+        <div className="in-app-visuals">
+          <h3 className="section-title">
+            <span className="section-icon">📈</span>
+            Interactive Charts
+          </h3>
+          <div className="simple-mode-notice">
+            <p>Advanced interactive charts are available in Enhanced Mode (multi-LLM comparison).</p>
+            <p>Use the "Generate Report" button above to create a visual presentation of your comparison.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -274,7 +274,7 @@ const App: React.FC = () => {
               VISUALS TAB
               ============================================================ */}
           {activeTab === 'visuals' && (
-            <VisualsTab result={enhancedResult} />
+            <VisualsTab result={enhancedResult || state.result} />
           )}
 
           {/* ============================================================
