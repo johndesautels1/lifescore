@@ -2,40 +2,58 @@
  * LIFE SCORE™ Evidence Panel Styles
  */
 
-/* Evidence Panel - Card style (matches other result cards) */
+/* Evidence Panel - Card style (matches category progress cards) */
 .evidence-panel-container {
-  background: var(--surface-color, #1a1a2e);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: 12px;
-  margin-top: 1.5rem;
+  margin-top: 12px; /* Half inch gap above */
+  margin-bottom: 12px; /* Half inch gap below */
   overflow: hidden;
   transition: all 0.3s ease;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .evidence-panel-container {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.evidence-panel-container.collapsed {
+  /* Collapsed: compact header only */
 }
 
 .evidence-panel-container.collapsed .evidence-panel-content {
   display: none;
 }
 
-/* Header */
+/* Header - matches category-progress-header style */
 .evidence-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: var(--surface-elevated, #252540);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  background: transparent;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.evidence-panel-container.collapsed .evidence-panel-header {
+  border-bottom: none;
 }
 
 .evidence-toggle-btn {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   background: none;
   border: none;
-  color: var(--text-primary, #fff);
+  color: var(--sapphire, #3e63dd);
   cursor: pointer;
   font-size: 1rem;
+  font-weight: 600;
   padding: 0;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .evidence-toggle-btn:hover {
@@ -43,23 +61,29 @@
 }
 
 .evidence-icon {
-  font-size: 1.25rem;
+  font-size: 1rem;
 }
 
 .evidence-title {
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .evidence-count {
-  font-weight: 400;
-  color: var(--text-secondary, #a0a0a0);
-  margin-left: 0.5rem;
-  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--gray-500, #6b7280);
+  font-size: 0.85rem;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
 }
 
 .collapse-arrow {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   transition: transform 0.2s ease;
+  color: var(--gray-500, #6b7280);
 }
 
 .collapse-arrow.expanded {
@@ -68,11 +92,12 @@
 
 /* Close button removed - panel is now always visible in results */
 
-/* Content */
+/* Content - matches category progress grid height */
 .evidence-panel-content {
-  max-height: 500px; /* Reasonable max height for card view */
+  min-height: 200px; /* Match category progress grid height */
+  max-height: 400px; /* Scrollable when content exceeds */
   overflow-y: auto;
-  padding: 1rem 1.5rem;
+  padding: 1rem;
 }
 
 /* Filters */
@@ -120,10 +145,16 @@
 }
 
 .evidence-group {
-  background: rgba(255, 255, 255, 0.03);
+  background: white;
   border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem;
+  border: 1px solid var(--gray-200, #e5e7eb);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .evidence-group {
+  background: var(--gray-800, #1f2937);
+  border-color: var(--gray-600, #4b5563);
 }
 
 .evidence-group-header {
@@ -255,12 +286,13 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .evidence-panel-header {
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
   }
 
   .evidence-panel-content {
     padding: 0.75rem 1rem;
-    max-height: 400px;
+    min-height: 150px;
+    max-height: 300px;
   }
 
   .evidence-filters {
@@ -270,5 +302,22 @@
   .filter-label {
     width: 100%;
     margin-bottom: 0.5rem;
+  }
+}
+
+/* Light mode overrides */
+@media (prefers-color-scheme: light) {
+  .evidence-panel-container {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+    border-color: rgba(99, 102, 241, 0.2);
+  }
+
+  .evidence-group {
+    background: white;
+    border-color: var(--gray-200, #e5e7eb);
+  }
+
+  .evidence-item {
+    background: var(--gray-50, #f9fafb);
   }
 }
