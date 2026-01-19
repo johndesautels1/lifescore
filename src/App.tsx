@@ -14,7 +14,7 @@ import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
 import SavedComparisons from './components/SavedComparisons';
-import AdvancedVisuals from './components/AdvancedVisuals';
+import VisualsTab from './components/VisualsTab';
 import {
   EnhancedModeToggle,
   APIKeyModal,
@@ -274,7 +274,7 @@ const App: React.FC = () => {
               VISUALS TAB
               ============================================================ */}
           {activeTab === 'visuals' && (
-            <AdvancedVisuals result={enhancedResult} />
+            <VisualsTab result={enhancedResult} />
           )}
 
           {/* ============================================================
