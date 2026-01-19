@@ -84,6 +84,7 @@ export interface MetricScore {
   confidence: 'high' | 'medium' | 'low' | 'unverified';
   source?: string;
   sourceUrl?: string;
+  sources?: string[];  // Array of source URLs from LLM web search
   notes?: string;
   verifiedAt?: string;
 }

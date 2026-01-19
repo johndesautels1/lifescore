@@ -308,6 +308,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
                 normalizedScore: city1NormalizedScore,
                 confidence,
                 source: 'LLM Evaluation',
+                sources: score.sources,  // Pass through source URLs from API
                 notes: score.reasoning
               });
 
@@ -318,6 +319,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
                 normalizedScore: city2NormalizedScore,
                 confidence,
                 source: 'LLM Evaluation',
+                sources: score.sources,  // Pass through source URLs from API
                 notes: score.reasoning
               });
             }

@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import type { ComparisonResult, CategoryScore, CategoryId } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { saveComparisonLocal, isComparisonSaved } from '../services/savedComparisons';
+import EvidencePanel from './EvidencePanel';
 import './Results.css';
 
 // ============================================================================
@@ -354,6 +355,9 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved }) => {
           <span style={{ color: '#856404' }}>{result.warning}</span>
         </div>
       )}
+
+      {/* Evidence & Citations Panel */}
+      <EvidencePanel result={result} />
 
       <div className="results-footer card">
         <h4>About This Analysis</h4>

@@ -1,14 +1,19 @@
 /**
  * LIFE SCORE™ Evidence Panel
  * Collapseable panel displaying LLM web search citations
+ * Works with both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
 import React, { useState } from 'react';
 import type { EnhancedComparisonResult, EvidenceItem } from '../types/enhancedComparison';
+import type { ComparisonResult } from '../types/metrics';
 import './EvidencePanel.css';
 
+// Union type to accept both simple and enhanced results
+type ResultType = EnhancedComparisonResult | ComparisonResult | null;
+
 interface EvidencePanelProps {
-  result: EnhancedComparisonResult | null;
+  result: ResultType;
 }
 
 interface CollectedEvidence {
@@ -18,50 +23,113 @@ interface CollectedEvidence {
   evidence: EvidenceItem[];
 }
 
+// Type guard to check if result is EnhancedComparisonResult
+function isEnhancedResult(result: ResultType): result is EnhancedComparisonResult {
+  if (!result) return false;
+  // Enhanced results have llmsUsed array
+  return 'llmsUsed' in result;
+}
+
 const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
   const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed
   const [filterCity, setFilterCity] = useState<'all' | 'city1' | 'city2'>('all');
 
   if (!result) return null;
 
-  // Collect all evidence from the result
+  // Collect all evidence from the result (handles both simple and enhanced)
   const collectEvidence = (): CollectedEvidence[] => {
     const collected: CollectedEvidence[] = [];
 
-    // Collect from city1 categories
-    result.city1.categories.forEach(category => {
-      category.metrics.forEach(metric => {
-        metric.llmScores?.forEach(score => {
-          if (score.evidence && score.evidence.length > 0) {
+    if (isEnhancedResult(result)) {
+      // ENHANCED MODE: Collect from llmScores[].evidence[]
+      result.city1.categories.forEach(category => {
+        category.metrics.forEach(metric => {
+          metric.llmScores?.forEach(score => {
+            if (score.evidence && score.evidence.length > 0) {
+              collected.push({
+                metricId: metric.metricId,
+                metricName: metric.metricId,
+                city: result.city1.city,
+                evidence: score.evidence
+              });
+            }
+          });
+        });
+      });
+
+      result.city2.categories.forEach(category => {
+        category.metrics.forEach(metric => {
+          metric.llmScores?.forEach(score => {
+            if (score.evidence && score.evidence.length > 0) {
+              collected.push({
+                metricId: metric.metricId,
+                metricName: metric.metricId,
+                city: result.city2.city,
+                evidence: score.evidence
+              });
+            }
+          });
+        });
+      });
+    } else {
+      // SIMPLE MODE: Collect from metric.sources[] (URL strings)
+      const now = new Date().toISOString();
+
+      // City 1
+      result.city1.categories.forEach(category => {
+        category.metrics.forEach(metric => {
+          if (metric.sources && metric.sources.length > 0) {
+            const evidence: EvidenceItem[] = metric.sources.map(url => ({
+              city: result.city1.city,
+              title: extractDomainFromUrl(url),
+              url: url,
+              snippet: '',
+              retrieved_at: now
+            }));
             collected.push({
               metricId: metric.metricId,
-              metricName: metric.metricId, // Will be improved with actual names
+              metricName: metric.metricId,
               city: result.city1.city,
-              evidence: score.evidence
+              evidence
             });
           }
         });
       });
-    });
 
-    // Collect from city2 categories
-    result.city2.categories.forEach(category => {
-      category.metrics.forEach(metric => {
-        metric.llmScores?.forEach(score => {
-          if (score.evidence && score.evidence.length > 0) {
+      // City 2
+      result.city2.categories.forEach(category => {
+        category.metrics.forEach(metric => {
+          if (metric.sources && metric.sources.length > 0) {
+            const evidence: EvidenceItem[] = metric.sources.map(url => ({
+              city: result.city2.city,
+              title: extractDomainFromUrl(url),
+              url: url,
+              snippet: '',
+              retrieved_at: now
+            }));
             collected.push({
               metricId: metric.metricId,
               metricName: metric.metricId,
               city: result.city2.city,
-              evidence: score.evidence
+              evidence
             });
           }
         });
       });
-    });
+    }
 
     return collected;
   };
+
+  // Helper to extract domain name from URL for display
+  function extractDomainFromUrl(url: string): string {
+    try {
+      const hostname = new URL(url).hostname;
+      return hostname.replace('www.', '');
+    } catch {
+      return url.slice(0, 50);
+    }
+  }
 
   const allEvidence = collectEvidence();
 
