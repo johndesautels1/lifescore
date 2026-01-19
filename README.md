@@ -8,34 +8,45 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ## CURRENT STATUS (January 20, 2026)
 
-### Latest Session: 2026-01-19
-**Conversation ID:** `LIFESCORE-2026-0119-SCORING-FIX`
+### Latest Session: 2026-01-20
+**Conversation ID:** `LIFESCORE-2026-0120-DEADCODE`
 
-### What Was Fixed
+### What Was Fixed This Session
 
-| Fix | Status |
-|-----|--------|
-| ${options} bug - outputting `[object Object]` | FIXED |
-| All 5 LLM prompts updated with 0-100 scoring scale | FIXED |
-| Gemini systemInstruction + safetySettings | FIXED |
-| GPT-4o false web search claim removed | FIXED |
-| Perplexity strict JSON schema removed | FIXED |
-| Debug logging added to evaluate.ts and judge.ts | FIXED |
-| Auto-switch to Results tab (standard mode) | FIXED |
-| Evidence Panel styling improved | FIXED |
-| TypeScript errors resolved | FIXED |
+| Issue | Fix | Commit | Lines |
+|-------|-----|--------|-------|
+| #5 Per-metric evidence hardcoded | Wired to `metric.llmScores[].evidence[]` | 427baa4 | +34 |
+| #6 Identical Law/Reality scores | Dual category prompt + parsing | 14340ef | +35 |
+| #9 Duplicate Judge code | Removed from opusJudge.ts | 9d2caae | -417 |
+| #10 Dead client code | Removed evaluator functions | 1568773 | -1,548 |
+| #11 opusJudge divergence | Covered by #9 | - | - |
+| #13 Hardcoded evidence | Covered by #5 | - | - |
 
-### Needs Testing
+**Total dead code removed: ~2,000 lines**
 
+### Codebase Now Clean:
+- `llmEvaluators.ts`: 333 lines (was 1,493)
+- `enhancedComparison.ts`: 69 lines (was 349)
+- `opusJudge.ts`: 212 lines (was 629)
+- `EnhancedComparison.tsx`: 1,614 lines (was 1,701)
+
+### Still Needs Testing
 | Item | Status |
 |------|--------|
-| GPT-4o - fix deployed | NEEDS TEST |
-| Perplexity - fix deployed | NEEDS TEST |
-| Opus Judge timing | NEEDS TEST |
-| All 5 LLMs return 0-100 scores | NEEDS TEST |
+| GPT-4o evaluation | NEEDS TEST |
+| Perplexity evaluation | NEEDS TEST |
+| Law vs Enforcement scores now different | NEEDS TEST |
+| Per-metric evidence displays correctly | NEEDS TEST |
 
-### Read First for Next Session
-- `D:\LifeScore\HANDOFF_2026_0120.md`
+### Next Session - Remaining Items
+See Master Issue Table below for items #19-52:
+- #19: Saved button persistence
+- #23-29: Branding to "Clues Intelligence LTD"
+- #30-36: Olivia AI features
+- #37-39: Reports (Gamma API)
+- #40-46: User/Payment (Stripe)
+- #47-49: Database caching
+- #50-52: Mobile (Vite Capacitor)
 
 ---
 
