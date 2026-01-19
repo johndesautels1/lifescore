@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
-import { getStoredAPIKeys, saveAPIKeys, runEnhancedComparison } from '../services/enhancedComparison';
+import { getStoredAPIKeys, saveAPIKeys } from '../services/enhancedComparison';
 import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress } from '../services/llmEvaluators';
 import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
@@ -1613,89 +1613,3 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   );
 };
 
-// ============================================================================
-// MAIN ENHANCED COMPARISON CONTAINER
-// ============================================================================
-
-interface EnhancedComparisonContainerProps {
-  city1: string;
-  city2: string;
-  onComplete: (result: EnhancedComparisonResult) => void;
-  dealbreakers?: string[];
-}
-
-export const EnhancedComparisonContainer: React.FC<EnhancedComparisonContainerProps> = ({
-  city1,
-  city2,
-  onComplete,
-  dealbreakers = []
-}) => {
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete' | 'error'>('idle');
-  const [progress, setProgress] = useState<EnhancedComparisonProgress | null>(null);
-  const [result, setResult] = useState<EnhancedComparisonResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    runComparison();
-  }, [city1, city2]);
-
-  const runComparison = async () => {
-    setStatus('running');
-    setError(null);
-
-    try {
-      // Always use real API - keys are in Vercel env vars
-      const apiKeys = getStoredAPIKeys();
-      const enhancedResult = await runEnhancedComparison({
-        city1,
-        city2,
-        apiKeys,
-        onProgress: setProgress
-      });
-      setResult(enhancedResult);
-      setStatus('complete');
-      onComplete(enhancedResult);
-
-      // Update OG meta tags for social sharing
-      const score1Val = enhancedResult.city1.totalConsensusScore;
-      const score2Val = enhancedResult.city2.totalConsensusScore;
-      const delta = Math.abs(score1Val - score2Val);
-      const winnerName = enhancedResult.winner === 'city1' ? city1 : enhancedResult.winner === 'city2' ? city2 : 'Tie';
-      updateOGMetaTags({
-        city1,
-        city2,
-        score1: score1Val,
-        score2: score2Val,
-        winner: winnerName,
-        delta
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStatus('error');
-    }
-  };
-
-  if (status === 'running' && progress) {
-    return <EnhancedProgress progress={progress} />;
-  }
-
-  if (status === 'error') {
-    return (
-      <div className="enhanced-error card">
-        <h3>Error Running Enhanced Comparison</h3>
-        <p>{error}</p>
-        <button className="btn btn-primary" onClick={runComparison}>
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  if (status === 'complete' && result) {
-    return <EnhancedResults result={result} dealbreakers={dealbreakers} />;
-  }
-
-  return null;
-};
-
-export default EnhancedComparisonContainer;
