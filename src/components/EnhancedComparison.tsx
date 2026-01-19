@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress } from '../types/enhancedComparison';
+import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
 import { getStoredAPIKeys, saveAPIKeys } from '../services/enhancedComparison';
@@ -1528,11 +1528,45 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
                               <div className="evidence-sources">
                                 <span className="evidence-label">Primary Sources:</span>
-                                <ul className="source-list">
-                                  <li><a href="https://freedomhouse.org" target="_blank" rel="noopener noreferrer">Freedom House</a></li>
-                                  <li><a href="https://www.cato.org/human-freedom-index" target="_blank" rel="noopener noreferrer">CATO Human Freedom Index</a></li>
-                                  <li><a href="https://data.worldbank.org" target="_blank" rel="noopener noreferrer">World Bank Open Data</a></li>
-                                </ul>
+                                {(() => {
+                                  // Collect all evidence from both cities' LLM scores
+                                  const allEvidence: EvidenceItem[] = [];
+                                  city1Metric?.llmScores?.forEach(score => {
+                                    if (score.evidence) allEvidence.push(...score.evidence);
+                                  });
+                                  city2Metric?.llmScores?.forEach(score => {
+                                    if (score.evidence) allEvidence.push(...score.evidence);
+                                  });
+
+                                  // Deduplicate by URL
+                                  const uniqueByUrl = Array.from(
+                                    new Map(allEvidence.map(e => [e.url, e])).values()
+                                  );
+
+                                  if (uniqueByUrl.length === 0) {
+                                    return <p className="no-sources">No specific sources cited for this metric.</p>;
+                                  }
+
+                                  return (
+                                    <ul className="source-list">
+                                      {uniqueByUrl.slice(0, 5).map((ev, idx) => (
+                                        <li key={idx}>
+                                          <a href={ev.url} target="_blank" rel="noopener noreferrer">
+                                            {ev.title || new URL(ev.url).hostname}
+                                          </a>
+                                          {ev.snippet && (
+                                            <span className="source-snippet" title={ev.snippet}>
+                                              — {ev.snippet.length > 80 ? ev.snippet.substring(0, 80) + '...' : ev.snippet}
+                                            </span>
+                                          )}
+                                        </li>
+                                      ))}
+                                      {uniqueByUrl.length > 5 && (
+                                        <li className="more-sources">+{uniqueByUrl.length - 5} more sources</li>
+                                      )}
+                                    </ul>
+                                  );
+                                })()}
                               </div>
                               <p className="evidence-note">
                                 Individual LLM scores combined into consensus by Claude Opus 4.5 Judge.
