@@ -41,7 +41,7 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 ### Next Session - Remaining Items
 See Master Issue Table below for items #23-52:
 - ~~#19: Saved button persistence~~ **FIXED** (commit 1e94321)
-- #23-29: Branding to "Clues Intelligence LTD"
+- ~~#23-29: Branding to "Clues Intelligence LTD"~~ **FIXED** (commit 3ae6461)
 - #30-36: Olivia AI features
 - #37-39: Reports (Gamma API)
 - #40-46: User/Payment (Stripe)
@@ -268,6 +268,7 @@ ea7537c Fix Vercel serverless import issue
 | **#12 LLMProvider type** | NO ISSUE | Type is correct |
 | **#13 EnhancedComparison hardcoded** | ✅ FIXED | Covered by #5 fix - commit 427baa4 |
 | **#19 Saved button persistence** | ✅ FIXED | Deterministic IDs based on city pair - commit 1e94321 |
+| **#23-29 Rebrand to Clues Intelligence LTD** | ✅ FIXED | 14 files updated - commit 3ae6461 |
 
 ---
 
