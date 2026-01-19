@@ -1550,9 +1550,6 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         })}
       </div>
 
-      {/* Evidence & Citations Panel - Collapsible */}
-      <EvidencePanel result={result} />
-
       {/* Action Buttons */}
       <div className="enhanced-actions card">
         {saveMessage && (
@@ -1580,6 +1577,9 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           </button>
         </div>
       </div>
+
+      {/* Evidence & Citations Panel - Collapsible */}
+      <EvidencePanel result={result} />
 
       {/* Footer */}
       <div className="enhanced-footer card">
