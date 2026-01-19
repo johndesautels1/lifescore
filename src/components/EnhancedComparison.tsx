@@ -13,7 +13,6 @@ import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
-import { updateOGMetaTags } from '../hooks/useOGMeta';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { DataSourcesModal } from './DataSourcesModal';
 import EvidencePanel from './EvidencePanel';
