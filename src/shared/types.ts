@@ -2,7 +2,7 @@
  * LIFE SCORE™ - Shared Type Definitions
  * Used by both client and server (api/evaluate.ts)
  *
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  * © 2025 All Rights Reserved
  */
 

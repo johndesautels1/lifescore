@@ -288,7 +288,7 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
       </div>
 
       <div class="footer">
-        <div class="footer-brand">LIFE SCORE™ by John E. Desautels & Associates</div>
+        <div class="footer-brand">LIFE SCORE™ by Clues Intelligence LTD</div>
         <div>Part of the CLUES™ Platform</div>
         <div style="margin-top: 10px;">
           Generated: ${new Date(result.generatedAt).toLocaleString()} |

@@ -1,6 +1,6 @@
 /**
  * LIFE SCORE Header Component
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  */
 
 import React from 'react';
@@ -17,7 +17,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Company Name */}
-        <h1 className="company-name">JOHN E. DESAUTELS & ASSOCIATES</h1>
+        <h1 className="company-name">CLUES INTELLIGENCE LTD</h1>
 
         {/* CLUES Branding */}
         <div className="clues-branding">

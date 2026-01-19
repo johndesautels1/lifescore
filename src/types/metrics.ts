@@ -2,7 +2,7 @@
  * LIFE SCORE™ - Legal Independence & Freedom Evaluation
  * Core Type Definitions
  * 
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  * © 2025 All Rights Reserved
  */
 

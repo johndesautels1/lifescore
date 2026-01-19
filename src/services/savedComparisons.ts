@@ -2,7 +2,7 @@
  * Saved Comparisons Service
  * Dual storage: localStorage (offline) + GitHub Gists (cloud sync)
  *
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  * © 2025 All Rights Reserved
  */
 

@@ -9,7 +9,7 @@
  * IMPORTANT: This replaces src/data/metrics.ts
  * All metric scoring criteria should be defined here.
  *
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
  */
 

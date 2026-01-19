@@ -2,8 +2,8 @@
  * LIFE SCORE™ Main Application
  * Legal Independence & Freedom Evaluation
  *
- * John E. Desautels & Associates
- * © 2025 All Rights Reserved
+ * Clues Intelligence LTD
+ * © 2025-2026 All Rights Reserved
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -306,7 +306,7 @@ const App: React.FC = () => {
                   <div className="about-content">
                     <p>
                       <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
-                      framework developed by John E. Desautels & Associates that analyzes legal freedom across
+                      framework developed by Clues Intelligence LTD that analyzes legal freedom across
                       <span className="highlight"> 100 specific metrics</span> in six key categories:
                     </p>
 

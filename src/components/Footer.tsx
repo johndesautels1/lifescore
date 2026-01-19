@@ -1,6 +1,6 @@
 /**
  * LIFE SCORE Footer Component
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  */
 
 import React from 'react';
@@ -12,12 +12,10 @@ const Footer: React.FC = () => {
       <div className="footer-container">
         <div className="footer-section">
           <h3>Company Information</h3>
-          <p className="company-title">John E. Desautels & Associates</p>
-          <p className="address">290 41st Ave</p>
-          <p>St. Pete Beach, FL 33706</p>
-          <p className="license">Licensed Real Estate Broker</p>
-          <p>Florida & Colorado</p>
-          <p className="experience">35+ Years Experience</p>
+          <p className="company-title">Clues Intelligence LTD</p>
+          <p className="tagline">AI-Powered Global Relocation Intelligence</p>
+          <p className="founder">Founded by John E. Desautels</p>
+          <p className="experience">35+ Years Real Estate Experience</p>
         </div>
 
         <div className="footer-section">
@@ -54,8 +52,8 @@ const Footer: React.FC = () => {
       </div>
 
       <div className="footer-bottom">
-        <p>© {new Date().getFullYear()} John E. Desautels & Associates. All rights reserved.</p>
-        <small>CLUES, SMART, and LIFE SCORE are trademarks of John E. Desautels & Associates</small>
+        <p>© {new Date().getFullYear()} Clues Intelligence LTD. All rights reserved.</p>
+        <small>CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD</small>
         <p className="powered-by">
           <small>AI-Powered Global Relocation Intelligence Platform</small>
         </p>

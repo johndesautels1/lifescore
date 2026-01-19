@@ -76,8 +76,8 @@ export function updateOGMetaTags(params: OGMetaParams): void {
 }
 
 export function resetOGMetaTags(): void {
-  const defaultTitle = 'LIFE SCORE | Legal Freedom Comparison | CLUES by John E. Desautels';
-  const defaultDescription = 'Compare legal freedom between any two cities worldwide across 100 comprehensive metrics. Part of the CLUES platform by John E. Desautels & Associates.';
+  const defaultTitle = 'LIFE SCORE | Legal Freedom Comparison | Clues Intelligence';
+  const defaultDescription = 'Compare legal freedom between any two cities worldwide across 100 comprehensive metrics. Part of the CLUES platform by Clues Intelligence LTD.';
   const defaultImage = `${BASE_URL}/og-image.png`;
 
   const metaResets: { property?: string; name?: string; content: string }[] = [

@@ -2,7 +2,7 @@
  * LIFE SCORE™ - Legal Independence & Freedom Evaluation
  * Complete 100 Metric Definitions
  * 
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  * © 2025 All Rights Reserved
  * 
  * IMPORTANT: These metrics are carefully designed to measure LEGAL FREEDOM

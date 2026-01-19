@@ -1,6 +1,6 @@
 /**
  * LIFE SCORE™ City Selector Component
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  *
  * Searchable dropdown with 200 metropolitan areas (100 NA + 100 EU)
  */

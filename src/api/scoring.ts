@@ -2,7 +2,7 @@
  * LIFE SCORE™ Scoring Engine
  * Calculates normalized scores from raw metric values
  * 
- * John E. Desautels & Associates
+ * Clues Intelligence LTD
  * © 2025 All Rights Reserved
  */
 
