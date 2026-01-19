@@ -52,56 +52,97 @@ See Master Issue Table below for items #23-52:
 
 ## GAMMA API INTEGRATION (#37-39) - VISUAL REPORTS
 
-**Full Documentation:** `GAMMA_API_INTEGRATION.md`
+**CRITICAL:** This is the visual heart of Clues. Transforms raw data into beautiful storybook presentations.
 
-### Architecture Overview
+**Documentation Files:**
+- `GAMMA_API_INTEGRATION.md` - Complete API reference (500+ lines)
+- `HANDOFF_GAMMA_INTEGRATION.md` - Implementation guide & handoff
+
+### Architecture
 
 ```
-LLM Evaluations → Opus Judge → Raw Data → Gamma API → Visual Storybook
-                                              ↓
-                              ┌───────────────┴───────────────┐
-                              │                               │
-                         Visuals Tab                    Ask Olivia Tab
-                         (Gamma Embed)                  (D-ID/HeyGen)
-                              │                               │
-                         PDF/PPTX Export              Summary & Action Plan
+┌─────────────────────────────────────────────────────────────────────┐
+│  5 LLMs → Opus Judge → Raw Data → Gamma API → Visual Storybook     │
+│                                       ↓                             │
+│                    ┌──────────────────┴──────────────────┐          │
+│                    │                                     │          │
+│               Visuals Tab                          Ask Olivia       │
+│               (Gamma Embed)                        (D-ID/HeyGen)    │
+│                    │                                     │          │
+│               PDF/PPTX Export                    Summary & Plan     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Gamma API Endpoints
+### API Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/v1.0/generations` | POST | Create visual presentation |
+| `/v1.0/generations` | POST | Create from scratch |
+| `/v1.0/generations/from-template` | POST | **Create from template (RECOMMENDED)** |
 | `/v1.0/generations/{id}` | GET | Check status / get result |
 | `/v1.0/themes` | GET | List available themes |
 | `/v1.0/folders` | GET | List storage folders |
 
-### Key Configuration
+### Two Approaches
+
+| Approach | Use Case | Consistency |
+|----------|----------|-------------|
+| Regular API | Custom one-offs | Variable |
+| **Templates API (Beta)** | **Uniform branded reports** | **Identical every time** |
+
+**LIFE SCORE should use Templates API** for consistent branding.
+
+### Template Approach (Recommended)
 
 ```json
 {
-  "textMode": "generate",
-  "format": "presentation",
-  "cardSplit": "inputTextBreaks",
-  "exportAs": "pdf",
-  "imageOptions": { "source": "aiGenerated", "model": "imagen-4-pro" }
+  "gammaId": "g_lifescore_template_v1",
+  "prompt": "Austin vs Miami: Winner Austin (72 vs 65)...",
+  "exportAs": "pdf"
 }
 ```
 
-### New Components Required
+### 10-Card Report Structure
 
-- `src/services/gammaService.ts` - API integration
-- `api/gamma.ts` - Serverless endpoint
-- `src/components/VisualsTab.tsx` - Presentation viewer
-- `src/components/AskOliviaTab.tsx` - AI assistant iframe
+1. **Hero** - Winner declaration, city images
+2. **Radar Chart** - All 6 categories visualized
+3. **Personal Freedom** - Scores + evidence
+4. **Housing & Property** - Scores + evidence
+5. **Business & Work** - Scores + evidence
+6. **Transportation** - Scores + evidence
+7. **Policing & Courts** - Scores + evidence
+8. **Speech & Lifestyle** - Scores + evidence
+9. **Winner Summary** - Final verdict
+10. **Clues CTA** - Ask Olivia, ecosystem links
+
+### Implementation Order
+
+1. Create master template in Gamma app (manual)
+2. Add `GAMMA_API_KEY` to Vercel
+3. Create `src/types/gamma.ts`
+4. Create `src/services/gammaService.ts`
+5. Create `api/gamma.ts`
+6. Create `src/components/VisualsTab.tsx`
+7. Update `TabNavigation.tsx` with new tabs
+8. Test end-to-end
 
 ### New Environment Variables
 
 ```
 GAMMA_API_KEY=sk-gamma-xxxxxxxx
-GAMMA_THEME_ID=[custom theme ID]
-GAMMA_FOLDER_ID=[reports folder ID]
+GAMMA_TEMPLATE_ID=[from Gamma app after creating template]
+GAMMA_FOLDER_ID=[optional - for organizing reports]
 ```
+
+### New Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/types/gamma.ts` | Type definitions |
+| `src/services/gammaService.ts` | API integration |
+| `api/gamma.ts` | Serverless endpoint |
+| `src/components/VisualsTab.tsx` | Report viewer |
+| `src/components/AskOliviaTab.tsx` | AI assistant |
 
 ---
 
