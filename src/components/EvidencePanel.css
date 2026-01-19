@@ -111,18 +111,20 @@
 }
 
 .filter-label {
-  color: var(--text-secondary, #a0a0a0);
+  color: #ffffff;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .filter-btn {
   padding: 0.4rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   background: transparent;
-  color: var(--text-primary, #fff);
+  color: #ffffff;
   border-radius: 20px;
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 
