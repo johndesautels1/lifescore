@@ -37,8 +37,8 @@ function isDisagreementArea(stdDev: number): boolean {
   return stdDev > CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG;
 }
 
-// Timeout constant for Opus API (180s - within Vercel Pro 300s limit)
-const OPUS_TIMEOUT_MS = 180000;
+// Timeout constant for Opus API (240s - within Vercel Pro 300s limit)
+const OPUS_TIMEOUT_MS = 240000;
 
 // Helper: fetch with timeout using AbortController
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {

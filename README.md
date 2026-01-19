@@ -172,15 +172,15 @@ GAMMA_FOLDER_ID=[optional - for organizing reports]
 
 ---
 
-## TIMEOUT AUDIT (Updated 2026-01-17)
+## TIMEOUT AUDIT (Updated 2026-01-19)
 
 **Vercel Pro Limit: 300 seconds**
 
 | Layer | Constant | Value | File |
 |-------|----------|-------|------|
 | Vercel Hard Limit | `maxDuration` | 300s | vercel.json |
-| Server LLM Calls | `LLM_TIMEOUT_MS` | 180s | api/evaluate.ts |
-| Server Opus Judge | `OPUS_TIMEOUT_MS` | 180s | api/judge.ts |
+| Server LLM Calls | `LLM_TIMEOUT_MS` | 240s | api/evaluate.ts |
+| Server Opus Judge | `OPUS_TIMEOUT_MS` | 240s | api/judge.ts |
 | Client Fetch | `CLIENT_TIMEOUT_MS` | 240s | src/services/llmEvaluators.ts |
 
 ---

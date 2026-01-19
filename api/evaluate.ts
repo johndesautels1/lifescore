@@ -9,7 +9,7 @@ import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './sha
 import type { ScoreResult } from './shared/metrics.js';
 
 // Timeout constant (in milliseconds) - unified for all API calls
-const LLM_TIMEOUT_MS = 180000; // 180 seconds for all LLM API calls including Tavily
+const LLM_TIMEOUT_MS = 240000; // 240 seconds for all LLM API calls including Tavily
 
 // Phase 2: Environment variable toggle for gradual rollout
 const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
