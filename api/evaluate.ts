@@ -1012,6 +1012,63 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
   const startTime = Date.now();
 
+  // Fetch Tavily context: Research baseline + Category searches (in parallel)
+  // This pre-fetches data so Perplexity doesn't have to do ALL web searches itself
+  let tavilyContext = '';
+  if (process.env.TAVILY_API_KEY) {
+    const searchQueries = [
+      // personal_freedom (15 metrics)
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      // housing_property (20 metrics)
+      `${city1} property rights zoning HOA land use housing regulations 2025`,
+      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      // business_work (25 metrics)
+      `${city1} business regulations taxes licensing employment labor laws 2025`,
+      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      // transportation (15 metrics)
+      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      // policing_legal (15 metrics)
+      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      // speech_lifestyle (10 metrics)
+      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+    ];
+
+    // Run Research + Search in parallel for speed
+    const [researchResult, ...searchResults] = await Promise.all([
+      tavilyResearch(city1, city2).catch(() => null),
+      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
+    ]);
+
+    const allResults = searchResults.flatMap(r => r.results);
+    const answers = searchResults.map(r => r.answer).filter(Boolean);
+
+    // Build context: Research report first, then category searches
+    const contextParts: string[] = [];
+
+    if (researchResult?.report) {
+      contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
+${researchResult.report}
+
+**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
+`);
+    }
+
+    if (allResults.length > 0) {
+      contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
+${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+`);
+    }
+
+    if (contextParts.length > 0) {
+      tavilyContext = contextParts.join('\n') + '\nUse this Tavily research data to supplement your Sonar web search.\n';
+    }
+  }
+
   // PERPLEXITY-SPECIFIC ADDENDUM (optimized for citation-backed research)
   const perplexityAddendum = `
 ## PERPLEXITY-SPECIFIC INSTRUCTIONS
@@ -1033,7 +1090,7 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
   const basePrompt = USE_CATEGORY_SCORING
     ? buildCategoryPrompt(city1, city2, metrics as MetricWithCriteria[])
     : buildBasePrompt(city1, city2, metrics);
-  const prompt = basePrompt + perplexityAddendum;
+  const prompt = tavilyContext + basePrompt + perplexityAddendum;
 
   try {
     const response = await fetchWithTimeout(
