@@ -50,6 +50,61 @@ See Master Issue Table below for items #23-52:
 
 ---
 
+## GAMMA API INTEGRATION (#37-39) - VISUAL REPORTS
+
+**Full Documentation:** `GAMMA_API_INTEGRATION.md`
+
+### Architecture Overview
+
+```
+LLM Evaluations → Opus Judge → Raw Data → Gamma API → Visual Storybook
+                                              ↓
+                              ┌───────────────┴───────────────┐
+                              │                               │
+                         Visuals Tab                    Ask Olivia Tab
+                         (Gamma Embed)                  (D-ID/HeyGen)
+                              │                               │
+                         PDF/PPTX Export              Summary & Action Plan
+```
+
+### Gamma API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/v1.0/generations` | POST | Create visual presentation |
+| `/v1.0/generations/{id}` | GET | Check status / get result |
+| `/v1.0/themes` | GET | List available themes |
+| `/v1.0/folders` | GET | List storage folders |
+
+### Key Configuration
+
+```json
+{
+  "textMode": "generate",
+  "format": "presentation",
+  "cardSplit": "inputTextBreaks",
+  "exportAs": "pdf",
+  "imageOptions": { "source": "aiGenerated", "model": "imagen-4-pro" }
+}
+```
+
+### New Components Required
+
+- `src/services/gammaService.ts` - API integration
+- `api/gamma.ts` - Serverless endpoint
+- `src/components/VisualsTab.tsx` - Presentation viewer
+- `src/components/AskOliviaTab.tsx` - AI assistant iframe
+
+### New Environment Variables
+
+```
+GAMMA_API_KEY=sk-gamma-xxxxxxxx
+GAMMA_THEME_ID=[custom theme ID]
+GAMMA_FOLDER_ID=[reports folder ID]
+```
+
+---
+
 ## COURT ORDER INJUNCTION - CLAUDE CODE RESTRICTIONS
 
 **CLAUDE CODE IS FORBIDDEN FROM MAKING THE FOLLOWING CHANGES WITHOUT DIRECT OWNER APPROVAL:**
