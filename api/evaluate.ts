@@ -78,9 +78,14 @@ interface ParsedEvaluation {
   city1Enforcement?: string;
   city2Legal?: string;
   city2Enforcement?: string;
-  // Phase 2: Category-based format
+  // Phase 2: Category-based format (legacy single category)
   city1Category?: string;
   city2Category?: string;
+  // Phase 2b: Dual category format (legal vs enforcement)
+  city1LegalCategory?: string;
+  city1EnforcementCategory?: string;
+  city2LegalCategory?: string;
+  city2EnforcementCategory?: string;
   // Legacy numeric format (0-100) - fallback
   city1LegalScore?: number;
   city1EnforcementScore?: number;
@@ -308,7 +313,11 @@ ${options.map(o => `    - "${o.value}": ${o.label} → ${o.score} points`).join(
   return `You are an expert legal analyst evaluating freedom metrics for city comparison.
 
 ## TASK
-Evaluate the following metrics for two cities. For EACH metric, select the CATEGORY VALUE that best describes the current legal status.
+Evaluate the following metrics for two cities. For EACH metric, you must provide TWO separate assessments:
+1. **LEGAL** - What does the written law technically say?
+2. **ENFORCEMENT** - How is it actually enforced in practice?
+
+These often differ! A law may exist but be rarely enforced (high enforcement freedom), or informal enforcement may be stricter than the law suggests.
 
 ## CITIES TO COMPARE (Year: ${new Date().getFullYear()})
 - City 1: ${city1}
@@ -323,10 +332,12 @@ Return a JSON object with this EXACT structure:
   "evaluations": [
     {
       "metricId": "metric_id_here",
-      "city1Category": "the_value_key",
-      "city2Category": "the_value_key",
+      "city1LegalCategory": "the_value_key",
+      "city1EnforcementCategory": "the_value_key",
+      "city2LegalCategory": "the_value_key",
+      "city2EnforcementCategory": "the_value_key",
       "confidence": "high",
-      "reasoning": "Brief explanation of key difference",
+      "reasoning": "Brief explanation including any law vs enforcement gap",
       "sources": ["https://example.com/law-source"],
       "city1Evidence": [{"title": "Source Title", "url": "https://...", "snippet": "Relevant quote"}],
       "city2Evidence": [{"title": "Source Title", "url": "https://...", "snippet": "Relevant quote"}]
@@ -336,8 +347,8 @@ Return a JSON object with this EXACT structure:
 
 ## CRITICAL RULES
 1. Use ONLY the exact category value keys listed for each metric (e.g., "fully_legal", "medical_only")
-2. Evaluate BOTH cities for EACH metric
-3. Consider 2026 laws and current status
+2. Evaluate BOTH Legal AND Enforcement separately - they are often different!
+3. Consider 2026 laws and current enforcement practices
 4. Return ONLY the JSON object, no other text
 5. MUST include sources - URLs to laws, government sites, news articles backing your evaluation`;
 }
@@ -393,7 +404,23 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
     };
 
     return (parsed.evaluations || []).map((e: ParsedEvaluation) => {
-      // Phase 2: If category-based response, use categoryToScore()
+      // Phase 2b: NEW dual category format (legal + enforcement separate)
+      if (USE_CATEGORY_SCORING && e.city1LegalCategory && e.city1EnforcementCategory) {
+        return {
+          metricId: e.metricId,
+          city1LegalScore: getCategoryScore(e.metricId, e.city1LegalCategory),
+          city1EnforcementScore: getCategoryScore(e.metricId, e.city1EnforcementCategory),
+          city2LegalScore: getCategoryScore(e.metricId, e.city2LegalCategory),
+          city2EnforcementScore: getCategoryScore(e.metricId, e.city2EnforcementCategory),
+          confidence: e.confidence || 'medium',
+          reasoning: e.reasoning,
+          sources: e.sources,
+          city1Evidence: e.city1Evidence || [],
+          city2Evidence: e.city2Evidence || []
+        };
+      }
+
+      // Phase 2: Legacy single category format (backwards compatibility)
       if (USE_CATEGORY_SCORING && e.city1Category && e.city2Category) {
         const city1Score = getCategoryScore(e.metricId, e.city1Category);
         const city2Score = getCategoryScore(e.metricId, e.city2Category);
