@@ -447,9 +447,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // FIX #8: Also verify that there are actual scores, not just success flags
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const hasActualScores = evaluatorResults?.some(r => r.success && r.scores && r.scores.length > 0);
+
+  // Debug logging
+  const successfulLLMs = evaluatorResults?.filter(r => r.success).map(r => r.provider) || [];
+  const totalScores = evaluatorResults?.reduce((sum, r) => sum + (r.scores?.length || 0), 0) || 0;
+  console.log(`[JUDGE] Evaluator results: ${successfulLLMs.length} successful LLMs (${successfulLLMs.join(', ')}), ${totalScores} total scores`);
+  console.log(`[JUDGE] Disagreement metrics: ${disagreementMetrics.length} (${disagreementMetrics.slice(0, 5).join(', ')}${disagreementMetrics.length > 5 ? '...' : ''})`);
+  console.log(`[JUDGE] hasActualScores=${hasActualScores}, anthropicKey=${!!anthropicKey}, city1=${city1}, city2=${city2}`);
+
   if (anthropicKey && city1 && city2 && hasActualScores) {
     try {
       const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses, disagreementMetrics);
+      console.log(`[JUDGE] Calling Opus API with prompt length: ${prompt.length} chars`);
 
       const response = await fetchWithTimeout(
         'https://api.anthropic.com/v1/messages',
@@ -472,8 +481,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (response.ok) {
         const data = await response.json();
         const content = data.content?.[0]?.text;
+        console.log(`[JUDGE] Opus response received, content length: ${content?.length || 0} chars`);
         if (content) {
           const opusJudgments = parseOpusResponse(content);
+          console.log(`[JUDGE] Opus judgments parsed: ${opusJudgments?.judgments?.length || 0} judgments`);
           if (opusJudgments) {
             mergeOpusJudgments(city1Consensuses, city2Consensuses, opusJudgments);
             // Override disagreement areas if Opus provided them
@@ -484,11 +495,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
       } else {
-        console.error('Opus API error:', response.status, await response.text());
+        const errorText = await response.text();
+        console.error(`[JUDGE] Opus API error: ${response.status} - ${errorText.slice(0, 500)}`);
       }
     } catch (error) {
-      console.error('Opus judge API call failed, using statistical consensus:', error);
+      console.error('[JUDGE] Opus judge API call failed, using statistical consensus:', error);
     }
+  } else {
+    console.log(`[JUDGE] Skipping Opus API call - conditions not met`);
   }
 
   // Calculate overall agreement from standard deviations

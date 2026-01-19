@@ -756,7 +756,7 @@ For each metric, provide TWO scores:
           model: 'gpt-4o',
           messages: [
             { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
-Use the provided web search results to find current, accurate data about laws and regulations.
+Use the Tavily research data provided in the user message to evaluate laws and regulations.
 
 ## SCORING SCALE (0-100)
 - 90-100: Extremely permissive, minimal restrictions (most free)
@@ -771,10 +771,10 @@ For each metric, provide TWO scores:
 2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
 
 ## IMPORTANT
-- Cite every claim with actual URLs
-- Note differences between federal/state/local laws
-- If evidence is missing, set confidence="low" and explain why
-- Return JSON exactly matching the schema provided` },
+- Use the Tavily research data as your primary source
+- If the research doesn't cover a metric, use your knowledge but set confidence="low"
+- Return JSON exactly matching the format requested
+- You MUST evaluate ALL metrics provided` },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
@@ -1031,43 +1031,30 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 - 30-49: Significant restrictions
 - 0-29: Highly restrictive (least free)
 
-Return ONLY valid JSON matching the exact format requested. Evaluate ALL metrics.`
+## OUTPUT FORMAT
+Return ONLY valid JSON with this structure (no markdown, no explanation):
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id",
+      "city1LegalScore": 75,
+      "city1EnforcementScore": 70,
+      "city2LegalScore": 60,
+      "city2EnforcementScore": 55,
+      "confidence": "high",
+      "reasoning": "Brief explanation",
+      "sources": ["url1", "url2"]
+    }
+  ]
+}
+
+You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
             },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
-          temperature: 0.3,
-          response_format: {
-            type: 'json_schema',
-            json_schema: {
-              name: 'freedom_evaluations',
-              schema: {
-                type: 'object',
-                properties: {
-                  evaluations: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        metricId: { type: 'string' },
-                        city1LegalScore: { type: 'number' },
-                        city1EnforcementScore: { type: 'number' },
-                        city2LegalScore: { type: 'number' },
-                        city2EnforcementScore: { type: 'number' },
-                        confidence: { type: 'string' },
-                        reasoning: { type: 'string' },
-                        sources: { type: 'array', items: { type: 'string' } }
-                      },
-                      required: ['metricId', 'city1LegalScore', 'city1EnforcementScore', 'city2LegalScore', 'city2EnforcementScore', 'confidence', 'reasoning']
-                    }
-                  }
-                },
-                required: ['evaluations'],
-                additionalProperties: false
-              },
-              strict: true
-            }
-          }
+          temperature: 0.3
+          // NOTE: Removed strict json_schema - conflicts with sonar-reasoning-pro thinking output
         })
       },
       LLM_TIMEOUT_MS
