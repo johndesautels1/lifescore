@@ -250,7 +250,7 @@ ea7537c Fix Vercel serverless import issue
 | Opus runs too fast | DEBUG ADDED | Check [JUDGE] logs |
 | Only ~25% metrics returned | MONITORING | Added debug logging |
 | **#5 Per-metric evidence hardcoded** | ✅ FIXED | Wired to `metric.llmScores[].evidence[]` - commit 427baa4 |
-| **#6 Identical Law/Reality scores** | BUG - FIX PLANNED | See detailed analysis below |
+| **#6 Identical Law/Reality scores** | ✅ FIXED | Dual category prompt + parsing - commit 14340ef |
 | **#9 Duplicate Judge code** | TECH DEBT - FIX PLANNED | See detailed analysis below |
 | **#10 Client prompts out of sync** | ✅ FIXED | Dead code removed (~1,548 lines) - commit 1568773 |
 | **#11 opusJudge.ts divergence** | COVERED BY #9 | Same issue as duplicate judge code |
