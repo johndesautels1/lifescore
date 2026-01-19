@@ -9,7 +9,6 @@ import type {
   MetricConsensus
 } from '../types/enhancedComparison';
 import type {
-  VisualReportRequest,
   VisualReportResponse,
   VisualReportState,
   GammaGenerationStatus
