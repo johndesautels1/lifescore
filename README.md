@@ -251,9 +251,9 @@ ea7537c Fix Vercel serverless import issue
 | Only ~25% metrics returned | MONITORING | Added debug logging |
 | **#5 Per-metric evidence hardcoded** | ✅ FIXED | Wired to `metric.llmScores[].evidence[]` - commit 427baa4 |
 | **#6 Identical Law/Reality scores** | ✅ FIXED | Dual category prompt + parsing - commit 14340ef |
-| **#9 Duplicate Judge code** | TECH DEBT - FIX PLANNED | See detailed analysis below |
+| **#9 Duplicate Judge code** | ✅ FIXED | Removed ~417 lines from opusJudge.ts - commit pending |
 | **#10 Client prompts out of sync** | ✅ FIXED | Dead code removed (~1,548 lines) - commit 1568773 |
-| **#11 opusJudge.ts divergence** | COVERED BY #9 | Same issue as duplicate judge code |
+| **#11 opusJudge.ts divergence** | ✅ FIXED | Covered by #9 - duplicate code removed |
 | **#12 LLMProvider type** | NO ISSUE | Type is correct |
 | **#13 EnhancedComparison hardcoded** | ✅ FIXED | Covered by #5 fix - commit 427baa4 |
 

@@ -26,6 +26,27 @@ The app was refactored from an **automatic multi-LLM flow** to a **manual button
 | `DEAD_CODE_ARCHIVE_2026-01-20.ts` | LLM evaluator functions | ~937 lines |
 | `DEAD_CODE_SERVICES_2026-01-20.ts` | Service + Component | ~353 lines |
 
+### Removed 2026-01-20 (Issue #9 fix)
+
+From `opusJudge.ts` (~417 lines removed, file now 212 lines):
+
+| Function | Purpose | Why Dead |
+|----------|---------|----------|
+| `fetchWithTimeout()` | Timeout wrapper | Duplicate of api/judge.ts |
+| `aggregateScoresByMetric()` | Score aggregation | Duplicate of api/judge.ts |
+| `calculateMean/StdDev/Median()` | Statistics | Duplicate of api/judge.ts |
+| `buildMetricConsensus()` | Consensus builder | Duplicate of api/judge.ts |
+| `JUDGE_PROMPT_TEMPLATE` | Opus prompt | Duplicate of api/judge.ts |
+| `runOpusJudge()` | Direct Opus API call | NEVER CALLED - client uses /api/judge |
+| `buildEvaluationSummary()` | Summary builder | Only used by runOpusJudge |
+| `parseOpusResponse()` | JSON parser | Duplicate of api/judge.ts |
+| `mergeOpusJudgments()` | Merge function | Duplicate of api/judge.ts |
+
+**Kept in opusJudge.ts:**
+- `JudgeInput`, `JudgeOutput` types (used by EnhancedComparison.tsx)
+- `buildCategoryConsensuses()` (used by buildEnhancedResultFromJudge)
+- `buildEnhancedResultFromJudge()` (dynamic import in App.tsx:190)
+
 ## Dead Code Inventory
 
 ### From `llmEvaluators.ts`
