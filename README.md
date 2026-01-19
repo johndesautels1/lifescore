@@ -249,11 +249,49 @@ ea7537c Fix Vercel serverless import issue
 | Perplexity fails | FIX DEPLOYED | Removed strict JSON schema |
 | Opus runs too fast | DEBUG ADDED | Check [JUDGE] logs |
 | Only ~25% metrics returned | MONITORING | Added debug logging |
-| **Per-metric evidence hardcoded** | BUG | EnhancedComparison.tsx:1529-1536 shows same sources for all metrics instead of actual LLM-cited sources |
-| **Identical Law/Reality scores** | BUG | LLM returning identical Legal Score and Enforcement Score for all 100 fields - should vary per metric |
+| **Per-metric evidence hardcoded** | BUG - FIX IDENTIFIED | EnhancedComparison.tsx:1529-1536 - wire to `metric.llmScores[].evidence[]` |
+| **Identical Law/Reality scores** | BUG - FIX PLANNED | See detailed analysis below |
+
+---
+
+## ISSUE #6: Identical Law/Reality Scores - DETAILED ANALYSIS
+
+**Root Cause Identified: 2026-01-20**
+
+### Problem Chain
+1. When `USE_CATEGORY_SCORING=true` (Vercel env var), `buildCategoryPrompt()` asks for only ONE category per city
+2. Prompt returns: `city1Category`, `city2Category` (single values)
+3. `parseResponse()` at lines 402-405 duplicates the value:
+   ```javascript
+   city1LegalScore: city1Score,
+   city1EnforcementScore: city1Score,  // ← BUG: Same value!
+   ```
+
+### Files Affected
+- `api/evaluate.ts:297-340` - `buildCategoryPrompt()` needs dual categories
+- `api/evaluate.ts:395-412` - `parseResponse()` needs to parse both fields
+
+### Chosen Fix: Option A - Expand Categories for Dual Scoring
+
+**Changes Required:**
+1. Update `buildCategoryPrompt()` to ask for:
+   - `city1LegalCategory` - What the law says
+   - `city1EnforcementCategory` - How it's enforced
+   - `city2LegalCategory`
+   - `city2EnforcementCategory`
+
+2. Update `parseResponse()` to parse all 4 fields:
+   ```javascript
+   city1LegalScore: getCategoryScore(e.metricId, e.city1LegalCategory),
+   city1EnforcementScore: getCategoryScore(e.metricId, e.city1EnforcementCategory),
+   ```
+
+3. Consider whether enforcement needs different category options or can reuse legal scale
+
+**Priority:** HIGH - Core differentiator of LifeScore product
 
 ---
 
 ## LICENSE
 
-UNLICENSED - John E. Desautels & Associates
+UNLICENSED - Clues Intelligence LTD
