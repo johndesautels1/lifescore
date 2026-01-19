@@ -249,8 +249,13 @@ ea7537c Fix Vercel serverless import issue
 | Perplexity fails | FIX DEPLOYED | Removed strict JSON schema |
 | Opus runs too fast | DEBUG ADDED | Check [JUDGE] logs |
 | Only ~25% metrics returned | MONITORING | Added debug logging |
-| **Per-metric evidence hardcoded** | BUG - FIX IDENTIFIED | EnhancedComparison.tsx:1529-1536 - wire to `metric.llmScores[].evidence[]` |
-| **Identical Law/Reality scores** | BUG - FIX PLANNED | See detailed analysis below |
+| **#5 Per-metric evidence hardcoded** | BUG - FIX IDENTIFIED | EnhancedComparison.tsx:1529-1536 - wire to `metric.llmScores[].evidence[]` |
+| **#6 Identical Law/Reality scores** | BUG - FIX PLANNED | See detailed analysis below |
+| **#9 Duplicate Judge code** | TECH DEBT - FIX PLANNED | See detailed analysis below |
+| **#10 Client prompts out of sync** | TECH DEBT - LOW RISK | ~1000 lines dead code in llmEvaluators.ts |
+| **#11 opusJudge.ts divergence** | COVERED BY #9 | Same issue as duplicate judge code |
+| **#12 LLMProvider type** | NO ISSUE | Type is correct |
+| **#13 EnhancedComparison hardcoded** | COVERED BY #5 | Same issue as hardcoded evidence |
 
 ---
 
@@ -344,6 +349,42 @@ ea7537c Fix Vercel serverless import issue
 - [ ] Full attestation required before merge
 
 **Priority:** MEDIUM - Tech debt, risk of code drift
+
+---
+
+## ISSUE #10: Client Prompts Out of Sync - DETAILED ANALYSIS
+
+**Root Cause Identified: 2026-01-20**
+
+### Problem: Dead Code with Duplicate Prompts
+
+`src/services/llmEvaluators.ts` contains ~1000 lines of functions that call LLM APIs directly:
+- `evaluateWithClaude()` - lines ~300-500
+- `evaluateWithGPT4o()` - lines ~500-600
+- `evaluateWithGemini()` - lines ~600-700
+- `evaluateWithGrok()` - lines ~700-800
+- `evaluateWithPerplexity()` - lines ~800-1000
+
+These have their **own prompts** that may be out of sync with `api/evaluate.ts`.
+
+### Current Usage
+
+| Function | What it calls | Used by |
+|----------|---------------|---------|
+| `runSingleEvaluatorBatched()` | `/api/evaluate` (server) | EnhancedComparison.tsx (LLM buttons) |
+| `runAllEvaluators()` | Direct LLM APIs (client) | enhancedComparison.ts (service) |
+
+### Risk Assessment: LOW
+- The LLM buttons UI (main user flow) uses the correct server path
+- The old `runAllEvaluators()` is only called by `enhancedComparison.ts`
+- That service is used by `EnhancedComparisonContainer` but the primary flow is the button UI
+
+### Recommended Fix (when time permits)
+1. Delete the direct API call functions (~1000 lines)
+2. Update `runAllEvaluators()` to use `/api/evaluate` like `runSingleEvaluatorBatched()` does
+3. Or: Delete `runAllEvaluators()` entirely if not needed
+
+**Priority:** LOW - Dead code, not actively causing bugs
 
 ---
 
