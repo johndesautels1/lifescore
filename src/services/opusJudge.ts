@@ -16,6 +16,24 @@ import { ALL_METRICS, CATEGORIES } from '../shared/metrics';
 import type { EvaluatorResult } from './llmEvaluators';
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Generate a deterministic comparison ID based on city names.
+ * Sorted alphabetically so "Austin vs Miami" = "Miami vs Austin"
+ */
+function generateDeterministicId(city1: string, city2: string, prefix: string): string {
+  // Normalize: lowercase, keep only alphanumeric, limit length
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+  const c1 = normalize(city1);
+  const c2 = normalize(city2);
+  // Sort alphabetically for consistency regardless of order
+  const [first, second] = [c1, c2].sort();
+  return `${prefix}-${first}-${second}`;
+}
+
+// ============================================================================
 // TYPES (used by EnhancedComparison.tsx)
 // ============================================================================
 
@@ -196,7 +214,7 @@ export function buildEnhancedResultFromJudge(
     winner,
     scoreDifference: scoreDiff,
     categoryWinners,
-    comparisonId: `LIFE-ENH-${Date.now().toString(36).toUpperCase()}`,
+    comparisonId: generateDeterministicId(city1Info.city, city2Info.city, 'LIFE-ENH'),
     generatedAt: new Date().toISOString(),
     llmsUsed,
     judgeModel: 'claude-opus',

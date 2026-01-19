@@ -18,6 +18,24 @@ import type {
 import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Generate a deterministic comparison ID based on city names.
+ * Sorted alphabetically so "Austin vs Miami" = "Miami vs Austin"
+ */
+function generateDeterministicId(city1: string, city2: string, prefix: string): string {
+  // Normalize: lowercase, keep only alphanumeric, limit length
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+  const c1 = normalize(city1);
+  const c2 = normalize(city2);
+  // Sort alphabetically for consistency regardless of order
+  const [first, second] = [c1, c2].sort();
+  return `${prefix}-${first}-${second}`;
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -393,7 +411,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         winner,
         scoreDifference: Math.round(scoreDifference),
         categoryWinners,
-        comparisonId: `LIFE-STD-${Date.now().toString(36).toUpperCase()}`,
+        comparisonId: generateDeterministicId(city1Name, city2Name, 'LIFE-STD'),
         generatedAt: new Date().toISOString(),
         // Add warning if some categories failed
         ...(failedCategories.length > 0 && {
