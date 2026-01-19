@@ -58,8 +58,14 @@ const App: React.FC = () => {
 
   const availableLLMs = getAvailableLLMs(apiKeys);
 
-  // Check if we have results
-  const hasResults = enhancedStatus === 'complete' && enhancedResult !== null;
+  // Check if we have results (enhanced mode)
+  const hasEnhancedResults = enhancedStatus === 'complete' && enhancedResult !== null;
+
+  // Check if we have results (standard mode)
+  const hasStandardResults = !enhancedMode && state.status === 'success' && state.result !== null;
+
+  // Combined check for any results
+  const hasResults = hasEnhancedResults || hasStandardResults;
 
   // Update saved count on mount and when savedKey changes
   useEffect(() => {
@@ -74,12 +80,12 @@ const App: React.FC = () => {
     }
   }, [savedKey]);
 
-  // Auto-switch to results tab when comparison completes
+  // Auto-switch to results tab when comparison completes (BOTH modes)
   useEffect(() => {
-    if (hasResults) {
+    if (hasEnhancedResults || hasStandardResults) {
       setActiveTab('results');
     }
-  }, [hasResults]);
+  }, [hasEnhancedResults, hasStandardResults]);
 
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
     loadResult(result);
