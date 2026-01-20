@@ -308,3 +308,28 @@
     text-align: center;
   }
 }
+
+/* ============================================================================
+   SIMPLE MODE NOTICE - Interactive Charts fallback for non-Enhanced mode
+   ============================================================================ */
+
+.simple-mode-notice {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px dashed var(--border-color, #3a3a5a);
+}
+
+.simple-mode-notice p {
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.simple-mode-notice p:last-child {
+  margin-bottom: 0;
+  color: #d0d0d0;
+  font-size: 0.9rem;
+}
