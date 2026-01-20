@@ -72,12 +72,21 @@
 }
 
 .evidence-count {
-  font-weight: 500;
-  color: var(--gray-500, #6b7280);
+  font-weight: 600;
   font-size: 0.85rem;
-  background: rgba(99, 102, 241, 0.1);
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 12px;
+  /* Default: crisp white (dark mode is app default) */
+  color: #ffffff !important;
+  background: rgba(212, 175, 55, 0.35);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+}
+
+/* Light mode override */
+[data-theme="light"] .evidence-count {
+  color: #1a1a2e !important;
+  background: rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(212, 175, 55, 0.6);
 }
 
 .collapse-arrow {

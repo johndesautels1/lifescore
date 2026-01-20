@@ -374,7 +374,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
             style={{ width: `${(completedCount / EVALUATOR_LLMS.length) * 100}%` }}
           />
         </div>
-        <span className="progress-text">
+        <span className="progress-text" style={{ color: '#ffffff' }}>
           {completedCount}/{EVALUATOR_LLMS.length} models completed
           {hasEnoughForJudge && !judgeResult && !isJudging && ' • Ready for Opus Judge'}
           {isJudging && !judgeResult && ' • Opus Judge analyzing...'}
