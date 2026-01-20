@@ -126,9 +126,9 @@ async function createFromTemplate(
     }
   };
 
-  // Add theme ID if configured
+  // Add theme ID if configured (skip if it looks like an API key by mistake)
   const themeId = process.env.GAMMA_THEME_ID;
-  if (themeId) {
+  if (themeId && !themeId.startsWith('sk-')) {
     requestBody.themeId = themeId;
   }
 
