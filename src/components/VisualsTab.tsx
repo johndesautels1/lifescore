@@ -133,15 +133,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
               Report generated successfully!
             </div>
             <div className="report-links">
-              {reportState.gammaUrl && (
+              {reportState.gammaUrl ? (
                 <a
                   href={reportState.gammaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="report-link view-link"
                 >
-                  View in Gamma
+                  View Report
                 </a>
+              ) : (
+                <span className="report-link view-link loading-link">
+                  Loading report link...
+                </span>
               )}
               {reportState.pdfUrl && (
                 <a

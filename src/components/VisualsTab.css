@@ -104,13 +104,25 @@
 
 .secondary-btn {
   background: transparent;
-  border: 1px solid var(--border-color, #2a2a4a);
-  color: var(--text-primary, #ffffff);
+  border: 2px solid #D4AF37;
+  color: #D4AF37;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .secondary-btn:hover {
-  border-color: var(--accent-color, #D4AF37);
-  color: var(--accent-color, #D4AF37);
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #E5C04B;
+  color: #E5C04B;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+.secondary-btn:active {
+  background: rgba(212, 175, 55, 0.25);
+  border-color: #F5D05B;
+  color: #F5D05B;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  font-weight: 700;
 }
 
 /* Progress State */
@@ -332,4 +344,11 @@
   margin-bottom: 0;
   color: #d0d0d0;
   font-size: 0.9rem;
+}
+
+/* Loading link fallback */
+.loading-link {
+  opacity: 0.6;
+  cursor: wait;
+  animation: pulse 1.5s infinite;
 }
