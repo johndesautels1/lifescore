@@ -955,6 +955,8 @@ interface MetricDifference {
   city2Score: number;
   difference: number;
   favoredCity: 'city1' | 'city2';
+  city1Explanation?: string;  // Judge explanation for city 1
+  city2Explanation?: string;  // Judge explanation for city 2
 }
 
 const calculateTopDifferences = (result: EnhancedComparisonResult, count: number = 5): MetricDifference[] => {
@@ -982,7 +984,9 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
         city1Score: metric1.consensusScore,
         city2Score: metric2.consensusScore,
         difference: diff,
-        favoredCity: metric1.consensusScore > metric2.consensusScore ? 'city1' : 'city2'
+        favoredCity: metric1.consensusScore > metric2.consensusScore ? 'city1' : 'city2',
+        city1Explanation: metric1.judgeExplanation,
+        city2Explanation: metric2.judgeExplanation
       });
     });
   });
@@ -1001,6 +1005,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [showDataSources, setShowDataSources] = useState(false);
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const [showScoringExplanation, setShowScoringExplanation] = useState(false);
+  const [expandedDifference, setExpandedDifference] = useState<string | null>(null);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -1259,30 +1264,67 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
         {showTopDifferences && (
           <>
-            <p className="breakdown-subtitle">The metrics with the biggest score differences</p>
+            <p className="breakdown-subtitle">The metrics with the biggest score differences - click any to learn why</p>
             <div className="differences-list">
               {topDifferences.map((diff, index) => {
                 const favoredCityName = diff.favoredCity === 'city1' ? result.city1.city : result.city2.city;
+                const isExpanded = expandedDifference === diff.metricId;
+                const hasExplanation = diff.city1Explanation || diff.city2Explanation;
                 return (
-                  <div key={diff.metricId} className="difference-item">
-                    <div className="diff-rank">#{index + 1}</div>
-                    <div className="diff-metric">
-                      <span className="diff-icon">{diff.icon}</span>
-                      <span className="diff-name">{diff.name}</span>
-                    </div>
-                    <div className="diff-scores">
-                      <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
-                        {Math.round(diff.city1Score)}
-                      </span>
-                      <span className="diff-vs">vs</span>
-                      <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
-                        {Math.round(diff.city2Score)}
-                      </span>
-                    </div>
-                    <div className="diff-delta">
-                      <span className="delta-pill">+{Math.round(diff.difference)}</span>
-                      <span className="delta-city">{favoredCityName}</span>
-                    </div>
+                  <div key={diff.metricId} className={`difference-item ${isExpanded ? 'expanded' : ''} ${hasExplanation ? 'clickable' : ''}`}>
+                    <button
+                      className="diff-header-btn"
+                      onClick={() => hasExplanation && setExpandedDifference(isExpanded ? null : diff.metricId)}
+                      disabled={!hasExplanation}
+                    >
+                      <div className="diff-rank">#{index + 1}</div>
+                      <div className="diff-metric">
+                        <span className="diff-icon">{diff.icon}</span>
+                        <span className="diff-name">{diff.name}</span>
+                      </div>
+                      <div className="diff-scores">
+                        <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
+                          {Math.round(diff.city1Score)}
+                        </span>
+                        <span className="diff-vs">vs</span>
+                        <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
+                          {Math.round(diff.city2Score)}
+                        </span>
+                      </div>
+                      <div className="diff-delta">
+                        <span className="delta-pill">+{Math.round(diff.difference)}</span>
+                        <span className="delta-city">{favoredCityName}</span>
+                      </div>
+                      {hasExplanation && (
+                        <span className={`diff-expand-icon ${isExpanded ? 'expanded' : ''}`}>
+                          {isExpanded ? '▲' : '▼'}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Expanded Explanation Panel */}
+                    {isExpanded && hasExplanation && (
+                      <div className="diff-explanation-panel">
+                        {diff.city1Explanation && (
+                          <div className="diff-city-explanation">
+                            <h4 className="explanation-city-header">
+                              <span className="city-flag">{result.city1.city}</span>
+                              <span className="city-score">Score: {Math.round(diff.city1Score)}</span>
+                            </h4>
+                            <p className="explanation-text">{diff.city1Explanation}</p>
+                          </div>
+                        )}
+                        {diff.city2Explanation && (
+                          <div className="diff-city-explanation">
+                            <h4 className="explanation-city-header">
+                              <span className="city-flag">{result.city2.city}</span>
+                              <span className="city-score">Score: {Math.round(diff.city2Score)}</span>
+                            </h4>
+                            <p className="explanation-text">{diff.city2Explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

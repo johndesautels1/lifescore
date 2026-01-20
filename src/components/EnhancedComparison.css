@@ -1009,21 +1009,127 @@
 }
 
 .difference-item {
-  display: grid;
-  grid-template-columns: 40px 2fr 120px 100px;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(247, 147, 30, 0.05) 100%);
   border-radius: 12px;
   border: 1px solid var(--gray-200);
   transition: all var(--transition-fast);
+  overflow: hidden;
 }
 
-.difference-item:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.difference-item.clickable {
+  cursor: pointer;
+}
+
+.difference-item.clickable:hover {
+  box-shadow: 0 4px 16px rgba(0, 71, 171, 0.15);
   border-color: var(--sapphire);
+}
+
+.difference-item.expanded {
+  border-color: #0047AB;
+  box-shadow: 0 6px 20px rgba(0, 71, 171, 0.2);
+}
+
+/* Header button that contains the metric info */
+.diff-header-btn {
+  display: grid;
+  grid-template-columns: 40px 2fr 120px 100px 30px;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.diff-header-btn:disabled {
+  cursor: default;
+}
+
+.diff-header-btn:not(:disabled):hover {
+  background: rgba(0, 71, 171, 0.05);
+}
+
+/* Expand icon */
+.diff-expand-icon {
+  font-size: 0.75rem;
+  color: #0047AB;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.diff-expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Explanation Panel */
+.diff-explanation-panel {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-top: 1px solid rgba(0, 71, 171, 0.15);
+  background: linear-gradient(180deg, rgba(0, 71, 171, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.diff-city-explanation {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid var(--gray-200);
+}
+
+.explanation-city-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.city-flag {
+  font-weight: 700;
+  color: #0047AB;
+  font-size: 1rem;
+}
+
+.city-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  color: white;
+  border-radius: 20px;
+}
+
+.explanation-text {
+  color: var(--gray-700);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Legacy hover (for non-clickable items) */
+.difference-item:not(.clickable):hover {
+  transform: translateX(4px);
 }
 
 .diff-rank {
@@ -1120,6 +1226,14 @@
   border-color: var(--gray-700);
 }
 
+[data-theme="dark"] .difference-item.expanded {
+  border-color: #0047AB;
+}
+
+[data-theme="dark"] .diff-header-btn:not(:disabled):hover {
+  background: rgba(0, 71, 171, 0.1);
+}
+
 [data-theme="dark"] .diff-icon {
   background: var(--gray-700);
 }
@@ -1129,9 +1243,35 @@
   border-color: var(--gray-600);
 }
 
+[data-theme="dark"] .diff-expand-icon {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .diff-explanation-panel {
+  background: linear-gradient(180deg, rgba(0, 71, 171, 0.08) 0%, rgba(30, 41, 59, 0) 100%);
+  border-top-color: rgba(0, 71, 171, 0.3);
+}
+
+[data-theme="dark"] .diff-city-explanation {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .explanation-city-header {
+  border-bottom-color: var(--gray-600);
+}
+
+[data-theme="dark"] .city-flag {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .explanation-text {
+  color: #e2e8f0;
+}
+
 /* Responsive for Top 5 Differences */
 @media (max-width: 768px) {
-  .difference-item {
+  .diff-header-btn {
     grid-template-columns: 1fr;
     gap: 0.5rem;
     text-align: center;
@@ -1143,6 +1283,27 @@
 
   .diff-scores {
     justify-content: center;
+  }
+
+  .diff-rank {
+    justify-self: center;
+  }
+
+  .diff-delta {
+    justify-self: center;
+  }
+
+  .diff-expand-icon {
+    justify-self: center;
+    margin-top: 0.5rem;
+  }
+
+  .diff-explanation-panel {
+    padding: 1rem;
+  }
+
+  .diff-city-explanation {
+    padding: 0.75rem;
   }
 }
 
