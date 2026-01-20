@@ -11,7 +11,7 @@
 - Compares legal freedom metrics between 200 metropolitan areas (100 NA + 100 EU)
 - Uses 5 LLMs with web search to evaluate 100 metrics across 6 categories
 - Claude Opus 4.5 serves as final judge ("The Judge") for consensus
-- Gamma AI generates 50-page visual reports
+- Gamma AI generates 30-page visual reports
 
 **Repository:** https://github.com/johndesautels1/lifescore
 **Deployed:** Vercel (auto-deploy from main branch)
@@ -113,7 +113,7 @@ D:\LifeScore\
 
 | # | Task | Priority | Status | Notes |
 |---|------|----------|--------|-------|
-| D1 | **Gamma 50-Page Setting** - Fix prompt or Gamma settings to generate 50 pages (not 10) | HIGH | 🔴 Not Started | User configured 50 in Gamma dashboard |
+| D1 | **Gamma 30-Page Setting** - Reduced to 30 pages for faster generation | HIGH | ✅ Done | Prompt updated in gammaService.ts:439-488 |
 | D2 | **Gamma Embed Loading Spinner** - Add spinner while iframe loads | LOW | 🔴 Not Started | Polish |
 | D3 | **Gamma Embed Error Handling** - Handle load errors gracefully | LOW | 🔴 Not Started | Edge case handling |
 
@@ -155,7 +155,6 @@ D:\LifeScore\
 ### HIGH PRIORITY
 - A1-A3: Domain & Deployment
 - B1-B2: Perplexity Data Sources
-- D1: Gamma 50-Page Setting
 - E1-E4: Ask Olivia Feature
 - F1-F2: Login System
 - G1-G2: Stripe Integration

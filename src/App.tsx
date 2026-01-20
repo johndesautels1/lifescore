@@ -15,6 +15,7 @@ import LoadingState from './components/LoadingState';
 import Results from './components/Results';
 import SavedComparisons from './components/SavedComparisons';
 import VisualsTab from './components/VisualsTab';
+import AskOlivia from './components/AskOlivia';
 import {
   EnhancedModeToggle,
   APIKeyModal,
@@ -361,6 +362,20 @@ const App: React.FC = () => {
               key={savedKey}
               onLoadComparison={handleLoadSavedComparison}
               currentComparisonId={state.result?.comparisonId}
+            />
+          )}
+
+          {/* ============================================================
+              ASK OLIVIA TAB
+              ============================================================ */}
+          {activeTab === 'olivia' && (
+            <AskOlivia
+              comparisonData={enhancedResult ? {
+                city1: enhancedResult.city1.city,
+                city2: enhancedResult.city2.city,
+                winner: enhancedResult.winner === 'city1' ? enhancedResult.city1.city :
+                        enhancedResult.winner === 'city2' ? enhancedResult.city2.city : 'Tie'
+              } : undefined}
             />
           )}
 

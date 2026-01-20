@@ -6,7 +6,7 @@
 import React from 'react';
 import './TabNavigation.css';
 
-export type TabId = 'compare' | 'results' | 'visuals' | 'saved' | 'about';
+export type TabId = 'compare' | 'results' | 'visuals' | 'saved' | 'olivia' | 'about';
 
 export interface Tab {
   id: TabId;
@@ -52,6 +52,11 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
       label: 'Saved',
       icon: '💾',
       badge: savedCount > 0 ? savedCount : undefined,
+    },
+    {
+      id: 'olivia',
+      label: 'Ask Olivia',
+      icon: '🎙️',
     },
     {
       id: 'about',
