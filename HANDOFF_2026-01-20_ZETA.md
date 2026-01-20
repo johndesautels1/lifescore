@@ -14,6 +14,7 @@
 | Fix Gamma report persistence (tab switch) | ✅ Done | `7a1bf92` |
 | Add Save Report button (U5) | ✅ Done | `7a1bf92` |
 | Gamma reports library in Saved tab | ✅ Done | `7a1bf92` |
+| U4: Top 5 Deciding Factors widget | ✅ Done | `97e0a4a` |
 
 ---
 
@@ -73,6 +74,7 @@
 
 | Commit | Description |
 |--------|-------------|
+| `97e0a4a` | feat(U4): Expandable Top 5 Deciding Factors with judge explanations |
 | `7a1bf92` | feat: Premium glassmorphic buttons + Gamma report save system |
 
 ---

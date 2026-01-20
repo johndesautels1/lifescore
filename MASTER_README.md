@@ -24,10 +24,10 @@
 
 | Commit | Description |
 |--------|-------------|
+| `97e0a4a` | feat(U4): Expandable Top 5 Deciding Factors with judge explanations |
 | `7a1bf92` | Premium glassmorphic buttons + Gamma report save system |
 | `0ee9e99` | Collapsible scoring explanation + disagreement bullet format |
 | `92b7635` | Add Ask Olivia tab + fix About card styling |
-| `b6a8a56` | Premium tooltip popup + reduce Gamma report to 30 pages |
 
 ---
 
@@ -40,19 +40,18 @@
 | Gamma report persistence | ✅ Done | State lifted to App.tsx |
 | U5: Save Report button | ✅ Done | Save to library + visual reports tab |
 | Visual Reports library | ✅ Done | Tab in Saved section with delete |
+| U4: Top 5 Deciding Factors | ✅ Done | Click to expand judge explanations |
 
 ---
 
 ## REMAINING WORK
 
-### URGENT (U4)
+### URGENT TASKS COMPLETED
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| U4 | Top 5 Deciding Factors Widget | HIGH | 🔴 Not Started |
+| U4 | Top 5 Deciding Factors Widget | HIGH | ✅ Done |
 | U5 | Save Report Button | MEDIUM | ✅ Done |
-
-**U4 Details:** Each metric in Top 5 should have clickable widget showing WHY cities scored differently. Data exists in `MetricConsensus.judgeExplanation` and `llmScores[].explanation`.
 
 ---
 
