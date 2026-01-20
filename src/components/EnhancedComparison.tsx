@@ -137,16 +137,24 @@ const getMetricIcon = (shortName: string): string => {
 // ============================================================================
 
 // Evaluator LLMs (not including Opus which is judge-only)
-const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
+export const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
 
 interface LLMSelectorProps {
   city1: string;
   city2: string;
+  // Lifted state from App.tsx
+  llmStates: Map<LLMProvider, LLMButtonState>;
+  setLLMStates: React.Dispatch<React.SetStateAction<Map<LLMProvider, LLMButtonState>>>;
+  judgeResult: JudgeOutput | null;
+  setJudgeResult: React.Dispatch<React.SetStateAction<JudgeOutput | null>>;
+  lastJudgedCount: number;
+  setLastJudgedCount: React.Dispatch<React.SetStateAction<number>>;
+  // Callbacks
   onResultsUpdate: (results: Map<LLMProvider, EvaluatorResult>, judgeResult: JudgeOutput | null) => void;
   onStatusChange: (status: 'idle' | 'running' | 'judging' | 'complete') => void;
 }
 
-interface LLMButtonState {
+export interface LLMButtonState {
   status: 'idle' | 'running' | 'completed' | 'failed';
   result?: EvaluatorResult;
   categoryProgress?: CategoryBatchProgress[];
@@ -155,17 +163,18 @@ interface LLMButtonState {
 export const LLMSelector: React.FC<LLMSelectorProps> = ({
   city1,
   city2,
+  llmStates,
+  setLLMStates,
+  judgeResult,
+  setJudgeResult,
+  lastJudgedCount,
+  setLastJudgedCount,
   onResultsUpdate,
   onStatusChange
 }) => {
-  const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
-    new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
-  );
-  const [judgeResult, setJudgeResult] = useState<JudgeOutput | null>(null);
+  // Local UI state only (not lifted)
   const [isJudging, setIsJudging] = useState(false);
   const [currentLLMProgress, setCurrentLLMProgress] = useState<{ provider: LLMProvider; progress: CategoryBatchProgress[] } | null>(null);
-  // Phase 3: Track how many LLMs were included in the last judge call
-  const [lastJudgedCount, setLastJudgedCount] = useState(0);
   const apiKeys = getStoredAPIKeys();
 
   // Count completed LLMs

@@ -19,11 +19,15 @@ import {
   EnhancedModeToggle,
   APIKeyModal,
   EnhancedResults,
-  LLMSelector
-} from './components/EnhancedComparison';
+  LLMSelector,
+  EVALUATOR_LLMS,
+  type LLMButtonState
+} from "./components/EnhancedComparison";
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult } from './types/metrics';
-import type { LLMAPIKeys, EnhancedComparisonResult } from './types/enhancedComparison';
+import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
+import { LLM_CONFIGS } from './types/enhancedComparison';
+import type { JudgeOutput } from './services/opusJudge';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
@@ -42,6 +46,13 @@ const App: React.FC = () => {
   const [enhancedStatus, setEnhancedStatus] = useState<'idle' | 'running' | 'complete'>('idle');
   const [enhancedResult, setEnhancedResult] = useState<EnhancedComparisonResult | null>(null);
   const [pendingCities, setPendingCities] = useState<{ city1: string; city2: string } | null>(null);
+
+  // LIFTED STATE from LLMSelector (for incremental LLM feature)
+  const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
+    new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
+  );
+  const [judgeResultLifted, setJudgeResultLifted] = useState<JudgeOutput | null>(null);
+  const [lastJudgedCount, setLastJudgedCount] = useState(0);
 
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
@@ -113,6 +124,10 @@ const App: React.FC = () => {
     setEnhancedStatus('idle');
     setEnhancedResult(null);
     setPendingCities(null);
+    // Reset lifted LLM state
+    setLLMStates(new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }])));
+    setJudgeResultLifted(null);
+    setLastJudgedCount(0);
     resetOGMetaTags();
   };
 
@@ -181,6 +196,12 @@ const App: React.FC = () => {
                   <LLMSelector
                     city1={pendingCities.city1}
                     city2={pendingCities.city2}
+                    llmStates={llmStates}
+                    setLLMStates={setLLMStates}
+                    judgeResult={judgeResultLifted}
+                    setJudgeResult={setJudgeResultLifted}
+                    lastJudgedCount={lastJudgedCount}
+                    setLastJudgedCount={setLastJudgedCount}
                     onResultsUpdate={(llmResults, judgeResult) => {
                       if (judgeResult && llmResults.size > 0) {
                         // Build EnhancedComparisonResult from LLM results and judge output
@@ -236,6 +257,55 @@ const App: React.FC = () => {
                     result={enhancedResult}
                     dealbreakers={dealbreakers}
                   />
+                  
+                  {/* ADD MORE MODELS SECTION - Phase 3 Incremental LLM Feature */}
+                  {pendingCities && (
+                    <div className="add-more-models card">
+                      <h3 className="section-title">
+                        <span className="section-icon">🤖</span>
+                        Add More AI Models
+                      </h3>
+                      <p className="section-description">
+                        Run additional LLMs to strengthen consensus. Judge will auto-update.
+                      </p>
+                      <div className="llm-add-grid">
+                        {EVALUATOR_LLMS.map(llm => {
+                          const config = LLM_CONFIGS[llm];
+                          const llmState = llmStates.get(llm);
+                          const isCompleted = llmState?.status === 'completed';
+                          const isRunning = llmState?.status === 'running';
+                          const isFailed = llmState?.status === 'failed';
+                          
+                          return (
+                            <button
+                              key={llm}
+                              className={`llm-add-btn ${isCompleted ? 'completed' : ''} ${isRunning ? 'running' : ''} ${isFailed ? 'failed' : ''}`}
+                              disabled={isCompleted || isRunning}
+                              onClick={() => {
+                                // This will be handled by going back to compare tab with state preserved
+                                setEnhancedStatus('running');
+                                setActiveTab('compare');
+                              }}
+                              title={isCompleted ? 'Already completed' : isRunning ? 'Running...' : 'Click to add'}
+                            >
+                              <span className="llm-icon">{config.icon}</span>
+                              <span className="llm-name">{config.shortName}</span>
+                              <span className="llm-status-indicator">
+                                {isCompleted && '✓'}
+                                {isRunning && '⏳'}
+                                {isFailed && '✗'}
+                                {!isCompleted && !isRunning && !isFailed && '+'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="models-count">
+                        {Array.from(llmStates.values()).filter(s => s.status === 'completed').length} of {EVALUATOR_LLMS.length} models completed
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="new-comparison">
                     <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
                       ← New Comparison

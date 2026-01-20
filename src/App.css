@@ -334,3 +334,112 @@
 [data-theme="dark"] .cities-subtitle {
   color: var(--gray-400);
 }
+
+/* ============================================
+   ADD MORE MODELS SECTION - Results Tab
+   ============================================ */
+.add-more-models {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #3a3a5e;
+}
+
+.add-more-models .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.add-more-models .section-icon {
+  font-size: 1.2rem;
+}
+
+.add-more-models .section-description {
+  color: #888;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.llm-add-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.llm-add-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 2px solid #3a3a5e;
+  border-radius: 8px;
+  background: #0a0a1a;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.llm-add-btn:hover:not(:disabled) {
+  border-color: #6366f1;
+  background: #1a1a3e;
+  transform: translateY(-2px);
+}
+
+.llm-add-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.llm-add-btn.completed {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.llm-add-btn.running {
+  border-color: #eab308;
+  background: rgba(234, 179, 8, 0.1);
+  animation: pulse 1.5s infinite;
+}
+
+.llm-add-btn.failed {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.llm-add-btn .llm-icon {
+  font-size: 1.5rem;
+}
+
+.llm-add-btn .llm-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.llm-add-btn .llm-status-indicator {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.llm-add-btn.completed .llm-status-indicator {
+  color: #22c55e;
+}
+
+.llm-add-btn.failed .llm-status-indicator {
+  color: #ef4444;
+}
+
+.models-count {
+  text-align: center;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
