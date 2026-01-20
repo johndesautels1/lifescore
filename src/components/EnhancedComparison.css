@@ -2340,26 +2340,91 @@
   color: #7070a0;
 }
 
+/* ============================================================================
+   PREMIUM METRIC SCORE BUTTONS
+   Sophisticated design for affluent, educated users
+   ============================================================================ */
+
 .metric-score {
   text-align: center;
   font-style: normal;
   font-family: inherit;
-  font-size: 1.1rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  min-width: 60px;
-}
-
-.metric-score.winning {
-  background: #0047AB;
-  color: white;
+  font-size: 1.15rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  min-width: 68px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
 }
 
+/* Winning score - Premium sapphire treatment */
+.metric-score.winning {
+  background: linear-gradient(145deg, #0047AB 0%, #002d6d 50%, #001a3d 100%);
+  color: #ffffff;
+  box-shadow:
+    0 4px 16px rgba(0, 71, 171, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.metric-score.winning::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+
+.metric-score.winning:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 24px rgba(0, 71, 171, 0.45),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Losing score - Refined crimson treatment */
 .metric-score:not(.winning) {
-  background: white;
-  color: #DC2626;
-  font-weight: 400;
+  background: linear-gradient(145deg, #ffffff 0%, #fef2f2 50%, #fee2e2 100%);
+  color: #991b1b;
+  box-shadow:
+    0 2px 8px rgba(220, 38, 38, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.metric-score:not(.winning)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, transparent 100%);
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+
+.metric-score:not(.winning):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(220, 38, 38, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(220, 38, 38, 0.08);
 }
 
 /* Disagreement Card */
@@ -3363,13 +3428,47 @@
   color: var(--gray-200);
 }
 
-[data-theme="dark"] .metric-score {
-  color: var(--gray-300);
+/* Dark mode - Premium metric scores */
+[data-theme="dark"] .metric-score.winning {
+  background: linear-gradient(145deg, #1a5694 0%, #0d3a6b 50%, #062140 100%);
+  color: #ffffff;
+  box-shadow:
+    0 4px 16px rgba(26, 86, 148, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  border-color: rgba(107, 163, 255, 0.3);
 }
 
-[data-theme="dark"] .metric-score.winning {
-  background: rgba(15, 76, 129, 0.2);
-  color: var(--sapphire-light);
+[data-theme="dark"] .metric-score.winning:hover {
+  box-shadow:
+    0 8px 24px rgba(26, 86, 148, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-score:not(.winning) {
+  background: linear-gradient(145deg, #3f1f1f 0%, #2d1414 50%, #1f0f0f 100%);
+  color: #fca5a5;
+  box-shadow:
+    0 2px 8px rgba(220, 38, 38, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+[data-theme="dark"] .metric-score:not(.winning):hover {
+  box-shadow:
+    0 4px 12px rgba(220, 38, 38, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-score::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
 }
 
 [data-theme="dark"] .disagreement-card {
@@ -3784,38 +3883,96 @@
   justify-content: center;
 }
 
+/* ============================================================================
+   PREMIUM LAW & ENFORCEMENT SCORE PILLS
+   Dual-score view for sophisticated legal analysis
+   ============================================================================ */
+
 .law-score,
 .enforce-score {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  min-width: 40px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Law Score - Sapphire theme */
 .law-score {
-  background: rgba(0, 71, 171, 0.1);
+  background: linear-gradient(145deg, rgba(0, 71, 171, 0.12) 0%, rgba(0, 45, 109, 0.18) 100%);
   color: #0047AB;
-  border: 1px solid rgba(0, 71, 171, 0.2);
+  border: 1px solid rgba(0, 71, 171, 0.25);
+  box-shadow:
+    0 2px 6px rgba(0, 71, 171, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.enforce-score {
-  background: rgba(247, 147, 30, 0.1);
-  color: #F7931E;
-  border: 1px solid rgba(247, 147, 30, 0.2);
+.law-score:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 10px rgba(0, 71, 171, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .law-score.winning {
-  background: rgba(0, 71, 171, 0.2);
-  border-color: #0047AB;
+  background: linear-gradient(145deg, #0047AB 0%, #002d6d 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 3px 10px rgba(0, 71, 171, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.law-score.winning:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 5px 14px rgba(0, 71, 171, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Enforce Score - Gold/Orange theme */
+.enforce-score {
+  background: linear-gradient(145deg, rgba(247, 147, 30, 0.12) 0%, rgba(212, 110, 0, 0.18) 100%);
+  color: #c66e00;
+  border: 1px solid rgba(247, 147, 30, 0.25);
+  box-shadow:
+    0 2px 6px rgba(247, 147, 30, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.enforce-score:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 10px rgba(247, 147, 30, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .enforce-score.winning {
-  background: rgba(247, 147, 30, 0.2);
-  border-color: #F7931E;
+  background: linear-gradient(145deg, #F7931E 0%, #c66e00 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 3px 10px rgba(247, 147, 30, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.enforce-score.winning:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 5px 14px rgba(247, 147, 30, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* Gap Warning - When enforcement is much lower than law */
@@ -3920,26 +4077,69 @@
   color: #F7931E;
 }
 
+/* Dark mode - Premium law/enforce scores */
 [data-theme="dark"] .law-score {
-  background: rgba(107, 163, 255, 0.15);
-  color: #6ba3ff;
-  border-color: rgba(107, 163, 255, 0.3);
+  background: linear-gradient(145deg, rgba(107, 163, 255, 0.15) 0%, rgba(60, 100, 180, 0.2) 100%);
+  color: #93bbff;
+  border-color: rgba(107, 163, 255, 0.35);
+  box-shadow:
+    0 2px 6px rgba(107, 163, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-[data-theme="dark"] .enforce-score {
-  background: rgba(247, 147, 30, 0.15);
-  color: #F7931E;
-  border-color: rgba(247, 147, 30, 0.3);
+[data-theme="dark"] .law-score:hover {
+  box-shadow:
+    0 4px 10px rgba(107, 163, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .law-score.winning {
-  background: rgba(107, 163, 255, 0.25);
-  border-color: #6ba3ff;
+  background: linear-gradient(145deg, #1a5694 0%, #0d3a6b 100%);
+  color: #ffffff;
+  border-color: rgba(107, 163, 255, 0.4);
+  box-shadow:
+    0 3px 10px rgba(26, 86, 148, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .law-score.winning:hover {
+  box-shadow:
+    0 5px 14px rgba(26, 86, 148, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .enforce-score {
+  background: linear-gradient(145deg, rgba(247, 147, 30, 0.15) 0%, rgba(180, 100, 20, 0.2) 100%);
+  color: #ffb347;
+  border-color: rgba(247, 147, 30, 0.35);
+  box-shadow:
+    0 2px 6px rgba(247, 147, 30, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .enforce-score:hover {
+  box-shadow:
+    0 4px 10px rgba(247, 147, 30, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .enforce-score.winning {
-  background: rgba(247, 147, 30, 0.25);
-  border-color: #F7931E;
+  background: linear-gradient(145deg, #c66e00 0%, #8a4d00 100%);
+  color: #ffffff;
+  border-color: rgba(247, 147, 30, 0.4);
+  box-shadow:
+    0 3px 10px rgba(198, 110, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .enforce-score.winning:hover {
+  box-shadow:
+    0 5px 14px rgba(198, 110, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Responsive - Tablet */
