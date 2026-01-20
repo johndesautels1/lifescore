@@ -118,11 +118,8 @@ async function createFromTemplate(
     gammaId: templateId,
     prompt: prompt,
     exportAs: exportAs || 'pdf',
-    imageOptions: {
-      source: 'aiGenerated',
-      model: 'imagen-3-flash',  // 2 credits - cost-effective for now
-      style: 'professional infographics, data visualization'
-    },
+    // Note: imageOptions.source is not allowed for from-template endpoint
+    // Images will use template defaults or AI generation based on template settings
     sharingOptions: {
       workspaceAccess: 'view',
       externalAccess: 'view'
