@@ -1545,46 +1545,65 @@
   color: #F7931E;
 }
 
-/* Metric Tooltips */
+/* Metric Tooltips - Premium Popup Card */
 .metric-tooltip {
   position: relative;
   display: inline-flex;
+  margin-left: 0.35rem;
 }
 
 .tooltip-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   border-radius: 50%;
   cursor: help;
-  transition: all var(--transition-fast);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 71, 171, 0.25);
 }
 
 .tooltip-trigger:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 71, 171, 0.4);
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0, 71, 171, 0.5);
+  background: linear-gradient(135deg, #F7931E 0%, #e67e00 100%);
 }
 
 .tooltip-content {
   display: none;
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 14px);
   transform: translateX(-50%);
-  width: 280px;
-  padding: 1rem;
-  background: white;
-  border: 2px solid #0047AB;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 340px;
+  padding: 1.5rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 255, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 71, 171, 0.2);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 50px rgba(0, 71, 171, 0.2),
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   z-index: 1000;
   text-align: left;
+}
+
+.tooltip-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0047AB 0%, #F7931E 50%, #0047AB 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .tooltip-content::after {
@@ -1593,58 +1612,79 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: #0047AB;
+  border: 10px solid transparent;
+  border-top-color: rgba(248, 250, 255, 0.98);
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.1));
 }
 
 .tooltip-content strong {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: #0047AB;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 71, 171, 0.15);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+}
+
+.tooltip-content strong::before {
+  content: '💡';
+  font-size: 1.1rem;
 }
 
 .tooltip-content p {
-  color: var(--gray-700);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  color: #374151;
+  font-size: 1.05rem;
+  line-height: 1.65;
   margin: 0;
+  font-weight: 450;
 }
 
 .metric-tooltip:hover .tooltip-content {
   display: block;
-  animation: tooltipFadeIn 0.2s ease;
+  animation: tooltipSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes tooltipFadeIn {
+@keyframes tooltipSlideIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(4px);
+    transform: translateX(-50%) translateY(8px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
 /* Dark mode tooltips */
 [data-theme="dark"] .tooltip-content {
-  background: var(--gray-800);
-  border-color: var(--sapphire-light);
+  background: linear-gradient(145deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
+  border-color: rgba(107, 163, 255, 0.3);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .tooltip-content::before {
+  background: linear-gradient(90deg, var(--sapphire-light) 0%, #F7931E 50%, var(--sapphire-light) 100%);
 }
 
 [data-theme="dark"] .tooltip-content strong {
   color: var(--sapphire-light);
+  border-bottom-color: rgba(107, 163, 255, 0.2);
 }
 
 [data-theme="dark"] .tooltip-content p {
-  color: var(--gray-300);
+  color: #e5e7eb;
 }
 
 [data-theme="dark"] .tooltip-content::after {
-  border-top-color: var(--sapphire-light);
+  border-top-color: rgba(17, 24, 39, 0.98);
 }
 
 /* LLM Agreement Indicators */

@@ -436,51 +436,55 @@ decisions about international relocation based on verified legal data.
 END OF DATA - USE ONLY THE INFORMATION ABOVE
 ================================================================================
 
-**COMPREHENSIVE 50-PAGE REPORT STRUCTURE:**
+**COMPREHENSIVE 30-PAGE REPORT STRUCTURE:**
 
-**IMPORTANT: Generate a COMPLETE 50-page report. Do NOT truncate to 10 pages.**
+**IMPORTANT: Generate a COMPLETE 30-page report covering all metrics.**
 
-**Section 1: Overview (Pages 1-5)**
+**Section 1: Overview (Pages 1-4)**
 - Page 1: Title slide with winner (${winner}), both total scores, dramatic hero visual
 - Page 2: Executive summary - key findings, overall winner, score gap analysis
 - Page 3: LIFE SCORE methodology - what we measure, why it matters
-- Page 4: 6-category visual comparison (radar/spider chart showing all category scores)
-- Page 5: Score differential analysis - which categories had biggest gaps
+- Page 4: 6-category visual comparison (radar/spider chart) + biggest gaps
 
-**Section 2: Personal Autonomy (Pages 6-13)**
-- Page 6: Category title + winner declaration + category scores
-- Pages 7-10: All 15 metrics detailed - 4 metrics per page with full comparison
-- Pages 11-12: Key insights and takeaways for Personal Autonomy
-- Page 13: Category infographic summary
+**Section 2: Personal Autonomy (Pages 5-8)**
+- Page 5: Category title + winner + scores + top 5 metrics table
+- Page 6: Metrics 1-8 detailed comparison (compact table format)
+- Page 7: Metrics 9-15 detailed comparison
+- Page 8: Personal Autonomy key insights + infographic
 
-**Section 3: Housing & Property (Pages 14-23)**
-- Page 14: Category title + winner declaration + category scores
-- Pages 15-19: All 20 metrics detailed - 4 metrics per page with full comparison
-- Pages 20-22: Key insights for Housing & Property
-- Page 23: Category infographic summary
+**Section 3: Housing & Property (Pages 9-13)**
+- Page 9: Category title + winner + scores + top 5 metrics
+- Page 10: Metrics 1-7 detailed comparison
+- Page 11: Metrics 8-14 detailed comparison
+- Page 12: Metrics 15-20 detailed comparison
+- Page 13: Housing & Property key insights + infographic
 
-**Section 4: Business & Work (Pages 24-35)**
-- Page 24: Category title + winner declaration + category scores
-- Pages 25-31: All 25 metrics detailed - 4 metrics per page with full comparison
-- Pages 32-34: Key insights for Business & Work
-- Page 35: Category infographic summary
+**Section 4: Business & Work (Pages 14-19)**
+- Page 14: Category title + winner + scores + top 5 metrics
+- Page 15: Metrics 1-9 detailed comparison
+- Page 16: Metrics 10-17 detailed comparison
+- Page 17: Metrics 18-25 detailed comparison
+- Page 18: Business & Work key insights
+- Page 19: Business & Work infographic summary
 
-**Section 5: Transportation (Pages 36-42)**
-- Page 36: Category title + winner declaration + category scores
-- Pages 37-40: All 15 metrics detailed - 4 metrics per page
-- Page 41: Key insights for Transportation
-- Page 42: Category infographic summary
+**Section 5: Transportation (Pages 20-23)**
+- Page 20: Category title + winner + scores + top 5 metrics
+- Page 21: All 15 metrics detailed comparison (compact table)
+- Page 22: Transportation key insights
+- Page 23: Transportation infographic
 
-**Section 6: Policing & Courts (Pages 43-48)**
-- Page 43: Category title + winner declaration + category scores
-- Pages 44-47: All 15 metrics detailed - 4 metrics per page
-- Page 48: Key insights and infographic for Policing & Courts
+**Section 6: Policing & Courts (Pages 24-27)**
+- Page 24: Category title + winner + scores + top 5 metrics
+- Page 25: All 15 metrics detailed comparison (compact table)
+- Page 26: Policing & Courts key insights
+- Page 27: Policing & Courts infographic
 
-**Section 7: Speech & Lifestyle + Conclusion (Pages 49-50)**
-- Page 49: Speech & Lifestyle complete analysis (all 10 metrics)
-- Page 50: Final verdict, methodology, Clues Intelligence LTD branding
+**Section 7: Speech & Lifestyle + Conclusion (Pages 28-30)**
+- Page 28: Speech & Lifestyle - all 10 metrics detailed
+- Page 29: Speech & Lifestyle insights + Final verdict summary
+- Page 30: Methodology recap, Clues Intelligence LTD branding, contact info
 
-**CRITICAL: This report MUST be 50 pages. Use the detailed metric data provided.**
+**CRITICAL: This report MUST be 30 pages. Use compact tables to fit all metrics.**
 DO NOT ADD ANY CONTENT NOT EXPLICITLY PROVIDED IN THIS DATA.
 `.trim();
 }
