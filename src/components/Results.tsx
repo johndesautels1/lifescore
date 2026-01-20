@@ -289,7 +289,7 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
           const s2 = city2Metrics.metrics.find(x => x.metricId === m.id);
           return s1?.notes || s2?.notes;
         }) && (
-          <p style={{ fontSize: '0.85em', color: '#666', marginTop: '8px' }}>
+          <p style={{ fontSize: '0.85em', color: '#FFFFFF', marginTop: '8px', fontWeight: 600, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
             Click any metric with ▶ to see detailed LLM analysis
           </p>
         )}

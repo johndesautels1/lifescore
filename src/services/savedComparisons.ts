@@ -40,11 +40,29 @@ export interface SavedEnhancedComparison {
 }
 
 // ============================================================================
+// GAMMA REPORT TYPES
+// ============================================================================
+
+export interface SavedGammaReport {
+  id: string;                    // Unique report ID
+  comparisonId: string;          // Links to the comparison this report is for
+  city1: string;
+  city2: string;
+  gammaUrl: string;              // URL to the Gamma presentation
+  pdfUrl?: string;               // Optional PDF download URL
+  pptxUrl?: string;              // Optional PPTX download URL
+  generationId: string;          // Gamma's generation ID
+  savedAt: string;
+  nickname?: string;
+}
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const LOCAL_STORAGE_KEY = 'lifescore_saved_comparisons';
 const ENHANCED_STORAGE_KEY = 'lifescore_saved_enhanced';
+const GAMMA_REPORTS_KEY = 'lifescore_saved_gamma_reports';
 const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
@@ -271,6 +289,110 @@ export function deleteEnhancedComparisonLocal(id: string): boolean {
 
   saveLocalEnhancedComparisons(filtered);
   return true;
+}
+
+// ============================================================================
+// GAMMA REPORT STORAGE
+// ============================================================================
+
+const MAX_GAMMA_REPORTS = 50;
+
+/**
+ * Get all saved Gamma reports from localStorage
+ */
+export function getSavedGammaReports(): SavedGammaReport[] {
+  try {
+    const stored = localStorage.getItem(GAMMA_REPORTS_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as SavedGammaReport[];
+  } catch (error) {
+    console.error('Error loading Gamma reports:', error);
+    return [];
+  }
+}
+
+/**
+ * Save Gamma reports to localStorage
+ */
+function saveGammaReportsLocal(reports: SavedGammaReport[]): void {
+  localStorage.setItem(GAMMA_REPORTS_KEY, JSON.stringify(reports));
+}
+
+/**
+ * Save a Gamma report locally
+ */
+export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>): SavedGammaReport {
+  const reports = getSavedGammaReports();
+
+  // Generate unique ID
+  const id = `gamma_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  const saved: SavedGammaReport = {
+    ...report,
+    id,
+    savedAt: new Date().toISOString(),
+  };
+
+  // Add to beginning of array
+  reports.unshift(saved);
+
+  // Trim if too many
+  if (reports.length > MAX_GAMMA_REPORTS) {
+    reports.pop();
+  }
+
+  saveGammaReportsLocal(reports);
+  return saved;
+}
+
+/**
+ * Get Gamma reports for a specific comparison
+ */
+export function getGammaReportsForComparison(comparisonId: string): SavedGammaReport[] {
+  return getSavedGammaReports().filter(r => r.comparisonId === comparisonId);
+}
+
+/**
+ * Check if a Gamma report exists for a comparison
+ */
+export function hasGammaReportForComparison(comparisonId: string): boolean {
+  return getSavedGammaReports().some(r => r.comparisonId === comparisonId);
+}
+
+/**
+ * Delete a Gamma report
+ */
+export function deleteGammaReport(id: string): boolean {
+  const reports = getSavedGammaReports();
+  const filtered = reports.filter(r => r.id !== id);
+
+  if (filtered.length === reports.length) {
+    return false;
+  }
+
+  saveGammaReportsLocal(filtered);
+  return true;
+}
+
+/**
+ * Update nickname for a Gamma report
+ */
+export function updateGammaReportNickname(id: string, nickname: string): boolean {
+  const reports = getSavedGammaReports();
+  const report = reports.find(r => r.id === id);
+
+  if (!report) return false;
+
+  report.nickname = nickname;
+  saveGammaReportsLocal(reports);
+  return true;
+}
+
+/**
+ * Clear all Gamma reports
+ */
+export function clearAllGammaReports(): void {
+  localStorage.removeItem(GAMMA_REPORTS_KEY);
 }
 
 // ============================================================================

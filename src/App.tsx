@@ -29,6 +29,7 @@ import type { ComparisonResult } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
 import { LLM_CONFIGS } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
+import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
@@ -63,6 +64,13 @@ const App: React.FC = () => {
 
   // Custom weights state (reserved for future weighted scoring)
   const [, setCustomWeights] = useState<Record<string, number> | null>(null);
+
+  // LIFTED STATE: Gamma visual report (persists across tab switches)
+  const [gammaReportState, setGammaReportState] = useState<VisualReportState>({
+    status: 'idle',
+  });
+  const [gammaExportFormat, setGammaExportFormat] = useState<'pdf' | 'pptx'>('pdf');
+  const [showGammaEmbedded, setShowGammaEmbedded] = useState(false);
 
   // About section collapse state
   const [showAboutSection, setShowAboutSection] = useState(true);
@@ -351,7 +359,15 @@ const App: React.FC = () => {
               VISUALS TAB
               ============================================================ */}
           {activeTab === 'visuals' && (
-            <VisualsTab result={enhancedResult || state.result || null} />
+            <VisualsTab
+              result={enhancedResult || state.result || null}
+              reportState={gammaReportState}
+              setReportState={setGammaReportState}
+              exportFormat={gammaExportFormat}
+              setExportFormat={setGammaExportFormat}
+              showEmbedded={showGammaEmbedded}
+              setShowEmbedded={setShowGammaEmbedded}
+            />
           )}
 
           {/* ============================================================

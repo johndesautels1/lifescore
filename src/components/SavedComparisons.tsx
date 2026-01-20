@@ -17,7 +17,11 @@ import {
   exportToJSON,
   importFromJSON,
   clearAllLocal,
-  type SavedComparison
+  getSavedGammaReports,
+  deleteGammaReport,
+  clearAllGammaReports,
+  type SavedComparison,
+  type SavedGammaReport
 } from '../services/savedComparisons';
 import './SavedComparisons.css';
 
@@ -31,7 +35,9 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   currentComparisonId
 }) => {
   const [comparisons, setComparisons] = useState<SavedComparison[]>([]);
+  const [gammaReports, setGammaReports] = useState<SavedGammaReport[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showGammaReports, setShowGammaReports] = useState(false);
   const [showGitHubModal, setShowGitHubModal] = useState(false);
   const [gitHubToken, setGitHubToken] = useState('');
   const [, setGitHubUsername] = useState<string | null>(null);
@@ -47,7 +53,24 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
   const loadComparisons = () => {
     setComparisons(getLocalComparisons());
+    setGammaReports(getSavedGammaReports());
     setSyncStatus(getSyncStatus());
+  };
+
+  const handleDeleteGammaReport = (id: string) => {
+    if (window.confirm('Delete this saved report?')) {
+      deleteGammaReport(id);
+      loadComparisons();
+      showMessage('success', 'Report deleted');
+    }
+  };
+
+  const handleClearAllGammaReports = () => {
+    if (window.confirm('Delete ALL saved visual reports? This cannot be undone.')) {
+      clearAllGammaReports();
+      loadComparisons();
+      showMessage('success', 'All reports cleared');
+    }
   };
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -244,83 +267,177 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
             </div>
           </div>
 
+          {/* Tab Toggle: Comparisons vs Reports */}
+          <div className="saved-tabs">
+            <button
+              className={`saved-tab ${!showGammaReports ? 'active' : ''}`}
+              onClick={() => setShowGammaReports(false)}
+            >
+              📊 Comparisons ({comparisons.length})
+            </button>
+            <button
+              className={`saved-tab ${showGammaReports ? 'active' : ''}`}
+              onClick={() => setShowGammaReports(true)}
+            >
+              📑 Visual Reports ({gammaReports.length})
+            </button>
+          </div>
+
           {/* Comparisons List */}
-          {comparisons.length === 0 ? (
-            <div className="no-saved">
-              <p>No saved comparisons yet.</p>
-              <p className="no-saved-hint">Complete a comparison and click "Save" to add it here.</p>
-            </div>
-          ) : (
-            <div className="saved-list">
-              {comparisons.map((comparison) => (
-                <div
-                  key={comparison.id}
-                  className={`saved-item ${comparison.id === currentComparisonId ? 'current' : ''}`}
-                >
-                  <div className="saved-item-main">
-                    <div className="saved-item-cities">
-                      {editingNickname === comparison.id ? (
-                        <div className="nickname-edit">
-                          <input
-                            type="text"
-                            value={nicknameValue}
-                            onChange={(e) => setNicknameValue(e.target.value)}
-                            placeholder="Add a nickname..."
-                            autoFocus
-                          />
-                          <button onClick={() => handleSaveNickname(comparison.id)}>✓</button>
-                          <button onClick={() => setEditingNickname(null)}>✕</button>
-                        </div>
-                      ) : (
-                        <>
-                          {comparison.nickname && (
-                            <span className="saved-nickname">{comparison.nickname}</span>
-                          )}
-                          <span className="saved-cities-text">
-                            {comparison.result.city1.city} vs {comparison.result.city2.city}
-                          </span>
-                        </>
-                      )}
+          {!showGammaReports && (
+            comparisons.length === 0 ? (
+              <div className="no-saved">
+                <p>No saved comparisons yet.</p>
+                <p className="no-saved-hint">Complete a comparison and click "Save" to add it here.</p>
+              </div>
+            ) : (
+              <div className="saved-list">
+                {comparisons.map((comparison) => (
+                  <div
+                    key={comparison.id}
+                    className={`saved-item ${comparison.id === currentComparisonId ? 'current' : ''}`}
+                  >
+                    <div className="saved-item-main">
+                      <div className="saved-item-cities">
+                        {editingNickname === comparison.id ? (
+                          <div className="nickname-edit">
+                            <input
+                              type="text"
+                              value={nicknameValue}
+                              onChange={(e) => setNicknameValue(e.target.value)}
+                              placeholder="Add a nickname..."
+                              autoFocus
+                            />
+                            <button onClick={() => handleSaveNickname(comparison.id)}>✓</button>
+                            <button onClick={() => setEditingNickname(null)}>✕</button>
+                          </div>
+                        ) : (
+                          <>
+                            {comparison.nickname && (
+                              <span className="saved-nickname">{comparison.nickname}</span>
+                            )}
+                            <span className="saved-cities-text">
+                              {comparison.result.city1.city} vs {comparison.result.city2.city}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="saved-item-meta">
+                        <span className={`saved-winner ${comparison.result.winner}`}>
+                          {getWinnerText(comparison)}
+                        </span>
+                        <span className="saved-scores">
+                          {Math.round(comparison.result.city1.totalScore)} - {Math.round(comparison.result.city2.totalScore)}
+                        </span>
+                        <span className="saved-date">{formatDate(comparison.savedAt)}</span>
+                        {!comparison.synced && syncStatus.connected && (
+                          <span className="unsynced-badge" title="Not synced">●</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="saved-item-meta">
-                      <span className={`saved-winner ${comparison.result.winner}`}>
-                        {getWinnerText(comparison)}
-                      </span>
-                      <span className="saved-scores">
-                        {Math.round(comparison.result.city1.totalScore)} - {Math.round(comparison.result.city2.totalScore)}
-                      </span>
-                      <span className="saved-date">{formatDate(comparison.savedAt)}</span>
-                      {!comparison.synced && syncStatus.connected && (
-                        <span className="unsynced-badge" title="Not synced">●</span>
-                      )}
+                    <div className="saved-item-actions">
+                      <button
+                        className="action-btn view-btn"
+                        onClick={() => handleLoad(comparison)}
+                        title="View comparison"
+                      >
+                        👁
+                      </button>
+                      <button
+                        className="action-btn edit-btn"
+                        onClick={() => handleEditNickname(comparison.id, comparison.nickname)}
+                        title="Edit nickname"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={() => handleDelete(comparison.id)}
+                        title="Delete"
+                      >
+                        🗑
+                      </button>
                     </div>
                   </div>
-                  <div className="saved-item-actions">
-                    <button
-                      className="action-btn view-btn"
-                      onClick={() => handleLoad(comparison)}
-                      title="View comparison"
-                    >
-                      👁
-                    </button>
-                    <button
-                      className="action-btn edit-btn"
-                      onClick={() => handleEditNickname(comparison.id, comparison.nickname)}
-                      title="Edit nickname"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="action-btn delete-btn"
-                      onClick={() => handleDelete(comparison.id)}
-                      title="Delete"
-                    >
-                      🗑
-                    </button>
-                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* Gamma Reports List */}
+          {showGammaReports && (
+            gammaReports.length === 0 ? (
+              <div className="no-saved">
+                <p>No saved visual reports yet.</p>
+                <p className="no-saved-hint">Generate a Gamma report in the Visuals tab and click "Save Report" to add it here.</p>
+              </div>
+            ) : (
+              <>
+                <div className="gamma-reports-toolbar">
+                  <span className="gamma-reports-count">{gammaReports.length} saved report{gammaReports.length !== 1 ? 's' : ''}</span>
+                  <button className="toolbar-btn clear-btn" onClick={handleClearAllGammaReports}>
+                    🗑️ Clear All
+                  </button>
                 </div>
-              ))}
-            </div>
+                <div className="saved-list gamma-reports-list">
+                  {gammaReports.map((report) => (
+                    <div key={report.id} className="saved-item gamma-report-item">
+                      <div className="saved-item-main">
+                        <div className="saved-item-cities">
+                          <span className="gamma-report-icon">📊</span>
+                          <span className="saved-cities-text">
+                            {report.city1} vs {report.city2}
+                          </span>
+                        </div>
+                        <div className="saved-item-meta">
+                          <span className="saved-date">{formatDate(report.savedAt)}</span>
+                        </div>
+                      </div>
+                      <div className="saved-item-actions gamma-report-actions">
+                        <a
+                          href={report.gammaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="action-btn view-btn"
+                          title="View Report"
+                        >
+                          👁
+                        </a>
+                        {report.pdfUrl && (
+                          <a
+                            href={report.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="action-btn download-btn"
+                            title="Download PDF"
+                          >
+                            📄
+                          </a>
+                        )}
+                        {report.pptxUrl && (
+                          <a
+                            href={report.pptxUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="action-btn download-btn"
+                            title="Download PPTX"
+                          >
+                            📑
+                          </a>
+                        )}
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDeleteGammaReport(report.id)}
+                          title="Delete"
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
           )}
         </div>
       )}

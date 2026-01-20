@@ -545,6 +545,125 @@
   color: #94a3b8;
 }
 
+/* ============================================================================
+   SAVED TABS (Comparisons vs Visual Reports)
+   ============================================================================ */
+
+.saved-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.saved-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: var(--gray-100);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.saved-tab:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.saved-tab.active {
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  border-color: #0047AB;
+  color: white;
+}
+
+/* Gamma Reports Toolbar */
+.gamma-reports-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.gamma-reports-count {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* Gamma Report Item */
+.gamma-report-item {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(26, 82, 118, 0.05) 100%);
+}
+
+.gamma-report-item:hover {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.1) 0%, rgba(26, 82, 118, 0.1) 100%);
+  border-color: #0047AB;
+}
+
+.gamma-report-icon {
+  font-size: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.gamma-report-actions {
+  gap: 0.5rem;
+}
+
+.gamma-report-actions .action-btn {
+  text-decoration: none;
+}
+
+.download-btn:hover {
+  background: var(--sapphire-50);
+  border-color: var(--sapphire);
+}
+
+/* Dark Mode - Tabs & Gamma Reports */
+[data-theme="dark"] .saved-tabs {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .saved-tab {
+  background: rgba(51, 65, 85, 0.6);
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .saved-tab:hover {
+  background: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .saved-tab.active {
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  border-color: #0047AB;
+  color: white;
+}
+
+[data-theme="dark"] .gamma-reports-toolbar {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .gamma-reports-count {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .gamma-report-item {
+  background: rgba(0, 71, 171, 0.1);
+}
+
+[data-theme="dark"] .gamma-report-item:hover {
+  background: rgba(0, 71, 171, 0.2);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .saved-toolbar {
@@ -569,5 +688,16 @@
 
   .saved-item-meta {
     gap: 0.5rem;
+  }
+
+  .saved-tabs {
+    flex-direction: column;
+  }
+
+  .gamma-reports-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+    text-align: center;
   }
 }

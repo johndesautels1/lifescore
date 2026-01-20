@@ -9,6 +9,7 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
 import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
+import { saveGammaReport, hasGammaReportForComparison } from '../services/savedComparisons';
 import AdvancedVisuals from './AdvancedVisuals';
 import './VisualsTab.css';
 
@@ -17,6 +18,13 @@ interface VisualsTabProps {
   // Optional: for backward compatibility, accept enhanced result separately
   enhancedResult?: EnhancedComparisonResult | null;
   simpleResult?: ComparisonResult | null;
+  // LIFTED STATE: Gamma report state (persists across tab switches)
+  reportState?: VisualReportState;
+  setReportState?: React.Dispatch<React.SetStateAction<VisualReportState>>;
+  exportFormat?: 'pdf' | 'pptx';
+  setExportFormat?: React.Dispatch<React.SetStateAction<'pdf' | 'pptx'>>;
+  showEmbedded?: boolean;
+  setShowEmbedded?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Type guard to check if result is EnhancedComparisonResult
@@ -25,12 +33,55 @@ function isEnhancedResult(result: AnyComparisonResult | null): result is Enhance
   return 'llmsUsed' in result;
 }
 
-const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
-  const [reportState, setReportState] = useState<VisualReportState>({
+const VisualsTab: React.FC<VisualsTabProps> = ({
+  result,
+  reportState: propsReportState,
+  setReportState: propsSetReportState,
+  exportFormat: propsExportFormat,
+  setExportFormat: propsSetExportFormat,
+  showEmbedded: propsShowEmbedded,
+  setShowEmbedded: propsSetShowEmbedded,
+}) => {
+  // Local state fallback for backward compatibility
+  const [localReportState, setLocalReportState] = useState<VisualReportState>({
     status: 'idle',
   });
-  const [exportFormat, setExportFormat] = useState<'pdf' | 'pptx'>('pdf');
-  const [showEmbedded, setShowEmbedded] = useState(false);
+  const [localExportFormat, setLocalExportFormat] = useState<'pdf' | 'pptx'>('pdf');
+  const [localShowEmbedded, setLocalShowEmbedded] = useState(false);
+
+  // Use props if provided, otherwise use local state
+  const reportState = propsReportState ?? localReportState;
+  const setReportState = propsSetReportState ?? setLocalReportState;
+  const exportFormat = propsExportFormat ?? localExportFormat;
+  const setExportFormat = propsSetExportFormat ?? setLocalExportFormat;
+  const showEmbedded = propsShowEmbedded ?? localShowEmbedded;
+  const setShowEmbedded = propsSetShowEmbedded ?? setLocalShowEmbedded;
+
+  // Save report state
+  const [isReportSaved, setIsReportSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Check if report is already saved when component mounts or report changes
+  const comparisonId = result?.comparisonId || '';
+  const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
+
+  const handleSaveReport = useCallback(() => {
+    if (!result || !reportState.gammaUrl || !reportState.generationId) return;
+
+    saveGammaReport({
+      comparisonId: result.comparisonId,
+      city1: result.city1.city,
+      city2: result.city2.city,
+      gammaUrl: reportState.gammaUrl,
+      pdfUrl: reportState.pdfUrl,
+      pptxUrl: reportState.pptxUrl,
+      generationId: reportState.generationId,
+    });
+
+    setIsReportSaved(true);
+    setSaveMessage('Report saved to your library!');
+    setTimeout(() => setSaveMessage(null), 3000);
+  }, [result, reportState]);
 
   const handleGenerateReport = useCallback(async () => {
     if (!result) return;
@@ -135,6 +186,21 @@ const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
                   <span className="success-icon">✓</span>
                   Report generated successfully!
                 </div>
+
+                {/* Save Report Button */}
+                <div className="save-report-section">
+                  {saveMessage && (
+                    <span className="save-message">{saveMessage}</span>
+                  )}
+                  <button
+                    className={`save-report-btn ${isReportSaved || isAlreadySaved ? 'saved' : ''}`}
+                    onClick={handleSaveReport}
+                    disabled={isReportSaved || isAlreadySaved}
+                  >
+                    {isReportSaved || isAlreadySaved ? '✓ Saved to Library' : '💾 Save Report'}
+                  </button>
+                </div>
+
                 <div className="report-links">
                   {reportState.gammaUrl && (
                     <button
