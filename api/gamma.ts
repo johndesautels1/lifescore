@@ -213,7 +213,8 @@ async function checkStatus(generationId: string): Promise<GammaStatusResponse> {
   }
 
   const result = await response.json() as GammaStatusResponse;
-  console.log('[GAMMA] Status:', result.status, result.url ? '(has URL)' : '');
+  console.log('[GAMMA] Status:', result.status);
+  console.log('[GAMMA] Full response:', JSON.stringify(result, null, 2));
 
   return result;
 }
