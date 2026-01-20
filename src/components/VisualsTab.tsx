@@ -43,13 +43,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
         (state) => setReportState(state)
       );
 
-      // Construct Gamma URL from generationId if not provided
-      const gammaUrl = finalState.url || `https://gamma.app/docs/${finalState.generationId}`;
-      
       setReportState({
         status: 'completed',
         generationId: finalState.generationId,
-        gammaUrl: gammaUrl,
+        gammaUrl: finalState.url,
         pdfUrl: finalState.pdfUrl,
         pptxUrl: finalState.pptxUrl,
         progress: 100,

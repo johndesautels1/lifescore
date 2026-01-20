@@ -45,6 +45,8 @@ interface GammaStatusResponse {
   id: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   url?: string;
+  gammaUrl?: string;  // Actual property name from Gamma API
+  exportUrl?: string; // PPTX/PDF export URL from Gamma API
   pdfUrl?: string;
   pptxUrl?: string;
   error?: string;
@@ -273,12 +275,16 @@ export default async function handler(
 
       const status = await checkStatus(generationId);
 
+      // Map Gamma's response fields to our expected fields
+      const gammaDocUrl = status.gammaUrl || status.url;
+      const exportUrl = status.exportUrl;
+      
       res.status(200).json({
         generationId: status.id,
         status: status.status,
-        url: status.url,
-        pdfUrl: status.pdfUrl,
-        pptxUrl: status.pptxUrl,
+        url: gammaDocUrl,
+        pdfUrl: exportUrl?.includes('.pdf') ? exportUrl : status.pdfUrl,
+        pptxUrl: exportUrl?.includes('.pptx') ? exportUrl : status.pptxUrl,
         error: status.error,
       });
       return;
