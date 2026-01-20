@@ -60,6 +60,8 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: nu
 
 // Opus API types
 // FIX #2: Add legalScore/enforcementScore fields to match opusJudge.ts
+// FIX: Removed confidence field - confidenceLevel must ONLY be derived from stdDev
+//      Opus overriding confidence caused mismatch with displayed variance (e.g., σ=47 showing "Strong")
 interface OpusJudgment {
   metricId: string;
   city1ConsensusScore: number;
@@ -68,7 +70,6 @@ interface OpusJudgment {
   city2ConsensusScore: number;
   city2LegalScore?: number;
   city2EnforcementScore?: number;
-  confidence: 'unanimous' | 'strong' | 'moderate' | 'split';
   explanation: string;
 }
 
@@ -337,7 +338,7 @@ ${USE_CATEGORY_SCORING ? 'Use the scoring criteria above to determine the correc
 Return JSON with ONLY metrics you want to override:
 {
   "judgments": [
-    {"metricId": "...", "city1ConsensusScore": N, "city2ConsensusScore": N, "confidence": "strong", "explanation": "..."}
+    {"metricId": "...", "city1ConsensusScore": N, "city2ConsensusScore": N, "explanation": "Why you chose this score"}
   ],
   "disagreementAreas": ["metric1", "metric2"]
 }
@@ -398,7 +399,8 @@ function mergeOpusJudgments(
       // FIX #3: Now also update legalScore and enforcementScore from Opus
       c1.legalScore = clampScore(judgment.city1LegalScore, c1.legalScore);
       c1.enforcementScore = clampScore(judgment.city1EnforcementScore, c1.enforcementScore);
-      c1.confidenceLevel = judgment.confidence || c1.confidenceLevel;
+      // FIX: Do NOT override confidenceLevel - it must always match stdDev
+      // Opus was causing σ=47 to show "Strong" instead of "Split"
       c1.judgeExplanation = judgment.explanation || c1.judgeExplanation;
     }
 
@@ -407,7 +409,7 @@ function mergeOpusJudgments(
       // FIX #3: Now also update legalScore and enforcementScore from Opus
       c2.legalScore = clampScore(judgment.city2LegalScore, c2.legalScore);
       c2.enforcementScore = clampScore(judgment.city2EnforcementScore, c2.enforcementScore);
-      c2.confidenceLevel = judgment.confidence || c2.confidenceLevel;
+      // FIX: Do NOT override confidenceLevel - it must always match stdDev
       c2.judgeExplanation = judgment.explanation || c2.judgeExplanation;
     }
   });

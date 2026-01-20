@@ -869,7 +869,7 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
               </h4>
               <p className="disputed-subtitle">
                 These metrics for <strong>{city1Name}</strong> had the highest score variation between AI evaluators.
-                Each LLM scored independently, then the Final score was calculated as the average.
+                Each LLM scored independently, then Claude Opus reviewed and set the final consensus.
               </p>
 
               <div className="disputed-list">
@@ -910,9 +910,9 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
                       </div>
                     </div>
 
-                    {/* Average Consensus Score - Average of all LLM scores */}
+                    {/* Consensus Score - Median of LLM scores, may be adjusted by Opus Judge */}
                     <div className="disputed-consensus">
-                      <span className="consensus-label">Avg</span>
+                      <span className="consensus-label">Score</span>
                       <span className="consensus-value">{Math.round(metric.city1Score)}</span>
                     </div>
                   </div>
