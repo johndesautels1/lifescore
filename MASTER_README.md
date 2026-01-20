@@ -1,5 +1,5 @@
 # LIFE SCORE™ MASTER README
-**Conversation ID:** `LIFESCORE-2026-0120-EPSILON`
+**Conversation ID:** `LIFESCORE-2026-0120-ZETA`
 **Last Updated:** January 20, 2026
 **Domain:** clueslifescore.com (pending DNS setup)
 
@@ -20,39 +20,37 @@
 
 ---
 
-## RECENT COMMITS (Session EPSILON)
+## RECENT COMMITS (Session ZETA)
 
 | Commit | Description |
 |--------|-------------|
+| `7a1bf92` | Premium glassmorphic buttons + Gamma report save system |
 | `0ee9e99` | Collapsible scoring explanation + disagreement bullet format |
 | `92b7635` | Add Ask Olivia tab + fix About card styling |
 | `b6a8a56` | Premium tooltip popup + reduce Gamma report to 30 pages |
-| `53a9e19` | Left-justify How Our Scoring Works text |
 
 ---
 
-## COMPLETED THIS SESSION (EPSILON)
+## COMPLETED THIS SESSION (ZETA)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Left-justify scoring text | ✅ Done | Added text-align: left |
-| Premium tooltip popup | ✅ Done | Larger glassmorphic popup cards for metric hover |
-| Gamma 50→30 pages | ✅ Done | Reduced to prevent timeout |
-| Ask Olivia tab | ✅ Done | Tab + placeholder component with Coming Soon |
-| About Card blue gradient | ✅ Done | White text on blue gradient background |
-| Scoring explanation collapsible | ✅ Done | Toggle button, defaults collapsed |
-| Disagreement bullet format | ✅ Done | UI-only conversion of IDs to readable names |
+| Simple Mode glassmorphic buttons | ✅ Done | 4D effect matching Enhanced mode |
+| "Click any metric" white text | ✅ Done | White + text-shadow, dark footer |
+| Gamma report persistence | ✅ Done | State lifted to App.tsx |
+| U5: Save Report button | ✅ Done | Save to library + visual reports tab |
+| Visual Reports library | ✅ Done | Tab in Saved section with delete |
 
 ---
 
 ## REMAINING WORK
 
-### URGENT (U4-U5)
+### URGENT (U4)
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
 | U4 | Top 5 Deciding Factors Widget | HIGH | 🔴 Not Started |
-| U5 | Save Report Button | MEDIUM | 🔴 Not Started |
+| U5 | Save Report Button | MEDIUM | ✅ Done |
 
 **U4 Details:** Each metric in Top 5 should have clickable widget showing WHY cities scored differently. Data exists in `MetricConsensus.judgeExplanation` and `llmScores[].explanation`.
 
@@ -88,7 +86,7 @@
 | C3 | Add More Models Button Handlers | MEDIUM | 🔴 Not Started |
 | C4 | Incremental LLM Addition Flow | MEDIUM | 🔴 Not Started |
 | C5 | Judge Re-runs with Combined Results | MEDIUM | 🔴 Not Started |
-| C6 | Save Report Button | MEDIUM | 🔴 Not Started (= U5) |
+| C6 | Save Report Button | MEDIUM | ✅ Done (= U5) |
 
 ---
 
