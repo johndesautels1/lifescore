@@ -506,8 +506,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Calculate overall agreement from standard deviations
-  const allStdDevs = [...city1Consensuses, ...city2Consensuses].map(c => c.standardDeviation);
-  const avgStdDev = allStdDevs.length > 0 ? calculateMean(allStdDevs) : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
+  // FIX: Only include metrics with 2+ LLM scores - single-LLM metrics have stdDev=0 which falsely inflates agreement
+  const validConsensuses = [...city1Consensuses, ...city2Consensuses].filter(c => c.llmScores.length >= 2);
+  const validStdDevs = validConsensuses.map(c => c.standardDeviation);
+
+  // If no metrics have 2+ LLMs, use default (indicates insufficient data, not perfect agreement)
+  const avgStdDev = validStdDevs.length > 0 ? calculateMean(validStdDevs) : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
   const overallAgreement = Math.max(0, Math.min(100, Math.round(100 - avgStdDev * 2)));
 
   const output: JudgeOutput = {

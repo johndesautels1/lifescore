@@ -910,9 +910,9 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
                       </div>
                     </div>
 
-                    {/* Final Consensus Score - Average of all LLM scores */}
+                    {/* Average Consensus Score - Average of all LLM scores */}
                     <div className="disputed-consensus">
-                      <span className="consensus-label">Final</span>
+                      <span className="consensus-label">Avg</span>
                       <span className="consensus-value">{Math.round(metric.city1Score)}</span>
                     </div>
                   </div>

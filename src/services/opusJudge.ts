@@ -71,20 +71,30 @@ export function buildCategoryConsensuses(
     // Each metric has a weight (1-10) defined in metrics.ts
     let totalWeightedScore = 0;
     let totalWeight = 0;
+
+    // FIX: Only include metrics with 2+ LLM scores for agreement calculation
+    // Single-LLM metrics have stdDev=0 which falsely inflates agreement
     let totalWeightedStdDev = 0;
+    let totalStdDevWeight = 0;
 
     categoryMetrics.forEach(m => {
       const metricDef = ALL_METRICS.find(am => am.id === m.metricId);
       const weight = metricDef?.weight || 1;
       totalWeightedScore += m.consensusScore * weight;
-      totalWeightedStdDev += m.standardDeviation * weight;
       totalWeight += weight;
+
+      // Only count stdDev from metrics with 2+ LLM evaluations
+      if (m.llmScores && m.llmScores.length >= 2) {
+        totalWeightedStdDev += m.standardDeviation * weight;
+        totalStdDevWeight += weight;
+      }
     });
 
     // Return neutral score (50) for empty categories, not 0
     // This prevents entire categories from dragging down scores when data is missing
     const avgScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
-    const avgStdDev = totalWeight > 0 ? totalWeightedStdDev / totalWeight : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
+    // Use default stdDev if no metrics have 2+ LLMs (indicates insufficient data, not perfect agreement)
+    const avgStdDev = totalStdDevWeight > 0 ? totalWeightedStdDev / totalStdDevWeight : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
 
     return {
       categoryId: category.id as CategoryId,
