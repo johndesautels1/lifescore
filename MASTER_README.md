@@ -1,5 +1,5 @@
 # LIFE SCORE™ MASTER README
-**Conversation ID:** `LIFESCORE-2026-0120-DELTA`
+**Conversation ID:** `LIFESCORE-2026-0120-EPSILON`
 **Last Updated:** January 20, 2026
 **Domain:** clueslifescore.com (pending DNS setup)
 
@@ -12,10 +12,126 @@
 - Uses 5 LLMs with web search to evaluate 100 metrics across 6 categories
 - Claude Opus 4.5 serves as final judge ("The Judge") for consensus
 - Gamma AI generates 30-page visual reports
+- Ask Olivia AI assistant (coming soon - D-ID/HeyGen integration)
 
 **Repository:** https://github.com/johndesautels1/lifescore
 **Deployed:** Vercel (auto-deploy from main branch)
 **Domain:** clueslifescore.com (GoDaddy - DNS pending)
+
+---
+
+## RECENT COMMITS (Session EPSILON)
+
+| Commit | Description |
+|--------|-------------|
+| `0ee9e99` | Collapsible scoring explanation + disagreement bullet format |
+| `92b7635` | Add Ask Olivia tab + fix About card styling |
+| `b6a8a56` | Premium tooltip popup + reduce Gamma report to 30 pages |
+| `53a9e19` | Left-justify How Our Scoring Works text |
+
+---
+
+## COMPLETED THIS SESSION (EPSILON)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Left-justify scoring text | ✅ Done | Added text-align: left |
+| Premium tooltip popup | ✅ Done | Larger glassmorphic popup cards for metric hover |
+| Gamma 50→30 pages | ✅ Done | Reduced to prevent timeout |
+| Ask Olivia tab | ✅ Done | Tab + placeholder component with Coming Soon |
+| About Card blue gradient | ✅ Done | White text on blue gradient background |
+| Scoring explanation collapsible | ✅ Done | Toggle button, defaults collapsed |
+| Disagreement bullet format | ✅ Done | UI-only conversion of IDs to readable names |
+
+---
+
+## REMAINING WORK
+
+### URGENT (U4-U5)
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| U4 | Top 5 Deciding Factors Widget | HIGH | 🔴 Not Started |
+| U5 | Save Report Button | MEDIUM | 🔴 Not Started |
+
+**U4 Details:** Each metric in Top 5 should have clickable widget showing WHY cities scored differently. Data exists in `MetricConsensus.judgeExplanation` and `llmScores[].explanation`.
+
+---
+
+### PHASE A: Infrastructure & Deployment
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| A1 | Domain DNS Setup (GoDaddy → Vercel) | HIGH | 🔴 Not Started |
+| A2 | Vercel Custom Domain Config | HIGH | 🔴 Not Started |
+| A3 | Verify GitHub-Vercel auto-deploy | HIGH | 🔴 Not Started |
+
+---
+
+### PHASE B: Data Sources & Evidence (BUGS)
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| B1 | Perplexity Data Sources | HIGH | 🔴 Not Started |
+| B2 | 5th Thumbnail UI Wiring | HIGH | 🔴 Not Started |
+| B3 | Multi-LLM Field Sources Missing | CRITICAL | 🔴 Not Started |
+| B4 | Field-by-Field Comparison References | CRITICAL | 🔴 Not Started |
+
+---
+
+### PHASE C: UI/UX Improvements
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| C1 | Section Auto-Scroll | MEDIUM | 🔴 Not Started |
+| C2 | About Card Explanation | MEDIUM | ✅ Done (via U2) |
+| C3 | Add More Models Button Handlers | MEDIUM | 🔴 Not Started |
+| C4 | Incremental LLM Addition Flow | MEDIUM | 🔴 Not Started |
+| C5 | Judge Re-runs with Combined Results | MEDIUM | 🔴 Not Started |
+| C6 | Save Report Button | MEDIUM | 🔴 Not Started (= U5) |
+
+---
+
+### PHASE D: Gamma Report
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| D1 | Gamma 30-Page Setting | HIGH | ✅ Done |
+| D2 | Gamma Embed Loading Spinner | LOW | 🔴 Not Started |
+| D3 | Gamma Embed Error Handling | LOW | 🔴 Not Started |
+
+---
+
+### PHASE E: Ask Olivia AI Assistant
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| E1 | Olivia Toolbar Tab | HIGH | ✅ Done |
+| E2 | Olivia Iframe/Placeholder Page | HIGH | ✅ Done |
+| E3 | Olivia Data Integration | HIGH | 🔴 Not Started |
+| E4 | D-ID/HeyGen API Setup | HIGH | 🔴 Not Started |
+
+---
+
+### PHASE F: User Authentication
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| F1 | Login Landing Page (Glassmorphic) | HIGH | 🔴 Not Started |
+| F2 | User ID System | HIGH | 🔴 Not Started |
+| F3 | Toolbar User Tab | MEDIUM | 🔴 Not Started |
+| F4 | Session Management | MEDIUM | 🔴 Not Started |
+
+---
+
+### PHASE G: Payment System (Stripe)
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| G1 | Stripe Integration | HIGH | 🔴 Not Started |
+| G2 | Price Options Page | HIGH | 🔴 Not Started |
+| G3 | Payment Flow | HIGH | 🔴 Not Started |
+| G4 | Subscription Gating | MEDIUM | 🔴 Not Started |
 
 ---
 
@@ -24,148 +140,27 @@
 ```
 D:\LifeScore\
 ├── src/
-│   ├── App.tsx                    # Main app, state lifting, Add More Models UI
-│   ├── App.css                    # Add More Models styling
-│   ├── data/
-│   │   └── metrics.ts             # 100 metric definitions
-│   ├── services/
-│   │   ├── llmEvaluators.ts       # Individual LLM evaluation functions
-│   │   ├── opusJudge.ts           # Opus consensus builder
-│   │   ├── enhancedComparison.ts  # Main orchestration
-│   │   ├── cache.ts               # Caching system
-│   │   └── rateLimiter.ts         # Rate limiting, circuit breaker
+│   ├── App.tsx                    # Main app, tab routing
 │   ├── components/
 │   │   ├── EnhancedComparison.tsx # Results display, LLMSelector
-│   │   ├── EnhancedComparison.css # Results styling, gradients
+│   │   ├── EnhancedComparison.css # Results styling
+│   │   ├── TabNavigation.tsx      # Toolbar tabs (includes Ask Olivia)
+│   │   ├── AskOlivia.tsx          # NEW: Olivia placeholder component
+│   │   ├── AskOlivia.css          # NEW: Olivia styling
 │   │   ├── VisualsTab.tsx         # Gamma embed iframe
-│   │   ├── VisualsTab.css         # Embed styles
-│   │   ├── EvidencePanel.tsx      # Source evidence display
-│   │   ├── EvidencePanel.css      # Evidence styling
-│   │   ├── CitySelector.tsx       # City dropdown
-│   │   └── CitySelector.css       # City selector styling
-│   ├── types/
-│   │   ├── metrics.ts             # Category, Metric type definitions
-│   │   └── enhancedComparison.ts  # LLM score types (SOURCE OF TRUTH)
-│   └── shared/
-│       └── metrics.ts             # Shared metrics + lookup Map
+│   │   └── ...
+│   ├── services/
+│   │   ├── gammaService.ts        # Gamma 30-page prompt
+│   │   ├── opusJudge.ts           # Judge client helpers
+│   │   └── ...
+│   └── types/
+│       └── enhancedComparison.ts  # SOURCE OF TRUTH for types
 ├── api/
-│   └── gamma.ts                   # Gamma API integration
-├── MASTER_README.md               # THIS FILE - master task list
-├── BATTLE_PLAN.md                 # Architecture decisions
-├── IMPLEMENTATION_MASTER_PLAN.md  # Scoring system redesign
-├── HANDOFF_2026-01-20.md          # Previous session handoff
-└── .env.local                     # API keys (not in git)
+│   ├── gamma.ts                   # Gamma API endpoint
+│   ├── judge.ts                   # Opus Judge endpoint
+│   └── evaluate.ts                # LLM evaluation endpoint
+└── MASTER_README.md               # THIS FILE
 ```
-
----
-
-## COMPLETED FEATURES (Previous Sessions)
-
-| Feature | Status | Commit |
-|---------|--------|--------|
-| State Lifting (llmStates → App.tsx) | ✅ Done | 72f583e |
-| Add More Models UI on Results tab | ✅ Done | 72f583e |
-| Gamma Embedded View (iframe) | ✅ Done | 72f583e |
-| Gamma API Fixes (imageOptions, themeId, response mapping) | ✅ Done | 72f583e |
-| Dark Mode Text Visibility | ✅ Done | 681e67c |
-| Evidence Count Badge (white + gold) | ✅ Done | 681e67c |
-| Single-LLM Selection UI | ✅ Done | 6ef12e7 |
-| Category Batch Prompts (6 parallel) | ✅ Done | 4db8294 |
-| Winner Logic Fix (rounded scores) | ✅ Done | 824874e |
-| Score Legend + Full Metric Names | ✅ Done | 67a1f20 |
-| 5-LLM Evaluator System | ✅ Done | Earlier |
-| Opus Judge Consensus | ✅ Done | Earlier |
-| Cache System (localStorage fallback) | ✅ Done | Earlier |
-
----
-
-## TASK LIST - ALL REMAINING WORK
-
-### PHASE A: Infrastructure & Deployment
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| A1 | **Domain DNS Setup** - Configure GoDaddy DNS for clueslifescore.com | HIGH | 🔴 Not Started | Need to point nameservers to Vercel |
-| A2 | **Vercel Domain Wiring** - Add custom domain in Vercel dashboard | HIGH | 🔴 Not Started | After DNS propagates |
-| A3 | **GitHub-Vercel Integration** - Verify auto-deploy from main | HIGH | 🔴 Not Started | Should already work, verify |
-
-### PHASE B: Data Sources & Evidence Display (BUGS)
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| B1 | **Perplexity Data Sources** - Investigate if Perplexity returns sources in API response | HIGH | 🔴 Not Started | May be API issue or UI wiring |
-| B2 | **5th Thumbnail UI Wiring** - Check if Perplexity thumbnail shows sources correctly | HIGH | 🔴 Not Started | Related to B1 |
-| B3 | **Multi-LLM Field Sources Missing** - White microscopic clickable page icon not showing when multiple LLMs | CRITICAL | 🔴 Not Started | Works with 1 LLM, breaks with 2+ |
-| B4 | **Field-by-Field Comparison References** - Restore per-field source display in multi-LLM view | CRITICAL | 🔴 Not Started | Key feature broken |
-
-### PHASE C: UI/UX Improvements
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| C1 | **Section Auto-Scroll** - When expanding any of 6 sections with +, auto-scroll to top of that section | MEDIUM | 🔴 Not Started | Currently scrolls wrong or not at all |
-| C2 | **About Card Explanation** - Add paragraph explaining scoring without revealing proprietary math | MEDIUM | 🔴 Not Started | Explain "The Judge" concept |
-| C3 | **Add More Models Button Handlers** - Wire up click handlers on Results tab | MEDIUM | 🔴 Not Started | UI exists, needs functionality |
-| C4 | **Incremental LLM Addition Flow** - Test adding LLM after initial results displayed | MEDIUM | 🔴 Not Started | End-to-end flow test |
-| C5 | **Judge Re-runs with Combined Results** - Verify Opus re-judges when new LLM added | MEDIUM | 🔴 Not Started | Part of incremental flow |
-| C6 | **Save Report Button** - Add save/export functionality on advanced comparison page | MEDIUM | 🔴 Not Started | Currently missing |
-
-### PHASE D: Gamma Report Fixes
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| D1 | **Gamma 30-Page Setting** - Reduced to 30 pages for faster generation | HIGH | ✅ Done | Prompt updated in gammaService.ts:439-488 |
-| D2 | **Gamma Embed Loading Spinner** - Add spinner while iframe loads | LOW | 🔴 Not Started | Polish |
-| D3 | **Gamma Embed Error Handling** - Handle load errors gracefully | LOW | 🔴 Not Started | Edge case handling |
-
-### PHASE E: Ask Olivia AI Assistant
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| E1 | **Olivia Toolbar Button** - Add "Ask Olivia" button to toolbar | HIGH | 🔴 Not Started | New feature |
-| E2 | **Olivia Iframe Page** - Create iframe container for D-ID/HeyGen avatar | HIGH | 🔴 Not Started | Glassmorphic design |
-| E3 | **Olivia Data Integration** - Wire results data + Gamma reports to Olivia's context | HIGH | 🔴 Not Started | GPT-brained assistant |
-| E4 | **D-ID/HeyGen API Setup** - Configure API keys and avatar | HIGH | 🔴 Not Started | Need API credentials |
-
-### PHASE F: User Authentication
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| F1 | **Login Landing Page** - Glassmorphic login/signup UI | HIGH | 🔴 Not Started | First user touchpoint |
-| F2 | **User ID System** - Generate/store unique user IDs | HIGH | 🔴 Not Started | Backend consideration |
-| F3 | **Toolbar User Tab** - Show logged-in user at far right of toolbar | MEDIUM | 🔴 Not Started | Username display |
-| F4 | **Session Management** - Handle login state, tokens, logout | MEDIUM | 🔴 Not Started | Security consideration |
-
-### PHASE G: Payment System (Stripe)
-
-| # | Task | Priority | Status | Notes |
-|---|------|----------|--------|-------|
-| G1 | **Stripe Integration** - Set up Stripe account and API keys | HIGH | 🔴 Not Started | Payment foundation |
-| G2 | **Price Options Page** - Design and implement pricing tiers | HIGH | 🔴 Not Started | User has GPT work in progress |
-| G3 | **Payment Flow** - Checkout, subscription management | HIGH | 🔴 Not Started | Stripe Checkout or custom |
-| G4 | **Subscription Gating** - Lock features behind paid tiers | MEDIUM | 🔴 Not Started | Feature access control |
-
----
-
-## TASK PRIORITY MATRIX
-
-### CRITICAL (Fix Immediately)
-- B3: Multi-LLM Field Sources Missing
-- B4: Field-by-Field Comparison References
-
-### HIGH PRIORITY
-- A1-A3: Domain & Deployment
-- B1-B2: Perplexity Data Sources
-- E1-E4: Ask Olivia Feature
-- F1-F2: Login System
-- G1-G2: Stripe Integration
-
-### MEDIUM PRIORITY
-- C1-C6: UI/UX Improvements
-- F3-F4: User Session
-- G3-G4: Payment Flow
-
-### LOW PRIORITY
-- D2-D3: Gamma Polish
 
 ---
 
@@ -173,139 +168,60 @@ D:\LifeScore\
 
 ### LLM Providers (5 Evaluators + 1 Judge)
 
-| Provider | Type ID | Actual API Model | Web Search Method |
-|----------|---------|------------------|-------------------|
-| Claude Sonnet 4.5 | `claude-sonnet` | `claude-sonnet-4-5-20250929` | Tavily API |
-| GPT-5.2 | `gpt-5.2` | `gpt-5.2` | Native web_search tool |
-| Gemini 3 Pro | `gemini-3-pro` | `gemini-3-pro-preview` | Google Search grounding |
-| Grok 4 | `grok-4` | `grok-4` | Native search: true |
-| Perplexity | `perplexity` | `sonar-reasoning-pro` | Native (return_citations) |
-| **Judge** | `claude-opus` | `claude-opus-4-5-20251101` | N/A (judge only) |
+| Provider | Type ID | Model | Web Search |
+|----------|---------|-------|------------|
+| Claude Sonnet 4.5 | `claude-sonnet` | claude-sonnet-4-5-20250929 | Tavily |
+| GPT-5.2 | `gpt-5.2` | gpt-5.2 | Native |
+| Gemini 3 Pro | `gemini-3-pro` | gemini-3-pro-preview | Google |
+| Grok 4 | `grok-4` | grok-4 | Native |
+| Perplexity | `perplexity` | sonar-reasoning-pro | Native |
+| **Judge** | `claude-opus` | claude-opus-4-5-20251101 | N/A |
 
-### API Keys (All Configured in Vercel)
-- Anthropic (Claude) ✓
-- OpenAI (GPT-5.2) ✓
-- Google (Gemini) ✓
-- xAI (Grok) ✓
-- Perplexity ✓
-- Tavily ✓
-- Gamma ✓
-
-**NEVER ask user to configure API keys - they are done.**
+### API Keys
+All configured in Vercel. **DO NOT ask user to configure.**
 
 ---
 
-## DOMAIN SETUP GUIDE (clueslifescore.com)
+## PRIORITY MATRIX
 
-### Step 1: GoDaddy DNS Configuration
-1. Log into GoDaddy → DNS Management for clueslifescore.com
-2. Remove existing A records pointing elsewhere
-3. Add Vercel DNS records:
-   - Type: `A` | Name: `@` | Value: `76.76.21.21`
-   - Type: `CNAME` | Name: `www` | Value: `cname.vercel-dns.com`
+### CRITICAL
+- B3: Multi-LLM Field Sources Missing
+- B4: Field-by-Field Comparison References
 
-### Step 2: Vercel Domain Configuration
-1. Vercel Dashboard → Project → Settings → Domains
-2. Add domain: `clueslifescore.com`
-3. Add domain: `www.clueslifescore.com`
-4. Wait for SSL certificate (automatic)
+### HIGH
+- U4: Top 5 Deciding Factors Widget
+- A1-A3: Domain & Deployment
+- E3-E4: Olivia Integration
+- F1-F2: Login System
+- G1-G2: Stripe
 
-### Step 3: Verify
-1. Wait 24-48 hours for DNS propagation
-2. Test: https://clueslifescore.com
-3. Test: https://www.clueslifescore.com (should redirect)
+### MEDIUM
+- U5: Save Report Button
+- C1, C3-C5: UI Improvements
+- F3-F4: Session Management
 
----
-
-## SCORING SYSTEM EXPLANATION (For About Card - C2)
-
-**Draft copy for "About Enhanced Comparison" card:**
-
-> **How LIFE SCORE™ Works**
->
-> Our system uses a multi-model consensus approach to evaluate freedom metrics objectively:
->
-> 1. **Independent Evaluation**: Multiple AI research models independently analyze each of the 100 freedom metrics using real-time web data from authoritative sources.
->
-> 2. **Evidence-Based Scoring**: Each metric is scored based on verifiable data - laws, regulations, statistics, and government policies - not opinions or rankings.
->
-> 3. **The Judge**: A specialized AI model reviews all independent evaluations, identifies consensus and disagreements, and produces the final balanced score. This "judge" weighs the evidence and reasoning from each evaluator.
->
-> 4. **Transparency**: Every score links to the specific data sources used, so you can verify the findings yourself.
->
-> The result is a data-driven freedom comparison that's more comprehensive and less biased than any single source could provide.
+### LOW
+- D2-D3: Gamma Polish
 
 ---
 
 ## NEW SESSION CHECKLIST
 
-When starting a new conversation:
 ```
-1. "Read D:\LifeScore\MASTER_README.md"
-2. Run: git log --oneline -5
-3. Run: git status
-4. Confirm current phase and task
+1. Read D:\LifeScore\MASTER_README.md
+2. git log --oneline -5
+3. git status
+4. Confirm current phase and priority
 5. Begin work
 ```
 
 ---
 
-## REMAINING ISSUES FROM SESSION DELTA (For Next Session)
-
-### URGENT UI FIXES NEEDED
-
-| # | Issue | Priority | Details |
-|---|-------|----------|---------|
-| U1 | About Card Text White | HIGH | Text in About Enhanced Comparison card needs crisp white color on blue gradient background |
-| U2 | Scoring Explanation Collapsible | HIGH | Make How Our Scoring Works section collapsible, default to collapsed state |
-| U3 | Disagreement Areas Bullet Format | HIGH | Format disagreement areas as bullet points with readable metric names (not field IDs like pf_08_euthanasia_status) |
-| U4 | Top 5 Deciding Factors Widget | HIGH | Restore clickable widget on each metric showing WHY each city won/lost on that specific metric |
-| U5 | Save Report Button | MEDIUM | Add save/export functionality on advanced comparison page (task C6) |
-
-### CONTEXT FOR U4 (Top 5 Deciding Factors Widget)
-
-The user reports that each metric in Top 5 Deciding Factors should have a clickable widget showing:
-- Why the winning city scored higher
-- Why the losing city scored lower
-- The judge's explanation for that metric
-
-Data exists in MetricConsensus.judgeExplanation and llmScores[].explanation but is not displayed.
-
-Files to modify:
-- src/components/EnhancedComparison.tsx - Add explanation to MetricDifference, update calculateTopDifferences, add expandable UI
-- src/components/EnhancedComparison.css - Style the expandable explanation widget
-
----
-
 ## COMPRESSION PROTOCOL
 
-### At 50% Context (~100k tokens)
-- Claude will warn: "We're at 50% token capacity"
-- **Action**: Continue but be aware
-
-### At 70% Context (~140k tokens)
-- Claude will warn: "We're at 70% - consider wrapping up soon"
-- **Action**: Commit current work, push, update this file
-
-### At 85% Context (~170k tokens)
-- Claude will alert: "We should start a new conversation NOW"
-- **Action**:
-  1. STOP coding immediately
-  2. Commit and push ALL changes
-  3. Update MASTER_README.md with exact stopping point
-  4. Start new conversation with: "Read D:\LifeScore\MASTER_README.md and continue"
-
----
-
-## FILES MODIFIED THIS SESSION
-
-*(To be updated as work progresses)*
-
----
-
-## COMMITS THIS SESSION
-
-*(To be updated as work progresses)*
+- **50% (~100k tokens):** "We're at 50% token capacity"
+- **70% (~140k tokens):** "We're at 70% - consider wrapping up"
+- **85% (~170k tokens):** STOP, commit all, update README, start new session
 
 ---
 

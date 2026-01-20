@@ -16,12 +16,16 @@ interface AskOliviaProps {
   };
 }
 
-const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonData }) => {
+const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonData: _comparisonData }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showChat, setShowChat] = useState(false);
 
   // Placeholder URL - will be replaced with actual D-ID/HeyGen embed
-  const OLIVIA_EMBED_URL = process.env.REACT_APP_OLIVIA_EMBED_URL || '';
+  // Using import.meta.env for Vite compatibility
+  const OLIVIA_EMBED_URL = (import.meta.env.VITE_OLIVIA_EMBED_URL as string) || '';
+
+  // Future: Use _comparisonData to provide context to Olivia
+  void _comparisonData;
 
   const handleIframeLoad = () => {
     setIsLoading(false);
