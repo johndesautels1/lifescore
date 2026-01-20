@@ -30,6 +30,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
     status: 'idle',
   });
   const [exportFormat, setExportFormat] = useState<'pdf' | 'pptx'>('pdf');
+  const [showEmbedded, setShowEmbedded] = useState(false);
 
   const handleGenerateReport = useCallback(async () => {
     if (!result) return;
@@ -128,52 +129,78 @@ const VisualsTab: React.FC<VisualsTabProps> = ({ result }) => {
 
         {reportState.status === 'completed' && (
           <div className="completed-state">
-            <div className="success-message">
-              <span className="success-icon">✓</span>
-              Report generated successfully!
-            </div>
-            <div className="report-links">
-              {reportState.gammaUrl ? (
-                <a
-                  href={reportState.gammaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="report-link view-link"
+            {!showEmbedded ? (
+              <>
+                <div className="success-message">
+                  <span className="success-icon">✓</span>
+                  Report generated successfully!
+                </div>
+                <div className="report-links">
+                  {reportState.gammaUrl && (
+                    <button
+                      className="report-link view-link"
+                      onClick={() => setShowEmbedded(true)}
+                    >
+                      View Report
+                    </button>
+                  )}
+                  {reportState.pptxUrl && (
+                    <a
+                      href={reportState.pptxUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="report-link download-link"
+                    >
+                      Download PPTX
+                    </a>
+                  )}
+                  {reportState.pdfUrl && (
+                    <a
+                      href={reportState.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="report-link download-link"
+                    >
+                      Download PDF
+                    </a>
+                  )}
+                </div>
+                <button
+                  className="reset-btn secondary-btn"
+                  onClick={handleReset}
                 >
-                  View Report
-                </a>
-              ) : (
-                <span className="report-link view-link loading-link">
-                  Loading report link...
-                </span>
-              )}
-              {reportState.pdfUrl && (
-                <a
-                  href={reportState.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="report-link download-link"
-                >
-                  Download PDF
-                </a>
-              )}
-              {reportState.pptxUrl && (
-                <a
-                  href={reportState.pptxUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="report-link download-link"
-                >
-                  Download PPTX
-                </a>
-              )}
-            </div>
-            <button
-              className="reset-btn secondary-btn"
-              onClick={handleReset}
-            >
-              Generate Another
-            </button>
+                  Generate Another
+                </button>
+              </>
+            ) : (
+              <div className="embedded-report">
+                <div className="embedded-header">
+                  <h3>LIFE SCORE™ Visual Report</h3>
+                  <div className="embedded-actions">
+                    <a
+                      href={reportState.gammaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="external-link-btn"
+                    >
+                      Open External ↗
+                    </a>
+                    <button
+                      className="close-embed-btn"
+                      onClick={() => setShowEmbedded(false)}
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+                </div>
+                <iframe
+                  src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
+                  className="gamma-embed-frame"
+                  title="LIFE SCORE Visual Report"
+                  allowFullScreen
+                />
+              </div>
+            )}
           </div>
         )}
 
