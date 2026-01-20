@@ -815,7 +815,28 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
           <div className="disagreement-summary">
             <div className="summary-icon">📊</div>
             <div className="summary-text">
-              <p>{result.disagreementSummary}</p>
+              {/* Parse disagreement summary and display as bullet points with readable names */}
+              {result.disagreementSummary.includes('disagreed most on:') ? (
+                <>
+                  <p className="disagreement-intro">LLMs disagreed most on:</p>
+                  <ul className="disagreement-list">
+                    {result.disagreementSummary
+                      .replace('LLMs disagreed most on: ', '')
+                      .split(', ')
+                      .map(metricId => {
+                        const metric = ALL_METRICS.find(m => m.id === metricId.trim());
+                        const displayName = metric?.shortName || metricId.replace(/^[a-z]{2}_\d{2}_/, '').replace(/_/g, ' ');
+                        return (
+                          <li key={metricId}>
+                            <span className="metric-bullet-name">{displayName}</span>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </>
+              ) : (
+                <p>{result.disagreementSummary}</p>
+              )}
               <span className="summary-detail">
                 Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
               </span>
@@ -979,6 +1000,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [scoreViewMode, setScoreViewMode] = useState<'lived' | 'lawVsReality'>('lived');
   const [showDataSources, setShowDataSources] = useState(false);
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
+  const [showScoringExplanation, setShowScoringExplanation] = useState(false);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -1673,24 +1695,34 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           A specialized judge model reviewed all evaluations to build consensus scores.
         </p>
         
-        <div className="scoring-explanation">
-          <h5>How Our Scoring Works</h5>
-          <p>
-            <strong>1. Independent Research:</strong> Multiple AI models with real-time web access independently 
-            analyze each metric using authoritative sources—laws, statutes, government data, and enforcement records.
-          </p>
-          <p>
-            <strong>2. Evidence-Based Scoring:</strong> Scores are derived from verifiable legal data, not opinions. 
-            Each metric measures specific regulations and their real-world enforcement.
-          </p>
-          <p>
-            <strong>3. Consensus Building:</strong> A final judge model reviews all independent evaluations, 
-            weighs the evidence, identifies areas of agreement and disagreement, and produces balanced consensus scores.
-          </p>
-          <p>
-            <strong>4. Full Transparency:</strong> Every score links to the specific sources used, allowing you 
-            to verify findings. Click the 📄 icon on any metric to see the data behind the numbers.
-          </p>
+        <div className={`scoring-explanation ${showScoringExplanation ? 'expanded' : 'collapsed'}`}>
+          <button
+            className="scoring-toggle-btn"
+            onClick={() => setShowScoringExplanation(!showScoringExplanation)}
+          >
+            <h5>How Our Scoring Works</h5>
+            <span className={`toggle-arrow ${showScoringExplanation ? 'expanded' : ''}`}>▼</span>
+          </button>
+          {showScoringExplanation && (
+            <div className="scoring-content">
+              <p>
+                <strong>1. Independent Research:</strong> Multiple AI models with real-time web access independently
+                analyze each metric using authoritative sources—laws, statutes, government data, and enforcement records.
+              </p>
+              <p>
+                <strong>2. Evidence-Based Scoring:</strong> Scores are derived from verifiable legal data, not opinions.
+                Each metric measures specific regulations and their real-world enforcement.
+              </p>
+              <p>
+                <strong>3. Consensus Building:</strong> A final judge model reviews all independent evaluations,
+                weighs the evidence, identifies areas of agreement and disagreement, and produces balanced consensus scores.
+              </p>
+              <p>
+                <strong>4. Full Transparency:</strong> Every score links to the specific sources used, allowing you
+                to verify findings. Click the 📄 icon on any metric to see the data behind the numbers.
+              </p>
+            </div>
+          )}
         </div>
         <p>
           <strong>Generated:</strong> {new Date(result.generatedAt).toLocaleString()}
