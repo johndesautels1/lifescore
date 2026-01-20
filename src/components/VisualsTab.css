@@ -33,7 +33,7 @@
 }
 
 .section-description {
-  color: var(--text-secondary, #a0a0c0);
+  color: #ffffff !important;
   margin: 0 0 1.5rem 0;
 }
 
