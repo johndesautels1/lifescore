@@ -3,7 +3,7 @@
  * Multi-LLM consensus UI
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
@@ -149,6 +149,9 @@ interface LLMSelectorProps {
   setJudgeResult: React.Dispatch<React.SetStateAction<JudgeOutput | null>>;
   lastJudgedCount: number;
   setLastJudgedCount: React.Dispatch<React.SetStateAction<number>>;
+  // Add More Models feature props
+  pendingLLMToRun?: LLMProvider | null;
+  clearPendingLLM?: () => void;
   // Callbacks
   onResultsUpdate: (results: Map<LLMProvider, EvaluatorResult>, judgeResult: JudgeOutput | null) => void;
   onStatusChange: (status: 'idle' | 'running' | 'judging' | 'complete') => void;
@@ -170,6 +173,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   lastJudgedCount,
   setLastJudgedCount,
   onResultsUpdate,
+  pendingLLMToRun,
+  clearPendingLLM,
   onStatusChange
 }) => {
   // Local UI state only (not lifted)
@@ -237,6 +242,25 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       runJudge();
     }
   }, [needsReJudge, isJudging, runJudge]);
+
+  // Add More Models feature: auto-trigger pending LLM when coming from Results tab
+  useEffect(() => {
+    if (pendingLLMToRun && clearPendingLLM) {
+      const llmState = llmStates.get(pendingLLMToRun);
+      const isIdle = llmState?.status === 'idle';
+      const isFailed = llmState?.status === 'failed';
+      const isRunning = Array.from(llmStates.values()).some(s => s.status === 'running');
+
+      // Trigger if LLM is idle or failed, and no other LLM is currently running
+      if ((isIdle || isFailed) && !isRunning) {
+        runLLM(pendingLLMToRun);
+        clearPendingLLM();
+      } else {
+        // Clear if LLM already completed or running
+        clearPendingLLM();
+      }
+    }
+  }, [pendingLLMToRun, clearPendingLLM, llmStates]);
 
   const runLLM = async (provider: LLMProvider) => {
     // Update state to running
@@ -947,6 +971,7 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
 
 export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [] }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -1313,10 +1338,26 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           const categoryMetrics = getMetricsByCategory(category.id);
 
           return (
-            <div key={category.id} className="enhanced-category">
+            <div
+              key={category.id}
+              className="enhanced-category"
+              ref={(el) => { if (el) categoryRefs.current.set(category.id, el); }}
+            >
               <button
                 className="category-header-btn"
-                onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+                onClick={() => {
+                  const newExpanded = isExpanded ? null : category.id;
+                  setExpandedCategory(newExpanded);
+                  // Auto-scroll to section top when expanding
+                  if (newExpanded) {
+                    setTimeout(() => {
+                      const el = categoryRefs.current.get(newExpanded);
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }
+                }}
               >
                 <div className="category-header">
                   <span className="category-icon">{category.icon}</span>
@@ -1629,8 +1670,28 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         <p>
           This enhanced LIFE SCORE™ used <strong>{result.llmsUsed.length} different AI models</strong> to
           independently evaluate {result.processingStats.metricsEvaluated} freedom metrics.
-          Claude Opus 4.5 served as the final judge to build consensus scores.
+          A specialized judge model reviewed all evaluations to build consensus scores.
         </p>
+        
+        <div className="scoring-explanation">
+          <h5>How Our Scoring Works</h5>
+          <p>
+            <strong>1. Independent Research:</strong> Multiple AI models with real-time web access independently 
+            analyze each metric using authoritative sources—laws, statutes, government data, and enforcement records.
+          </p>
+          <p>
+            <strong>2. Evidence-Based Scoring:</strong> Scores are derived from verifiable legal data, not opinions. 
+            Each metric measures specific regulations and their real-world enforcement.
+          </p>
+          <p>
+            <strong>3. Consensus Building:</strong> A final judge model reviews all independent evaluations, 
+            weighs the evidence, identifies areas of agreement and disagreement, and produces balanced consensus scores.
+          </p>
+          <p>
+            <strong>4. Full Transparency:</strong> Every score links to the specific sources used, allowing you 
+            to verify findings. Click the 📄 icon on any metric to see the data behind the numbers.
+          </p>
+        </div>
         <p>
           <strong>Generated:</strong> {new Date(result.generatedAt).toLocaleString()}
           <br />

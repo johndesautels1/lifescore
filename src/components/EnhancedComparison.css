@@ -1512,6 +1512,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .metric-icon {
@@ -1530,6 +1532,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .metric-name {
@@ -1709,18 +1714,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 0.9rem;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  font-size: 1rem;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.9;
   transition: all var(--transition-fast);
-  border-radius: 4px;
+  border-radius: 6px;
   margin-left: auto;
-  flex-shrink: 0;
-  background: none;
-  border: none;
+  flex: 0 0 auto;
+  background: rgba(0, 71, 171, 0.1);
+  border: 1px solid rgba(0, 71, 171, 0.2);
   padding: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .evidence-indicator:hover {
@@ -3768,3 +3776,52 @@
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
+
+/* Scoring Explanation in About Card */
+.scoring-explanation {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(247, 147, 30, 0.03) 100%);
+  border: 1px solid rgba(0, 71, 171, 0.15);
+  border-radius: 12px;
+}
+
+.scoring-explanation h5 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #0047AB;
+  font-weight: 700;
+}
+
+.scoring-explanation p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.scoring-explanation p:last-child {
+  margin-bottom: 0;
+}
+
+.scoring-explanation strong {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .scoring-explanation {
+  background: linear-gradient(135deg, rgba(107, 163, 255, 0.1) 0%, rgba(247, 147, 30, 0.05) 100%);
+  border-color: rgba(107, 163, 255, 0.2);
+}
+
+[data-theme="dark"] .scoring-explanation h5 {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .scoring-explanation p {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .scoring-explanation strong {
+  color: #F7931E;
+}
+

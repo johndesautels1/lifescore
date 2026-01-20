@@ -54,6 +54,9 @@ const App: React.FC = () => {
   const [judgeResultLifted, setJudgeResultLifted] = useState<JudgeOutput | null>(null);
   const [lastJudgedCount, setLastJudgedCount] = useState(0);
 
+  // Pending LLM to run (for Add More Models feature)
+  const [pendingLLMToRun, setPendingLLMToRun] = useState<LLMProvider | null>(null);
+
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
 
@@ -128,6 +131,7 @@ const App: React.FC = () => {
     setLLMStates(new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }])));
     setJudgeResultLifted(null);
     setLastJudgedCount(0);
+    setPendingLLMToRun(null);
     resetOGMetaTags();
   };
 
@@ -202,6 +206,8 @@ const App: React.FC = () => {
                     setJudgeResult={setJudgeResultLifted}
                     lastJudgedCount={lastJudgedCount}
                     setLastJudgedCount={setLastJudgedCount}
+                    pendingLLMToRun={pendingLLMToRun}
+                    clearPendingLLM={() => setPendingLLMToRun(null)}
                     onResultsUpdate={(llmResults, judgeResult) => {
                       if (judgeResult && llmResults.size > 0) {
                         // Build EnhancedComparisonResult from LLM results and judge output
@@ -282,7 +288,7 @@ const App: React.FC = () => {
                               className={`llm-add-btn ${isCompleted ? 'completed' : ''} ${isRunning ? 'running' : ''} ${isFailed ? 'failed' : ''}`}
                               disabled={isCompleted || isRunning}
                               onClick={() => {
-                                // This will be handled by going back to compare tab with state preserved
+                                setPendingLLMToRun(llm);  // Track which LLM to run
                                 setEnhancedStatus('running');
                                 setActiveTab('compare');
                               }}

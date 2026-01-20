@@ -1127,17 +1127,24 @@ Return ONLY valid JSON with this structure (no markdown, no explanation):
       "city2EnforcementScore": 55,
       "confidence": "high",
       "reasoning": "Brief explanation",
-      "sources": ["url1", "url2"]
+      "sources": ["url1", "url2"],
+      "city1Evidence": [{"title": "Source title", "url": "https://...", "snippet": "Relevant quote from source"}],
+      "city2Evidence": [{"title": "Source title", "url": "https://...", "snippet": "Relevant quote from source"}]
     }
   ]
 }
+
+## CRITICAL: INCLUDE EVIDENCE
+For EACH evaluation, you MUST include city1Evidence and city2Evidence arrays.
+Each evidence item needs: title (source name), url (full link), snippet (relevant quote supporting the score).
 
 You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
             },
             { role: 'user', content: prompt }
           ],
           max_tokens: 16384,
-          temperature: 0.3
+          temperature: 0.3,
+          return_citations: true,  // FIX: Request citations from Perplexity API
           // NOTE: Removed strict json_schema - conflicts with sonar-reasoning-pro thinking output
         })
       },
