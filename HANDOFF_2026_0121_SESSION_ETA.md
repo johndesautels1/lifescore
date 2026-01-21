@@ -195,6 +195,77 @@ Median of [20, 60, 100, 100] = 80, not 60. (Opus may have overridden)
 
 ---
 
+# NEW FEATURE: Judges Report
+
+## Toolbar Button Addition
+**Location:** Right side of toolbar, LEFT of "About" button
+
+**New Button:** "Judges Report" (or "📋 Report")
+
+## Judges Report Modal/Page Content
+
+When user clicks "Judges Report", Opus generates a comprehensive executive summary:
+
+### 1. Executive Summary
+- Overall winner declaration with confidence level
+- Key differentiators between cities
+- Data quality assessment (how many LLMs contributed, coverage %)
+
+### 2. Source Analysis
+- All sources cited by LLMs, deduplicated
+- Source credibility assessment
+- Data freshness (2024 vs 2025 laws)
+- Gaps in sourcing (metrics with no citations)
+
+### 3. Key Findings
+- Top 5 metrics where City A dominates
+- Top 5 metrics where City B dominates
+- Surprising findings (unexpected scores)
+- Areas of high LLM agreement (trustworthy)
+- Areas of high LLM disagreement (needs verification)
+
+### 4. Future Forecast
+- Pending legislation that could change scores
+- Trends in each city (becoming more/less free)
+- Risk factors for score changes
+
+### 5. User Recommendations
+- "If you value X, choose City A"
+- "If you value Y, choose City B"
+- Dealbreaker warnings based on user preferences
+- Suggested follow-up research
+
+### 6. Data Visualizations Summary
+- Reference to charts/graphs generated
+- Key visual insights
+
+## Implementation Notes
+- Opus should receive ALL raw LLM data + sources
+- Generate report AFTER judge consensus is complete
+- Cache report (don't regenerate on every view)
+- Allow PDF export of report
+
+---
+
+# TOOLBAR LAYOUT CHANGES
+
+## Current Layout:
+```
+[Ask Olivia] [Visuals] [Saved] [Export] ... [About]
+```
+
+## New Layout:
+```
+[Visuals] [Ask Olivia] [Saved] [Export] ... [Judges Report] [About]
+```
+
+**Changes:**
+1. Move "Ask Olivia" to RIGHT of "Visuals"
+2. Move "Saved" to where "Ask Olivia" was (now 3rd position)
+3. Add "Judges Report" button LEFT of "About"
+
+---
+
 # ARCHITECTURE CHANGES NEEDED
 
 ## Proposed New Section Structure
@@ -218,6 +289,44 @@ Median of [20, 60, 100, 100] = 80, not 60. (Opus may have overridden)
 - Category sources expandable
 - Clear winner indication
 ```
+
+## UI Design: Option B - Expandable Row Detail (APPROVED)
+
+Each metric row shows summary, click to expand for full LLM breakdown:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🏠 Housing, Property & HOA Control (20%)                                        [-]    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  METRIC               │  PHILADELPHIA  │  GLASGOW  │  Δ   │  LLMs  │  σ    │           │
+│  ─────────────────────┼────────────────┼───────────┼──────┼────────┼───────┼───────────│
+│  🏘️ HOA Prevalence    │      70        │    44     │ +26  │  5/5   │  3.2  │    [▼]    │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │  LLM BREAKDOWN:                                                                 │   │
+│  │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐                       │   │
+│  │  │ 📝Sonnet │ 🤖GPT-4o │ 💎Gemini │  𝕏Grok  │ 🔮Perplx │                       │   │
+│  │  ├──────────┼──────────┼──────────┼──────────┼──────────┤                       │   │
+│  │  │ Philly:70│ Philly:65│ Philly:68│ Philly:72│ Philly:70│  Median → 70         │   │
+│  │  │ Glasgow:45│Glasgow:40│Glasgow:42│Glasgow:48│Glasgow:44│  Median → 44         │   │
+│  │  └──────────┴──────────┴──────────┴──────────┴──────────┘                       │   │
+│  │  Sources: [Sonnet: city-code.org] [GPT-4o: zillow.com] [Gemini: hoa-laws.com]   │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│  📄 HOA Docs           │      80        │    58     │ +22  │  4/5   │  2.8  │    [▶]    │
+│  💰 Property Tax       │      44        │    71     │ -27  │  5/5   │  3.1  │    [▶]    │
+│  🔒 Rent Control       │      58        │    82     │ -24  │  4/5   │  2.5  │    [▶]    │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+[▶] = Click to expand    [▼] = Expanded    LLMs = How many scored this    σ = Variance
+```
+
+**Benefits of Option B:**
+1. Keeps default view clean and scannable
+2. Power users can drill into any field they care about
+3. Shows LLM count + variance at a glance (5/5, σ=3.2)
+4. Expanded view has room for sources/evidence
+5. Mobile-friendly (columns don't get too cramped)
+6. User can verify consensus math: "Median of [40,45,40,42,43] = 42"
 
 ## Data Structure Changes
 
@@ -285,4 +394,46 @@ The user is building a "Freedom Index" comparing cities based on 100 legal metri
 
 1. `7b0c249` - Fix critical agreement calculation bug + UI improvements
 2. `fc355c7` - Fix confidenceLevel/stdDev mismatch bug
-3. `[PENDING]` - This handoff document
+3. `3e25255` - Initial handoff document
+4. `baa1298` - Bug E clarification (LLM breakdown at field level)
+5. `[THIS COMMIT]` - Final session handoff with all features/bugs documented
+
+---
+
+# SESSION SUMMARY
+
+## Completed This Session:
+- [x] Fixed agreement percentage inflation bug
+- [x] Fixed confidenceLevel/stdDev mismatch bug
+- [x] Fixed Law vs Reality button styling
+- [x] Fixed dark mode deviation level classes
+- [x] Documented all critical bugs
+- [x] Designed Option B expandable row UI
+- [x] Documented Judges Report feature
+- [x] Documented toolbar layout changes
+
+## TODO Next Session:
+- [ ] Implement Option B expandable row detail for all 100 metrics
+- [ ] Add "Where LLMs AGREED" section
+- [ ] Show BOTH cities in disagreement section
+- [ ] Add city labels to all columns
+- [ ] Implement Judges Report feature
+- [ ] Reorder toolbar buttons
+- [ ] Add sources to deciding factors
+- [ ] Fix two inconsistent disagreement lists
+- [ ] Diagnose Perplexity early timeout
+
+---
+
+# QUICK START NEXT SESSION
+
+```
+Read D:\LifeScore\HANDOFF_2026_0121_SESSION_ETA.md
+```
+
+Priority order:
+1. Bug E - Expandable row with LLM breakdown (biggest UX gap)
+2. Bug B - Add "Agreement" section
+3. Bug A - Show both cities in disagreement
+4. Judges Report feature
+5. Toolbar reordering
