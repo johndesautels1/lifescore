@@ -459,12 +459,7 @@ const App: React.FC = () => {
               ============================================================ */}
           {activeTab === 'olivia' && (
             <AskOlivia
-              comparisonData={enhancedResult ? {
-                city1: enhancedResult.city1.city,
-                city2: enhancedResult.city2.city,
-                winner: enhancedResult.winner === 'city1' ? enhancedResult.city1.city :
-                        enhancedResult.winner === 'city2' ? enhancedResult.city2.city : 'Tie'
-              } : undefined}
+              comparisonResult={enhancedResult || state.result || undefined}
             />
           )}
 
