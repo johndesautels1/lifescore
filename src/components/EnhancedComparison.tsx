@@ -824,31 +824,27 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
 
       {isExpanded && (
         <div className="disagreement-content">
-          {/* Overall Summary */}
+          {/* Overall Summary - Uses same disputedMetrics as detailed list for consistency (Bug F fix) */}
           <div className="disagreement-summary">
             <div className="summary-icon">📊</div>
             <div className="summary-text">
-              {/* Parse disagreement summary and display as bullet points with readable names */}
-              {result.disagreementSummary.includes('disagreed most on:') ? (
+              {disputedMetrics.length > 0 ? (
                 <>
-                  <p className="disagreement-intro">LLMs disagreed most on:</p>
+                  <p className="disagreement-intro">
+                    {disputedMetrics.length} metric{disputedMetrics.length !== 1 ? 's' : ''} had significant LLM disagreement (σ &gt; 10):
+                  </p>
                   <ul className="disagreement-list">
-                    {result.disagreementSummary
-                      .replace('LLMs disagreed most on: ', '')
-                      .split(', ')
-                      .map(metricId => {
-                        const metric = ALL_METRICS.find(m => m.id === metricId.trim());
-                        const displayName = metric?.shortName || metricId.replace(/^[a-z]{2}_\d{2}_/, '').replace(/_/g, ' ');
-                        return (
-                          <li key={metricId}>
-                            <span className="metric-bullet-name">{displayName}</span>
-                          </li>
-                        );
-                      })}
+                    {disputedMetrics.slice(0, 5).map(metric => (
+                      <li key={metric.metricId}>
+                        <span className="metric-bullet-icon">{metric.icon}</span>
+                        <span className="metric-bullet-name">{metric.shortName}</span>
+                        <span className="metric-bullet-stddev">σ = {Math.round(Math.max(metric.standardDeviation, metric.city2StandardDeviation))}</span>
+                      </li>
+                    ))}
                   </ul>
                 </>
               ) : (
-                <p>{result.disagreementSummary}</p>
+                <p className="disagreement-intro">All metrics showed strong LLM agreement. Scores are highly reliable.</p>
               )}
               <span className="summary-detail">
                 Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge

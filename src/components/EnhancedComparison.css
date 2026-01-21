@@ -3378,29 +3378,40 @@
 
 .disagreement-summary .disagreement-list {
   margin: 0 0 0.75rem 0;
-  padding-left: 1.25rem;
+  padding-left: 0;
   list-style: none;
 }
 
 .disagreement-summary .disagreement-list li {
-  position: relative;
-  padding: 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.35rem;
+  background: rgba(124, 58, 237, 0.06);
+  border-radius: var(--radius-sm);
   color: var(--gray-700);
   font-size: 0.9rem;
 }
 
-.disagreement-summary .disagreement-list li::before {
-  content: '•';
-  position: absolute;
-  left: -1rem;
-  color: #7c3aed;
-  font-weight: bold;
-  font-size: 1.1rem;
+.disagreement-summary .metric-bullet-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .disagreement-summary .metric-bullet-name {
-  font-weight: 500;
-  text-transform: capitalize;
+  font-weight: 600;
+  flex: 1;
+}
+
+.disagreement-summary .metric-bullet-stddev {
+  font-size: 0.75rem;
+  font-family: monospace;
+  font-weight: 600;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.12);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
 }
 
 .disagreement-summary .summary-detail {
@@ -4502,10 +4513,16 @@
 
 [data-theme="dark"] .disagreement-summary .disagreement-list li {
   color: #d0d0e0;
+  background: rgba(124, 58, 237, 0.12);
 }
 
-[data-theme="dark"] .disagreement-summary .disagreement-list li::before {
+[data-theme="dark"] .disagreement-summary .metric-bullet-name {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .disagreement-summary .metric-bullet-stddev {
   color: #a78bfa;
+  background: rgba(124, 58, 237, 0.2);
 }
 
 [data-theme="dark"] .disagreement-summary .summary-detail {
