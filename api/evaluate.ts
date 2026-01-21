@@ -479,10 +479,13 @@ interface TavilyResult { title: string; url: string; content: string }
 interface TavilyResponse { results: TavilyResult[]; answer?: string }
 interface TavilyResearchResponse { report: string; sources: { title: string; url: string }[] }
 
-const TAVILY_HEADERS = {
+// Tavily API headers - Updated 2026-01-21 to use Bearer auth per official docs
+// Docs: https://docs.tavily.com/documentation/api-reference/endpoint/search
+const getTavilyHeaders = (apiKey: string) => ({
   'Content-Type': 'application/json',
+  'Authorization': `Bearer ${apiKey}`,
   'X-Project-ID': 'lifescore-freedom-app'  // Project tracking for usage analytics
-};
+});
 
 // Tavily Research API - Comprehensive baseline report for city comparison
 async function tavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
@@ -494,9 +497,9 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
       'https://api.tavily.com/research',
       {
         method: 'POST',
-        headers: TAVILY_HEADERS,
+        headers: getTavilyHeaders(apiKey),
         body: JSON.stringify({
-          api_key: apiKey,
+          // api_key removed - now using Bearer auth in header per Tavily docs
           input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
           model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
           citation_format: 'numbered'
@@ -529,9 +532,9 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
       'https://api.tavily.com/search',
       {
         method: 'POST',
-        headers: TAVILY_HEADERS,
+        headers: getTavilyHeaders(apiKey),
         body: JSON.stringify({
-          api_key: apiKey,
+          // api_key removed - now using Bearer auth in header per Tavily docs
           query,
           search_depth: 'advanced',
           max_results: maxResults,
@@ -552,7 +555,8 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
             'yelp.com',
             'tripadvisor.com'
           ],
-          country: 'US',                  // Boost US results
+          // country removed - was causing 400 errors for international cities
+          // Tavily will search globally without this parameter
           include_usage: true             // Track credit consumption
         })
       },
