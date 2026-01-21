@@ -12,8 +12,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_TIMEOUT_MS = 30000; // 30 seconds
 
-// Default voice ID - Olivia's voice (can be overridden via env)
-const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL'; // Sarah voice as fallback
+// Default voice ID - Olivia's cloned voice (can be overridden via env)
+const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
+
+// Default model - multilingual v2 for best quality
+const DEFAULT_MODEL_ID = 'eleven_multilingual_v2';
 
 // ============================================================================
 // TYPES
@@ -23,6 +26,7 @@ interface TTSRequest {
   text: string;
   voiceId?: string;
   modelId?: string;
+  outputFormat?: string;
   stability?: number;
   similarityBoost?: number;
 }
@@ -110,7 +114,8 @@ export default async function handler(
     const {
       text,
       voiceId = DEFAULT_VOICE_ID,
-      modelId = 'eleven_turbo_v2_5',
+      modelId = DEFAULT_MODEL_ID,
+      outputFormat = 'mp3_44100_128',
       stability = 0.5,
       similarityBoost = 0.8,
     } = req.body as TTSRequest;
@@ -126,7 +131,7 @@ export default async function handler(
 
     // Call ElevenLabs API
     const response = await fetchWithTimeout(
-      `${ELEVENLABS_API_BASE}/text-to-speech/${voiceId}`,
+      `${ELEVENLABS_API_BASE}/text-to-speech/${voiceId}?output_format=${outputFormat}`,
       {
         method: 'POST',
         headers: {
