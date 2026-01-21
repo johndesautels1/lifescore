@@ -181,6 +181,62 @@ a:hover {
   margin-bottom: var(--spacing-xl);
 }
 
+/* Judges Report Section */
+.judges-report-section {
+  text-align: left;
+}
+
+.judges-report-section .section-title {
+  margin-bottom: var(--spacing-lg);
+}
+
+.coming-soon-notice {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.08) 0%, rgba(247, 147, 30, 0.08) 100%);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border: 1px dashed rgba(0, 71, 171, 0.3);
+}
+
+.coming-soon-notice p {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--gray-700);
+}
+
+.coming-soon-notice ul {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-xl);
+}
+
+.coming-soon-notice li {
+  margin-bottom: var(--spacing-sm);
+  color: var(--gray-600);
+}
+
+.coming-soon-notice .hint {
+  font-style: italic;
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  margin-top: var(--spacing-md);
+  margin-bottom: 0;
+}
+
+[data-theme="dark"] .coming-soon-notice {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.15) 0%, rgba(247, 147, 30, 0.1) 100%);
+  border-color: rgba(107, 163, 255, 0.3);
+}
+
+[data-theme="dark"] .coming-soon-notice p {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .coming-soon-notice li {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .coming-soon-notice .hint {
+  color: var(--gray-500);
+}
+
 /* ============================================================================
    Button Styles
    ============================================================================ */
