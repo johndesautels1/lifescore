@@ -917,6 +917,7 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
                                 className="llm-score-mini"
                                 title={`${config?.name || llm.provider}: ${Math.round(llm.score)}/100`}
                               >
+                                <span className="mini-llm-name">{config?.shortName || llm.provider}</span>
                                 <span className="mini-icon">{llm.icon}</span>
                                 <span className="mini-score">{Math.round(llm.score)}</span>
                               </div>
@@ -956,6 +957,7 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
                                 className="llm-score-mini"
                                 title={`${config?.name || llm.provider}: ${Math.round(llm.score)}/100`}
                               >
+                                <span className="mini-llm-name">{config?.shortName || llm.provider}</span>
                                 <span className="mini-icon">{llm.icon}</span>
                                 <span className="mini-score">{Math.round(llm.score)}</span>
                               </div>

@@ -3938,29 +3938,41 @@
 
 .llm-score-mini {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.2rem 0.4rem;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: 4px;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  background: linear-gradient(135deg, #1e1e3a 0%, #2a2a4a 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 6px;
   cursor: help;
   transition: all var(--transition-fast);
+  min-width: 50px;
 }
 
 .llm-score-mini:hover {
-  border-color: #7C3AED;
-  background: rgba(124, 58, 237, 0.08);
+  border-color: #D4AF37;
+  background: linear-gradient(135deg, #2a2a4a 0%, #1e1e3a 100%);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+.llm-score-mini .mini-llm-name {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #D4AF37;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .llm-score-mini .mini-icon {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .llm-score-mini .mini-score {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--gray-700);
+  color: #ffffff;
 }
 
 /* City Consensus */
@@ -4054,17 +4066,22 @@
 }
 
 [data-theme="dark"] .llm-score-mini {
-  background: #1a1a2e;
-  border-color: #3d3d55;
+  background: linear-gradient(135deg, #1e1e3a 0%, #151528 100%);
+  border-color: rgba(212, 175, 55, 0.4);
 }
 
 [data-theme="dark"] .llm-score-mini:hover {
-  border-color: #A78BFA;
-  background: rgba(124, 58, 237, 0.15);
+  border-color: #D4AF37;
+  background: linear-gradient(135deg, #2a2a4a 0%, #1e1e3a 100%);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+[data-theme="dark"] .llm-score-mini .mini-llm-name {
+  color: #D4AF37;
 }
 
 [data-theme="dark"] .llm-score-mini .mini-score {
-  color: #e5e7eb;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .city-consensus {
@@ -4126,11 +4143,16 @@
   }
 
   .llm-score-mini {
-    padding: 0.15rem 0.3rem;
+    padding: 0.25rem 0.35rem;
+    min-width: 40px;
+  }
+
+  .llm-score-mini .mini-llm-name {
+    font-size: 0.5rem;
   }
 
   .llm-score-mini .mini-icon {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .llm-score-mini .mini-score {
