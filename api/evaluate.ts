@@ -491,10 +491,16 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
       LLM_TIMEOUT_MS
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unable to read error');
+      console.error(`[TAVILY RESEARCH] Error ${response.status}: ${errorText.slice(0, 500)}`);
+      return null;
+    }
     const data = await response.json();
+    console.log(`[TAVILY RESEARCH] Success - report length: ${data.report?.length || 0}, sources: ${data.sources?.length || 0}`);
     return { report: data.report || '', sources: data.sources || [] };
-  } catch {
+  } catch (error) {
+    console.error(`[TAVILY RESEARCH] Exception:`, error instanceof Error ? error.message : error);
     return null;
   }
 }
@@ -539,10 +545,16 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
       LLM_TIMEOUT_MS
     );
 
-    if (!response.ok) return { results: [] };
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unable to read error');
+      console.error(`[TAVILY SEARCH] Error ${response.status} for query "${query.slice(0, 50)}...": ${errorText.slice(0, 500)}`);
+      return { results: [] };
+    }
     const data = await response.json();
+    console.log(`[TAVILY SEARCH] Success - results: ${data.results?.length || 0}, credits used: ${data.usage?.total_tokens || 'N/A'}`);
     return { results: data.results || [], answer: data.answer };
-  } catch {
+  } catch (error) {
+    console.error(`[TAVILY SEARCH] Exception for query "${query.slice(0, 50)}...":`, error instanceof Error ? error.message : error);
     return { results: [] };
   }
 }
