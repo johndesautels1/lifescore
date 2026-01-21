@@ -937,21 +937,44 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 
   const startTime = Date.now();
 
-  // GROK-SPECIFIC ADDENDUM (optimized for real-time social data)
+  // GROK-SPECIFIC ADDENDUM (optimized per Grok's own recommendations 2026-01-21)
+  const currentYear = new Date().getFullYear();
   const grokAddendum = `
-## GROK-SPECIFIC INSTRUCTIONS
-- Use your native X/Twitter search to find real enforcement experiences from residents
-- Prioritize recent posts (2024-2026) about actual encounters with laws and police
-- X posts often reveal enforcement reality that differs from official policy
-- Weight anecdotal enforcement data alongside official legal sources
-- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+## GROK-SPECIFIC CLASSIFICATION RULES
 
-## SCORING SCALE (0-100)
+### REAL-TIME DATA STRATEGY
+- Use your native X/Twitter search to bridge "legal theory" vs "enforcement reality"
+- Query pattern: "${city1} OR ${city2} [metric keywords] enforcement experience since:2025-01-01"
+- Summarize 5-10 recent posts to inform if enforcement deviates from written law
+- Weight X anecdotes at 20-30% alongside official sources (gov sites, statutes)
+
+### DATE/RECENCY REQUIREMENTS
+- Base classification on current ${currentYear} laws and enforcement
+- Sources must be from the last 12 months; flag older data as confidence: "low"
+- If laws are in flux (pending legislation), classify based on CURRENT effective status
+- Note potential changes in reasoning field
+
+### CLASSIFICATION RULES
+- Prioritize official sources (gov sites, statutes) but cross-verify with X for enforcement reality
+- If ambiguous, choose closest match and note uncertainty in reasoning
+- If no exact category fit, explain mismatch in reasoning and use closest option
+
+### EDGE CASES
+- For rapidly changing laws: classify conservatively (current status), set confidence: "low"
+- For pending legislation: note in reasoning, stick to current effective law
+- If category match but enforcement differs significantly, note gap in reasoning
+
+### SCORING SCALE (0-100)
 - 90-100: Extremely permissive, minimal restrictions (most free)
 - 70-89: Generally permissive with some limitations
 - 50-69: Moderate restrictions
 - 30-49: Significant restrictions
 - 0-29: Highly restrictive or prohibited (least free)
+
+### OUTPUT
+- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
+- Return ONLY valid JSON matching the requested format
+- No additional text outside the JSON object
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -960,21 +983,33 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
     : buildBasePrompt(city1, city2, metrics);
   const prompt = basePrompt + grokAddendum;
 
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.x.ai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'grok-4',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert legal analyst evaluating freedom metrics. Use your real-time web search to find current laws and regulations.
+  // Grok retry logic with exponential backoff (per Grok's recommendation)
+  const MAX_RETRIES = 3;
+  let lastError = '';
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[GROK] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
+
+      const response = await fetchWithTimeout(
+        'https://api.x.ai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'grok-4',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert legal analyst classifying freedom metrics. Use real-time web search for verification.
+
+## CLASSIFICATION APPROACH
+- For LEGAL score: Classify based on written law text from official sources
+- For ENFORCEMENT score: Use X/Twitter search for real-world resident experiences
+- These often differ (e.g., law exists but rarely enforced)
 
 ## SCORING SCALE (0-100)
 - 90-100: Extremely permissive, minimal restrictions (most free)
@@ -983,36 +1018,85 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 - 30-49: Significant restrictions
 - 0-29: Highly restrictive or prohibited (least free)
 
-You MUST evaluate ALL metrics provided and return valid JSON.`
-            },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 16384,
-          temperature: 0.3,
-          search: true
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+## CRITICAL RULES
+- Return ONLY valid JSON matching the requested format
+- Evaluate ALL metrics provided - do not skip any
+- If category doesn't fit exactly, use closest match and explain in reasoning
+- Sources must be from last 12 months for high confidence`
+              },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 16384,
+            temperature: 0.2,  // Grok recommendation: 0.2-0.4 for deterministic classification
+            search: true
+          })
+        },
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+      if (!response.ok) {
+        const errorText = await response.text();
+        lastError = `API error: ${response.status} - ${errorText}`;
+        console.error(`[GROK] Attempt ${attempt} failed: ${lastError}`);
+        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
+        if (response.status >= 400 && response.status < 500) {
+          return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
+        }
+        // Exponential backoff before retry: 1s, 2s, 4s
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.log(`[GROK] Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const data = await response.json();
+      const content = data?.choices?.[0]?.message?.content;
+
+      if (!content) {
+        lastError = 'Empty or malformed response from Grok';
+        console.error(`[GROK] Attempt ${attempt}: ${lastError}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      // JSON validation: try to parse before accepting
+      const scores = parseResponse(content, 'grok-4');
+
+      if (scores.length === 0) {
+        lastError = 'Invalid JSON or no evaluations parsed from Grok response';
+        console.error(`[GROK] Attempt ${attempt}: ${lastError}. Content preview: ${content.substring(0, 200)}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      // Success!
+      console.log(`[GROK] Success on attempt ${attempt}: ${scores.length} scores returned`);
+      return { provider: 'grok-4', success: true, scores, latencyMs: Date.now() - startTime };
+
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
+      console.error(`[GROK] Attempt ${attempt} exception: ${lastError}`);
+
+      // Exponential backoff before retry
+      if (attempt < MAX_RETRIES) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[GROK] Retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
     }
-
-    const data = await response.json();
-    // FIX #8: Defensive parsing - handle missing/malformed response
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) {
-      return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Grok' };
-    }
-    const scores = parseResponse(content, 'grok-4');
-
-    return { provider: 'grok-4', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
-    return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
+
+  // All retries exhausted
+  console.error(`[GROK] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
+  return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
 // Perplexity evaluation (with Sonar web search and citations)

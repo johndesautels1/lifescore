@@ -6,10 +6,70 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
-## CURRENT STATUS (January 20, 2026)
+## CURRENT STATUS (January 21, 2026)
 
-### Latest Session: 2026-01-20
-**Conversation ID:** `LIFESCORE-2026-0120-PERPLEXITY-INCREMENTAL`
+### Latest Session: 2026-01-21
+**Conversation ID:** `LIFESCORE-2026-0121-GROK-SAFE-IMPL`
+
+---
+
+## 🚨 HANDOFF: GROK OPTIMIZATION (DEFERRED ITEMS) 🚨
+
+**Date:** 2026-01-21
+**Status:** PARTIAL IMPLEMENTATION - SAFE CHANGES ONLY
+
+### What Was Implemented This Session
+
+| Change | Status | Notes |
+|--------|--------|-------|
+| Temperature 0.3 → 0.2 | ✅ DONE | More deterministic outputs |
+| Updated grokAddendum | ✅ DONE | Grok's recommended format |
+| Date/recency requirements | ✅ DONE | Explicit year, "last 12 months" |
+| X search query patterns | ✅ DONE | Enforcement sentiment guidance |
+| JSON validation with retry | ✅ DONE | 3 attempts with backoff |
+
+### DEFERRED TO NEXT SESSION (Require More Testing)
+
+| # | Item | Risk Level | Why Deferred |
+|---|------|------------|--------------|
+| 11 | Change `search: true` to selective per metric | 🟡 MEDIUM | Could break working metrics; needs metric-by-metric analysis |
+| 12 | Major prompt restructuring | 🟡 MEDIUM | Grok already returning data; risk vs reward unclear |
+
+### Grok's Own Recommendations (From Consultation)
+
+**Selective Search Strategy (Item #11):**
+- Enable `search: true` automatically for metrics prone to change (cannabis, abortion, firearms)
+- Disable for static metrics (historical zoning laws) to save tokens/latency
+- Add conditional: "If metric involves time-sensitive laws, perform real-time web search"
+- Each search adds ~5-10 seconds; selective approach optimizes for 300s Vercel timeout
+
+**Implementation Approach When Ready:**
+```typescript
+// In evaluateWithGrok(), determine search need per metric category
+const dynamicCategories = ['personal_freedom', 'policing_legal'];
+const needsSearch = metrics.some(m => dynamicCategories.includes(m.categoryId));
+// Then: search: needsSearch (instead of search: true)
+```
+
+### What NOT to Change (Per User Directive)
+
+| Setting | Value | Reason |
+|---------|-------|--------|
+| max_tokens | 16384 | User explicitly wants NO reduction |
+| timeout | 240000ms | Court order: no timeout changes |
+| Tavily pre-fetch | NOT added to Grok | Risk of 65-130s added latency causing timeouts |
+
+### Files Changed This Session
+
+- `api/evaluate.ts` - Lines 932-1016 (evaluateWithGrok function only)
+- `README.md` - This handoff section
+
+### Next Session TODO
+
+1. Test selective `search: true` on staging with different metric categories
+2. Measure latency difference between search: true vs false
+3. If safe, implement metric-category-based search toggle
+4. Consider Grok's "Dynamic Category Augmentation" idea for Opus review
 
 ---
 
