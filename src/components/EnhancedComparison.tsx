@@ -1206,6 +1206,7 @@ interface MetricDifference {
   favoredCity: 'city1' | 'city2';
   city1Explanation?: string;  // Judge explanation for city 1
   city2Explanation?: string;  // Judge explanation for city 2
+  sources: EvidenceItem[];    // Bug D fix: Combined sources from both cities
 }
 
 const calculateTopDifferences = (result: EnhancedComparisonResult, count: number = 5): MetricDifference[] => {
@@ -1224,6 +1225,19 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
       const name = metricDef?.name || metric1.metricId;
       const shortName = metricDef?.shortName || metric1.metricId;
 
+      // Collect evidence/sources from both cities' LLM scores (Bug D fix)
+      const allEvidence: EvidenceItem[] = [];
+      metric1.llmScores?.forEach(score => {
+        if (score.evidence) allEvidence.push(...score.evidence);
+      });
+      metric2.llmScores?.forEach(score => {
+        if (score.evidence) allEvidence.push(...score.evidence);
+      });
+      // Deduplicate by URL
+      const uniqueSources = Array.from(
+        new Map(allEvidence.map(e => [e.url, e])).values()
+      );
+
       const diff = Math.abs(metric1.consensusScore - metric2.consensusScore);
       differences.push({
         metricId: metric1.metricId,
@@ -1235,7 +1249,8 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
         difference: diff,
         favoredCity: metric1.consensusScore > metric2.consensusScore ? 'city1' : 'city2',
         city1Explanation: metric1.judgeExplanation,
-        city2Explanation: metric2.judgeExplanation
+        city2Explanation: metric2.judgeExplanation,
+        sources: uniqueSources
       });
     });
   });
@@ -1570,6 +1585,28 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               <span className="city-score">Score: {Math.round(diff.city2Score)}</span>
                             </h4>
                             <p className="explanation-text">{diff.city2Explanation}</p>
+                          </div>
+                        )}
+
+                        {/* Bug D fix: Sources section */}
+                        {diff.sources.length > 0 && (
+                          <div className="diff-sources-section">
+                            <h4 className="sources-header">📚 Sources</h4>
+                            <ul className="diff-sources-list">
+                              {diff.sources.slice(0, 4).map((source, idx) => (
+                                <li key={idx}>
+                                  <a href={source.url} target="_blank" rel="noopener noreferrer">
+                                    {source.title || (() => { try { return new URL(source.url).hostname; } catch { return source.url; } })()}
+                                  </a>
+                                  {source.snippet && (
+                                    <span className="source-snippet">— {source.snippet.length > 80 ? source.snippet.substring(0, 80) + '...' : source.snippet}</span>
+                                  )}
+                                </li>
+                              ))}
+                              {diff.sources.length > 4 && (
+                                <li className="more-sources">+{diff.sources.length - 4} more sources</li>
+                              )}
+                            </ul>
                           </div>
                         )}
                       </div>
