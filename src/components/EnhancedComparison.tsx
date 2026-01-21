@@ -710,10 +710,13 @@ interface DisputedMetric {
   shortName: string;
   icon: string;
   standardDeviation: number;
+  city2StandardDeviation: number;
   confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
   city1Score: number;
   city2Score: number;
-  llmScores: { provider: LLMProvider; score: number; icon: string }[];
+  scoreDifference: number;
+  city1LlmScores: { provider: LLMProvider; score: number; icon: string }[];
+  city2LlmScores: { provider: LLMProvider; score: number; icon: string }[];
 }
 
 const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5): DisputedMetric[] => {
@@ -727,13 +730,20 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
       const metric2 = city2Cat.metrics[metricIndex];
       if (!metric2) return;
 
-      // Only include metrics where LLMs had significant disagreement
-      if (metric1.standardDeviation > 10) {
+      // Only include metrics where LLMs had significant disagreement (either city)
+      const maxStdDev = Math.max(metric1.standardDeviation, metric2.standardDeviation);
+      if (maxStdDev > 10) {
         const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
         const shortName = metricDef?.shortName || metric1.metricId;
 
-        // Build LLM scores array with icons
-        const llmScores = metric1.llmScores.map(score => ({
+        // Build LLM scores arrays for BOTH cities
+        const city1LlmScores = metric1.llmScores.map(score => ({
+          provider: score.llmProvider,
+          score: score.normalizedScore,
+          icon: LLM_CONFIGS[score.llmProvider]?.icon || '🤖'
+        }));
+
+        const city2LlmScores = metric2.llmScores.map(score => ({
           provider: score.llmProvider,
           score: score.normalizedScore,
           icon: LLM_CONFIGS[score.llmProvider]?.icon || '🤖'
@@ -744,21 +754,24 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
           shortName,
           icon: getMetricIcon(shortName),
           standardDeviation: metric1.standardDeviation,
+          city2StandardDeviation: metric2.standardDeviation,
           confidenceLevel: metric1.confidenceLevel,
           city1Score: metric1.consensusScore,
           city2Score: metric2.consensusScore,
-          llmScores
+          scoreDifference: Math.abs(metric1.consensusScore - metric2.consensusScore),
+          city1LlmScores,
+          city2LlmScores
         });
       }
     });
   });
 
   return disputed
-    .sort((a, b) => b.standardDeviation - a.standardDeviation)
+    .sort((a, b) => Math.max(b.standardDeviation, b.city2StandardDeviation) - Math.max(a.standardDeviation, a.city2StandardDeviation))
     .slice(0, count);
 };
 
-const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result, city1Name, city2Name: _city2Name }) => {
+const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result, city1Name, city2Name }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const disputedMetrics = findDisputedMetrics(result, 5);
   const hasSignificantDisagreement = disputedMetrics.length > 0;
@@ -868,52 +881,98 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
                 Where LLMs Disagreed Most
               </h4>
               <p className="disputed-subtitle">
-                These metrics for <strong>{city1Name}</strong> had the highest score variation between AI evaluators.
+                These metrics had the highest score variation between AI evaluators for <strong>{city1Name}</strong> and <strong>{city2Name}</strong>.
                 Each LLM scored independently, then Claude Opus reviewed and set the final consensus.
               </p>
 
               <div className="disputed-list">
                 {disputedMetrics.map((metric, index) => (
-                  <div key={metric.metricId} className="disputed-item">
-                    <div className="disputed-rank">#{index + 1}</div>
-                    <div className="disputed-info">
-                      <div className="disputed-metric-name">
-                        <span className="metric-icon">{metric.icon}</span>
-                        <span className="metric-name">{metric.shortName}</span>
-                        <span className={`confidence-tag ${metric.confidenceLevel}`}>
-                          {getMetricConfidenceLabel(metric.confidenceLevel)}
-                        </span>
-                      </div>
-                      <div className="disputed-deviation">
-                        σ = {Math.round(metric.standardDeviation)} points variance
-                      </div>
-                    </div>
-
-                    {/* Individual LLM Scores */}
-                    <div className="llm-scores-section">
-                      <div className="scores-section-label">Individual Scores:</div>
-                      <div className="llm-scores-breakdown">
-                        {metric.llmScores.map((llm, i) => {
-                          const config = LLM_CONFIGS[llm.provider];
-                          return (
-                            <div
-                              key={i}
-                              className="llm-score-item"
-                              title={`${config?.name || llm.provider}: ${Math.round(llm.score)}/100`}
-                            >
-                              <span className="llm-item-icon">{llm.icon}</span>
-                              <span className="llm-item-name">{config?.shortName || llm.provider}</span>
-                              <span className="llm-item-score">{Math.round(llm.score)}</span>
-                            </div>
-                          );
-                        })}
+                  <div key={metric.metricId} className="disputed-item-enhanced">
+                    <div className="disputed-item-header">
+                      <div className="disputed-rank">#{index + 1}</div>
+                      <div className="disputed-info">
+                        <div className="disputed-metric-name">
+                          <span className="metric-icon">{metric.icon}</span>
+                          <span className="metric-name">{metric.shortName}</span>
+                          <span className={`confidence-tag ${metric.confidenceLevel}`}>
+                            {getMetricConfidenceLabel(metric.confidenceLevel)}
+                          </span>
+                        </div>
+                        <div className="disputed-deviation">
+                          σ = {Math.round(Math.max(metric.standardDeviation, metric.city2StandardDeviation))} points max variance
+                        </div>
                       </div>
                     </div>
 
-                    {/* Consensus Score - Median of LLM scores, may be adjusted by Opus Judge */}
-                    <div className="disputed-consensus">
-                      <span className="consensus-label">Score</span>
-                      <span className="consensus-value">{Math.round(metric.city1Score)}</span>
+                    {/* Both Cities Scores Side by Side */}
+                    <div className="disputed-cities-comparison">
+                      {/* City 1 */}
+                      <div className="disputed-city-block">
+                        <div className="city-block-header">
+                          <span className="city-block-name">{city1Name}</span>
+                          <span className="city-block-stddev">σ = {Math.round(metric.standardDeviation)}</span>
+                        </div>
+                        <div className="llm-scores-mini">
+                          {metric.city1LlmScores.map((llm, i) => {
+                            const config = LLM_CONFIGS[llm.provider];
+                            return (
+                              <div
+                                key={i}
+                                className="llm-score-mini"
+                                title={`${config?.name || llm.provider}: ${Math.round(llm.score)}/100`}
+                              >
+                                <span className="mini-icon">{llm.icon}</span>
+                                <span className="mini-score">{Math.round(llm.score)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="city-consensus">
+                          <span className="consensus-label">Consensus</span>
+                          <span className={`consensus-value ${metric.city1Score > metric.city2Score ? 'winner' : ''}`}>
+                            {Math.round(metric.city1Score)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* VS Divider */}
+                      <div className="disputed-vs">
+                        <span className="vs-text">vs</span>
+                        {metric.scoreDifference > 0 && (
+                          <span className={`vs-diff ${metric.city1Score > metric.city2Score ? 'city1-leads' : 'city2-leads'}`}>
+                            Δ{Math.round(metric.scoreDifference)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* City 2 */}
+                      <div className="disputed-city-block">
+                        <div className="city-block-header">
+                          <span className="city-block-name">{city2Name}</span>
+                          <span className="city-block-stddev">σ = {Math.round(metric.city2StandardDeviation)}</span>
+                        </div>
+                        <div className="llm-scores-mini">
+                          {metric.city2LlmScores.map((llm, i) => {
+                            const config = LLM_CONFIGS[llm.provider];
+                            return (
+                              <div
+                                key={i}
+                                className="llm-score-mini"
+                                title={`${config?.name || llm.provider}: ${Math.round(llm.score)}/100`}
+                              >
+                                <span className="mini-icon">{llm.icon}</span>
+                                <span className="mini-score">{Math.round(llm.score)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="city-consensus">
+                          <span className="consensus-label">Consensus</span>
+                          <span className={`consensus-value ${metric.city2Score > metric.city1Score ? 'winner' : ''}`}>
+                            {Math.round(metric.city2Score)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
