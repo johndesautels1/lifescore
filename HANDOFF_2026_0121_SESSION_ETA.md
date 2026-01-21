@@ -127,37 +127,40 @@ But can't tell if 75 is Philadelphia or Glasgow.
 
 ---
 
-## Bug E: Individual Metric Scores Don't Show Per-City Breakdown
-**Location:** "Where LLMs Disagreed Most" section
+## Bug E: Individual Field Rows Don't Show LLM Breakdown (MAJOR)
+**Location:** ALL 100 metric rows in the results grid
 
-**Problem:** Shows:
+**Problem:** When viewing ANY individual field (e.g., "Cannabis Laws"), the user sees:
 ```
-Individual Scores:
-Sonnet: 100
-GPT-4o: 0
+| Cannabis Laws | Philadelphia: 65 | Glasgow: 42 |
 ```
 
-But user has NO IDEA if "Sonnet: 100" is for Philadelphia or Glasgow or some aggregate.
+But has ZERO visibility into:
+- Which LLMs actually returned scores for this field?
+- What did each LLM score for each city?
+- How was the consensus "65" derived from individual LLM scores?
 
-**Current Data Structure:**
-```javascript
-llmScores: { provider: LLMProvider; score: number; icon: string }[]
+**Current State:** Only consensus scores shown. LLM breakdown is INVISIBLE at field level.
+
+**Required State:** Every field row should show per-LLM columns:
+```
+| Cannabis Laws | Sonnet | GPT-4o | Gemini | Grok  | Perplexity | Consensus |
+| Philadelphia  |   70   |   60   |   65   |   60  |     70     |    65     |
+| Glasgow       |   40   |   45   |   40   |   42  |     43     |    42     |
 ```
 
-**Required Data Structure:**
-```javascript
-llmScores: {
-  provider: LLMProvider;
-  city1Score: number;  // Philadelphia
-  city2Score: number;  // Glasgow
-  icon: string
-}[]
-```
+**Data Exists But Not Displayed:**
+The `MetricConsensus.llmScores` array DOES contain individual LLM scores, but the UI only shows the aggregated `consensusScore`. Need to expose this data.
 
-**Required Fix:**
-- Restructure data to include both cities' scores per LLM
-- UI should show 5 columns (one per LLM) with both city scores
-- Consider compact button design to fit all data
+**Required UI Changes:**
+1. Add 5 LLM columns to each metric row (or expandable detail)
+2. Show both cities' scores per LLM in each column
+3. Make columns compact enough to fit (smaller buttons/text)
+4. Indicate missing data (if an LLM didn't score this field)
+5. Allow user to verify: "Median of [40,45,40,42,43] = 42" ✓
+
+**Alternative: Expandable Row Detail**
+If 5 columns is too wide, each row could expand to show LLM breakdown on click.
 
 ---
 
