@@ -195,6 +195,14 @@
   animation: fadeIn 0.3s ease;
 }
 
+.save-message.error {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
 .save-report-btn {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -228,6 +236,17 @@
   box-shadow:
     0 4px 12px rgba(5, 150, 105, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.save-report-btn.disabled-url {
+  background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+  box-shadow:
+    0 4px 12px rgba(146, 64, 14, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.save-report-btn.disabled-url:hover {
+  background: linear-gradient(135deg, #a34d0f 0%, #884011 100%);
 }
 
 .save-report-btn:disabled {

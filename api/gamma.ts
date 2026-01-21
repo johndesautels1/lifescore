@@ -46,6 +46,9 @@ interface GammaStatusResponse {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   url?: string;
   gammaUrl?: string;  // Actual property name from Gamma API
+  docUrl?: string;    // Alternative field name
+  documentUrl?: string; // Another possible field name
+  link?: string;      // Yet another possibility
   exportUrl?: string; // PPTX/PDF export URL from Gamma API
   pdfUrl?: string;
   pptxUrl?: string;
@@ -276,9 +279,15 @@ export default async function handler(
       const status = await checkStatus(generationId);
 
       // Map Gamma's response fields to our expected fields
-      const gammaDocUrl = status.gammaUrl || status.url;
+      // Try all possible field names that Gamma might use for the document URL
+      const gammaDocUrl = status.gammaUrl || status.url || status.docUrl || status.documentUrl || status.link;
       const exportUrl = status.exportUrl;
-      
+
+      // Log for debugging if URL is missing when completed
+      if (status.status === 'completed' && !gammaDocUrl) {
+        console.error('[GAMMA] WARNING: Completed but no URL found! Full response:', JSON.stringify(status, null, 2));
+      }
+
       res.status(200).json({
         generationId: status.id,
         status: status.status,

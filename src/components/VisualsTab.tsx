@@ -66,7 +66,25 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
 
   const handleSaveReport = useCallback(() => {
-    if (!result || !reportState.gammaUrl || !reportState.generationId) return;
+    if (!result) {
+      setSaveMessage('Error: No comparison data available');
+      setTimeout(() => setSaveMessage(null), 3000);
+      return;
+    }
+
+    if (!reportState.gammaUrl) {
+      setSaveMessage('Error: Report URL not available. Please regenerate the report.');
+      setTimeout(() => setSaveMessage(null), 5000);
+      console.error('[VisualsTab] Save failed: gammaUrl is undefined. Report state:', reportState);
+      return;
+    }
+
+    if (!reportState.generationId) {
+      setSaveMessage('Error: Generation ID missing. Please regenerate the report.');
+      setTimeout(() => setSaveMessage(null), 5000);
+      console.error('[VisualsTab] Save failed: generationId is undefined. Report state:', reportState);
+      return;
+    }
 
     saveGammaReport({
       comparisonId: result.comparisonId,
@@ -190,14 +208,17 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 {/* Save Report Button */}
                 <div className="save-report-section">
                   {saveMessage && (
-                    <span className="save-message">{saveMessage}</span>
+                    <span className={`save-message ${saveMessage.startsWith('Error') ? 'error' : ''}`}>
+                      {saveMessage}
+                    </span>
                   )}
                   <button
-                    className={`save-report-btn ${isReportSaved || isAlreadySaved ? 'saved' : ''}`}
+                    className={`save-report-btn ${isReportSaved || isAlreadySaved ? 'saved' : ''} ${!reportState.gammaUrl ? 'disabled-url' : ''}`}
                     onClick={handleSaveReport}
                     disabled={isReportSaved || isAlreadySaved}
+                    title={!reportState.gammaUrl ? 'Report URL not available - please regenerate' : 'Save this report to your library'}
                   >
-                    {isReportSaved || isAlreadySaved ? '✓ Saved to Library' : '💾 Save Report'}
+                    {isReportSaved || isAlreadySaved ? '✓ Saved to Library' : !reportState.gammaUrl ? '⚠️ URL Missing' : '💾 Save Report'}
                   </button>
                 </div>
 
