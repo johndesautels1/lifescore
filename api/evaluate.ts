@@ -226,48 +226,51 @@ interface EvaluationResponse {
   error?: string;
 }
 
-// Build BASE evaluation prompt with A/B/C/D/E letter grades
+// Build BASE evaluation prompt with unified 0-100 numeric scoring
 // This is shared by all LLMs - each LLM function adds its own addendum
+// UPDATED 2026-01-21: Standardized to 5 anchor bands per 6-LLM consultation consensus
 function buildBasePrompt(city1: string, city2: string, metrics: EvaluationRequest['metrics']): string {
   const metricsList = metrics.map(m => `
 - ${m.id}: ${m.name}
   Description: ${m.description}
-  Direction: ${m.scoringDirection === 'higher_is_better' ? 'Higher grade = more freedom' : 'Lower grade = more freedom'}
+  Direction: ${m.scoringDirection === 'higher_is_better' ? 'Higher score = more freedom' : 'Lower score = more freedom'}
 `).join('\n');
 
   return `You are an expert legal analyst evaluating freedom metrics for city comparison.
 
 ## TASK
-Evaluate the following metrics for two cities. For EACH metric, provide TWO letter grades (A/B/C/D/E):
-1. **Legal Grade**: What does the law technically say?
-2. **Enforcement Grade**: How is the law actually enforced in practice?
+Evaluate the following metrics for two cities. For EACH metric, provide TWO numeric scores (0-100):
+1. **Legal Score**: What does the law technically say? Higher = more permissive law
+2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
 
 ## CITIES TO COMPARE (Year: ${new Date().getFullYear()})
 - City 1: ${city1}
 - City 2: ${city2}
 
-## LETTER GRADE SCALE
+## SCORING SCALE (0-100) - USE THESE ANCHOR BANDS
 
 **Legal Score (What the law says):**
-| Grade | Meaning |
-|-------|---------|
-| A | Fully legal/permitted - no restrictions |
-| B | Mostly legal - minor limitations only |
-| C | Moderate restrictions - some limits |
-| D | Restricted - significant legal barriers |
-| E | Prohibited/Illegal - severe penalties |
+| Score Range | Meaning |
+|-------------|---------|
+| 90-100 | Fully legal/unrestricted - no legal barriers |
+| 70-89  | Generally permissive - minor limitations only |
+| 50-69  | Moderate restrictions - some legal limits |
+| 30-49  | Significant restrictions - substantial barriers |
+| 0-29   | Prohibited/Illegal - severe penalties |
 
 **Enforcement Score (How it's actually enforced):**
-| Grade | Meaning |
-|-------|---------|
-| A | Never enforced - authorities ignore completely |
-| B | Rarely enforced - low priority, warnings only |
-| C | Selectively enforced - depends on situation |
-| D | Usually enforced - regular citations/arrests |
-| E | Strictly enforced - zero tolerance |
+| Score Range | Meaning |
+|-------------|---------|
+| 90-100 | Never/rarely enforced - authorities ignore |
+| 70-89  | Low priority - warnings, minimal action |
+| 50-69  | Selectively enforced - depends on situation |
+| 30-49  | Usually enforced - regular citations/arrests |
+| 0-29   | Strictly enforced - zero tolerance |
 
 ## METRICS TO EVALUATE
 ${metricsList}
+
+**IMPORTANT: There are exactly ${metrics.length} metrics above. You MUST return exactly ${metrics.length} evaluations.**
 
 ## OUTPUT FORMAT
 Return a JSON object with this EXACT structure:
@@ -275,10 +278,10 @@ Return a JSON object with this EXACT structure:
   "evaluations": [
     {
       "metricId": "metric_id_here",
-      "city1Legal": "B",
-      "city1Enforcement": "C",
-      "city2Legal": "D",
-      "city2Enforcement": "D",
+      "city1Legal": 75,
+      "city1Enforcement": 65,
+      "city2Legal": 45,
+      "city2Enforcement": 40,
       "confidence": "high",
       "reasoning": "Brief explanation of key difference",
       "sources": ["https://example.com/law-source"],
@@ -289,12 +292,13 @@ Return a JSON object with this EXACT structure:
 }
 
 ## CRITICAL RULES
-1. Use ONLY letters A, B, C, D, or E - no numbers
+1. Use numeric scores 0-100 (integers only, no decimals)
 2. Evaluate BOTH cities for EACH metric
-3. Consider 2026 laws and current enforcement trends
+3. Consider ${new Date().getFullYear()} laws and current enforcement trends
 4. Return ONLY the JSON object, no other text
 5. MUST include sources - URLs to laws, government sites, news articles backing your evaluation
-6. Include city1Evidence and city2Evidence with title, url, and relevant snippet for each city`;
+6. Include city1Evidence and city2Evidence with title, url, and relevant snippet for each city
+7. Return EXACTLY ${metrics.length} evaluations - do not skip any metrics`;
 }
 
 
@@ -386,14 +390,24 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
     console.log(`[PARSE] ${provider} returned ${parsed.evaluations?.length || 0} evaluations`);
 
     // Helper: Convert letter grade to score, or clamp numeric score
-    const getScore = (letter: string | undefined, numeric: number | undefined): number => {
-      // Prefer letter grade if present
-      if (letter && /^[A-Ea-e]$/.test(letter.trim())) {
+    // FIX 2026-01-21: Handle string numbers (e.g., "75" instead of 75) safely
+    const getScore = (letter: string | undefined, numeric: number | string | undefined): number => {
+      // Prefer letter grade if present (legacy support)
+      if (letter && typeof letter === 'string' && /^[A-Ea-e]$/.test(letter.trim())) {
         return letterToScore(letter);
       }
-      // Fallback to numeric (clamp to 0-100)
-      const s = numeric ?? 50;
-      return Math.max(0, Math.min(100, Math.round(s)));
+      // Handle numeric scores - convert strings to numbers safely
+      if (numeric === undefined || numeric === null) {
+        return 50; // Default to middle score
+      }
+      // Convert to number (handles both number and string "75")
+      const numericValue = typeof numeric === 'string' ? parseFloat(numeric) : numeric;
+      // Validate and clamp to 0-100
+      if (isNaN(numericValue)) {
+        console.warn(`[PARSE] Invalid numeric value: ${numeric}, defaulting to 50`);
+        return 50;
+      }
+      return Math.max(0, Math.min(100, Math.round(numericValue)));
     };
 
     // Phase 2: Helper to convert category to score using shared metrics
@@ -626,20 +640,15 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
   }
 
   // CLAUDE-SPECIFIC ADDENDUM
+  // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const claudeAddendum = `
 ## CLAUDE-SPECIFIC INSTRUCTIONS
 - Use the Tavily Research Report as your primary baseline for comparing ${city1} vs ${city2}
 - Cross-reference with category-specific search results for detailed metrics
 - You excel at nuanced legal interpretation - distinguish between law text vs enforcement reality
-- For ambiguous cases, lean toward the grade that reflects lived experience over technical legality
-- You MUST return evaluations for ALL ${metrics.length} metrics
-
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
+- For ambiguous cases, lean toward the score that reflects lived experience over technical legality
+- Follow the scoring scale defined above (0-100 with 5 anchor bands)
+- You MUST return evaluations for ALL ${metrics.length} metrics - do not skip any
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -754,25 +763,15 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     }
   }
 
-  // GPT-4o SPECIFIC ADDENDUM with full scoring guidelines
+  // GPT-4o SPECIFIC ADDENDUM
+  // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const gptAddendum = `
 ## GPT-4o SPECIFIC INSTRUCTIONS
 - Use the Tavily Research Report as your primary baseline for comparing ${city1} vs ${city2}
 - Cross-reference with category-specific search results for detailed metrics
-- Focus on factual accuracy - be precise with scores
+- Focus on factual accuracy - be precise with scores using the 5 anchor bands
+- Follow the scoring scale defined above (0-100 with 5 anchor bands)
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
-
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
-
-## DUAL SCORING SYSTEM
-For each metric, provide TWO scores:
-1. **Legal Score**: What does the law technically say? Higher = more permissive law
-2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -794,22 +793,14 @@ For each metric, provide TWO scores:
         body: JSON.stringify({
           model: 'gpt-4o',
           messages: [
+            // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
             { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
 Use the Tavily research data provided in the user message to evaluate laws and regulations.
 
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
-
-## DUAL SCORING SYSTEM
-For each metric, provide TWO scores:
-1. **Legal Score**: What does the law technically say? Higher = more permissive law
-2. **Enforcement Score**: How is the law actually enforced? Higher = more lenient enforcement
-
 ## IMPORTANT
+- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
+- Use numeric scores 0-100 (integers only)
+- For each metric, provide TWO scores: Legal Score and Enforcement Score
 - Use the Tavily research data as your primary source
 - If the research doesn't cover a metric, use your knowledge but set confidence="low"
 - Return JSON exactly matching the format requested
@@ -853,26 +844,22 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
   const startTime = Date.now();
 
   // GEMINI-SPECIFIC ADDENDUM (optimized for Reasoning-over-Grounding)
+  // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const geminiAddendum = `
 ## GEMINI-SPECIFIC INSTRUCTIONS
-- Use Google Search grounding to verify current 2026 legal status for both cities
+- Use Google Search grounding to verify current ${new Date().getFullYear()} legal status for both cities
 - Apply your "Thinking" reasoning to distinguish between legal text and enforcement reality
 - For Policing & Legal metrics (pl_*), spend extra reasoning time on contradictory data
+- Follow the scoring scale defined above (0-100 with 5 anchor bands)
 - You have the full context window - maintain consistency across all ${metrics.length} metrics
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
-
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
 `;
 
   // Gemini system instruction
+  // UPDATED 2026-01-21: Added reference to base prompt's scale
   const systemInstruction = {
     parts: [{
-      text: 'You are an expert legal analyst evaluating freedom metrics for city comparison. Use Google Search grounding to find current, accurate data about laws and regulations. Be factual and cite sources. You MUST evaluate ALL metrics provided.'
+      text: 'You are an expert legal analyst evaluating freedom metrics for city comparison. Use Google Search grounding to find current, accurate data about laws and regulations. Be factual and cite sources. Follow the scoring scale in the user message (0-100 with 5 anchor bands). Use numeric scores 0-100 (integers only). You MUST evaluate ALL metrics provided.'
     }]
   };
 
@@ -938,6 +925,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
   const startTime = Date.now();
 
   // GROK-SPECIFIC ADDENDUM (optimized per Grok's own recommendations 2026-01-21)
+  // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const currentYear = new Date().getFullYear();
   const grokAddendum = `
 ## GROK-SPECIFIC CLASSIFICATION RULES
@@ -956,20 +944,13 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 
 ### CLASSIFICATION RULES
 - Prioritize official sources (gov sites, statutes) but cross-verify with X for enforcement reality
-- If ambiguous, choose closest match and note uncertainty in reasoning
-- If no exact category fit, explain mismatch in reasoning and use closest option
+- Follow the scoring scale defined above (0-100 with 5 anchor bands)
+- If ambiguous, choose closest band and note uncertainty in reasoning
 
 ### EDGE CASES
 - For rapidly changing laws: classify conservatively (current status), set confidence: "low"
 - For pending legislation: note in reasoning, stick to current effective law
-- If category match but enforcement differs significantly, note gap in reasoning
-
-### SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
+- If enforcement differs significantly from law, note gap in reasoning
 
 ### OUTPUT
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
@@ -1004,6 +985,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
             messages: [
               {
                 role: 'system',
+                // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
                 content: `You are an expert legal analyst classifying freedom metrics. Use real-time web search for verification.
 
 ## CLASSIFICATION APPROACH
@@ -1011,17 +993,12 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 - For ENFORCEMENT score: Use X/Twitter search for real-world resident experiences
 - These often differ (e.g., law exists but rarely enforced)
 
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
-
-## CRITICAL RULES
+## IMPORTANT
+- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
+- Use numeric scores 0-100 (integers only)
 - Return ONLY valid JSON matching the requested format
 - Evaluate ALL metrics provided - do not skip any
-- If category doesn't fit exactly, use closest match and explain in reasoning
+- If ambiguous, use closest band and explain in reasoning
 - Sources must be from last 12 months for high confidence`
               },
               { role: 'user', content: prompt }
@@ -1166,20 +1143,15 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
   }
 
   // PERPLEXITY-SPECIFIC ADDENDUM (optimized for citation-backed research)
+  // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const perplexityAddendum = `
 ## PERPLEXITY-SPECIFIC INSTRUCTIONS
 - Use your Sonar web search to find authoritative sources for each metric
 - Cite specific laws, statutes, or official government sources when possible
 - Your strength is verified, citation-backed research - leverage it
 - For enforcement scores, look for news articles about actual enforcement actions
+- Follow the scoring scale defined above (0-100 with 5 anchor bands)
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
-
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive, minimal restrictions (most free)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (least free)
 `;
 
   // Phase 2: Use category prompt when enabled
@@ -1202,14 +1174,12 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
           messages: [
             {
               role: 'system',
+              // UPDATED 2026-01-21: Fixed JSON keys to match buildBasePrompt (city1Legal not city1LegalScore)
               content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
 
-## SCORING SCALE (0-100)
-- 90-100: Extremely permissive (most free)
-- 70-89: Generally permissive
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive (least free)
+## IMPORTANT
+- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
+- Use numeric scores 0-100 (integers only)
 
 ## OUTPUT FORMAT
 Return ONLY valid JSON with this structure (no markdown, no explanation):
@@ -1217,10 +1187,10 @@ Return ONLY valid JSON with this structure (no markdown, no explanation):
   "evaluations": [
     {
       "metricId": "metric_id",
-      "city1LegalScore": 75,
-      "city1EnforcementScore": 70,
-      "city2LegalScore": 60,
-      "city2EnforcementScore": 55,
+      "city1Legal": 75,
+      "city1Enforcement": 70,
+      "city2Legal": 60,
+      "city2Enforcement": 55,
       "confidence": "high",
       "reasoning": "Brief explanation",
       "sources": ["url1", "url2"],
