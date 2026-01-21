@@ -24,6 +24,8 @@ import {
   EVALUATOR_LLMS,
   type LLMButtonState
 } from "./components/EnhancedComparison";
+import type { EvaluatorResult } from './services/llmEvaluators';
+import type { LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
@@ -109,6 +111,75 @@ const App: React.FC = () => {
       setActiveTab('results');
     }
   }, [hasEnhancedResults, hasStandardResults]);
+
+  // SYNC STATE: When toggling to enhanced mode with existing single search result,
+  // mark claude-sonnet as completed so user sees the green checkmark
+  useEffect(() => {
+    if (enhancedMode && state.status === 'success' && state.result) {
+      // Check if claude-sonnet is already marked as completed
+      const currentSonnetState = llmStates.get('claude-sonnet');
+      if (currentSonnetState?.status !== 'completed') {
+        // Convert single search result to EvaluatorResult format
+        const sonnetScores: LLMMetricScore[] = [];
+
+        // Extract scores from city1 categories
+        state.result.city1.categories.forEach(cat => {
+          cat.metrics.forEach(metric => {
+            sonnetScores.push({
+              ...metric,
+              llmProvider: 'claude-sonnet',
+              city: 'city1' as const
+            });
+          });
+        });
+
+        // Extract scores from city2 categories
+        state.result.city2.categories.forEach(cat => {
+          cat.metrics.forEach(metric => {
+            sonnetScores.push({
+              ...metric,
+              llmProvider: 'claude-sonnet',
+              city: 'city2' as const
+            });
+          });
+        });
+
+        const sonnetResult: EvaluatorResult = {
+          provider: 'claude-sonnet',
+          success: true,
+          scores: sonnetScores,
+          latencyMs: 0 // Not tracked in single mode
+        };
+
+        // Update llmStates to show claude-sonnet as completed
+        setLLMStates(prev => {
+          const newMap = new Map(prev);
+          newMap.set('claude-sonnet', {
+            status: 'completed',
+            result: sonnetResult
+          });
+          return newMap;
+        });
+
+        // Also set pending cities from the existing result
+        if (!pendingCities) {
+          setPendingCities({
+            city1: `${state.result.city1.city}, ${state.result.city1.region || ''} ${state.result.city1.country}`.replace(/\s+/g, ' ').trim(),
+            city2: `${state.result.city2.city}, ${state.result.city2.region || ''} ${state.result.city2.country}`.replace(/\s+/g, ' ').trim()
+          });
+        }
+      }
+    }
+  }, [enhancedMode, state.status, state.result, llmStates, pendingCities]);
+
+  // SYNC STATE: When toggling FROM enhanced mode with completed claude-sonnet,
+  // the standard mode result should already exist or we keep the enhanced result visible
+  useEffect(() => {
+    if (!enhancedMode && llmStates.get('claude-sonnet')?.status === 'completed' && !state.result) {
+      // If we have enhanced mode results but no standard result, keep enhanced visible
+      // This is handled by hasEnhancedResults check elsewhere
+    }
+  }, [enhancedMode, llmStates, state.result]);
 
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
     loadResult(result);
