@@ -1581,23 +1581,40 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     {/* Expanded Explanation Panel */}
                     {isExpanded && hasExplanation && (
                       <div className="diff-explanation-panel">
-                        {diff.city1Explanation && (
+                        {/* Show single combined analysis if explanations are identical or only one exists */}
+                        {(diff.city1Explanation === diff.city2Explanation || !diff.city1Explanation || !diff.city2Explanation) ? (
                           <div className="diff-city-explanation">
                             <h4 className="explanation-city-header">
-                              <span className="city-flag">{result.city1.city}</span>
-                              <span className="city-score">Score: {Math.round(diff.city1Score)}</span>
+                              <span className="city-flag">⚖️ Judge's Analysis</span>
                             </h4>
-                            <p className="explanation-text">{diff.city1Explanation}</p>
+                            <p className="explanation-text">{diff.city1Explanation || diff.city2Explanation}</p>
+                            <div className="explanation-scores">
+                              <span className="score-badge city1-score">{result.city1.city}: {Math.round(diff.city1Score)}</span>
+                              <span className="score-badge city2-score">{result.city2.city}: {Math.round(diff.city2Score)}</span>
+                            </div>
                           </div>
-                        )}
-                        {diff.city2Explanation && (
-                          <div className="diff-city-explanation">
-                            <h4 className="explanation-city-header">
-                              <span className="city-flag">{result.city2.city}</span>
-                              <span className="city-score">Score: {Math.round(diff.city2Score)}</span>
-                            </h4>
-                            <p className="explanation-text">{diff.city2Explanation}</p>
-                          </div>
+                        ) : (
+                          /* Show separate explanations only if they're actually different */
+                          <>
+                            {diff.city1Explanation && (
+                              <div className="diff-city-explanation">
+                                <h4 className="explanation-city-header">
+                                  <span className="city-flag">{result.city1.city}</span>
+                                  <span className="city-score">Score: {Math.round(diff.city1Score)}</span>
+                                </h4>
+                                <p className="explanation-text">{diff.city1Explanation}</p>
+                              </div>
+                            )}
+                            {diff.city2Explanation && (
+                              <div className="diff-city-explanation">
+                                <h4 className="explanation-city-header">
+                                  <span className="city-flag">{result.city2.city}</span>
+                                  <span className="city-score">Score: {Math.round(diff.city2Score)}</span>
+                                </h4>
+                                <p className="explanation-text">{diff.city2Explanation}</p>
+                              </div>
+                            )}
+                          </>
                         )}
 
                         {/* Bug G fix: Calculation Verification */}

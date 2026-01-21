@@ -1167,6 +1167,48 @@
   margin: 0;
 }
 
+/* Score badges in combined Judge's Analysis view */
+.explanation-scores {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--gray-300);
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.score-badge.city1-score {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.score-badge.city2-score {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8B5CF6;
+}
+
+[data-theme="dark"] .explanation-scores {
+  border-top-color: var(--gray-600);
+}
+
+[data-theme="dark"] .score-badge.city1-score {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34D399;
+}
+
+[data-theme="dark"] .score-badge.city2-score {
+  background: rgba(139, 92, 246, 0.25);
+  color: #A78BFA;
+}
+
 /* Legacy hover (for non-clickable items) */
 .difference-item:not(.clickable):hover {
   transform: translateX(4px);
