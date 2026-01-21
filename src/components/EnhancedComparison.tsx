@@ -1544,7 +1544,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                           {Math.round(diff.city2Score)}
                         </span>
                       </div>
-                      <div className="diff-delta">
+                      <div className={`diff-delta ${diff.favoredCity === 'city1' ? 'city1-leads' : 'city2-leads'}`}>
                         <span className="delta-pill">+{Math.round(diff.difference)}</span>
                         <span className="delta-city">{favoredCityName}</span>
                       </div>

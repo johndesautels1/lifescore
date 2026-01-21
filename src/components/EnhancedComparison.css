@@ -1201,23 +1201,49 @@
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+  min-width: 90px;
 }
 
 .delta-pill {
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: white;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.85rem;
   border-radius: 50px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
 .delta-city {
-  font-size: 0.7rem;
-  color: var(--gray-500);
-  font-weight: 600;
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  max-width: 85px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* City1 leads - Green theme */
+.diff-delta.city1-leads .delta-pill {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.diff-delta.city1-leads .delta-city {
+  color: #059669;
+}
+
+/* City2 leads - Blue theme */
+.diff-delta.city2-leads .delta-pill {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.diff-delta.city2-leads .delta-city {
+  color: #2563EB;
 }
 
 /* Dark mode for Top 5 Differences */
@@ -1267,6 +1293,25 @@
 
 [data-theme="dark"] .explanation-text {
   color: #e2e8f0;
+}
+
+/* Dark mode for city-leads color coding */
+[data-theme="dark"] .diff-delta.city1-leads .delta-pill {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+  box-shadow: 0 2px 6px rgba(52, 211, 153, 0.3);
+}
+
+[data-theme="dark"] .diff-delta.city1-leads .delta-city {
+  color: #34D399;
+}
+
+[data-theme="dark"] .diff-delta.city2-leads .delta-pill {
+  background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+  box-shadow: 0 2px 6px rgba(96, 165, 250, 0.3);
+}
+
+[data-theme="dark"] .diff-delta.city2-leads .delta-city {
+  color: #60A5FA;
 }
 
 /* Responsive for Top 5 Differences */
