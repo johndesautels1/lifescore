@@ -9,7 +9,97 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 ## CURRENT STATUS (January 21, 2026)
 
 ### Latest Session: 2026-01-21
-**Conversation ID:** `LIFESCORE-2026-0121-GROK-SAFE-IMPL`
+**Conversation ID:** `LIFESCORE-2026-0121-PROMPT-UNIFICATION`
+
+---
+
+## 🚨 HANDOFF: PROMPT UNIFICATION & SCORING STANDARDIZATION 🚨
+
+**Date:** 2026-01-21
+**Status:** PLANNING COMPLETE - READY FOR IMPLEMENTATION
+
+### Problem Statement
+
+All 6 LLMs were consulted about prompt issues. They identified critical conflicts:
+1. **buildBasePrompt()** uses A-E letter grades
+2. **All addendums + system prompts** use 0-100 numeric
+3. **Perplexity system prompt** uses different JSON keys (`city1LegalScore` vs `city1Legal`)
+4. LLMs receive 2-4 conflicting instructions per call
+
+### Consensus from 6 LLM Consultations
+
+| LLM | Recommendation |
+|-----|----------------|
+| Sonnet | Use 0-100, fix string vs number bug in parseResponse |
+| GPT-4o | Use 0-100 with anchored bands (95-100, 85-94, 70-84, 50-69, 30-49, 10-29, 0-9) |
+| Gemini | Use 0-100, define scale once in system prompt |
+| Grok | Use 0-100, standardize temp to 0.3, add retry logic |
+| Perplexity | Use 0-100 or A-E but NOT both |
+| Opus | Use 0-100, maps naturally to percentages |
+
+### Approved Implementation Plan
+
+**FILE: `api/evaluate.ts` (ONLY file that needs changes)**
+
+1. **Remove A-E from buildBasePrompt() (lines 231-298)**
+   - Replace letter grade tables with 5 anchor bands
+   - Keep JSON keys as `city1Legal` (no suffix)
+
+2. **Add Anchor Bands (5 buckets per user preference)**
+   ```
+   90-100: Fully legal/unrestricted (most free)
+   70-89:  Generally permissive with limitations
+   50-69:  Moderate restrictions
+   30-49:  Significant restrictions
+   0-29:   Prohibited/heavily restricted (least free)
+   ```
+
+3. **Fix parseResponse() string vs number bug (lines 389-397)**
+   - Add `Number()` coercion for safety
+   - Current: `const s = numeric ?? 50` (fails if string)
+   - Fixed: `const s = Number(numeric) || 50`
+
+4. **Remove duplicate scale definitions**
+   - Keep scale ONLY in system prompt (not in addendums)
+   - Addendums reference system prompt instead
+
+5. **Add explicit metric count after metric list**
+   - Add: "There are exactly N metrics. Return exactly N evaluations."
+
+6. **Standardize JSON keys to `city1Legal` (no suffix)**
+   - Fix Perplexity system prompt (line 1220) to use `city1Legal` not `city1LegalScore`
+
+### Files Verified - No Hidden Files Missed
+
+| Category | Files | Status |
+|----------|-------|--------|
+| Prompts/Parsing | `api/evaluate.ts` | ⚠️ NEEDS CHANGES |
+| Score Handling | `src/services/llmEvaluators.ts`, `src/services/opusJudge.ts` | ✅ Already correct |
+| Hooks | `src/hooks/useComparison.ts` | ✅ No letter grades |
+| Scoring | `src/api/scoring.ts` | ✅ Just 0-100 output |
+| Judge | `api/judge.ts` | ✅ Uses correct keys |
+| All other 28 .ts files | N/A | ✅ No scoring logic |
+
+### What NOT to Change
+
+| Item | Reason |
+|------|--------|
+| max_tokens (16384) | User directive |
+| timeout (240000ms) | User directive |
+| Batching logic | Already correct (6 batches by category) |
+| Tavily search queries | Working correctly |
+| parseResponse() flexibility | Keep handling both formats during transition |
+
+### Verification After Implementation
+
+Must verify:
+1. [ ] All 5 LLMs return 0-100 scores
+2. [ ] parseResponse() handles string "75" and number 75
+3. [ ] No duplicate scale definitions
+4. [ ] Explicit metric count in prompts
+5. [ ] JSON keys consistent across all prompts
+6. [ ] TypeScript compiles without errors
+7. [ ] Build succeeds
 
 ---
 
