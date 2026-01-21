@@ -19,6 +19,40 @@ interface AskOliviaProps {
 }
 
 const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
+  // Load D-ID Agent SDK
+  useEffect(() => {
+    // Check if script already exists
+    if (document.querySelector('script[data-name="did-agent"]')) {
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://agent.d-id.com/v2/index.js';
+    script.setAttribute('data-mode', 'fabio');
+    script.setAttribute('data-client-key', 'Z29vZ2xlLW9hdXRoMnwxMDY0MjQyNjA4ODQzODA1NDA4OTM6dEQ5LXU2WW1QTm8zbWp0WEhZcHhw');
+    script.setAttribute('data-agent-id', 'v2_agt_jwRjOIM4');
+    script.setAttribute('data-name', 'did-agent');
+    script.setAttribute('data-monitor', 'true');
+    script.setAttribute('data-orientation', 'horizontal');
+    script.setAttribute('data-position', 'right');
+
+    document.body.appendChild(script);
+
+    // Cleanup on unmount
+    return () => {
+      const existingScript = document.querySelector('script[data-name="did-agent"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+      // Also remove the D-ID widget if it exists
+      const widget = document.querySelector('did-agent');
+      if (widget) {
+        widget.remove();
+      }
+    };
+  }, []);
+
   // Chat state
   const {
     messages,
