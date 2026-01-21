@@ -812,7 +812,7 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
       >
         <h3 className="section-title">
           <span className="title-icon">🧠</span>
-          LLM Consensus Analysis
+          LLM Consensus Analysis - Where LLMs Disagree Most
         </h3>
         <div className="toggle-right">
           <span className={`confidence-badge ${getConfidenceClass(result.overallConsensusConfidence)}`}>

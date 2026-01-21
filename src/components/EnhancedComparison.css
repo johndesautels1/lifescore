@@ -1970,9 +1970,9 @@
   margin-top: 1rem;
   background: white;
   border-radius: 12px;
-  border: 2px solid var(--gray-200);
+  border: 2px solid rgba(212, 175, 55, 0.3);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(30, 30, 58, 0.1);
 }
 
 .metric-details-header {
@@ -1980,18 +1980,24 @@
   grid-template-columns: 2fr 100px 100px;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, #0047AB 0%, #1a5276 100%);
+  background: linear-gradient(135deg, #1e1e3a 0%, #151528 100%);
   font-weight: 700;
   font-size: 0.95rem;
   color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-bottom: 2px solid #D4AF37;
 }
 
 .metric-header-city {
   text-align: center;
-  color: #FFFFFF !important;
+  color: #D4AF37 !important;
   font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
 }
 
 .metric-row {
@@ -2315,7 +2321,7 @@
 }
 
 .metric-row-wrapper.expanded {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(0, 71, 171, 0.04) 100%);
+  background: linear-gradient(135deg, rgba(30, 30, 58, 0.08) 0%, rgba(21, 21, 40, 0.05) 100%);
 }
 
 /* Expandable header with new columns */
@@ -2324,11 +2330,11 @@
   grid-template-columns: 2fr 80px 80px 50px 50px 50px 40px;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(0, 71, 171, 0.1) 100%);
-  border-bottom: 2px solid rgba(124, 58, 237, 0.3);
+  background: linear-gradient(135deg, #1e1e3a 0%, #151528 100%);
+  border-bottom: 2px solid #D4AF37;
   font-weight: 600;
-  font-size: 0.85rem;
-  color: #1e40af;
+  font-size: 0.75rem;
+  color: #D4AF37;
 }
 
 .metric-details-header.dual-header.expandable-header {
@@ -2349,17 +2355,19 @@
   grid-template-columns: 2fr 80px 80px 50px 50px 50px 40px;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
   cursor: pointer;
   width: 100%;
   text-align: left;
   transition: all var(--transition-fast);
   align-items: center;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
 }
 
 .metric-row-expandable:hover {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(212, 175, 55, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(30, 30, 58, 0.06) 0%, rgba(212, 175, 55, 0.08) 100%);
+  border-left: 3px solid #D4AF37;
 }
 
 .metric-row-expandable.dual-row {
@@ -2381,9 +2389,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(0, 71, 171, 0.1) 100%);
+  background: linear-gradient(135deg, #1e1e3a 0%, #2a2a4a 100%);
   border-radius: 6px;
   flex-shrink: 0;
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 .metric-row-expandable .metric-name-container {
@@ -2398,7 +2407,7 @@
 .metric-row-expandable .metric-name {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #b8860b;
+  color: #1e1e3a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2412,27 +2421,24 @@
   min-width: 68px;
   height: 36px;
   padding: 0.35rem 0.6rem;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(0, 71, 171, 0.08) 100%);
+  background: linear-gradient(135deg, #1e1e3a 0%, #2a2a4a 100%);
   border-radius: 8px;
   font-weight: 700;
   font-size: 1rem;
-  color: #1e40af;
+  color: #ffffff;
   position: relative;
+  border: 1px solid rgba(212, 175, 55, 0.4);
 }
 
 .metric-row-expandable .metric-score::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%);
-  border-radius: 8px;
-  pointer-events: none;
+  display: none;
 }
 
 .metric-row-expandable .metric-score.winning {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(52, 211, 153, 0.15) 100%);
-  color: #059669;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9) 0%, rgba(22, 163, 74, 0.85) 100%);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+  border-color: #22c55e;
 }
 
 /* Delta column */
@@ -2468,10 +2474,11 @@
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #0047AB;
-  background: rgba(0, 71, 171, 0.08);
+  color: #D4AF37;
+  background: linear-gradient(135deg, #1e1e3a 0%, #2a2a4a 100%);
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 /* Standard deviation column */
@@ -2512,7 +2519,7 @@
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
-  color: var(--gray-400);
+  color: #D4AF37;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
@@ -2817,56 +2824,70 @@
 
 /* Dark mode for expandable rows */
 [data-theme="dark"] .metric-row-wrapper.expanded {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(30, 64, 175, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(30, 30, 58, 0.3) 0%, rgba(21, 21, 40, 0.2) 100%);
 }
 
 [data-theme="dark"] .metric-details-header.expandable-header {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(30, 64, 175, 0.15) 100%);
-  border-bottom-color: rgba(139, 92, 246, 0.4);
-  color: #a78bfa;
+  background: linear-gradient(135deg, #1e1e3a 0%, #151528 100%);
+  border-bottom-color: #D4AF37;
+  color: #D4AF37;
+}
+
+[data-theme="dark"] .metric-row-expandable {
+  background: rgba(30, 30, 58, 0.4);
+  border-bottom-color: rgba(212, 175, 55, 0.2);
 }
 
 [data-theme="dark"] .metric-row-expandable:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(212, 175, 55, 0.06) 100%);
+  background: linear-gradient(135deg, rgba(42, 42, 74, 0.8) 0%, rgba(212, 175, 55, 0.1) 100%);
+  border-left: 3px solid #D4AF37;
 }
 
 [data-theme="dark"] .metric-row-expandable .metric-name {
-  color: #fcd34d;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .metric-row-expandable .metric-icon {
+  background: linear-gradient(135deg, #2a2a4a 0%, #1e1e3a 100%);
+  border-color: rgba(212, 175, 55, 0.4);
 }
 
 [data-theme="dark"] .metric-row-expandable .metric-score {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(30, 64, 175, 0.15) 100%);
-  color: #c4b5fd;
+  background: linear-gradient(135deg, #2a2a4a 0%, #1e1e3a 100%);
+  color: #ffffff;
+  border-color: rgba(212, 175, 55, 0.5);
 }
 
 [data-theme="dark"] .metric-row-expandable .metric-score.winning {
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.2) 100%);
-  color: #34d399;
-  box-shadow: 0 0 12px rgba(52, 211, 153, 0.2);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9) 0%, rgba(22, 163, 74, 0.85) 100%);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+  border-color: #22c55e;
 }
 
 [data-theme="dark"] .metric-delta.city1-favored {
   color: #34d399;
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2) 0%, rgba(16, 185, 129, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.2) 100%);
 }
 
 [data-theme="dark"] .metric-delta.city2-favored {
   color: #fb7185;
-  background: linear-gradient(135deg, rgba(251, 113, 133, 0.2) 0%, rgba(190, 18, 60, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.25) 0%, rgba(190, 18, 60, 0.2) 100%);
 }
 
 [data-theme="dark"] .metric-llm-count {
-  color: #a78bfa;
-  background: rgba(139, 92, 246, 0.2);
+  color: #D4AF37;
+  background: linear-gradient(135deg, #2a2a4a 0%, #1e1e3a 100%);
+  border-color: rgba(212, 175, 55, 0.4);
 }
 
 [data-theme="dark"] .metric-expand-arrow {
-  color: #9090a0;
+  color: #D4AF37;
 }
 
 [data-theme="dark"] .metric-row-expandable:hover .metric-expand-arrow,
 [data-theme="dark"] .metric-expand-arrow.expanded {
-  color: #a78bfa;
+  color: #fcd34d;
 }
 
 [data-theme="dark"] .llm-breakdown-panel {
