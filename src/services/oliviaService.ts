@@ -126,13 +126,14 @@ export async function sendMessage(
  * Send a quick action prompt to Olivia
  */
 export async function sendQuickAction(
-  actionId: string,
+  _actionId: string,  // Reserved for analytics/tracking
   prompt: string,
   options: {
     threadId?: string;
     context?: LifeScoreContext;
   } = {}
 ): Promise<OliviaChatResponse> {
+  void _actionId; // Will be used for action tracking
   return sendMessage(prompt, options);
 }
 

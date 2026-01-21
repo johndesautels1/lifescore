@@ -20,7 +20,8 @@ export function useTTS(
     onError?: (error: string) => void;
   } = {}
 ): UseTTSReturn {
-  const { voiceId, autoPlay = false, onStart, onEnd, onError } = options;
+  const { voiceId, autoPlay: _autoPlay = false, onStart, onEnd, onError } = options;
+  void _autoPlay; // Reserved for future auto-play on load feature
 
   // State
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,7 +30,9 @@ export function useTTS(
 
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  // audioContextRef reserved for Web Audio API integration
+  const _audioContextRef = useRef<AudioContext | null>(null);
+  void _audioContextRef;
 
   // Initialize audio element
   useEffect(() => {

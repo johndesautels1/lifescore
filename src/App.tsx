@@ -16,6 +16,7 @@ import Results from './components/Results';
 import SavedComparisons from './components/SavedComparisons';
 import VisualsTab from './components/VisualsTab';
 import AskOlivia from './components/AskOlivia';
+import OliviaChatBubble from './components/OliviaChatBubble';
 import {
   EnhancedModeToggle,
   APIKeyModal,
@@ -601,6 +602,13 @@ const App: React.FC = () => {
         onSave={handleSaveAPIKeys}
         initialKeys={apiKeys}
       />
+
+      {/* Olivia Chat Bubble - Shows on all pages EXCEPT Ask Olivia tab */}
+      {activeTab !== 'olivia' && (
+        <OliviaChatBubble
+          comparisonResult={enhancedResult || state.result || undefined}
+        />
+      )}
     </div>
   );
 };

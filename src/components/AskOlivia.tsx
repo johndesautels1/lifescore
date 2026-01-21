@@ -1,7 +1,13 @@
 /**
- * LIFE SCORE™ Ask Olivia Component
- * AI Assistant with D-ID/HeyGen avatar integration
- * Full chat, voice, and video avatar support
+ * LIFE SCORE™ Ask Olivia - Premium Edition
+ *
+ * Design Philosophy:
+ * - James Bond: Sleek sophistication, MI6 briefing room elegance
+ * - Airbus A320: Glass cockpit precision, information-dense displays
+ * - Patek Philippe: Swiss craftsmanship, perfect typography
+ * - London International: Cosmopolitan wealth, refined taste
+ *
+ * "The name is Olivia. Just Olivia."
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -19,10 +25,17 @@ interface AskOliviaProps {
 }
 
 const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
+  const [isAvatarReady, setIsAvatarReady] = useState(false);
+  const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [showTextChat, setShowTextChat] = useState(false);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   // Load D-ID Agent SDK
   useEffect(() => {
-    // Check if script already exists
     if (document.querySelector('script[data-name="did-agent"]')) {
+      setIsAvatarReady(true);
       return;
     }
 
@@ -34,26 +47,28 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     script.setAttribute('data-agent-id', 'v2_agt_jwRjOIM4');
     script.setAttribute('data-name', 'did-agent');
     script.setAttribute('data-monitor', 'true');
-    script.setAttribute('data-orientation', 'horizontal');
-    script.setAttribute('data-position', 'right');
+
+    script.onload = () => {
+      setTimeout(() => setIsAvatarReady(true), 1500);
+    };
 
     document.body.appendChild(script);
 
-    // Cleanup on unmount
     return () => {
       const existingScript = document.querySelector('script[data-name="did-agent"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-      // Also remove the D-ID widget if it exists
+      if (existingScript) existingScript.remove();
       const widget = document.querySelector('did-agent');
-      if (widget) {
-        widget.remove();
-      }
+      if (widget) widget.remove();
     };
   }, []);
 
-  // Chat state
+  // Real-time clock for cockpit feel
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Chat functionality
   const {
     messages,
     isTyping,
@@ -83,11 +98,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   // TTS
   const { isPlaying: isSpeaking, play: speakText, stop: stopSpeaking } = useTTS();
 
-  // Local state
   const [inputText, setInputText] = useState('');
-  const [showChat, setShowChat] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -100,26 +112,24 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.role === 'assistant' && !lastMessage.audioUrl) {
         speakText(lastMessage.content);
+        setIsAvatarSpeaking(true);
+        setTimeout(() => setIsAvatarSpeaking(false), lastMessage.content.length * 50);
       }
     }
   }, [messages, autoSpeak, speakText]);
 
-  // Handle sending a message
   const handleSendMessage = useCallback(async (text?: string) => {
     const messageText = text || inputText.trim();
     if (!messageText) return;
-
     setInputText('');
     await sendMessage(messageText);
   }, [inputText, sendMessage]);
 
-  // Handle quick action
   const handleQuickAction = useCallback((action: OliviaQuickAction) => {
-    setShowChat(true);
+    setShowTextChat(true);
     handleSendMessage(action.prompt);
   }, [handleSendMessage]);
 
-  // Handle voice toggle
   const handleVoiceToggle = useCallback(() => {
     if (isListening) {
       stopListening();
@@ -128,7 +138,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     }
   }, [isListening, startListening, stopListening]);
 
-  // Handle key press in input
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -136,216 +145,347 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     }
   };
 
-  // Check if comparison data is available
+  // Data context
   const hasComparisonData = !!comparisonResult;
   const city1 = comparisonResult?.city1?.city || 'City 1';
   const city2 = comparisonResult?.city2?.city || 'City 2';
 
+  // Cockpit-style time formatting
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).toUpperCase();
+  };
+
   return (
-    <div className="ask-olivia">
-      {/* Hero Section */}
-      <div className="olivia-hero card">
-        <div className="hero-content">
-          <div className="olivia-avatar-preview">
-            <div className="avatar-circle">
-              <span className="avatar-icon">🎙️</span>
+    <div className="olivia-premium">
+      {/* ═══════════════════════════════════════════════════════════════════
+          COCKPIT HEADER - Airbus A320 Glass Cockpit Inspiration
+      ═══════════════════════════════════════════════════════════════════ */}
+      <header className="cockpit-header">
+        <div className="cockpit-left">
+          <div className="status-cluster">
+            <div className="status-indicator online">
+              <span className="indicator-dot"></span>
+              <span className="indicator-label">SYSTEM ONLINE</span>
             </div>
-            <div className="pulse-ring"></div>
-            <div className="pulse-ring delay-1"></div>
-            <div className="pulse-ring delay-2"></div>
+            <div className="status-indicator">
+              <span className="indicator-icon">◈</span>
+              <span className="indicator-label">D-ID AVATAR</span>
+              <span className={`indicator-value ${isAvatarReady ? 'active' : ''}`}>
+                {isAvatarReady ? 'READY' : 'INIT...'}
+              </span>
+            </div>
           </div>
-          <h2 className="olivia-title">Meet Olivia</h2>
-          <p className="olivia-subtitle">Your AI Freedom Advisor</p>
-          <p className="olivia-description">
-            {hasComparisonData
-              ? `I'm ready to discuss your ${city1} vs ${city2} comparison. Ask me about specific metrics, category breakdowns, or personalized recommendations.`
-              : 'Run a city comparison first, then come back to discuss the results with me.'}
-          </p>
-          {!showChat && hasComparisonData && (
-            <button className="start-chat-btn" onClick={() => setShowChat(true)}>
-              Start Conversation
-            </button>
-          )}
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="olivia-actions card">
-        <h3>Quick Questions</h3>
-        <div className="action-buttons">
-          {DEFAULT_QUICK_ACTIONS.slice(0, 8).map((action) => (
+        <div className="cockpit-center">
+          <div className="olivia-wordmark">
+            <span className="wordmark-prefix">ASK</span>
+            <span className="wordmark-main">OLIVIA</span>
+          </div>
+          <div className="wordmark-tagline">AI Freedom Advisor • London</div>
+        </div>
+
+        <div className="cockpit-right">
+          <div className="time-cluster">
+            <div className="time-display">
+              <span className="time-label">LOCAL</span>
+              <span className="time-value">{formatTime(currentTime)}</span>
+            </div>
+            <div className="date-display">
+              <span className="date-value">{formatDate(currentTime)}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MAIN VIEWPORT - The TV Screen / Video Interface
+      ═══════════════════════════════════════════════════════════════════ */}
+      <main className="viewport-container">
+        <div className="viewport-frame">
+          {/* Premium bezel styling */}
+          <div className="viewport-bezel">
+            <div className="bezel-corner tl"></div>
+            <div className="bezel-corner tr"></div>
+            <div className="bezel-corner bl"></div>
+            <div className="bezel-corner br"></div>
+
+            {/* The actual video screen */}
+            <div className="viewport-screen" ref={videoContainerRef}>
+              {/* D-ID Avatar renders here via SDK */}
+
+              {/* Overlay gradient for depth */}
+              <div className="screen-vignette"></div>
+
+              {/* Speaking indicator */}
+              {isAvatarSpeaking && (
+                <div className="speaking-indicator">
+                  <div className="speaking-waves">
+                    <span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+              )}
+
+              {/* Avatar loading state */}
+              {!isAvatarReady && (
+                <div className="avatar-loading">
+                  <div className="loading-ring"></div>
+                  <div className="loading-ring delay-1"></div>
+                  <div className="loading-ring delay-2"></div>
+                  <div className="loading-text">ESTABLISHING CONNECTION</div>
+                  <div className="loading-subtext">Initializing D-ID Avatar System</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Viewport bottom info bar */}
+          <div className="viewport-info-bar">
+            <div className="info-segment">
+              <span className="segment-icon">◉</span>
+              <span className="segment-label">VIDEO FEED</span>
+              <span className="segment-value">{isAvatarReady ? 'LIVE' : 'STANDBY'}</span>
+            </div>
+            <div className="info-segment">
+              <span className="segment-icon">◈</span>
+              <span className="segment-label">VOICE</span>
+              <span className={`segment-value ${isListening ? 'active' : ''}`}>
+                {isListening ? 'LISTENING' : isSpeaking ? 'SPEAKING' : 'READY'}
+              </span>
+            </div>
+            <div className="info-segment">
+              <span className="segment-icon">◇</span>
+              <span className="segment-label">DATA CONTEXT</span>
+              <span className={`segment-value ${hasComparisonData ? 'active' : ''}`}>
+                {hasComparisonData ? `${city1} / ${city2}` : 'NO DATA'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          CONTROL PANEL - Swiss Timepiece Precision
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="control-panel">
+        {/* Voice Controls */}
+        <div className="control-group voice-controls">
+          <div className="control-label">VOICE COMMAND</div>
+          <div className="control-buttons">
             <button
-              key={action.id}
-              className={`action-btn ${!hasComparisonData ? 'disabled' : ''}`}
-              onClick={() => hasComparisonData && handleQuickAction(action)}
-              disabled={!hasComparisonData}
-              title={action.prompt}
+              className={`control-btn primary ${isListening ? 'active recording' : ''}`}
+              onClick={handleVoiceToggle}
+              disabled={!voiceSupported}
             >
-              <span className="action-icon">{action.icon}</span>
-              <span className="action-text">{action.label}</span>
+              <span className="btn-icon">{isListening ? '◼' : '◉'}</span>
+              <span className="btn-text">{isListening ? 'STOP' : 'SPEAK'}</span>
+              {isListening && <span className="btn-pulse"></span>}
             </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Chat Interface */}
-      {showChat && (
-        <div className="olivia-chat-container card">
-          <div className="chat-header">
-            <div className="chat-title">
-              <span className="chat-avatar">🎙️</span>
-              <div>
-                <h3>Olivia</h3>
-                <span className="chat-status">
-                  <span className={`status-dot ${isTyping ? 'typing' : ''}`}></span>
-                  {isTyping ? 'Thinking...' : isSpeaking ? 'Speaking...' : 'Online'}
-                </span>
-              </div>
-            </div>
-            <div className="chat-controls">
-              <button
-                className={`control-btn ${autoSpeak ? 'active' : ''}`}
-                onClick={() => setAutoSpeak(!autoSpeak)}
-                title={autoSpeak ? 'Auto-speak ON' : 'Auto-speak OFF'}
-              >
-                {autoSpeak ? '🔊' : '🔇'}
-              </button>
-              <button
-                className="control-btn"
-                onClick={clearHistory}
-                title="Clear chat"
-              >
-                🗑️
-              </button>
-              <button
-                className="close-chat-btn"
-                onClick={() => setShowChat(false)}
-              >
-                ✕
-              </button>
-            </div>
+            <button
+              className={`control-btn ${autoSpeak ? 'active' : ''}`}
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              title="Auto-speak responses"
+            >
+              <span className="btn-icon">{autoSpeak ? '◉' : '○'}</span>
+              <span className="btn-text">AUTO</span>
+            </button>
           </div>
 
-          {/* Chat Messages */}
-          <div className="chat-messages">
-            {messages.length === 0 && (
-              <div className="chat-welcome">
-                <p>
-                  Hi! I'm Olivia, your AI freedom advisor. I have full context of your
-                  <strong> {city1} vs {city2}</strong> comparison.
-                  Ask me anything about the results!
-                </p>
-              </div>
-            )}
-
-            {messages.map((msg) => (
-              <div key={msg.id} className={`chat-message ${msg.role}`}>
-                <div className="message-avatar">
-                  {msg.role === 'assistant' ? '🎙️' : '👤'}
-                </div>
-                <div className="message-content">
-                  <div className="message-text">{msg.content}</div>
-                  <div className="message-meta">
-                    <span className="message-time">
-                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {msg.role === 'assistant' && (
-                      <button
-                        className="speak-btn"
-                        onClick={() => isSpeaking ? stopSpeaking() : speakText(msg.content)}
-                        title={isSpeaking ? 'Stop speaking' : 'Speak this message'}
-                      >
-                        {isSpeaking ? '⏹️' : '🔊'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="chat-message assistant">
-                <div className="message-avatar">🎙️</div>
-                <div className="message-content">
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {chatError && (
-              <div className="chat-error">
-                {chatError.message}
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Voice Transcript */}
+          {/* Voice transcript display */}
           {(transcript || interimTranscript) && (
-            <div className="voice-transcript">
-              <span className="transcript-label">🎤 Listening:</span>
+            <div className="voice-transcript-display">
+              <span className="transcript-indicator">◉ REC</span>
               <span className="transcript-text">
                 {transcript}
                 <span className="interim">{interimTranscript}</span>
               </span>
             </div>
           )}
+        </div>
 
-          {/* Chat Input */}
-          <div className="chat-input-container">
-            <div className="chat-input-wrapper">
-              <textarea
-                className="chat-input"
-                placeholder="Ask Olivia anything about your comparison..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                rows={1}
-              />
-              {voiceSupported && (
-                <button
-                  className={`voice-btn ${isListening ? 'listening' : ''}`}
-                  onClick={handleVoiceToggle}
-                  title={isListening ? 'Stop listening' : 'Start voice input'}
-                >
-                  {isListening ? '⏹️' : '🎤'}
-                </button>
-              )}
-              <button
-                className="send-btn"
-                onClick={() => handleSendMessage()}
-                disabled={!inputText.trim() && !isListening}
-              >
-                ➤
+        {/* Text Input */}
+        <div className="control-group text-input-group">
+          <div className="control-label">TEXT COMMAND</div>
+          <div className="text-input-wrapper">
+            <input
+              type="text"
+              className="text-command-input"
+              placeholder="Type your question..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+            />
+            <button
+              className="send-command-btn"
+              onClick={() => handleSendMessage()}
+              disabled={!inputText.trim()}
+            >
+              <span className="btn-icon">▶</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Toggle text chat panel */}
+        <div className="control-group">
+          <button
+            className={`control-btn toggle-chat ${showTextChat ? 'active' : ''}`}
+            onClick={() => setShowTextChat(!showTextChat)}
+          >
+            <span className="btn-icon">☰</span>
+            <span className="btn-text">TRANSCRIPT</span>
+            {messages.length > 0 && (
+              <span className="message-count">{messages.length}</span>
+            )}
+          </button>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          QUICK ACTIONS - James Bond Gadget Panel
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="quick-actions-panel">
+        <div className="panel-header">
+          <span className="panel-icon">◈</span>
+          <span className="panel-title">QUICK BRIEFING</span>
+          <span className="panel-subtitle">Select a topic for instant analysis</span>
+        </div>
+        <div className="actions-grid">
+          {DEFAULT_QUICK_ACTIONS.slice(0, 8).map((action, index) => (
+            <button
+              key={action.id}
+              className={`action-tile ${!hasComparisonData ? 'disabled' : ''}`}
+              onClick={() => hasComparisonData && handleQuickAction(action)}
+              disabled={!hasComparisonData}
+              style={{ '--delay': `${index * 0.05}s` } as React.CSSProperties}
+            >
+              <span className="tile-number">{String(index + 1).padStart(2, '0')}</span>
+              <span className="tile-icon">{action.icon}</span>
+              <span className="tile-label">{action.label}</span>
+              <span className="tile-arrow">→</span>
+            </button>
+          ))}
+        </div>
+        {!hasComparisonData && (
+          <div className="no-data-notice">
+            <span className="notice-icon">⚠</span>
+            <span>Run a city comparison first to unlock full analysis capabilities</span>
+          </div>
+        )}
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          TEXT CHAT PANEL - Expandable Transcript
+      ═══════════════════════════════════════════════════════════════════ */}
+      {showTextChat && (
+        <section className="chat-transcript-panel">
+          <div className="transcript-header">
+            <div className="header-left">
+              <span className="header-icon">◈</span>
+              <span className="header-title">CONVERSATION TRANSCRIPT</span>
+            </div>
+            <div className="header-right">
+              <button className="header-btn" onClick={clearHistory} title="Clear history">
+                <span>CLEAR</span>
+              </button>
+              <button className="header-btn close" onClick={() => setShowTextChat(false)}>
+                <span>✕</span>
               </button>
             </div>
           </div>
-        </div>
+
+          <div className="transcript-messages">
+            {messages.length === 0 && (
+              <div className="transcript-empty">
+                <span className="empty-icon">◇</span>
+                <span className="empty-text">No conversation yet</span>
+                <span className="empty-hint">Speak or type to begin your briefing with Olivia</span>
+              </div>
+            )}
+
+            {messages.map((msg) => (
+              <div key={msg.id} className={`transcript-message ${msg.role}`}>
+                <div className="message-header">
+                  <span className="message-sender">
+                    {msg.role === 'assistant' ? 'OLIVIA' : 'YOU'}
+                  </span>
+                  <span className="message-time">
+                    {msg.timestamp.toLocaleTimeString('en-GB', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+                <div className="message-body">{msg.content}</div>
+                {msg.role === 'assistant' && (
+                  <button
+                    className="replay-btn"
+                    onClick={() => isSpeaking ? stopSpeaking() : speakText(msg.content)}
+                  >
+                    <span>{isSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {isTyping && (
+              <div className="transcript-message assistant">
+                <div className="message-header">
+                  <span className="message-sender">OLIVIA</span>
+                  <span className="message-time">TYPING...</span>
+                </div>
+                <div className="typing-dots">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            )}
+
+            {chatError && (
+              <div className="transcript-error">
+                <span className="error-icon">⚠</span>
+                <span>{chatError.message}</span>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </section>
       )}
 
-      {/* Info Cards */}
-      <div className="olivia-info-grid">
-        <div className="info-card card">
-          <span className="info-icon">🧠</span>
-          <h4>GPT-Powered</h4>
-          <p>Olivia is powered by advanced AI with access to all your comparison data and LIFE SCORE methodology.</p>
+      {/* ═══════════════════════════════════════════════════════════════════
+          FOOTER - Luxury Brand Footer
+      ═══════════════════════════════════════════════════════════════════ */}
+      <footer className="olivia-footer">
+        <div className="footer-left">
+          <span className="footer-brand">LIFE SCORE™</span>
+          <span className="footer-divider">|</span>
+          <span className="footer-tagline">Premium AI Advisory</span>
         </div>
-        <div className="info-card card">
-          <span className="info-icon">🎤</span>
-          <h4>Voice Enabled</h4>
-          <p>Speak naturally with voice input and hear Olivia's responses read aloud.</p>
+        <div className="footer-center">
+          <div className="connection-status">
+            <span className={`status-dot ${isAvatarReady ? 'online' : 'connecting'}`}></span>
+            <span className="status-text">
+              {isAvatarReady ? 'SECURE CONNECTION' : 'ESTABLISHING LINK'}
+            </span>
+          </div>
         </div>
-        <div className="info-card card">
-          <span className="info-icon">📈</span>
-          <h4>Data Context</h4>
-          <p>Olivia knows all 100 metrics, sources, and can explain any detail of your comparison.</p>
+        <div className="footer-right">
+          <span className="footer-location">LONDON • NEW YORK • SINGAPORE</span>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
