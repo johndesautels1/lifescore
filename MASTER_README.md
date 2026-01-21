@@ -156,7 +156,7 @@ D:\LifeScore\
 │   ├── gamma.ts                   # Gamma API endpoint
 │   ├── judge.ts                   # Opus Judge endpoint
 │   └── evaluate.ts                # LLM evaluation endpoint
-└── MASTER_README.md               # THIS FILE
+└── HANDOFF_2026_0121_SESSION_THETA.md               # THIS FILE
 ```
 
 ---
@@ -205,7 +205,7 @@ All configured in Vercel. **DO NOT ask user to configure.**
 ## NEW SESSION CHECKLIST
 
 ```
-1. Read D:\LifeScore\MASTER_README.md
+1. Read D:\LifeScore\HANDOFF_2026_0121_SESSION_THETA.md
 2. git log --oneline -5
 3. git status
 4. Confirm current phase and priority
