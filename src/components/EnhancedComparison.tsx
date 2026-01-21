@@ -1161,8 +1161,8 @@ const LLMAgreementSection: React.FC<LLMAgreementSectionProps> = ({ result, city1
             </div>
           )}
 
-          {/* No strong agreement */}
-          {!hasStrongAgreement && (
+          {/* No strong agreement - only show if truly zero unanimous/strong metrics */}
+          {totalUnanimous === 0 && totalStrong === 0 && (
             <div className="no-strong-agreement">
               <span className="warning-icon">⚠️</span>
               <p>No metrics achieved unanimous LLM agreement. Consider the scores as approximations.</p>
@@ -1533,6 +1533,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         {showTopDifferences && (
           <>
             <p className="breakdown-subtitle">The metrics with the biggest score differences - click any to learn why</p>
+            {/* Column headers for Top 5 */}
+            <div className="differences-header">
+              <span className="header-rank">#</span>
+              <span className="header-metric">Metric</span>
+              <span className="header-city1">{result.city1.city}</span>
+              <span className="header-city2">{result.city2.city}</span>
+              <span className="header-delta">Δ Winner</span>
+            </div>
             <div className="differences-list">
               {topDifferences.map((diff, index) => {
                 const favoredCityName = diff.favoredCity === 'city1' ? result.city1.city : result.city2.city;

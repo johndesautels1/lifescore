@@ -1002,6 +1002,46 @@
   color: #0047AB;
 }
 
+/* Top 5 Deciding Factors column headers */
+.differences-header {
+  display: grid;
+  grid-template-columns: 40px 2fr 70px 70px 100px;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(0, 71, 171, 0.08) 100%);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #1e40af;
+  align-items: center;
+}
+
+.differences-header .header-rank {
+  text-align: center;
+}
+
+.differences-header .header-metric {
+  text-align: left;
+}
+
+.differences-header .header-city1,
+.differences-header .header-city2 {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.differences-header .header-delta {
+  text-align: center;
+}
+
+[data-theme="dark"] .differences-header {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(30, 64, 175, 0.12) 100%);
+  color: #a78bfa;
+}
+
 .differences-list {
   display: flex;
   flex-direction: column;
