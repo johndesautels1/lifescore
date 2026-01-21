@@ -1,0 +1,55 @@
+CLAUDE CODE INSTRUCTIONS: Fix Tavily-LLM Scoring Conflicts
+TASK 1: Standardize Scale to 0-100 Numeric (P0 Critical)
+File to modify: [the file containing buildBasePrompt()]
+Instructions:
+
+In buildBasePrompt() (Lines 231-298), replace ALL references to A/B/C/D/E letter grades with 0-100 numeric scale
+Replace the letter grade tables with numeric ranges:
+
+A (Fully legal/Never enforced) → 90-100
+B (Mostly legal/Rarely enforced) → 70-89
+C (Moderate/Selective) → 50-69
+D (Restricted/Usually enforced) → 30-49
+E (Prohibited/Strictly enforced) → 0-29
+
+
+Update the example JSON output in buildBasePrompt() to show numeric values (e.g., "city1Legal": 75) instead of letters
+Do NOT modify parseResponse() - it already handles numeric input correctly
+
+
+TASK 2: Standardize JSON Key Names (P0 Critical)
+Decision needed from John: Use city1Legal or city1LegalScore?
+Instructions for Claude Code:
+
+Pick ONE key naming convention and use it everywhere
+Update buildBasePrompt() example JSON to match chosen convention
+Update Perplexity system prompt (Lines 1204-1237) to match chosen convention
+Verify parseResponse() extracts using the chosen key names
+
+
+TASK 3: Remove Duplicate Scale Definitions (P1)
+Instructions:
+
+Each LLM should receive the 0-100 scale definition exactly ONCE
+For LLMs with system prompts (GPT-4o, Gemini, Grok, Perplexity): Define scale in system prompt only, remove from addendum
+For Claude (no system prompt): Define scale in addendum only
+Remove duplicate evidence requirement instructions - keep in ONE location per LLM
+
+
+TASK 4: Verify 6-Section Batching (P0 Critical)
+Instructions:
+
+Confirm metrics are split into 6 batches before API calls
+Each batch should contain ~16-17 metrics maximum
+Verify each LLM call only processes its assigned batch, not all 100 metrics
+Confirm responses are aggregated correctly after all 6 calls complete
+
+
+VALIDATION CHECKLIST FOR CLAUDE CODE
+After making changes, verify:
+
+ buildBasePrompt() contains ONLY 0-100 numeric references (no A-E letters)
+ All JSON key names are consistent across base prompt, addendums, and system prompts
+ Scale is defined exactly once per LLM
+ No single API call receives more than ~20 metrics
+ parseResponse() still correctly extracts scores (test with sample output)

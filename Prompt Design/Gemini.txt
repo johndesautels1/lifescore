@@ -1,0 +1,64 @@
+Gemini:
+
+This is a masterful breakdown of the technical friction within your system. You have identified exactly why the LLM might be "hallucinating" or returning inconsistent data: Instruction Friction and Payload Bloat.
+
+To resolve these conflicts and stabilize the "LIFE SCORE" engine, here is a strategic roadmap for refactoring.
+
+1. Unified Scoring Architecture (P0: Critical)
+The A-E scale in buildBasePrompt is the primary source of entropy. LLMs struggle when told "Use A-E" in one breath and "Use 0-100" in the next.
+
+Action: Deprecate the A-E scale entirely.
+
+Standard: Move to a Strict 0-100 Integer Scale across all prompt layers.
+
+Refactor letterToScore(): Instead of converting letters after the fact, have the LLM provide the number directly. This eliminates the regex dependency and the "middle-man" conversion logic.
+
+2. Solving the Truncation Crisis (P0: Critical)
+Table 6 (Conflict #6) is your hardest ceiling. Most LLMs have an output token limit (often 4k tokens) regardless of the input context window. 100 metrics, each requiring a score, evidence, and a description, will almost always exceed this.
+
+Action: Implement Categorical Batching.
+
+Method: Instead of one massive call for 100 metrics, split the request into 4-5 parallel calls based on category (e.g., "Legal & Civil," "Economic," "Healthcare").
+
+Benefit: * Prevents truncation.
+
+Increases accuracy (the LLM can "focus" on 20 metrics at a time).
+
+Allows for faster UI updates as categories can stream in independently.
+
+3. Schema & Key Harmonization (P0: Critical)
+As Table 6 highlights, having city1Legal vs city1LegalScore will eventually break your parser.
+
+Action: Enforce a Single Schema Definition.
+
+Standardize: Use the city1MetricScore and city1MetricEvidence format across every model's System Prompt and Addendum.
+
+Eliminate Redundancy: Remove JSON schema definitions from the Addendums and buildBasePrompt. Define it once in the System Prompt (for models that support it) or at the very end of the final assembled prompt.
+
+4. Search Strategy Optimization (P1: High)
+Table 3 shows a fragmented search landscape. Relying on different search methods per LLM makes your "Life Score" non-deterministic.
+
+Action: Tavily as the Search Standard.
+
+Strategy: For Gemini and Grok, do not rely on their native search for the raw data. Fetch the 12 category-specific searches via Tavily first, then inject that context into their prompts. This ensures that every LLM is "looking at the same library" before they start scoring.
+
+5. Clean Prompt Assembly (P1: High)
+The "Prompt Formula" in Table 7 reveals that models like Perplexity are receiving four layers of conflicting instructions.
+
+The New Assembly Logic:
+Layer	Content
+System Prompt	High-level persona + The only place the 0-100 scale and JSON keys are defined.
+Context Layer	The Tavily search results (The "Evidence").
+User Prompt	The specific list of metrics to score (limited to ~20 per batch).
+Constraint Addendum	Simple instruction: "Return ONLY JSON. No conversational filler."
+
+Export to Sheets
+
+Summary of Priorities
+Stop using A-E letters. It is the #1 cause of parser failure.
+
+Batch the 100 metrics. You cannot fit 100 rows of high-quality data in one LLM response.
+
+Sync the Keys. Ensure the parseResponse() logic is looking for the exact same keys the System Prompt is demanding.
+
+Would you like me to draft the refactored buildBasePrompt logic that implements this unified 0-100 scale and the batching structure?

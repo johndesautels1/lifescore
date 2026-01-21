@@ -1,0 +1,644 @@
+Perplexity:
+
+The main issues are conflicts and overload in the prompt design rather than something specific to “3 of 6 sections” in the text you shared. The current structure almost guarantees partial output/truncation when you try to push 100 metrics through in one shot.
+
+Below are the concrete problems and how to fix them without “breaking the chain” of what already works.
+
+1. Conflicting grading systems
+You are giving the model two incompatible output specs:
+
+LAYER 2 (Base Prompt):
+
+Legal grade: A–E
+
+Enforcement grade: A–E
+
+Keys: city1Legal, city1Enforcement, etc.
+
+LAYER 4 (System Prompt):
+
+Legal score: 0–100
+
+Enforcement score: 0–100
+
+Keys: city1LegalScore, city1EnforcementScore, etc.
+
+This creates several conflicts:
+
+Same conceptual fields, totally different scales (letters vs 0–100).
+
+Different JSON key names for the same thing.
+
+System-level instructions (LAYER 4) usually override user message instructions (LAYER 2), but they contradict each other, so the model must choose one or muddle them.
+
+What to change (minimal but strict):
+
+Pick exactly one scheme and stick to it everywhere:
+
+Option A (letters everywhere):
+
+Remove the 0–100 scoring scale from LAYER 3 and LAYER 4.
+
+In LAYER 4 JSON, rename keys to match LAYER 2:
+
+json
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id",
+      "city1Legal": "A",
+      "city1Enforcement": "B",
+      "city2Legal": "C",
+      "city2Enforcement": "D",
+      "confidence": "high",
+      "reasoning": "Brief explanation",
+      "sources": ["url1", "url2"],
+      "city1Evidence": [...],
+      "city2Evidence": [...]
+    }
+  ]
+}
+Option B (0–100 everywhere):
+
+In LAYER 2, remove the A–E tables and replace with the numeric scale description.
+
+Change the sample object in LAYER 2 to use city1LegalScore etc. to match LAYER 4.
+
+Right now you are effectively telling the model: “Use letters AND use numbers AND use both sets of keys,” which makes strict structured-output behavior much less reliable.
+​
+
+2. Duplicate, competing “output format” instructions
+You give a full JSON spec in LAYER 2 and a different JSON spec in LAYER 4:
+
+LAYER 2:
+
+Object example with city1Legal, city1Enforcement and letter grades.
+
+LAYER 4:
+
+Different example with city1LegalScore, city1EnforcementScore and numeric scores.
+
+Since LAYER 4 is described as the “System Prompt,” it tends to dominate, but the user message still strongly pushes an incompatible schema.
+
+What to change:
+
+Keep only one canonical JSON specification in one place.
+
+In the other layer, refer to it instead of repeating:
+
+In LAYER 2:
+
+Use the JSON schema specified below in the system instructions. Do not invent any additional fields.
+
+In LAYER 4: include the only canonical JSON example and the field definitions.
+
+This reduces schema confusion and improves compliance with all evaluations present instead of half.
+​
+
+3. “Evaluate ALL metrics” vs token/output limits
+You are asking for:
+
+100 metrics × 2 cities
+
+For each metric: 4 scores, confidence, reasoning, sources array, evidence arrays with title/url/snippet.
+
+Realistically this produces a huge JSON payload, often exceeding practical output limits even if max_tokens is large, which leads to:
+
+Truncation mid-array (you get only part of evaluations).
+
+Some metrics never appear, even though the model “tried.”
+
+Why you see “3 of 6 sections”:
+
+The model likely outputs in order of metrics.
+
+Once output tokens are exhausted, the tail of the JSON array (last categories/metrics) is cut off.
+
+You observe this as “only 3 categories populated” because later metrics never get written.
+
+What to change (without breaking the chain conceptually):
+
+Slice the 100 metrics into smaller batches and call the model multiple times:
+
+E.g. 4–5 calls of ~20–25 metrics each.
+
+Keep the same Tavily context and city info, but pass a subset of metrics in each call.
+
+In your prompt, explicitly acknowledge batching:
+
+You will receive only a subset of all 100 metrics in this call. Evaluate only the metrics listed under “METRICS TO EVALUATE” and return one evaluations item per metric.
+
+On your side, merge evaluations arrays from all calls keyed by metricId.
+
+This is the standard workaround to avoid structured-output truncation in large JSON tasks.
+
+4. Mixed score semantics in LAYER 3 vs LAYER 4
+LAYER 3 defines a 0–100 scale in terms of “permissive vs restrictive,” but does not explicitly say how that relates to legal vs enforcement or to the letter grades; LAYER 4 has a similar scale but does not connect it clearly.
+
+If you keep letters, those numeric scales contradict the earlier letter-only instruction. If you keep numbers, you still have redundant, slightly different text for the same scale in two places.
+
+What to change:
+
+Keep the scale definition in one place (preferably system prompt) and remove the duplicate.
+
+If using numeric scores:
+
+Clarify once:
+
+Higher scores always mean more freedom (more permissive law or weaker enforcement). A score of 0 means least free, 100 means most free.
+
+If using letters, drop the 0–100 scale entirely from LAYER 3 and LAYER 4.
+
+5. Ambiguity around “metrics.length” and categories
+The addendum says:
+
+You MUST evaluate ALL {metrics.length} metrics – do not skip any.
+
+But the model never sees metrics.length as a concrete number in plain text; it only sees the expanded metrics list. At the same time you talk about 6 categories and 100 metrics at the top but do not restate “There are exactly 100 metrics” in the actual runtime text.
+
+For long outputs, models often stop early regardless of “must evaluate all” instructions, especially when hitting token caps.
+
+What to change:
+
+After the metrics list, add a simple, explicit line:
+
+There are exactly 100 metrics in this list. Return exactly 100 items in the evaluations array, one per metric.
+
+When batching, adjust that sentence to the batch size:
+
+There are exactly 20 metrics in this list. Return exactly 20 items in the evaluations array.
+
+This helps you detect partial responses quickly (length mismatch) and makes intent clearer.
+
+6. Evidence and sources instructions are duplicated in two places
+Both LAYER 2 and LAYER 4 have a “MUST include sources and evidence” section. They are mostly compatible, but duplication increases prompt length and can muddy priority.
+
+What to change:
+
+Keep the detailed evidence spec in one place (e.g., system prompt):
+
+For EACH evaluation, you MUST include city1Evidence and city2Evidence arrays… etc.
+
+In LAYER 2, refer to it briefly:
+
+Follow the evidence requirements described in the system instructions.
+
+This frees tokens for actual work, which is important at this scale.
+
+7. Potential Tavily context bloat
+You are inlining:
+
+A full “TAVILY RESEARCH REPORT (Comprehensive Baseline)”
+
+Category-specific search results
+
+Then letting Sonar do its own web search again.
+
+This is powerful but also heavy in tokens. Large context + large output pushes you closer to the effective cap, increasing the odds that the tail of your JSON gets cut off.
+
+What to consider (gradual, non-breaking):
+
+Compress Tavily results into short bullet summaries per category before sending them to Sonar (e.g., pre-summarize with a smaller model or a “summarizer” call).
+
+Pass only the summarized evidence + city names + metric list into Sonar.
+
+You can keep the logical layering (Tavily → Sonar) but reduce raw token count significantly.
+
+If you paste one of the actual failing JSON outputs (even if truncated), it becomes possible to see exactly where the cut happens (e.g., mid-metric vs end of a category) and then tune batch size and prompt length around the actual ceiling your workflow hits.
+
+Now I have all the data. Here's the COMPREHENSIVE SCORING COMPARISON TABLE:
+
+---
+MASTER TABLE: Tavily-LLM Prompt Scoring Analysis
+
+TABLE 1: Prompt Layers & Scoring Systems
+┌────────────────────────┬─────────────┬──────────────────────────────┬───────────────────────────────────┬───────────┐
+│ Component │ Location │ Scale Used │ JSON Keys │ Conflict? │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ buildBasePrompt() │ Lines │ A/B/C/D/E letters │ city1Legal, city1Enforcement │ ⚠️ YES │
+│ │ 231-298 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ buildCategoryPrompt() │ Lines │ Category values │ city1LegalCategory, │ ✅ No │
+│ │ 302-354 │ │ city1EnforcementCategory │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Claude Addendum │ Lines │ 0-100 numeric │ (none - refers to base) │ ⚠️ YES │
+│ │ 629-643 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ GPT-4o Addendum │ Lines │ 0-100 numeric + "Legal Score │ (none - refers to base) │ ⚠️ YES │
+│ │ 758-776 │ / Enforcement Score" │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ GPT-4o System Prompt │ Lines │ 0-100 numeric │ (none - refers to base) │ ⚠️ YES │
+│ │ 797-816 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Gemini Addendum │ Lines │ 0-100 numeric │ (none - refers to base) │ ⚠️ YES │
+│ │ 856-870 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Gemini System │ Lines │ (none specified) │ (none) │ ✅ No │
+│ │ 873-877 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Grok Addendum │ Lines │ 0-100 numeric │ (none - refers to base) │ ⚠️ YES │
+│ │ 942-978 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Grok System Prompt │ Lines │ 0-100 numeric │ (none - refers to base) │ ⚠️ YES │
+│ │ 1006-1025 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Perplexity Addendum │ Lines │ 0-100 numeric │ (none - refers to base) │ ⚠️ YES │
+│ │ 1169-1183 │ │ │ │
+├────────────────────────┼─────────────┼──────────────────────────────┼───────────────────────────────────┼───────────┤
+│ Perplexity System │ Lines │ 0-100 numeric │ city1LegalScore, │ ⚠️ MAJOR │
+│ Prompt │ 1204-1237 │ │ city1EnforcementScore │ │
+└────────────────────────┴─────────────┴──────────────────────────────┴───────────────────────────────────┴───────────┘
+---
+TABLE 2: The Conflict - buildBasePrompt vs System Prompts
+┌──────────────────────────────────┬───────────────────────────────────────────┐
+│ What buildBasePrompt Says │ What System Prompts Say │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ Scale: A/B/C/D/E letters │ Scale: 0-100 numeric │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ Keys: city1Legal: "B" │ Keys: city1LegalScore: 75 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ Example: "city1Enforcement": "C" │ Example: "city1EnforcementScore": 70 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ Tables: Grade meanings A-E │ Tables: 90-100, 70-89, 50-69, 30-49, 0-29 │
+└──────────────────────────────────┴───────────────────────────────────────────┘
+Result: Model receives CONFLICTING instructions and must choose one format or muddle both.
+
+---
+TABLE 3: Web Search Methods Per LLM
+┌───────────────┬────────────────────────────────────┬─────────────────────────────┬────────────────┐
+│ LLM │ Tavily Pre-fetch │ Native Search │ Search Method │
+├───────────────┼────────────────────────────────────┼─────────────────────────────┼────────────────┤
+│ Claude Sonnet │ ✅ Research + 12 category searches │ ❌ None │ Tavily only │
+├───────────────┼────────────────────────────────────┼─────────────────────────────┼────────────────┤
+│ GPT-4o │ ✅ Research + 12 category searches │ ❌ None │ Tavily only │
+├───────────────┼────────────────────────────────────┼─────────────────────────────┼────────────────┤
+│ Gemini 3 Pro │ ❌ None │ ✅ Google Search grounding │ Google only │
+├───────────────┼────────────────────────────────────┼─────────────────────────────┼────────────────┤
+│ Grok 4 │ ❌ None │ ✅ X/Twitter (search: true) │ X/Twitter only │
+├───────────────┼────────────────────────────────────┼─────────────────────────────┼────────────────┤
+│ Perplexity │ ✅ Research + 12 category searches │ ✅ Sonar web search │ Both │
+└───────────────┴────────────────────────────────────┴─────────────────────────────┴────────────────┘
+---
+TABLE 4: parseResponse() Conversion Logic
+┌───────────────────────────────────┬───────────────────────────┬──────────────────────────────────┬──────────────────┐
+│ Input Format │ Detection │ Conversion │ Output │
+├───────────────────────────────────┼───────────────────────────┼──────────────────────────────────┼──────────────────┤
+│ Dual Categories │ USE_CATEGORY_SCORING && │ categoryToScore(metricId, │ │
+│ (city1LegalCategory, │ e.city1LegalCategory │ category) → score from │ 0-100 │
+│ city1EnforcementCategory) │ │ METRICS_MAP │ │
+├───────────────────────────────────┼───────────────────────────┼──────────────────────────────────┼──────────────────┤
+│ │ USE_CATEGORY_SCORING && │ │ Same score for │
+│ Single Category (city1Category) │ e.city1Category │ categoryToScore() │ Legal & │
+│ │ │ │ Enforcement │
+├───────────────────────────────────┼───────────────────────────┼──────────────────────────────────┼──────────────────┤
+│ Letter Grades (city1Legal: "B") │ Regex /^[A-Ea-e]$/ │ letterToScore(): A=100, B=75, │ 0-100 │
+│ │ │ C=50, D=25, E=0 │ │
+├───────────────────────────────────┼───────────────────────────┼──────────────────────────────────┼──────────────────┤
+│ Numeric Scores (city1LegalScore: │ typeof === 'number' │ Clamp to 0-100 │ 0-100 │
+│ 75) │ │ │ │
+└───────────────────────────────────┴───────────────────────────┴──────────────────────────────────┴──────────────────┘
+letterToScore() mapping (Lines 119-130):
+A → 100 (Fully legal/Never enforced)
+B → 75 (Mostly legal/Rarely enforced)
+C → 50 (Moderate/Selective)
+D → 25 (Restricted/Usually enforced)
+E → 0 (Prohibited/Strictly enforced)
+F → 0 (Same as E)
+
+---
+TABLE 5: Complete LLM Configuration Comparison
+Setting: Model
+Claude: claude-sonnet-4-5-20250929
+GPT-4o: gpt-4o
+Gemini: gemini-3-pro-preview
+Grok: grok-4
+Perplexity: sonar-reasoning-pro
+────────────────────────────────────────
+Setting: max_tokens
+Claude: 16384
+GPT-4o: 16384
+Gemini: 16384
+Grok: 16384
+Perplexity: 16384
+────────────────────────────────────────
+Setting: temperature
+Claude: (default)
+GPT-4o: 0.3
+Gemini: 0.3
+Grok: 0.2
+Perplexity: 0.3
+────────────────────────────────────────
+Setting: Has System Prompt
+Claude: ❌ No
+GPT-4o: ✅ Yes
+Gemini: ✅ Yes (simple)
+Grok: ✅ Yes
+Perplexity: ✅ Yes
+────────────────────────────────────────
+Setting: System Scale
+Claude: N/A
+GPT-4o: 0-100
+Gemini: None
+Grok: 0-100
+Perplexity: 0-100
+────────────────────────────────────────
+Setting: Addendum Scale
+Claude: 0-100
+GPT-4o: 0-100
+Gemini: 0-100
+Grok: 0-100
+Perplexity: 0-100
+────────────────────────────────────────
+Setting: Base Prompt Scale
+Claude: A-E letters
+GPT-4o: A-E letters
+Gemini: A-E letters
+Grok: A-E letters
+Perplexity: A-E letters
+────────────────────────────────────────
+Setting: Tavily
+Claude: ✅
+GPT-4o: ✅
+Gemini: ❌
+Grok: ❌
+Perplexity: ✅
+────────────────────────────────────────
+Setting: Native Search
+Claude: ❌
+GPT-4o: ❌
+Gemini: ✅ Google
+Grok: ✅ X/Twitter
+Perplexity: ✅ Sonar
+────────────────────────────────────────
+Setting: Retry Logic
+Claude: ❌
+GPT-4o: ❌
+Gemini: ❌
+Grok: ✅ 3 attempts
+Perplexity: ❌
+────────────────────────────────────────
+Setting: return_citations
+Claude: N/A
+GPT-4o: N/A
+Gemini: N/A
+Grok: N/A
+Perplexity: ✅ true
+---
+TABLE 6: The CONFLICTS Perplexity Identified
+┌─────┬────────────────────────────────────┬───────────────────────────────────────────────────────┬─────────────┐
+│ # │ Conflict │ Where │ Severity │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 1 │ A-E letters vs 0-100 scale │ buildBasePrompt ↔ All addendums + system prompts │ 🔴 CRITICAL │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 2 │ city1Legal vs city1LegalScore keys │ buildBasePrompt ↔ Perplexity system prompt │ 🔴 CRITICAL │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 3 │ Duplicate JSON schemas │ buildBasePrompt + System prompts both define format │ 🟡 HIGH │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 4 │ Duplicate scale definitions │ Addendum + System prompt both define 0-100 │ 🟡 HIGH │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 5 │ Duplicate evidence instructions │ buildBasePrompt + System prompt both require evidence │ 🟢 MEDIUM │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 6 │ 100 metrics = truncation │ Payload too large for single response │ 🔴 CRITICAL │
+├─────┼────────────────────────────────────┼───────────────────────────────────────────────────────┼─────────────┤
+│ 7 │ metrics.length not explicit │ Model doesn't see "exactly 100 metrics" │ 🟢 MEDIUM │
+└─────┴────────────────────────────────────┴───────────────────────────────────────────────────────┴─────────────┘
+---
+TABLE 7: What Each LLM Actually Receives (Full Prompt Assembly)
+LLM: Claude
+Prompt Formula: tavilyContext + buildBasePrompt (A-E) + claudeAddendum (0-100)
+Total Layers with Scoring Instructions: 2 conflicting scales
+────────────────────────────────────────
+LLM: GPT-4o
+Prompt Formula: tavilyContext + buildBasePrompt (A-E) + gptAddendum (0-100) + System (0-100)
+Total Layers with Scoring Instructions: 3 conflicting scales
+────────────────────────────────────────
+LLM: Gemini
+Prompt Formula: buildBasePrompt (A-E) + geminiAddendum (0-100) + System (none)
+Total Layers with Scoring Instructions: 2 conflicting scales
+────────────────────────────────────────
+LLM: Grok
+Prompt Formula: buildBasePrompt (A-E) + grokAddendum (0-100) + System (0-100)
+Total Layers with Scoring Instructions: 3 conflicting scales
+────────────────────────────────────────
+LLM: Perplexity
+Prompt Formula: tavilyContext + buildBasePrompt (A-E) + perplexityAddendum (0-100) + System (0-100 + different keys)
+Total Layers with Scoring Instructions: 4 conflicting scales + keys
+---
+TABLE 8: USE_CATEGORY_SCORING Toggle Effect
+┌───────────────┬────────────────────┬────────────────────────┬──────────────────────────────────────────────────────┐
+│ Toggle │ buildBasePrompt │ buildCategoryPrompt │ Expected Output │
+│ │ Used │ Used │ │
+├───────────────┼────────────────────┼────────────────────────┼──────────────────────────────────────────────────────┤
+│ false │ ✅ A-E letters │ ❌ │ city1Legal: "B" → converted to 75 │
+│ (default) │ │ │ │
+├───────────────┼────────────────────┼────────────────────────┼──────────────────────────────────────────────────────┤
+│ true │ ❌ │ ✅ Category values │ city1LegalCategory: "medical_only" → looked up in │
+│ │ │ │ METRICS_MAP │
+└───────────────┴────────────────────┴────────────────────────┴──────────────────────────────────────────────────────┘
+Current status: USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true'
+- If not set in env, defaults to false → uses letter grades (which conflict with system prompts)
+
+---
+SUMMARY: Root Causes of Issues
+┌──────────────────────────────────────────────────────┬─────────────────────────────────────────────┬──────────────┐
+│ Root Cause │ Impact │ Fix Priority │
+├──────────────────────────────────────────────────────┼─────────────────────────────────────────────┼──────────────┤
+│ buildBasePrompt uses A-E, everything else uses 0-100 │ Model confusion, inconsistent output format │ 🔴 P0 │
+├──────────────────────────────────────────────────────┼─────────────────────────────────────────────┼──────────────┤
+│ Two different JSON key naming schemes │ Parser may fail to extract scores │ 🔴 P0 │
+├──────────────────────────────────────────────────────┼─────────────────────────────────────────────┼──────────────┤
+│ 100 metrics in single call │ Truncation after ~40-60 metrics │ 🔴 P0 │
+├──────────────────────────────────────────────────────┼─────────────────────────────────────────────┼──────────────┤
+│ Scale defined 2-4 times per LLM │ Wasted tokens, conflicting wording │ 🟡 P1 │
+├──────────────────────────────────────────────────────┼─────────────────────────────────────────────┼──────────────┤
+│ Evidence requirements duplicated │ Wasted tokens │ 🟢 P2 │
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴──────────────┘
+---
+Ready for your direction on how to fix these conflicts!
+You already diagnosed the core issues correctly in your tables: the conflicts between A–E vs 0–100 and the key names, plus output-length/truncation. The fix is to standardize scoring and keys across all layers and batch the 100 metrics.
+
+Below is a concrete direction that keeps your existing parsing logic and METRICS_MAP intact.
+
+1. Choose a single scoring scheme
+Given your parseResponse() already normalizes four input shapes into 0–100, the cleanest move is:
+
+Keep A–E in buildBasePrompt() (and buildCategoryPrompt() when USE_CATEGORY_SCORING=false).
+
+Remove all 0–100 instructions and examples from every addendum and system prompt.
+
+Have every LLM output letters or categories only.
+
+Your existing mappings already handle this:
+
+Letter inputs: city1Legal: "B" → letterToScore() → 75.
+​
+
+Category inputs: city1LegalCategory: "medical_only" → METRICS_MAP → numeric.
+​
+
+This means:
+
+No model ever needs to output city1LegalScore or direct numbers.
+
+All your downstream logic continues to work unchanged.
+
+If you prefer the opposite (0–100 everywhere), you can do that, but then you should delete letters from buildBasePrompt and change the example JSON and prose there. Your current codebase and tables strongly favor letters + conversion.
+
+2. Canonical JSON schema and keys
+Pick one JSON schema and stick to it across all models. From your tables, the least disruptive canonical schema is the one in buildBasePrompt():
+
+json
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id_here",
+      "city1Legal": "B",
+      "city1Enforcement": "C",
+      "city2Legal": "D",
+      "city2Enforcement": "D",
+      "confidence": "high",
+      "reasoning": "Brief explanation of key difference",
+      "sources": ["https://example.com/law-source"],
+      "city1Evidence": [
+        { "title": "Source Title", "url": "https://...", "snippet": "Relevant quote" }
+      ],
+      "city2Evidence": [
+        { "title": "Source Title", "url": "https://...", "snippet": "Relevant quote" }
+      ]
+    }
+  ]
+}
+Then:
+
+In all system prompts (GPT-4o, Grok, Perplexity, etc.), delete any mention of:
+
+city1LegalScore, city1EnforcementScore, etc.
+
+0–100 numeric examples.
+
+Replace with:
+
+Use exactly the JSON structure defined in the user prompt (city1Legal, city1Enforcement, etc.). Do not introduce any additional keys.
+
+This directly fixes conflicts #1–#3 from your TABLE 6.
+​
+
+3. Unify scale definitions across all layers
+Right now you have:
+
+A–E tables in buildBasePrompt (good and needed).
+
+0–100 tables (90–100, 70–89, etc.) in every addendum + several system prompts.
+​
+
+With the “letters as canonical” decision:
+
+Keep the A–E legal and enforcement tables in buildBasePrompt.
+
+Remove all 0–100 scaling text from:
+
+Claude addendum.
+
+GPT-4o addendum.
+
+Gemini addendum.
+
+Grok addendum.
+
+Perplexity addendum.
+
+GPT-4o system prompt.
+
+Grok system prompt.
+
+Perplexity system prompt.
+
+If you want to preserve the intuition behind 0–100, compress it into a single non-normative paragraph, e.g.:
+
+Internally, these letter grades are mapped to numeric scores (A ≈ 100, B ≈ 75, C ≈ 50, D ≈ 25, E ≈ 0) for charting and analysis, but you should output only letters, not numbers.
+
+That keeps your cognitive model while removing the conflicting “output numbers” instruction.
+​
+
+4. De-duplicate evidence and format instructions
+To reduce token load and avoid mixed signals:
+
+Keep the full “CRITICAL: INCLUDE EVIDENCE” section only once per LLM:
+
+Preferably in the system prompt, because it has higher priority.
+
+In buildBasePrompt, shorten to:
+
+Follow the evidence requirements described in the system instructions. Every evaluation must include sources, city1Evidence, and city2Evidence.
+
+Do the same for “Return ONLY valid JSON, no markdown” and similar requirements: state them once at the system level, and in the user prompt just say “Follow the system instructions on JSON format.”
+
+This reduces TABLE 6 conflicts #3–#5 and frees tokens for actual metrics.
+
+5. Handle the 100-metric truncation
+Your own analysis (TABLE 6 #6) matches what’s observed with reasoning models: output truncates well before a 16k max_tokens setting, especially with large JSON + reasoning tokens.
+
+Given your output shape, 100 metrics × full evidence is too big for one shot. The robust pattern:
+
+Batch by metrics, not categories vs sections:
+
+Example: 5 calls × 20 metrics each.
+
+Or even 10 calls × 10 metrics if you want extra safety.
+
+For each call:
+
+Pass the same Tavily context (or a compressed version; see below).
+
+Pass only that subset in METRICS TO EVALUATE.
+
+Add explicit cardinality:
+
+There are exactly 20 metrics listed below. Return exactly 20 items in the evaluations array, one per metricId.
+
+After all calls, merge:
+
+allEvaluations = calls.flatMap(r => r.evaluations);
+
+Validate allEvaluations.length === 100 and uniqueness of metricId.
+
+This directly addresses root cause “100 metrics in single call → truncation after ~40–60 metrics” from your summary.
+
+6. Tighten Tavily + native search usage
+Your TABLE 3 and TABLE 5 show:
+
+Claude/GPT use Tavily only.
+
+Perplexity uses Tavily + Sonar.
+
+Gemini/Grok use native search only.
+​
+
+This is fine logically, but you can reduce prompt bloat:
+
+Pre-summarize Tavily context into compact category bullets (1–3 sentences per category, per city) before feeding to any LLM, especially Perplexity.
+
+In the LLM prompt, say:
+
+Use the summarized Tavily research below as your primary factual base. You may use your own web search only to fill gaps or verify edge cases.
+
+That helps keep total token usage down and further reduces truncation risk while preserving the “chain” behavior you like.
+
+7. USE_CATEGORY_SCORING toggle
+Your TABLE 8 design is good: it explicitly covers both letter and category modes and your parser normalizes both.
+​
+
+With the above changes:
+
+Default path (USE_CATEGORY_SCORING=false):
+
+All models output letters; parser uses letterToScore.
+
+Category path (USE_CATEGORY_SCORING=true):
+
+Only buildCategoryPrompt() is used.
+
+Addendum and system prompts must not mention letters or 0–100; they should just say:
+
+For each metric, output the category values as specified in the JSON example in the user prompt (city1LegalCategory, etc.).
+

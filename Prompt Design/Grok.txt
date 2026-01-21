@@ -1,0 +1,117 @@
+Grok:
+
+Recommended Fixes for Prompt Scoring Conflicts
+Thank you for compiling this detailed analysis—it's thorough and highlights the key pain points clearly. Based on the tables, the core issues stem from inconsistencies in scoring scales, JSON formats, duplication, and payload size, which lead to model confusion, parsing errors, truncation, and inefficient token usage. I'll outline a structured plan to resolve these, prioritizing the critical (P0) issues first, then P1 and P2. The goal is to standardize everything to a single, consistent system (e.g., 0-100 numeric scale with uniform keys), eliminate redundancies, and optimize for reliability across LLMs.
+I'll assume this is implemented in a codebase (e.g., JavaScript/TypeScript based on the references to functions like buildBasePrompt(), env vars, and line numbers). Fixes include code changes, prompt refactoring, and potential architectural tweaks. Test thoroughly after each change, especially with sample inputs for all LLMs, to ensure outputs parse correctly in parseResponse().
+1. P0: Standardize Scoring Scale (A-E Letters vs. 0-100 Numeric)
+
+Impact Recap: Models receive conflicting instructions (e.g., base prompt says A-E, but addendums/systems say 0-100), leading to inconsistent or hybrid outputs (e.g., letters that don't convert cleanly or numbers outside expected ranges).
+Fix Strategy: Migrate everything to a single 0-100 numeric scale. This is more granular, aligns with most existing addendums/system prompts, and simplifies conversion logic in parseResponse(). Deprecate A-E letters entirely to avoid conflicts.
+Steps:
+Update buildBasePrompt() (lines 231-298): Replace A-E letter instructions with 0-100 numeric. For example:
+Change grade tables to: 90-100 (Fully legal/Never enforced), 70-89 (Mostly legal/Rarely enforced), 50-69 (Moderate/Selective), 30-49 (Restricted/Usually enforced), 0-29 (Prohibited/Strictly enforced).
+Update examples to use numbers: e.g., "city1LegalScore": 75 instead of "city1Legal": "B".
+
+Remove or align conflicting addendums:
+Claude (629-643): Keep 0-100 but remove redundant scale definitions.
+GPT-4o (758-776): Integrate into system prompt (797-816) to avoid duplication.
+Gemini (856-870): Align with system (873-877), adding explicit 0-100 if missing.
+Grok (942-978): Merge with system (1006-1025).
+Perplexity (1169-1183): Merge with system (1204-1237).
+
+Update parseResponse() (lines 119-130):
+Remove letterToScore() entirely.
+Keep numeric clamping (0-100) and category-to-score logic (if retaining categories—see below).
+Add validation: If output uses letters, retry or log error (as a safety net during transition).
+
+For USE_CATEGORY_SCORING:
+If categories provide value (e.g., more nuanced than numbers), set to true by default and update buildCategoryPrompt() (302-354) to output 0-100 directly via METRICS_MAP lookup in the prompt itself (so models compute scores upfront).
+If not needed, set to false permanently and remove buildCategoryPrompt() to simplify.
+
+
+Expected Outcome: All prompts use 0-100; no scale conflicts. Test with 5-10 metrics to verify models output numbers consistently.
+
+
+2. P0: Standardize JSON Keys (city1Legal vs. city1LegalScore)
+
+Impact Recap: Key mismatches (e.g., in Perplexity system prompt) cause parsing failures in parseResponse().
+Fix Strategy: Use suffixed keys (city1LegalScore, city1EnforcementScore) everywhere for clarity and to distinguish from categories.
+Steps:
+Search/replace in all prompt builders:
+Change city1Legal to city1LegalScore, city1Enforcement to city1EnforcementScore.
+If categories are kept: Use city1LegalCategory, etc., but ensure they're optional and map to scores.
+
+Update Perplexity system prompt (1204-1237) specifically to match.
+In parseResponse(): Add fallback detection (e.g., if old keys are detected, remap them) but log warnings for monitoring.
+Update any examples or schemas in prompts to reflect new keys.
+
+Expected Outcome: Uniform keys across all LLMs; parser extracts scores reliably without conflicts.
+
+
+3. P0: Handle 100 Metrics to Prevent Truncation
+
+Impact Recap: Single-call payload for 100 metrics exceeds token limits, truncating after ~40-60.
+Fix Strategy: Split into batched calls (e.g., 20-25 metrics per batch) to stay under max_tokens (16384). Make metric count explicit in prompts.
+Steps:
+Refactor the main loop or caller function:
+Add batching logic: e.g., const batches = chunk(metrics, 25); (using lodash or similar).
+For each batch, build/run prompt separately, then aggregate results.
+Update prompt to say: "Score exactly these [batch.length] metrics" instead of implying 100.
+
+For LLMs with retry logic (e.g., Grok's 3 attempts): Extend to all if needed, but prioritize batching.
+If using Tavily/native search: Fetch context per batch to reduce overall tokens.
+Monitor token usage: Add logging with estimateTokens(prompt) to fine-tune batch size.
+
+Expected Outcome: Full 100 metrics processed without truncation; scalable for larger sets.
+
+
+4. P1: Remove Duplicate Scale Definitions and Schemas
+
+Impact Recap: Scales and JSON formats defined 2-4 times per LLM wastes tokens and risks wording inconsistencies.
+Fix Strategy: Centralize definitions in one place per LLM (preferably system prompt, or base if no system).
+Steps:
+For each LLM:
+Claude: Move 0-100 from addendum to a new system prompt.
+GPT-4o: Consolidate addendum + system into system only.
+Gemini: Add 0-100 to system if missing; remove from addendum.
+Grok: Merge addendum + system into system.
+Perplexity: Merge addendum + system into system.
+
+Use a shared utility function (e.g., buildScoringInstructions()) to generate consistent scale text, then inject into prompts.
+Remove duplicate JSON schemas: Define once at the end of the prompt.
+
+Expected Outcome: Cleaner, shorter prompts; reduced token costs and confusion.
+
+
+5. P2: Remove Duplicate Evidence Instructions
+
+Impact Recap: Evidence requirements repeated in base + system/addendums wastes tokens.
+Fix Strategy: Define evidence rules once, ideally in system prompts.
+Steps:
+Extract evidence instructions to a shared string or function.
+Remove duplicates from base/addendums, keeping only in system (or base for Claude/Gemini if no system).
+If citations are key (e.g., Perplexity's return_citations: true), ensure they're not overridden.
+
+Expected Outcome: Minor token savings; prompts remain focused.
+
+
+Additional Recommendations
+
+Search Integration: No major conflicts here, but for consistency:
+If Tavily is primary, enable it for Gemini/Grok if possible (or note limitations).
+For Perplexity (using both): Prioritize Sonar for real-time, Tavily for depth.
+
+LLM-Specific Tweaks:
+Grok: Leverage its retry logic as a model for others.
+Gemini: Ensure Google grounding doesn't override your scale (test explicitly).
+Temperature: Standardize to 0.3 across all for consistency (Grok's 0.2 is close).
+
+Testing Plan:
+Run end-to-end with a small set (e.g., 5 metrics) for each LLM.
+Validate outputs: Scores in 0-100, correct keys, no truncation, parsable JSON.
+Edge cases: Invalid outputs, categories toggled, large payloads.
+
+Deployment: Roll out in stages (e.g., fix one LLM at a time). Set env var for USE_CATEGORY_SCORING explicitly (recommend false unless categories are essential).
+Monitoring: Add logs for parsed scores, token usage, and failures. If issues persist, consider a unified prompt builder that assembles based on LLM type.
+
+This should resolve all identified conflicts and make the system more robust. If you provide code snippets or specify an LLM to focus on first, I can give more granular edits!
