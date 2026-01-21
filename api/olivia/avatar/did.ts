@@ -62,27 +62,32 @@ async function fetchWithTimeout(
 }
 
 /**
- * Get D-ID API key
+ * Get D-ID API key and encode for Basic auth
+ * D-ID keys come as "username:password" format from studio
+ * If your key doesn't contain a colon, it's just the password (username is empty)
  */
-function getDIDKey(): string {
+function getDIDAuthHeader(): string {
   const key = process.env.DID_API_KEY;
   if (!key) {
     throw new Error('DID_API_KEY not configured');
   }
-  return key;
+  // If key already contains colon (username:password format), use as-is
+  // Otherwise, treat as password-only with empty username
+  const credentials = key.includes(':') ? key : `:${key}`;
+  return `Basic ${Buffer.from(credentials).toString('base64')}`;
 }
 
 /**
  * Create a new chat session with agent
  */
-async function createChat(apiKey: string, agentId: string): Promise<{ chatId: string }> {
+async function createChat(authHeader: string, agentId: string): Promise<{ chatId: string }> {
   const response = await fetchWithTimeout(
     `${DID_API_BASE}/agents/${agentId}/chats`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        'Authorization': authHeader,
       },
     },
     DID_TIMEOUT_MS
@@ -101,7 +106,7 @@ async function createChat(apiKey: string, agentId: string): Promise<{ chatId: st
  * Send a message to the agent
  */
 async function sendMessage(
-  apiKey: string,
+  authHeader: string,
   agentId: string,
   chatId: string,
   message: string
@@ -112,7 +117,7 @@ async function sendMessage(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        'Authorization': authHeader,
       },
       body: JSON.stringify({
         messages: [
@@ -139,7 +144,7 @@ async function sendMessage(
  * Get chat status and result
  */
 async function getChatStatus(
-  apiKey: string,
+  authHeader: string,
   agentId: string,
   chatId: string
 ): Promise<DIDChatResponse> {
@@ -148,7 +153,7 @@ async function getChatStatus(
     {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        'Authorization': authHeader,
       },
     },
     DID_TIMEOUT_MS
@@ -166,7 +171,7 @@ async function getChatStatus(
  * Delete chat session
  */
 async function deleteChat(
-  apiKey: string,
+  authHeader: string,
   agentId: string,
   chatId: string
 ): Promise<void> {
@@ -175,7 +180,7 @@ async function deleteChat(
     {
       method: 'DELETE',
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        'Authorization': authHeader,
       },
     },
     DID_TIMEOUT_MS
@@ -210,7 +215,7 @@ export default async function handler(
   }
 
   try {
-    const apiKey = getDIDKey();
+    const authHeader = getDIDAuthHeader();
     const { action, agentId, sessionId, message } = req.body as DIDAgentRequest;
 
     if (!action) {
@@ -228,7 +233,7 @@ export default async function handler(
 
     switch (action) {
       case 'create': {
-        const { chatId } = await createChat(apiKey, effectiveAgentId);
+        const { chatId } = await createChat(authHeader, effectiveAgentId);
         console.log('[DID] Created chat:', chatId);
 
         res.status(200).json({
@@ -246,7 +251,7 @@ export default async function handler(
         }
 
         // Send message
-        const chatResponse = await sendMessage(apiKey, effectiveAgentId, sessionId, message);
+        const chatResponse = await sendMessage(authHeader, effectiveAgentId, sessionId, message);
         console.log('[DID] Chat response status:', chatResponse.status);
 
         // If video URL is available, return it
@@ -265,7 +270,7 @@ export default async function handler(
 
         while (attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 1000));
-          const status = await getChatStatus(apiKey, effectiveAgentId, sessionId);
+          const status = await getChatStatus(authHeader, effectiveAgentId, sessionId);
 
           if (status.status === 'done' && status.result_url) {
             res.status(200).json({
@@ -292,7 +297,7 @@ export default async function handler(
           return;
         }
 
-        await deleteChat(apiKey, effectiveAgentId, sessionId);
+        await deleteChat(authHeader, effectiveAgentId, sessionId);
         console.log('[DID] Closed chat:', sessionId);
 
         res.status(200).json({
