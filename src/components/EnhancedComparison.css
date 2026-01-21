@@ -3635,6 +3635,515 @@
   font-weight: 600;
 }
 
+/* ============================================================================
+   LLM AGREEMENT SECTION - Bug B Fix
+   ============================================================================ */
+
+.agreement-section {
+  margin-bottom: 1.5rem;
+}
+
+.agreement-section .section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border: 2px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.agreement-section .section-toggle:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.agreement-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+  color: #059669;
+}
+
+.agreement-section .title-icon {
+  font-size: 1.25rem;
+}
+
+.agreement-section .toggle-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.agreement-count-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.agreement-section .toggle-arrow {
+  color: #059669;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.agreement-section .toggle-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* Agreement Content */
+.agreement-content {
+  padding: 1.25rem;
+  border: 2px solid rgba(16, 185, 129, 0.2);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: white;
+  animation: slideDown 0.3s ease;
+}
+
+/* Agreement Summary */
+.agreement-summary {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  margin-bottom: 1.25rem;
+}
+
+.agreement-summary .summary-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.agreement-summary .summary-text {
+  flex: 1;
+}
+
+.agreement-intro {
+  color: var(--gray-700);
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+}
+
+.agreement-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-badge.unanimous {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.stat-badge.strong {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
+}
+
+.stat-badge .stat-count {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+/* Agreed Metrics */
+.agreed-metrics {
+  border-top: 2px solid var(--gray-200);
+  padding-top: 1.25rem;
+}
+
+.agreed-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #059669;
+  font-size: 1rem;
+  margin: 0 0 0.35rem 0;
+}
+
+.agreed-header .header-icon {
+  font-size: 1.1rem;
+}
+
+.agreed-subtitle {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin: 0 0 1rem 0;
+}
+
+.agreed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.agreed-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.agreed-item:hover {
+  border-color: #10B981;
+  transform: translateX(4px);
+}
+
+.agreed-rank {
+  font-weight: 800;
+  color: #059669;
+  font-size: 0.9rem;
+  width: 30px;
+}
+
+.agreed-info {
+  min-width: 0;
+}
+
+.agreed-metric-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agreed-metric-name .metric-icon {
+  font-size: 1.1rem;
+}
+
+.agreed-metric-name .metric-name {
+  font-weight: 700;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+.agreed-deviation {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+/* Agreed Scores - Both Cities */
+.agreed-scores {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.city-score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.6rem;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  min-width: 65px;
+}
+
+.city-score-box .city-name {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
+}
+
+.city-score-box .city-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gray-700);
+}
+
+.city-score-box .city-score.winner {
+  color: #059669;
+}
+
+.score-vs {
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+
+/* Agreed Difference */
+.agreed-difference {
+  min-width: 80px;
+  text-align: right;
+}
+
+.diff-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.diff-badge.city1-leads {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.diff-badge.city2-leads {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
+}
+
+/* No Strong Agreement */
+.no-strong-agreement {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+}
+
+.no-strong-agreement .warning-icon {
+  font-size: 2rem;
+}
+
+.no-strong-agreement p {
+  margin: 0;
+  color: #D97706;
+  font-weight: 500;
+}
+
+/* Trust Indicator */
+.trust-indicator {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.06) 0%, rgba(0, 71, 171, 0.02) 100%);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 71, 171, 0.15);
+  margin-top: 1.25rem;
+}
+
+.trust-indicator .trust-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.trust-indicator p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.trust-indicator strong {
+  color: #0047AB;
+}
+
+/* Dark Mode for Agreement Section */
+[data-theme="dark"] .agreement-section .section-toggle {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="dark"] .agreement-section .section-toggle:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.12) 100%);
+}
+
+[data-theme="dark"] .agreement-section .section-title {
+  color: #34D399;
+}
+
+[data-theme="dark"] .agreement-section .toggle-arrow {
+  color: #34D399;
+}
+
+[data-theme="dark"] .agreement-content {
+  background: #1a1a2e;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .agreement-summary {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="dark"] .agreement-intro {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .stat-badge.unanimous {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34D399;
+}
+
+[data-theme="dark"] .stat-badge.strong {
+  background: rgba(59, 130, 246, 0.25);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .agreed-metrics {
+  border-top-color: #3d3d55;
+}
+
+[data-theme="dark"] .agreed-header {
+  color: #34D399;
+}
+
+[data-theme="dark"] .agreed-subtitle {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .agreed-item {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .agreed-item:hover {
+  border-color: #34D399;
+}
+
+[data-theme="dark"] .agreed-rank {
+  color: #34D399;
+}
+
+[data-theme="dark"] .agreed-metric-name .metric-name {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .agreed-deviation {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .city-score-box {
+  background: #252538;
+  border-color: #3d3d55;
+}
+
+[data-theme="dark"] .city-score-box .city-name {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .city-score-box .city-score {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .city-score-box .city-score.winner {
+  color: #34D399;
+}
+
+[data-theme="dark"] .score-vs {
+  color: #6b6b80;
+}
+
+[data-theme="dark"] .diff-badge.city1-leads {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34D399;
+}
+
+[data-theme="dark"] .diff-badge.city2-leads {
+  background: rgba(59, 130, 246, 0.25);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .no-strong-agreement {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .no-strong-agreement p {
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .trust-indicator {
+  background: linear-gradient(135deg, rgba(107, 163, 255, 0.1) 0%, rgba(107, 163, 255, 0.03) 100%);
+  border-color: rgba(107, 163, 255, 0.2);
+}
+
+[data-theme="dark"] .trust-indicator p {
+  color: #d0d0e0;
+}
+
+[data-theme="dark"] .trust-indicator strong {
+  color: #6ba3ff;
+}
+
+/* Responsive for Agreement Section */
+@media (max-width: 768px) {
+  .agreement-section .section-toggle {
+    padding: 0.75rem 1rem;
+  }
+
+  .agreement-section .section-title {
+    font-size: 0.9rem;
+  }
+
+  .agreement-count-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .agreed-item {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+  }
+
+  .agreed-scores {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .agreed-difference {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+
+  .city-score-box {
+    min-width: 55px;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .city-score-box .city-name {
+    font-size: 0.6rem;
+    max-width: 50px;
+  }
+
+  .city-score-box .city-score {
+    font-size: 0.95rem;
+  }
+}
+
 /* Dark Mode for Disagreement Section */
 [data-theme="dark"] .disagreement-section .section-toggle {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0.08) 100%);

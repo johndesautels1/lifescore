@@ -935,6 +935,200 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
 };
 
 // ============================================================================
+// LLM AGREEMENT ANALYSIS SECTION (Bug B Fix)
+// ============================================================================
+
+interface AgreedMetric {
+  metricId: string;
+  shortName: string;
+  icon: string;
+  standardDeviation: number;
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
+  city1Score: number;
+  city2Score: number;
+  scoreDifference: number;
+  llmCount: number;
+}
+
+const findAgreedMetrics = (result: EnhancedComparisonResult, count: number = 5): AgreedMetric[] => {
+  const agreed: AgreedMetric[] = [];
+
+  result.city1.categories.forEach((city1Cat, catIndex) => {
+    const city2Cat = result.city2.categories[catIndex];
+    if (!city2Cat) return;
+
+    city1Cat.metrics.forEach((metric1, metricIndex) => {
+      const metric2 = city2Cat.metrics[metricIndex];
+      if (!metric2) return;
+
+      // Only include metrics where LLMs had strong agreement (σ < 5)
+      // AND we have at least 2 LLM scores to make it meaningful
+      if (metric1.standardDeviation < 5 && metric1.llmScores.length >= 2) {
+        const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
+        const shortName = metricDef?.shortName || metric1.metricId;
+
+        agreed.push({
+          metricId: metric1.metricId,
+          shortName,
+          icon: getMetricIcon(shortName),
+          standardDeviation: metric1.standardDeviation,
+          confidenceLevel: metric1.confidenceLevel,
+          city1Score: metric1.consensusScore,
+          city2Score: metric2.consensusScore,
+          scoreDifference: Math.abs(metric1.consensusScore - metric2.consensusScore),
+          llmCount: metric1.llmScores.length
+        });
+      }
+    });
+  });
+
+  // Sort by lowest standard deviation (highest agreement) first
+  return agreed
+    .sort((a, b) => a.standardDeviation - b.standardDeviation)
+    .slice(0, count);
+};
+
+interface LLMAgreementSectionProps {
+  result: EnhancedComparisonResult;
+  city1Name: string;
+  city2Name: string;
+}
+
+const LLMAgreementSection: React.FC<LLMAgreementSectionProps> = ({ result, city1Name, city2Name }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const agreedMetrics = findAgreedMetrics(result, 8);
+  const hasStrongAgreement = agreedMetrics.length > 0;
+
+  // Count total high-confidence metrics
+  let totalUnanimous = 0;
+  let totalStrong = 0;
+  result.city1.categories.forEach(cat => {
+    cat.metrics.forEach(m => {
+      if (m.confidenceLevel === 'unanimous') totalUnanimous++;
+      else if (m.confidenceLevel === 'strong') totalStrong++;
+    });
+  });
+
+  return (
+    <div className="agreement-section card">
+      <button
+        className="section-toggle"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <h3 className="section-title">
+          <span className="title-icon">✅</span>
+          Where LLMs Strongly Agreed
+        </h3>
+        <div className="toggle-right">
+          <span className="agreement-count-badge">
+            {totalUnanimous + totalStrong} high-confidence metrics
+          </span>
+          <span className={`toggle-arrow ${isExpanded ? 'expanded' : ''}`}>▼</span>
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="agreement-content">
+          {/* Agreement Summary */}
+          <div className="agreement-summary">
+            <div className="summary-icon">🎯</div>
+            <div className="summary-text">
+              <p className="agreement-intro">
+                These metrics have the highest LLM consensus — you can trust these scores with confidence.
+              </p>
+              <div className="agreement-stats">
+                <span className="stat-badge unanimous">
+                  <span className="stat-count">{totalUnanimous}</span> Unanimous (σ &lt; 3)
+                </span>
+                <span className="stat-badge strong">
+                  <span className="stat-count">{totalStrong}</span> Strong (σ &lt; 8)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Agreed Metrics List */}
+          {hasStrongAgreement && (
+            <div className="agreed-metrics">
+              <h4 className="agreed-header">
+                <span className="header-icon">🏆</span>
+                Top High-Confidence Metrics
+              </h4>
+              <p className="agreed-subtitle">
+                All LLMs scored these metrics similarly — these are your most reliable data points.
+              </p>
+
+              <div className="agreed-list">
+                {agreedMetrics.map((metric, index) => (
+                  <div key={metric.metricId} className="agreed-item">
+                    <div className="agreed-rank">#{index + 1}</div>
+                    <div className="agreed-info">
+                      <div className="agreed-metric-name">
+                        <span className="metric-icon">{metric.icon}</span>
+                        <span className="metric-name">{metric.shortName}</span>
+                        <span className={`confidence-tag ${metric.confidenceLevel}`}>
+                          {metric.confidenceLevel === 'unanimous' ? '🎯 Unanimous' : '✓ Strong'}
+                        </span>
+                      </div>
+                      <div className="agreed-deviation">
+                        σ = {metric.standardDeviation.toFixed(1)} • {metric.llmCount} LLMs agree
+                      </div>
+                    </div>
+
+                    {/* Both Cities Scores */}
+                    <div className="agreed-scores">
+                      <div className="city-score-box">
+                        <span className="city-name">{city1Name}</span>
+                        <span className={`city-score ${metric.city1Score > metric.city2Score ? 'winner' : ''}`}>
+                          {Math.round(metric.city1Score)}
+                        </span>
+                      </div>
+                      <div className="score-vs">vs</div>
+                      <div className="city-score-box">
+                        <span className="city-name">{city2Name}</span>
+                        <span className={`city-score ${metric.city2Score > metric.city1Score ? 'winner' : ''}`}>
+                          {Math.round(metric.city2Score)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Difference indicator */}
+                    {metric.scoreDifference > 0 && (
+                      <div className="agreed-difference">
+                        <span className={`diff-badge ${metric.city1Score > metric.city2Score ? 'city1-leads' : 'city2-leads'}`}>
+                          +{Math.round(metric.scoreDifference)} {metric.city1Score > metric.city2Score ? city1Name : city2Name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No strong agreement */}
+          {!hasStrongAgreement && (
+            <div className="no-strong-agreement">
+              <span className="warning-icon">⚠️</span>
+              <p>No metrics achieved unanimous LLM agreement. Consider the scores as approximations.</p>
+            </div>
+          )}
+
+          {/* Trust indicator */}
+          <div className="trust-indicator">
+            <span className="trust-icon">💡</span>
+            <p>
+              <strong>Why this matters:</strong> When multiple AI models independently arrive at the same score,
+              you can be confident the data accurately reflects real-world conditions.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
 // ENHANCED RESULTS DISPLAY
 // ============================================================================
 
@@ -1342,6 +1536,13 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           </>
         )}
       </div>
+
+      {/* LLM Agreement Analysis - Bug B Fix */}
+      <LLMAgreementSection
+        result={result}
+        city1Name={result.city1.city}
+        city2Name={result.city2.city}
+      />
 
       {/* LLM Disagreement Analysis */}
       <LLMDisagreementSection
