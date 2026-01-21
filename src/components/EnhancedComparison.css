@@ -1383,6 +1383,84 @@
   color: #64748b;
 }
 
+/* Bug G fix: Calculation Verification in Top 5 Deciding Factors */
+.diff-calculation-verification {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  border: 1px solid rgba(0, 71, 171, 0.15);
+}
+
+.verification-header {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.diff-verification-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.diff-verification-row:last-child {
+  margin-bottom: 0;
+}
+
+.diff-verification-label {
+  font-weight: 600;
+  color: #0047AB;
+  min-width: 100px;
+}
+
+.diff-verification-calc {
+  color: #374151;
+}
+
+.diff-verification-calc strong {
+  color: #16a34a;
+  font-size: 1em;
+}
+
+.diff-opus-adjusted {
+  color: #F7931E;
+  font-style: italic;
+  font-weight: 600;
+}
+
+/* Dark mode for calculation verification */
+[data-theme="dark"] .diff-calculation-verification {
+  background: rgba(30, 30, 50, 0.7);
+  border-color: rgba(107, 163, 255, 0.2);
+}
+
+[data-theme="dark"] .verification-header {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .diff-verification-label {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .diff-verification-calc {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .diff-verification-calc strong {
+  color: #4ade80;
+}
+
+[data-theme="dark"] .diff-opus-adjusted {
+  color: #fbbf24;
+}
+
 /* Dark mode for city-leads color coding */
 [data-theme="dark"] .diff-delta.city1-leads .delta-pill {
   background: linear-gradient(135deg, #34D399 0%, #10B981 100%);

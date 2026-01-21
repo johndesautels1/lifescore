@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem } from '../types/enhancedComparison';
+import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
 import { getStoredAPIKeys, saveAPIKeys } from '../services/enhancedComparison';
@@ -1207,6 +1207,8 @@ interface MetricDifference {
   city1Explanation?: string;  // Judge explanation for city 1
   city2Explanation?: string;  // Judge explanation for city 2
   sources: EvidenceItem[];    // Bug D fix: Combined sources from both cities
+  city1LlmScores?: LLMMetricScore[];  // Bug G fix: For calculation verification
+  city2LlmScores?: LLMMetricScore[];  // Bug G fix: For calculation verification
 }
 
 const calculateTopDifferences = (result: EnhancedComparisonResult, count: number = 5): MetricDifference[] => {
@@ -1250,7 +1252,9 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
         favoredCity: metric1.consensusScore > metric2.consensusScore ? 'city1' : 'city2',
         city1Explanation: metric1.judgeExplanation,
         city2Explanation: metric2.judgeExplanation,
-        sources: uniqueSources
+        sources: uniqueSources,
+        city1LlmScores: metric1.llmScores,  // Bug G fix
+        city2LlmScores: metric2.llmScores   // Bug G fix
       });
     });
   });
@@ -1585,6 +1589,47 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               <span className="city-score">Score: {Math.round(diff.city2Score)}</span>
                             </h4>
                             <p className="explanation-text">{diff.city2Explanation}</p>
+                          </div>
+                        )}
+
+                        {/* Bug G fix: Calculation Verification */}
+                        {(diff.city1LlmScores?.length || diff.city2LlmScores?.length) && (
+                          <div className="diff-calculation-verification">
+                            <h4 className="verification-header">🔢 Score Calculation</h4>
+                            {diff.city1LlmScores && diff.city1LlmScores.length > 0 && (() => {
+                              const scores = diff.city1LlmScores.map(s => s.normalizedScore).sort((a, b) => a - b);
+                              const mid = Math.floor(scores.length / 2);
+                              const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
+                              const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city1Score);
+                              return (
+                                <div className="diff-verification-row">
+                                  <span className="diff-verification-label">{result.city1.city}:</span>
+                                  <span className="diff-verification-calc">
+                                    Median of [{scores.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(calculatedMedian)}</strong>
+                                    {isAdjusted && (
+                                      <span className="diff-opus-adjusted"> → {Math.round(diff.city1Score)} (Opus adjusted)</span>
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                            {diff.city2LlmScores && diff.city2LlmScores.length > 0 && (() => {
+                              const scores = diff.city2LlmScores.map(s => s.normalizedScore).sort((a, b) => a - b);
+                              const mid = Math.floor(scores.length / 2);
+                              const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
+                              const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city2Score);
+                              return (
+                                <div className="diff-verification-row">
+                                  <span className="diff-verification-label">{result.city2.city}:</span>
+                                  <span className="diff-verification-calc">
+                                    Median of [{scores.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(calculatedMedian)}</strong>
+                                    {isAdjusted && (
+                                      <span className="diff-opus-adjusted"> → {Math.round(diff.city2Score)} (Opus adjusted)</span>
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
 
