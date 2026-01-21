@@ -62,8 +62,8 @@ const App: React.FC = () => {
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
 
-  // Custom weights state (reserved for future weighted scoring)
-  const [, setCustomWeights] = useState<Record<string, number> | null>(null);
+  // Custom weights state - used for persona-based scoring (Digital Nomad, Entrepreneur, etc.)
+  const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
 
   // LIFTED STATE: Gamma visual report (persists across tab switches)
   const [gammaReportState, setGammaReportState] = useState<VisualReportState>({
@@ -228,7 +228,8 @@ const App: React.FC = () => {
                             pendingCities.city1,
                             pendingCities.city2,
                             Array.from(llmResults.values()),
-                            judgeResult
+                            judgeResult,
+                            customWeights  // Pass user's custom weights for persona-based scoring
                           );
                           setEnhancedResult(result);
                           setEnhancedStatus('complete');
@@ -271,6 +272,7 @@ const App: React.FC = () => {
                   <EnhancedResults
                     result={enhancedResult}
                     dealbreakers={dealbreakers}
+                    customWeights={customWeights}
                   />
                   
                   {/* ADD MORE MODELS SECTION - Phase 3 Incremental LLM Feature */}
@@ -332,7 +334,7 @@ const App: React.FC = () => {
               {/* Standard Results */}
               {!enhancedMode && state.status === 'success' && state.result && (
                 <>
-                  <Results result={state.result} onSaved={handleSaved} />
+                  <Results result={state.result} onSaved={handleSaved} customWeights={customWeights} />
                   <div className="new-comparison">
                     <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
                       ← New Comparison

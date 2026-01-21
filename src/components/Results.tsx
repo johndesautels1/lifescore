@@ -91,9 +91,10 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({ result }) => {
 
 interface CategoryBreakdownProps {
   result: ComparisonResult;
+  customWeights?: Record<string, number> | null;  // User's persona weights
 }
 
-export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result }) => {
+export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result, customWeights }) => {
   const [expandedCategory, setExpandedCategory] = useState<CategoryId | null>(null);
 
   const getCategoryScore = (cityScore: typeof result.city1, categoryId: CategoryId): CategoryScore | undefined => {
@@ -126,7 +127,7 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result }) 
               <div className="category-header">
                 <span className="category-icon">{category.icon}</span>
                 <span className="category-name">{category.name}</span>
-                <span className="category-weight">({category.weight}% weight)</span>
+                <span className="category-weight">({customWeights?.[category.id] ?? category.weight}% weight)</span>
               </div>
               <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
             </button>
@@ -305,9 +306,10 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
 interface ResultsProps {
   result: ComparisonResult;
   onSaved?: () => void;
+  customWeights?: Record<string, number> | null;  // User's persona weights (Digital Nomad, etc.)
 }
 
-export const Results: React.FC<ResultsProps> = ({ result, onSaved }) => {
+export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -327,7 +329,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved }) => {
     <div className="results animate-slideUp">
       <WinnerHero result={result} />
       <ScoreGrid result={result} />
-      <CategoryBreakdown result={result} />
+      <CategoryBreakdown result={result} customWeights={customWeights} />
 
       {/* Save Button */}
       <div className="save-comparison-bar">

@@ -1192,6 +1192,7 @@ interface EnhancedResultsProps {
   dealbreakers?: string[];
   showEvidence?: boolean;
   onToggleEvidence?: () => void;
+  customWeights?: Record<string, number> | null;  // User's persona weights (Digital Nomad, etc.)
 }
 
 // Helper to calculate top metric differences
@@ -1262,7 +1263,7 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
   return differences.sort((a, b) => b.difference - a.difference).slice(0, count);
 };
 
-export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [] }) => {
+export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [], customWeights }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [isSaved, setIsSaved] = useState(false);
@@ -1789,7 +1790,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                 <div className="category-header">
                   <span className="category-icon">{category.icon}</span>
                   <span className="category-name">{category.name}</span>
-                  <span className="category-weight">({category.weight}%)</span>
+                  <span className="category-weight">({customWeights?.[category.id] ?? category.weight}%)</span>
                 </div>
                 <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
               </button>

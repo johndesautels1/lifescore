@@ -110,15 +110,25 @@ export function buildCategoryConsensuses(
 // ============================================================================
 
 /**
+ * Custom category weights type (from WeightPresets)
+ * Maps category ID to weight percentage (should sum to 100)
+ */
+export type CategoryWeights = Record<string, number> | null;
+
+/**
  * Build a complete EnhancedComparisonResult from LLM evaluator results and judge output.
  * This is called when the judge completes to construct the final result for the UI.
  * Called from App.tsx via dynamic import.
+ *
+ * @param customWeights - Optional user-defined category weights from persona selection
+ *                        If null, uses default weights from CATEGORIES
  */
 export function buildEnhancedResultFromJudge(
   city1: string,
   city2: string,
   evaluatorResults: EvaluatorResult[],
-  judgeOutput: JudgeOutput
+  judgeOutput: JudgeOutput,
+  customWeights?: CategoryWeights
 ): EnhancedComparisonResult {
   // Parse city names
   const parseCity = (cityStr: string) => {
@@ -137,15 +147,25 @@ export function buildEnhancedResultFromJudge(
   const city1Categories = buildCategoryConsensuses(judgeOutput.city1Consensuses);
   const city2Categories = buildCategoryConsensuses(judgeOutput.city2Consensuses);
 
-  // Calculate weighted total scores
+  // Helper to get category weight - use custom weights if provided, else default
+  const getCategoryWeight = (categoryId: string): number => {
+    if (customWeights && customWeights[categoryId] !== undefined) {
+      return customWeights[categoryId];
+    }
+    // Fall back to default weights from CATEGORIES definition
+    const catDef = CATEGORIES.find(c => c.id === categoryId);
+    return catDef?.weight || 0;
+  };
+
+  // Calculate weighted total scores using user's persona weights or defaults
   const city1Total = city1Categories.reduce((sum, cat) => {
-    const catDef = CATEGORIES.find(c => c.id === cat.categoryId);
-    return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
+    const weight = getCategoryWeight(cat.categoryId);
+    return sum + (cat.averageConsensusScore * weight) / 100;
   }, 0);
 
   const city2Total = city2Categories.reduce((sum, cat) => {
-    const catDef = CATEGORIES.find(c => c.id === cat.categoryId);
-    return sum + (cat.averageConsensusScore * (catDef?.weight || 0)) / 100;
+    const weight = getCategoryWeight(cat.categoryId);
+    return sum + (cat.averageConsensusScore * weight) / 100;
   }, 0);
 
   // Determine winner
