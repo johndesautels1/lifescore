@@ -2006,11 +2006,754 @@
   background: rgba(107, 163, 255, 0.25);
 }
 
-/* Evidence Panel */
+/* ============================================================================
+   EXPANDABLE METRIC ROW - Bug E Fix
+   ============================================================================ */
+
+/* Metric row wrapper - no longer display: contents to allow expansion */
 .metric-row-wrapper {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--gray-150);
 }
 
+.metric-row-wrapper:last-child {
+  border-bottom: none;
+}
+
+.metric-row-wrapper.expanded {
+  background: rgba(0, 71, 171, 0.03);
+}
+
+/* Expandable header with new columns */
+.metric-details-header.expandable-header {
+  display: grid;
+  grid-template-columns: 2fr 80px 80px 50px 50px 50px 40px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 71, 171, 0.08);
+  border-bottom: 2px solid rgba(0, 71, 171, 0.2);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #0047AB;
+}
+
+.metric-details-header.dual-header.expandable-header {
+  grid-template-columns: 2fr 120px 120px 50px 50px 50px 40px;
+}
+
+.metric-header-delta,
+.metric-header-llms,
+.metric-header-stddev,
+.metric-header-expand {
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+/* Main expandable metric row */
+.metric-row-expandable {
+  display: grid;
+  grid-template-columns: 2fr 80px 80px 50px 50px 50px 40px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all var(--transition-fast);
+  align-items: center;
+}
+
+.metric-row-expandable:hover {
+  background: rgba(0, 71, 171, 0.08);
+}
+
+.metric-row-expandable.dual-row {
+  grid-template-columns: 2fr 120px 120px 50px 50px 50px 40px;
+}
+
+/* Metric info within expandable row */
+.metric-row-expandable .metric-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.metric-row-expandable .metric-icon {
+  font-size: 1.1rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.1) 0%, rgba(0, 71, 171, 0.05) 100%);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.metric-row-expandable .metric-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.metric-row-expandable .metric-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #F7931E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Metric score in expandable row */
+.metric-row-expandable .metric-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  height: 36px;
+  padding: 0.35rem 0.6rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.08) 0%, rgba(0, 71, 171, 0.04) 100%);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #374151;
+  position: relative;
+}
+
+.metric-row-expandable .metric-score::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 100%);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.metric-row-expandable .metric-score.winning {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+  color: #16a34a;
+}
+
+/* Delta column */
+.metric-delta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+}
+
+.metric-delta.city1-favored {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.metric-delta.city2-favored {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.metric-delta.tie {
+  color: var(--gray-400);
+}
+
+/* LLM Count column */
+.metric-llm-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0047AB;
+  background: rgba(0, 71, 171, 0.08);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* Standard deviation column */
+.metric-stddev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: monospace;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.metric-stddev.unanimous {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.metric-stddev.strong {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.metric-stddev.moderate {
+  color: #d97706;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.metric-stddev.split {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Expand/collapse arrow */
+.metric-expand-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--gray-400);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.metric-expand-arrow.expanded {
+  color: #0047AB;
+}
+
+.metric-row-expandable:hover .metric-expand-arrow {
+  color: #0047AB;
+}
+
+/* ============================================================================
+   LLM BREAKDOWN PANEL
+   ============================================================================ */
+
+.llm-breakdown-panel {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(247, 147, 30, 0.03) 100%);
+  border: 1px solid rgba(0, 71, 171, 0.15);
+  border-radius: 12px;
+  margin: 0.5rem 1rem 1rem;
+  padding: 1rem;
+  animation: slideDown 0.2s ease;
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 71, 171, 0.15);
+}
+
+.breakdown-title {
+  font-weight: 700;
+  color: #0047AB;
+  font-size: 1rem;
+}
+
+.breakdown-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.breakdown-close:hover {
+  color: #dc2626;
+}
+
+/* LLM Grid Table */
+.llm-grid-container {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.llm-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.llm-breakdown-table th,
+.llm-breakdown-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: center;
+  border: 1px solid rgba(0, 71, 171, 0.1);
+}
+
+.llm-breakdown-table thead th {
+  background: rgba(0, 71, 171, 0.1);
+  font-weight: 600;
+  color: #0047AB;
+}
+
+.llm-col-header {
+  white-space: nowrap;
+}
+
+.llm-provider-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.llm-header-icon {
+  font-size: 1.1rem;
+}
+
+.llm-header-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.consensus-col {
+  background: rgba(247, 147, 30, 0.15) !important;
+  color: #F7931E !important;
+}
+
+.city-name-cell {
+  font-weight: 600;
+  text-align: left;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.llm-score-cell {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.consensus-cell {
+  background: rgba(247, 147, 30, 0.08);
+}
+
+.consensus-value {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #F7931E;
+}
+
+.city1-row {
+  background: rgba(0, 71, 171, 0.03);
+}
+
+.city2-row {
+  background: rgba(107, 163, 255, 0.03);
+}
+
+/* Calculation verification */
+.calculation-verification {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  font-family: monospace;
+}
+
+.verification-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.verification-row:last-child {
+  margin-bottom: 0;
+}
+
+.verification-label {
+  font-weight: 600;
+  color: #0047AB;
+  min-width: 100px;
+}
+
+.verification-calc {
+  color: #374151;
+}
+
+.verification-calc strong {
+  color: #16a34a;
+}
+
+.opus-adjusted {
+  color: #F7931E;
+  font-style: italic;
+  margin-left: 0.5rem;
+}
+
+/* Breakdown stats */
+.breakdown-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(0, 71, 171, 0.05);
+  border-radius: 8px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+}
+
+.stat-value {
+  font-weight: 700;
+  font-family: monospace;
+  color: #0047AB;
+}
+
+.confidence-badge {
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.confidence-badge.unanimous {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.confidence-badge.strong {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.confidence-badge.moderate {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.confidence-badge.split {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+/* Judge explanation section */
+.judge-explanation-section {
+  background: rgba(247, 147, 30, 0.08);
+  border-left: 3px solid #F7931E;
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.explanation-header {
+  font-weight: 700;
+  color: #F7931E;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.explanation-item {
+  margin-bottom: 0.75rem;
+}
+
+.explanation-item:last-child {
+  margin-bottom: 0;
+}
+
+.explanation-city {
+  font-weight: 600;
+  color: #0047AB;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.explanation-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Breakdown sources */
+.breakdown-sources {
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--gray-200);
+}
+
+.sources-header {
+  font-weight: 600;
+  color: #0047AB;
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.no-sources {
+  color: var(--gray-400);
+  font-style: italic;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Source snippet in breakdown */
+.breakdown-sources .source-snippet {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+  padding-left: 1rem;
+}
+
+/* Dark mode for expandable rows */
+[data-theme="dark"] .metric-row-wrapper.expanded {
+  background: rgba(107, 163, 255, 0.05);
+}
+
+[data-theme="dark"] .metric-details-header.expandable-header {
+  background: rgba(107, 163, 255, 0.15);
+  border-bottom-color: rgba(107, 163, 255, 0.3);
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .metric-row-expandable:hover {
+  background: rgba(107, 163, 255, 0.1);
+}
+
+[data-theme="dark"] .metric-row-expandable .metric-name {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .metric-row-expandable .metric-score {
+  background: rgba(107, 163, 255, 0.15);
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .metric-row-expandable .metric-score.winning {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+[data-theme="dark"] .metric-delta.city1-favored {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+[data-theme="dark"] .metric-delta.city2-favored {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .metric-llm-count {
+  color: #6ba3ff;
+  background: rgba(107, 163, 255, 0.15);
+}
+
+[data-theme="dark"] .metric-expand-arrow {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .metric-row-expandable:hover .metric-expand-arrow,
+[data-theme="dark"] .metric-expand-arrow.expanded {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .llm-breakdown-panel {
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.8) 0%, rgba(40, 30, 50, 0.8) 100%);
+  border-color: rgba(107, 163, 255, 0.3);
+}
+
+[data-theme="dark"] .breakdown-header {
+  border-bottom-color: rgba(107, 163, 255, 0.2);
+}
+
+[data-theme="dark"] .breakdown-title {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .llm-breakdown-table th,
+[data-theme="dark"] .llm-breakdown-table td {
+  border-color: rgba(107, 163, 255, 0.15);
+}
+
+[data-theme="dark"] .llm-breakdown-table thead th {
+  background: rgba(107, 163, 255, 0.15);
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .consensus-col {
+  background: rgba(247, 147, 30, 0.2) !important;
+}
+
+[data-theme="dark"] .city-name-cell {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .llm-score-cell {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .consensus-cell {
+  background: rgba(247, 147, 30, 0.1);
+}
+
+[data-theme="dark"] .city1-row {
+  background: rgba(107, 163, 255, 0.05);
+}
+
+[data-theme="dark"] .city2-row {
+  background: rgba(159, 122, 234, 0.05);
+}
+
+[data-theme="dark"] .calculation-verification {
+  background: rgba(30, 30, 50, 0.6);
+}
+
+[data-theme="dark"] .verification-label {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .verification-calc {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .verification-calc strong {
+  color: #4ade80;
+}
+
+[data-theme="dark"] .breakdown-stats {
+  background: rgba(107, 163, 255, 0.08);
+}
+
+[data-theme="dark"] .stat-label {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .judge-explanation-section {
+  background: rgba(247, 147, 30, 0.1);
+}
+
+[data-theme="dark"] .explanation-city {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .explanation-item p {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .breakdown-sources {
+  border-top-color: #3d3d55;
+}
+
+[data-theme="dark"] .sources-header {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .breakdown-sources .source-snippet {
+  color: #9090a0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .metric-details-header.expandable-header {
+    grid-template-columns: 1fr 55px 55px 40px 40px 40px 30px;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .metric-details-header.dual-header.expandable-header {
+    grid-template-columns: 1fr 80px 80px 40px 40px 40px 30px;
+  }
+
+  .metric-row-expandable {
+    grid-template-columns: 1fr 55px 55px 40px 40px 40px 30px;
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .metric-row-expandable.dual-row {
+    grid-template-columns: 1fr 80px 80px 40px 40px 40px 30px;
+  }
+
+  .metric-row-expandable .metric-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.9rem;
+  }
+
+  .metric-row-expandable .metric-name {
+    font-size: 0.8rem;
+  }
+
+  .metric-row-expandable .metric-score {
+    min-width: 50px;
+    height: 30px;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .metric-delta,
+  .metric-llm-count,
+  .metric-stddev {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.25rem;
+  }
+
+  .llm-breakdown-panel {
+    margin: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .llm-breakdown-table {
+    font-size: 0.75rem;
+  }
+
+  .llm-breakdown-table th,
+  .llm-breakdown-table td {
+    padding: 0.4rem;
+  }
+
+  .llm-header-icon {
+    font-size: 0.9rem;
+  }
+
+  .llm-header-name {
+    font-size: 0.65rem;
+  }
+
+  .consensus-value {
+    font-size: 0.9rem;
+  }
+
+  .calculation-verification {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  .verification-label {
+    min-width: 70px;
+  }
+}
+
+/* Legacy Evidence Panel (keeping for backward compatibility) */
 .evidence-panel {
   grid-column: 1 / -1;
   background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(247, 147, 30, 0.05) 100%);

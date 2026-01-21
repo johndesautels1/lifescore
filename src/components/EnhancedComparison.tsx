@@ -1448,13 +1448,17 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                 <div className={`metric-details ${scoreViewMode === 'lawVsReality' ? 'dual-score-mode' : ''}`}>
                   {/* Header changes based on view mode */}
                   {scoreViewMode === 'lived' ? (
-                    <div className="metric-details-header">
+                    <div className="metric-details-header expandable-header">
                       <span>Metric</span>
                       <span className="metric-header-city">{result.city1.city}</span>
                       <span className="metric-header-city">{result.city2.city}</span>
+                      <span className="metric-header-delta">Δ</span>
+                      <span className="metric-header-llms">LLMs</span>
+                      <span className="metric-header-stddev">σ</span>
+                      <span className="metric-header-expand"></span>
                     </div>
                   ) : (
-                    <div className="metric-details-header dual-header">
+                    <div className="metric-details-header dual-header expandable-header">
                       <span>Metric</span>
                       <div className="dual-header-city">
                         <span className="city-name">{result.city1.city}</span>
@@ -1470,6 +1474,10 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                           <span className="label-enforce">Reality</span>
                         </div>
                       </div>
+                      <span className="metric-header-delta">Δ</span>
+                      <span className="metric-header-llms">LLMs</span>
+                      <span className="metric-header-stddev">σ</span>
+                      <span className="metric-header-expand"></span>
                     </div>
                   )}
 
@@ -1488,27 +1496,54 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
                     // Calculate LLM agreement indicator
                     const confidence1 = city1Metric?.confidenceLevel || 'moderate';
-                    const llmCount = city1Metric?.llmScores?.length || 5;
-                    const agreementText = confidence1 === 'unanimous' ? `${llmCount}/${llmCount}` :
-                                         confidence1 === 'strong' ? `${llmCount-1}/${llmCount}` :
-                                         confidence1 === 'moderate' ? `${llmCount-2}/${llmCount}` : `Split`;
-                    const agreementClass = confidence1 === 'unanimous' ? 'unanimous' :
-                                          confidence1 === 'strong' ? 'strong' :
-                                          confidence1 === 'moderate' ? 'moderate' : 'split';
+                    const llmCount = city1Metric?.llmScores?.length || 0;
+                    const stdDev = city1Metric?.standardDeviation ?? 0;
 
-                    const isEvidenceExpanded = expandedEvidence === metric.id;
+                    // Score difference (delta)
+                    const scoreDelta = score1 - score2;
+                    const deltaSign = scoreDelta > 0 ? '+' : '';
+
+                    const isRowExpanded = expandedEvidence === metric.id;
+
+                    // Get all unique LLM providers that scored this metric
+                    const allLLMProviders = new Set<LLMProvider>();
+                    city1Metric?.llmScores?.forEach(s => allLLMProviders.add(s.llmProvider));
+                    city2Metric?.llmScores?.forEach(s => allLLMProviders.add(s.llmProvider));
+
+                    // Build LLM scores map for easy lookup
+                    const city1LLMScoresMap = new Map(city1Metric?.llmScores?.map(s => [s.llmProvider, s]) || []);
+                    const city2LLMScoresMap = new Map(city2Metric?.llmScores?.map(s => [s.llmProvider, s]) || []);
+
+                    // Calculate median verification
+                    const city1Scores = city1Metric?.llmScores?.map(s => s.normalizedScore) || [];
+                    const city2Scores = city2Metric?.llmScores?.map(s => s.normalizedScore) || [];
+                    const sortedCity1 = [...city1Scores].sort((a, b) => a - b);
+                    const sortedCity2 = [...city2Scores].sort((a, b) => a - b);
+                    const medianCity1 = sortedCity1.length > 0
+                      ? sortedCity1.length % 2 === 0
+                        ? (sortedCity1[sortedCity1.length/2 - 1] + sortedCity1[sortedCity1.length/2]) / 2
+                        : sortedCity1[Math.floor(sortedCity1.length/2)]
+                      : 0;
+                    const medianCity2 = sortedCity2.length > 0
+                      ? sortedCity2.length % 2 === 0
+                        ? (sortedCity2[sortedCity2.length/2 - 1] + sortedCity2[sortedCity2.length/2]) / 2
+                        : sortedCity2[Math.floor(sortedCity2.length/2)]
+                      : 0;
 
                     return (
-                      <div key={metric.id} className="metric-row-wrapper">
-                        <div className={`metric-row ${scoreViewMode === 'lawVsReality' ? 'dual-row' : ''}`}>
+                      <div key={metric.id} className={`metric-row-wrapper ${isRowExpanded ? 'expanded' : ''}`}>
+                        {/* Main metric row - clickable to expand */}
+                        <button
+                          className={`metric-row-expandable ${scoreViewMode === 'lawVsReality' ? 'dual-row' : ''}`}
+                          onClick={() => setExpandedEvidence(isRowExpanded ? null : metric.id)}
+                          aria-expanded={isRowExpanded}
+                        >
                           <div className="metric-info">
                             <span className="metric-icon">{getMetricIcon(metric.shortName)}</span>
                             <div className="metric-name-container">
-                              <span className="metric-name">
-                                {metric.shortName}
-                              </span>
+                              <span className="metric-name">{metric.shortName}</span>
                               {tooltip && (
-                                <div className="metric-tooltip">
+                                <div className="metric-tooltip" onClick={(e) => e.stopPropagation()}>
                                   <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
                                   <div className="tooltip-content">
                                     <strong>Why This Matters:</strong>
@@ -1516,174 +1551,208 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                   </div>
                                 </div>
                               )}
-                              <span className={`llm-agreement ${agreementClass}`} title={`${agreementText} LLMs agree`}>
-                                {agreementText}
-                              </span>
                             </div>
-                            {/* Evidence/Citation indicator */}
-                            <button
-                              className={`evidence-indicator ${isEvidenceExpanded ? 'active' : ''}`}
-                              title="View sources"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedEvidence(isEvidenceExpanded ? null : metric.id);
-                              }}
-                            >
-                              📄
-                            </button>
                           </div>
 
-                        {/* Lived Freedom Mode - Single Score */}
-                        {scoreViewMode === 'lived' ? (
-                          <>
+                          {/* City 1 Score */}
+                          {scoreViewMode === 'lived' ? (
                             <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
                               {Math.round(score1)}
-                              {city1Metric?.llmScores?.[0]?.confidence && (
-                                <span className={`data-quality ${city1Metric.llmScores[0].confidence}`}>
-                                  {city1Metric.llmScores[0].confidence === 'high' ? '✓' :
-                                   city1Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
-                                </span>
-                              )}
                             </div>
+                          ) : (
+                            <div className="dual-score-cell">
+                              <span className={`law-score ${legal1 > legal2 ? 'winning' : ''}`}>{Math.round(legal1)}</span>
+                              <span className={`enforce-score ${enforce1 > enforce2 ? 'winning' : ''}`}>{Math.round(enforce1)}</span>
+                            </div>
+                          )}
+
+                          {/* City 2 Score */}
+                          {scoreViewMode === 'lived' ? (
                             <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
                               {Math.round(score2)}
-                              {city2Metric?.llmScores?.[0]?.confidence && (
-                                <span className={`data-quality ${city2Metric.llmScores[0].confidence}`}>
-                                  {city2Metric.llmScores[0].confidence === 'high' ? '✓' :
-                                   city2Metric.llmScores[0].confidence === 'medium' ? '~' : '?'}
+                            </div>
+                          ) : (
+                            <div className="dual-score-cell">
+                              <span className={`law-score ${legal2 > legal1 ? 'winning' : ''}`}>{Math.round(legal2)}</span>
+                              <span className={`enforce-score ${enforce2 > enforce1 ? 'winning' : ''}`}>{Math.round(enforce2)}</span>
+                            </div>
+                          )}
+
+                          {/* Delta (score difference) */}
+                          <div className={`metric-delta ${scoreDelta > 0 ? 'city1-favored' : scoreDelta < 0 ? 'city2-favored' : 'tie'}`}>
+                            {scoreDelta !== 0 ? `${deltaSign}${Math.round(scoreDelta)}` : '—'}
+                          </div>
+
+                          {/* LLM Count */}
+                          <div className="metric-llm-count" title={`${llmCount} LLMs evaluated this metric`}>
+                            {llmCount}/{result.llmsUsed.length}
+                          </div>
+
+                          {/* Standard Deviation */}
+                          <div className={`metric-stddev ${confidence1}`} title={`Standard deviation: ${stdDev.toFixed(1)}`}>
+                            σ{stdDev.toFixed(0)}
+                          </div>
+
+                          {/* Expand/Collapse Arrow */}
+                          <div className={`metric-expand-arrow ${isRowExpanded ? 'expanded' : ''}`}>
+                            {isRowExpanded ? '▼' : '▶'}
+                          </div>
+                        </button>
+
+                        {/* Expanded LLM Breakdown Panel */}
+                        {isRowExpanded && (
+                          <div className="llm-breakdown-panel">
+                            <div className="breakdown-header">
+                              <span className="breakdown-title">🧠 LLM Breakdown: {metric.shortName}</span>
+                              <button className="breakdown-close" onClick={() => setExpandedEvidence(null)}>×</button>
+                            </div>
+
+                            {/* LLM Grid - Side by side comparison */}
+                            <div className="llm-grid-container">
+                              <table className="llm-breakdown-table">
+                                <thead>
+                                  <tr>
+                                    <th className="llm-col-header">LLM</th>
+                                    {Array.from(allLLMProviders).map(provider => {
+                                      const config = LLM_CONFIGS[provider];
+                                      return (
+                                        <th key={provider} className="llm-col-header llm-provider-header">
+                                          <span className="llm-header-icon">{config?.icon || '🤖'}</span>
+                                          <span className="llm-header-name">{config?.shortName || provider}</span>
+                                        </th>
+                                      );
+                                    })}
+                                    <th className="llm-col-header consensus-col">Consensus</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {/* City 1 Row */}
+                                  <tr className="llm-city-row city1-row">
+                                    <td className="city-name-cell">{result.city1.city}</td>
+                                    {Array.from(allLLMProviders).map(provider => {
+                                      const score = city1LLMScoresMap.get(provider);
+                                      return (
+                                        <td key={provider} className="llm-score-cell">
+                                          {score ? Math.round(score.normalizedScore) : '—'}
+                                        </td>
+                                      );
+                                    })}
+                                    <td className="consensus-cell">
+                                      <span className="consensus-value">{Math.round(score1)}</span>
+                                    </td>
+                                  </tr>
+                                  {/* City 2 Row */}
+                                  <tr className="llm-city-row city2-row">
+                                    <td className="city-name-cell">{result.city2.city}</td>
+                                    {Array.from(allLLMProviders).map(provider => {
+                                      const score = city2LLMScoresMap.get(provider);
+                                      return (
+                                        <td key={provider} className="llm-score-cell">
+                                          {score ? Math.round(score.normalizedScore) : '—'}
+                                        </td>
+                                      );
+                                    })}
+                                    <td className="consensus-cell">
+                                      <span className="consensus-value">{Math.round(score2)}</span>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Calculation Verification */}
+                            <div className="calculation-verification">
+                              <div className="verification-row">
+                                <span className="verification-label">{result.city1.city}:</span>
+                                <span className="verification-calc">
+                                  Median of [{sortedCity1.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(medianCity1)}</strong>
+                                  {Math.round(medianCity1) !== Math.round(score1) && (
+                                    <span className="opus-adjusted" title="Adjusted by Opus Judge"> → {Math.round(score1)} (Opus adjusted)</span>
+                                  )}
                                 </span>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          /* Law vs Reality Mode - Dual Scores */
-                          <>
-                            <div className="dual-score-cell">
-                              <span className={`law-score ${legal1 > legal2 ? 'winning' : ''}`} title="What the law says">
-                                {Math.round(legal1)}
-                              </span>
-                              <span className={`enforce-score ${enforce1 > enforce2 ? 'winning' : ''} ${enforce1 < legal1 - 10 ? 'gap-warning' : ''}`} title="How it's enforced">
-                                {Math.round(enforce1)}
-                              </span>
-                            </div>
-                            <div className="dual-score-cell">
-                              <span className={`law-score ${legal2 > legal1 ? 'winning' : ''}`} title="What the law says">
-                                {Math.round(legal2)}
-                              </span>
-                              <span className={`enforce-score ${enforce2 > enforce1 ? 'winning' : ''} ${enforce2 < legal2 - 10 ? 'gap-warning' : ''}`} title="How it's enforced">
-                                {Math.round(enforce2)}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                        </div>
-
-                        {/* Evidence Panel - Expanded with Individual LLM Opinions (Phase 3) */}
-                        {isEvidenceExpanded && (
-                          <div className="evidence-panel">
-                            <div className="evidence-header">
-                              <span className="evidence-title">📚 {metric.shortName} - LLM Opinions & Sources</span>
-                              <button className="evidence-close" onClick={() => setExpandedEvidence(null)}>×</button>
-                            </div>
-                            <div className="evidence-content">
-                              {/* Phase 3: Individual LLM Opinions for City 1 */}
-                              <div className="llm-opinions-section">
-                                <div className="opinions-city-header">
-                                  <span className="city-label">{result.city1.city}</span>
-                                  <span className="consensus-label">Consensus: {Math.round(score1)}</span>
-                                </div>
-                                <div className="llm-opinions-grid">
-                                  {city1Metric?.llmScores?.map((llmScore, idx) => {
-                                    const config = LLM_CONFIGS[llmScore.llmProvider];
-                                    return (
-                                      <div key={idx} className="llm-opinion-item">
-                                        <span className="llm-opinion-icon">{config?.icon || '🤖'}</span>
-                                        <span className="llm-opinion-name">{config?.shortName || llmScore.llmProvider}</span>
-                                        <span className="llm-opinion-score">{Math.round(llmScore.normalizedScore)}</span>
-                                      </div>
-                                    );
-                                  }) || <span className="no-opinions">No LLM data</span>}
-                                </div>
                               </div>
-
-                              {/* Phase 3: Individual LLM Opinions for City 2 */}
-                              <div className="llm-opinions-section">
-                                <div className="opinions-city-header">
-                                  <span className="city-label">{result.city2.city}</span>
-                                  <span className="consensus-label">Consensus: {Math.round(score2)}</span>
-                                </div>
-                                <div className="llm-opinions-grid">
-                                  {city2Metric?.llmScores?.map((llmScore, idx) => {
-                                    const config = LLM_CONFIGS[llmScore.llmProvider];
-                                    return (
-                                      <div key={idx} className="llm-opinion-item">
-                                        <span className="llm-opinion-icon">{config?.icon || '🤖'}</span>
-                                        <span className="llm-opinion-name">{config?.shortName || llmScore.llmProvider}</span>
-                                        <span className="llm-opinion-score">{Math.round(llmScore.normalizedScore)}</span>
-                                      </div>
-                                    );
-                                  }) || <span className="no-opinions">No LLM data</span>}
-                                </div>
+                              <div className="verification-row">
+                                <span className="verification-label">{result.city2.city}:</span>
+                                <span className="verification-calc">
+                                  Median of [{sortedCity2.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(medianCity2)}</strong>
+                                  {Math.round(medianCity2) !== Math.round(score2) && (
+                                    <span className="opus-adjusted" title="Adjusted by Opus Judge"> → {Math.round(score2)} (Opus adjusted)</span>
+                                  )}
+                                </span>
                               </div>
+                            </div>
 
-                              {/* Standard Deviation Info */}
-                              {city1Metric?.standardDeviation !== undefined && (
-                                <div className="deviation-info">
-                                  <span className="deviation-label">Score Variance:</span>
-                                  <span className="deviation-value">σ = {city1Metric.standardDeviation.toFixed(1)}</span>
-                                  <span className={`deviation-level ${city1Metric.confidenceLevel}`}>
-                                    {city1Metric.confidenceLevel === 'unanimous' ? 'High Agreement' :
-                                     city1Metric.confidenceLevel === 'strong' ? 'Good Agreement' :
-                                     city1Metric.confidenceLevel === 'moderate' ? 'Some Disagreement' : 'Split Opinions'}
-                                  </span>
-                                </div>
-                              )}
-
-                              <div className="evidence-sources">
-                                <span className="evidence-label">Primary Sources:</span>
-                                {(() => {
-                                  // Collect all evidence from both cities' LLM scores
-                                  const allEvidence: EvidenceItem[] = [];
-                                  city1Metric?.llmScores?.forEach(score => {
-                                    if (score.evidence) allEvidence.push(...score.evidence);
-                                  });
-                                  city2Metric?.llmScores?.forEach(score => {
-                                    if (score.evidence) allEvidence.push(...score.evidence);
-                                  });
-
-                                  // Deduplicate by URL
-                                  const uniqueByUrl = Array.from(
-                                    new Map(allEvidence.map(e => [e.url, e])).values()
-                                  );
-
-                                  if (uniqueByUrl.length === 0) {
-                                    return <p className="no-sources">No specific sources cited for this metric.</p>;
-                                  }
-
-                                  return (
-                                    <ul className="source-list">
-                                      {uniqueByUrl.slice(0, 5).map((ev, idx) => (
-                                        <li key={idx}>
-                                          <a href={ev.url} target="_blank" rel="noopener noreferrer">
-                                            {ev.title || new URL(ev.url).hostname}
-                                          </a>
-                                          {ev.snippet && (
-                                            <span className="source-snippet" title={ev.snippet}>
-                                              — {ev.snippet.length > 80 ? ev.snippet.substring(0, 80) + '...' : ev.snippet}
-                                            </span>
-                                          )}
-                                        </li>
-                                      ))}
-                                      {uniqueByUrl.length > 5 && (
-                                        <li className="more-sources">+{uniqueByUrl.length - 5} more sources</li>
-                                      )}
-                                    </ul>
-                                  );
-                                })()}
+                            {/* Standard Deviation & Confidence */}
+                            <div className="breakdown-stats">
+                              <div className="stat-item">
+                                <span className="stat-label">Score Variance:</span>
+                                <span className="stat-value">σ = {stdDev.toFixed(1)}</span>
                               </div>
-                              <p className="evidence-note">
-                                Individual LLM scores combined into consensus by Claude Opus 4.5 Judge.
-                              </p>
+                              <div className="stat-item">
+                                <span className={`confidence-badge ${confidence1}`}>
+                                  {confidence1 === 'unanimous' ? 'Unanimous Agreement' :
+                                   confidence1 === 'strong' ? 'Strong Agreement' :
+                                   confidence1 === 'moderate' ? 'Moderate Agreement' : 'Split Opinions'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Judge Explanation */}
+                            {(city1Metric?.judgeExplanation || city2Metric?.judgeExplanation) && (
+                              <div className="judge-explanation-section">
+                                <span className="explanation-header">🎭 Opus Judge Analysis:</span>
+                                {city1Metric?.judgeExplanation && (
+                                  <div className="explanation-item">
+                                    <span className="explanation-city">{result.city1.city}:</span>
+                                    <p>{city1Metric.judgeExplanation}</p>
+                                  </div>
+                                )}
+                                {city2Metric?.judgeExplanation && (
+                                  <div className="explanation-item">
+                                    <span className="explanation-city">{result.city2.city}:</span>
+                                    <p>{city2Metric.judgeExplanation}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Sources Section */}
+                            <div className="breakdown-sources">
+                              <span className="sources-header">📚 Sources:</span>
+                              {(() => {
+                                const allEvidence: EvidenceItem[] = [];
+                                city1Metric?.llmScores?.forEach(score => {
+                                  if (score.evidence) allEvidence.push(...score.evidence);
+                                });
+                                city2Metric?.llmScores?.forEach(score => {
+                                  if (score.evidence) allEvidence.push(...score.evidence);
+                                });
+                                const uniqueByUrl = Array.from(new Map(allEvidence.map(e => [e.url, e])).values());
+
+                                if (uniqueByUrl.length === 0) {
+                                  return <p className="no-sources">No specific sources cited for this metric.</p>;
+                                }
+
+                                return (
+                                  <ul className="source-list">
+                                    {uniqueByUrl.slice(0, 5).map((ev, idx) => (
+                                      <li key={idx}>
+                                        <a href={ev.url} target="_blank" rel="noopener noreferrer">
+                                          {ev.title || (() => { try { return new URL(ev.url).hostname; } catch { return ev.url; } })()}
+                                        </a>
+                                        {ev.snippet && (
+                                          <span className="source-snippet" title={ev.snippet}>
+                                            — {ev.snippet.length > 60 ? ev.snippet.substring(0, 60) + '...' : ev.snippet}
+                                          </span>
+                                        )}
+                                      </li>
+                                    ))}
+                                    {uniqueByUrl.length > 5 && (
+                                      <li className="more-sources">+{uniqueByUrl.length - 5} more sources</li>
+                                    )}
+                                  </ul>
+                                );
+                              })()}
                             </div>
                           </div>
                         )}
