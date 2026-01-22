@@ -339,9 +339,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ onCompare, isLoading
       </div>
 
       <p className="info-text bottom-info">
-        Analysis uses Multiple LLMs with our proprietary weighted average LIFE score technology to verify all 100 legal freedom metrics.
-        <br />
-        <span className="info-highlight">No fabricated data - only verified facts.</span>
+        Analysis uses our proprietary weighted average multi variant Life score technology to verify and evaluate all 100 freedom metrics.
       </p>
     </div>
   );
