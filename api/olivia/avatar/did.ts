@@ -1,6 +1,14 @@
 /**
- * LIFE SCORE - D-ID Agents API (Fallback Avatar)
- * D-ID Agents API for conversational AI avatars
+ * LIFE SCORE - D-ID Agents API
+ *
+ * ⚠️ DEPRECATED: This file uses D-ID Agents API which has its own LLM brain.
+ *
+ * Option B Architecture: Use streams.ts instead.
+ * - OpenAI Assistant = ALL intelligence (brain)
+ * - D-ID Streams API = Avatar video only (no brain)
+ *
+ * This file is kept for reference but should NOT be used.
+ * Use /api/olivia/avatar/streams for Option B compliant avatar.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';

@@ -292,57 +292,26 @@
   box-shadow: var(--shadow-inset);
 }
 
-/* D-ID Agent Widget Embedding in Viewport */
-.viewport-screen did-agent {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+/* ═══════════════════════════════════════════════════════════════════
+   D-ID Streams Video (Option B: Avatar Only, OpenAI is Brain)
+   ═══════════════════════════════════════════════════════════════════ */
+.avatar-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   z-index: 5;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 }
 
-/* Hide D-ID's built-in chat - we use our own */
-#olivia-viewport input,
-#olivia-viewport textarea,
-#olivia-viewport [class*="chat"],
-#olivia-viewport [class*="input"],
-#olivia-viewport [class*="message"],
-#olivia-viewport button:not(.our-button) {
+/* Hide native video controls */
+.avatar-video::-webkit-media-controls {
   display: none !important;
 }
 
-/* Keep only the video visible */
-#olivia-viewport video,
-#olivia-viewport canvas {
-  display: block !important;
-}
-
-/* Override D-ID widget default styles when inside viewport */
-.viewport-screen did-agent > div,
-.viewport-screen did-agent > div > div {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 0 !important;
-}
-
-/* Target the video element inside D-ID widget */
-.viewport-screen did-agent video {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  border-radius: 0 !important;
-}
-
-/* Target D-ID iframe if used */
-.viewport-screen did-agent iframe {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-  border-radius: 0 !important;
+.avatar-video::-webkit-media-controls-enclosure {
+  display: none !important;
 }
 
 /* Screen vignette for depth */

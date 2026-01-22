@@ -274,10 +274,13 @@ export async function closeHeyGenSession(sessionId: string): Promise<void> {
 }
 
 // ============================================================================
-// D-ID AVATAR API (FALLBACK)
+// D-ID AGENTS API (⚠️ DEPRECATED - Uses D-ID's own LLM brain)
 // ============================================================================
+// Option B Architecture: Use useDIDStream hook instead which calls /api/olivia/avatar/streams
+// These functions are kept for reference but should NOT be used.
 
 /**
+ * @deprecated Use useDIDStream hook instead. D-ID Agents have their own LLM brain.
  * Create a D-ID agent session
  */
 export async function createDIDSession(): Promise<DIDAgentResponse> {
@@ -301,6 +304,7 @@ export async function createDIDSession(): Promise<DIDAgentResponse> {
 }
 
 /**
+ * @deprecated Use useDIDStream hook instead. D-ID Agents have their own LLM brain.
  * Send a chat message through D-ID agent
  */
 export async function didChat(
@@ -331,6 +335,7 @@ export async function didChat(
 }
 
 /**
+ * @deprecated Use useDIDStream hook instead. D-ID Agents have their own LLM brain.
  * Close D-ID session
  */
 export async function closeDIDSession(sessionId: string): Promise<void> {

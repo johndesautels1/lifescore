@@ -1,6 +1,12 @@
 /**
  * LIFE SCORE™ Ask Olivia - Premium Edition
  *
+ * ARCHITECTURE: Option B
+ * - OpenAI Assistant = ALL intelligence (the brain)
+ * - D-ID Streams = Avatar video only (no brain)
+ *
+ * Flow: User → OpenAI → Response → D-ID speaks response
+ *
  * Design Philosophy:
  * - James Bond: Sleek sophistication, MI6 briefing room elegance
  * - Airbus A320: Glass cockpit precision, information-dense displays
@@ -18,6 +24,7 @@ import { DEFAULT_QUICK_ACTIONS } from '../types/olivia';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
+import { useDIDStream } from '../hooks/useDIDStream';
 import './AskOlivia.css';
 
 interface AskOliviaProps {
@@ -27,99 +34,16 @@ interface AskOliviaProps {
 const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showTextChat, setShowTextChat] = useState(false);
-  const [isAvatarReady, setIsAvatarReady] = useState(false);
-  const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const [inputText, setInputText] = useState('');
+  const [autoSpeak, setAutoSpeak] = useState(true);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const lastSpokenMsgRef = useRef<string | null>(null);
 
-  // Build context string from comparison result
-  const buildContextString = useCallback(() => {
-    if (!comparisonResult) return '';
-
-    const city1 = comparisonResult.city1;
-    const city2 = comparisonResult.city2;
-
-    // Handle both CityScore (normalizedScore) and CityConsensusScore (totalConsensusScore)
-    const getScore = (city: typeof city1) => {
-      if (!city) return 'N/A';
-      if ('normalizedScore' in city) return city.normalizedScore;
-      if ('totalConsensusScore' in city) return city.totalConsensusScore;
-      return 'N/A';
-    };
-
-    let context = `You are Olivia, an AI advisor for LIFE SCORE - a platform comparing cities for expat relocation.\n\n`;
-    context += `CURRENT COMPARISON DATA:\n`;
-    context += `- City 1: ${city1?.city || 'Unknown'}, ${city1?.country || ''} - Score: ${getScore(city1)}/100\n`;
-    context += `- City 2: ${city2?.city || 'Unknown'}, ${city2?.country || ''} - Score: ${getScore(city2)}/100\n`;
-    context += `- Winner: ${comparisonResult.winner || 'TBD'}\n`;
-    context += `- Score Difference: ${comparisonResult.scoreDifference || 0} points\n\n`;
-    context += `Answer questions about this comparison. Be specific with scores and data.`;
-
-    return context;
-  }, [comparisonResult]);
-
-  // Load D-ID Agent SDK
-  useEffect(() => {
-    // Remove existing widget if comparison changed
-    const existingWidget = document.querySelector('did-agent');
-    if (existingWidget) {
-      existingWidget.remove();
-    }
-    const existingScript = document.querySelector('script[data-name="did-agent"]');
-    if (existingScript) {
-      existingScript.remove();
-    }
-
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://agent.d-id.com/v2/index.js';
-    script.setAttribute('data-name', 'did-agent');
-    script.setAttribute('data-mode', 'full');
-    script.setAttribute('data-client-key', 'Z29vZ2xlLW9hdXRoMnwxMDY0MjQyNjA4ODQzODA1NDA4OTM6dEQ5LXU2WW1QTm8zbWp0WEhZcHhw');
-    script.setAttribute('data-agent-id', 'v2_agt_jwRjOIM4');
-    script.setAttribute('data-monitor', 'true');
-    script.setAttribute('data-target-id', 'olivia-viewport');
-
-    // Custom Olivia greeting (overrides D-ID default)
-    const city1Name = comparisonResult?.city1?.city || '';
-    const city2Name = comparisonResult?.city2?.city || '';
-    const greeting = city1Name && city2Name
-      ? `Hello, I'm Olivia, your LIFE SCORE advisor. I've analyzed your ${city1Name} versus ${city2Name} comparison. What would you like to know?`
-      : `Hello, I'm Olivia, your LIFE SCORE advisor. How can I help you understand your city comparison today?`;
-    script.setAttribute('data-greeting', greeting);
-
-    // Pass comparison context to the agent
-    const context = buildContextString();
-    if (context) {
-      script.setAttribute('data-context', context);
-      console.log('[AskOlivia] Passing context to D-ID agent');
-    }
-
-    console.log('[AskOlivia] Loading D-ID in full mode targeting #olivia-viewport');
-
-    script.onload = () => {
-      console.log('[AskOlivia] D-ID Agent SDK loaded in full mode');
-      setTimeout(() => setIsAvatarReady(true), 2000);
-    };
-
-    script.onerror = () => {
-      console.error('[AskOlivia] Failed to load D-ID Agent SDK');
-    };
-
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup handled at start of effect
-    };
-  }, [comparisonResult, buildContextString]);
-
-  // Real-time clock for cockpit feel
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Chat functionality
+  // ═══════════════════════════════════════════════════════════════════
+  // OPENAI CHAT - The Brain (ALL intelligence comes from here)
+  // ═══════════════════════════════════════════════════════════════════
   const {
     messages,
     isTyping,
@@ -128,7 +52,26 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     clearHistory,
   } = useOliviaChat(comparisonResult);
 
-  // Voice recognition
+  // ═══════════════════════════════════════════════════════════════════
+  // D-ID STREAMS - Avatar Only (NO brain, just video/lip-sync)
+  // ═══════════════════════════════════════════════════════════════════
+  const {
+    status: didStatus,
+    isConnected: isAvatarConnected,
+    isSpeaking: isAvatarSpeaking,
+    connect: connectAvatar,
+    speak: makeAvatarSpeak,
+    disconnect: disconnectAvatar,
+  } = useDIDStream({
+    videoRef,
+    onSpeakingStart: () => console.log('[AskOlivia] Avatar started speaking'),
+    onSpeakingEnd: () => console.log('[AskOlivia] Avatar finished speaking'),
+    onError: (err) => console.error('[AskOlivia] Avatar error:', err),
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // VOICE RECOGNITION - Speech to text input
+  // ═══════════════════════════════════════════════════════════════════
   const {
     isSupported: voiceSupported,
     isListening,
@@ -146,74 +89,74 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     },
   });
 
-  // TTS for voice output
+  // ═══════════════════════════════════════════════════════════════════
+  // TTS FALLBACK - Browser speech synthesis if D-ID unavailable
+  // ═══════════════════════════════════════════════════════════════════
   const { isPlaying: isTTSSpeaking, play: speakText, stop: stopSpeaking } = useTTS();
 
-  const [inputText, setInputText] = useState('');
-  const [autoSpeak, setAutoSpeak] = useState(true);
-  const lastSpokenMsgRef = useRef<string | null>(null);
+  // ═══════════════════════════════════════════════════════════════════
+  // EFFECTS
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Real-time clock for cockpit feel
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Auto-connect to D-ID Streams on mount
+  useEffect(() => {
+    console.log('[AskOlivia] Initializing D-ID Streams connection (avatar only, OpenAI is brain)');
+    connectAvatar();
+
+    return () => {
+      disconnectAvatar();
+    };
+  }, [connectAvatar, disconnectAvatar]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Make D-ID avatar speak text
-  const makeDIDSpeak = useCallback(async (text: string) => {
-    try {
-      // Try to find D-ID's global API
-      const didAgent = document.querySelector('did-agent') as any;
-      if (didAgent && typeof didAgent.speak === 'function') {
-        await didAgent.speak(text);
-        return true;
-      }
-
-      // Try window.DID global
-      if ((window as any).DID?.speak) {
-        await (window as any).DID.speak(text);
-        return true;
-      }
-
-      // Fallback: Send chat message to D-ID agent
-      if (didAgent && typeof didAgent.sendMessage === 'function') {
-        // Send as if user said it, D-ID will respond and speak
-        return false; // Let D-ID handle it
-      }
-
-      return false;
-    } catch (err) {
-      console.warn('[AskOlivia] D-ID speak failed:', err);
-      return false;
-    }
-  }, []);
-
-  // Auto-speak assistant responses through D-ID avatar
+  // ═══════════════════════════════════════════════════════════════════
+  // AUTO-SPEAK: When OpenAI responds, make D-ID avatar speak it
+  // This is the KEY Option B connection: OpenAI brain → D-ID mouth
+  // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (autoSpeak && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      // Only speak new messages from assistant
+
+      // Only speak NEW assistant messages (from OpenAI)
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
-        setIsAvatarSpeaking(true);
 
-        // Try D-ID first, fallback to browser TTS
-        makeDIDSpeak(lastMessage.content).then((didWorked) => {
-          if (!didWorked) {
-            // Fallback to browser TTS
+        console.log('[AskOlivia] OpenAI responded, sending to D-ID avatar to speak');
+
+        // Try D-ID avatar first
+        if (isAvatarConnected) {
+          makeAvatarSpeak(lastMessage.content).catch((err) => {
+            console.warn('[AskOlivia] D-ID speak failed, falling back to browser TTS:', err);
             speakText(lastMessage.content);
-          }
-        });
-
-        // Reset speaking state after estimated duration
-        setTimeout(() => setIsAvatarSpeaking(false), lastMessage.content.length * 60);
+          });
+        } else {
+          // Fallback to browser TTS
+          console.log('[AskOlivia] D-ID not connected, using browser TTS');
+          speakText(lastMessage.content);
+        }
       }
     }
-  }, [messages, autoSpeak, speakText, makeDIDSpeak]);
+  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // HANDLERS
+  // ═══════════════════════════════════════════════════════════════════
 
   const handleSendMessage = useCallback(async (text?: string) => {
     const messageText = text || inputText.trim();
     if (!messageText) return;
     setInputText('');
+    // Send to OpenAI (the brain) - response will auto-trigger D-ID speak
     await sendMessage(messageText);
   }, [inputText, sendMessage]);
 
@@ -231,19 +174,30 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   }, [isListening, startListening, stopListening]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Stop propagation to prevent D-ID widget from capturing keystrokes
     e.stopPropagation();
-
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  // Data context
+  // ═══════════════════════════════════════════════════════════════════
+  // DATA CONTEXT
+  // ═══════════════════════════════════════════════════════════════════
   const hasComparisonData = !!comparisonResult;
   const city1 = comparisonResult?.city1?.city || 'City 1';
   const city2 = comparisonResult?.city2?.city || 'City 2';
+
+  // Determine avatar status for display
+  const getAvatarStatus = () => {
+    if (isAvatarSpeaking) return 'SPEAKING';
+    if (isAvatarConnected) return 'READY';
+    if (didStatus === 'connecting') return 'CONNECTING';
+    if (didStatus === 'error') return 'ERROR';
+    return 'INIT...';
+  };
+
+  const isAvatarReady = isAvatarConnected || didStatus === 'connected';
 
   // Cockpit-style time formatting
   const formatTime = (date: Date) => {
@@ -273,13 +227,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
           <div className="status-cluster">
             <div className="status-indicator online">
               <span className="indicator-dot"></span>
-              <span className="indicator-label">SYSTEM ONLINE</span>
+              <span className="indicator-label">OPENAI BRAIN</span>
             </div>
             <div className="status-indicator">
               <span className="indicator-icon">◈</span>
               <span className="indicator-label">D-ID AVATAR</span>
               <span className={`indicator-value ${isAvatarReady ? 'active' : ''}`}>
-                {isAvatarReady ? 'READY' : 'INIT...'}
+                {getAvatarStatus()}
               </span>
             </div>
           </div>
@@ -307,7 +261,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          MAIN VIEWPORT - The TV Screen / Video Interface
+          MAIN VIEWPORT - D-ID Streams Video (Avatar Only, No Brain)
       ═══════════════════════════════════════════════════════════════════ */}
       <main className="viewport-container">
         <div className="viewport-frame">
@@ -318,9 +272,16 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             <div className="bezel-corner bl"></div>
             <div className="bezel-corner br"></div>
 
-            {/* The actual video screen */}
-            <div id="olivia-viewport" className="viewport-screen" ref={viewportRef}>
-              {/* D-ID Agent renders here in full mode */}
+            {/* The actual video screen - D-ID WebRTC stream */}
+            <div id="olivia-viewport" className="viewport-screen">
+              {/* D-ID Streams video element */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted={false}
+                className="avatar-video"
+              />
 
               {/* Overlay gradient for depth */}
               <div className="screen-vignette"></div>
@@ -341,7 +302,11 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
                   <div className="loading-ring delay-1"></div>
                   <div className="loading-ring delay-2"></div>
                   <div className="loading-text">INITIALIZING OLIVIA</div>
-                  <div className="loading-subtext">Loading D-ID Avatar Agent</div>
+                  <div className="loading-subtext">
+                    {didStatus === 'error'
+                      ? 'Connection failed - using text mode'
+                      : 'Connecting to D-ID Streams...'}
+                  </div>
                 </div>
               )}
             </div>
@@ -351,8 +316,10 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
           <div className="viewport-info-bar">
             <div className="info-segment">
               <span className="segment-icon">◉</span>
-              <span className="segment-label">VIDEO FEED</span>
-              <span className="segment-value">{isAvatarReady ? 'LIVE' : 'STANDBY'}</span>
+              <span className="segment-label">VIDEO</span>
+              <span className={`segment-value ${isAvatarReady ? 'active' : ''}`}>
+                {isAvatarReady ? 'LIVE' : 'STANDBY'}
+              </span>
             </div>
             <div className="info-segment">
               <span className="segment-icon">◈</span>
@@ -363,10 +330,15 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             </div>
             <div className="info-segment">
               <span className="segment-icon">◇</span>
-              <span className="segment-label">DATA CONTEXT</span>
+              <span className="segment-label">DATA</span>
               <span className={`segment-value ${hasComparisonData ? 'active' : ''}`}>
                 {hasComparisonData ? `${city1} / ${city2}` : 'NO DATA'}
               </span>
+            </div>
+            <div className="info-segment">
+              <span className="segment-icon">⚡</span>
+              <span className="segment-label">BRAIN</span>
+              <span className="segment-value active">OPENAI</span>
             </div>
           </div>
         </div>
@@ -483,7 +455,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          TEXT CHAT PANEL - Expandable Transcript
+          TEXT CHAT PANEL - Expandable Transcript (OpenAI responses)
       ═══════════════════════════════════════════════════════════════════ */}
       {showTextChat && (
         <section className="chat-transcript-panel">
@@ -531,12 +503,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
                     onClick={() => {
                       if (isTTSSpeaking) {
                         stopSpeaking();
+                      } else if (isAvatarConnected) {
+                        makeAvatarSpeak(msg.content);
                       } else {
                         speakText(msg.content);
                       }
                     }}
                   >
-                    <span>{isTTSSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
+                    <span>{isTTSSpeaking || isAvatarSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
                   </button>
                 )}
               </div>
@@ -546,7 +520,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               <div className="transcript-message assistant">
                 <div className="message-header">
                   <span className="message-sender">OLIVIA</span>
-                  <span className="message-time">TYPING...</span>
+                  <span className="message-time">THINKING...</span>
                 </div>
                 <div className="typing-dots">
                   <span></span><span></span><span></span>
@@ -579,7 +553,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
           <div className="connection-status">
             <span className={`status-dot ${isAvatarReady ? 'online' : 'connecting'}`}></span>
             <span className="status-text">
-              {isAvatarReady ? 'SECURE CONNECTION' : 'ESTABLISHING LINK'}
+              {isAvatarReady ? 'OPENAI + D-ID CONNECTED' : 'ESTABLISHING LINK'}
             </span>
           </div>
         </div>
