@@ -292,44 +292,41 @@
   box-shadow: var(--shadow-inset);
 }
 
-/* D-ID Agent Widget Embedding */
-.viewport-screen did-agent,
-.viewport-screen [data-did-agent] {
+/* D-ID Agent Widget Embedding in Viewport */
+.viewport-screen did-agent {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  z-index: 1;
+  z-index: 5;
 }
 
-/* Style D-ID widget parts */
-did-agent::part(container) {
+/* Override D-ID widget default styles when inside viewport */
+.viewport-screen did-agent > div,
+.viewport-screen did-agent > div > div {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   border-radius: 0 !important;
-  background: transparent !important;
 }
 
-did-agent::part(video-container) {
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 0 !important;
-}
-
-did-agent::part(video) {
+/* Target the video element inside D-ID widget */
+.viewport-screen did-agent video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
   border-radius: 0 !important;
 }
 
-/* Hide default D-ID UI elements we don't need */
-did-agent::part(button),
-did-agent::part(chat-button),
-did-agent::part(minimize-button) {
-  display: none !important;
+/* Target D-ID iframe if used */
+.viewport-screen did-agent iframe {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
 }
 
 /* Screen vignette for depth */
