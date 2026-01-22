@@ -177,11 +177,8 @@ async function createStream(authHeader: string): Promise<StreamSession> {
         source_url: OLIVIA_SOURCE_URL,
         driver_url: 'bank://lively', // Natural movement driver
         config: {
-          stitch: true, // Better quality
+          stitch: true,
           result_format: 'mp4',
-          crop: {
-            type: 'wide', // Show more of body, not just face close-up
-          },
         },
       }),
     },
