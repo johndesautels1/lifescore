@@ -113,7 +113,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     console.log('[AskOlivia] Initializing D-ID Streams connection (avatar only, OpenAI is brain)');
     connectAvatar();
 
+    // Cleanup D-ID session on page refresh/close to prevent "Max user sessions" error
+    const handleBeforeUnload = () => {
+      disconnectAvatar();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       disconnectAvatar();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

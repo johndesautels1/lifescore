@@ -124,35 +124,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
 
-    // TEMP: Skip DB fetch to avoid hanging
-    console.log("[Auth] Skipping profile fetch");
-    return { profile: null, preferences: null };
+    console.log("[Auth] Fetching profile for user:", userId);
+
+    // Helper: wrap query with timeout to prevent hanging
+    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error('Database query timeout')), ms)
+        ),
+      ]);
+    };
+
     try {
-      // Fetch profile
-      const { data: profile, error: profileError } = await supabase
+      // Fetch profile with timeout - use maybeSingle() to handle missing rows gracefully
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileError && (profileError as any).code !== 'PGRST116') {
+      const { data: profile, error: profileError } = await withTimeout(profilePromise, 5000);
+
+      if (profileError) {
         console.error('[Auth] Error fetching profile:', profileError);
+      } else if (profile) {
+        console.log('[Auth] Profile loaded:', profile.email);
+      } else {
+        console.log('[Auth] No profile found for user (will use defaults)');
       }
 
-      // Fetch preferences
-      const { data: preferences, error: prefsError } = await supabase
+      // Fetch preferences with timeout
+      const prefsPromise = supabase
         .from('user_preferences')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (prefsError && (prefsError as any).code !== 'PGRST116') {
+      const { data: preferences, error: prefsError } = await withTimeout(prefsPromise, 5000);
+
+      if (prefsError) {
         console.error('[Auth] Error fetching preferences:', prefsError);
       }
 
-      return { profile, preferences };
+      return { profile: profile || null, preferences: preferences || null };
     } catch (error) {
       console.error('[Auth] Error in fetchUserData:', error);
+      // Return nulls on timeout/error - app continues without DB profile
       return { profile: null, preferences: null };
     }
   }, [state.isConfigured]);
