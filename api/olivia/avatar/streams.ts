@@ -162,6 +162,7 @@ async function createStream(authHeader: string): Promise<StreamSession> {
 
 /**
  * Start the stream with SDP answer from client
+ * D-ID expects answer as RTCSessionDescriptionInit object: { type: 'answer', sdp: '...' }
  */
 async function startStream(
   authHeader: string,
@@ -178,7 +179,10 @@ async function startStream(
         'Authorization': authHeader,
       },
       body: JSON.stringify({
-        answer: sdpAnswer,
+        answer: {
+          type: 'answer',
+          sdp: sdpAnswer,
+        },
         session_id: sessionId,
       }),
     },
