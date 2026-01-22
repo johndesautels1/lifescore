@@ -150,20 +150,57 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-speak assistant responses (D-ID agent handles its own speech)
+  // Make D-ID avatar speak text
+  const makeDIDSpeak = useCallback(async (text: string) => {
+    try {
+      // Try to find D-ID's global API
+      const didAgent = document.querySelector('did-agent') as any;
+      if (didAgent && typeof didAgent.speak === 'function') {
+        await didAgent.speak(text);
+        return true;
+      }
+
+      // Try window.DID global
+      if ((window as any).DID?.speak) {
+        await (window as any).DID.speak(text);
+        return true;
+      }
+
+      // Fallback: Send chat message to D-ID agent
+      if (didAgent && typeof didAgent.sendMessage === 'function') {
+        // Send as if user said it, D-ID will respond and speak
+        return false; // Let D-ID handle it
+      }
+
+      return false;
+    } catch (err) {
+      console.warn('[AskOlivia] D-ID speak failed:', err);
+      return false;
+    }
+  }, []);
+
+  // Auto-speak assistant responses through D-ID avatar
   useEffect(() => {
     if (autoSpeak && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       // Only speak new messages from assistant
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
-        // Use browser TTS as backup voice
-        speakText(lastMessage.content);
         setIsAvatarSpeaking(true);
-        setTimeout(() => setIsAvatarSpeaking(false), lastMessage.content.length * 50);
+
+        // Try D-ID first, fallback to browser TTS
+        makeDIDSpeak(lastMessage.content).then((didWorked) => {
+          if (!didWorked) {
+            // Fallback to browser TTS
+            speakText(lastMessage.content);
+          }
+        });
+
+        // Reset speaking state after estimated duration
+        setTimeout(() => setIsAvatarSpeaking(false), lastMessage.content.length * 60);
       }
     }
-  }, [messages, autoSpeak, speakText]);
+  }, [messages, autoSpeak, speakText, makeDIDSpeak]);
 
   const handleSendMessage = useCallback(async (text?: string) => {
     const messageText = text || inputText.trim();

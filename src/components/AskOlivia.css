@@ -301,6 +301,22 @@
   z-index: 5;
 }
 
+/* Hide D-ID's built-in chat - we use our own */
+#olivia-viewport input,
+#olivia-viewport textarea,
+#olivia-viewport [class*="chat"],
+#olivia-viewport [class*="input"],
+#olivia-viewport [class*="message"],
+#olivia-viewport button:not(.our-button) {
+  display: none !important;
+}
+
+/* Keep only the video visible */
+#olivia-viewport video,
+#olivia-viewport canvas {
+  display: block !important;
+}
+
 /* Override D-ID widget default styles when inside viewport */
 .viewport-screen did-agent > div,
 .viewport-screen did-agent > div > div {
