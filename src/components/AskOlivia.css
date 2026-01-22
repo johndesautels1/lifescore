@@ -300,10 +300,12 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 20%;
+  object-fit: contain;
+  object-position: center center;
   z-index: 5;
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  transform: scale(0.55);
+  transform-origin: center 30%;
 }
 
 /* Hide native video controls */

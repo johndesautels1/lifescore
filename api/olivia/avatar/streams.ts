@@ -179,9 +179,6 @@ async function createStream(authHeader: string): Promise<StreamSession> {
         config: {
           stitch: true, // Better quality
           result_format: 'mp4',
-          crop: {
-            type: 'wide', // Show more of body, not just face close-up
-          },
         },
       }),
     },
