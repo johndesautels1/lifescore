@@ -181,8 +181,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // SUPABASE MODE: Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // SUPABASE MODE: Get initial session with timeout
+    const sessionTimeout = setTimeout(() => {
+      console.warn("[Auth] Session check timed out");
+      setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
+    }, 5000);
+
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      clearTimeout(sessionTimeout);
+      if (error) { console.error("[Auth] getSession error:", error); setState(prev => ({ ...prev, isLoading: false })); return; }
       if (session?.user) {
         const { profile, preferences } = await fetchUserData(session.user.id);
         const user = normalizeUser(session.user, profile as Profile | null);
