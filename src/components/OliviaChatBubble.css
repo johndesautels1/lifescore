@@ -283,6 +283,44 @@
   color: var(--bubble-error);
 }
 
+/* Toolbar Widgets */
+.bubble-toolbar {
+  display: flex;
+  gap: 2px;
+  margin-right: 8px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.toolbar-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--bubble-steel);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: rgba(201, 162, 39, 0.2);
+  color: var(--bubble-gold);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.toolbar-btn svg {
+  flex-shrink: 0;
+}
+
 /* Messages */
 .bubble-messages {
   flex: 1;
@@ -414,14 +452,60 @@
   border-radius: 12px 12px 4px 12px;
 }
 
-.message-time {
-  font-size: 0.65rem;
-  color: var(--bubble-steel);
+.message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0 0.5rem;
 }
 
-.bubble-message.user .message-time {
-  text-align: right;
+.message-time {
+  font-size: 0.65rem;
+  color: var(--bubble-steel);
+}
+
+.bubble-message.user .message-footer {
+  justify-content: flex-end;
+}
+
+/* Message Play Button */
+.msg-play-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(201, 162, 39, 0.15);
+  color: var(--bubble-gold);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.6;
+}
+
+.msg-play-btn:hover {
+  opacity: 1;
+  background: rgba(201, 162, 39, 0.3);
+  transform: scale(1.1);
+}
+
+.msg-play-btn.playing {
+  opacity: 1;
+  background: var(--bubble-gold);
+  color: var(--bubble-midnight);
+  animation: pulse-play 1s ease-in-out infinite;
+}
+
+@keyframes pulse-play {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(201, 162, 39, 0); }
+}
+
+.msg-play-btn svg {
+  flex-shrink: 0;
 }
 
 /* Typing Indicator */
