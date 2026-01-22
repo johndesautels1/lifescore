@@ -1,13 +1,7 @@
 /**
  * LIFE SCORE Database Types
  * Auto-generated types for Supabase tables
- *
- * These types match the schema in supabase/migrations/001_initial_schema.sql
  */
-
-// ============================================================================
-// ENUMS
-// ============================================================================
 
 export type UserTier = 'free' | 'pro' | 'enterprise';
 export type ComparisonWinner = 'city1' | 'city2' | 'tie';
@@ -15,15 +9,8 @@ export type MessageRole = 'user' | 'assistant' | 'system';
 export type Theme = 'light' | 'dark' | 'auto';
 export type DefaultView = 'grid' | 'list' | 'table';
 
-// ============================================================================
-// TABLE TYPES
-// ============================================================================
-
-/**
- * User profile (extends Supabase auth.users)
- */
 export interface Profile {
-  id: string; // UUID, matches auth.users.id
+  id: string;
   email: string | null;
   full_name: string | null;
   avatar_url: string | null;
@@ -35,13 +22,10 @@ export interface Profile {
   updated_at: string;
 }
 
-/**
- * Saved comparison/report
- */
 export interface Comparison {
-  id: string; // UUID
-  user_id: string; // UUID
-  comparison_id: string; // Original app comparison ID
+  id: string;
+  user_id: string;
+  comparison_id: string;
   city1_name: string;
   city1_country: string;
   city1_score: number | null;
@@ -50,7 +34,7 @@ export interface Comparison {
   city2_score: number | null;
   winner: ComparisonWinner | null;
   score_difference: number | null;
-  comparison_result: Record<string, unknown>; // Full JSONB data
+  comparison_result: Record<string, unknown>;
   nickname: string | null;
   notes: string | null;
   is_favorite: boolean;
@@ -58,13 +42,10 @@ export interface Comparison {
   updated_at: string;
 }
 
-/**
- * Olivia chat conversation
- */
 export interface OliviaConversation {
-  id: string; // UUID
-  user_id: string; // UUID
-  comparison_id: string | null; // UUID, optional link to comparison
+  id: string;
+  user_id: string;
+  comparison_id: string | null;
   openai_thread_id: string;
   title: string | null;
   message_count: number;
@@ -74,12 +55,9 @@ export interface OliviaConversation {
   updated_at: string;
 }
 
-/**
- * Individual Olivia chat message
- */
 export interface OliviaMessage {
-  id: string; // UUID
-  conversation_id: string; // UUID
+  id: string;
+  conversation_id: string;
   role: MessageRole;
   content: string;
   openai_message_id: string | null;
@@ -87,13 +65,10 @@ export interface OliviaMessage {
   created_at: string;
 }
 
-/**
- * Gamma visual report
- */
 export interface GammaReport {
-  id: string; // UUID
-  user_id: string; // UUID
-  comparison_id: string; // UUID
+  id: string;
+  user_id: string;
+  comparison_id: string;
   gamma_generation_id: string;
   gamma_url: string;
   pdf_url: string | null;
@@ -102,13 +77,10 @@ export interface GammaReport {
   created_at: string;
 }
 
-/**
- * User preferences
- */
 export interface UserPreferences {
-  id: string; // UUID
-  user_id: string; // UUID
-  favorite_cities: string[]; // JSONB array
+  id: string;
+  user_id: string;
+  favorite_cities: string[];
   theme: Theme;
   default_view: DefaultView;
   olivia_auto_speak: boolean;
@@ -116,10 +88,6 @@ export interface UserPreferences {
   created_at: string;
   updated_at: string;
 }
-
-// ============================================================================
-// INSERT TYPES (for creating new records)
-// ============================================================================
 
 export interface ProfileInsert {
   id: string;
@@ -183,10 +151,6 @@ export interface UserPreferencesInsert {
   olivia_voice_enabled?: boolean;
 }
 
-// ============================================================================
-// UPDATE TYPES (for updating records)
-// ============================================================================
-
 export interface ProfileUpdate {
   email?: string | null;
   full_name?: string | null;
@@ -216,70 +180,64 @@ export interface UserPreferencesUpdate {
   olivia_voice_enabled?: boolean;
 }
 
-// ============================================================================
-// SUPABASE DATABASE TYPES (for client initialization)
-// ============================================================================
-
-export interface Database {
+// Supabase expects this structure
+export type Database = {
   public: {
     Tables: {
       profiles: {
         Row: Profile;
         Insert: ProfileInsert;
-        Update: ProfileUpdate;
+        Update: Partial<Profile>;
+        Relationships: [];
       };
       comparisons: {
         Row: Comparison;
         Insert: ComparisonInsert;
-        Update: ComparisonUpdate;
+        Update: Partial<Comparison>;
+        Relationships: [];
       };
       olivia_conversations: {
         Row: OliviaConversation;
         Insert: OliviaConversationInsert;
-        Update: OliviaConversationUpdate;
+        Update: Partial<OliviaConversation>;
+        Relationships: [];
       };
       olivia_messages: {
         Row: OliviaMessage;
         Insert: OliviaMessageInsert;
-        Update: never; // Messages are immutable
+        Update: Partial<OliviaMessage>;
+        Relationships: [];
       };
       gamma_reports: {
         Row: GammaReport;
         Insert: GammaReportInsert;
-        Update: never;
+        Update: Partial<GammaReport>;
+        Relationships: [];
       };
       user_preferences: {
         Row: UserPreferences;
         Insert: UserPreferencesInsert;
-        Update: UserPreferencesUpdate;
+        Update: Partial<UserPreferences>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
-}
+};
 
-// ============================================================================
-// HELPER TYPES
-// ============================================================================
-
-/**
- * Comparison with related data (for list views)
- */
 export interface ComparisonWithRelations extends Comparison {
   gamma_reports?: GammaReport[];
   olivia_conversations?: OliviaConversation[];
 }
 
-/**
- * Conversation with messages (for chat view)
- */
 export interface ConversationWithMessages extends OliviaConversation {
   messages: OliviaMessage[];
   comparison?: Comparison;
 }
 
-/**
- * User data bundle (for initial app load)
- */
 export interface UserDataBundle {
   profile: Profile;
   preferences: UserPreferences;

@@ -1,24 +1,13 @@
 /**
  * LIFE SCORE - Supabase Client
  * Initialize and export the Supabase client for use throughout the app
- *
- * Setup:
- * 1. Create a Supabase project at https://supabase.com
- * 2. Copy your project URL and anon key
- * 3. Add to your .env file (see .env.example)
  */
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database';
-
-// ============================================================================
-// ENVIRONMENT VARIABLES
-// ============================================================================
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
     '[Supabase] Missing environment variables. Auth features will be disabled.\n' +
@@ -26,29 +15,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// ============================================================================
-// SUPABASE CLIENT
-// ============================================================================
-
-/**
- * Supabase client instance
- * Use this for all database and auth operations
- */
-export const supabase = createClient<Database>(
+// Create untyped client to avoid strict type inference issues
+export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
   {
     auth: {
-      // Persist session in localStorage (works with Capacitor)
       persistSession: true,
-      // Auto-refresh tokens before they expire
       autoRefreshToken: true,
-      // Detect session from URL (for OAuth redirects)
       detectSessionInUrl: true,
-      // Storage key prefix
       storageKey: 'lifescore-auth',
     },
-    // Global options
     global: {
       headers: {
         'x-application-name': 'lifescore',
@@ -57,20 +34,10 @@ export const supabase = createClient<Database>(
   }
 );
 
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Check if Supabase is properly configured
- */
 export function isSupabaseConfigured(): boolean {
   return !!(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co');
 }
 
-/**
- * Get the current authenticated user
- */
 export async function getCurrentUser() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {
@@ -80,9 +47,6 @@ export async function getCurrentUser() {
   return user;
 }
 
-/**
- * Get the current session
- */
 export async function getCurrentSession() {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error) {
@@ -91,10 +55,6 @@ export async function getCurrentSession() {
   }
   return session;
 }
-
-// ============================================================================
-// AUTH EVENT LISTENER (for debugging)
-// ============================================================================
 
 if (import.meta.env.DEV) {
   supabase.auth.onAuthStateChange((event, session) => {

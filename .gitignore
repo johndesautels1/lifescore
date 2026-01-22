@@ -32,3 +32,6 @@ dist-ssr
 .vercel
 tmpclaude-*
 nul
+.temp/
+
+.vercel
