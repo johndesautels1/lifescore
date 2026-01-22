@@ -1,152 +1,212 @@
-# LIFE SCORE™ Build Progress & Handoff Instructions
+# LIFE SCORE - Build Progress & Master Handoff
+**Project:** LIFE SCORE - Legal Independence & Freedom Evaluation
+**Owner:** John E. Desautels & Associates / Clues Intelligence LTD
+**Started:** January 13, 2026
+**Last Updated:** January 22, 2026
+**Status:** Production Ready - Deployed on Vercel
 
-## Project: LIFE SCORE™ - Legal Independence & Freedom Evaluation
-## Owner: John E. Desautels & Associates
-## Started: January 13, 2026
-## Status: ✅ CORE BUILD COMPLETE - Ready for API Integration
+---
+
+## CURRENT STATE (January 22, 2026)
+
+The application is **fully functional and deployed**. Recent work has focused on:
+- Premium Ask Olivia AI assistant page
+- User authentication system
+- UI polish and bug fixes
 
 ---
 
 ## BUILD PHASES
 
-### ✅ PHASE 1: Foundation (COMPLETED)
-- [x] Created Vite + React + TypeScript project
-- [x] Installed dependencies
-- [x] Created directory structure
-- [x] Created TypeScript types (`src/types/metrics.ts`)
-- [x] **CRITICAL: Created all 100 freedom metrics definitions** (`src/data/metrics.ts`)
-  - Personal Freedom & Morality: 15 metrics
-  - Housing, Property & HOA Control: 20 metrics
-  - Business & Work Regulation: 25 metrics
-  - Transportation & Daily Movement: 15 metrics
-  - Policing, Courts & Enforcement: 15 metrics
-  - Speech, Lifestyle & Culture: 10 metrics
-  - TOTAL: 100 metrics ✓
+### PHASE 1: Foundation (COMPLETED)
+- [x] Vite + React + TypeScript project
+- [x] All dependencies installed
+- [x] Directory structure created
+- [x] TypeScript types (`src/types/metrics.ts`)
+- [x] **100 freedom metrics definitions** (`src/data/metrics.ts`)
 
-### ✅ PHASE 2: Core Components (COMPLETED)
+### PHASE 2: Core Components (COMPLETED)
 - [x] Header component with CLUES branding
 - [x] Footer component
-- [x] CitySelector component with inputs & popular comparisons
+- [x] CitySelector component
 - [x] Results component with category breakdown
-- [x] LoadingState component with progress tracking
+- [x] LoadingState component
 - [x] Scoring engine (`src/api/scoring.ts`)
-- [x] useComparison hook (`src/hooks/useComparison.ts`)
+- [x] useComparison hook
 
-### ⬜ PHASE 3: Results & Display
-- [ ] WinnerHero component
-- [ ] MetricDetail component
-- [ ] CategoryBar component
-- [ ] ConfidenceIndicator component
-- [ ] SourceCitation component
+### PHASE 3: Results & Display (COMPLETED)
+- [x] WinnerHero component
+- [x] MetricDetail component
+- [x] CategoryBar component
+- [x] EnhancedComparison with Law/Reality toggle
+- [x] Multi-model LLM comparison (Claude, GPT-4, Gemini, etc.)
 
-### ⬜ PHASE 4: API Integration
-- [ ] Claude API service (Sonnet + web_search)
-- [ ] Scoring calculation engine
-- [ ] Rate limiting & error handling
-- [ ] Response parsing & normalization
+### PHASE 4: API Integration (COMPLETED)
+- [x] Claude API service with web_search
+- [x] Multi-LLM orchestration (Anthropic, OpenAI, Google, Groq, Perplexity)
+- [x] Tavily web search integration
+- [x] Rate limiting & error handling
+- [x] Response parsing & normalization
 
-### ⬜ PHASE 5: Styling & Polish
-- [ ] Global CSS with CLUES brand colors
-- [ ] Responsive design
-- [ ] Animations & transitions
-- [ ] Accessibility improvements
+### PHASE 5: Styling & Polish (COMPLETED)
+- [x] Global CSS with CLUES brand colors
+- [x] Responsive design
+- [x] Dark/Light theme toggle
+- [x] Animations & transitions
+- [x] Glassmorphic UI effects
 
-### ⬜ PHASE 6: Testing & Deployment
-- [ ] TypeScript compilation verification
-- [ ] Build verification
-- [ ] Vercel deployment config
-- [ ] Environment variables setup
+### PHASE 6: Testing & Deployment (COMPLETED)
+- [x] TypeScript compilation verified
+- [x] Build verification
+- [x] Vercel deployment configured
+- [x] Environment variables set
+
+### PHASE 7: Ask Olivia AI Assistant (COMPLETED)
+- [x] OpenAI Assistant with knowledge base
+- [x] D-ID video avatar integration
+- [x] Voice recognition (Web Speech API)
+- [x] Text-to-speech (ElevenLabs)
+- [x] Premium cockpit-style UI
+- [x] Floating chat bubble on all pages
+
+### PHASE 8: Authentication (COMPLETED)
+- [x] Premium login screen
+- [x] Auth context provider
+- [x] User account display in header
+- [x] Session persistence
 
 ---
 
-## NEXT STEPS FOR CLAUDE
+## RECENT COMMITS (January 21-22, 2026)
 
-If handoff occurs, the next Claude should:
-
-1. **Continue from Phase 2** - Create React components
-2. **Read the existing files first:**
-   - `/home/claude/life-score-app/src/types/metrics.ts` - Type definitions
-   - `/home/claude/life-score-app/src/data/metrics.ts` - All 100 metrics defined
-3. **Create components in this order:**
-   - Header → Footer → CitySelector → Results components
-4. **Then move to Phase 4** - API integration with Claude Sonnet
+```
+f7d8b26 - feat: Premium login screen + user account display
+5f1b15d - fix: Shrink Law/Reality score buttons to prevent overlap
+68d1b46 - feat: Premium Ask Olivia UI + Floating Chat Bubble
+3096a66 - feat: Add D-ID Agent SDK embed to Ask Olivia
+11919f9 - docs: Add unified Olivia GPT instructions
+31434b0 - docs: Add comprehensive Olivia knowledge base (76k chars)
+3027bd9 - feat: Add Ask Olivia AI avatar assistant (13 files)
+```
 
 ---
 
-## CRITICAL RULES (From John's Master Rules)
+## KEY FILES
 
-1. **NEVER fabricate data** - All scores must come from verified web searches
-2. **Use Claude Sonnet for API calls** - Only Sonnet supports web_search tool
-3. **Return "DATA NOT FOUND"** if search fails - never guess
-4. **Run `npx tsc --noEmit`** before claiming code is complete
+### Authentication
+| File | Description |
+|------|-------------|
+| `src/contexts/AuthContext.tsx` | Auth provider with login/logout |
+| `src/components/LoginScreen.tsx` | Premium login component |
+| `src/components/LoginScreen.css` | Swiss-banking style login |
+
+### Olivia AI Assistant
+| File | Description |
+|------|-------------|
+| `src/components/AskOlivia.tsx` | Cockpit-style video interface |
+| `src/components/AskOlivia.css` | Premium Olivia styling |
+| `src/components/OliviaChatBubble.tsx` | Floating text chat |
+| `src/services/oliviaService.ts` | Client API service |
+| `src/hooks/useOliviaChat.ts` | Chat state management |
+| `src/hooks/useVoiceRecognition.ts` | Web Speech API |
+| `src/hooks/useTTS.ts` | Text-to-speech hook |
+| `api/olivia/chat.ts` | OpenAI Assistant API |
+| `api/olivia/avatar/did.ts` | D-ID video API |
+
+### Core Comparison
+| File | Description |
+|------|-------------|
+| `src/components/EnhancedComparison.tsx` | Main comparison view |
+| `src/components/CitySearch.tsx` | City selection |
+| `src/data/metrics.ts` | All 100 freedom metrics |
+| `api/compare-cities-unified.ts` | Multi-LLM comparison |
+
+### Knowledge Base
+| File | Description |
+|------|-------------|
+| `OLIVIA_KNOWLEDGE_BASE.md` | 76,605 chars of knowledge |
+| `OLIVIA_GPT_INSTRUCTIONS.md` | Assistant system prompt |
+
+---
+
+## ENVIRONMENT VARIABLES (Vercel)
+
+```
+# AI Models
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GOOGLE_AI_API_KEY=...
+GROQ_API_KEY=gsk_...
+PERPLEXITY_API_KEY=pplx-...
+
+# Olivia AI
+DID_API_KEY=email:password
+DID_AGENT_ID=v2_agt_jwRjOIM4
+OPENAI_ASSISTANT_ID=asst_3wbVjyY629u7fDylaK0s5gsM
+ELEVENLABS_API_KEY=...
+ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+
+# Search
+TAVILY_API_KEY=tvly-...
+```
+
+---
+
+## DEMO CREDENTIALS
+
+```
+Email: any email address
+Password: lifescore
+
+OR:
+demo@lifescore.com / demo123
+john@clues.com / clues2026
+```
+
+---
+
+## DESIGN SYSTEM
+
+### Colors
+```css
+/* Sapphire (Header/Primary) */
+--sapphire: #1a4b8c;
+--sapphire-dark: #0d2847;
+--sapphire-light: #2d6bb3;
+
+/* Gold (Accents) */
+--gold: #c9a227;
+--gold-light: #d4af37;
+
+/* Orange (LIFE SCORE brand) */
+--orange: #f7931e;
+
+/* Midnight (Olivia/Login) */
+--midnight: #0a1628;
+--navy: #0d2847;
+```
+
+---
+
+## FOR NEW AI SESSION
+
+Read the specific handoff file for your task:
+
+| Task | Handoff File |
+|------|--------------|
+| Olivia AI work | `HANDOFF_2026_0122_OLIVIA.md` |
+| General updates | This file (`HANDOFF.md`) |
+
+---
+
+## CRITICAL RULES
+
+1. **NEVER fabricate data** - All scores from verified web searches
+2. **Use Claude Sonnet for web search** - Only Sonnet supports web_search tool
+3. **Return "DATA NOT FOUND"** if search fails
+4. **Run `npx tsc --noEmit`** before claiming code complete
 5. **All 100 metrics must be scored** - no shortcuts
 
 ---
 
-## FILE STRUCTURE
-
-```
-/home/claude/life-score-app/
-├── src/
-│   ├── types/
-│   │   └── metrics.ts          ✅ Created
-│   ├── data/
-│   │   └── metrics.ts          ✅ Created (100 metrics)
-│   ├── components/             ⬜ To create
-│   │   ├── Header.tsx
-│   │   ├── Footer.tsx
-│   │   ├── CitySelector.tsx
-│   │   ├── Results/
-│   │   │   ├── WinnerHero.tsx
-│   │   │   ├── ScoreGrid.tsx
-│   │   │   └── CategoryBreakdown.tsx
-│   │   └── ui/
-│   │       ├── LoadingSpinner.tsx
-│   │       └── ErrorMessage.tsx
-│   ├── hooks/                  ⬜ To create
-│   │   └── useComparison.ts
-│   ├── api/                    ⬜ To create
-│   │   ├── claude.ts
-│   │   └── scoring.ts
-│   ├── styles/                 ⬜ To create
-│   │   └── globals.css
-│   ├── App.tsx                 ⬜ To update
-│   └── main.tsx               ⬜ To update
-├── package.json               ✅ Created
-└── HANDOFF.md                 ✅ This file
-```
-
----
-
-## API INTEGRATION NOTES
-
-The Claude API integration MUST use:
-- Model: `claude-sonnet-4-5-20250929` (Sonnet for web search)
-- Tool: `web_search_20250305`
-- Each metric has `searchQueries` array for verification
-
-Example API call structure:
-```javascript
-{
-  model: "claude-sonnet-4-5-20250929",
-  tools: [
-    {
-      type: "web_search_20250305",
-      name: "web_search"
-    }
-  ],
-  messages: [
-    {
-      role: "user",
-      content: "Search for: {city} cannabis marijuana legal status 2024 2025"
-    }
-  ]
-}
-```
-
----
-
-## LAST UPDATED
-- Date: January 13, 2026
-- Phase: 2 (Core Components)
-- Status: Building components
+**END OF MASTER HANDOFF**
