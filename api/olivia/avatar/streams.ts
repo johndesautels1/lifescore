@@ -5,6 +5,9 @@
  * This creates a WebRTC stream of the Olivia avatar that can be displayed
  * in the TV viewport and lip-synced to OpenAI responses.
  *
+ * VOICE: Microsoft Sonia (en-GB-SoniaNeural) - D-ID built-in voice
+ * No external ElevenLabs API key required for lip-sync.
+ *
  * RATE LIMITING: Server-side protection against runaway retry loops
  */
 

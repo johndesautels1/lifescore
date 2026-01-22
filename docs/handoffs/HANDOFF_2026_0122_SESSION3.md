@@ -25,7 +25,7 @@ return { profile: null, preferences: null };
 - Login screen loads (5s timeout added)
 - User can log in with `test@lifescore.com` / `lifescore123`
 - Olivia avatar face loads with custom image
-- Custom ElevenLabs voice configured: `W0Zh57R76zl4xEJ4vCd2`
+- **Voice: Microsoft Sonia (en-GB-SoniaNeural) via D-ID with lip-sync** ✅
 
 ### Not Working / Needs Debug ❌
 - Database profile/preferences fetch hangs
@@ -45,8 +45,10 @@ return { profile: null, preferences: null };
    - Fixed `DID_PRESENTER_URL` in Vercel: `https://create-images-results.d-id.com/google-oauth2%7C106424260884380540893/upl_vGCA0WX2x0LA4chS7QIKU/image.png`
    - Changed avatar CSS from `object-fit: cover` to `contain` with `center top` position
 
-3. **ElevenLabs Voice**
-   - Updated `ELEVENLABS_VOICE_ID` to new Olivia voice: `W0Zh57R76zl4xEJ4vCd2`
+3. **Voice Configuration**
+   - **CHANGED:** Now using Microsoft Sonia (en-GB-SoniaNeural) via D-ID
+   - ElevenLabs removed from D-ID streaming (was causing "Stream Error")
+   - ElevenLabs remains as optional fallback TTS when D-ID unavailable
 
 4. **Supabase Auth**
    - Fixed `VITE_SUPABASE_URL` (was dashboard URL, now API URL)
@@ -61,19 +63,19 @@ return { profile: null, preferences: null };
 VITE_SUPABASE_URL=https://henghuunttmaowypiyhq.supabase.co
 VITE_SUPABASE_ANON_KEY=[set]
 DID_PRESENTER_URL=https://create-images-results.d-id.com/google-oauth2%7C106424260884380540893/upl_vGCA0WX2x0LA4chS7QIKU/image.png
-ELEVENLABS_VOICE_ID=W0Zh57R76zl4xEJ4vCd2
-ELEVENLABS_API_KEY=[set]
 DID_API_KEY=[set]
+# Voice: Microsoft Sonia (en-GB-SoniaNeural) - built into D-ID, no extra env vars needed
+# ELEVENLABS_API_KEY=[optional - fallback TTS only]
+# ELEVENLABS_VOICE_ID=[optional - fallback TTS only]
 ```
 
 ---
 
 ## Next Steps
 
-1. **Debug Olivia errors** - Check browser console for specific errors
+1. ~~**Debug Olivia errors**~~ ✅ FIXED - Voice now Microsoft Sonia via D-ID with lip-sync
 2. **Fix database hanging** - Check Supabase RLS policies, verify `handle_new_user` trigger works
 3. **Re-enable profile fetch** - Remove the temp skip in `AuthContext.tsx` once DB is fixed
-4. **Test Olivia voice** - Verify new ElevenLabs voice works
 
 ---
 
@@ -96,28 +98,19 @@ DID_API_KEY=[set]
 
 ---
 
-## Olivia Errors (from console)
+## Olivia Errors - RESOLVED ✅
 
+**Original Error:**
 ```
-[useDIDStream] Stream created: strm_mVCPPQbyR-iPh5-y2SiEm_EKS
-[useDIDStream] Received track: audio
-[useDIDStream] Received track: video
-AbortError: The play() request was interrupted by a new load request.
-[useDIDStream] Connection state: connecting
-[useDIDStream] Connection state: connected
-/api/olivia/avatar/streams:1 Failed to load resource: 500
 [useDIDStream] Connection error: Failed to speak: {"kind":"InternalServerError","description":"Stream Error"}
 ```
 
-**Root Cause:** D-ID API `/api/olivia/avatar/streams` returning 500 Internal Server Error with "Stream Error"
+**Root Cause:** D-ID could not use ElevenLabs voice without proper API key configuration in D-ID dashboard.
 
-**Possible causes:**
-1. D-ID API rate limit
-2. Invalid stream ID
-3. Voice/presenter configuration issue
-4. D-ID API key issue
+**Solution (Session 4):**
+- Switched from ElevenLabs to Microsoft Sonia (en-GB-SoniaNeural)
+- Microsoft voice is built into D-ID - no external API key needed
+- Lip-sync now works correctly
 
-**Debug steps:**
-1. Check Vercel function logs for `/api/olivia/avatar/streams`
-2. Verify D-ID API key is valid
-3. Check D-ID dashboard for rate limits/errors
+**Files Changed:**
+- `api/olivia/avatar/streams.ts` - Changed VOICE_PROVIDER to 'microsoft', VOICE_ID to 'en-GB-SoniaNeural'

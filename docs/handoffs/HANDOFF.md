@@ -63,9 +63,9 @@ The application is **fully functional and deployed**. Recent work has focused on
 
 ### PHASE 7: Ask Olivia AI Assistant (COMPLETED)
 - [x] OpenAI Assistant with knowledge base
-- [x] D-ID video avatar integration
+- [x] D-ID video avatar with lip-sync
+- [x] Voice: Microsoft Sonia (en-GB-SoniaNeural) via D-ID
 - [x] Voice recognition (Web Speech API)
-- [x] Text-to-speech (ElevenLabs)
 - [x] Premium cockpit-style UI
 - [x] Floating chat bubble on all pages
 
@@ -143,8 +143,9 @@ PERPLEXITY_API_KEY=pplx-...
 DID_API_KEY=email:password
 DID_AGENT_ID=v2_agt_jwRjOIM4
 OPENAI_ASSISTANT_ID=asst_3wbVjyY629u7fDylaK0s5gsM
-ELEVENLABS_API_KEY=...
-ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+# Voice: Microsoft Sonia (en-GB-SoniaNeural) - built into D-ID, no extra API key needed
+# ELEVENLABS_API_KEY=... (optional - fallback TTS only)
+# ELEVENLABS_VOICE_ID=... (optional - fallback TTS only)
 
 # Search
 TAVILY_API_KEY=tvly-...

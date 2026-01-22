@@ -190,14 +190,15 @@ OPENAI_ASSISTANT_ID=asst_3wbVjyY629u7fDylaK0s5gsM
 # D-ID (Video Avatar for Cockpit Page)
 DID_API_KEY=your_email@example.com:your_api_key
 DID_AGENT_ID=v2_agt_jwRjOIM4
-DID_PRESENTER_URL=https://create-images-results.d-id.com/DefaultPresenters/Emma_f/v1_image.jpeg
+DID_PRESENTER_URL=https://create-images-results.d-id.com/...your_avatar_image.png
 
-# ElevenLabs (Voice)
-ELEVENLABS_API_KEY=your_key
-ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+# Voice: Microsoft Sonia (en-GB-SoniaNeural) - built into D-ID, no extra env vars needed
+# ELEVENLABS_API_KEY=... (optional - fallback TTS only)
+# ELEVENLABS_VOICE_ID=... (optional - fallback TTS only)
 ```
 
-**NEW: `DID_PRESENTER_URL`** - This is the image URL of Olivia's avatar. Use a custom image URL for your own avatar.
+**Voice Configuration:** Microsoft Sonia (en-GB-SoniaNeural) via D-ID with lip-sync. No ElevenLabs API key needed for avatar speech.
+**DID_PRESENTER_URL:** Custom Olivia avatar image URL.
 
 ---
 
@@ -274,10 +275,11 @@ Continue enhancing Olivia integration:
 
 ## NEXT SESSION PRIORITIES
 
-1. Test D-ID video streaming in production
+1. ~~Test D-ID video streaming in production~~ ✅ WORKING - Microsoft Sonia voice with lip-sync
 2. Mobile responsive testing
 3. Voice recognition polish
-4. Potential fallback if D-ID streaming fails (use static image + ElevenLabs audio)
+4. Fix Supabase RLS policies / hanging DB queries
+5. Re-enable profile fetch in AuthContext.tsx
 
 ---
 

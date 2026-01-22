@@ -1,6 +1,11 @@
 /**
- * LIFE SCORE - Olivia TTS API
- * Text-to-speech endpoint using ElevenLabs
+ * LIFE SCORE - Olivia TTS API (FALLBACK)
+ *
+ * Text-to-speech endpoint using ElevenLabs.
+ * This is a FALLBACK for when D-ID streaming is unavailable.
+ *
+ * Primary voice: Microsoft Sonia (en-GB-SoniaNeural) via D-ID with lip-sync
+ * Fallback voice: ElevenLabs (audio only, no lip-sync)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';

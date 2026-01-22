@@ -430,12 +430,15 @@ export const DEFAULT_QUICK_ACTIONS: OliviaQuickAction[] = [
 
 /**
  * Olivia configuration
+ *
+ * Voice: Microsoft Sonia (en-GB-SoniaNeural) via D-ID - no external API key needed
+ * ElevenLabs is optional fallback only when D-ID unavailable
  */
 export interface OliviaConfig {
   assistantId: string;
   heygenAvatarId?: string;
   didAgentId?: string;
-  elevenlabsVoiceId?: string;
+  elevenlabsVoiceId?: string; // Optional - fallback TTS only
   defaultMode: OliviaMode;
   enableVoiceInput: boolean;
   enableAvatar: boolean;

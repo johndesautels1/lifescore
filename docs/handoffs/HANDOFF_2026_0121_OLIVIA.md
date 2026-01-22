@@ -74,10 +74,12 @@ Create an extraordinarily high-end luxury Ask Olivia page with these design insp
 ```
 DID_API_KEY=your_email@example.com:your_api_key
 DID_AGENT_ID=v2_agt_jwRjOIM4
+DID_PRESENTER_URL=https://create-images-results.d-id.com/...your_avatar.png
 OPENAI_API_KEY=sk-...
 OPENAI_ASSISTANT_ID=asst_3wbVjyY629u7fDylaK0s5gsM
-ELEVENLABS_API_KEY=your_key
-ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+# Voice: Microsoft Sonia (en-GB-SoniaNeural) - built into D-ID, no extra env vars needed
+# ELEVENLABS_API_KEY=... (optional - fallback TTS only)
+# ELEVENLABS_VOICE_ID=... (optional - fallback TTS only)
 ```
 
 ---

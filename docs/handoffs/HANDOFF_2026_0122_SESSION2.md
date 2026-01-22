@@ -125,10 +125,11 @@ OPENAI_ASSISTANT_ID=asst_3wbVjyY629u7fDylaK0s5gsM
 # D-ID (Video Avatar)
 DID_API_KEY=email:key
 DID_AGENT_ID=v2_agt_jwRjOIM4
+DID_PRESENTER_URL=https://create-images-results.d-id.com/...your_avatar.png
 
-# ElevenLabs (Voice - backup)
-ELEVENLABS_API_KEY=...
-ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+# Voice: Microsoft Sonia (en-GB-SoniaNeural) - built into D-ID, no extra env vars needed
+# ELEVENLABS_API_KEY=... (optional - fallback TTS only)
+# ELEVENLABS_VOICE_ID=... (optional - fallback TTS only)
 
 # Tavily (Research)
 TAVILY_API_KEY=...
@@ -188,7 +189,7 @@ Then immediately:
 ## KNOWN ISSUES
 
 1. **Letter "C" not typing** in Ask Olivia text input - needs debugging
-2. **D-ID speak API** not fully working - falls back to browser TTS
+2. ~~**D-ID speak API** not fully working~~ ✅ FIXED - Now using Microsoft Sonia voice with lip-sync
 3. **Gamma report content** not included in context (only URL)
 
 ---
