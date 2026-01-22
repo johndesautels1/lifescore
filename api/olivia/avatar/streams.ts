@@ -253,6 +253,9 @@ async function speakText(
           provider: {
             type: VOICE_PROVIDER,
             voice_id: VOICE_ID,
+            voice_config: {
+              api_key: process.env.ELEVENLABS_API_KEY,
+            },
           },
         },
         session_id: sessionId,
