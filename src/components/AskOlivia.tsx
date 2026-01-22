@@ -80,6 +80,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     script.setAttribute('data-monitor', 'true');
     script.setAttribute('data-target-id', 'olivia-viewport');
 
+    // Custom Olivia greeting (overrides D-ID default)
+    const city1Name = comparisonResult?.city1?.city || '';
+    const city2Name = comparisonResult?.city2?.city || '';
+    const greeting = city1Name && city2Name
+      ? `Hello, I'm Olivia, your LIFE SCORE advisor. I've analyzed your ${city1Name} versus ${city2Name} comparison. What would you like to know?`
+      : `Hello, I'm Olivia, your LIFE SCORE advisor. How can I help you understand your city comparison today?`;
+    script.setAttribute('data-greeting', greeting);
+
     // Pass comparison context to the agent
     const context = buildContextString();
     if (context) {
