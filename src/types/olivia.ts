@@ -158,6 +158,7 @@ export interface ContextBuildRequest {
  */
 export interface ContextBuildResponse {
   context: LifeScoreContext;
+  textSummary?: string; // Human-readable summary with all 100 metrics
   tokenEstimate: number;
   truncated: boolean;
 }

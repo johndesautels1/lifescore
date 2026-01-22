@@ -222,7 +222,10 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     }
   }, [isListening, startListening, stopListening]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Stop propagation to prevent D-ID widget from capturing keystrokes
+    e.stopPropagation();
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -411,7 +414,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               placeholder="Type your question..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
             />
             <button
               className="send-command-btn"

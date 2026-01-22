@@ -32,20 +32,22 @@ export function useOliviaChat(
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<OliviaError | null>(null);
   const [context, setContextState] = useState<LifeScoreContext | null>(null);
+  const [textSummary, setTextSummary] = useState<string | null>(null);
 
   // Refs
   const contextBuiltRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Build context when comparison result changes
+  // Build context when comparison result changes (now includes all 100 metrics)
   useEffect(() => {
     if (comparisonResult && !contextBuiltRef.current) {
       contextBuiltRef.current = true;
 
       buildContext(comparisonResult)
-        .then(({ context: builtContext }) => {
+        .then(({ context: builtContext, textSummary: builtSummary }) => {
           setContextState(builtContext);
-          console.log('[useOliviaChat] Context built successfully');
+          setTextSummary(builtSummary || null);
+          console.log('[useOliviaChat] Context built with', builtContext?.topMetrics?.length || 0, 'metrics');
         })
         .catch((err) => {
           console.error('[useOliviaChat] Failed to build context:', err);
@@ -95,10 +97,11 @@ export function useOliviaChat(
     abortControllerRef.current = new AbortController();
 
     try {
-      // Send to API
+      // Send to API with all 100 metrics context on first message
       const response = await sendMessage(userMessage, {
         threadId: threadId || undefined,
-        context: !threadId ? context || undefined : undefined, // Only send context on first message
+        context: !threadId ? context || undefined : undefined,
+        textSummary: !threadId ? textSummary || undefined : undefined, // Include full text summary on first message
       });
 
       // Update thread ID if new
@@ -140,7 +143,7 @@ export function useOliviaChat(
       setIsTyping(false);
       abortControllerRef.current = null;
     }
-  }, [threadId, context, generateMessageId]);
+  }, [threadId, context, textSummary, generateMessageId]);
 
   /**
    * Clear chat history and start fresh

@@ -21,6 +21,7 @@ interface ChatRequest {
   threadId?: string;
   message: string;
   context?: any; // LifeScoreContext
+  textSummary?: string; // Pre-built text summary from context API
   generateAudio?: boolean;
 }
 
@@ -79,11 +80,17 @@ function getOpenAIKey(): string {
 }
 
 /**
- * Build context message for Olivia
+ * Build context message for Olivia with ALL 100 metrics
  */
-function buildContextMessage(context: any): string {
+function buildContextMessage(context: any, textSummary?: string): string {
   if (!context) return '';
 
+  // If we have a pre-built text summary, use it (more comprehensive)
+  if (textSummary) {
+    return `\n\n---\n${textSummary}\n---\n\nUse all the data above to answer user questions about this comparison. You have access to ALL 100 METRICS - be specific with scores and reference any metric the user asks about.`;
+  }
+
+  // Fallback: build from context object
   const { comparison, categories, topMetrics, consensus, evidence } = context;
 
   let contextStr = `\n\n---\n## CURRENT COMPARISON DATA\n\n`;
@@ -109,15 +116,25 @@ function buildContextMessage(context: any): string {
   });
   contextStr += `\n`;
 
-  // Top metrics with biggest differences
+  // ALL metrics (not just top 10)
   if (topMetrics && topMetrics.length > 0) {
-    contextStr += `### Top Metrics (Biggest Differences)\n`;
-    topMetrics.slice(0, 10).forEach((m: any) => {
-      contextStr += `- **${m.name}:** ${comparison.city1.name}=${m.city1Score}, ${comparison.city2.name}=${m.city2Score}`;
-      if (m.judgeExplanation) {
-        contextStr += ` (${m.judgeExplanation})`;
-      }
-      contextStr += `\n`;
+    contextStr += `### All ${topMetrics.length} Metrics\n`;
+
+    // Group by category
+    const metricsByCategory: Record<string, any[]> = {};
+    topMetrics.forEach((m: any) => {
+      const cat = m.category || 'Other';
+      if (!metricsByCategory[cat]) metricsByCategory[cat] = [];
+      metricsByCategory[cat].push(m);
+    });
+
+    Object.entries(metricsByCategory).forEach(([catName, metrics]) => {
+      contextStr += `\n#### ${catName}\n`;
+      contextStr += `| Metric | ${comparison.city1.name} | ${comparison.city2.name} |\n`;
+      contextStr += `|--------|---------|----------|\n`;
+      metrics.forEach((m: any) => {
+        contextStr += `| ${m.name} | ${m.city1Score} | ${m.city2Score} |\n`;
+      });
     });
     contextStr += `\n`;
   }
@@ -155,7 +172,7 @@ function buildContextMessage(context: any): string {
     contextStr += `\n`;
   }
 
-  contextStr += `---\n\nUse the data above to answer user questions about this comparison. Be specific with scores and cite evidence when relevant.`;
+  contextStr += `---\n\nUse the data above to answer user questions about this comparison. You have access to ALL ${topMetrics?.length || 0} METRICS - be specific with scores.`;
 
   return contextStr;
 }
@@ -357,7 +374,7 @@ export default async function handler(
 
   try {
     const apiKey = getOpenAIKey();
-    const { threadId: existingThreadId, message, context } = req.body as ChatRequest;
+    const { threadId: existingThreadId, message, context, textSummary } = req.body as ChatRequest;
 
     if (!message || typeof message !== 'string') {
       res.status(400).json({ error: 'message is required' });
@@ -375,11 +392,11 @@ export default async function handler(
       console.log('[OLIVIA/CHAT] Created new thread:', threadId);
     }
 
-    // Build context instructions for this conversation
+    // Build context instructions for this conversation (with ALL 100 metrics)
     let additionalInstructions: string | undefined;
     if (context && isNewThread) {
-      additionalInstructions = buildContextMessage(context);
-      console.log('[OLIVIA/CHAT] Added context, length:', additionalInstructions.length);
+      additionalInstructions = buildContextMessage(context, textSummary);
+      console.log('[OLIVIA/CHAT] Added context with', context?.topMetrics?.length || 0, 'metrics, length:', additionalInstructions.length);
     }
 
     // Add user message to thread

@@ -70,7 +70,7 @@ export async function buildContext(
       body: JSON.stringify({
         comparisonResult,
         includeEvidence: options.includeEvidence ?? true,
-        maxTokens: options.maxTokens ?? 8000,
+        maxTokens: options.maxTokens ?? 16000, // Increased to include all 100 metrics
       }),
     }
   );
@@ -95,13 +95,15 @@ export async function sendMessage(
   options: {
     threadId?: string;
     context?: LifeScoreContext;
+    textSummary?: string; // Pre-built text summary with all 100 metrics
     generateAudio?: boolean;
   } = {}
 ): Promise<OliviaChatResponse> {
-  const request: OliviaChatRequest = {
+  const request: OliviaChatRequest & { textSummary?: string } = {
     message,
     threadId: options.threadId,
     context: options.context,
+    textSummary: options.textSummary,
     generateAudio: options.generateAudio,
   };
 
@@ -352,7 +354,7 @@ export async function closeDIDSession(sessionId: string): Promise<void> {
 // ============================================================================
 
 /**
- * Start a new conversation with Olivia, injecting comparison context
+ * Start a new conversation with Olivia, injecting comparison context with all 100 metrics
  */
 export async function startConversation(
   comparisonResult: EnhancedComparisonResult | ComparisonResult,
@@ -360,17 +362,19 @@ export async function startConversation(
 ): Promise<{
   threadId: string;
   context: LifeScoreContext;
+  textSummary?: string;
   response?: OliviaChatResponse;
 }> {
-  // Build context from comparison
-  const { context } = await buildContext(comparisonResult);
+  // Build context from comparison (now includes textSummary with all 100 metrics)
+  const { context, textSummary } = await buildContext(comparisonResult);
 
-  // If initial message provided, send it
+  // If initial message provided, send it with both context and textSummary
   if (initialMessage) {
-    const response = await sendMessage(initialMessage, { context });
+    const response = await sendMessage(initialMessage, { context, textSummary });
     return {
       threadId: response.threadId,
       context,
+      textSummary,
       response,
     };
   }
@@ -378,6 +382,7 @@ export async function startConversation(
   return {
     threadId: '',
     context,
+    textSummary,
   };
 }
 
