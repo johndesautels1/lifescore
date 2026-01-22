@@ -402,6 +402,21 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               {isListening && <span className="btn-pulse"></span>}
             </button>
 
+            {/* STOP OLIVIA button - shown when she's speaking */}
+            {(isAvatarSpeaking || isTTSSpeaking) && (
+              <button
+                className="control-btn danger"
+                onClick={() => {
+                  disconnectAvatar();
+                  stopSpeaking();
+                }}
+                title="Stop Olivia"
+              >
+                <span className="btn-icon">◼</span>
+                <span className="btn-text">PAUSE</span>
+              </button>
+            )}
+
             <button
               className={`control-btn ${autoSpeak ? 'active' : ''}`}
               onClick={() => setAutoSpeak(!autoSpeak)}

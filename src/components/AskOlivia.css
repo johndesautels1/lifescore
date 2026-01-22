@@ -301,11 +301,11 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center 15%;
+  object-position: center center;
   z-index: 5;
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-  transform: scale(0.92);
-  transform-origin: center top;
+  transform: scale(0.55);
+  transform-origin: center 30%;
 }
 
 /* Hide native video controls */
@@ -557,6 +557,23 @@
   background: rgba(239, 68, 68, 0.2) !important;
   border-color: var(--error-red) !important;
   color: var(--error-red) !important;
+}
+
+.control-btn.danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.15) 100%);
+  border-color: var(--error-red);
+  color: var(--error-red);
+  animation: pulse-danger 1s infinite;
+}
+
+.control-btn.danger:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(239, 68, 68, 0.2) 100%);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .btn-icon {
