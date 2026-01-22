@@ -59,9 +59,11 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     status: didStatus,
     isConnected: isAvatarConnected,
     isSpeaking: isAvatarSpeaking,
+    isRateLimited,
     connect: connectAvatar,
     speak: makeAvatarSpeak,
     disconnect: disconnectAvatar,
+    resetRetries,
   } = useDIDStream({
     videoRef,
     onSpeakingStart: () => console.log('[AskOlivia] Avatar started speaking'),
@@ -105,6 +107,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   }, []);
 
   // Auto-connect to D-ID Streams on mount
+  // IMPORTANT: Empty dependency array - connect ONCE on mount only!
+  // Having connectAvatar in deps caused infinite retry loops when status changed
   useEffect(() => {
     console.log('[AskOlivia] Initializing D-ID Streams connection (avatar only, OpenAI is brain)');
     connectAvatar();
@@ -112,7 +116,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     return () => {
       disconnectAvatar();
     };
-  }, [connectAvatar, disconnectAvatar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - mount/unmount only
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -192,9 +197,16 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const getAvatarStatus = () => {
     if (isAvatarSpeaking) return 'SPEAKING';
     if (isAvatarConnected) return 'READY';
+    if (isRateLimited) return 'RATE LIMITED';
     if (didStatus === 'connecting') return 'CONNECTING';
     if (didStatus === 'error') return 'ERROR';
     return 'INIT...';
+  };
+
+  // Handler for manual reconnection attempt
+  const handleManualReconnect = () => {
+    resetRetries();
+    connectAvatar();
   };
 
   const isAvatarReady = isAvatarConnected || didStatus === 'connected';
@@ -298,15 +310,43 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               {/* Avatar loading state */}
               {!isAvatarReady && (
                 <div className="avatar-loading">
-                  <div className="loading-ring"></div>
-                  <div className="loading-ring delay-1"></div>
-                  <div className="loading-ring delay-2"></div>
-                  <div className="loading-text">INITIALIZING OLIVIA</div>
-                  <div className="loading-subtext">
-                    {didStatus === 'error'
-                      ? 'Connection failed - using text mode'
-                      : 'Connecting to D-ID Streams...'}
+                  {!isRateLimited && didStatus !== 'error' && (
+                    <>
+                      <div className="loading-ring"></div>
+                      <div className="loading-ring delay-1"></div>
+                      <div className="loading-ring delay-2"></div>
+                    </>
+                  )}
+                  <div className="loading-text">
+                    {isRateLimited ? 'RATE LIMITED' : didStatus === 'error' ? 'CONNECTION ERROR' : 'INITIALIZING OLIVIA'}
                   </div>
+                  <div className="loading-subtext">
+                    {isRateLimited
+                      ? 'D-ID API rate limit reached. Please wait...'
+                      : didStatus === 'error'
+                        ? 'Connection failed - using text mode'
+                        : 'Connecting to D-ID Streams...'}
+                  </div>
+                  {(didStatus === 'error' || isRateLimited) && (
+                    <button
+                      className="retry-connection-btn"
+                      onClick={handleManualReconnect}
+                      style={{
+                        marginTop: '1rem',
+                        padding: '0.5rem 1.5rem',
+                        background: 'rgba(212, 175, 55, 0.2)',
+                        border: '1px solid rgba(212, 175, 55, 0.5)',
+                        color: '#d4af37',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        fontSize: '0.85rem',
+                        fontFamily: 'inherit',
+                        letterSpacing: '0.1em',
+                      }}
+                    >
+                      RETRY CONNECTION
+                    </button>
+                  )}
                 </div>
               )}
             </div>

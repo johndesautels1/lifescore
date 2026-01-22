@@ -1,16 +1,29 @@
 /**
  * LIFE SCORE - useDIDStream Hook
  * Manages WebRTC connection to D-ID Streams API for real-time video avatar
+ *
+ * RATE LIMITING: This hook implements exponential backoff to prevent
+ * runaway retry loops that can exhaust D-ID API quotas.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+
+// ============================================================================
+// RATE LIMITING CONSTANTS
+// ============================================================================
+
+const MIN_RETRY_DELAY_MS = 2000;      // Minimum 2 seconds between retries
+const MAX_RETRY_DELAY_MS = 60000;     // Maximum 1 minute between retries
+const BACKOFF_MULTIPLIER = 2;         // Double delay each failure
+const MAX_RETRIES = 5;                // Give up after 5 failed attempts
+const COOLDOWN_AFTER_429_MS = 30000;  // 30 second cooldown after rate limit
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface DIDStreamState {
-  status: 'idle' | 'connecting' | 'connected' | 'speaking' | 'error';
+  status: 'idle' | 'connecting' | 'connected' | 'speaking' | 'error' | 'rate_limited';
   error: string | null;
   streamId: string | null;
   sessionId: string | null;
@@ -28,9 +41,12 @@ interface UseDIDStreamReturn {
   error: string | null;
   isConnected: boolean;
   isSpeaking: boolean;
+  isRateLimited: boolean;
+  retryCount: number;
   connect: () => Promise<void>;
   speak: (text: string) => Promise<void>;
   disconnect: () => Promise<void>;
+  resetRetries: () => void;
 }
 
 // ============================================================================
@@ -50,6 +66,13 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Rate limiting refs - persist across renders without triggering re-renders
+  const retryCountRef = useRef(0);
+  const lastAttemptRef = useRef(0);
+  const retryDelayRef = useRef(MIN_RETRY_DELAY_MS);
+  const isConnectingRef = useRef(false);  // Mutex to prevent concurrent connects
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -59,17 +82,51 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       if (speakingTimeoutRef.current) {
         clearTimeout(speakingTimeoutRef.current);
       }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, []);
 
   /**
    * Create WebRTC connection and connect to D-ID stream
+   * Implements rate limiting and exponential backoff to prevent API abuse
    */
   const connect = useCallback(async () => {
-    if (state.status === 'connected' || state.status === 'connecting') {
-      console.log('[useDIDStream] Already connected/connecting');
+    // Prevent concurrent connection attempts (mutex)
+    if (isConnectingRef.current) {
+      console.log('[useDIDStream] Connection already in progress, skipping');
       return;
     }
+
+    // Already connected - no need to reconnect
+    if (state.status === 'connected' || state.status === 'speaking') {
+      console.log('[useDIDStream] Already connected');
+      return;
+    }
+
+    // Check rate limiting: enforce minimum delay between attempts
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastAttemptRef.current;
+    if (lastAttemptRef.current > 0 && timeSinceLastAttempt < retryDelayRef.current) {
+      console.log(`[useDIDStream] Rate limited - wait ${Math.ceil((retryDelayRef.current - timeSinceLastAttempt) / 1000)}s before retry`);
+      return;
+    }
+
+    // Check max retries
+    if (retryCountRef.current >= MAX_RETRIES) {
+      console.log(`[useDIDStream] Max retries (${MAX_RETRIES}) exceeded, giving up`);
+      setState(prev => ({
+        ...prev,
+        status: 'error',
+        error: 'Connection failed after multiple attempts. Please refresh the page.',
+      }));
+      return;
+    }
+
+    // Set mutex and update tracking
+    isConnectingRef.current = true;
+    lastAttemptRef.current = now;
 
     setState(prev => ({ ...prev, status: 'connecting', error: null }));
 
@@ -83,8 +140,27 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
 
       if (!createResponse.ok) {
         const error = await createResponse.json();
+
+        // Special handling for rate limit (429)
+        if (createResponse.status === 429) {
+          console.error('[useDIDStream] Rate limited by D-ID API');
+          retryDelayRef.current = COOLDOWN_AFTER_429_MS;
+          setState(prev => ({
+            ...prev,
+            status: 'rate_limited',
+            error: 'D-ID rate limited. Waiting 30 seconds...',
+          }));
+          isConnectingRef.current = false;
+          retryCountRef.current++;
+          return;
+        }
+
         throw new Error(error.error || 'Failed to create stream');
       }
+
+      // Success! Reset retry counters
+      retryCountRef.current = 0;
+      retryDelayRef.current = MIN_RETRY_DELAY_MS;
 
       const { streamId, sessionId, offer, iceServers } = await createResponse.json();
       console.log('[useDIDStream] Stream created:', streamId);
@@ -167,11 +243,25 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
         sessionId,
       });
 
+      // Release mutex on success
+      isConnectingRef.current = false;
       console.log('[useDIDStream] Connected successfully');
 
     } catch (error) {
+      // Release mutex on failure
+      isConnectingRef.current = false;
+
       const message = error instanceof Error ? error.message : 'Connection failed';
       console.error('[useDIDStream] Connection error:', message);
+
+      // Increment retry counter and apply exponential backoff
+      retryCountRef.current++;
+      retryDelayRef.current = Math.min(
+        retryDelayRef.current * BACKOFF_MULTIPLIER,
+        MAX_RETRY_DELAY_MS
+      );
+      console.log(`[useDIDStream] Retry ${retryCountRef.current}/${MAX_RETRIES}, next delay: ${retryDelayRef.current}ms`);
+
       setState(prev => ({ ...prev, status: 'error', error: message }));
       onError?.(message);
     }
@@ -278,14 +368,27 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
     console.log('[useDIDStream] Disconnected');
   }, [state.streamId, state.sessionId, videoRef]);
 
+  /**
+   * Reset retry counters - call this when user explicitly requests reconnection
+   */
+  const resetRetries = useCallback(() => {
+    retryCountRef.current = 0;
+    retryDelayRef.current = MIN_RETRY_DELAY_MS;
+    lastAttemptRef.current = 0;
+    console.log('[useDIDStream] Retry counters reset');
+  }, []);
+
   return {
     status: state.status,
     error: state.error,
     isConnected: state.status === 'connected' || state.status === 'speaking',
     isSpeaking: state.status === 'speaking',
+    isRateLimited: state.status === 'rate_limited',
+    retryCount: retryCountRef.current,
     connect,
     speak,
     disconnect,
+    resetRetries,
   };
 }
 
