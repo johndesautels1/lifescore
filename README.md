@@ -6,14 +6,45 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
-## CURRENT STATUS (January 21, 2026)
+## CURRENT STATUS (January 22, 2026)
 
-### Latest Session: 2026-01-21
-**Conversation ID:** `LIFESCORE-2026-0121-PROMPT-UNIFICATION`
+### Latest Session: 2026-01-22
+**Conversation ID:** `LIFESCORE-OLIVIA-2026-0122-S2`
 
 ---
 
-## 🚨 HANDOFF: PROMPT UNIFICATION & SCORING STANDARDIZATION 🚨
+## 🚨 HANDOFF: ASK OLIVIA - ENHANCED CONTEXT BUILDER 🚨
+
+**Date:** 2026-01-22
+**Status:** D-ID VIDEO AVATAR COMPLETE - NEED ENHANCED CONTEXT
+
+### What's Working
+- D-ID video avatar in Ask Olivia TV viewport (`data-mode="full"`)
+- OpenAI Assistant brain for intelligent responses
+- Voice input and transcript replay
+- OliviaChatBubble (text chat) on all other pages
+
+### Immediate Tasks for Next Session
+
+1. **BUG FIX:** Letter "C" not typing in Ask Olivia text input
+
+2. **IMPLEMENT OPTION A: Enhanced Context Builder**
+   - File: `api/olivia/context.ts`
+   - Include ALL 100 metrics (not just top 10)
+   - Increase token limit: 8000 → 16000
+   - Add metric display names from `gammaService.ts`
+   - Generate text summary of comparison for richer context
+
+3. **Goal:** Olivia can answer ANY question about the user's specific LIFE SCORE report with full detail
+
+### Start Next Session With:
+```
+Read D:\LifeScore\HANDOFF_2026_0122_SESSION2.md
+```
+
+---
+
+## Previous Handoff: PROMPT UNIFICATION & SCORING STANDARDIZATION
 
 **Date:** 2026-01-21
 **Status:** PLANNING COMPLETE - READY FOR IMPLEMENTATION
