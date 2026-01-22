@@ -80,6 +80,15 @@ function getOpenAIKey(): string {
 }
 
 /**
+ * Strip OpenAI citation annotations from response text
+ * These look like: 【4:9†OLIVIA_KNOWLEDGE_BASE.md】
+ */
+function stripCitations(text: string): string {
+  // Match patterns like 【number:number†filename】
+  return text.replace(/【\d+:\d+†[^\】]+】/g, '').trim();
+}
+
+/**
  * Build context message for Olivia with ALL 100 metrics
  */
 function buildContextMessage(context: any, textSummary?: string): string {
@@ -418,10 +427,13 @@ export default async function handler(
       throw new Error('No assistant response received');
     }
 
-    const responseText = assistantMessage.content
+    const rawResponse = assistantMessage.content
       .filter(c => c.type === 'text')
       .map(c => c.text.value)
       .join('\n');
+
+    // Strip citation annotations like 【4:9†OLIVIA_KNOWLEDGE_BASE.md】
+    const responseText = stripCitations(rawResponse);
 
     console.log('[OLIVIA/CHAT] Response length:', responseText.length);
 
