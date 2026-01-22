@@ -7,6 +7,8 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LoginScreen from './components/LoginScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import TabNavigation, { type TabId } from './components/TabNavigation';
@@ -40,7 +42,9 @@ import { ALL_METRICS } from './shared/metrics';
 import './styles/globals.css';
 import './App.css';
 
-const App: React.FC = () => {
+// Main app content (requires auth)
+const AppContent: React.FC = () => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const [savedKey, setSavedKey] = useState(0);
 
@@ -219,6 +223,23 @@ const App: React.FC = () => {
   const handleSaveAPIKeys = (keys: LLMAPIKeys) => {
     setApiKeys(keys);
   };
+
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="app auth-loading">
+        <div className="auth-loading-spinner">
+          <div className="spinner-ring"></div>
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
 
   return (
     <div className="app">
@@ -610,6 +631,15 @@ const App: React.FC = () => {
         />
       )}
     </div>
+  );
+};
+
+// Root App component with AuthProvider
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

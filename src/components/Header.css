@@ -123,13 +123,106 @@
   }
 }
 
-/* Header Actions (Theme Toggle) */
+/* Header Actions (Theme Toggle + User Account) */
 .header-actions {
   position: absolute;
   top: 1rem;
   right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .header {
   position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   USER ACCOUNT DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.user-account {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.4rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  transition: all 0.2s ease;
+}
+
+.user-account:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(247, 147, 30, 0.3);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #F7931E 0%, #c66e00 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+.user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-btn {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .user-account {
+    padding: 0.3rem;
+    border-radius: 50%;
+  }
+
+  .user-info {
+    gap: 0;
+  }
 }
