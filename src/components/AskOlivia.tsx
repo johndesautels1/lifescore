@@ -32,13 +32,34 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Build context string from comparison result
+  const buildContextString = useCallback(() => {
+    if (!comparisonResult) return '';
+
+    const city1 = comparisonResult.city1;
+    const city2 = comparisonResult.city2;
+
+    let context = `You are Olivia, an AI advisor for LIFE SCORE - a platform comparing cities for expat relocation.\n\n`;
+    context += `CURRENT COMPARISON DATA:\n`;
+    context += `- City 1: ${city1?.city || 'Unknown'}, ${city1?.country || ''} - Score: ${city1?.normalizedScore || 'N/A'}/100\n`;
+    context += `- City 2: ${city2?.city || 'Unknown'}, ${city2?.country || ''} - Score: ${city2?.normalizedScore || 'N/A'}/100\n`;
+    context += `- Winner: ${comparisonResult.winner || 'TBD'}\n`;
+    context += `- Score Difference: ${comparisonResult.scoreDifference || 0} points\n\n`;
+    context += `Answer questions about this comparison. Be specific with scores and data.`;
+
+    return context;
+  }, [comparisonResult]);
+
   // Load D-ID Agent SDK
   useEffect(() => {
-    // Check if already loaded
+    // Remove existing widget if comparison changed
     const existingWidget = document.querySelector('did-agent');
     if (existingWidget) {
-      setIsAvatarReady(true);
-      return;
+      existingWidget.remove();
+    }
+    const existingScript = document.querySelector('script[data-name="did-agent"]');
+    if (existingScript) {
+      existingScript.remove();
     }
 
     const script = document.createElement('script');
@@ -50,6 +71,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     script.setAttribute('data-agent-id', 'v2_agt_jwRjOIM4');
     script.setAttribute('data-monitor', 'true');
     script.setAttribute('data-target-id', 'olivia-viewport');
+
+    // Pass comparison context to the agent
+    const context = buildContextString();
+    if (context) {
+      script.setAttribute('data-context', context);
+      console.log('[AskOlivia] Passing context to D-ID agent');
+    }
 
     console.log('[AskOlivia] Loading D-ID in full mode targeting #olivia-viewport');
 
@@ -65,9 +93,9 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     document.body.appendChild(script);
 
     return () => {
-      // Don't remove on unmount - widget persists across navigation
+      // Cleanup handled at start of effect
     };
-  }, []);
+  }, [comparisonResult, buildContextString]);
 
   // Real-time clock for cockpit feel
   useEffect(() => {
