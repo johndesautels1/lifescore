@@ -55,9 +55,9 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number; rese
 // Olivia's presenter image (the avatar image)
 const OLIVIA_SOURCE_URL = process.env.DID_PRESENTER_URL || 'https://create-images-results.d-id.com/DefaultPresenters/Emma_f/v1_image.jpeg';
 
-// Voice settings
-const VOICE_PROVIDER = 'elevenlabs';
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
+// Voice settings - using Microsoft for testing (D-ID built-in)
+const VOICE_PROVIDER = 'microsoft';
+const VOICE_ID = 'en-GB-SoniaNeural';
 
 // ============================================================================
 // TYPES
@@ -253,9 +253,6 @@ async function speakText(
           provider: {
             type: VOICE_PROVIDER,
             voice_id: VOICE_ID,
-            voice_config: {
-              api_key: process.env.ELEVENLABS_API_KEY,
-            },
           },
         },
         session_id: sessionId,
