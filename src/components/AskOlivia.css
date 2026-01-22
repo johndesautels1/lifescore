@@ -1177,21 +1177,90 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   D-ID WIDGET OVERRIDES - Position within viewport
+   EXTRA SMALL SCREENS (Phones < 480px)
    ═══════════════════════════════════════════════════════════════════════════ */
-did-agent {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
+@media (max-width: 480px) {
+  .olivia-wordmark {
+    flex-direction: column;
+    gap: 0;
+  }
 
-/* Hide D-ID default positioning */
-did-agent::part(container) {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
+  .wordmark-prefix {
+    font-size: 0.6rem;
+  }
+
+  .wordmark-main {
+    font-size: 1.2rem;
+  }
+
+  .wordmark-tagline {
+    font-size: 0.55rem;
+  }
+
+  .viewport-container {
+    padding: 0.5rem;
+    min-height: 35vh;
+  }
+
+  .viewport-bezel {
+    padding: 8px;
+  }
+
+  .viewport-info-bar {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .info-segment {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .segment-label {
+    font-size: 0.5rem;
+  }
+
+  .segment-value {
+    font-size: 0.6rem;
+  }
+
+  .control-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.65rem;
+  }
+
+  .text-command-input {
+    font-size: 14px; /* Prevents iOS zoom */
+    padding: 0.6rem 0.75rem;
+  }
+
+  .action-tile {
+    padding: 0.75rem;
+  }
+
+  .tile-label {
+    font-size: 0.7rem;
+  }
+
+  .quick-actions-panel .panel-header {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .avatar-loading {
+    padding: 1rem;
+  }
+
+  .loading-text {
+    font-size: 0.65rem;
+  }
+
+  .loading-subtext {
+    font-size: 0.55rem;
+  }
+
+  .retry-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.65rem;
+  }
 }
