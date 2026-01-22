@@ -44,24 +44,18 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     const script = document.createElement('script');
     script.type = 'module';
     script.src = 'https://agent.d-id.com/v2/index.js';
-    script.setAttribute('data-name', 'did-agent-viewport');
-    script.setAttribute('data-mode', 'fabio');
+    script.setAttribute('data-name', 'did-agent');
+    script.setAttribute('data-mode', 'full');
     script.setAttribute('data-client-key', 'Z29vZ2xlLW9hdXRoMnwxMDY0MjQyNjA4ODQzODA1NDA4OTM6dEQ5LXU2WW1QTm8zbWp0WEhZcHhw');
     script.setAttribute('data-agent-id', 'v2_agt_jwRjOIM4');
     script.setAttribute('data-monitor', 'true');
+    script.setAttribute('data-target-id', 'olivia-viewport');
+
+    console.log('[AskOlivia] Loading D-ID in full mode targeting #olivia-viewport');
 
     script.onload = () => {
-      console.log('[AskOlivia] D-ID Agent SDK loaded');
-      // Move the widget into the viewport after it loads
-      setTimeout(() => {
-        const widget = document.querySelector('did-agent');
-        const viewport = viewportRef.current;
-        if (widget && viewport) {
-          viewport.appendChild(widget);
-          console.log('[AskOlivia] D-ID widget moved to viewport');
-        }
-        setIsAvatarReady(true);
-      }, 2500);
+      console.log('[AskOlivia] D-ID Agent SDK loaded in full mode');
+      setTimeout(() => setIsAvatarReady(true), 2000);
     };
 
     script.onerror = () => {
@@ -241,8 +235,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             <div className="bezel-corner br"></div>
 
             {/* The actual video screen */}
-            <div className="viewport-screen" ref={viewportRef}>
-              {/* D-ID Agent widget renders here */}
+            <div id="olivia-viewport" className="viewport-screen" ref={viewportRef}>
+              {/* D-ID Agent renders here in full mode */}
 
               {/* Overlay gradient for depth */}
               <div className="screen-vignette"></div>
