@@ -292,20 +292,44 @@
   box-shadow: var(--shadow-inset);
 }
 
-/* D-ID Avatar Video Element */
-.avatar-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: transparent;
+/* D-ID Agent Widget Embedding */
+.viewport-screen did-agent,
+.viewport-screen [data-did-agent] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   z-index: 1;
 }
 
-/* Hide video when not connected */
-.avatar-video:not([src]) {
-  opacity: 0;
+/* Style D-ID widget parts */
+did-agent::part(container) {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+did-agent::part(video-container) {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+
+did-agent::part(video) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+}
+
+/* Hide default D-ID UI elements we don't need */
+did-agent::part(button),
+did-agent::part(chat-button),
+did-agent::part(minimize-button) {
+  display: none !important;
 }
 
 /* Screen vignette for depth */
