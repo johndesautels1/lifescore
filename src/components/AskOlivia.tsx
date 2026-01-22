@@ -39,10 +39,18 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     const city1 = comparisonResult.city1;
     const city2 = comparisonResult.city2;
 
+    // Handle both CityScore (normalizedScore) and CityConsensusScore (totalConsensusScore)
+    const getScore = (city: typeof city1) => {
+      if (!city) return 'N/A';
+      if ('normalizedScore' in city) return city.normalizedScore;
+      if ('totalConsensusScore' in city) return city.totalConsensusScore;
+      return 'N/A';
+    };
+
     let context = `You are Olivia, an AI advisor for LIFE SCORE - a platform comparing cities for expat relocation.\n\n`;
     context += `CURRENT COMPARISON DATA:\n`;
-    context += `- City 1: ${city1?.city || 'Unknown'}, ${city1?.country || ''} - Score: ${city1?.normalizedScore || 'N/A'}/100\n`;
-    context += `- City 2: ${city2?.city || 'Unknown'}, ${city2?.country || ''} - Score: ${city2?.normalizedScore || 'N/A'}/100\n`;
+    context += `- City 1: ${city1?.city || 'Unknown'}, ${city1?.country || ''} - Score: ${getScore(city1)}/100\n`;
+    context += `- City 2: ${city2?.city || 'Unknown'}, ${city2?.country || ''} - Score: ${getScore(city2)}/100\n`;
     context += `- Winner: ${comparisonResult.winner || 'TBD'}\n`;
     context += `- Score Difference: ${comparisonResult.scoreDifference || 0} points\n\n`;
     context += `Answer questions about this comparison. Be specific with scores and data.`;
