@@ -124,6 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
 
+    // TEMP: Skip DB fetch to avoid hanging
+    console.log("[Auth] Skipping profile fetch");
+    return { profile: null, preferences: null };
     try {
       // Fetch profile
       const { data: profile, error: profileError } = await supabase
@@ -132,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (profileError && profileError.code !== 'PGRST116') {
+      if (profileError && (profileError as any).code !== 'PGRST116') {
         console.error('[Auth] Error fetching profile:', profileError);
       }
 
@@ -143,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId)
         .single();
 
-      if (prefsError && prefsError.code !== 'PGRST116') {
+      if (prefsError && (prefsError as any).code !== 'PGRST116') {
         console.error('[Auth] Error fetching preferences:', prefsError);
       }
 
