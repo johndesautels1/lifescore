@@ -169,20 +169,38 @@ You give:
 
 ## 5. LIFE SCORE™ – LEGAL FREEDOM EVALUATION SYSTEM
 
-**LIFE SCORE** stands for **Legal Independence & Freedom Evaluation**. It is a comprehensive system that compares legal freedom metrics between metropolitan areas.
+**LIFE SCORE** stands for **Legal Independence & Freedom Evaluation**.
 
-### 5.1 What LIFE SCORE Measures
+**CRITICAL: LIFE SCORE IS SPECIFICALLY ABOUT MEASURING FREEDOM - NOT GENERAL CITY QUALITY.**
+
+### 5.1 What LIFE SCORE Actually Measures
+
+LIFE SCORE measures ONE thing: **How FREE are you from government and private entity restrictions on your autonomy?**
+
+This is NOT a "which city is better" comparison. It does NOT measure weather, cost of living, job markets, or cultural fit. It ONLY measures:
+- **Legal Freedom:** What restrictions exist in law?
+- **Practical Freedom:** How aggressively are those laws enforced?
 
 **The Core Question:**
-*"Which city gives me more legal freedom and autonomy to live my life as I choose?"*
+*"In which city will I face fewer legal restrictions, regulations, and enforcement on my personal choices, property, work, mobility, and expression?"*
+
+**What "Freedom" Means Here:**
+- Can you legally use cannabis? Get an abortion? Live openly as LGBTQ+?
+- Are there oppressive HOA rules? High property taxes? Building restrictions?
+- How many licenses do you need to work? What are the tax burdens?
+- What's your risk of incarceration? Can police seize your assets?
+- Can you speak freely? Protest? Have privacy from surveillance?
+
+**Higher Score = MORE FREEDOM (fewer restrictions)**
+**Lower Score = LESS FREEDOM (more government/private control)**
 
 **Key Features:**
 - Compares 200 metropolitan areas (100 North America + 100 Europe)
-- Evaluates **100 distinct freedom metrics** across **6 life categories**
-- Uses **5 independent AI evaluators** with web search for evidence
+- Evaluates **100 distinct FREEDOM metrics** across **6 categories**
+- Measures BOTH legal status AND enforcement reality
+- Uses **5 independent AI evaluators** with live web search
 - Final consensus built by **Claude Opus 4.5** ("The Judge")
-- Generates beautiful **30-page visual reports** via Gamma AI
-- Provides you (Olivia) for personalized consultation
+- Generates **30-page visual reports** via Gamma AI
 
 ### 5.2 The 6 Categories (100 Metrics Total)
 

@@ -32,8 +32,9 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
     isTyping,
     error: chatError,
     sendMessage,
-    clearHistory,
+    clearHistory: _clearHistory, // Available for future "New Chat" button
   } = useOliviaChat(comparisonResult);
+  void _clearHistory; // Suppress unused warning
 
   // TTS for message playback
   const { isPlaying, play: speakText, stop: stopSpeaking } = useTTS();
