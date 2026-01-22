@@ -18,6 +18,7 @@ import { DEFAULT_QUICK_ACTIONS } from '../types/olivia';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
+import { useDIDStream } from '../hooks/useDIDStream';
 import './AskOlivia.css';
 
 interface AskOliviaProps {
@@ -25,40 +26,32 @@ interface AskOliviaProps {
 }
 
 const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
-  const [isAvatarReady, setIsAvatarReady] = useState(false);
-  const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showTextChat, setShowTextChat] = useState(false);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load D-ID Agent SDK
+  // D-ID Video Stream for real avatar
+  const {
+    status: streamStatus,
+    error: streamError,
+    isConnected: isAvatarReady,
+    isSpeaking: isAvatarSpeaking,
+    connect: connectAvatar,
+    speak: avatarSpeak,
+    disconnect: disconnectAvatar,
+  } = useDIDStream({
+    videoRef,
+    onSpeakingStart: () => console.log('[AskOlivia] Avatar speaking started'),
+    onSpeakingEnd: () => console.log('[AskOlivia] Avatar speaking ended'),
+    onError: (error) => console.error('[AskOlivia] Avatar error:', error),
+  });
+
+  // Auto-connect avatar on mount
   useEffect(() => {
-    if (document.querySelector('script[data-name="did-agent"]')) {
-      setIsAvatarReady(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://agent.d-id.com/v2/index.js';
-    script.setAttribute('data-mode', 'fabio');
-    script.setAttribute('data-client-key', 'Z29vZ2xlLW9hdXRoMnwxMDY0MjQyNjA4ODQzODA1NDA4OTM6dEQ5LXU2WW1QTm8zbWp0WEhZcHhw');
-    script.setAttribute('data-agent-id', 'v2_agt_jwRjOIM4');
-    script.setAttribute('data-name', 'did-agent');
-    script.setAttribute('data-monitor', 'true');
-
-    script.onload = () => {
-      setTimeout(() => setIsAvatarReady(true), 1500);
-    };
-
-    document.body.appendChild(script);
-
+    connectAvatar();
     return () => {
-      const existingScript = document.querySelector('script[data-name="did-agent"]');
-      if (existingScript) existingScript.remove();
-      const widget = document.querySelector('did-agent');
-      if (widget) widget.remove();
+      disconnectAvatar();
     };
   }, []);
 
@@ -95,28 +88,36 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     },
   });
 
-  // TTS
-  const { isPlaying: isSpeaking, play: speakText, stop: stopSpeaking } = useTTS();
+  // TTS (backup if avatar not ready)
+  const { isPlaying: isTTSSpeaking, play: speakText, stop: stopSpeaking } = useTTS();
 
   const [inputText, setInputText] = useState('');
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const lastSpokenMsgRef = useRef<string | null>(null);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-speak assistant responses
+  // Auto-speak assistant responses through D-ID avatar
   useEffect(() => {
     if (autoSpeak && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'assistant' && !lastMessage.audioUrl) {
-        speakText(lastMessage.content);
-        setIsAvatarSpeaking(true);
-        setTimeout(() => setIsAvatarSpeaking(false), lastMessage.content.length * 50);
+      // Only speak new messages from assistant
+      if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
+        lastSpokenMsgRef.current = lastMessage.id;
+
+        if (isAvatarReady) {
+          // Use D-ID avatar to speak
+          avatarSpeak(lastMessage.content);
+        } else {
+          // Fallback to browser TTS if avatar not ready
+          speakText(lastMessage.content);
+        }
       }
     }
-  }, [messages, autoSpeak, speakText]);
+  }, [messages, autoSpeak, isAvatarReady, avatarSpeak, speakText]);
 
   const handleSendMessage = useCallback(async (text?: string) => {
     const messageText = text || inputText.trim();
@@ -224,8 +225,15 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             <div className="bezel-corner br"></div>
 
             {/* The actual video screen */}
-            <div className="viewport-screen" ref={videoContainerRef}>
-              {/* D-ID Avatar renders here via SDK */}
+            <div className="viewport-screen">
+              {/* D-ID Avatar Video Stream */}
+              <video
+                ref={videoRef}
+                className="avatar-video"
+                autoPlay
+                playsInline
+                muted={false}
+              />
 
               {/* Overlay gradient for depth */}
               <div className="screen-vignette"></div>
@@ -239,14 +247,25 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
                 </div>
               )}
 
-              {/* Avatar loading state */}
+              {/* Avatar loading/connecting state */}
               {!isAvatarReady && (
                 <div className="avatar-loading">
                   <div className="loading-ring"></div>
                   <div className="loading-ring delay-1"></div>
                   <div className="loading-ring delay-2"></div>
-                  <div className="loading-text">ESTABLISHING CONNECTION</div>
-                  <div className="loading-subtext">Initializing D-ID Avatar System</div>
+                  <div className="loading-text">
+                    {streamStatus === 'connecting' ? 'ESTABLISHING CONNECTION' :
+                     streamStatus === 'error' ? 'CONNECTION ERROR' :
+                     'INITIALIZING AVATAR'}
+                  </div>
+                  <div className="loading-subtext">
+                    {streamError || 'Connecting to D-ID Video Stream'}
+                  </div>
+                  {streamStatus === 'error' && (
+                    <button className="retry-btn" onClick={() => connectAvatar()}>
+                      RETRY CONNECTION
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -263,7 +282,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               <span className="segment-icon">◈</span>
               <span className="segment-label">VOICE</span>
               <span className={`segment-value ${isListening ? 'active' : ''}`}>
-                {isListening ? 'LISTENING' : isSpeaking ? 'SPEAKING' : 'READY'}
+                {isListening ? 'LISTENING' : isAvatarSpeaking ? 'SPEAKING' : 'READY'}
               </span>
             </div>
             <div className="info-segment">
@@ -433,9 +452,17 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
                 {msg.role === 'assistant' && (
                   <button
                     className="replay-btn"
-                    onClick={() => isSpeaking ? stopSpeaking() : speakText(msg.content)}
+                    onClick={() => {
+                      if (isAvatarSpeaking || isTTSSpeaking) {
+                        stopSpeaking();
+                      } else if (isAvatarReady) {
+                        avatarSpeak(msg.content);
+                      } else {
+                        speakText(msg.content);
+                      }
+                    }}
                   >
-                    <span>{isSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
+                    <span>{isAvatarSpeaking || isTTSSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
                   </button>
                 )}
               </div>

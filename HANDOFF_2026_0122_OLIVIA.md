@@ -183,13 +183,21 @@ src/
 ## ENVIRONMENT VARIABLES (Vercel)
 
 ```
-DID_API_KEY=your_email@example.com:your_api_key
-DID_AGENT_ID=v2_agt_jwRjOIM4
+# OpenAI (Olivia's brain)
 OPENAI_API_KEY=sk-...
 OPENAI_ASSISTANT_ID=asst_3wbVjyY629u7fDylaK0s5gsM
+
+# D-ID (Video Avatar for Cockpit Page)
+DID_API_KEY=your_email@example.com:your_api_key
+DID_AGENT_ID=v2_agt_jwRjOIM4
+DID_PRESENTER_URL=https://create-images-results.d-id.com/DefaultPresenters/Emma_f/v1_image.jpeg
+
+# ElevenLabs (Voice)
 ELEVENLABS_API_KEY=your_key
 ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
 ```
+
+**NEW: `DID_PRESENTER_URL`** - This is the image URL of Olivia's avatar. Use a custom image URL for your own avatar.
 
 ---
 
@@ -233,10 +241,43 @@ Continue enhancing Olivia integration:
 
 ---
 
+## SESSION 2 UPDATES (January 22, 2026)
+
+### Completed This Session:
+
+1. **D-ID Streams API Integration**
+   - Created `api/olivia/avatar/streams.ts` - WebRTC streaming endpoint
+   - Created `src/hooks/useDIDStream.ts` - Frontend WebRTC hook
+   - Updated `AskOlivia.tsx` to use real video streaming in TV viewport
+
+2. **Architecture Clarified**
+   - **OliviaChatBubble** (all pages except Ask Olivia) = Text chat with OpenAI ✅
+   - **Ask Olivia Cockpit** = Full video avatar via D-ID Streams + OpenAI brain ✅
+
+3. **Files Created:**
+   - `api/olivia/avatar/streams.ts` - D-ID Streams API endpoint
+   - `src/hooks/useDIDStream.ts` - WebRTC hook for video streaming
+
+4. **Files Modified:**
+   - `src/components/AskOlivia.tsx` - Now uses video streaming instead of widget
+   - `src/components/AskOlivia.css` - Added video element and retry button styles
+
+---
+
 ## KNOWN ISSUES
 
 1. **Tavily API Quota Exceeded** - Web search for LIFE SCORE comparisons hitting quota limits (separate from Olivia)
-2. **D-ID not tested in production** - Need to verify SDK works deployed to Vercel
+2. **D-ID Streams needs testing** - WebRTC connection needs live testing with real API key
+3. **DID_PRESENTER_URL** - Add to Vercel with your custom Olivia avatar image URL
+
+---
+
+## NEXT SESSION PRIORITIES
+
+1. Test D-ID video streaming in production
+2. Mobile responsive testing
+3. Voice recognition polish
+4. Potential fallback if D-ID streaming fails (use static image + ElevenLabs audio)
 
 ---
 
