@@ -107,6 +107,45 @@ async function fetchWithTimeout(
   }
 }
 
+/**
+ * Strip markdown formatting from text for natural speech
+ * Removes: **bold**, *italic*, # headers, - bullets, [links](url), etc.
+ */
+function stripMarkdown(text: string): string {
+  return text
+    // Remove headers (# ## ### etc)
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bold **text** or __text__
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    // Remove italic *text* or _text_
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    // Remove strikethrough ~~text~~
+    .replace(/~~([^~]+)~~/g, '$1')
+    // Remove inline code `code`
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove code blocks ```code```
+    .replace(/```[\s\S]*?```/g, '')
+    // Remove links [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove images ![alt](url)
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    // Remove bullet points and list markers
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    // Remove blockquotes
+    .replace(/^>\s+/gm, '')
+    // Remove horizontal rules
+    .replace(/^[-*_]{3,}$/gm, '')
+    // Remove HTML tags
+    .replace(/<[^>]+>/g, '')
+    // Clean up multiple spaces/newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function getDIDAuthHeader(): string {
   const key = process.env.DID_API_KEY;
   if (!key) {
@@ -241,6 +280,9 @@ async function speakText(
   sessionId: string,
   text: string
 ): Promise<{ duration: number }> {
+  // Strip markdown formatting so Olivia speaks naturally
+  const cleanText = stripMarkdown(text);
+
   const response = await fetchWithTimeout(
     `${DID_API_BASE}/talks/streams/${streamId}`,
     {
@@ -252,7 +294,7 @@ async function speakText(
       body: JSON.stringify({
         script: {
           type: 'text',
-          input: text,
+          input: cleanText,
           provider: {
             type: VOICE_PROVIDER,
             voice_id: VOICE_ID,
