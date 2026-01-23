@@ -1,0 +1,1 @@
+{"name":"getFieldEvidence","description":"Fetches source evidence for a metric.","parameters":{"type":"object","properties":{"comparisonId":{"type":"string"},"metricId":{"type":"string"},"city":{"type":"string"}},"required":["comparisonId","metricId"]}}

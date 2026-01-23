@@ -37,10 +37,25 @@ interface OpenAIMessage {
   }>;
 }
 
+interface ToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
 interface OpenAIRun {
   id: string;
   status: 'queued' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'expired' | 'requires_action';
   thread_id: string;
+  required_action?: {
+    type: 'submit_tool_outputs';
+    submit_tool_outputs: {
+      tool_calls: ToolCall[];
+    };
+  };
 }
 
 // ============================================================================
@@ -166,6 +181,108 @@ function buildContextMessage(context: any, textSummary?: string): string {
 }
 
 // ============================================================================
+// FUNCTION CALLING - FIELD EVIDENCE
+// ============================================================================
+
+/**
+ * Call the field-evidence API to get sources for a metric
+ */
+async function callFieldEvidenceAPI(
+  comparisonId: string,
+  metricId: string,
+  city?: string
+): Promise<string> {
+  try {
+    // Use internal API call (same server)
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_BASE_URL || 'https://lifescore.cluesintelligence.com';
+
+    const response = await fetchWithTimeout(
+      `${baseUrl}/api/olivia/field-evidence`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comparisonId, metricId, city }),
+      },
+      10000
+    );
+
+    if (!response.ok) {
+      return JSON.stringify({ error: 'Could not fetch evidence', metricId });
+    }
+
+    const data = await response.json();
+    return JSON.stringify(data);
+  } catch (error) {
+    console.error('[OLIVIA/CHAT] Field evidence API error:', error);
+    return JSON.stringify({ error: 'Evidence lookup failed', metricId });
+  }
+}
+
+/**
+ * Handle tool calls from the assistant
+ */
+async function handleToolCalls(
+  toolCalls: ToolCall[],
+  comparisonId?: string
+): Promise<Array<{ tool_call_id: string; output: string }>> {
+  const outputs: Array<{ tool_call_id: string; output: string }> = [];
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.function.name === 'getFieldEvidence') {
+      const args = JSON.parse(toolCall.function.arguments);
+      const result = await callFieldEvidenceAPI(
+        args.comparisonId || comparisonId || '',
+        args.metricId,
+        args.city
+      );
+      outputs.push({ tool_call_id: toolCall.id, output: result });
+      console.log('[OLIVIA/CHAT] Tool call result for', args.metricId, ':', result.substring(0, 100));
+    } else {
+      // Unknown function - return error
+      outputs.push({
+        tool_call_id: toolCall.id,
+        output: JSON.stringify({ error: `Unknown function: ${toolCall.function.name}` }),
+      });
+    }
+  }
+
+  return outputs;
+}
+
+/**
+ * Submit tool outputs back to the run
+ */
+async function submitToolOutputs(
+  apiKey: string,
+  threadId: string,
+  runId: string,
+  toolOutputs: Array<{ tool_call_id: string; output: string }>
+): Promise<OpenAIRun> {
+  const response = await fetchWithTimeout(
+    `${OPENAI_API_BASE}/threads/${threadId}/runs/${runId}/submit_tool_outputs`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2',
+      },
+      body: JSON.stringify({ tool_outputs: toolOutputs }),
+    },
+    OPENAI_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to submit tool outputs: ${error}`);
+  }
+
+  return response.json();
+}
+
+// ============================================================================
 // OPENAI ASSISTANTS API FUNCTIONS
 // ============================================================================
 
@@ -265,12 +382,13 @@ async function createRun(
 }
 
 /**
- * Poll run status until complete
+ * Poll run status until complete, handling tool calls automatically
  */
 async function waitForRun(
   apiKey: string,
   threadId: string,
   runId: string,
+  comparisonId?: string,
   maxAttempts: number = 60
 ): Promise<OpenAIRun> {
   for (let i = 0; i < maxAttempts; i++) {
@@ -299,6 +417,22 @@ async function waitForRun(
 
     if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
       throw new Error(`Run ${run.status}`);
+    }
+
+    // Handle tool calls (function calling)
+    if (run.status === 'requires_action' && run.required_action?.type === 'submit_tool_outputs') {
+      const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
+      console.log('[OLIVIA/CHAT] Handling', toolCalls.length, 'tool calls');
+
+      // Execute the tool calls
+      const toolOutputs = await handleToolCalls(toolCalls, comparisonId);
+
+      // Submit the results back to OpenAI
+      await submitToolOutputs(apiKey, threadId, runId, toolOutputs);
+      console.log('[OLIVIA/CHAT] Submitted tool outputs, continuing run');
+
+      // Continue polling (don't count this as an attempt)
+      continue;
     }
 
     // Wait 1 second before next poll
@@ -392,8 +526,11 @@ export default async function handler(
     const run = await createRun(apiKey, threadId, ASSISTANT_ID, additionalInstructions);
     console.log('[OLIVIA/CHAT] Created run:', run.id);
 
-    // Wait for completion
-    await waitForRun(apiKey, threadId, run.id);
+    // Extract comparisonId for function calling
+    const comparisonId = context?.comparison?.comparisonId;
+
+    // Wait for completion (handles tool calls automatically)
+    await waitForRun(apiKey, threadId, run.id, comparisonId);
     console.log('[OLIVIA/CHAT] Run completed');
 
     // Get the assistant's response
