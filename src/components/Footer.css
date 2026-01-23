@@ -15,6 +15,11 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
+  justify-items: center;
+}
+
+.footer-section {
+  text-align: center;
 }
 
 .footer-section h3 {
@@ -142,8 +147,9 @@
 
 /* Facebook Link */
 .facebook-link {
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 }
 
