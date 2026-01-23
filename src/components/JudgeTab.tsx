@@ -24,6 +24,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { CATEGORIES } from '../shared/metrics';
+import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
 import './JudgeTab.css';
 
 // ============================================================================
@@ -163,36 +164,368 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
     });
   };
 
-  // Generate Judge Report handler (shell - API integration in Phase B)
+  // Generate Judge Report handler - Phase B Implementation
   const handleGenerateReport = async () => {
     if (!comparisonResult) return;
 
     setIsGenerating(true);
     setGenerationProgress(0);
 
-    // TODO: Phase B - Implement actual API call to Claude Opus
-    // TODO: Phase B - Implement HeyGen video generation
     console.log('[JudgeTab] Generate report requested for:', {
       city1: comparisonResult.city1.city,
       city2: comparisonResult.city2.city,
       userId
     });
+
+    try {
+      // Simulate progress updates during API call
+      const progressInterval = setInterval(() => {
+        setGenerationProgress(prev => {
+          if (prev >= 85) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + Math.random() * 10;
+        });
+      }, 500);
+
+      // Call the Judge Report API
+      const response = await fetch('/api/judge-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          comparisonResult,
+          userId
+        })
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.report) {
+        throw new Error('Invalid response from Judge API');
+      }
+
+      setGenerationProgress(100);
+      setJudgeReport(data.report);
+
+      // Save to localStorage
+      saveReportToLocalStorage(data.report);
+
+      console.log('[JudgeTab] Report generated successfully:', data.report.reportId);
+
+    } catch (error) {
+      console.error('[JudgeTab] Failed to generate report:', error);
+      // Reset state on error
+      setGenerationProgress(0);
+      // Could add error state/toast notification here
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  // Action handlers (shell - implementation in Phase B)
-  const handleSaveReport = () => {
-    console.log('[JudgeTab] Save report requested');
-    // TODO: Phase B - Save to localStorage + Supabase
+  // Save report to localStorage
+  const saveReportToLocalStorage = (report: JudgeReport) => {
+    try {
+      const storageKey = 'lifescore_judge_reports';
+      const existingReports = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+      // Add new report at the beginning
+      existingReports.unshift(report);
+
+      // Keep only last 20 reports
+      const trimmedReports = existingReports.slice(0, 20);
+
+      localStorage.setItem(storageKey, JSON.stringify(trimmedReports));
+      console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
+    } catch (error) {
+      console.error('[JudgeTab] Failed to save report to localStorage:', error);
+    }
+  };
+
+  // Load report from localStorage on mount (if we have a matching comparison)
+  useEffect(() => {
+    if (!comparisonResult) return;
+
+    try {
+      const storageKey = 'lifescore_judge_reports';
+      const existingReports: JudgeReport[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+      // Find a report matching this comparison
+      const matchingReport = existingReports.find(r =>
+        r.comparisonId === comparisonResult.comparisonId ||
+        (r.city1 === comparisonResult.city1.city && r.city2 === comparisonResult.city2.city)
+      );
+
+      if (matchingReport) {
+        console.log('[JudgeTab] Found cached report:', matchingReport.reportId);
+        setJudgeReport(matchingReport);
+      }
+    } catch (error) {
+      console.error('[JudgeTab] Failed to load cached report:', error);
+    }
+  }, [comparisonResult]);
+
+  // Save report to Supabase (for authenticated users)
+  const saveReportToSupabase = async (report: JudgeReport): Promise<boolean> => {
+    if (!isSupabaseConfigured()) {
+      console.log('[JudgeTab] Supabase not configured, skipping cloud save');
+      return false;
+    }
+
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        console.log('[JudgeTab] No authenticated user, skipping Supabase save');
+        return false;
+      }
+
+      // Check if report already exists
+      const { data: existing } = await supabase
+        .from('judge_reports')
+        .select('id')
+        .eq('report_id', report.reportId)
+        .single();
+
+      if (existing) {
+        // Update existing report
+        const { error } = await supabase
+          .from('judge_reports')
+          .update({
+            city1_score: report.summaryOfFindings.city1Score,
+            city1_trend: report.summaryOfFindings.city1Trend,
+            city2_score: report.summaryOfFindings.city2Score,
+            city2_trend: report.summaryOfFindings.city2Trend,
+            overall_confidence: report.summaryOfFindings.overallConfidence,
+            recommendation: report.executiveSummary.recommendation,
+            rationale: report.executiveSummary.rationale,
+            key_factors: report.executiveSummary.keyFactors,
+            future_outlook: report.executiveSummary.futureOutlook,
+            confidence_level: report.executiveSummary.confidenceLevel,
+            category_analysis: report.categoryAnalysis,
+            full_report: report,
+            video_url: report.videoUrl,
+            video_status: report.videoStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('report_id', report.reportId);
+
+        if (error) throw error;
+        console.log('[JudgeTab] Report updated in Supabase:', report.reportId);
+      } else {
+        // Insert new report
+        const { error } = await supabase
+          .from('judge_reports')
+          .insert({
+            user_id: user.id,
+            report_id: report.reportId,
+            city1_name: report.city1,
+            city2_name: report.city2,
+            city1_score: report.summaryOfFindings.city1Score,
+            city1_trend: report.summaryOfFindings.city1Trend,
+            city2_score: report.summaryOfFindings.city2Score,
+            city2_trend: report.summaryOfFindings.city2Trend,
+            overall_confidence: report.summaryOfFindings.overallConfidence,
+            recommendation: report.executiveSummary.recommendation,
+            rationale: report.executiveSummary.rationale,
+            key_factors: report.executiveSummary.keyFactors,
+            future_outlook: report.executiveSummary.futureOutlook,
+            confidence_level: report.executiveSummary.confidenceLevel,
+            category_analysis: report.categoryAnalysis,
+            full_report: report,
+            video_url: report.videoUrl,
+            video_status: report.videoStatus
+          });
+
+        if (error) throw error;
+        console.log('[JudgeTab] Report saved to Supabase:', report.reportId);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('[JudgeTab] Supabase save error:', error);
+      return false;
+    }
+  };
+
+  // Action handlers - Phase B Implementation
+  const handleSaveReport = async () => {
+    if (!judgeReport) return;
+
+    console.log('[JudgeTab] Save report requested:', judgeReport.reportId);
+
+    // Save to localStorage
+    saveReportToLocalStorage(judgeReport);
+
+    // Save to Supabase for authenticated users
+    const savedToCloud = await saveReportToSupabase(judgeReport);
+
+    if (savedToCloud) {
+      alert(`Report ${judgeReport.reportId} saved to your account!`);
+    } else {
+      alert(`Report ${judgeReport.reportId} saved locally. Sign in to save to cloud.`);
+    }
   };
 
   const handleDownloadReport = (format: 'pdf' | 'video') => {
+    if (!judgeReport) return;
+
     console.log('[JudgeTab] Download requested:', format);
-    // TODO: Phase B - Generate and download PDF/video
+
+    if (format === 'pdf') {
+      // Generate PDF content
+      const pdfContent = generatePDFContent(judgeReport);
+
+      // Create blob and download
+      const blob = new Blob([pdfContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${judgeReport.reportId}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('[JudgeTab] PDF downloaded:', judgeReport.reportId);
+    } else if (format === 'video') {
+      if (!judgeReport.videoUrl) {
+        alert('Video not yet available. Generate video report first.');
+        return;
+      }
+      // Download video URL
+      const a = document.createElement('a');
+      a.href = judgeReport.videoUrl;
+      a.download = `${judgeReport.reportId}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   };
 
   const handleForwardReport = () => {
+    if (!judgeReport) return;
+
     console.log('[JudgeTab] Forward report requested');
-    // TODO: Phase B - Share/forward functionality
+
+    // Generate shareable summary
+    const summary = `🏆 LIFE SCORE™ Judge's Verdict\n\n` +
+      `${judgeReport.city1} vs ${judgeReport.city2}\n\n` +
+      `Winner: ${judgeReport.executiveSummary.recommendation === 'city1' ? judgeReport.city1 :
+        judgeReport.executiveSummary.recommendation === 'city2' ? judgeReport.city2 : 'TIE'}\n` +
+      `Confidence: ${judgeReport.executiveSummary.confidenceLevel.toUpperCase()}\n\n` +
+      `Rationale: ${judgeReport.executiveSummary.rationale.slice(0, 200)}...\n\n` +
+      `Report ID: ${judgeReport.reportId}\n` +
+      `Generated: ${new Date(judgeReport.generatedAt).toLocaleDateString()}`;
+
+    // Copy to clipboard and/or share
+    if (navigator.share) {
+      navigator.share({
+        title: `LIFE SCORE™ Verdict: ${judgeReport.city1} vs ${judgeReport.city2}`,
+        text: summary
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(summary).then(() => {
+        alert('Report summary copied to clipboard!');
+      }).catch(() => {
+        alert('Unable to copy to clipboard.');
+      });
+    }
+  };
+
+  // Generate PDF content as HTML (can be printed to PDF)
+  const generatePDFContent = (report: JudgeReport): string => {
+    const winner = report.executiveSummary.recommendation === 'city1' ? report.city1 :
+      report.executiveSummary.recommendation === 'city2' ? report.city2 : 'TIE';
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LIFE SCORE™ Judge's Report - ${report.reportId}</title>
+  <style>
+    body { font-family: 'Inter', -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; background: #0a1628; color: #f8fafc; }
+    h1 { color: #d4af37; border-bottom: 2px solid #d4af37; padding-bottom: 10px; }
+    h2 { color: #c9a227; margin-top: 30px; }
+    h3 { color: #64748b; }
+    .verdict { background: linear-gradient(135deg, #0d2847 0%, #1e3a5f 100%); padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }
+    .verdict h2 { color: #d4af37; margin: 0; font-size: 2em; }
+    .score-card { display: inline-block; padding: 15px 25px; margin: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+    .score-value { font-size: 2.5em; font-weight: bold; color: #10b981; }
+    .trend-rising { color: #22c55e; }
+    .trend-declining { color: #ef4444; }
+    .trend-stable { color: #f59e0b; }
+    .category { background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #c9a227; }
+    .key-factor { background: rgba(212,175,55,0.1); padding: 10px 15px; margin: 5px 0; border-radius: 5px; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #64748b; text-align: center; color: #64748b; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>⚖️ LIFE SCORE™ Judge's Report</h1>
+  <p><strong>Report ID:</strong> ${report.reportId}<br>
+  <strong>Generated:</strong> ${new Date(report.generatedAt).toLocaleString()}<br>
+  <strong>User ID:</strong> ${report.userId}</p>
+
+  <div class="verdict">
+    <h3>THE JUDGE'S VERDICT</h3>
+    <h2>🏆 ${winner}</h2>
+    <p>Confidence: <strong>${report.executiveSummary.confidenceLevel.toUpperCase()}</strong></p>
+  </div>
+
+  <h2>📊 Summary of Findings</h2>
+  <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+    <div class="score-card">
+      <h3>${report.city1}</h3>
+      <div class="score-value">${report.summaryOfFindings.city1Score}</div>
+      <div class="trend-${report.summaryOfFindings.city1Trend}">
+        ${report.summaryOfFindings.city1Trend === 'rising' ? '↗️ Rising' :
+          report.summaryOfFindings.city1Trend === 'declining' ? '↘️ Declining' : '→ Stable'}
+      </div>
+    </div>
+    <div class="score-card">
+      <h3>${report.city2}</h3>
+      <div class="score-value">${report.summaryOfFindings.city2Score}</div>
+      <div class="trend-${report.summaryOfFindings.city2Trend}">
+        ${report.summaryOfFindings.city2Trend === 'rising' ? '↗️ Rising' :
+          report.summaryOfFindings.city2Trend === 'declining' ? '↘️ Declining' : '→ Stable'}
+      </div>
+    </div>
+  </div>
+
+  <h2>📖 Detailed Category Analysis</h2>
+  ${report.categoryAnalysis.map(cat => `
+    <div class="category">
+      <h3>${cat.categoryName}</h3>
+      <p><strong>${report.city1}:</strong> ${cat.city1Analysis}</p>
+      <p><strong>${report.city2}:</strong> ${cat.city2Analysis}</p>
+      <p><em>📈 Trend: ${cat.trendNotes}</em></p>
+    </div>
+  `).join('')}
+
+  <h2>🏆 Executive Summary</h2>
+  <p>${report.executiveSummary.rationale}</p>
+
+  <h3>Key Factors</h3>
+  ${report.executiveSummary.keyFactors.map(f => `<div class="key-factor">◈ ${f}</div>`).join('')}
+
+  <h3>Future Outlook</h3>
+  <p>${report.executiveSummary.futureOutlook}</p>
+
+  <div class="footer">
+    <p>LIFE SCORE™ - The Judge's Verdict<br>
+    Powered by Claude Opus 4.5<br>
+    © 2025-2026 Clues Intelligence LTD</p>
+  </div>
+</body>
+</html>`;
   };
 
   // Trend icon helper
