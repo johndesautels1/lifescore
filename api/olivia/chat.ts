@@ -4,6 +4,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from '../shared/rateLimit.js';
 
 // ============================================================================
 // CONSTANTS
@@ -374,6 +375,11 @@ export default async function handler(
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // Rate limiting - standard preset for chat
+  if (!applyRateLimit(req.headers, 'olivia-chat', 'standard', res)) {
+    return; // 429 already sent
   }
 
   if (req.method !== 'POST') {

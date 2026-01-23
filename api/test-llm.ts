@@ -4,6 +4,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from './shared/rateLimit.js';
 
 // Quick timeout for test calls (15 seconds)
 const TEST_TIMEOUT_MS = 15000;
@@ -222,6 +223,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Rate limiting - light preset for test calls
+  if (!applyRateLimit(req.headers, 'test-llm', 'light', res)) {
+    return; // 429 already sent
   }
 
   // Check which LLM to test (default: all)

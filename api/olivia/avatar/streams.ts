@@ -12,6 +12,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from '../../shared/rateLimit.js';
 
 // ============================================================================
 // CONSTANTS
@@ -19,41 +20,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const DID_API_BASE = 'https://api.d-id.com';
 const DID_TIMEOUT_MS = 60000;
-
-// ============================================================================
-// SERVER-SIDE RATE LIMITING (Defense in depth)
-// ============================================================================
-
-// Simple in-memory rate limiter (resets on cold start, but that's OK for burst protection)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW_MS = 60000;  // 1 minute window
-const RATE_LIMIT_MAX_REQUESTS = 30;  // Max 30 requests per minute per IP
-
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetIn: number } {
-  const now = Date.now();
-  const key = ip || 'unknown';
-  const record = rateLimitMap.get(key);
-
-  // Clean up expired entries periodically
-  if (rateLimitMap.size > 1000) {
-    for (const [k, v] of rateLimitMap.entries()) {
-      if (v.resetTime < now) rateLimitMap.delete(k);
-    }
-  }
-
-  if (!record || record.resetTime < now) {
-    // New window
-    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1, resetIn: RATE_LIMIT_WINDOW_MS };
-  }
-
-  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
-  }
-
-  record.count++;
-  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - record.count, resetIn: record.resetTime - now };
-}
 
 // Olivia's presenter image (the avatar image)
 const OLIVIA_SOURCE_URL = process.env.DID_PRESENTER_URL || 'https://create-images-results.d-id.com/DefaultPresenters/Emma_f/v1_image.jpeg';
@@ -371,24 +337,9 @@ export default async function handler(
     return;
   }
 
-  // Server-side rate limiting (defense in depth)
-  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
-    || req.headers['x-real-ip'] as string
-    || 'unknown';
-  const rateLimit = checkRateLimit(clientIp);
-
-  // Add rate limit headers
-  res.setHeader('X-RateLimit-Limit', RATE_LIMIT_MAX_REQUESTS.toString());
-  res.setHeader('X-RateLimit-Remaining', rateLimit.remaining.toString());
-  res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimit.resetIn / 1000).toString());
-
-  if (!rateLimit.allowed) {
-    console.warn(`[DID-STREAMS] Rate limited: ${clientIp}`);
-    res.status(429).json({
-      error: 'Too many requests. Please wait before retrying.',
-      retryAfter: Math.ceil(rateLimit.resetIn / 1000),
-    });
-    return;
+  // Rate limiting - standard preset for avatar streaming
+  if (!applyRateLimit(req.headers, 'did-streams', 'standard', res)) {
+    return; // 429 already sent
   }
 
   try {

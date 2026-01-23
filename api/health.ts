@@ -4,6 +4,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from './shared/rateLimit.js';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,6 +13,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Rate limiting - lenient for health checks
+  if (!applyRateLimit(req.headers, 'health', 'health', res)) {
+    return; // 429 already sent
   }
 
   // Check which API keys are configured (don't expose actual keys)

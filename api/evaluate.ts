@@ -4,6 +4,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from './shared/rateLimit.js';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 import type { ScoreResult } from './shared/metrics.js';
@@ -1287,6 +1288,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Rate limiting - heavy preset for expensive LLM calls
+  if (!applyRateLimit(req.headers, 'evaluate', 'heavy', res)) {
+    return; // 429 already sent
   }
 
   if (req.method !== 'POST') {

@@ -7,6 +7,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from './shared/rateLimit.js';
 
 // ============================================================================
 // CONSTANTS
@@ -240,6 +241,11 @@ export default async function handler(
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // Rate limiting - light preset for report generation
+  if (!applyRateLimit(req.headers, 'gamma', 'light', res)) {
+    return; // 429 already sent
   }
 
   try {

@@ -9,6 +9,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyRateLimit } from './shared/rateLimit.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
 import { METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 
@@ -430,6 +431,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Rate limiting - heavy preset for expensive Opus calls
+  if (!applyRateLimit(req.headers, 'judge', 'heavy', res)) {
+    return; // 429 already sent
   }
 
   if (req.method !== 'POST') {
