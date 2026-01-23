@@ -121,13 +121,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // FETCH PROFILE & PREFERENCES
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Track if we're already fetching to prevent duplicate calls
+  const fetchingRef = React.useRef<string | null>(null);
+
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
 
+    // Prevent duplicate fetches for the same user
+    if (fetchingRef.current === userId) {
+      console.log("[Auth] Already fetching profile for user, skipping duplicate");
+      return { profile: null, preferences: null };
+    }
+
+    fetchingRef.current = userId;
     console.log("[Auth] Fetching profile for user:", userId);
 
-    // Helper: wrap query with timeout to prevent hanging
-    // Note: Supabase PostgrestBuilder is thenable but not a full Promise, so we accept PromiseLike
+    // Helper: wrap query with timeout to prevent hanging (increased to 15s)
     const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
         Promise.resolve(promise),
@@ -138,39 +147,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     try {
-      // Fetch profile with timeout - use maybeSingle() to handle missing rows gracefully
+      // Fetch profile and preferences in parallel with timeout
       const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      const { data: profile, error: profileError } = await withTimeout(profilePromise, 5000);
-
-      if (profileError) {
-        console.error('[Auth] Error fetching profile:', profileError);
-      } else if (profile) {
-        console.log('[Auth] Profile loaded:', profile.email);
-      } else {
-        console.log('[Auth] No profile found for user (will use defaults)');
-      }
-
-      // Fetch preferences with timeout
       const prefsPromise = supabase
         .from('user_preferences')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      const { data: preferences, error: prefsError } = await withTimeout(prefsPromise, 5000);
+      // Run both in parallel with 15s timeout
+      const [profileResult, prefsResult] = await Promise.all([
+        withTimeout(profilePromise, 15000).catch(err => {
+          console.warn('[Auth] Profile fetch timeout/error:', err.message);
+          return { data: null, error: err };
+        }),
+        withTimeout(prefsPromise, 15000).catch(err => {
+          console.warn('[Auth] Preferences fetch timeout/error:', err.message);
+          return { data: null, error: err };
+        }),
+      ]);
 
-      if (prefsError) {
-        console.error('[Auth] Error fetching preferences:', prefsError);
+      const profile = profileResult.data;
+      const preferences = prefsResult.data;
+
+      if (profile) {
+        console.log('[Auth] Profile loaded:', profile.email);
+      } else {
+        console.log('[Auth] No profile found for user (will use defaults)');
       }
 
+      fetchingRef.current = null;
       return { profile: profile || null, preferences: preferences || null };
     } catch (error) {
       console.error('[Auth] Error in fetchUserData:', error);
+      fetchingRef.current = null;
       // Return nulls on timeout/error - app continues without DB profile
       return { profile: null, preferences: null };
     }
@@ -203,15 +218,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // SUPABASE MODE: Get initial session with timeout
+    // SUPABASE MODE: Get initial session with timeout (increased to 15s)
+    let sessionHandled = false;
     const sessionTimeout = setTimeout(() => {
-      console.warn("[Auth] Session check timed out");
-      setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
-    }, 5000);
+      if (!sessionHandled) {
+        console.warn("[Auth] Session check timed out after 15s");
+        setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
+      }
+    }, 15000);
 
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (sessionHandled) return; // Already handled by auth state change
+      sessionHandled = true;
       clearTimeout(sessionTimeout);
-      if (error) { console.error("[Auth] getSession error:", error); setState(prev => ({ ...prev, isLoading: false })); return; }
+
+      if (error) {
+        console.error("[Auth] getSession error:", error);
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+
       if (session?.user) {
         const { profile, preferences } = await fetchUserData(session.user.id);
         const user = normalizeUser(session.user, profile as Profile | null);
@@ -232,6 +258,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
           isAuthenticated: false,
         }));
+      }
+    }).catch(err => {
+      console.error("[Auth] getSession exception:", err);
+      if (!sessionHandled) {
+        sessionHandled = true;
+        clearTimeout(sessionTimeout);
+        setState(prev => ({ ...prev, isLoading: false }));
       }
     });
 
