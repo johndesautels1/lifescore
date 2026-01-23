@@ -76,7 +76,7 @@ export async function buildContext(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `Failed to build context: ${response.status}`);
   }
 
@@ -117,7 +117,7 @@ export async function sendMessage(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `Chat request failed: ${response.status}`);
   }
 
@@ -164,7 +164,7 @@ export async function generateTTS(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `TTS generation failed: ${response.status}`);
   }
 
@@ -191,7 +191,7 @@ export async function createHeyGenSession(): Promise<HeyGenSessionResponse> {
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `HeyGen session creation failed: ${response.status}`);
   }
 
@@ -221,7 +221,7 @@ export async function heygenSpeak(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `HeyGen speak failed: ${response.status}`);
   }
 
@@ -247,7 +247,7 @@ export async function heygenInterrupt(sessionId: string): Promise<HeyGenSessionR
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `HeyGen interrupt failed: ${response.status}`);
   }
 
@@ -296,7 +296,7 @@ export async function createDIDSession(): Promise<DIDAgentResponse> {
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `D-ID session creation failed: ${response.status}`);
   }
 
@@ -327,7 +327,7 @@ export async function didChat(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
     throw new Error(error.error || `D-ID chat failed: ${response.status}`);
   }
 

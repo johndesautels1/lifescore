@@ -48,9 +48,15 @@ export async function saveComparison(
 ): Promise<{ data: Comparison | null; error: Error | null }> {
   requireDatabase();
 
-  // Extract city data from result
-  const city1 = comparisonResult.city1 as any;
-  const city2 = comparisonResult.city2 as any;
+  // Extract city data from result with proper typing
+  interface CityData {
+    city?: string;
+    country?: string;
+    normalizedScore?: number;
+    totalConsensusScore?: number;
+  }
+  const city1 = comparisonResult.city1 as CityData | undefined;
+  const city2 = comparisonResult.city2 as CityData | undefined;
 
   const insert: ComparisonInsert = {
     user_id: userId,

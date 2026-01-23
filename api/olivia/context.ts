@@ -27,6 +27,8 @@ interface ContextMetric {
   judgeExplanation?: string;
   legalScore?: number;
   enforcementScore?: number;
+  diff?: number;
+  category?: string;
 }
 
 interface ContextCategory {
@@ -581,7 +583,7 @@ function generateTextSummary(context: LifeScoreContext): string {
   // Group metrics by category
   const metricsByCategory: Record<string, typeof topMetrics> = {};
   topMetrics.forEach(m => {
-    const cat = (m as any).category || 'Other';
+    const cat = m.category || 'Other';
     if (!metricsByCategory[cat]) metricsByCategory[cat] = [];
     metricsByCategory[cat].push(m);
   });
@@ -600,7 +602,7 @@ function generateTextSummary(context: LifeScoreContext): string {
 
   // Top 10 Biggest Differences (for quick reference)
   summary += `## Top 10 Biggest Differences\n\n`;
-  const sortedByDiff = [...topMetrics].sort((a, b) => (b as any).diff - (a as any).diff).slice(0, 10);
+  const sortedByDiff = [...topMetrics].sort((a, b) => (b.diff || 0) - (a.diff || 0)).slice(0, 10);
   sortedByDiff.forEach((m, i) => {
     const better = m.city1Score > m.city2Score ? city1 : city2;
     const diff = Math.abs(m.city1Score - m.city2Score);
