@@ -127,9 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[Auth] Fetching profile for user:", userId);
 
     // Helper: wrap query with timeout to prevent hanging
-    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+    // Note: Supabase PostgrestBuilder is thenable but not a full Promise, so we accept PromiseLike
+    const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
-        promise,
+        Promise.resolve(promise),
         new Promise<T>((_, reject) =>
           setTimeout(() => reject(new Error('Database query timeout')), ms)
         ),
