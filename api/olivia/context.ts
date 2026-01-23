@@ -225,6 +225,111 @@ function getMetricDisplayName(metricId: string): string {
 }
 
 // ============================================================================
+// METRIC TALKING POINTS (Key conversation starters for Olivia)
+// ============================================================================
+
+interface MetricKnowledge {
+  keyPoints: string[];
+  commonQ: string[];
+  impact: string;
+}
+
+const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
+  'pf_01_cannabis_legal': {
+    keyPoints: ['Recreational vs medical distinction', 'Home cultivation rights vary', 'Possession limits matter', 'Employment protections rare'],
+    commonQ: ['Can I grow my own?', 'What are limits?', 'Can employer fire me for off-duty use?'],
+    impact: 'Affects whether you can legally purchase and consume cannabis without arrest risk.',
+  },
+  'pf_02_alcohol_restrictions': {
+    keyPoints: ['Blue laws restrict Sunday sales', 'Dry counties still exist', 'State-run stores limit selection', 'Happy hour restrictions'],
+    commonQ: ['Can I buy on Sunday?', 'Are there state-run stores?'],
+    impact: 'Determines when and where you can purchase alcohol.',
+  },
+  'pf_06_abortion_access': {
+    keyPoints: ['Post-Dobbs landscape varies dramatically', 'Gestational limits range widely', 'Waiting periods add barriers', 'Clinic availability critical'],
+    commonQ: ['Is it legal here?', 'What are gestational limits?', 'Are there waiting periods?'],
+    impact: 'Critical for reproductive autonomy and healthcare access.',
+  },
+  'pf_07_lgbtq_rights': {
+    keyPoints: ['Marriage equality is federal but other protections vary', 'Employment non-discrimination differs', 'Conversion therapy bans in some states'],
+    commonQ: ['Are LGBTQ+ people protected from discrimination?', 'Is conversion therapy banned?'],
+    impact: 'Affects safety, employment, housing for LGBTQ+ individuals.',
+  },
+  'hp_01_hoa_prevalence': {
+    keyPoints: ['75M+ Americans in HOA communities', 'Varies 5-70% by metro', 'New construction almost always HOA', 'Older areas often HOA-free'],
+    commonQ: ['How common are HOAs?', 'Can I find homes without HOA?'],
+    impact: 'Determines likelihood of living under HOA rules and fees.',
+  },
+  'hp_02_hoa_power': {
+    keyPoints: ['CC&Rs define powers', 'Some control paint, landscaping, parking', 'Fining and lien authority varies', 'State laws increasingly limit overreach'],
+    commonQ: ['What can HOA control?', 'Can they fine me?', 'Can they lien my home?'],
+    impact: 'Affects daily decisions about your property from paint to parking.',
+  },
+  'hp_03_property_tax_rate': {
+    keyPoints: ['Rates range 0.3% to 2.5%+', 'Assessed vs market value differs', 'Homestead exemptions available', 'Tax caps like Prop 13'],
+    commonQ: ['What is the rate?', 'Are there exemptions?', 'How much annually?'],
+    impact: 'Major ongoing cost, can be $5K-$20K+ annually.',
+  },
+  'bw_03_minimum_wage': {
+    keyPoints: ['Federal $7.25, many states higher', 'Some cities $15-20+', 'Tipped minimum much lower', 'Small biz exemptions exist'],
+    commonQ: ['What is minimum wage?', 'Are tips counted?'],
+    impact: 'Affects wages for workers and costs for businesses.',
+  },
+  'bw_04_right_to_work': {
+    keyPoints: ['27 states have RTW laws', 'Cannot be required to pay union dues', 'Affects union strength', 'Michigan repealed in 2023'],
+    commonQ: ['Is this RTW state?', 'Do I have to join union?', 'Must I pay dues?'],
+    impact: 'Affects union membership requirements.',
+  },
+  'bw_08_non_compete': {
+    keyPoints: ['California bans entirely', 'FTC proposed federal ban', 'Many states limit scope/duration', 'Tech avoiding non-competes'],
+    commonQ: ['Are non-competes enforceable?', 'Can I work for competitor?'],
+    impact: 'Affects career mobility and job switching.',
+  },
+  'bw_10_income_tax': {
+    keyPoints: ['9 states have no income tax', 'Top rates up to 13.3%', 'Flat vs progressive structures', 'Local taxes in some cities'],
+    commonQ: ['Is there state income tax?', 'What are brackets?', 'Local taxes?'],
+    impact: 'Significant impact on take-home pay.',
+  },
+  'tr_01_public_transit': {
+    keyPoints: ['Quality varies from world-class to none', 'Coverage and frequency matter', 'Last-mile connectivity critical', 'Funding affects stability'],
+    commonQ: ['How good is transit?', 'Can I live without a car?', 'How often do trains run?'],
+    impact: 'Determines whether car-free living is practical.',
+  },
+  'tr_04_car_dependency': {
+    keyPoints: ['Many US metros require cars', 'Jobs-housing mismatch increases need', 'Sprawl requires driving', 'Car-free saves significantly'],
+    commonQ: ['Do I need a car?', 'Can family share one car?', 'How do people commute?'],
+    impact: 'Major cost and lifestyle factor.',
+  },
+  'pl_01_incarceration_rate': {
+    keyPoints: ['US highest globally', 'Rates vary 3x+ between states', 'Racial disparities significant', 'Population declining from peak'],
+    commonQ: ['What is the rate?', 'How does it compare?', 'Are there disparities?'],
+    impact: 'Reflects criminal justice system harshness.',
+  },
+  'pl_03_civil_forfeiture': {
+    keyPoints: ['Police can seize without conviction', 'Some states require conviction', 'Federal sharing bypasses limits', 'Burden of proof varies'],
+    commonQ: ['Can police seize property without charges?', 'How do I get it back?'],
+    impact: 'Risk of property loss without due process.',
+  },
+  'sl_01_free_speech': {
+    keyPoints: ['First Amendment strong baseline', 'State constitutions may add protection', 'Anti-SLAPP laws protect speakers', 'Campus policies vary'],
+    commonQ: ['What protections exist?', 'Are there anti-SLAPP laws?'],
+    impact: 'Affects ability to speak freely without legal risk.',
+  },
+  'sl_07_privacy_laws': {
+    keyPoints: ['California CCPA/CPRA leads', 'Growing state privacy laws', 'No federal law yet', 'Biometric privacy in some states'],
+    commonQ: ['What privacy rights exist?', 'Can I opt out of data collection?'],
+    impact: 'Affects control over personal data.',
+  },
+};
+
+/**
+ * Get knowledge for a metric ID
+ */
+function getMetricKnowledge(metricId: string): MetricKnowledge | undefined {
+  return METRIC_KNOWLEDGE[metricId];
+}
+
+// ============================================================================
 // CONTEXT BUILDER FUNCTIONS
 // ============================================================================
 
@@ -341,7 +446,7 @@ function buildStandardContext(result: any): LifeScoreContext {
     },
     categories,
     topMetrics,
-    evidence: evidence.slice(0, 20), // Limit evidence to avoid context overflow
+    evidence: evidence.slice(0, 50), // Expanded to 50 for richer context
     stats: {
       metricsEvaluated: allMetricDiffs.length,
       totalProcessingTimeMs: 0,
@@ -473,7 +578,7 @@ function buildEnhancedContext(result: any): LifeScoreContext {
     },
     categories,
     topMetrics,
-    evidence: evidence.slice(0, 20),
+    evidence: evidence.slice(0, 50), // Expanded to 50 for richer context
     consensus: {
       llmsUsed: result.llmsUsed || [],
       judgeModel: result.judgeModel || 'claude-opus',
@@ -567,6 +672,33 @@ function generateTextSummary(context: LifeScoreContext): string {
   summary += `**${city1}:** ${comparison.city1.normalizedScore}/100\n`;
   summary += `**${city2}:** ${comparison.city2.normalizedScore}/100\n\n`;
 
+  // Executive Summary (narrative for Olivia to reference when discussing "the report")
+  const city1CatWins = categories.filter(c => c.winner === 'city1').length;
+  const city2CatWins = categories.filter(c => c.winner === 'city2').length;
+  const sortedDiffs = [...topMetrics].sort((a, b) => (b.diff || 0) - (a.diff || 0));
+  const biggestWinMetrics = sortedDiffs.slice(0, 3);
+  const closeMetrics = sortedDiffs.filter(m => (m.diff || 0) < 5).slice(0, 3);
+
+  summary += `## Executive Summary\n\n`;
+  summary += `This LIFE SCORE (Legal Independence & Freedom Evaluation) comparison analyzed 100 legal freedom metrics across 6 categories to determine which city offers more personal and economic freedom.\n\n`;
+  summary += `**Key Finding:** ${comparison.winner} emerges as the winner with a total score of ${comparison.winner === city1 ? comparison.city1.normalizedScore : comparison.city2.normalizedScore}/100, beating ${comparison.winner === city1 ? city2 : city1} by ${comparison.scoreDifference} points.\n\n`;
+  summary += `**Category Wins:** ${city1} won ${city1CatWins} categories, ${city2} won ${city2CatWins} categories.\n\n`;
+
+  if (biggestWinMetrics.length > 0) {
+    summary += `**Biggest Differences:**\n`;
+    biggestWinMetrics.forEach(m => {
+      const winner = m.city1Score > m.city2Score ? city1 : city2;
+      summary += `- ${m.name}: ${winner} scores ${Math.abs(m.city1Score - m.city2Score)} points higher\n`;
+    });
+    summary += `\n`;
+  }
+
+  if (closeMetrics.length > 0) {
+    summary += `**Areas Where Cities Are Similar:** ${closeMetrics.map(m => m.name).join(', ')}\n\n`;
+  }
+
+  summary += `**What This Means:** If you value personal freedom, property rights, and low regulatory burden, ${comparison.winner} offers more legal freedom for everyday life decisions. However, the specific areas that matter most to you should guide your final decision.\n\n`;
+
   // Category Breakdown
   summary += `## Category Breakdown\n\n`;
   categories.forEach(cat => {
@@ -609,6 +741,26 @@ function generateTextSummary(context: LifeScoreContext): string {
     summary += `${i + 1}. **${m.name}**: ${better} wins by ${diff} points (${m.city1Score} vs ${m.city2Score})\n`;
   });
 
+  // Deep-Dive Knowledge for Top Differences (helps Olivia discuss specifics)
+  summary += `\n## Deep-Dive: What These Differences Mean\n\n`;
+  summary += `Here is detailed knowledge about the most significant differences:\n\n`;
+  sortedByDiff.forEach((m) => {
+    const knowledge = getMetricKnowledge(m.id);
+    if (knowledge) {
+      summary += `### ${m.name}\n`;
+      summary += `**Daily Life Impact:** ${knowledge.impact}\n\n`;
+      summary += `**Key Points:**\n`;
+      knowledge.keyPoints.forEach(point => {
+        summary += `- ${point}\n`;
+      });
+      summary += `\n**Common Questions:**\n`;
+      knowledge.commonQ.forEach(q => {
+        summary += `- ${q}\n`;
+      });
+      summary += `\n`;
+    }
+  });
+
   // Consensus info if available
   if (context.consensus) {
     summary += `\n## AI Consensus Information\n\n`;
@@ -622,6 +774,35 @@ function generateTextSummary(context: LifeScoreContext): string {
         summary += `- ${d.metricName}: StdDev ${d.standardDeviation.toFixed(1)} - ${d.explanation}\n`;
       });
     }
+  }
+
+  // Evidence and Sources with actual quotes
+  if (context.evidence && context.evidence.length > 0) {
+    summary += `\n## Source Evidence & Quotes\n\n`;
+    summary += `The following evidence was gathered from web research:\n\n`;
+
+    // Group evidence by metric for better organization
+    const evidenceByMetric: Record<string, typeof context.evidence> = {};
+    context.evidence.forEach(e => {
+      const key = `${e.metricName} (${e.city})`;
+      if (!evidenceByMetric[key]) evidenceByMetric[key] = [];
+      evidenceByMetric[key].push(e);
+    });
+
+    Object.entries(evidenceByMetric).forEach(([metricKey, evidenceItems]) => {
+      summary += `### ${metricKey}\n`;
+      evidenceItems.forEach(e => {
+        e.sources.forEach(s => {
+          if (s.title) {
+            summary += `- **${s.title}**\n`;
+          }
+          if (s.snippet) {
+            summary += `  > "${s.snippet}"\n`;
+          }
+          summary += `  Source: ${s.url}\n\n`;
+        });
+      });
+    });
   }
 
   return summary;
