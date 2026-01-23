@@ -13,7 +13,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // ============================================================================
 
 const GAMMA_API_BASE = 'https://public-api.gamma.app/v1.0';
-const GAMMA_TIMEOUT_MS = 30000;  // 30 seconds for API calls
+const GAMMA_TIMEOUT_MS = 60000;  // 60 seconds for API calls
 
 // ============================================================================
 // TYPES

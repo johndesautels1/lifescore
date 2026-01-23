@@ -160,7 +160,7 @@ export async function generateTTS(
         voiceId: options.voiceId,
       }),
     },
-    30000 // 30 second timeout for TTS
+    60000 // 60 second timeout for TTS
   );
 
   if (!response.ok) {

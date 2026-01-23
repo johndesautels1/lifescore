@@ -15,7 +15,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // ============================================================================
 
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
-const ELEVENLABS_TIMEOUT_MS = 30000; // 30 seconds
+const ELEVENLABS_TIMEOUT_MS = 60000; // 60 seconds
 
 // Default voice ID - Olivia's cloned voice (can be overridden via env)
 const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';

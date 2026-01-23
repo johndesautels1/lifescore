@@ -66,7 +66,7 @@ const GAMMA_REPORTS_KEY = 'lifescore_saved_gamma_reports';
 const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
-const GITHUB_TIMEOUT_MS = 30000; // 30 seconds for GitHub API calls
+const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
 
 // Helper: fetch with timeout using AbortController
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {

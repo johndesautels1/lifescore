@@ -10,7 +10,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // ============================================================================
 
 const HEYGEN_API_BASE = 'https://api.heygen.com/v1';
-const HEYGEN_TIMEOUT_MS = 30000;
+const HEYGEN_TIMEOUT_MS = 60000;
 
 // Default avatar (can be overridden via env)
 const DEFAULT_AVATAR_ID = process.env.HEYGEN_AVATAR_ID || '';

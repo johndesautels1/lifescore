@@ -18,7 +18,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // ============================================================================
 
 const DID_API_BASE = 'https://api.d-id.com';
-const DID_TIMEOUT_MS = 30000;
+const DID_TIMEOUT_MS = 60000;
 
 // ============================================================================
 // SERVER-SIDE RATE LIMITING (Defense in depth)

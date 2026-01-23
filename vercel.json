@@ -15,6 +15,29 @@
     },
     "api/test-llm.ts": {
       "maxDuration": 60
+    },
+    "api/gamma.ts": {
+      "maxDuration": 120,
+      "includeFiles": "api/shared/**"
+    },
+    "api/olivia/chat.ts": {
+      "maxDuration": 120
+    },
+    "api/olivia/tts.ts": {
+      "maxDuration": 120
+    },
+    "api/olivia/context.ts": {
+      "maxDuration": 120,
+      "includeFiles": "api/shared/**"
+    },
+    "api/olivia/avatar/streams.ts": {
+      "maxDuration": 120
+    },
+    "api/olivia/avatar/did.ts": {
+      "maxDuration": 120
+    },
+    "api/olivia/avatar/heygen.ts": {
+      "maxDuration": 120
     }
   },
   "buildCommand": "npm run build",

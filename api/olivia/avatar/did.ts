@@ -18,7 +18,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // ============================================================================
 
 const DID_API_BASE = 'https://api.d-id.com';
-const DID_TIMEOUT_MS = 30000;
+const DID_TIMEOUT_MS = 60000;
 
 // Default agent (can be overridden via env)
 const DEFAULT_AGENT_ID = process.env.DID_AGENT_ID || '';
