@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import LegalModal, { type LegalPage } from './components/LegalModal';
 import TabNavigation, { type TabId } from './components/TabNavigation';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
@@ -85,6 +86,9 @@ const AppContent: React.FC = () => {
   // Tab navigation state
   const [activeTab, setActiveTab] = useState<TabId>('compare');
   const [savedCount, setSavedCount] = useState(0);
+
+  // Legal modal state
+  const [activeLegalPage, setActiveLegalPage] = useState<LegalPage>(null);
 
   const availableLLMs = getAvailableLLMs(apiKeys);
 
@@ -614,7 +618,10 @@ const AppContent: React.FC = () => {
         </div>
       </main>
 
-      <Footer />
+      <Footer onOpenLegal={setActiveLegalPage} />
+
+      {/* Legal Modal */}
+      <LegalModal page={activeLegalPage} onClose={() => setActiveLegalPage(null)} />
 
       {/* API Key Configuration Modal */}
       <APIKeyModal

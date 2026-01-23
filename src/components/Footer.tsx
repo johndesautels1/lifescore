@@ -4,9 +4,19 @@
  */
 
 import React from 'react';
+import type { LegalPage } from './LegalModal';
 import './Footer.css';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenLegal?: (page: LegalPage) => void;
+}
+
+const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
+  const handleLegalClick = (page: LegalPage) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    onOpenLegal?.(page);
+  };
+
   return (
     <footer className="footer">
       <div className="footer-container">
@@ -53,6 +63,31 @@ const Footer: React.FC = () => {
 
       <div className="footer-bottom">
         <p>© {new Date().getFullYear()} Clues Intelligence LTD. All rights reserved.</p>
+
+        <div className="footer-legal-links">
+          <button type="button" className="legal-link" onClick={handleLegalClick('privacy')}>
+            Privacy Policy
+          </button>
+          <span className="legal-separator">|</span>
+          <button type="button" className="legal-link" onClick={handleLegalClick('terms')}>
+            Terms of Service
+          </button>
+          <span className="legal-separator">|</span>
+          <button type="button" className="legal-link" onClick={handleLegalClick('cookies')}>
+            Cookie Policy
+          </button>
+          <span className="legal-separator">|</span>
+          <button
+            type="button"
+            className="legal-link cookie-settings-btn"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('openCookieSettings'));
+            }}
+          >
+            Cookie Settings
+          </button>
+        </div>
+
         <small>CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD</small>
         <p className="powered-by">
           <small>AI-Powered Global Relocation Intelligence Platform</small>
