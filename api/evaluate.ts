@@ -834,6 +834,8 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 
   // GEMINI-SPECIFIC ADDENDUM (optimized for Reasoning-over-Grounding)
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
+  // UPDATED 2026-01-24: Added conciseness requirements to stay within 8192 token output limit
+  const isLargeCategory = metrics.length >= 20;
   const geminiAddendum = `
 ## GEMINI-SPECIFIC INSTRUCTIONS
 - Use Google Search grounding to verify current ${new Date().getFullYear()} legal status for both cities
@@ -842,7 +844,14 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 - Follow the scoring scale defined above (0-100 with 5 anchor bands)
 - You have the full context window - maintain consistency across all ${metrics.length} metrics
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
-`;
+${isLargeCategory ? `
+## CRITICAL: CONCISENESS REQUIRED (Large category with ${metrics.length} metrics)
+- Keep "reasoning" field to 1-2 SHORT sentences max (under 50 words each)
+- Include only 1-2 sources per metric (most authoritative only)
+- Include only 1 evidence item per city per metric
+- Omit verbose explanations - scores and brief justification are sufficient
+- This is required to fit within output token limits
+` : ''}`;
 
   // Gemini system instruction
   // UPDATED 2026-01-21: Added reference to base prompt's scale
@@ -867,7 +876,8 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
         body: JSON.stringify({
           systemInstruction,
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 16384, temperature: 0.3 },
+          // UPDATED 2026-01-24: Reduced to 8192 (Gemini 3 Pro's actual output limit)
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.3 },
           // Safety settings - allow freedom-related content
           safetySettings: [
             { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
