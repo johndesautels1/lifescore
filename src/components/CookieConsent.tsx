@@ -23,6 +23,46 @@ const DEFAULT_PREFERENCES: CookiePreferences = {
 };
 
 const STORAGE_KEY = 'clues_cookie_consent';
+const ANONYMOUS_ID_KEY = 'clues_anonymous_id';
+
+// Generate or retrieve anonymous ID for consent tracking
+const getAnonymousId = (): string => {
+  let id = localStorage.getItem(ANONYMOUS_ID_KEY);
+  if (!id) {
+    id = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem(ANONYMOUS_ID_KEY, id);
+  }
+  return id;
+};
+
+// Log consent to database (non-blocking)
+const logConsentToServer = async (
+  action: 'granted' | 'denied' | 'withdrawn',
+  categories: CookiePreferences
+): Promise<void> => {
+  try {
+    await fetch('/api/consent/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        consentType: 'cookies',
+        consentAction: action,
+        consentCategories: {
+          essential: categories.essential,
+          functional: categories.functional,
+          analytics: categories.analytics,
+          marketing: categories.marketing,
+        },
+        anonymousId: getAnonymousId(),
+        pageUrl: window.location.href,
+        policyVersion: '1.0',
+      }),
+    });
+  } catch (error) {
+    // Silent fail - consent still works locally
+    console.debug('[CookieConsent] Failed to log consent to server:', error);
+  }
+};
 
 const CookieConsent: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
@@ -57,12 +97,15 @@ const CookieConsent: React.FC = () => {
     return () => window.removeEventListener('openCookieSettings', handleOpenSettings);
   }, []);
 
-  const savePreferences = (prefs: CookiePreferences) => {
+  const savePreferences = (prefs: CookiePreferences, action: 'granted' | 'denied' = 'granted') => {
     const withTimestamp = { ...prefs, timestamp: new Date().toISOString() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(withTimestamp));
     setPreferences(withTimestamp);
     setShowBanner(false);
     setShowSettings(false);
+
+    // Log consent to server (non-blocking)
+    logConsentToServer(action, withTimestamp);
   };
 
   const handleAcceptAll = () => {
@@ -82,7 +125,7 @@ const CookieConsent: React.FC = () => {
       analytics: false,
       marketing: false,
       timestamp: '',
-    });
+    }, 'denied');
   };
 
   const handleSavePreferences = () => {

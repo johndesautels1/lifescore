@@ -78,7 +78,7 @@
 | C1 | Cookie Consent Banner | [x] | `src/components/CookieConsent.tsx` | `7391247` | 2026-01-23 |
 | C2 | "Download My Data" Feature | [x] | `api/user/export.ts` | `7391247` | 2026-01-23 |
 | C3 | "Delete My Account" Feature | [x] | `api/user/delete.ts` | `7391247` | 2026-01-23 |
-| C4 | Consent Logging (DB) | [ ] | Supabase table | - | - |
+| C4 | Consent Logging (DB) | [x] | `supabase/migrations/`, `api/consent/log.ts` | `_____` | 2026-01-23 |
 | C5 | Data Export Endpoint | [x] | `DATA_EXPORT_SPEC.md` | `_____` | 2026-01-23 |
 | C6 | Privacy Policy Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
 | C7 | Terms Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
@@ -152,4 +152,5 @@
 | 2026-01-23 | Claude Code | Cookie Consent (C1), Delete API (C3), Export API (C2) |
 | 2026-01-23 | Claude Code | Acceptable Use (A4), Refund Policy (A5) - Section A complete |
 | 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
+| 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
 
