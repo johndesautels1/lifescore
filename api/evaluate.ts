@@ -876,8 +876,7 @@ ${isLargeCategory ? `
         body: JSON.stringify({
           systemInstruction,
           contents: [{ parts: [{ text: prompt }] }],
-          // UPDATED 2026-01-24: Reduced to 8192 (Gemini 3 Pro's actual output limit)
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.3 },
+          generationConfig: { maxOutputTokens: 16384, temperature: 0.3 },
           // Safety settings - allow freedom-related content
           safetySettings: [
             { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
