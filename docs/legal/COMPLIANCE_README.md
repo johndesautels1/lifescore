@@ -75,9 +75,9 @@
 
 | # | Item | Status | File/Location | Commit | Date |
 |---|------|--------|---------------|--------|------|
-| C1 | Cookie Consent Banner | [ ] | `src/components/CookieConsent.tsx` | - | - |
-| C2 | "Download My Data" Feature | [ ] | `api/user/export.ts` | - | - |
-| C3 | "Delete My Account" Feature | [x] | `ACCOUNT_DELETION_SPEC.md` | `_____` | 2026-01-23 |
+| C1 | Cookie Consent Banner | [x] | `src/components/CookieConsent.tsx` | `7391247` | 2026-01-23 |
+| C2 | "Download My Data" Feature | [x] | `api/user/export.ts` | `7391247` | 2026-01-23 |
+| C3 | "Delete My Account" Feature | [x] | `api/user/delete.ts` | `7391247` | 2026-01-23 |
 | C4 | Consent Logging (DB) | [ ] | Supabase table | - | - |
 | C5 | Data Export Endpoint | [x] | `DATA_EXPORT_SPEC.md` | `_____` | 2026-01-23 |
 | C6 | Privacy Policy Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
@@ -149,4 +149,5 @@
 |------|--------|---------|
 | 2026-01-23 | Claude Code | Initial creation, documents A1-A3, B1, C3, C5 |
 | 2026-01-23 | Claude Code | Added LegalModal component (C6, C7), footer links |
+| 2026-01-23 | Claude Code | Cookie Consent (C1), Delete API (C3), Export API (C2) |
 
