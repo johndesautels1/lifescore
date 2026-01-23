@@ -89,7 +89,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
   // Video generation state
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [videoGenerationProgress, setVideoGenerationProgress] = useState('');
-  const videoPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const videoPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Real-time clock for cockpit feel
   useEffect(() => {
