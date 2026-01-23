@@ -20,6 +20,7 @@ import Results from './components/Results';
 import SavedComparisons from './components/SavedComparisons';
 import VisualsTab from './components/VisualsTab';
 import AskOlivia from './components/AskOlivia';
+import JudgeTab from './components/JudgeTab';
 import OliviaChatBubble from './components/OliviaChatBubble';
 import {
   EnhancedModeToggle,
@@ -491,25 +492,13 @@ const AppContent: React.FC = () => {
           )}
 
           {/* ============================================================
-              JUDGES REPORT TAB
+              JUDGES REPORT TAB - The Final Verdict
               ============================================================ */}
-          {activeTab === 'judges-report' && enhancedResult && (
-            <div className="judges-report-section card">
-              <h3 className="section-title">📋 Judges Report</h3>
-              <div className="coming-soon-notice">
-                <p>
-                  <strong>Coming Soon:</strong> The Judges Report will provide a comprehensive executive summary including:
-                </p>
-                <ul>
-                  <li>Overall winner declaration with confidence assessment</li>
-                  <li>Source analysis and credibility ratings</li>
-                  <li>Key findings and surprising results</li>
-                  <li>Future forecast and pending legislation</li>
-                  <li>Personalized recommendations</li>
-                </ul>
-                <p className="hint">This feature is currently under development.</p>
-              </div>
-            </div>
+          {activeTab === 'judges-report' && (
+            <JudgeTab
+              comparisonResult={enhancedResult}
+              userId={/* TODO: Get from auth context */ 'guest'}
+            />
           )}
 
           {/* ============================================================
