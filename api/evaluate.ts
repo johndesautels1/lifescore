@@ -9,30 +9,13 @@ import { handleCors } from './shared/cors.js';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 import type { ScoreResult } from './shared/metrics.js';
+import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // Timeout constant (in milliseconds) - unified for all API calls
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for all LLM API calls including Tavily
 
 // Phase 2: Environment variable toggle for gradual rollout
 const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
-
-// Helper: fetch with timeout using AbortController
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timed out after ${timeoutMs / 1000} seconds`);
-    }
-    throw error;
-  }
-}
 
 // LLM Provider types
 type LLMProvider = 'claude-sonnet' | 'gpt-4o' | 'gemini-3-pro' | 'grok-4' | 'perplexity';

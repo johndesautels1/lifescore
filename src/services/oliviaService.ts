@@ -16,40 +16,13 @@ import type {
 } from '../types/olivia';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const API_TIMEOUT_MS = 60000; // 60 seconds for chat responses
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Fetch with timeout wrapper
- */
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number = API_TIMEOUT_MS
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timed out after ${timeoutMs / 1000} seconds`);
-    }
-    throw error;
-  }
-}
 
 // ============================================================================
 // CONTEXT API

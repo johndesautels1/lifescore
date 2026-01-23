@@ -14,6 +14,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../../shared/rateLimit.js';
 import { handleCors } from '../../shared/cors.js';
+import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
 
 // ============================================================================
 // CONSTANTS
@@ -46,30 +47,6 @@ interface DIDChatResponse {
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-/**
- * Fetch with timeout
- */
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timed out after ${timeoutMs / 1000} seconds`);
-    }
-    throw error;
-  }
-}
 
 /**
  * Get D-ID API key and encode for Basic auth

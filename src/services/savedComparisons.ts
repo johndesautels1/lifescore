@@ -8,6 +8,7 @@
 
 import type { ComparisonResult } from '../types/metrics';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 // ============================================================================
 // TYPES
@@ -67,24 +68,6 @@ const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
 const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
-
-// Helper: fetch with timeout using AbortController
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`GitHub API timed out after ${timeoutMs / 1000} seconds`);
-    }
-    throw error;
-  }
-}
 const MAX_SAVED = 100;
 
 // ============================================================================

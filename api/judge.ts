@@ -11,6 +11,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
+import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
 import { METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 
@@ -41,24 +42,6 @@ function isDisagreementArea(stdDev: number): boolean {
 
 // Timeout constant for Opus API (240s - within Vercel Pro 300s limit)
 const OPUS_TIMEOUT_MS = 240000;
-
-// Helper: fetch with timeout using AbortController
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Opus API timed out after ${timeoutMs / 1000} seconds`);
-    }
-    throw error;
-  }
-}
 
 // Opus API types
 // FIX #2: Add legalScore/enforcementScore fields to match opusJudge.ts

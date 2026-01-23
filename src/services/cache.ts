@@ -13,6 +13,7 @@
  */
 
 import type { LLMProvider, EnhancedComparisonResult, MetricConsensus } from '../types/enhancedComparison';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 // ============================================================================
 // CONFIGURATION
@@ -31,21 +32,6 @@ const CACHE_CONFIG = {
   // Timeout for KV operations (10 seconds)
   KV_TIMEOUT_MS: 10000
 };
-
-// Helper: fetch with timeout using AbortController
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-}
 
 // ============================================================================
 // TYPES
