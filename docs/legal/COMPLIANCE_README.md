@@ -56,11 +56,11 @@
 
 | # | Item | Status | File | Commit | Date |
 |---|------|--------|------|--------|------|
-| A1 | Privacy Policy | [x] | `PRIVACY_POLICY.md` | `_____` | 2026-01-23 |
-| A2 | Terms of Service | [x] | `TERMS_OF_SERVICE.md` | `_____` | 2026-01-23 |
-| A3 | Cookie Policy | [x] | `COOKIE_POLICY.md` | `_____` | 2026-01-23 |
-| A4 | Acceptable Use Policy | [ ] | - | - | - |
-| A5 | Refund Policy | [ ] | - | - | - |
+| A1 | Privacy Policy | [x] | `PRIVACY_POLICY.md` | `268ef9f` | 2026-01-23 |
+| A2 | Terms of Service | [x] | `TERMS_OF_SERVICE.md` | `268ef9f` | 2026-01-23 |
+| A3 | Cookie Policy | [x] | `COOKIE_POLICY.md` | `268ef9f` | 2026-01-23 |
+| A4 | Acceptable Use Policy | [x] | `ACCEPTABLE_USE_POLICY.md` | `_____` | 2026-01-23 |
+| A5 | Refund Policy | [x] | `REFUND_POLICY.md` | `_____` | 2026-01-23 |
 
 ### Section B: Internal Policies
 
@@ -150,4 +150,5 @@
 | 2026-01-23 | Claude Code | Initial creation, documents A1-A3, B1, C3, C5 |
 | 2026-01-23 | Claude Code | Added LegalModal component (C6, C7), footer links |
 | 2026-01-23 | Claude Code | Cookie Consent (C1), Delete API (C3), Export API (C2) |
+| 2026-01-23 | Claude Code | Acceptable Use (A4), Refund Policy (A5) - Section A complete |
 

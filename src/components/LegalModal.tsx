@@ -6,7 +6,7 @@
 import React from 'react';
 import './LegalModal.css';
 
-export type LegalPage = 'privacy' | 'terms' | 'cookies' | null;
+export type LegalPage = 'privacy' | 'terms' | 'cookies' | 'acceptable-use' | 'refunds' | null;
 
 interface LegalModalProps {
   page: LegalPage;
@@ -20,6 +20,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
     privacy: 'Privacy Policy',
     terms: 'Terms of Service',
     cookies: 'Cookie Policy',
+    'acceptable-use': 'Acceptable Use Policy',
+    refunds: 'Refund Policy',
   };
 
   return (
@@ -35,6 +37,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
           {page === 'privacy' && <PrivacyContent />}
           {page === 'terms' && <TermsContent />}
           {page === 'cookies' && <CookiesContent />}
+          {page === 'acceptable-use' && <AcceptableUseContent />}
+          {page === 'refunds' && <RefundContent />}
         </div>
         <div className="legal-modal-footer">
           <p>Clues Intelligence LTD &bull; United Kingdom</p>
@@ -245,6 +249,135 @@ const CookiesContent: React.FC = () => (
 
     <h3>6. Contact</h3>
     <p>Email: privacy@cluesintelligence.com</p>
+
+    <p className="legal-version">Document Version 1.0</p>
+  </div>
+);
+
+// Acceptable Use Policy Content
+const AcceptableUseContent: React.FC = () => (
+  <div className="legal-content">
+    <p className="legal-effective">Effective Date: January 23, 2026</p>
+
+    <h3>1. Permitted Uses</h3>
+    <p>You MAY use the Service to:</p>
+    <ul>
+      <li>Compare cities for personal relocation decisions</li>
+      <li>Research locations for business expansion</li>
+      <li>Generate reports for internal business use</li>
+      <li>Share reports with family, colleagues, or advisors</li>
+      <li>Quote reports with attribution to "CLUES Intelligence"</li>
+    </ul>
+
+    <h3>2. Prohibited Uses</h3>
+
+    <h4>Illegal Activities</h4>
+    <ul>
+      <li>Violate any applicable laws or regulations</li>
+      <li>Facilitate illegal immigration or visa fraud</li>
+      <li>Plan or execute illegal activities</li>
+    </ul>
+
+    <h4>Commercial Misuse</h4>
+    <ul>
+      <li>Resell or redistribute reports for profit</li>
+      <li>Create derivative products for sale</li>
+      <li>Scrape or bulk-download content</li>
+      <li>Use automated tools (bots) to access the Service</li>
+    </ul>
+
+    <h4>System Abuse</h4>
+    <ul>
+      <li>Attempt to reverse-engineer our AI systems</li>
+      <li>Circumvent rate limits or access controls</li>
+      <li>Exploit security vulnerabilities</li>
+      <li>Interfere with other users' access</li>
+    </ul>
+
+    <h4>Misrepresentation</h4>
+    <ul>
+      <li>Present AI content as official government data</li>
+      <li>Claim reports are legal/financial advice</li>
+      <li>Impersonate other users or staff</li>
+    </ul>
+
+    <h3>3. Enforcement</h3>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Severity</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Minor violation</td><td>Warning email</td></tr>
+        <tr><td>Moderate violation</td><td>Temporary suspension</td></tr>
+        <tr><td>Severe violation</td><td>Immediate termination</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4. Reporting Violations</h3>
+    <p>Email: abuse@cluesintelligence.com</p>
+
+    <p className="legal-version">Document Version 1.0</p>
+  </div>
+);
+
+// Refund Policy Content
+const RefundContent: React.FC = () => (
+  <div className="legal-content">
+    <p className="legal-effective">Effective Date: January 23, 2026</p>
+
+    <h3>1. Subscription Refunds</h3>
+
+    <h4>Monthly Subscriptions</h4>
+    <ul>
+      <li>Cancel anytime - no refund for current month</li>
+      <li>Access continues until period ends</li>
+      <li>Billing errors are fully refunded</li>
+    </ul>
+
+    <h4>Annual Subscriptions</h4>
+    <ul>
+      <li>Cancel within 14 days - full refund (minus reports generated)</li>
+      <li>Cancel after 14 days - no refund, access continues</li>
+      <li>Billing errors are fully refunded</li>
+    </ul>
+
+    <h3>2. Report Purchase Refunds</h3>
+    <p className="legal-warning">
+      <strong>No refunds after report generation.</strong> Once generated, AI processing
+      costs are incurred and the report is immediately available.
+    </p>
+
+    <h4>Exceptions</h4>
+    <ul>
+      <li>Failed generation due to our error - automatic credit or refund</li>
+      <li>Significant errors - contact support within 7 days</li>
+    </ul>
+
+    <h3>3. How to Request a Refund</h3>
+    <p><strong>Self-Service:</strong> Account Settings → Billing → Request Refund</p>
+    <p><strong>Email:</strong> billing@cluesintelligence.com</p>
+
+    <h4>Processing Time</h4>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Method</th><th>Response</th><th>Refund</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Self-service</td><td>Immediate</td><td>5-10 business days</td></tr>
+        <tr><td>Email</td><td>2 business days</td><td>5-10 business days</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4. Non-Refundable Items</h3>
+    <ul>
+      <li>Reports already generated</li>
+      <li>Subscriptions cancelled after refund window</li>
+      <li>Accounts terminated for policy violations</li>
+      <li>Promotional or discounted purchases</li>
+    </ul>
+
+    <h3>5. Contact</h3>
+    <p>Email: billing@cluesintelligence.com</p>
 
     <p className="legal-version">Document Version 1.0</p>
   </div>

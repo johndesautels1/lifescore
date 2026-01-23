@@ -66,15 +66,23 @@ const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
 
         <div className="footer-legal-links">
           <button type="button" className="legal-link" onClick={handleLegalClick('privacy')}>
-            Privacy Policy
+            Privacy
           </button>
           <span className="legal-separator">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('terms')}>
-            Terms of Service
+            Terms
           </button>
           <span className="legal-separator">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('cookies')}>
-            Cookie Policy
+            Cookies
+          </button>
+          <span className="legal-separator">|</span>
+          <button type="button" className="legal-link" onClick={handleLegalClick('acceptable-use')}>
+            Acceptable Use
+          </button>
+          <span className="legal-separator">|</span>
+          <button type="button" className="legal-link" onClick={handleLegalClick('refunds')}>
+            Refunds
           </button>
           <span className="legal-separator">|</span>
           <button
