@@ -1,0 +1,35 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Header -->
+  <text x="600" y="120" text-anchor="middle" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#60a5fa" letter-spacing="0.1em">LIFE SCORE</text>
+  <text x="600" y="160" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="#94a3b8">Legal Freedom Comparison</text>
+
+  <!-- Main Content Box -->
+  <rect x="100" y="200" width="1000" height="300" rx="20" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+
+  <!-- Left Score -->
+  <text x="300" y="340" text-anchor="middle" font-family="system-ui, sans-serif" font-size="96" font-weight="800" fill="#22c55e">78</text>
+  <text x="300" y="400" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#f1f5f9">City A</text>
+
+  <!-- VS -->
+  <text x="600" y="340" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="700" fill="#475569">VS</text>
+
+  <!-- Right Score -->
+  <text x="900" y="340" text-anchor="middle" font-family="system-ui, sans-serif" font-size="96" font-weight="800" fill="#eab308">52</text>
+  <text x="900" y="400" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#f1f5f9">City B</text>
+
+  <!-- Footer -->
+  <text x="600" y="570" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#64748b">100 Metrics | 6 Categories | lifescore.cluesnomad.com</text>
+
+  <!-- Clues Badge -->
+  <text x="600" y="600" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#475569">Clues Intelligence LTD</text>
+</svg>
