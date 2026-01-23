@@ -86,6 +86,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
   const [videoDuration, setVideoDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
+  // Video generation state
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoGenerationProgress, setVideoGenerationProgress] = useState('');
+  const videoPollingRef = useRef<NodeJS.Timeout | null>(null);
+
   // Real-time clock for cockpit feel
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -164,6 +169,145 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
     });
   };
 
+  // Cleanup video polling on unmount
+  useEffect(() => {
+    return () => {
+      if (videoPollingRef.current) {
+        clearInterval(videoPollingRef.current);
+      }
+    };
+  }, []);
+
+  // Poll for video status until ready or error
+  const pollVideoStatus = async (videoId: string, report: JudgeReport) => {
+    console.log('[JudgeTab] Starting video status polling for:', videoId);
+    setVideoGenerationProgress('Christian is preparing your video report...');
+
+    // Clear any existing polling
+    if (videoPollingRef.current) {
+      clearInterval(videoPollingRef.current);
+    }
+
+    const poll = async () => {
+      try {
+        const response = await fetch('/api/judge-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', videoId })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to check video status');
+        }
+
+        const data = await response.json();
+        console.log('[JudgeTab] Video status:', data.status, data.heygenStatus);
+
+        if (data.status === 'ready' && data.videoUrl) {
+          // Video is ready!
+          if (videoPollingRef.current) {
+            clearInterval(videoPollingRef.current);
+            videoPollingRef.current = null;
+          }
+
+          const updatedReport: JudgeReport = {
+            ...report,
+            videoUrl: data.videoUrl,
+            videoStatus: 'ready'
+          };
+
+          setJudgeReport(updatedReport);
+          saveReportToLocalStorage(updatedReport);
+          setIsGeneratingVideo(false);
+          setVideoGenerationProgress('');
+          console.log('[JudgeTab] Video ready:', data.videoUrl);
+        } else if (data.status === 'error') {
+          // Video generation failed
+          if (videoPollingRef.current) {
+            clearInterval(videoPollingRef.current);
+            videoPollingRef.current = null;
+          }
+
+          const updatedReport: JudgeReport = {
+            ...report,
+            videoStatus: 'error'
+          };
+
+          setJudgeReport(updatedReport);
+          setIsGeneratingVideo(false);
+          setVideoGenerationProgress('');
+          console.error('[JudgeTab] Video generation failed:', data.error);
+        } else {
+          // Still generating
+          setVideoGenerationProgress(
+            data.heygenStatus === 'processing'
+              ? 'Christian is recording your verdict...'
+              : 'Preparing video generation...'
+          );
+        }
+      } catch (error) {
+        console.error('[JudgeTab] Video polling error:', error);
+      }
+    };
+
+    // Initial check
+    await poll();
+
+    // Poll every 5 seconds
+    videoPollingRef.current = setInterval(poll, 5000);
+  };
+
+  // Generate video from judge report
+  const generateJudgeVideo = async (report: JudgeReport) => {
+    console.log('[JudgeTab] Starting video generation for report:', report.reportId);
+    setIsGeneratingVideo(true);
+    setVideoGenerationProgress('Initiating video generation...');
+
+    try {
+      const response = await fetch('/api/judge-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate', report })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Video API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.videoId) {
+        throw new Error('Failed to start video generation');
+      }
+
+      console.log('[JudgeTab] Video generation started, videoId:', data.videoId);
+
+      // Update report with generating status
+      const updatedReport: JudgeReport = {
+        ...report,
+        videoStatus: 'generating'
+      };
+      setJudgeReport(updatedReport);
+      saveReportToLocalStorage(updatedReport);
+
+      // Start polling for video status
+      pollVideoStatus(data.videoId, updatedReport);
+
+    } catch (error) {
+      console.error('[JudgeTab] Video generation error:', error);
+      setIsGeneratingVideo(false);
+      setVideoGenerationProgress('');
+
+      // Update report with error status
+      const updatedReport: JudgeReport = {
+        ...report,
+        videoStatus: 'error'
+      };
+      setJudgeReport(updatedReport);
+    }
+  };
+
   // Generate Judge Report handler - Phase B Implementation
   const handleGenerateReport = async () => {
     if (!comparisonResult) return;
@@ -221,6 +365,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
       saveReportToLocalStorage(data.report);
 
       console.log('[JudgeTab] Report generated successfully:', data.report.reportId);
+
+      // Automatically start video generation
+      generateJudgeVideo(data.report);
 
     } catch (error) {
       console.error('[JudgeTab] Failed to generate report:', error);
@@ -634,7 +781,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
             <div className="bezel-corner br"></div>
 
             <div className="viewport-screen">
-              {judgeReport?.videoUrl ? (
+              {judgeReport?.videoUrl && judgeReport.videoStatus === 'ready' ? (
                 <video
                   ref={videoRef}
                   src={judgeReport.videoUrl}
@@ -660,7 +807,51 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
                           style={{ width: `${generationProgress}%` }}
                         ></div>
                       </div>
-                      <div className="progress-text">{generationProgress}% Complete</div>
+                      <div className="progress-text">{Math.round(generationProgress)}% Complete</div>
+                    </div>
+                  ) : isGeneratingVideo || judgeReport?.videoStatus === 'generating' ? (
+                    <div className="generating-state video-generating">
+                      <div className="generating-ring video-ring"></div>
+                      <div className="generating-ring video-ring delay-1"></div>
+                      <div className="generating-ring video-ring delay-2"></div>
+                      <div className="generating-text">GENERATING VIDEO</div>
+                      <div className="generating-subtext">
+                        {videoGenerationProgress || 'Christian is preparing your video report...'}
+                      </div>
+                      <div className="video-status-indicator">
+                        <span className="status-dot pulsing"></span>
+                        <span className="status-text">HeyGen Processing</span>
+                      </div>
+                    </div>
+                  ) : judgeReport?.videoStatus === 'error' ? (
+                    <div className="awaiting-state error-state">
+                      <div className="avatar-silhouette error">
+                        <span className="silhouette-icon">⚠️</span>
+                      </div>
+                      <div className="awaiting-text">VIDEO UNAVAILABLE</div>
+                      <div className="awaiting-subtext">Video generation encountered an error</div>
+                      <button
+                        className="generate-report-btn retry-btn"
+                        onClick={() => judgeReport && generateJudgeVideo(judgeReport)}
+                      >
+                        <span className="btn-icon">🔄</span>
+                        <span className="btn-text">RETRY VIDEO GENERATION</span>
+                      </button>
+                    </div>
+                  ) : judgeReport ? (
+                    <div className="awaiting-state video-pending">
+                      <div className="avatar-silhouette">
+                        <span className="silhouette-icon">🎬</span>
+                      </div>
+                      <div className="awaiting-text">VIDEO PENDING</div>
+                      <div className="awaiting-subtext">Report ready - generate video</div>
+                      <button
+                        className="generate-report-btn"
+                        onClick={() => generateJudgeVideo(judgeReport)}
+                      >
+                        <span className="btn-icon">🎥</span>
+                        <span className="btn-text">GENERATE VIDEO REPORT</span>
+                      </button>
                     </div>
                   ) : (
                     <div className="awaiting-state">

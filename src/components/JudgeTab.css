@@ -437,6 +437,88 @@
   font-family: var(--font-mono);
 }
 
+/* Video Generating State */
+.generating-state.video-generating {
+  padding: 2rem;
+}
+
+.generating-state.video-generating .generating-text {
+  color: var(--verdict-green);
+}
+
+.generating-ring.video-ring {
+  border-color: var(--verdict-green);
+}
+
+.video-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+}
+
+.video-status-indicator .status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--verdict-green);
+  border-radius: 50%;
+}
+
+.video-status-indicator .status-dot.pulsing {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.video-status-indicator .status-text {
+  font-size: 0.75rem;
+  color: var(--verdict-green);
+  letter-spacing: 0.05em;
+}
+
+/* Error State */
+.awaiting-state.error-state .avatar-silhouette {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.awaiting-state.error-state .avatar-silhouette.error .silhouette-icon {
+  opacity: 1;
+}
+
+.awaiting-state.error-state .awaiting-text {
+  color: var(--error-red);
+}
+
+.generate-report-btn.retry-btn {
+  border-color: var(--stable-amber);
+  color: var(--stable-amber);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+}
+
+.generate-report-btn.retry-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(245, 158, 11, 0.2) 100%);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Video Pending State */
+.awaiting-state.video-pending .avatar-silhouette {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.awaiting-state.video-pending .awaiting-text {
+  color: var(--verdict-green);
+}
+
 /* Awaiting State */
 .awaiting-state {
   text-align: center;
