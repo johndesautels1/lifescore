@@ -36,3 +36,6 @@ nul
 
 .vercel
 .env*.local
+
+# Archived code (kept locally for reference)
+Dead Code/
