@@ -515,7 +515,7 @@ export async function generateVisualReport(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json().catch((e) => { console.warn('[GammaService] Failed to parse error response:', e); return {}; });
     throw new Error(errorData.error || `Failed to generate report: ${response.status}`);
   }
 
@@ -534,7 +534,7 @@ export async function checkGenerationStatus(generationId: string): Promise<Visua
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json().catch((e) => { console.warn('[GammaService] Failed to parse error response:', e); return {}; });
     throw new Error(errorData.error || `Failed to check status: ${response.status}`);
   }
 
