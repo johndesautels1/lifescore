@@ -345,7 +345,7 @@ export default async function handler(
       return;
     }
 
-    console.log('[DID-STREAMS] Action:', action, '| IP:', clientIp, '| Remaining:', rateLimit.remaining);
+    console.log('[DID-STREAMS] Action:', action);
 
     switch (action) {
       case 'create': {
