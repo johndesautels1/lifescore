@@ -1,6 +1,16 @@
 /**
  * LIFE SCORE - Judge Video API
- * HeyGen video generation for Christian avatar delivering the Judge's verdict
+ * D-ID Talks API for Christian avatar delivering the Judge's verdict
+ *
+ * IMPORTANT: Uses SEPARATE env vars from Olivia to prevent config mixing:
+ * - DID_API_KEY (shared - same D-ID account)
+ * - DID_JUDGE_PRESENTER_URL (Judge-specific avatar image)
+ * - DID_JUDGE_VOICE_ID (Judge-specific voice - male)
+ *
+ * Olivia uses:
+ * - DID_PRESENTER_URL (Olivia's avatar)
+ * - DID_AGENT_ID (Olivia's agent)
+ * - Microsoft Sonia voice (female)
  *
  * Actions:
  * - generate: Create video from JudgeReport
@@ -19,12 +29,13 @@ import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 // CONSTANTS
 // ============================================================================
 
-const HEYGEN_API_BASE = 'https://api.heygen.com';
-const HEYGEN_TIMEOUT_MS = 60000;
+const DID_API_BASE = 'https://api.d-id.com';
+const DID_TIMEOUT_MS = 60000;
 
-// Christian avatar configuration (set in environment)
-const CHRISTIAN_AVATAR_ID = process.env.HEYGEN_CHRISTIAN_AVATAR_ID || process.env.HEYGEN_AVATAR_ID || '';
-const CHRISTIAN_VOICE_ID = process.env.HEYGEN_CHRISTIAN_VOICE_ID || process.env.HEYGEN_VOICE_ID || '';
+// JUDGE-SPECIFIC config (completely separate from Olivia)
+// These env vars are ONLY for Judge/Christian - never used by Olivia
+const JUDGE_PRESENTER_URL = process.env.DID_JUDGE_PRESENTER_URL || '';
+const JUDGE_VOICE_ID = process.env.DID_JUDGE_VOICE_ID || 'en-US-GuyNeural'; // Default male voice
 
 // ============================================================================
 // TYPES
@@ -69,28 +80,16 @@ interface GenerateVideoRequest {
 
 interface StatusRequest {
   action: 'status';
-  videoId: string;
+  talkId: string;
 }
 
 type JudgeVideoRequest = GenerateVideoRequest | StatusRequest;
 
-interface HeyGenVideoResponse {
-  error: null | string;
-  data: {
-    video_id: string;
-  };
-}
-
-interface HeyGenStatusResponse {
-  error: null | string;
-  data: {
-    id: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    video_url?: string;
-    thumbnail_url?: string;
-    duration?: number;
-    error?: string;
-  };
+interface DIDTalkResponse {
+  id: string;
+  status: 'created' | 'started' | 'done' | 'error';
+  result_url?: string;
+  error?: { description: string };
 }
 
 // ============================================================================
@@ -157,127 +156,134 @@ This has been the LIFE SCORE Judge's Verdict. Make informed decisions about wher
 }
 
 // ============================================================================
-// HEYGEN API FUNCTIONS
+// D-ID API FUNCTIONS
 // ============================================================================
 
 /**
- * Get HeyGen API key
+ * Get D-ID API key and encode for Basic auth
+ * SHARED with Olivia - same D-ID account
  */
-function getHeyGenKey(): string {
-  const key = process.env.HEYGEN_API_KEY;
+function getDIDAuthHeader(): string {
+  const key = process.env.DID_API_KEY;
   if (!key) {
-    throw new Error('HEYGEN_API_KEY not configured');
+    throw new Error('DID_API_KEY not configured');
   }
-  return key;
+  // If key already contains colon (username:password format), use as-is
+  // Otherwise, treat as password-only with empty username
+  const credentials = key.includes(':') ? key : `:${key}`;
+  return `Basic ${Buffer.from(credentials).toString('base64')}`;
 }
 
 /**
- * Generate video using HeyGen's video generation API
+ * Create a talk (video) using D-ID Talks API
+ * Uses JUDGE-SPECIFIC presenter and voice (not Olivia's)
  */
-async function generateVideo(
-  apiKey: string,
+async function createTalk(
+  authHeader: string,
   script: string,
-  avatarId: string,
-  voiceId?: string
+  presenterUrl: string,
+  voiceId: string
 ): Promise<string> {
-  console.log('[JUDGE-VIDEO] Generating video with script length:', script.length);
+  console.log('[JUDGE-VIDEO] Creating talk with D-ID, script length:', script.length);
+  console.log('[JUDGE-VIDEO] Using presenter:', presenterUrl.slice(0, 50) + '...');
+  console.log('[JUDGE-VIDEO] Using voice:', voiceId);
 
   const requestBody = {
-    video_inputs: [
-      {
-        character: {
-          type: 'avatar',
-          avatar_id: avatarId,
-          avatar_style: 'normal',
-        },
-        voice: voiceId ? {
-          type: 'text',
-          input_text: script,
-          voice_id: voiceId,
-        } : {
-          type: 'text',
-          input_text: script,
-        },
-        background: {
-          type: 'color',
-          value: '#0a1628', // Dark cockpit background matching LIFE SCORE theme
-        },
+    source_url: presenterUrl,
+    script: {
+      type: 'text',
+      input: script,
+      provider: {
+        type: 'microsoft',
+        voice_id: voiceId,
       },
-    ],
-    dimension: {
-      width: 1280,
-      height: 720,
     },
-    aspect_ratio: '16:9',
-    test: false,
+    config: {
+      stitch: true, // Smoother video
+    },
   };
 
   const response = await fetchWithTimeout(
-    `${HEYGEN_API_BASE}/v2/video/generate`,
+    `${DID_API_BASE}/talks`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': apiKey,
+        'Authorization': authHeader,
       },
       body: JSON.stringify(requestBody),
     },
-    HEYGEN_TIMEOUT_MS
+    DID_TIMEOUT_MS
   );
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('[JUDGE-VIDEO] HeyGen API error:', error);
-    throw new Error(`HeyGen video generation failed: ${error}`);
+    console.error('[JUDGE-VIDEO] D-ID API error:', error);
+    throw new Error(`D-ID video generation failed: ${error}`);
   }
 
-  const data: HeyGenVideoResponse = await response.json();
+  const data: DIDTalkResponse = await response.json();
 
-  if (data.error) {
-    throw new Error(`HeyGen error: ${data.error}`);
+  if (!data.id) {
+    throw new Error('D-ID did not return a talk ID');
   }
 
-  console.log('[JUDGE-VIDEO] Video generation started, video_id:', data.data.video_id);
-  return data.data.video_id;
+  console.log('[JUDGE-VIDEO] Talk created, id:', data.id);
+  return data.id;
 }
 
 /**
- * Check video generation status
+ * Check talk (video) generation status
  */
-async function checkVideoStatus(
-  apiKey: string,
-  videoId: string
+async function getTalkStatus(
+  authHeader: string,
+  talkId: string
 ): Promise<{
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'generating' | 'ready' | 'error';
   videoUrl?: string;
   error?: string;
 }> {
   const response = await fetchWithTimeout(
-    `${HEYGEN_API_BASE}/v1/video_status.get?video_id=${encodeURIComponent(videoId)}`,
+    `${DID_API_BASE}/talks/${talkId}`,
     {
       method: 'GET',
       headers: {
-        'X-Api-Key': apiKey,
+        'Authorization': authHeader,
       },
     },
-    HEYGEN_TIMEOUT_MS
+    DID_TIMEOUT_MS
   );
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Failed to check video status: ${error}`);
+    throw new Error(`Failed to check talk status: ${error}`);
   }
 
-  const data: HeyGenStatusResponse = await response.json();
+  const data: DIDTalkResponse = await response.json();
 
-  if (data.error) {
-    throw new Error(`HeyGen status error: ${data.error}`);
+  // Map D-ID status to our status
+  let videoStatus: 'pending' | 'generating' | 'ready' | 'error';
+  switch (data.status) {
+    case 'created':
+      videoStatus = 'pending';
+      break;
+    case 'started':
+      videoStatus = 'generating';
+      break;
+    case 'done':
+      videoStatus = 'ready';
+      break;
+    case 'error':
+      videoStatus = 'error';
+      break;
+    default:
+      videoStatus = 'pending';
   }
 
   return {
-    status: data.data.status,
-    videoUrl: data.data.video_url,
-    error: data.data.error,
+    status: videoStatus,
+    videoUrl: data.result_url,
+    error: data.error?.description,
   };
 }
 
@@ -303,7 +309,7 @@ export default async function handler(
   }
 
   try {
-    const apiKey = getHeyGenKey();
+    const authHeader = getDIDAuthHeader();
     const body = req.body as JudgeVideoRequest;
 
     if (!body.action) {
@@ -320,10 +326,10 @@ export default async function handler(
           return;
         }
 
-        if (!CHRISTIAN_AVATAR_ID) {
+        if (!JUDGE_PRESENTER_URL) {
           res.status(400).json({
-            error: 'HEYGEN_CHRISTIAN_AVATAR_ID not configured',
-            hint: 'Set HEYGEN_CHRISTIAN_AVATAR_ID in environment variables',
+            error: 'DID_JUDGE_PRESENTER_URL not configured',
+            hint: 'Set DID_JUDGE_PRESENTER_URL in Vercel with Christian avatar image URL',
           });
           return;
         }
@@ -332,17 +338,17 @@ export default async function handler(
         const script = generateVideoScript(body.report);
         console.log('[JUDGE-VIDEO] Generated script:', script.slice(0, 100) + '...');
 
-        // Call HeyGen to generate video
-        const videoId = await generateVideo(
-          apiKey,
+        // Call D-ID to create talk (video)
+        const talkId = await createTalk(
+          authHeader,
           script,
-          CHRISTIAN_AVATAR_ID,
-          CHRISTIAN_VOICE_ID || undefined
+          JUDGE_PRESENTER_URL,
+          JUDGE_VOICE_ID
         );
 
         res.status(200).json({
           success: true,
-          videoId,
+          talkId,
           status: 'pending',
           message: 'Video generation started. Poll /api/judge-video with action=status to check progress.',
           script, // Include script for debugging/display
@@ -351,35 +357,17 @@ export default async function handler(
       }
 
       case 'status': {
-        if (!body.videoId) {
-          res.status(400).json({ error: 'videoId is required for status action' });
+        if (!body.talkId) {
+          res.status(400).json({ error: 'talkId is required for status action' });
           return;
         }
 
-        const statusResult = await checkVideoStatus(apiKey, body.videoId);
-
-        // Map HeyGen status to our status
-        let videoStatus: 'pending' | 'generating' | 'ready' | 'error';
-        switch (statusResult.status) {
-          case 'pending':
-          case 'processing':
-            videoStatus = 'generating';
-            break;
-          case 'completed':
-            videoStatus = 'ready';
-            break;
-          case 'failed':
-            videoStatus = 'error';
-            break;
-          default:
-            videoStatus = 'pending';
-        }
+        const statusResult = await getTalkStatus(authHeader, body.talkId);
 
         res.status(200).json({
           success: true,
-          videoId: body.videoId,
-          status: videoStatus,
-          heygenStatus: statusResult.status,
+          talkId: body.talkId,
+          status: statusResult.status,
           videoUrl: statusResult.videoUrl,
           error: statusResult.error,
         });

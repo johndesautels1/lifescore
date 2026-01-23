@@ -1,24 +1,27 @@
-# HANDOFF: Judge Tab - Phase C Complete (HeyGen Video Integration)
+# HANDOFF: Judge Tab - Phase C Complete (D-ID Video Integration)
 
 **Date:** 2026-01-24
 **Conversation ID:** LIFESCORE-JUDGE-TAB-20260124
-**Status:** Phase C Complete - HeyGen Video Integration Done
+**Status:** Phase C Complete - D-ID Video Integration Done
 
 ---
 
 ## What Was Built (Phase C)
 
 ### Files Created
-1. **`api/judge-video.ts`** - HeyGen video generation endpoint
+1. **`api/judge-video.ts`** - D-ID Talks API video generation endpoint
    - `action: 'generate'` - Creates video from JudgeReport
-   - `action: 'status'` - Polls video generation status
+   - `action: 'status'` - Polls video generation status via talkId
    - Video script generator from JudgeReport data
-   - Uses HEYGEN_CHRISTIAN_AVATAR_ID / HEYGEN_CHRISTIAN_VOICE_ID env vars
+   - **SEPARATE env vars from Olivia** to prevent config mixing:
+     - `DID_API_KEY` (shared - same D-ID account)
+     - `DID_JUDGE_PRESENTER_URL` (Judge-specific avatar image)
+     - `DID_JUDGE_VOICE_ID` (Judge-specific voice - male)
 
 ### Files Modified
 1. **`src/components/JudgeTab.tsx`** - Video integration:
    - `generateJudgeVideo()` - Initiates video generation
-   - `pollVideoStatus()` - Polls HeyGen every 5s until ready/error
+   - `pollVideoStatus()` - Polls D-ID every 5s until ready/error
    - Auto-triggers video after report generation
    - Multiple UI states: pending, generating, ready, error
    - Retry button for failed video generation
@@ -30,6 +33,20 @@
    - `.error-state` styling
    - `.video-pending` styling
    - `.retry-btn` button styling
+
+---
+
+## CRITICAL: Separation from Olivia
+
+**Judge (Christian) uses:**
+- `DID_API_KEY` - Shared D-ID account API key
+- `DID_JUDGE_PRESENTER_URL` - URL to Christian's avatar image
+- `DID_JUDGE_VOICE_ID` - Male voice (default: `en-US-GuyNeural`)
+
+**Olivia uses (DO NOT TOUCH):**
+- `DID_PRESENTER_URL` - Olivia's avatar
+- `DID_AGENT_ID` - Olivia's agent
+- Microsoft Sonia voice (female)
 
 ---
 
@@ -46,7 +63,7 @@ POST /api/judge-video
 // Response
 {
   success: true,
-  videoId: 'heygen-video-id',
+  talkId: 'did-talk-id',
   status: 'pending',
   message: 'Video generation started...',
   script: '...' // Generated script for debugging
@@ -58,15 +75,14 @@ POST /api/judge-video
 POST /api/judge-video
 {
   action: 'status',
-  videoId: 'heygen-video-id'
+  talkId: 'did-talk-id'
 }
 
 // Response
 {
   success: true,
-  videoId: 'heygen-video-id',
-  status: 'generating' | 'ready' | 'error',
-  heygenStatus: 'pending' | 'processing' | 'completed' | 'failed',
+  talkId: 'did-talk-id',
+  status: 'pending' | 'generating' | 'ready' | 'error',
   videoUrl: 'https://...' // When ready
 }
 ```
@@ -99,12 +115,16 @@ This has been the LIFE SCORE Judge's Verdict. Make informed decisions about wher
 ## Environment Variables Required
 
 ```bash
-# HeyGen API
-HEYGEN_API_KEY=your-heygen-api-key
+# D-ID API (shared with Olivia - same account)
+DID_API_KEY=your-did-api-key
 
-# Christian Avatar Configuration
-HEYGEN_CHRISTIAN_AVATAR_ID=your-avatar-id
-HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not set
+# JUDGE-SPECIFIC Configuration (Christian avatar)
+DID_JUDGE_PRESENTER_URL=https://your-bucket/christian-avatar.png
+DID_JUDGE_VOICE_ID=en-US-GuyNeural  # Optional, defaults to this male voice
+
+# Olivia's config (DO NOT USE FOR JUDGE):
+# DID_PRESENTER_URL - Olivia only
+# DID_AGENT_ID - Olivia only
 ```
 
 ---
@@ -113,28 +133,28 @@ HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not 
 
 ```
 1. User clicks "Generate Judge's Verdict"
-   ↓
+   |
 2. handleGenerateReport() calls /api/judge-report
-   ↓
+   |
 3. Claude Opus 4.5 generates JudgeReport
-   ↓
+   |
 4. generateJudgeVideo(report) called automatically
-   ↓
+   |
 5. POST /api/judge-video { action: 'generate', report }
    - Script generated from report
-   - HeyGen video generation started
-   - Returns videoId
-   ↓
-6. pollVideoStatus(videoId) starts polling every 5s
-   ↓
+   - D-ID Talks API video generation started
+   - Returns talkId
+   |
+6. pollVideoStatus(talkId) starts polling every 5s
+   |
 7. UI shows "GENERATING VIDEO" with green pulsing animation
-   ↓
+   |
 8. When status = 'ready':
    - Update report.videoUrl
    - Update report.videoStatus = 'ready'
    - Save to localStorage
    - Video player shows generated video
-   ↓
+   |
 9. If error:
    - Update report.videoStatus = 'error'
    - Show retry button
@@ -158,7 +178,7 @@ HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not 
 - Green pulsing rings (`.video-ring`)
 - "GENERATING VIDEO"
 - "Christian is preparing your video report..."
-- HeyGen Processing indicator with pulsing dot
+- D-ID Processing indicator with pulsing dot
 
 ### 4. Video Ready
 - Video player with generated video
@@ -179,10 +199,11 @@ HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not 
 
 ## Testing Phase C
 
-1. Set environment variables:
+1. Set environment variables in Vercel:
    ```
-   HEYGEN_API_KEY=your-key
-   HEYGEN_CHRISTIAN_AVATAR_ID=your-avatar-id
+   DID_API_KEY=your-did-key (may already exist for Olivia)
+   DID_JUDGE_PRESENTER_URL=https://your-christian-avatar-image-url
+   DID_JUDGE_VOICE_ID=en-US-GuyNeural (optional)
    ```
 
 2. Run city comparison in enhanced mode
@@ -193,7 +214,7 @@ HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not 
 
 5. Watch states:
    - Report generation (blue rings, progress bar)
-   - Video generation (green rings, HeyGen indicator)
+   - Video generation (green rings, D-ID indicator)
 
 6. When video is ready:
    - Video should auto-display in player
@@ -221,11 +242,12 @@ HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not 
 - ~60-90 second video length target
 - Includes scores, trends, verdict, rationale, outlook
 
-### HeyGen Configuration
-- Uses v2/video/generate API (not streaming)
-- 1280x720 (16:9) resolution
-- Dark background matching LIFE SCORE theme (#0a1628)
-- Normal avatar style
+### D-ID Configuration
+- Uses D-ID Talks API (POST /talks, GET /talks/{id})
+- Pre-rendered video (not streaming like Olivia)
+- Microsoft Azure TTS voices
+- Default male voice: en-US-GuyNeural
+- Stitch mode enabled for smoother video
 
 ---
 
@@ -241,7 +263,7 @@ HEYGEN_CHRISTIAN_VOICE_ID=your-voice-id  # Optional, uses avatar default if not 
 7. **Video Sharing** - Direct link to hosted video
 
 ### Streaming Alternative
-If real-time interaction needed, reference `api/olivia/avatar/heygen.ts` for WebRTC streaming implementation.
+If real-time interaction needed, reference `api/olivia/avatar/` for D-ID streaming implementation.
 
 ---
 
@@ -266,7 +288,7 @@ TASK: Video storage and caching improvements
 
 ## Key Files
 
-- `api/judge-video.ts` - Video generation API endpoint
+- `api/judge-video.ts` - D-ID video generation API endpoint
 - `api/judge-report.ts` - Report generation API endpoint
 - `src/components/JudgeTab.tsx` - UI component with full implementation
 - `src/components/JudgeTab.css` - Styling with video states
@@ -275,12 +297,14 @@ TASK: Video storage and caching improvements
 
 ## Notes
 
-1. **Video Generation Time** - HeyGen typically takes 30-120 seconds
+1. **Video Generation Time** - D-ID typically takes 30-120 seconds
 2. **Rate Limiting** - Uses 'heavy' preset (10 req/min)
 3. **Error Handling** - Graceful fallback with retry option
-4. **Cost Consideration** - Each video costs HeyGen credits
+4. **Cost Consideration** - Each video costs D-ID credits
+5. **Separation** - Judge config is COMPLETELY SEPARATE from Olivia
 
 ---
 
 **Commits this session:**
-- Phase C: HeyGen Video Integration (api/judge-video.ts, JudgeTab.tsx video integration, CSS video states)
+- Phase C: D-ID Video Integration (api/judge-video.ts, JudgeTab.tsx video integration, CSS video states)
+- Switched from HeyGen to D-ID Talks API for Judge video generation

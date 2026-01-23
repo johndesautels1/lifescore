@@ -5,7 +5,7 @@
  * future trend forecasting, and executive recommendations.
  *
  * Features:
- * - HeyGen video report by "Christian" (male humanoid avatar)
+ * - D-ID video report by "Christian" (male avatar via Talks API)
  * - Summary of findings with trend indicators
  * - Detailed category-by-category analysis
  * - Executive summary with final recommendation
@@ -179,8 +179,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
   }, []);
 
   // Poll for video status until ready or error
-  const pollVideoStatus = async (videoId: string, report: JudgeReport) => {
-    console.log('[JudgeTab] Starting video status polling for:', videoId);
+  const pollVideoStatus = async (talkId: string, report: JudgeReport) => {
+    console.log('[JudgeTab] Starting video status polling for:', talkId);
     setVideoGenerationProgress('Christian is preparing your video report...');
 
     // Clear any existing polling
@@ -193,7 +193,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
         const response = await fetch('/api/judge-video', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'status', videoId })
+          body: JSON.stringify({ action: 'status', talkId })
         });
 
         if (!response.ok) {
@@ -201,7 +201,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
         }
 
         const data = await response.json();
-        console.log('[JudgeTab] Video status:', data.status, data.heygenStatus);
+        console.log('[JudgeTab] Video status:', data.status);
 
         if (data.status === 'ready' && data.videoUrl) {
           // Video is ready!
@@ -240,7 +240,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
         } else {
           // Still generating
           setVideoGenerationProgress(
-            data.heygenStatus === 'processing'
+            data.status === 'generating'
               ? 'Christian is recording your verdict...'
               : 'Preparing video generation...'
           );
@@ -277,11 +277,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
 
       const data = await response.json();
 
-      if (!data.success || !data.videoId) {
+      if (!data.success || !data.talkId) {
         throw new Error('Failed to start video generation');
       }
 
-      console.log('[JudgeTab] Video generation started, videoId:', data.videoId);
+      console.log('[JudgeTab] Video generation started, talkId:', data.talkId);
 
       // Update report with generating status
       const updatedReport: JudgeReport = {
@@ -292,7 +292,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
       saveReportToLocalStorage(updatedReport);
 
       // Start polling for video status
-      pollVideoStatus(data.videoId, updatedReport);
+      pollVideoStatus(data.talkId, updatedReport);
 
     } catch (error) {
       console.error('[JudgeTab] Video generation error:', error);
@@ -770,7 +770,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          VIDEO VIEWPORT - HeyGen Christian's Report
+          VIDEO VIEWPORT - D-ID Christian's Report
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="video-viewport-section">
         <div className="viewport-frame">
@@ -820,7 +820,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
                       </div>
                       <div className="video-status-indicator">
                         <span className="status-dot pulsing"></span>
-                        <span className="status-text">HeyGen Processing</span>
+                        <span className="status-text">D-ID Processing</span>
                       </div>
                     </div>
                   ) : judgeReport?.videoStatus === 'error' ? (
