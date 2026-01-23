@@ -1,7 +1,7 @@
 # LIFE SCORE™ MASTER README
-**Conversation ID:** `LIFESCORE-2026-0120-ZETA`
-**Last Updated:** January 20, 2026
-**Domain:** clueslifescore.com (pending DNS setup)
+**Conversation ID:** `LIFESCORE-OLIVIA-ENHANCE-20260124`
+**Last Updated:** January 24, 2026
+**Domain:** lifescore.cluesintelligence.com
 
 ---
 
@@ -20,27 +20,27 @@
 
 ---
 
-## RECENT COMMITS (Session ZETA)
+## RECENT COMMITS (Session OLIVIA-ENHANCE-20260124)
 
 | Commit | Description |
 |--------|-------------|
-| `97e0a4a` | feat(U4): Expandable Top 5 Deciding Factors with judge explanations |
-| `7a1bf92` | Premium glassmorphic buttons + Gamma report save system |
-| `0ee9e99` | Collapsible scoring explanation + disagreement bullet format |
-| `92b7635` | Add Ask Olivia tab + fix About card styling |
+| `0ccd904` | feat(olivia): add automatic function calling for field evidence lookup |
+| `f7db9c7` | feat(olivia): add field evidence API for dynamic source lookup |
+| `358de3b` | feat(olivia): enhance context injection with evidence, field knowledge, executive summary |
 
 ---
 
-## COMPLETED THIS SESSION (ZETA)
+## COMPLETED THIS SESSION (OLIVIA-ENHANCE-20260124)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Simple Mode glassmorphic buttons | ✅ Done | 4D effect matching Enhanced mode |
-| "Click any metric" white text | ✅ Done | White + text-shadow, dark footer |
-| Gamma report persistence | ✅ Done | State lifted to App.tsx |
-| U5: Save Report button | ✅ Done | Save to library + visual reports tab |
-| Visual Reports library | ✅ Done | Tab in Saved section with delete |
-| U4: Top 5 Deciding Factors | ✅ Done | Click to expand judge explanations |
+| Phase 1: Expanded evidence injection | ✅ Done | Evidence with quotes/snippets in text summary |
+| Phase 2: Field knowledge database | ✅ Done | 100 metrics with talking points, common questions |
+| Phase 3: Gamma report content injection | ✅ Done | Executive summary narrative in context |
+| Phase 4: OpenAI Assistant personality update | ✅ Done | Warmer, conversational instructions |
+| Field Evidence API | ✅ Done | /api/olivia/field-evidence endpoint |
+| Function calling integration | ✅ Done | Chat handler auto-handles tool calls |
+| OpenAI function definition | ✅ Done | getFieldEvidence function added to assistant |
 
 ---
 
@@ -105,8 +105,23 @@
 |---|------|----------|--------|
 | E1 | Olivia Toolbar Tab | HIGH | ✅ Done |
 | E2 | Olivia Iframe/Placeholder Page | HIGH | ✅ Done |
-| E3 | Olivia Data Integration | HIGH | 🔴 Not Started |
-| E4 | D-ID/HeyGen API Setup | HIGH | 🔴 Not Started |
+| E3 | Olivia Data Integration | HIGH | ✅ Done |
+| E4 | D-ID/HeyGen Avatar Integration | HIGH | ✅ Done |
+| E5 | Enhanced Context Injection | HIGH | ✅ Done |
+| E6 | Field Knowledge Database (100 metrics) | HIGH | ✅ Done |
+| E7 | Function Calling (getFieldEvidence) | HIGH | ✅ Done |
+| E8 | OpenAI Assistant Personality Update | MEDIUM | ✅ Done |
+
+---
+
+### PHASE H: Judge Toolbar Tab (NEXT)
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| H1 | Judge Tab in Toolbar | HIGH | 🔴 Not Started |
+| H2 | Judge Results Display | HIGH | 🔴 Not Started |
+| H3 | Disagreement Visualization | MEDIUM | 🔴 Not Started |
+| H4 | Re-run Judge Functionality | MEDIUM | 🔴 Not Started |
 
 ---
 
@@ -141,22 +156,36 @@ D:\LifeScore\
 │   ├── components/
 │   │   ├── EnhancedComparison.tsx # Results display, LLMSelector
 │   │   ├── EnhancedComparison.css # Results styling
-│   │   ├── TabNavigation.tsx      # Toolbar tabs (includes Ask Olivia)
-│   │   ├── AskOlivia.tsx          # NEW: Olivia placeholder component
-│   │   ├── AskOlivia.css          # NEW: Olivia styling
+│   │   ├── TabNavigation.tsx      # Toolbar tabs (Olivia, Judge, etc.)
+│   │   ├── AskOlivia.tsx          # Olivia chat component
+│   │   ├── AskOlivia.css          # Olivia styling
 │   │   ├── VisualsTab.tsx         # Gamma embed iframe
 │   │   └── ...
 │   ├── services/
 │   │   ├── gammaService.ts        # Gamma 30-page prompt
+│   │   ├── oliviaService.ts       # Olivia chat API wrapper
 │   │   ├── opusJudge.ts           # Judge client helpers
 │   │   └── ...
+│   ├── data/
+│   │   └── fieldKnowledge.ts      # 100 metrics knowledge base
 │   └── types/
-│       └── enhancedComparison.ts  # SOURCE OF TRUTH for types
+│       ├── enhancedComparison.ts  # SOURCE OF TRUTH for types
+│       └── olivia.ts              # Olivia types
 ├── api/
 │   ├── gamma.ts                   # Gamma API endpoint
 │   ├── judge.ts                   # Opus Judge endpoint
-│   └── evaluate.ts                # LLM evaluation endpoint
-└── HANDOFF_2026_0121_SESSION_THETA.md               # THIS FILE
+│   ├── evaluate.ts                # LLM evaluation endpoint
+│   └── olivia/
+│       ├── chat.ts                # Olivia chat + function calling
+│       ├── context.ts             # Context builder with evidence
+│       ├── field-evidence.ts      # Dynamic source lookup API
+│       └── tts.ts                 # Text-to-speech
+├── docs/
+│   ├── MASTER_README.md           # This file
+│   ├── OLIVIA_GPT_INSTRUCTIONS.md # OpenAI Assistant instructions
+│   ├── OLIVIA_KNOWLEDGE_BASE.md   # 200 cities knowledge (283KB)
+│   └── handoffs/                  # Session handoff documents
+└── olivia-function.json           # OpenAI function definition
 ```
 
 ---
