@@ -66,10 +66,10 @@
 
 | # | Item | Status | File | Commit | Date |
 |---|------|--------|------|--------|------|
-| B1 | Data Retention Policy | [x] | `DATA_RETENTION_POLICY.md` | `_____` | 2026-01-23 |
-| B2 | Data Breach Response Plan | [ ] | - | - | - |
-| B3 | Employee Data Handling Policy | [ ] | - | - | - |
-| B4 | Subprocessor Management Policy | [ ] | - | - | - |
+| B1 | Data Retention Policy | [x] | `DATA_RETENTION_POLICY.md` | `268ef9f` | 2026-01-23 |
+| B2 | Data Breach Response Plan | [x] | `DATA_BREACH_RESPONSE_PLAN.md` | `_____` | 2026-01-23 |
+| B3 | Employee Data Handling Policy | [x] | `EMPLOYEE_DATA_HANDLING_POLICY.md` | `_____` | 2026-01-23 |
+| B4 | Subprocessor Management Policy | [x] | `SUBPROCESSOR_MANAGEMENT_POLICY.md` | `_____` | 2026-01-23 |
 
 ### Section C: Technical Implementation
 
@@ -151,4 +151,5 @@
 | 2026-01-23 | Claude Code | Added LegalModal component (C6, C7), footer links |
 | 2026-01-23 | Claude Code | Cookie Consent (C1), Delete API (C3), Export API (C2) |
 | 2026-01-23 | Claude Code | Acceptable Use (A4), Refund Policy (A5) - Section A complete |
+| 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
 
