@@ -10,6 +10,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
+import { handleCors } from './shared/cors.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
 import { METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 
@@ -421,17 +422,8 @@ function mergeOpusJudgments(
 // ============================================================================
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers - restrict to Vercel deployment domain
-  const allowedOrigin = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'https://lifescore.vercel.app';
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // CORS - restricted to Vercel deployment domain
+  if (handleCors(req, res, 'restricted')) return;
 
   // Rate limiting - heavy preset for expensive Opus calls
   if (!applyRateLimit(req.headers, 'judge', 'heavy', res)) {

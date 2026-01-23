@@ -5,6 +5,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../../shared/rateLimit.js';
+import { handleCors } from '../../shared/cors.js';
 
 // ============================================================================
 // CONSTANTS
@@ -237,15 +238,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  // CORS - open for avatar
+  if (handleCors(req, res, 'open')) return;
 
   // Rate limiting - standard preset for avatar
   if (!applyRateLimit(req.headers, 'heygen', 'standard', res)) {

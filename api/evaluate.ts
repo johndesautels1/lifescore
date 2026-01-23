@@ -5,6 +5,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
+import { handleCors } from './shared/cors.js';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 import type { ScoreResult } from './shared/metrics.js';
@@ -1278,17 +1279,8 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
 
-  // CORS headers - restrict to Vercel deployment domain
-  const allowedOrigin = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'https://lifescore.vercel.app';
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // CORS - restricted to Vercel deployment domain
+  if (handleCors(req, res, 'restricted')) return;
 
   // Rate limiting - heavy preset for expensive LLM calls
   if (!applyRateLimit(req.headers, 'evaluate', 'heavy', res)) {

@@ -5,15 +5,11 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
+import { handleCors } from './shared/cors.js';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // CORS - open for health checks
+  if (handleCors(req, res, 'open', { methods: 'GET, OPTIONS' })) return;
 
   // Rate limiting - lenient for health checks
   if (!applyRateLimit(req.headers, 'health', 'health', res)) {
