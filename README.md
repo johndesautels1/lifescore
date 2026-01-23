@@ -6,6 +6,18 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
+## COMPLIANCE REMINDER (Before Launch)
+
+| Task | Priority | Status | Action |
+|------|----------|--------|--------|
+| ICO Registration (UK) | **HIGH** | Pending | https://ico.org.uk/for-organisations/register/ |
+| EU Representative | **HIGH** | Pending | Sign up with GDPR-Rep.eu (~€100-500/yr) |
+| 5 DPA Emails | LOW | Pending | Templates in `docs/legal/COMPLIANCE_README.md` |
+
+**Full compliance checklist:** `docs/legal/COMPLIANCE_README.md`
+
+---
+
 ## CODEBASE AUDIT STATUS (January 23, 2026)
 
 **Conversation ID:** `LIFESCORE-AUDIT-20260123-001`

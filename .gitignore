@@ -30,7 +30,10 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# Claude Code temp files
 tmpclaude-*
+.claude-temp/
 nul
 .temp/
 

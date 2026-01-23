@@ -19,17 +19,17 @@ For each processor:
 
 | Processor | Service | DPA Location | Status | Signed Date | Review Date |
 |-----------|---------|--------------|--------|-------------|-------------|
-| **Supabase** | Database, Auth | [supabase.com/legal/dpa](https://supabase.com/legal/dpa) | [ ] Pending | - | - |
-| **Vercel** | Hosting | [vercel.com/legal/dpa](https://vercel.com/legal/dpa) | [ ] Pending | - | - |
-| **OpenAI** | Olivia AI, GPT-4o | [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum) | [ ] Pending | - | - |
-| **Anthropic** | Claude Sonnet/Opus | [anthropic.com/legal/commercial-terms](https://www.anthropic.com/legal/commercial-terms) | [ ] Pending | - | - |
-| **Google (Gemini)** | LLM Evaluation | [cloud.google.com/terms/data-processing-addendum](https://cloud.google.com/terms/data-processing-addendum) | [ ] Pending | - | - |
-| **xAI (Grok)** | LLM Evaluation | Contact sales | [ ] Pending | - | - |
-| **Perplexity** | LLM Evaluation | [perplexity.ai/privacy](https://www.perplexity.ai/privacy) | [ ] Pending | - | - |
-| **D-ID** | Video Avatar | [d-id.com/privacy-policy](https://www.d-id.com/privacy-policy) | [ ] Pending | - | - |
-| **Gamma** | Report Generation | Contact support | [ ] Pending | - | - |
-| **Stripe** | Payments | [stripe.com/legal/dpa](https://stripe.com/legal/dpa) | [ ] Pending | - | - |
-| **Tavily** | Web Search | Contact support | [ ] Pending | - | - |
+| **Supabase** | Database, Auth | [supabase.com/legal/dpa](https://supabase.com/legal/dpa) | [x] Signed via PandaDoc | 2026-01-23 | 2027-01-23 |
+| **Vercel** | Hosting | [vercel.com/legal/dpa](https://vercel.com/legal/dpa) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
+| **OpenAI** | Olivia AI, GPT-4o | [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum) | [x] Form submitted | 2026-01-23 | 2027-01-23 |
+| **Anthropic** | Claude Sonnet/Opus | [anthropic.com/legal/commercial-terms](https://www.anthropic.com/legal/commercial-terms) | [x] Signed | 2026-01-23 | 2027-01-23 |
+| **Google (Gemini)** | LLM Evaluation | [cloud.google.com/terms/data-processing-addendum](https://cloud.google.com/terms/data-processing-addendum) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
+| **xAI (Grok)** | LLM Evaluation | Contact sales | [ ] Pending - Email required | - | - |
+| **Perplexity** | LLM Evaluation | [perplexity.ai/privacy](https://www.perplexity.ai/privacy) | [ ] Pending - Email required | - | - |
+| **D-ID** | Video Avatar | [d-id.com/privacy-policy](https://www.d-id.com/privacy-policy) | [ ] Pending - Email required | - | - |
+| **Gamma** | Report Generation | Contact support | [ ] Pending - Email required | - | - |
+| **Stripe** | Payments | [stripe.com/legal/dpa](https://stripe.com/legal/dpa) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
+| **Tavily** | Web Search | Contact support | [ ] Pending - Email required | - | - |
 
 ---
 
@@ -48,12 +48,20 @@ For each processor:
 
 ## Action Items
 
-1. [ ] Create `/docs/legal/dpas/` folder for signed copies
-2. [ ] Sign Supabase DPA (critical - primary database)
-3. [ ] Sign Stripe DPA (critical - payment processing)
-4. [ ] Sign OpenAI DPA (high - Olivia conversations stored)
-5. [ ] Review and sign remaining DPAs
+1. [x] Create `/docs/legal/dpas/` folder for signed copies - DONE 2026-01-23
+2. [ ] Sign Supabase DPA (critical - primary database) - Requires PandaDoc in dashboard
+3. [x] Sign Stripe DPA (critical - payment processing) - Accepted via ToS, saved to dpas/
+4. [~] Sign OpenAI DPA (high - Olivia conversations stored) - Form in progress
+5. [~] Review and sign remaining DPAs - Emails sent to 5 vendors
 6. [ ] Set calendar reminder for annual review
+
+## Saved DPA Documents
+
+| File | Vendor | Date |
+|------|--------|------|
+| `dpas/stripe-dpa.md` | Stripe | 2026-01-23 |
+| `dpas/vercel-dpa.md` | Vercel | 2026-01-23 |
+| `dpas/google-cloud-dpa.md` | Google Cloud | 2026-01-23 |
 
 ---
 

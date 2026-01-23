@@ -95,16 +95,16 @@
 
 | # | Processor | Purpose | DPA Status | Reviewed | Date |
 |---|-----------|---------|------------|----------|------|
-| E1 | Supabase | Database & Auth | [ ] | [ ] | - |
-| E2 | Vercel | Hosting | [ ] | [ ] | - |
-| E3 | OpenAI | Olivia AI Assistant | [ ] | [ ] | - |
-| E4 | Anthropic | Claude LLM Evaluation | [ ] | [ ] | - |
-| E5 | Google (Gemini) | LLM Evaluation | [ ] | [ ] | - |
+| E1 | Supabase | Database & Auth | [x] | [x] | 2026-01-23 |
+| E2 | Vercel | Hosting | [x] | [x] | 2026-01-23 |
+| E3 | OpenAI | Olivia AI Assistant | [x] | [x] | 2026-01-23 |
+| E4 | Anthropic | Claude LLM Evaluation | [x] | [x] | 2026-01-23 |
+| E5 | Google (Gemini) | LLM Evaluation | [x] | [x] | 2026-01-23 |
 | E6 | xAI (Grok) | LLM Evaluation | [ ] | [ ] | - |
 | E7 | Perplexity | LLM Evaluation | [ ] | [ ] | - |
 | E8 | D-ID | Video Avatar | [ ] | [ ] | - |
 | E9 | Gamma | Report Generation | [ ] | [ ] | - |
-| E10 | Stripe | Payments | [ ] | [ ] | - |
+| E10 | Stripe | Payments | [x] | [x] | 2026-01-23 |
 | E11 | Tavily | Web Search | [ ] | [ ] | - |
 
 ### Section F: US State Compliance
@@ -153,4 +153,136 @@
 | 2026-01-23 | Claude Code | Acceptable Use (A4), Refund Policy (A5) - Section A complete |
 | 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
 | 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
+| 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
+
+---
+
+## DPA Request Email Templates
+
+**Send to vendors that require email requests:**
+
+### D-ID (support@d-id.com)
+**Subject:** DPA Request - Clues Intelligence LTD
+
+```
+Hello,
+
+We are Clues Intelligence LTD, a UK-registered company using D-ID's
+video avatar services.
+
+Under UK GDPR and EU GDPR, we require a signed Data Processing
+Agreement (DPA) with all third-party processors handling personal data.
+
+Please provide your standard DPA for execution, or direct us to
+where we can access and sign it.
+
+Company: Clues Intelligence LTD
+Country: United Kingdom
+Contact: John E. Desautels
+Email: cluesnomads@gmail.com
+
+Thank you,
+John E. Desautels
+Clues Intelligence LTD
+```
+
+### xAI / Grok (support@x.ai)
+**Subject:** DPA Request - Clues Intelligence LTD (Grok API)
+
+```
+Hello,
+
+We are Clues Intelligence LTD, a UK-registered company using the
+Grok API for LLM evaluation services.
+
+Under UK GDPR and EU GDPR, we require a signed Data Processing
+Agreement (DPA) with all third-party processors handling personal data.
+
+Please provide your standard DPA for execution, or direct us to
+where we can access and sign it.
+
+Company: Clues Intelligence LTD
+Country: United Kingdom
+Contact: John E. Desautels
+Email: cluesnomads@gmail.com
+
+Thank you,
+John E. Desautels
+Clues Intelligence LTD
+```
+
+### Perplexity (support@perplexity.ai)
+**Subject:** DPA Request - Clues Intelligence LTD (API Customer)
+
+```
+Hello,
+
+We are Clues Intelligence LTD, a UK-registered company using the
+Perplexity API (Sonar) for search services.
+
+Under UK GDPR and EU GDPR, we require a signed Data Processing
+Agreement (DPA) with all third-party processors handling personal data.
+
+Please provide your standard DPA for execution, or direct us to
+where we can access and sign it.
+
+Company: Clues Intelligence LTD
+Country: United Kingdom
+Contact: John E. Desautels
+Email: cluesnomads@gmail.com
+
+Thank you,
+John E. Desautels
+Clues Intelligence LTD
+```
+
+### Gamma (support@gamma.app)
+**Subject:** DPA Request - Clues Intelligence LTD
+
+```
+Hello,
+
+We are Clues Intelligence LTD, a UK-registered company using Gamma
+for report generation services.
+
+Under UK GDPR and EU GDPR, we require a signed Data Processing
+Agreement (DPA) with all third-party processors handling personal data.
+
+Please provide your standard DPA for execution, or direct us to
+where we can access and sign it.
+
+Company: Clues Intelligence LTD
+Country: United Kingdom
+Contact: John E. Desautels
+Email: cluesnomads@gmail.com
+
+Thank you,
+John E. Desautels
+Clues Intelligence LTD
+```
+
+### Tavily (support@tavily.com)
+**Subject:** DPA Request - Clues Intelligence LTD (API Customer)
+
+```
+Hello,
+
+We are Clues Intelligence LTD, a UK-registered company using the
+Tavily API for web search services.
+
+Under UK GDPR and EU GDPR, we require a signed Data Processing
+Agreement (DPA) with all third-party processors handling personal data.
+
+Please provide your standard DPA for execution, or direct us to
+where we can access and sign it.
+
+Company: Clues Intelligence LTD
+Country: United Kingdom
+Contact: John E. Desautels
+Email: cluesnomads@gmail.com
+
+Thank you,
+John E. Desautels
+Clues Intelligence LTD
+```
 
