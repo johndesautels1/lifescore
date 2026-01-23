@@ -80,8 +80,8 @@
 | C3 | "Delete My Account" Feature | [x] | `ACCOUNT_DELETION_SPEC.md` | `_____` | 2026-01-23 |
 | C4 | Consent Logging (DB) | [ ] | Supabase table | - | - |
 | C5 | Data Export Endpoint | [x] | `DATA_EXPORT_SPEC.md` | `_____` | 2026-01-23 |
-| C6 | Privacy Policy Page in App | [ ] | `src/pages/Privacy.tsx` | - | - |
-| C7 | Terms Page in App | [ ] | `src/pages/Terms.tsx` | - | - |
+| C6 | Privacy Policy Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
+| C7 | Terms Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
 
 ### Section D: Regulatory Registration
 
@@ -148,4 +148,5 @@
 | Date | Author | Changes |
 |------|--------|---------|
 | 2026-01-23 | Claude Code | Initial creation, documents A1-A3, B1, C3, C5 |
+| 2026-01-23 | Claude Code | Added LegalModal component (C6, C7), footer links |
 
