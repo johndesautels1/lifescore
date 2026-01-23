@@ -269,7 +269,16 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
                 </p>
                 {city1Score?.source && (
                   <p style={{ margin: '8px 0 0', fontSize: '0.85em', color: '#777' }}>
-                    Source: {city1Score.source}
+                    Source: {city1Score.sourceUrl ? (
+                      <a
+                        href={city1Score.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#4a90d9', textDecoration: 'underline' }}
+                      >
+                        {city1Score.source}
+                      </a>
+                    ) : city1Score.source}
                   </p>
                 )}
               </div>

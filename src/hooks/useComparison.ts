@@ -301,14 +301,29 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
               if (score.confidence === 'high') confidence = 'high';
               else if (score.confidence === 'low') confidence = 'low';
 
+              // Derive source display from sources array
+              // If we have actual URLs, show the first domain; otherwise fallback
+              const sourcesArray = score.sources || [];
+              const sourceDisplay = sourcesArray.length > 0
+                ? sourcesArray.map(url => {
+                    try {
+                      return new URL(url).hostname.replace('www.', '');
+                    } catch {
+                      return url;
+                    }
+                  }).slice(0, 3).join(', ')
+                : 'LLM Evaluation';
+              const sourceUrl = sourcesArray.length > 0 ? sourcesArray[0] : undefined;
+
               // City 1 score
               city1MetricScores.push({
                 metricId: score.metricId,
                 rawValue: score.city1LegalScore,
                 normalizedScore: city1NormalizedScore,
                 confidence,
-                source: 'LLM Evaluation',
-                sources: score.sources,  // Pass through source URLs from API
+                source: sourceDisplay,
+                sourceUrl: sourceUrl,
+                sources: sourcesArray,  // Pass through source URLs from API
                 notes: score.reasoning
               });
 
@@ -318,8 +333,9 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
                 rawValue: score.city2LegalScore,
                 normalizedScore: city2NormalizedScore,
                 confidence,
-                source: 'LLM Evaluation',
-                sources: score.sources,  // Pass through source URLs from API
+                source: sourceDisplay,
+                sourceUrl: sourceUrl,
+                sources: sourcesArray,  // Pass through source URLs from API
                 notes: score.reasoning
               });
             }
