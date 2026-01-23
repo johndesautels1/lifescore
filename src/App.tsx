@@ -12,6 +12,7 @@ import LoginScreen from './components/LoginScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LegalModal, { type LegalPage } from './components/LegalModal';
+import CookieConsent from './components/CookieConsent';
 import TabNavigation, { type TabId } from './components/TabNavigation';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
@@ -637,6 +638,9 @@ const AppContent: React.FC = () => {
           comparisonResult={enhancedResult || state.result || undefined}
         />
       )}
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
     </div>
   );
 };
