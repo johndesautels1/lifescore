@@ -11,6 +11,7 @@ import type { VisualReportState } from '../types/gamma';
 import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
 import { saveGammaReport, hasGammaReportForComparison } from '../services/savedComparisons';
 import AdvancedVisuals from './AdvancedVisuals';
+import FeatureGate from './FeatureGate';
 import './VisualsTab.css';
 
 interface VisualsTabProps {
@@ -157,31 +158,33 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         </p>
 
         {reportState.status === 'idle' && (
-          <div className="generate-controls">
-            <div className="format-selector">
-              <label>Export Format:</label>
-              <div className="format-options">
-                <button
-                  className={`format-btn ${exportFormat === 'pdf' ? 'active' : ''}`}
-                  onClick={() => setExportFormat('pdf')}
-                >
-                  PDF
-                </button>
-                <button
-                  className={`format-btn ${exportFormat === 'pptx' ? 'active' : ''}`}
-                  onClick={() => setExportFormat('pptx')}
-                >
-                  PowerPoint
-                </button>
+          <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
+            <div className="generate-controls">
+              <div className="format-selector">
+                <label>Export Format:</label>
+                <div className="format-options">
+                  <button
+                    className={`format-btn ${exportFormat === 'pdf' ? 'active' : ''}`}
+                    onClick={() => setExportFormat('pdf')}
+                  >
+                    PDF
+                  </button>
+                  <button
+                    className={`format-btn ${exportFormat === 'pptx' ? 'active' : ''}`}
+                    onClick={() => setExportFormat('pptx')}
+                  >
+                    PowerPoint
+                  </button>
+                </div>
               </div>
+              <button
+                className="generate-btn primary-btn"
+                onClick={handleGenerateReport}
+              >
+                Generate Report
+              </button>
             </div>
-            <button
-              className="generate-btn primary-btn"
-              onClick={handleGenerateReport}
-            >
-              Generate Report
-            </button>
-          </div>
+          </FeatureGate>
         )}
 
         {(reportState.status === 'generating' || reportState.status === 'polling') && (

@@ -23,6 +23,7 @@ import VisualsTab from './components/VisualsTab';
 import AskOlivia from './components/AskOlivia';
 import JudgeTab from './components/JudgeTab';
 import OliviaChatBubble from './components/OliviaChatBubble';
+import FeatureGate from './components/FeatureGate';
 import {
   EnhancedModeToggle,
   APIKeyModal,
@@ -292,13 +293,19 @@ const AppContent: React.FC = () => {
               ============================================================ */}
           {activeTab === 'compare' && (
             <>
-              {/* Enhanced Mode Toggle */}
-              <EnhancedModeToggle
-                enabled={enhancedMode}
-                onToggle={setEnhancedMode}
-                onConfigureKeys={() => setShowAPIKeyModal(true)}
-                availableLLMs={availableLLMs}
-              />
+              {/* Enhanced Mode Toggle - Gated for Pro+ users */}
+              <FeatureGate
+                feature="enhancedComparisons"
+                showUsage={true}
+                blurContent={false}
+              >
+                <EnhancedModeToggle
+                  enabled={enhancedMode}
+                  onToggle={setEnhancedMode}
+                  onConfigureKeys={() => setShowAPIKeyModal(true)}
+                  availableLLMs={availableLLMs}
+                />
+              </FeatureGate>
 
               {/* City Selector */}
               <CitySelector

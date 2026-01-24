@@ -25,6 +25,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { CATEGORIES } from '../shared/metrics';
 import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
+import FeatureGate from './FeatureGate';
 import './JudgeTab.css';
 
 // ============================================================================
@@ -845,13 +846,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
                       </div>
                       <div className="awaiting-text">VIDEO PENDING</div>
                       <div className="awaiting-subtext">Report ready - generate video</div>
-                      <button
-                        className="generate-report-btn"
-                        onClick={() => generateJudgeVideo(judgeReport)}
-                      >
-                        <span className="btn-icon">🎥</span>
-                        <span className="btn-text">GENERATE VIDEO REPORT</span>
-                      </button>
+                      <FeatureGate feature="judgeVideos" showUsage={true} blurContent={false}>
+                        <button
+                          className="generate-report-btn"
+                          onClick={() => generateJudgeVideo(judgeReport)}
+                        >
+                          <span className="btn-icon">🎥</span>
+                          <span className="btn-text">GENERATE VIDEO REPORT</span>
+                        </button>
+                      </FeatureGate>
                     </div>
                   ) : (
                     <div className="awaiting-state">

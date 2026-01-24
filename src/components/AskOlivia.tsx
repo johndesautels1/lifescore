@@ -25,6 +25,8 @@ import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
 import { useDIDStream } from '../hooks/useDIDStream';
+import { useTierAccess } from '../hooks/useTierAccess';
+import { UsageMeter } from './FeatureGate';
 import './AskOlivia.css';
 
 interface AskOliviaProps {
@@ -36,10 +38,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const [showTextChat, setShowTextChat] = useState(false);
   const [inputText, setInputText] = useState('');
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [usageLimitReached, setUsageLimitReached] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastSpokenMsgRef = useRef<string | null>(null);
+
+  // Tier access for message limits
+  const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
 
   // ═══════════════════════════════════════════════════════════════════
   // OPENAI CHAT - The Brain (ALL intelligence comes from here)
@@ -167,10 +173,27 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const handleSendMessage = useCallback(async (text?: string) => {
     const messageText = text || inputText.trim();
     if (!messageText) return;
+
+    // Check usage limits before sending
+    if (!isUnlimited('oliviaMessagesPerDay')) {
+      const usage = await checkUsage('oliviaMessagesPerDay');
+      if (!usage.allowed) {
+        setUsageLimitReached(true);
+        // Dispatch event to open pricing modal
+        window.dispatchEvent(new CustomEvent('openPricing', {
+          detail: { feature: 'Olivia messages', requiredTier: usage.requiredTier }
+        }));
+        return;
+      }
+      // Increment usage counter
+      await incrementUsage('oliviaMessagesPerDay');
+    }
+
     setInputText('');
+    setUsageLimitReached(false);
     // Send to OpenAI (the brain) - response will auto-trigger D-ID speak
     await sendMessage(messageText);
-  }, [inputText, sendMessage]);
+  }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited]);
 
   const handleQuickAction = useCallback((action: OliviaQuickAction) => {
     setShowTextChat(true);
@@ -453,18 +476,23 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             <input
               type="text"
               className="text-command-input"
-              placeholder="Type your question..."
+              placeholder={usageLimitReached ? "Daily limit reached - Upgrade for more" : "Type your question..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
+              disabled={usageLimitReached}
             />
             <button
               className="send-command-btn"
               onClick={() => handleSendMessage()}
-              disabled={!inputText.trim()}
+              disabled={!inputText.trim() || usageLimitReached}
             >
               <span className="btn-icon">▶</span>
             </button>
+          </div>
+          {/* Usage meter for message limits */}
+          <div className="olivia-usage-meter">
+            <UsageMeter feature="oliviaMessagesPerDay" compact={true} />
           </div>
         </div>
 
