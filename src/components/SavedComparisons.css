@@ -126,8 +126,13 @@
 .toolbar-left,
 .toolbar-right {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbar-right {
+  gap: 1rem;
 }
 
 .toolbar-btn {
@@ -195,16 +200,19 @@
 .no-saved {
   text-align: center;
   padding: 2rem;
-  color: var(--gray-500);
+  color: var(--text-primary);
 }
 
 .no-saved p {
   margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .no-saved-hint {
-  font-size: 0.875rem;
-  color: var(--gray-400);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Saved List */
@@ -540,9 +548,12 @@
   color: #e2e8f0;
 }
 
-[data-theme="dark"] .no-saved,
+[data-theme="dark"] .no-saved {
+  color: #f1f5f9;
+}
+
 [data-theme="dark"] .no-saved-hint {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 /* ============================================================================
