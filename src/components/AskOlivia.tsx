@@ -37,12 +37,18 @@ interface AskOliviaProps {
   comparisonResult?: EnhancedComparisonResult | ComparisonResult | null;
 }
 
-const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
+const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonResult }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showTextChat, setShowTextChat] = useState(false);
   const [inputText, setInputText] = useState('');
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [usageLimitReached, setUsageLimitReached] = useState(false);
+
+  // Video chat is now OPT-IN (user must click "Start Video Chat")
+  const [videoEnabled, setVideoEnabled] = useState(false);
+
+  // Selected comparison from dropdown (null = use prop, or "none" for general chat)
+  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -55,6 +61,22 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   // This gives Olivia knowledge of ALL user's previous comparisons
   const savedComparisons = getLocalComparisons();
   const savedEnhanced = getLocalEnhancedComparisons();
+
+  // Determine which comparison to use for context
+  // Priority: Selected from dropdown > Prop > None
+  const getActiveComparison = (): EnhancedComparisonResult | ComparisonResult | null => {
+    if (selectedComparisonId === 'none') return null;
+    if (selectedComparisonId) {
+      // Look up in saved comparisons
+      const savedStd = savedComparisons.find(c => c.result.comparisonId === selectedComparisonId);
+      if (savedStd) return savedStd.result;
+      const savedEnh = savedEnhanced.find(c => c.result.comparisonId === selectedComparisonId);
+      if (savedEnh) return savedEnh.result;
+    }
+    return propComparisonResult || null;
+  };
+
+  const comparisonResult = getActiveComparison();
 
   // ═══════════════════════════════════════════════════════════════════
   // OPENAI CHAT - The Brain (ALL intelligence comes from here)
@@ -131,15 +153,21 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-connect to avatar provider on mount
-  // IMPORTANT: Empty dependency array - connect ONCE on mount only!
+  // Connect/disconnect avatar based on videoEnabled state
   useEffect(() => {
-    console.log('[AskOlivia] Initializing avatar connection (Simli primary, D-ID fallback)');
-    connectAvatar();
+    if (videoEnabled) {
+      console.log('[AskOlivia] Starting video chat (Simli primary, D-ID fallback)');
+      connectAvatar();
+    } else {
+      console.log('[AskOlivia] Video chat disabled, disconnecting avatar');
+      disconnectAvatar();
+    }
 
     // Cleanup avatar session on page refresh/close
     const handleBeforeUnload = () => {
-      disconnectAvatar();
+      if (videoEnabled) {
+        disconnectAvatar();
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -148,7 +176,12 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       disconnectAvatar();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty - mount/unmount only
+  }, [videoEnabled]); // Only re-run when videoEnabled changes
+
+  // Toggle video chat
+  const toggleVideoChat = useCallback(() => {
+    setVideoEnabled(prev => !prev);
+  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -156,7 +189,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   }, [messages]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // AUTO-SPEAK: When OpenAI responds, make avatar speak it
+  // AUTO-SPEAK: When OpenAI responds, make avatar speak it (if video enabled)
   // This is the KEY connection: OpenAI brain → Avatar mouth (Simli or D-ID)
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
@@ -167,22 +200,21 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
 
-        console.log(`[AskOlivia] OpenAI responded, sending to ${activeProvider.toUpperCase()} avatar to speak`);
-
-        // Try avatar provider (Simli with D-ID fallback)
-        if (isAvatarConnected) {
+        // If video is enabled and avatar is connected, use avatar
+        if (videoEnabled && isAvatarConnected) {
+          console.log(`[AskOlivia] OpenAI responded, sending to ${activeProvider.toUpperCase()} avatar to speak`);
           makeAvatarSpeak(lastMessage.content).catch((err: Error) => {
             console.warn('[AskOlivia] Avatar speak failed, falling back to browser TTS:', err);
             speakText(lastMessage.content);
           });
         } else {
-          // Fallback to browser TTS
-          console.log('[AskOlivia] Avatar not connected, using browser TTS');
+          // Use browser TTS when video is disabled
+          console.log('[AskOlivia] Using browser TTS (video chat disabled)');
           speakText(lastMessage.content);
         }
       }
     }
-  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider]);
+  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled]);
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
@@ -342,67 +374,92 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
 
             {/* The actual video screen - Simli AI WebRTC stream */}
             <div id="olivia-viewport" className="viewport-screen">
-              {/* Simli AI video element */}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted={false}
-                className="avatar-video"
-              />
+              {videoEnabled ? (
+                <>
+                  {/* Simli AI video element */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted={false}
+                    className="avatar-video"
+                  />
+
+                  {/* Speaking indicator */}
+                  {isAvatarSpeaking && (
+                    <div className="speaking-indicator">
+                      <div className="speaking-waves">
+                        <span></span><span></span><span></span><span></span><span></span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Avatar loading state */}
+                  {!isAvatarReady && (
+                    <div className="avatar-loading">
+                      {!hasConnectionError && (
+                        <>
+                          <div className="loading-ring"></div>
+                          <div className="loading-ring delay-1"></div>
+                          <div className="loading-ring delay-2"></div>
+                        </>
+                      )}
+                      <div className="loading-text">
+                        {hasConnectionError ? 'CONNECTION ERROR' : 'INITIALIZING OLIVIA'}
+                      </div>
+                      <div className="loading-subtext">
+                        {hasConnectionError
+                          ? avatarError || 'Connection failed - using text mode'
+                          : `Connecting to ${activeProvider.toUpperCase()} AI...`}
+                      </div>
+                      {hasConnectionError && (
+                        <button
+                          className="retry-connection-btn"
+                          onClick={handleManualReconnect}
+                          style={{
+                            marginTop: '1rem',
+                            padding: '0.5rem 1.5rem',
+                            background: 'rgba(212, 175, 55, 0.2)',
+                            border: '1px solid rgba(212, 175, 55, 0.5)',
+                            color: '#d4af37',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            fontSize: '0.85rem',
+                            fontFamily: 'inherit',
+                            letterSpacing: '0.1em',
+                          }}
+                        >
+                          RETRY CONNECTION
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Video disabled placeholder */
+                <div className="video-disabled-placeholder">
+                  <div className="placeholder-avatar">
+                    <div className="avatar-circle">
+                      <span className="avatar-initial">O</span>
+                    </div>
+                    <div className="avatar-name">OLIVIA</div>
+                    <div className="avatar-subtitle">AI Freedom Advisor</div>
+                  </div>
+                  <button
+                    className="start-video-btn"
+                    onClick={toggleVideoChat}
+                  >
+                    <span className="btn-icon">🎥</span>
+                    <span className="btn-text">Start Video Chat</span>
+                  </button>
+                  <div className="text-mode-hint">
+                    Text chat is active. Click above to enable video.
+                  </div>
+                </div>
+              )}
 
               {/* Overlay gradient for depth */}
               <div className="screen-vignette"></div>
-
-              {/* Speaking indicator */}
-              {isAvatarSpeaking && (
-                <div className="speaking-indicator">
-                  <div className="speaking-waves">
-                    <span></span><span></span><span></span><span></span><span></span>
-                  </div>
-                </div>
-              )}
-
-              {/* Avatar loading state */}
-              {!isAvatarReady && (
-                <div className="avatar-loading">
-                  {!hasConnectionError && (
-                    <>
-                      <div className="loading-ring"></div>
-                      <div className="loading-ring delay-1"></div>
-                      <div className="loading-ring delay-2"></div>
-                    </>
-                  )}
-                  <div className="loading-text">
-                    {hasConnectionError ? 'CONNECTION ERROR' : 'INITIALIZING OLIVIA'}
-                  </div>
-                  <div className="loading-subtext">
-                    {hasConnectionError
-                      ? avatarError || 'Connection failed - using text mode'
-                      : `Connecting to ${activeProvider.toUpperCase()} AI...`}
-                  </div>
-                  {hasConnectionError && (
-                    <button
-                      className="retry-connection-btn"
-                      onClick={handleManualReconnect}
-                      style={{
-                        marginTop: '1rem',
-                        padding: '0.5rem 1.5rem',
-                        background: 'rgba(212, 175, 55, 0.2)',
-                        border: '1px solid rgba(212, 175, 55, 0.5)',
-                        color: '#d4af37',
-                        cursor: 'pointer',
-                        borderRadius: '4px',
-                        fontSize: '0.85rem',
-                        fontFamily: 'inherit',
-                        letterSpacing: '0.1em',
-                      }}
-                    >
-                      RETRY CONNECTION
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -442,6 +499,56 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
           CONTROL PANEL - Swiss Timepiece Precision
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="control-panel">
+        {/* Report Selection & Video Toggle */}
+        <div className="control-group report-selection">
+          <div className="control-label">SELECT REPORT</div>
+          <div className="control-row">
+            <select
+              className="report-dropdown"
+              value={selectedComparisonId || ''}
+              onChange={(e) => {
+                setSelectedComparisonId(e.target.value || null);
+                clearHistory(); // Clear chat when switching reports
+              }}
+            >
+              <option value="">
+                {propComparisonResult
+                  ? `Current: ${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
+                  : 'No report loaded'}
+              </option>
+              <option value="none">General Chat (No Report)</option>
+              {savedComparisons.length > 0 && (
+                <optgroup label="Saved Reports">
+                  {savedComparisons.map((saved) => (
+                    <option key={saved.id} value={saved.result.comparisonId}>
+                      {saved.result.city1.city} vs {saved.result.city2.city}
+                      {saved.nickname ? ` (${saved.nickname})` : ''}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {savedEnhanced.length > 0 && (
+                <optgroup label="Enhanced Reports">
+                  {savedEnhanced.map((saved) => (
+                    <option key={saved.id} value={saved.result.comparisonId}>
+                      ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
+                      {saved.nickname ? ` (${saved.nickname})` : ''}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+            <button
+              className={`control-btn video-toggle ${videoEnabled ? 'active' : ''}`}
+              onClick={toggleVideoChat}
+              title={videoEnabled ? 'Stop Video Chat' : 'Start Video Chat'}
+            >
+              <span className="btn-icon">{videoEnabled ? '🎥' : '📹'}</span>
+              <span className="btn-text">{videoEnabled ? 'END VIDEO' : 'VIDEO CHAT'}</span>
+            </button>
+          </div>
+        </div>
+
         {/* Voice Controls */}
         <div className="control-group voice-controls">
           <div className="control-label">VOICE COMMAND</div>

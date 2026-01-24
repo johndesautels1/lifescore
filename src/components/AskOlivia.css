@@ -603,6 +603,147 @@
   50% { opacity: 1; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   REPORT SELECTION & VIDEO TOGGLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.control-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.report-dropdown {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.875rem 1rem;
+  background: rgba(10, 22, 40, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  color: var(--platinum);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.report-dropdown:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(10, 22, 40, 0.9);
+}
+
+.report-dropdown:focus {
+  outline: none;
+  border-color: var(--brushed-gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.report-dropdown option {
+  background: #0a1628;
+  color: var(--platinum);
+  padding: 0.5rem;
+}
+
+.report-dropdown optgroup {
+  background: #0d2847;
+  color: var(--brushed-gold);
+  font-weight: 600;
+}
+
+.video-toggle {
+  white-space: nowrap;
+}
+
+.video-toggle.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--error-red);
+  color: var(--error-red);
+}
+
+/* Video Disabled Placeholder */
+.video-disabled-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0a1628 0%, #0d2847 50%, #0a1628 100%);
+  z-index: 5;
+}
+
+.video-disabled-placeholder .placeholder-avatar {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.video-disabled-placeholder .avatar-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.video-disabled-placeholder .avatar-initial {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--brushed-gold);
+  font-family: 'Times New Roman', serif;
+}
+
+.video-disabled-placeholder .avatar-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brushed-gold);
+  letter-spacing: 0.3em;
+  margin-bottom: 0.25rem;
+}
+
+.video-disabled-placeholder .avatar-subtitle {
+  font-size: 0.8rem;
+  color: var(--steel-gray);
+  letter-spacing: 0.15em;
+}
+
+.start-video-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 10px;
+  color: var(--brushed-gold);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.start-video-btn:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.15) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.start-video-btn .btn-icon {
+  font-size: 1.25rem;
+}
+
+.text-mode-hint {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--steel-gray);
+  letter-spacing: 0.05em;
+}
+
 /* Voice Transcript Display */
 .voice-transcript-display {
   display: flex;
