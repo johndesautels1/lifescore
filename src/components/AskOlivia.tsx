@@ -1,11 +1,11 @@
 /**
  * LIFE SCORE™ Ask Olivia - Premium Edition
  *
- * ARCHITECTURE: Option B
+ * ARCHITECTURE: Option B (Updated for Simli AI)
  * - OpenAI Assistant = ALL intelligence (the brain)
- * - D-ID Streams = Avatar video only (no brain)
+ * - Simli AI = Avatar video only (replaced D-ID - 90% cost savings)
  *
- * Flow: User → OpenAI → Response → D-ID speaks response
+ * Flow: User → OpenAI → Response → Simli speaks response
  *
  * Design Philosophy:
  * - James Bond: Sleek sophistication, MI6 briefing room elegance
@@ -24,7 +24,7 @@ import { DEFAULT_QUICK_ACTIONS } from '../types/olivia';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
-import { useDIDStream } from '../hooks/useDIDStream';
+import { useSimli } from '../hooks/useSimli';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { UsageMeter } from './FeatureGate';
 import './AskOlivia.css';
@@ -59,23 +59,19 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   } = useOliviaChat(comparisonResult);
 
   // ═══════════════════════════════════════════════════════════════════
-  // D-ID STREAMS - Avatar Only (NO brain, just video/lip-sync)
+  // SIMLI AI - Avatar Only (NO brain, just video/lip-sync)
+  // Replaced D-ID for 90% cost savings
   // ═══════════════════════════════════════════════════════════════════
   const {
-    status: didStatus,
+    status: simliStatus,
     isConnected: isAvatarConnected,
     isSpeaking: isAvatarSpeaking,
-    isRateLimited,
     connect: connectAvatar,
     speak: makeAvatarSpeak,
     disconnect: disconnectAvatar,
-    resetRetries,
-  } = useDIDStream({
-    videoRef,
-    onSpeakingStart: () => console.log('[AskOlivia] Avatar started speaking'),
-    onSpeakingEnd: () => console.log('[AskOlivia] Avatar finished speaking'),
-    onError: (err) => console.error('[AskOlivia] Avatar error:', err),
-  });
+    interrupt: interruptAvatar,
+    error: simliError,
+  } = useSimli();
 
   // ═══════════════════════════════════════════════════════════════════
   // VOICE RECOGNITION - Speech to text input
@@ -112,14 +108,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-connect to D-ID Streams on mount
+  // Auto-connect to Simli AI on mount
   // IMPORTANT: Empty dependency array - connect ONCE on mount only!
-  // Having connectAvatar in deps caused infinite retry loops when status changed
   useEffect(() => {
-    console.log('[AskOlivia] Initializing D-ID Streams connection (avatar only, OpenAI is brain)');
+    console.log('[AskOlivia] Initializing Simli AI connection (avatar only, OpenAI is brain)');
     connectAvatar();
 
-    // Cleanup D-ID session on page refresh/close to prevent "Max user sessions" error
+    // Cleanup Simli session on page refresh/close
     const handleBeforeUnload = () => {
       disconnectAvatar();
     };
@@ -138,8 +133,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   }, [messages]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // AUTO-SPEAK: When OpenAI responds, make D-ID avatar speak it
-  // This is the KEY Option B connection: OpenAI brain → D-ID mouth
+  // AUTO-SPEAK: When OpenAI responds, make Simli avatar speak it
+  // This is the KEY Option B connection: OpenAI brain → Simli mouth
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (autoSpeak && messages.length > 0) {
@@ -149,17 +144,17 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
 
-        console.log('[AskOlivia] OpenAI responded, sending to D-ID avatar to speak');
+        console.log('[AskOlivia] OpenAI responded, sending to Simli avatar to speak');
 
-        // Try D-ID avatar first
+        // Try Simli avatar first
         if (isAvatarConnected) {
-          makeAvatarSpeak(lastMessage.content).catch((err) => {
-            console.warn('[AskOlivia] D-ID speak failed, falling back to browser TTS:', err);
+          makeAvatarSpeak(lastMessage.content).catch((err: Error) => {
+            console.warn('[AskOlivia] Simli speak failed, falling back to browser TTS:', err);
             speakText(lastMessage.content);
           });
         } else {
           // Fallback to browser TTS
-          console.log('[AskOlivia] D-ID not connected, using browser TTS');
+          console.log('[AskOlivia] Simli not connected, using browser TTS');
           speakText(lastMessage.content);
         }
       }
@@ -227,19 +222,19 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const getAvatarStatus = () => {
     if (isAvatarSpeaking) return 'SPEAKING';
     if (isAvatarConnected) return 'READY';
-    if (isRateLimited) return 'RATE LIMITED';
-    if (didStatus === 'connecting') return 'CONNECTING';
-    if (didStatus === 'error') return 'ERROR';
+    if (simliStatus === 'connecting') return 'CONNECTING';
+    if (simliStatus === 'error') return 'ERROR';
+    if (simliStatus === 'listening') return 'LISTENING';
     return 'INIT...';
   };
 
   // Handler for manual reconnection attempt
   const handleManualReconnect = () => {
-    resetRetries();
     connectAvatar();
   };
 
-  const isAvatarReady = isAvatarConnected || didStatus === 'connected';
+  const isAvatarReady = isAvatarConnected || simliStatus === 'connected';
+  const hasConnectionError = simliStatus === 'error';
 
   // Cockpit-style time formatting
   const formatTime = (date: Date) => {
@@ -273,7 +268,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             </div>
             <div className="status-indicator">
               <span className="indicator-icon">◈</span>
-              <span className="indicator-label">D-ID AVATAR</span>
+              <span className="indicator-label">SIMLI AVATAR</span>
               <span className={`indicator-value ${isAvatarReady ? 'active' : ''}`}>
                 {getAvatarStatus()}
               </span>
@@ -303,7 +298,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          MAIN VIEWPORT - D-ID Streams Video (Avatar Only, No Brain)
+          MAIN VIEWPORT - Simli AI Video (Avatar Only, No Brain)
       ═══════════════════════════════════════════════════════════════════ */}
       <main className="viewport-container">
         <div className="viewport-frame">
@@ -314,9 +309,9 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             <div className="bezel-corner bl"></div>
             <div className="bezel-corner br"></div>
 
-            {/* The actual video screen - D-ID WebRTC stream */}
+            {/* The actual video screen - Simli AI WebRTC stream */}
             <div id="olivia-viewport" className="viewport-screen">
-              {/* D-ID Streams video element */}
+              {/* Simli AI video element */}
               <video
                 ref={videoRef}
                 autoPlay
@@ -340,7 +335,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               {/* Avatar loading state */}
               {!isAvatarReady && (
                 <div className="avatar-loading">
-                  {!isRateLimited && didStatus !== 'error' && (
+                  {!hasConnectionError && (
                     <>
                       <div className="loading-ring"></div>
                       <div className="loading-ring delay-1"></div>
@@ -348,16 +343,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
                     </>
                   )}
                   <div className="loading-text">
-                    {isRateLimited ? 'RATE LIMITED' : didStatus === 'error' ? 'CONNECTION ERROR' : 'INITIALIZING OLIVIA'}
+                    {hasConnectionError ? 'CONNECTION ERROR' : 'INITIALIZING OLIVIA'}
                   </div>
                   <div className="loading-subtext">
-                    {isRateLimited
-                      ? 'D-ID API rate limit reached. Please wait...'
-                      : didStatus === 'error'
-                        ? 'Connection failed - using text mode'
-                        : 'Connecting to D-ID Streams...'}
+                    {hasConnectionError
+                      ? simliError || 'Connection failed - using text mode'
+                      : 'Connecting to Simli AI...'}
                   </div>
-                  {(didStatus === 'error' || isRateLimited) && (
+                  {hasConnectionError && (
                     <button
                       className="retry-connection-btn"
                       onClick={handleManualReconnect}
@@ -437,7 +430,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
               <button
                 className="control-btn danger"
                 onClick={() => {
-                  disconnectAvatar();
+                  interruptAvatar();
                   stopSpeaking();
                 }}
                 title="Stop Olivia"
@@ -643,7 +636,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
           <div className="connection-status">
             <span className={`status-dot ${isAvatarReady ? 'online' : 'connecting'}`}></span>
             <span className="status-text">
-              {isAvatarReady ? 'OPENAI + D-ID CONNECTED' : 'ESTABLISHING LINK'}
+              {isAvatarReady ? 'OPENAI + SIMLI CONNECTED' : 'ESTABLISHING LINK'}
             </span>
           </div>
         </div>

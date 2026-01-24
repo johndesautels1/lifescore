@@ -23,7 +23,8 @@ import VisualsTab from './components/VisualsTab';
 import AskOlivia from './components/AskOlivia';
 import JudgeTab from './components/JudgeTab';
 import OliviaChatBubble from './components/OliviaChatBubble';
-import FeatureGate from './components/FeatureGate';
+import FeatureGate, { UsageMeter } from './components/FeatureGate';
+import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
   APIKeyModal,
@@ -51,6 +52,7 @@ import './App.css';
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
+  const { checkUsage, incrementUsage } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
 
   // Enhanced mode state
@@ -226,11 +228,29 @@ const AppContent: React.FC = () => {
 
   const handleCompare = async (city1: string, city2: string) => {
     if (enhancedMode) {
+      // Enhanced mode has its own gating via FeatureGate component
       // Run enhanced comparison
       setEnhancedStatus('running');
       setEnhancedResult(null);
       setPendingCities({ city1, city2 });
     } else {
+      // Standard mode: Check usage limit before running
+      const usageResult = await checkUsage('standardComparisons');
+
+      if (!usageResult.allowed) {
+        // User has hit their limit - show pricing modal
+        setPricingHighlight({
+          feature: 'standardComparisons',
+          tier: usageResult.requiredTier,
+        });
+        setShowPricingModal(true);
+        return;
+      }
+
+      // Increment usage counter before running comparison
+      await incrementUsage('standardComparisons');
+
+      // Run the comparison
       await compare(city1, city2);
     }
   };
@@ -293,6 +313,13 @@ const AppContent: React.FC = () => {
               ============================================================ */}
           {activeTab === 'compare' && (
             <>
+              {/* Standard Comparisons Usage Meter - Only show for standard mode */}
+              {!enhancedMode && (
+                <div className="usage-meter-container">
+                  <UsageMeter feature="standardComparisons" showLabel={true} />
+                </div>
+              )}
+
               {/* Enhanced Mode Toggle - Gated for Pro+ users */}
               <FeatureGate
                 feature="enhancedComparisons"

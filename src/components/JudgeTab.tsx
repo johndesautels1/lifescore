@@ -5,11 +5,13 @@
  * future trend forecasting, and executive recommendations.
  *
  * Features:
- * - D-ID video report by "Christian" (male avatar via Talks API)
+ * - Replicate video report by "Christiano" (photorealistic avatar via MuseTalk)
  * - Summary of findings with trend indicators
  * - Detailed category-by-category analysis
  * - Executive summary with final recommendation
  * - Save, download, forward capabilities
+ *
+ * Video Generation: Replaced D-ID with Replicate for 95% cost savings
  *
  * Design DNA:
  * - James Bond: MI6 briefing room authority
@@ -26,6 +28,8 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { CATEGORIES } from '../shared/metrics';
 import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
 import FeatureGate from './FeatureGate';
+import { useJudgeVideo } from '../hooks/useJudgeVideo';
+import type { GenerateJudgeVideoRequest } from '../types/avatar';
 import './JudgeTab.css';
 
 // ============================================================================
@@ -87,8 +91,17 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
   const [videoDuration, setVideoDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
-  // Video generation state
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  // Replicate video generation hook (replaced D-ID)
+  const {
+    video: replicateVideo,
+    status: videoStatus,
+    isGenerating: isGeneratingVideo,
+    isReady: isVideoReady,
+    generate: generateReplicateVideo,
+    error: videoError,
+  } = useJudgeVideo();
+
+  // Legacy video generation state (for backwards compatibility)
   const [videoGenerationProgress, setVideoGenerationProgress] = useState('');
   const videoPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -182,7 +195,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
   // Poll for video status until ready or error
   const pollVideoStatus = async (talkId: string, report: JudgeReport) => {
     console.log('[JudgeTab] Starting video status polling for:', talkId);
-    setVideoGenerationProgress('Christian is preparing your video report...');
+    setVideoGenerationProgress('Christiano is preparing your video report...');
 
     // Clear any existing polling
     if (videoPollingRef.current) {
@@ -258,31 +271,34 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
     videoPollingRef.current = setInterval(poll, 5000);
   };
 
-  // Generate video from judge report
+  // Generate video from judge report using Replicate (replaced D-ID)
   const generateJudgeVideo = async (report: JudgeReport) => {
-    console.log('[JudgeTab] Starting video generation for report:', report.reportId);
-    setIsGeneratingVideo(true);
+    console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');
 
+    // Build script for Christiano to speak
+    const winner = report.executiveSummary.recommendation === 'city1' ? report.city1 :
+      report.executiveSummary.recommendation === 'city2' ? report.city2 : 'TIE';
+    const winnerScore = report.executiveSummary.recommendation === 'city1'
+      ? report.summaryOfFindings.city1Score
+      : report.summaryOfFindings.city2Score;
+    const loserScore = report.executiveSummary.recommendation === 'city1'
+      ? report.summaryOfFindings.city2Score
+      : report.summaryOfFindings.city1Score;
+
+    const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+
+    const request: GenerateJudgeVideoRequest = {
+      script,
+      city1: report.city1,
+      city2: report.city2,
+      winner,
+      winnerScore,
+      loserScore,
+    };
+
     try {
-      const response = await fetch('/api/judge-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate', report })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `Video API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.success || !data.talkId) {
-        throw new Error('Failed to start video generation');
-      }
-
-      console.log('[JudgeTab] Video generation started, talkId:', data.talkId);
+      await generateReplicateVideo(request);
 
       // Update report with generating status
       const updatedReport: JudgeReport = {
@@ -292,12 +308,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
       setJudgeReport(updatedReport);
       saveReportToLocalStorage(updatedReport);
 
-      // Start polling for video status
-      pollVideoStatus(data.talkId, updatedReport);
-
     } catch (error) {
       console.error('[JudgeTab] Video generation error:', error);
-      setIsGeneratingVideo(false);
       setVideoGenerationProgress('');
 
       // Update report with error status
@@ -308,6 +320,34 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
       setJudgeReport(updatedReport);
     }
   };
+
+  // Update report when Replicate video is ready
+  useEffect(() => {
+    if (isVideoReady && replicateVideo?.videoUrl && judgeReport) {
+      const updatedReport: JudgeReport = {
+        ...judgeReport,
+        videoUrl: replicateVideo.videoUrl,
+        videoStatus: 'ready'
+      };
+      setJudgeReport(updatedReport);
+      saveReportToLocalStorage(updatedReport);
+      setVideoGenerationProgress('');
+      console.log('[JudgeTab] Replicate video ready:', replicateVideo.videoUrl);
+    }
+  }, [isVideoReady, replicateVideo?.videoUrl]);
+
+  // Handle video generation errors
+  useEffect(() => {
+    if (videoError && judgeReport) {
+      const updatedReport: JudgeReport = {
+        ...judgeReport,
+        videoStatus: 'error'
+      };
+      setJudgeReport(updatedReport);
+      setVideoGenerationProgress('');
+      console.error('[JudgeTab] Replicate video error:', videoError);
+    }
+  }, [videoError]);
 
   // Generate Judge Report handler - Phase B Implementation
   const handleGenerateReport = async () => {
@@ -771,7 +811,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          VIDEO VIEWPORT - D-ID Christian's Report
+          VIDEO VIEWPORT - Replicate Christiano's Report
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="video-viewport-section">
         <div className="viewport-frame">
@@ -817,11 +857,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
                       <div className="generating-ring video-ring delay-2"></div>
                       <div className="generating-text">GENERATING VIDEO</div>
                       <div className="generating-subtext">
-                        {videoGenerationProgress || 'Christian is preparing your video report...'}
+                        {videoGenerationProgress || 'Christiano is preparing your video report...'}
                       </div>
                       <div className="video-status-indicator">
                         <span className="status-dot pulsing"></span>
-                        <span className="status-text">D-ID Processing</span>
+                        <span className="status-text">Replicate Processing</span>
                       </div>
                     </div>
                   ) : judgeReport?.videoStatus === 'error' ? (
@@ -859,9 +899,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
                   ) : (
                     <div className="awaiting-state">
                       <div className="avatar-silhouette">
-                        <span className="silhouette-icon">👤</span>
+                        <span className="silhouette-icon">⚖️</span>
                       </div>
-                      <div className="awaiting-text">CHRISTIAN</div>
+                      <div className="awaiting-text">CHRISTIANO</div>
                       <div className="awaiting-subtext">Judge's Video Report</div>
                       <button
                         className="generate-report-btn"

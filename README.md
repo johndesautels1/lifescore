@@ -6,6 +6,179 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
+## AVATAR SYSTEM - SIMLI + REPLICATE (January 24, 2026)
+
+**Conversation ID:** `LIFESCORE-AVATAR-20260124`
+**Status:** IMPLEMENTATION COMPLETE - TESTING REQUIRED
+
+### Overview
+
+Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
+- **Olivia (Interactive Chat):** Simli AI - Real-time photorealistic streaming avatar
+- **Christiano (Judge Videos):** Replicate MuseTalk - High-quality video generation
+
+**Monthly Cost: ~$50-55 (vs $500+ previously) = 90% savings**
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    OLIVIA (Interactive Chat)                        │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │  User speaks/types → GPT responds → Simli streams video      │  │
+│  │  • Real-time WebRTC streaming (<500ms latency)               │  │
+│  │  • Your Olivia photo → photorealistic avatar                 │  │
+│  │  • User can interrupt mid-speech                             │  │
+│  │  • Cost: $49/mo Pro plan (1000 min shared)                   │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                 CHRISTIANO (Judge Video Reports)                    │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │  Judge verdict → Replicate MuseTalk → MP4 video              │  │
+│  │  • Batch video generation (30-60s processing)                │  │
+│  │  • Your Christiano photo → professional presenter            │  │
+│  │  • Cached results (same comparison = same video)             │  │
+│  │  • Cost: ~$0.02-0.03 per video                               │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Environment Variables Required
+
+```bash
+# Simli AI (Olivia interactive chat)
+SIMLI_API_KEY=simli_xxxxxxxx
+SIMLI_FACE_ID=olivia-face-id        # Created after uploading Olivia image
+
+# Replicate (Christiano judge videos)
+REPLICATE_API_TOKEN=r8_xxxxxxxx
+
+# ElevenLabs (TTS for Christiano - optional, can use free browser TTS)
+ELEVENLABS_API_KEY=xi_xxxxxxxx       # Optional
+ELEVENLABS_VOICE_ID=christiano-voice # Optional
+```
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/avatar/simli-session` | POST | Create Simli streaming session for Olivia |
+| `/api/avatar/simli-speak` | POST | Send text for Olivia to speak |
+| `/api/avatar/generate-judge-video` | POST | Generate Christiano video via Replicate |
+| `/api/avatar/video-status` | GET | Check video generation status |
+
+### Database Schema
+
+```sql
+-- Video cache table (prevents regenerating same videos)
+CREATE TABLE IF NOT EXISTS public.avatar_videos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  comparison_id TEXT NOT NULL,           -- Hash of city pair + verdict
+  video_url TEXT NOT NULL,               -- Replicate output URL
+  script TEXT NOT NULL,                  -- Judge script used
+  duration_seconds INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,                -- For cleanup
+  UNIQUE(comparison_id)
+);
+```
+
+### Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `OliviaAvatar` | `src/components/OliviaAvatar.tsx` | Simli streaming video player |
+| `JudgeVideo` | `src/components/JudgeVideo.tsx` | Replicate video player |
+| `useSimli` | `src/hooks/useSimli.ts` | Simli session management |
+| `useJudgeVideo` | `src/hooks/useJudgeVideo.ts` | Video generation & caching |
+
+### Types
+
+```typescript
+// src/types/avatar.ts
+interface SimliSession {
+  sessionId: string;
+  streamUrl: string;
+  faceId: string;
+  status: 'connecting' | 'connected' | 'speaking' | 'idle' | 'error';
+}
+
+interface JudgeVideo {
+  id: string;
+  comparisonId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  videoUrl?: string;
+  script: string;
+  error?: string;
+}
+```
+
+### Integration Points
+
+| Existing Component | Integration |
+|--------------------|-------------|
+| `AskOlivia.tsx` | Replace D-ID with `OliviaAvatar` component |
+| `JudgeTab.tsx` | Add `JudgeVideo` component for verdict presentations |
+
+### Cost Comparison
+
+| Solution | Olivia (Chat) | Christiano (Videos) | Total/Month |
+|----------|---------------|---------------------|-------------|
+| **D-ID (old)** | N/A | $2,700+ | $2,700+ |
+| **HeyGen (old)** | N/A | $500+ | $500+ |
+| **Simli + Replicate (new)** | $49 | $2-5 | **$51-54** |
+
+### Setup Steps
+
+1. **Simli Setup:**
+   - Sign up at https://simli.com
+   - Upload Olivia image to create face
+   - Copy API key and face ID to Vercel env vars
+
+2. **Replicate Setup:**
+   - Sign up at https://replicate.com
+   - Get API token from account settings
+   - Add to Vercel env vars
+
+3. **Run Database Migration:**
+   ```bash
+   # Run migration for video caching
+   supabase db push
+   ```
+
+4. **Test:**
+   - Olivia: Open Ask Olivia tab, should see streaming avatar
+   - Christiano: Generate judge report, video should appear
+
+### Files Created This Session
+
+```
+api/avatar/simli-session.ts      # Simli session creation
+api/avatar/simli-speak.ts        # Text-to-speech streaming
+api/avatar/generate-judge-video.ts # Replicate video generation
+api/avatar/video-status.ts       # Check generation status
+src/components/OliviaAvatar.tsx  # Olivia streaming component
+src/components/OliviaAvatar.css  # Styling
+src/components/JudgeVideo.tsx    # Christiano video component
+src/components/JudgeVideo.css    # Styling
+src/hooks/useSimli.ts            # Simli hook
+src/hooks/useJudgeVideo.ts       # Video generation hook
+src/types/avatar.ts              # Type definitions
+supabase/migrations/003_avatar_videos.sql # Video cache table
+```
+
+### Files Modified This Session
+
+```
+src/components/AskOlivia.tsx     # Integrated OliviaAvatar
+src/components/JudgeTab.tsx      # Integrated JudgeVideo
+README.md                        # This documentation
+```
+
+---
+
 ## PREMIUM PRICING SYSTEM (January 24, 2026)
 
 **Conversation ID:** `LIFESCORE-PRICING-20260123`
