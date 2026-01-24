@@ -159,6 +159,11 @@
   background: rgba(16, 185, 129, 0.1);
 }
 
+.indicator-value.fallback {
+  color: var(--amber-active);
+  background: rgba(245, 158, 11, 0.1);
+}
+
 /* Center - Olivia Wordmark */
 .cockpit-center {
   text-align: center;
@@ -1107,6 +1112,11 @@
 .connection-status .status-dot.connecting {
   background: var(--amber-active);
   animation: pulse-glow 1s ease-in-out infinite;
+}
+
+.connection-status .status-dot.fallback {
+  background: var(--amber-active);
+  box-shadow: 0 0 6px var(--amber-active);
 }
 
 .connection-status .status-text {

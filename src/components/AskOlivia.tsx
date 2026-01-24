@@ -24,7 +24,7 @@ import { DEFAULT_QUICK_ACTIONS } from '../types/olivia';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
-import { useSimli } from '../hooks/useSimli';
+import { useAvatarProvider } from '../hooks/useAvatarProvider';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { UsageMeter } from './FeatureGate';
 import './AskOlivia.css';
@@ -59,19 +59,28 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   } = useOliviaChat(comparisonResult);
 
   // ═══════════════════════════════════════════════════════════════════
-  // SIMLI AI - Avatar Only (NO brain, just video/lip-sync)
-  // Replaced D-ID for 90% cost savings
+  // AVATAR PROVIDER - Simli AI with D-ID fallback
+  // Primary: Simli AI (cost-effective)
+  // Fallback: D-ID Streams (premium backup)
   // ═══════════════════════════════════════════════════════════════════
   const {
-    status: simliStatus,
+    status: avatarStatus,
     isConnected: isAvatarConnected,
     isSpeaking: isAvatarSpeaking,
     connect: connectAvatar,
     speak: makeAvatarSpeak,
     disconnect: disconnectAvatar,
     interrupt: interruptAvatar,
-    error: simliError,
-  } = useSimli();
+    error: avatarError,
+    activeProvider,
+    hasFallenBack,
+  } = useAvatarProvider({
+    videoRef,
+    autoFallback: true,
+    onProviderSwitch: (from, to, reason) => {
+      console.log(`[AskOlivia] Avatar provider switched: ${from} → ${to} (${reason})`);
+    },
+  });
 
   // ═══════════════════════════════════════════════════════════════════
   // VOICE RECOGNITION - Speech to text input
@@ -108,13 +117,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-connect to Simli AI on mount
+  // Auto-connect to avatar provider on mount
   // IMPORTANT: Empty dependency array - connect ONCE on mount only!
   useEffect(() => {
-    console.log('[AskOlivia] Initializing Simli AI connection (avatar only, OpenAI is brain)');
+    console.log('[AskOlivia] Initializing avatar connection (Simli primary, D-ID fallback)');
     connectAvatar();
 
-    // Cleanup Simli session on page refresh/close
+    // Cleanup avatar session on page refresh/close
     const handleBeforeUnload = () => {
       disconnectAvatar();
     };
@@ -133,8 +142,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   }, [messages]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // AUTO-SPEAK: When OpenAI responds, make Simli avatar speak it
-  // This is the KEY Option B connection: OpenAI brain → Simli mouth
+  // AUTO-SPEAK: When OpenAI responds, make avatar speak it
+  // This is the KEY connection: OpenAI brain → Avatar mouth (Simli or D-ID)
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (autoSpeak && messages.length > 0) {
@@ -144,22 +153,22 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
 
-        console.log('[AskOlivia] OpenAI responded, sending to Simli avatar to speak');
+        console.log(`[AskOlivia] OpenAI responded, sending to ${activeProvider.toUpperCase()} avatar to speak`);
 
-        // Try Simli avatar first
+        // Try avatar provider (Simli with D-ID fallback)
         if (isAvatarConnected) {
           makeAvatarSpeak(lastMessage.content).catch((err: Error) => {
-            console.warn('[AskOlivia] Simli speak failed, falling back to browser TTS:', err);
+            console.warn('[AskOlivia] Avatar speak failed, falling back to browser TTS:', err);
             speakText(lastMessage.content);
           });
         } else {
           // Fallback to browser TTS
-          console.log('[AskOlivia] Simli not connected, using browser TTS');
+          console.log('[AskOlivia] Avatar not connected, using browser TTS');
           speakText(lastMessage.content);
         }
       }
     }
-  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText]);
+  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider]);
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
@@ -222,10 +231,18 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   const getAvatarStatus = () => {
     if (isAvatarSpeaking) return 'SPEAKING';
     if (isAvatarConnected) return 'READY';
-    if (simliStatus === 'connecting') return 'CONNECTING';
-    if (simliStatus === 'error') return 'ERROR';
-    if (simliStatus === 'listening') return 'LISTENING';
+    if (avatarStatus === 'connecting') return 'CONNECTING';
+    if (avatarStatus === 'falling_back') return 'SWITCHING...';
+    if (avatarStatus === 'error') return 'ERROR';
+    if (avatarStatus === 'listening') return 'LISTENING';
+    if (avatarStatus === 'rate_limited') return 'RATE LIMITED';
     return 'INIT...';
+  };
+
+  // Get provider display name
+  const getProviderDisplay = () => {
+    const provider = activeProvider.toUpperCase();
+    return hasFallenBack ? `${provider} (FALLBACK)` : provider;
   };
 
   // Handler for manual reconnection attempt
@@ -233,8 +250,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     connectAvatar();
   };
 
-  const isAvatarReady = isAvatarConnected || simliStatus === 'connected';
-  const hasConnectionError = simliStatus === 'error';
+  const isAvatarReady = isAvatarConnected || avatarStatus === 'connected';
+  const hasConnectionError = avatarStatus === 'error' || avatarStatus === 'rate_limited';
 
   // Cockpit-style time formatting
   const formatTime = (date: Date) => {
@@ -268,8 +285,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
             </div>
             <div className="status-indicator">
               <span className="indicator-icon">◈</span>
-              <span className="indicator-label">SIMLI AVATAR</span>
-              <span className={`indicator-value ${isAvatarReady ? 'active' : ''}`}>
+              <span className="indicator-label">{getProviderDisplay()} AVATAR</span>
+              <span className={`indicator-value ${isAvatarReady ? 'active' : ''} ${hasFallenBack ? 'fallback' : ''}`}>
                 {getAvatarStatus()}
               </span>
             </div>
@@ -347,8 +364,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
                   </div>
                   <div className="loading-subtext">
                     {hasConnectionError
-                      ? simliError || 'Connection failed - using text mode'
-                      : 'Connecting to Simli AI...'}
+                      ? avatarError || 'Connection failed - using text mode'
+                      : `Connecting to ${activeProvider.toUpperCase()} AI...`}
                   </div>
                   {hasConnectionError && (
                     <button
@@ -634,9 +651,11 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
         </div>
         <div className="footer-center">
           <div className="connection-status">
-            <span className={`status-dot ${isAvatarReady ? 'online' : 'connecting'}`}></span>
+            <span className={`status-dot ${isAvatarReady ? 'online' : 'connecting'} ${hasFallenBack ? 'fallback' : ''}`}></span>
             <span className="status-text">
-              {isAvatarReady ? 'OPENAI + SIMLI CONNECTED' : 'ESTABLISHING LINK'}
+              {isAvatarReady
+                ? `OPENAI + ${activeProvider.toUpperCase()} CONNECTED${hasFallenBack ? ' (FALLBACK)' : ''}`
+                : 'ESTABLISHING LINK'}
             </span>
           </div>
         </div>
