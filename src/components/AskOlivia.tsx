@@ -27,6 +27,10 @@ import { useTTS } from '../hooks/useTTS';
 import { useAvatarProvider } from '../hooks/useAvatarProvider';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { UsageMeter } from './FeatureGate';
+import {
+  getLocalComparisons,
+  getLocalEnhancedComparisons,
+} from '../services/savedComparisons';
 import './AskOlivia.css';
 
 interface AskOliviaProps {
@@ -47,8 +51,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
   // Tier access for message limits
   const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
 
+  // Load saved comparisons for Olivia's context
+  // This gives Olivia knowledge of ALL user's previous comparisons
+  const savedComparisons = getLocalComparisons();
+  const savedEnhanced = getLocalEnhancedComparisons();
+
   // ═══════════════════════════════════════════════════════════════════
   // OPENAI CHAT - The Brain (ALL intelligence comes from here)
+  // Now includes saved comparison history for full context
   // ═══════════════════════════════════════════════════════════════════
   const {
     messages,
@@ -56,7 +66,11 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult }) => {
     error: chatError,
     sendMessage,
     clearHistory,
-  } = useOliviaChat(comparisonResult);
+  } = useOliviaChat({
+    comparisonResult,
+    savedComparisons,
+    savedEnhanced,
+  });
 
   // ═══════════════════════════════════════════════════════════════════
   // AVATAR PROVIDER - Simli AI with D-ID fallback

@@ -12,6 +12,7 @@ import type {
 } from '../types/olivia';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
+import type { SavedComparison, SavedEnhancedComparison } from '../services/savedComparisons';
 import {
   sendMessage,
   buildContext,
@@ -20,12 +21,78 @@ import {
 } from '../services/oliviaService';
 
 // ============================================================================
+// SAVED COMPARISONS SUMMARY BUILDER
+// ============================================================================
+
+/**
+ * Build a summary of saved comparisons for Olivia's context
+ */
+function buildSavedComparisonsSummary(
+  savedComparisons: SavedComparison[],
+  savedEnhanced: SavedEnhancedComparison[]
+): string {
+  if (savedComparisons.length === 0 && savedEnhanced.length === 0) {
+    return '';
+  }
+
+  const lines: string[] = [
+    '\n\n--- USER\'S SAVED COMPARISON HISTORY ---',
+    `The user has ${savedComparisons.length + savedEnhanced.length} saved comparisons:\n`,
+  ];
+
+  // Add standard comparisons
+  savedComparisons.forEach((saved, index) => {
+    const r = saved.result;
+    const city1Score = r.city1.totalScore || r.city1.normalizedScore || 0;
+    const city2Score = r.city2.totalScore || r.city2.normalizedScore || 0;
+    const winnerCity = city1Score > city2Score ? r.city1.city : r.city2.city;
+    const winnerScore = Math.max(city1Score, city2Score);
+    const loserScore = Math.min(city1Score, city2Score);
+    lines.push(
+      `${index + 1}. ${r.city1.city} vs ${r.city2.city}` +
+      `${saved.nickname ? ` ("${saved.nickname}")` : ''}` +
+      ` - Winner: ${winnerCity} (${winnerScore.toFixed(1)} vs ${loserScore.toFixed(1)})` +
+      ` - Saved: ${new Date(saved.savedAt).toLocaleDateString()}`
+    );
+  });
+
+  // Add enhanced comparisons
+  savedEnhanced.forEach((saved, index) => {
+    const r = saved.result;
+    const winnerCity = r.winner === 'city1' ? r.city1.city : r.city2.city;
+    const score1 = r.city1.totalConsensusScore || 0;
+    const score2 = r.city2.totalConsensusScore || 0;
+    lines.push(
+      `${savedComparisons.length + index + 1}. [ENHANCED] ${r.city1.city} vs ${r.city2.city}` +
+      `${saved.nickname ? ` ("${saved.nickname}")` : ''}` +
+      ` - Winner: ${winnerCity} (${score1.toFixed(1)} vs ${score2.toFixed(1)})` +
+      ` - Saved: ${new Date(saved.savedAt).toLocaleDateString()}`
+    );
+  });
+
+  lines.push(
+    '\nYou can reference any of these comparisons when the user asks about their history.',
+    '--- END SAVED HISTORY ---\n'
+  );
+
+  return lines.join('\n');
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
+export interface UseOliviaChatOptions {
+  comparisonResult?: EnhancedComparisonResult | ComparisonResult | null;
+  savedComparisons?: SavedComparison[];
+  savedEnhanced?: SavedEnhancedComparison[];
+}
+
 export function useOliviaChat(
-  comparisonResult?: EnhancedComparisonResult | ComparisonResult | null
+  options: UseOliviaChatOptions = {}
 ): UseOliviaChatReturn {
+  const { comparisonResult, savedComparisons = [], savedEnhanced = [] } = options;
+
   // State
   const [messages, setMessages] = useState<OliviaChatMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -38,7 +105,7 @@ export function useOliviaChat(
   const contextBuiltRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Build context when comparison result changes (now includes all 100 metrics)
+  // Build context when comparison result changes (now includes all 100 metrics + saved history)
   useEffect(() => {
     if (comparisonResult && !contextBuiltRef.current) {
       contextBuiltRef.current = true;
@@ -46,8 +113,14 @@ export function useOliviaChat(
       buildContext(comparisonResult)
         .then(({ context: builtContext, textSummary: builtSummary }) => {
           setContextState(builtContext);
-          setTextSummary(builtSummary || null);
+
+          // Append saved comparisons summary to the text summary
+          const savedSummary = buildSavedComparisonsSummary(savedComparisons, savedEnhanced);
+          const fullSummary = (builtSummary || '') + savedSummary;
+          setTextSummary(fullSummary);
+
           console.log('[useOliviaChat] Context built with', builtContext?.topMetrics?.length || 0, 'metrics');
+          console.log('[useOliviaChat] Included', savedComparisons.length + savedEnhanced.length, 'saved comparisons in context');
         })
         .catch((err) => {
           console.error('[useOliviaChat] Failed to build context:', err);
@@ -58,7 +131,7 @@ export function useOliviaChat(
           });
         });
     }
-  }, [comparisonResult]);
+  }, [comparisonResult, savedComparisons, savedEnhanced]);
 
   // Reset context flag when comparison changes
   useEffect(() => {

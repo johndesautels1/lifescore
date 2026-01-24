@@ -13,6 +13,10 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useTTS } from '../hooks/useTTS';
+import {
+  getLocalComparisons,
+  getLocalEnhancedComparisons,
+} from '../services/savedComparisons';
 import './OliviaChatBubble.css';
 
 interface OliviaChatBubbleProps {
@@ -27,13 +31,21 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Load saved comparisons for Olivia's context
+  const savedComparisons = getLocalComparisons();
+  const savedEnhanced = getLocalEnhancedComparisons();
+
   const {
     messages,
     isTyping,
     error: chatError,
     sendMessage,
     clearHistory: _clearHistory, // Available for future "New Chat" button
-  } = useOliviaChat(comparisonResult);
+  } = useOliviaChat({
+    comparisonResult,
+    savedComparisons,
+    savedEnhanced,
+  });
   void _clearHistory; // Suppress unused warning
 
   // TTS for message playback
