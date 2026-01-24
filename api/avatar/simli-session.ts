@@ -1,8 +1,10 @@
 /**
  * LIFE SCORE - Simli Session API
  *
- * Creates a Simli streaming session for Olivia avatar.
- * Returns session ID and WebRTC stream URL.
+ * Returns Simli credentials for WebRTC session establishment.
+ * The actual WebRTC connection is handled client-side using useSimli hook.
+ *
+ * Reference: https://docs.simli.com/api-reference/simli-webrtc
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -10,9 +12,6 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-
-// Simli API configuration
-const SIMLI_API_URL = 'https://api.simli.ai/v1';
 
 export const config = {
   maxDuration: 30,
@@ -37,60 +36,32 @@ export default async function handler(
     res.status(500).json({
       error: 'Simli not configured',
       message: 'SIMLI_API_KEY and SIMLI_FACE_ID environment variables required',
+      configured: {
+        apiKey: !!apiKey,
+        faceId: !!faceId,
+      },
     });
     return;
   }
 
   try {
-    console.log('[SIMLI] Creating session with faceId:', faceId);
+    console.log('[SIMLI-SESSION] Providing credentials for faceId:', faceId);
 
-    // Create Simli session
-    const response = await fetch(`${SIMLI_API_URL}/sessions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        face_id: faceId,
-        // Optional: voice settings
-        voice: {
-          provider: 'elevenlabs', // or 'azure', 'google'
-          voice_id: process.env.SIMLI_VOICE_ID || 'default',
-        },
-        // Session settings
-        settings: {
-          language: 'en',
-          interruption_enabled: true,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[SIMLI] Session creation failed:', response.status, errorText);
-      res.status(response.status).json({
-        error: 'Failed to create Simli session',
-        message: errorText,
-      });
-      return;
-    }
-
-    const data = await response.json();
-    console.log('[SIMLI] Session created:', data.session_id);
-
+    // Return credentials for client-side WebRTC connection
+    // The actual session is established via WebSocket in useSimli hook
     res.status(200).json({
       success: true,
       session: {
-        sessionId: data.session_id,
+        sessionId: `simli_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         faceId: faceId,
-        streamUrl: data.stream_url,
-        status: 'connected',
+        apiKey: apiKey, // Sent securely to client for WebRTC auth
+        wsUrl: 'wss://api.simli.ai/startWebRTCSession',
+        status: 'ready',
         createdAt: new Date().toISOString(),
       },
     });
   } catch (error) {
-    console.error('[SIMLI] Session error:', error);
+    console.error('[SIMLI-SESSION] Error:', error);
     res.status(500).json({
       error: 'Failed to create session',
       message: error instanceof Error ? error.message : 'Unknown error',

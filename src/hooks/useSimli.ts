@@ -2,7 +2,9 @@
  * LIFE SCORE - useSimli Hook
  *
  * React hook for managing Simli AI sessions for Olivia avatar.
- * Handles connection, speaking, and real-time streaming.
+ * Implements proper WebRTC connection via Simli's WebSocket API.
+ *
+ * Reference: https://docs.simli.com/api-reference/simli-webrtc
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -10,7 +12,10 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-// Inline types since avatar.ts does not exist
+// ============================================================================
+// TYPES
+// ============================================================================
+
 export interface SimliSession {
   sessionId: string;
   streamUrl?: string;
@@ -46,23 +51,105 @@ export interface UseSimliReturn {
   error: string | null;
 }
 
-const API_BASE = '/api/avatar';
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const SIMLI_WS_URL = 'wss://api.simli.ai/startWebRTCSession';
+const ICE_SERVERS = [{ urls: ['stun:stun.l.google.com:19302'] }];
+
+// ============================================================================
+// HOOK
+// ============================================================================
 
 export function useSimli(): UseSimliReturn {
   const [session, setSession] = useState<SimliSession | null>(null);
   const [status, setStatus] = useState<SimliSessionStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // Refs for WebRTC and WebSocket
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const webSocketRef = useRef<WebSocket | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const isConnected = status === 'connected' || status === 'speaking' || status === 'listening';
   const isSpeaking = status === 'speaking';
 
-  // Connect to Simli and establish WebRTC stream
+  /**
+   * Create and configure RTCPeerConnection
+   */
+  const createPeerConnection = useCallback((): RTCPeerConnection => {
+    const config: RTCConfiguration = {
+      iceServers: ICE_SERVERS,
+    };
+
+    const pc = new RTCPeerConnection(config);
+
+    // Handle incoming tracks (video/audio stream from Simli)
+    pc.ontrack = (event) => {
+      console.log('[useSimli] Received track:', event.track.kind);
+
+      if (event.streams && event.streams[0]) {
+        // Find video element in DOM if not set via ref
+        const videoEl = videoElementRef.current || document.querySelector('.avatar-video') as HTMLVideoElement;
+
+        if (videoEl) {
+          videoEl.srcObject = event.streams[0];
+          videoEl.play().catch(err => {
+            console.warn('[useSimli] Video autoplay failed:', err);
+          });
+          console.log('[useSimli] Video stream attached to element');
+        } else {
+          console.error('[useSimli] No video element found to attach stream');
+        }
+      }
+    };
+
+    // Monitor connection state
+    pc.onconnectionstatechange = () => {
+      console.log('[useSimli] Connection state:', pc.connectionState);
+
+      switch (pc.connectionState) {
+        case 'connected':
+          setStatus('connected');
+          break;
+        case 'disconnected':
+        case 'failed':
+          setStatus('error');
+          setError('WebRTC connection failed');
+          break;
+        case 'closed':
+          setStatus('disconnected');
+          break;
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('[useSimli] ICE state:', pc.iceConnectionState);
+      if (pc.iceConnectionState === 'failed') {
+        setError('ICE connection failed');
+        setStatus('error');
+      }
+    };
+
+    // Handle ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('[useSimli] ICE candidate:', event.candidate.candidate.substring(0, 50));
+      }
+    };
+
+    return pc;
+  }, []);
+
+  /**
+   * Connect to Simli via WebRTC
+   */
   const connect = useCallback(async () => {
-    if (session) {
-      console.log('[useSimli] Already connected');
+    if (peerConnectionRef.current) {
+      console.log('[useSimli] Already connected or connecting');
       return;
     }
 
@@ -70,105 +157,182 @@ export function useSimli(): UseSimliReturn {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/simli-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
+      // Create peer connection
+      const pc = createPeerConnection();
+      peerConnectionRef.current = pc;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create session');
-      }
+      // Add transceiver for receiving video
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
 
-      const data = await response.json();
+      // Create data channel for sending audio
+      const dc = pc.createDataChannel('audio', { ordered: true });
+      dataChannelRef.current = dc;
 
-      if (!data.success || !data.session) {
-        throw new Error(data.error || 'Invalid session response');
-      }
+      dc.onopen = () => {
+        console.log('[useSimli] Data channel opened');
 
-      setSession(data.session);
-      setStatus('connected');
+        // Send initial silence to start the avatar
+        const silence = new Uint8Array(16000); // 0.5 second silence at 16kHz
+        dc.send(silence);
+      };
 
-      // If stream URL is provided, set up WebRTC
-      if (data.session.streamUrl) {
-        await setupWebRTC(data.session.streamUrl);
-      }
+      dc.onclose = () => {
+        console.log('[useSimli] Data channel closed');
+      };
 
-      console.log('[useSimli] Connected:', data.session.sessionId);
+      dc.onerror = (err) => {
+        console.error('[useSimli] Data channel error:', err);
+      };
+
+      // Create offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      console.log('[useSimli] Connecting to WebSocket:', SIMLI_WS_URL);
+
+      // Connect to Simli WebSocket
+      const ws = new WebSocket(SIMLI_WS_URL);
+      webSocketRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('[useSimli] WebSocket connected, sending offer');
+
+        // Get credentials
+        const apiKey = import.meta.env.VITE_SIMLI_API_KEY;
+        const faceId = import.meta.env.VITE_SIMLI_FACE_ID;
+
+        // Send SDP offer with credentials
+        ws.send(JSON.stringify({
+          sdp: offer.sdp,
+          type: offer.type,
+          apiKey,
+          faceId,
+        }));
+      };
+
+      ws.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('[useSimli] WebSocket message:', data.type || 'unknown');
+
+          if (data.type === 'answer' && data.sdp) {
+            // Set remote description from Simli's answer
+            const answer = new RTCSessionDescription({
+              type: 'answer',
+              sdp: data.sdp,
+            });
+            await pc.setRemoteDescription(answer);
+            console.log('[useSimli] Remote description set');
+
+            // Create session object
+            const sessionId = `simli_${Date.now()}`;
+            setSession({
+              sessionId,
+              createdAt: new Date(),
+            });
+
+            setStatus('connected');
+          } else if (data.type === 'error') {
+            throw new Error(data.message || 'Simli connection error');
+          }
+        } catch (err) {
+          console.error('[useSimli] Message handling error:', err);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[useSimli] WebSocket error:', err);
+        setError('WebSocket connection failed');
+        setStatus('error');
+      };
+
+      ws.onclose = (event) => {
+        console.log('[useSimli] WebSocket closed:', event.code, event.reason);
+        if (status === 'connecting') {
+          setError('Connection closed unexpectedly');
+          setStatus('error');
+        }
+      };
+
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Connection failed';
       console.error('[useSimli] Connect error:', message);
       setError(message);
       setStatus('error');
+
+      // Cleanup on error
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
     }
-  }, [session]);
+  }, [createPeerConnection, status]);
 
-  // Set up WebRTC connection for video streaming
-  const setupWebRTC = async (streamUrl: string) => {
-    try {
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      });
-
-      peerConnectionRef.current = pc;
-
-      pc.ontrack = (event) => {
-        if (videoRef.current && event.streams[0]) {
-          videoRef.current.srcObject = event.streams[0];
-        }
-      };
-
-      pc.oniceconnectionstatechange = () => {
-        console.log('[useSimli] ICE state:', pc.iceConnectionState);
-        if (pc.iceConnectionState === 'failed') {
-          setError('Connection failed');
-          setStatus('error');
-        }
-      };
-
-      // Simli provides the stream URL - connect to it
-      // This is a simplified version - real implementation depends on Simli's API
-      console.log('[useSimli] WebRTC setup for:', streamUrl);
-    } catch (err) {
-      console.error('[useSimli] WebRTC error:', err);
-    }
-  };
-
-  // Disconnect from Simli
+  /**
+   * Disconnect from Simli
+   */
   const disconnect = useCallback(() => {
+    console.log('[useSimli] Disconnecting...');
+
+    // Close data channel
+    if (dataChannelRef.current) {
+      dataChannelRef.current.close();
+      dataChannelRef.current = null;
+    }
+
+    // Close WebSocket
+    if (webSocketRef.current) {
+      webSocketRef.current.close();
+      webSocketRef.current = null;
+    }
+
+    // Close peer connection
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
 
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
+    // Clear video
+    if (videoElementRef.current) {
+      videoElementRef.current.srcObject = null;
+    }
+
+    // Close audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
     }
 
     setSession(null);
     setStatus('disconnected');
+    setError(null);
+
     console.log('[useSimli] Disconnected');
   }, []);
 
-  // Make Olivia speak
+  /**
+   * Convert text to audio and send to Simli for lip-sync
+   * Uses server-side TTS to generate audio
+   */
   const speak = useCallback(async (
     text: string,
     options?: Partial<SimliSpeakRequest>
   ) => {
-    if (!session) {
-      console.error('[useSimli] No session to speak');
-      return;
+    if (!isConnected) {
+      console.error('[useSimli] Cannot speak - not connected');
+      throw new Error('Not connected to Simli');
     }
 
     setStatus('speaking');
 
     try {
-      const response = await fetch(`${API_BASE}/simli-speak`, {
+      // Call server-side API to generate TTS audio and send to Simli
+      const response = await fetch('/api/avatar/simli-speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: session.sessionId,
+          sessionId: session?.sessionId,
           text,
           emotion: options?.emotion || 'neutral',
           speed: options?.speed || 1.0,
@@ -176,55 +340,70 @@ export function useSimli(): UseSimliReturn {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to speak');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Speak failed: ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Wait for speech duration before setting back to connected
-      if (data.duration) {
-        setTimeout(() => {
-          setStatus('connected');
-        }, data.duration * 1000);
-      } else {
-        // Fallback: estimate duration from text length
-        const estimatedDuration = Math.max(2, text.length / 15); // ~15 chars per second
-        setTimeout(() => {
-          setStatus('connected');
-        }, estimatedDuration * 1000);
+      // If we got audio data, send it through the data channel
+      if (data.audioData && dataChannelRef.current?.readyState === 'open') {
+        // Convert base64 audio to Uint8Array
+        const binaryString = atob(data.audioData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Send in chunks of 6000 bytes (Simli recommended)
+        const chunkSize = 6000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.slice(i, i + chunkSize);
+          dataChannelRef.current.send(chunk);
+        }
       }
 
-      console.log('[useSimli] Speaking:', text.substring(0, 30) + '...');
+      // Estimate duration and set timeout to return to connected state
+      const estimatedDuration = data.duration || Math.max(2, text.length / 15);
+      setTimeout(() => {
+        if (status === 'speaking') {
+          setStatus('connected');
+        }
+      }, estimatedDuration * 1000);
+
+      console.log('[useSimli] Speaking:', text.substring(0, 50) + '...');
+
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Speak failed';
       console.error('[useSimli] Speak error:', message);
       setError(message);
-      setStatus('connected'); // Return to connected state
+      setStatus('connected');
+      throw err;
     }
-  }, [session]);
+  }, [isConnected, session, status]);
 
-  // Interrupt current speech
+  /**
+   * Interrupt current speech
+   */
   const interrupt = useCallback(() => {
-    if (!session || status !== 'speaking') {
+    if (!isSpeaking) {
       return;
     }
 
-    // Send interrupt signal to Simli
-    fetch(`${API_BASE}/simli-speak`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: session.sessionId,
-        interrupt: true,
-      }),
-    }).catch(console.error);
+    console.log('[useSimli] Interrupting speech');
+
+    // Send empty audio to clear buffer
+    if (dataChannelRef.current?.readyState === 'open') {
+      const silence = new Uint8Array(1000);
+      dataChannelRef.current.send(silence);
+    }
 
     setStatus('connected');
-    console.log('[useSimli] Interrupted');
-  }, [session, status]);
+  }, [isSpeaking]);
 
-  // Cleanup on unmount
+  /**
+   * Cleanup on unmount
+   */
   useEffect(() => {
     return () => {
       disconnect();

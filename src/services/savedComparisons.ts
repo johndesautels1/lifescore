@@ -9,6 +9,13 @@
 import type { ComparisonResult } from '../types/metrics';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
+import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
+import {
+  saveComparison as dbSaveComparison,
+  getUserComparisons as dbGetUserComparisons,
+  deleteComparison as dbDeleteComparison,
+  updateComparison as dbUpdateComparison,
+} from './databaseService';
 
 // ============================================================================
 // TYPES
@@ -127,9 +134,9 @@ export function clearGitHubConfig(): void {
 // ============================================================================
 
 /**
- * Save a comparison locally
+ * Save a comparison locally AND to Supabase database if user is authenticated
  */
-export function saveComparisonLocal(result: ComparisonResult, nickname?: string): SavedComparison {
+export async function saveComparisonLocal(result: ComparisonResult, nickname?: string): Promise<SavedComparison> {
   const comparisons = getLocalComparisons();
 
   const existingIndex = comparisons.findIndex(c => c.id === result.comparisonId);
@@ -152,13 +159,85 @@ export function saveComparisonLocal(result: ComparisonResult, nickname?: string)
   }
 
   saveLocalComparisons(comparisons);
+
+  // Also save to Supabase database if user is authenticated
+  if (isSupabaseConfigured()) {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        const { error } = await dbSaveComparison(user.id, result as unknown as Record<string, unknown>, nickname);
+        if (error) {
+          console.error('[savedComparisons] Database save failed:', error);
+        } else {
+          // Mark as synced
+          saved.synced = true;
+          const updatedComparisons = getLocalComparisons();
+          const idx = updatedComparisons.findIndex(c => c.id === result.comparisonId);
+          if (idx >= 0) {
+            updatedComparisons[idx].synced = true;
+            saveLocalComparisons(updatedComparisons);
+          }
+          console.log('[savedComparisons] Saved to database:', result.comparisonId);
+        }
+      }
+    } catch (err) {
+      console.error('[savedComparisons] Database sync error:', err);
+    }
+  }
+
   return saved;
 }
 
 /**
- * Delete a comparison locally
+ * Save a comparison locally (sync version for backwards compatibility)
  */
-export function deleteComparisonLocal(id: string): boolean {
+export function saveComparisonLocalSync(result: ComparisonResult, nickname?: string): SavedComparison {
+  const comparisons = getLocalComparisons();
+
+  const existingIndex = comparisons.findIndex(c => c.id === result.comparisonId);
+
+  const saved: SavedComparison = {
+    id: result.comparisonId,
+    result,
+    savedAt: new Date().toISOString(),
+    nickname,
+    synced: false
+  };
+
+  if (existingIndex >= 0) {
+    comparisons[existingIndex] = saved;
+  } else {
+    comparisons.unshift(saved);
+    if (comparisons.length > MAX_SAVED) {
+      comparisons.pop();
+    }
+  }
+
+  saveLocalComparisons(comparisons);
+
+  // Fire and forget database save
+  if (isSupabaseConfigured()) {
+    getCurrentUser().then(user => {
+      if (user) {
+        dbSaveComparison(user.id, result as unknown as Record<string, unknown>, nickname)
+          .then(({ error }) => {
+            if (error) {
+              console.error('[savedComparisons] Database save failed:', error);
+            } else {
+              console.log('[savedComparisons] Saved to database:', result.comparisonId);
+            }
+          });
+      }
+    }).catch(console.error);
+  }
+
+  return saved;
+}
+
+/**
+ * Delete a comparison locally AND from Supabase database if user is authenticated
+ */
+export async function deleteComparisonLocal(id: string): Promise<boolean> {
   const comparisons = getLocalComparisons();
   const filtered = comparisons.filter(c => c.id !== id);
 
@@ -167,13 +246,37 @@ export function deleteComparisonLocal(id: string): boolean {
   }
 
   saveLocalComparisons(filtered);
+
+  // Also delete from Supabase database if user is authenticated
+  if (isSupabaseConfigured()) {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        // Find the database record by comparison_id
+        const { data } = await supabase
+          .from('comparisons')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('comparison_id', id)
+          .single();
+
+        if (data) {
+          await dbDeleteComparison(data.id);
+          console.log('[savedComparisons] Deleted from database:', id);
+        }
+      }
+    } catch (err) {
+      console.error('[savedComparisons] Database delete error:', err);
+    }
+  }
+
   return true;
 }
 
 /**
- * Update nickname locally
+ * Update nickname locally AND in Supabase database if user is authenticated
  */
-export function updateNicknameLocal(id: string, nickname: string): boolean {
+export async function updateNicknameLocal(id: string, nickname: string): Promise<boolean> {
   const comparisons = getLocalComparisons();
   const comparison = comparisons.find(c => c.id === id);
 
@@ -182,6 +285,32 @@ export function updateNicknameLocal(id: string, nickname: string): boolean {
   comparison.nickname = nickname;
   comparison.synced = false;
   saveLocalComparisons(comparisons);
+
+  // Also update in Supabase database if user is authenticated
+  if (isSupabaseConfigured()) {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        // Find the database record by comparison_id
+        const { data } = await supabase
+          .from('comparisons')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('comparison_id', id)
+          .single();
+
+        if (data) {
+          await dbUpdateComparison(data.id, { nickname });
+          comparison.synced = true;
+          saveLocalComparisons(comparisons);
+          console.log('[savedComparisons] Updated nickname in database:', id);
+        }
+      }
+    } catch (err) {
+      console.error('[savedComparisons] Database nickname update error:', err);
+    }
+  }
+
   return true;
 }
 
@@ -225,9 +354,9 @@ function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): v
 }
 
 /**
- * Save an enhanced comparison locally
+ * Save an enhanced comparison locally AND to Supabase database if user is authenticated
  */
-export function saveEnhancedComparisonLocal(result: EnhancedComparisonResult, nickname?: string): SavedEnhancedComparison {
+export async function saveEnhancedComparisonLocal(result: EnhancedComparisonResult, nickname?: string): Promise<SavedEnhancedComparison> {
   const comparisons = getLocalEnhancedComparisons();
 
   const existingIndex = comparisons.findIndex(c => c.id === result.comparisonId);
@@ -249,6 +378,69 @@ export function saveEnhancedComparisonLocal(result: EnhancedComparisonResult, ni
   }
 
   saveLocalEnhancedComparisons(comparisons);
+
+  // Also save to Supabase database if user is authenticated
+  if (isSupabaseConfigured()) {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        const { error } = await dbSaveComparison(user.id, result as unknown as Record<string, unknown>, nickname);
+        if (error) {
+          console.error('[savedComparisons] Database save enhanced failed:', error);
+        } else {
+          console.log('[savedComparisons] Enhanced comparison saved to database:', result.comparisonId);
+        }
+      }
+    } catch (err) {
+      console.error('[savedComparisons] Database sync error for enhanced:', err);
+    }
+  }
+
+  return saved;
+}
+
+/**
+ * Save an enhanced comparison locally (sync version for backwards compatibility)
+ */
+export function saveEnhancedComparisonLocalSync(result: EnhancedComparisonResult, nickname?: string): SavedEnhancedComparison {
+  const comparisons = getLocalEnhancedComparisons();
+
+  const existingIndex = comparisons.findIndex(c => c.id === result.comparisonId);
+
+  const saved: SavedEnhancedComparison = {
+    id: result.comparisonId,
+    result,
+    savedAt: new Date().toISOString(),
+    nickname
+  };
+
+  if (existingIndex >= 0) {
+    comparisons[existingIndex] = saved;
+  } else {
+    comparisons.unshift(saved);
+    if (comparisons.length > MAX_SAVED) {
+      comparisons.pop();
+    }
+  }
+
+  saveLocalEnhancedComparisons(comparisons);
+
+  // Fire and forget database save
+  if (isSupabaseConfigured()) {
+    getCurrentUser().then(user => {
+      if (user) {
+        dbSaveComparison(user.id, result as unknown as Record<string, unknown>, nickname)
+          .then(({ error }) => {
+            if (error) {
+              console.error('[savedComparisons] Database save enhanced failed:', error);
+            } else {
+              console.log('[savedComparisons] Enhanced comparison saved to database:', result.comparisonId);
+            }
+          });
+      }
+    }).catch(console.error);
+  }
+
   return saved;
 }
 
@@ -260,9 +452,9 @@ export function isEnhancedComparisonSaved(comparisonId: string): boolean {
 }
 
 /**
- * Delete an enhanced comparison locally
+ * Delete an enhanced comparison locally AND from Supabase database
  */
-export function deleteEnhancedComparisonLocal(id: string): boolean {
+export async function deleteEnhancedComparisonLocal(id: string): Promise<boolean> {
   const comparisons = getLocalEnhancedComparisons();
   const filtered = comparisons.filter(c => c.id !== id);
 
@@ -271,6 +463,30 @@ export function deleteEnhancedComparisonLocal(id: string): boolean {
   }
 
   saveLocalEnhancedComparisons(filtered);
+
+  // Also delete from Supabase database if user is authenticated
+  if (isSupabaseConfigured()) {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        // Find the database record by comparison_id
+        const { data } = await supabase
+          .from('comparisons')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('comparison_id', id)
+          .single();
+
+        if (data) {
+          await dbDeleteComparison(data.id);
+          console.log('[savedComparisons] Deleted enhanced from database:', id);
+        }
+      }
+    } catch (err) {
+      console.error('[savedComparisons] Database delete enhanced error:', err);
+    }
+  }
+
   return true;
 }
 
@@ -699,5 +915,195 @@ export function importFromJSON(json: string): { success: boolean; message: strin
     return { success: true, message: `Imported ${addedCount} new comparisons`, count: addedCount };
   } catch (error) {
     return { success: false, message: 'Invalid JSON file', count: 0 };
+  }
+}
+
+// ============================================================================
+// SUPABASE DATABASE SYNC OPERATIONS
+// ============================================================================
+
+/**
+ * Load comparisons from Supabase database and merge with localStorage
+ * Called when user logs in or opens the app while logged in
+ */
+export async function pullFromDatabase(): Promise<{ success: boolean; message: string; added: number }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Database not configured.', added: 0 };
+  }
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, message: 'User not logged in.', added: 0 };
+    }
+
+    const { data: dbComparisons, error } = await dbGetUserComparisons(user.id, { limit: MAX_SAVED });
+
+    if (error) {
+      return { success: false, message: error.message, added: 0 };
+    }
+
+    const localComparisons = getLocalComparisons();
+    const localEnhanced = getLocalEnhancedComparisons();
+
+    // Merge database comparisons into local storage
+    const mergedMap = new Map<string, SavedComparison>();
+    const mergedEnhancedMap = new Map<string, SavedEnhancedComparison>();
+
+    // Add local first
+    localComparisons.forEach(c => mergedMap.set(c.id, c));
+    localEnhanced.forEach(c => mergedEnhancedMap.set(c.id, c));
+
+    // Add database comparisons (database wins for conflicts)
+    let addedCount = 0;
+    for (const dbComp of dbComparisons) {
+      const compResult = dbComp.comparison_result as Record<string, unknown>;
+      const isEnhanced = 'llmsUsed' in compResult && Array.isArray(compResult.llmsUsed);
+      const comparisonId = dbComp.comparison_id;
+
+      if (isEnhanced) {
+        if (!mergedEnhancedMap.has(comparisonId)) {
+          addedCount++;
+        }
+        mergedEnhancedMap.set(comparisonId, {
+          id: comparisonId,
+          result: compResult as unknown as EnhancedComparisonResult,
+          savedAt: dbComp.created_at,
+          nickname: dbComp.nickname || undefined,
+        });
+      } else {
+        if (!mergedMap.has(comparisonId)) {
+          addedCount++;
+        }
+        mergedMap.set(comparisonId, {
+          id: comparisonId,
+          result: compResult as unknown as ComparisonResult,
+          savedAt: dbComp.created_at,
+          nickname: dbComp.nickname || undefined,
+          synced: true,
+        });
+      }
+    }
+
+    // Sort and save
+    const mergedStandard = Array.from(mergedMap.values())
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+      .slice(0, MAX_SAVED);
+
+    const mergedEnhanced = Array.from(mergedEnhancedMap.values())
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+      .slice(0, MAX_SAVED);
+
+    saveLocalComparisons(mergedStandard);
+    saveLocalEnhancedComparisons(mergedEnhanced);
+
+    console.log(`[savedComparisons] Pulled ${dbComparisons.length} from database, added ${addedCount} new`);
+    return {
+      success: true,
+      message: `Pulled ${dbComparisons.length} comparisons from database`,
+      added: addedCount
+    };
+  } catch (error) {
+    console.error('[savedComparisons] Database pull error:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Pull failed', added: 0 };
+  }
+}
+
+/**
+ * Sync all unsynced local comparisons to Supabase database
+ * Called when user logs in or manually triggers sync
+ */
+export async function syncToDatabase(): Promise<{ success: boolean; message: string; synced: number }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Database not configured.', synced: 0 };
+  }
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, message: 'User not logged in.', synced: 0 };
+    }
+
+    const localComparisons = getLocalComparisons();
+    const localEnhanced = getLocalEnhancedComparisons();
+    let syncedCount = 0;
+
+    // Sync unsynced standard comparisons
+    for (const local of localComparisons) {
+      if (!local.synced) {
+        const { error } = await dbSaveComparison(
+          user.id,
+          local.result as unknown as Record<string, unknown>,
+          local.nickname
+        );
+        if (!error) {
+          local.synced = true;
+          syncedCount++;
+        } else {
+          console.error('[savedComparisons] Failed to sync:', local.id, error);
+        }
+      }
+    }
+
+    // Sync enhanced comparisons
+    for (const local of localEnhanced) {
+      const { error } = await dbSaveComparison(
+        user.id,
+        local.result as unknown as Record<string, unknown>,
+        local.nickname
+      );
+      if (!error) {
+        syncedCount++;
+      } else {
+        console.error('[savedComparisons] Failed to sync enhanced:', local.id, error);
+      }
+    }
+
+    // Update local storage with synced flags
+    saveLocalComparisons(localComparisons);
+
+    console.log(`[savedComparisons] Synced ${syncedCount} comparisons to database`);
+    return {
+      success: true,
+      message: `Synced ${syncedCount} comparisons to database`,
+      synced: syncedCount
+    };
+  } catch (error) {
+    console.error('[savedComparisons] Database sync error:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Sync failed', synced: 0 };
+  }
+}
+
+/**
+ * Full bidirectional sync: pull from database, then push unsynced local changes
+ * Called when user logs in
+ */
+export async function fullDatabaseSync(): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Database not configured.', pulled: 0, pushed: 0 };
+  }
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, message: 'User not logged in.', pulled: 0, pushed: 0 };
+    }
+
+    // First pull from database
+    const pullResult = await pullFromDatabase();
+
+    // Then sync any unsynced local changes
+    const syncResult = await syncToDatabase();
+
+    console.log(`[savedComparisons] Full sync complete: pulled ${pullResult.added}, pushed ${syncResult.synced}`);
+    return {
+      success: true,
+      message: `Sync complete: ${pullResult.added} pulled, ${syncResult.synced} pushed`,
+      pulled: pullResult.added,
+      pushed: syncResult.synced
+    };
+  } catch (error) {
+    console.error('[savedComparisons] Full sync error:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Sync failed', pulled: 0, pushed: 0 };
   }
 }

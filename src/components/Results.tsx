@@ -326,12 +326,18 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights
     setIsSaved(isComparisonSaved(result.comparisonId));
   }, [result.comparisonId]);
 
-  const handleSave = () => {
-    saveComparisonLocal(result);
-    setIsSaved(true);
-    setSaveMessage('Comparison saved!');
-    setTimeout(() => setSaveMessage(null), 3000);
-    onSaved?.();
+  const handleSave = async () => {
+    try {
+      await saveComparisonLocal(result);
+      setIsSaved(true);
+      setSaveMessage('Comparison saved!');
+      setTimeout(() => setSaveMessage(null), 3000);
+      onSaved?.();
+    } catch (error) {
+      console.error('Failed to save comparison:', error);
+      setSaveMessage('Save failed - try again');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
   };
 
   return (

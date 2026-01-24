@@ -1344,11 +1344,17 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
   }, [result.comparisonId]);
 
-  const handleSave = () => {
-    saveEnhancedComparisonLocal(result);
-    setIsSaved(true);
-    setSaveMessage('Comparison saved!');
-    setTimeout(() => setSaveMessage(null), 3000);
+  const handleSave = async () => {
+    try {
+      await saveEnhancedComparisonLocal(result);
+      setIsSaved(true);
+      setSaveMessage('Comparison saved!');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error) {
+      console.error('Failed to save enhanced comparison:', error);
+      setSaveMessage('Save failed - try again');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
   };
 
   const handleShare = async () => {
