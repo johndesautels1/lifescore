@@ -6,6 +6,66 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
+## PREMIUM PRICING SYSTEM (January 24, 2026)
+
+**Conversation ID:** `LIFESCORE-PRICING-20260123`
+
+### Pricing Tiers
+
+| Tier | Name | Monthly | Annual | Savings |
+|------|------|---------|--------|---------|
+| Free | **EXPLORER** | $0 | $0 | - |
+| Pro | **NAVIGATOR** | $29/mo | $249/yr | 28% |
+| Enterprise | **SOVEREIGN** | $99/mo | $899/yr | 24% |
+
+### Feature Limits
+
+| Feature | EXPLORER | NAVIGATOR | SOVEREIGN |
+|---------|----------|-----------|-----------|
+| Standard Comparisons | 3/month | Unlimited | Unlimited |
+| Enhanced Mode (5 LLMs) | - | 10/month | Unlimited |
+| Ask Olivia Messages | 5/day | 50/day | Unlimited |
+| Judge Video Reports | - | 3/month | Unlimited |
+| Gamma Visual Reports | - | 5/month | Unlimited |
+| Cloud Sync | - | ✓ | ✓ |
+| API Access | - | - | ✓ |
+
+### Stripe Integration
+
+**Environment Variables Required:**
+```
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_NAVIGATOR_MONTHLY=price_...
+STRIPE_PRICE_NAVIGATOR_ANNUAL=price_...
+STRIPE_PRICE_SOVEREIGN_MONTHLY=price_...
+STRIPE_PRICE_SOVEREIGN_ANNUAL=price_...
+```
+
+**API Endpoints:**
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/stripe/create-checkout-session` | POST | Start Stripe checkout |
+| `/api/stripe/webhook` | POST | Handle Stripe events |
+| `/api/stripe/create-portal-session` | POST | Open billing portal |
+| `/api/stripe/get-subscription` | GET | Get current subscription |
+
+**Database Migration:**
+Run `supabase/migrations/002_subscriptions_and_usage.sql` to create:
+- `subscriptions` table (Stripe subscription data)
+- `usage_tracking` table (monthly feature limits)
+
+### Components
+
+| Component | Purpose |
+|-----------|---------|
+| `PricingPage.tsx` | Premium pricing cards with Stripe checkout |
+| `FeatureGate.tsx` | Lock overlay for gated features |
+| `useTierAccess.ts` | Hook for checking tier limits |
+
+---
+
 ## COMPLIANCE REMINDER (Before Launch)
 
 | Task | Priority | Status | Action |
