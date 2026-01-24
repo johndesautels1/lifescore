@@ -15,7 +15,7 @@ import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const MUSETALK_MODEL = 'cjwbw/musetalk:latest'; // or use sadtalker
-const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL || 'https://your-domain.com/christiano.jpg';
+const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL || 'https://henghuunttmaowypiyhq.supabase.co/storage/v1/object/public/Avatars/Cristiano.png';
 
 export const config = {
   maxDuration: 120,
