@@ -29,8 +29,9 @@
 }
 
 .loading-header p {
-  color: var(--gray-500);
-  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .progress-section {
@@ -46,7 +47,8 @@
 }
 
 .progress-count {
-  color: var(--gray-600);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .progress-percent {
@@ -151,8 +153,9 @@
 }
 
 .loading-disclaimer p {
-  font-size: 0.75rem;
-  color: var(--gray-700);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
   margin: 0;
 }
 

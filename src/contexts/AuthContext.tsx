@@ -56,6 +56,9 @@ interface AuthContextValue extends AuthState {
   // Sign up
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>;
 
+  // Password reset
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+
   // Sign out
   signOut: () => Promise<void>;
 
@@ -423,6 +426,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: { message: 'Supabase not configured' } as AuthError };
     }
 
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -433,6 +438,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
+
+    setState(prev => ({
+      ...prev,
+      isLoading: false,
+      error: error?.message || null,
+    }));
+
+    return { error };
+  }, [state.isConfigured]);
+
+  const resetPassword = useCallback(async (email: string) => {
+    if (!state.isConfigured) {
+      return { error: { message: 'Supabase not configured' } as AuthError };
+    }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    setState(prev => ({
+      ...prev,
+      isLoading: false,
+      error: error?.message || null,
+    }));
+
     return { error };
   }, [state.isConfigured]);
 
@@ -531,6 +563,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGitHub,
     signInWithMagicLink,
     signUp,
+    resetPassword,
     signOut,
     login,
     logout,

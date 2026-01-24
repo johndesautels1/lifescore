@@ -292,12 +292,15 @@ export const UsageMeter: React.FC<{
   const isExhausted = percentage >= 100;
 
   return (
-    <div className={`usage-meter ${compact ? 'compact' : ''}`}>
+    <div className={`usage-meter ${compact ? 'compact' : ''}`} title={FEATURE_DESCRIPTIONS[feature].description}>
       {showLabel && (
         <div className="meter-label">
-          <span className="meter-feature">{FEATURE_DESCRIPTIONS[feature].title}</span>
+          <span className="meter-feature">
+            {FEATURE_DESCRIPTIONS[feature].title}
+            <span className="meter-info-icon" title={FEATURE_DESCRIPTIONS[feature].description}>ⓘ</span>
+          </span>
           <span className="meter-count">
-            {usage.used}/{usage.limit}
+            {usage.used}/{usage.limit} used this month
           </span>
         </div>
       )}

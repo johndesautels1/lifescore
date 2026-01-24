@@ -224,13 +224,37 @@
 }
 
 .meter-feature {
-  color: #e2e8f0;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.meter-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 50%;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.meter-info-icon:hover {
+  color: #c9a227;
+  background: rgba(201, 162, 39, 0.2);
 }
 
 .meter-count {
-  color: #94a3b8;
+  color: #e2e8f0;
   font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .meter-bar {

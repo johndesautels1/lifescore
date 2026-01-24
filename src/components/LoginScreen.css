@@ -493,6 +493,146 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   AUTH TABS (Sign In / Sign Up)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ls-steel);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab:hover:not(.active) {
+  color: var(--ls-platinum);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.auth-tab.active {
+  background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
+  color: var(--ls-midnight);
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SUCCESS MESSAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.form-success {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  color: var(--ls-success);
+  font-size: 0.85rem;
+  animation: fade-slide-up 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORGOT PASSWORD LINK
+   ═══════════════════════════════════════════════════════════════════════════ */
+.forgot-password-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--ls-gold);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.forgot-password-link:hover {
+  color: var(--ls-gold-light);
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BACK TO SIGN IN BUTTON
+   ═══════════════════════════════════════════════════════════════════════════ */
+.back-to-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: var(--ls-platinum);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-to-signin:hover {
+  border-color: var(--ls-gold);
+  color: var(--ls-gold);
+  background: rgba(201, 162, 39, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIGURATION WARNING
+   ═══════════════════════════════════════════════════════════════════════════ */
+.config-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.config-warning svg {
+  flex-shrink: 0;
+  color: #fbbf24;
+  margin-top: 2px;
+}
+
+.config-warning p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ls-platinum);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD HEADER FIX - Make description more visible
+   ═══════════════════════════════════════════════════════════════════════════ */
+.card-header p {
+  font-size: 0.9rem;
+  color: var(--ls-platinum);
+  margin: 0.5rem 0 0;
+  opacity: 0.9;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    DARK MODE (Already dark, but ensure consistency)
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] .login-screen {
