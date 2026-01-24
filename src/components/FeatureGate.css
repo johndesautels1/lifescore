@@ -47,6 +47,7 @@
 }
 
 .gate-card {
+  position: relative;
   background: linear-gradient(145deg, rgba(13, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 16px;
@@ -56,6 +57,51 @@
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.4),
     0 0 20px rgba(201, 162, 39, 0.1);
+}
+
+/* Dismiss Button (X) */
+.gate-dismiss-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(100, 116, 139, 0.2);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 50%;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gate-dismiss-btn:hover {
+  background: rgba(100, 116, 139, 0.4);
+  color: #f8fafc;
+  transform: scale(1.1);
+}
+
+/* Continue with free features link */
+.gate-continue-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gate-continue-btn:hover {
+  color: #94a3b8;
 }
 
 .gate-icon {

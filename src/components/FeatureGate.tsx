@@ -39,6 +39,10 @@ interface FeatureGateProps {
   onUpgradeClick?: () => void;
   /** Show usage remaining (for limited features) */
   showUsage?: boolean;
+  /** Allow users to dismiss the gate overlay (default: true) */
+  allowDismiss?: boolean;
+  /** Callback when dismissed */
+  onDismiss?: () => void;
 }
 
 // ============================================================================
@@ -89,6 +93,8 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   blurContent = true,
   onUpgradeClick,
   showUsage = false,
+  allowDismiss = true,
+  onDismiss,
 }) => {
   const { tier, canAccess, checkUsage, getRequiredTier, isUnlimited } = useTierAccess();
   const [usageInfo, setUsageInfo] = useState<{
@@ -97,6 +103,7 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     remaining: number;
   } | null>(null);
   const [isLimited, setIsLimited] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   // Determine the required tier
   const actualRequiredTier = requiredTier || getRequiredTier(feature);
@@ -132,6 +139,12 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     }
   };
 
+  // Handle dismiss button click
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    onDismiss?.();
+  };
+
   // If user has access and not limited, render children normally
   if (hasAccess && !isLimited) {
     return (
@@ -150,6 +163,17 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     );
   }
 
+  // If dismissed, render children without overlay (but still blurred/disabled)
+  if (isDismissed) {
+    return (
+      <div className="feature-gate dismissed">
+        <div className={`gated-content ${blurContent ? 'blurred' : 'hidden'}`}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   // Render locked state
   return (
     <div className="feature-gate">
@@ -161,6 +185,18 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
       {/* Lock overlay */}
       <div className="gate-overlay">
         <div className="gate-card">
+          {/* Dismiss button */}
+          {allowDismiss && (
+            <button
+              className="gate-dismiss-btn"
+              onClick={handleDismiss}
+              aria-label="Dismiss"
+              title="Continue with free features"
+            >
+              ✕
+            </button>
+          )}
+
           <div className="gate-icon">
             {isLimited ? '⏱️' : '🔒'}
           </div>
@@ -189,6 +225,12 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
             <span className="tier-arrow">→</span>
             <span className="required-tier">{TIER_NAMES[actualRequiredTier]}</span>
           </div>
+
+          {allowDismiss && (
+            <button className="gate-continue-btn" onClick={handleDismiss}>
+              Continue with free features
+            </button>
+          )}
         </div>
       </div>
     </div>
