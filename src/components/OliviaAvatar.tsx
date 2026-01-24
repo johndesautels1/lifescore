@@ -33,13 +33,11 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
   const [showFallback, setShowFallback] = useState(false);
 
   const {
-    session,
     status,
     isConnected,
     isSpeaking,
     connect,
     disconnect,
-    speak,
     interrupt,
     error,
   } = useSimli();

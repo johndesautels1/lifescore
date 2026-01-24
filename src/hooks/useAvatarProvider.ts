@@ -13,7 +13,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useSimli, type UseSimliReturn, type SimliSessionStatus } from './useSimli';
+import { useSimli } from './useSimli';
 import { useDIDStream } from './useDIDStream';
 
 // ============================================================================

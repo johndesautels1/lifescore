@@ -24,7 +24,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
   const [status, setStatus] = useState<JudgeVideoStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isGenerating = status === 'pending' || status === 'processing';
   const isReady = status === 'completed' && !!video?.videoUrl;

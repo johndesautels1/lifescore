@@ -94,7 +94,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
   // Replicate video generation hook (replaced D-ID)
   const {
     video: replicateVideo,
-    status: videoStatus,
     isGenerating: isGeneratingVideo,
     isReady: isVideoReady,
     generate: generateReplicateVideo,
@@ -192,8 +191,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
     };
   }, []);
 
-  // Poll for video status until ready or error
-  const pollVideoStatus = async (talkId: string, report: JudgeReport) => {
+  // Poll for video status until ready or error (legacy D-ID polling, kept for reference)
+  const _pollVideoStatus = async (talkId: string, report: JudgeReport) => {
     console.log('[JudgeTab] Starting video status polling for:', talkId);
     setVideoGenerationProgress('Christiano is preparing your video report...');
 
@@ -232,7 +231,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
 
           setJudgeReport(updatedReport);
           saveReportToLocalStorage(updatedReport);
-          setIsGeneratingVideo(false);
           setVideoGenerationProgress('');
           console.log('[JudgeTab] Video ready:', data.videoUrl);
         } else if (data.status === 'error') {
@@ -248,7 +246,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
           };
 
           setJudgeReport(updatedReport);
-          setIsGeneratingVideo(false);
           setVideoGenerationProgress('');
           console.error('[JudgeTab] Video generation failed:', data.error);
         } else {
@@ -270,6 +267,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
     // Poll every 5 seconds
     videoPollingRef.current = setInterval(poll, 5000);
   };
+  // Suppress unused warning
+  void _pollVideoStatus;
 
   // Generate video from judge report using Replicate (replaced D-ID)
   const generateJudgeVideo = async (report: JudgeReport) => {

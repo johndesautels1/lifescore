@@ -84,7 +84,7 @@ export interface JudgeVideo {
 }
 
 export interface GenerateJudgeVideoRequest {
-  comparisonId: string;
+  comparisonId?: string;
   script: string;
   city1: string;
   city2: string;
