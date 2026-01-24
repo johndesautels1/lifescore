@@ -8,6 +8,15 @@ export type ComparisonWinner = 'city1' | 'city2' | 'tie';
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type Theme = 'light' | 'dark' | 'auto';
 export type DefaultView = 'grid' | 'list' | 'table';
+export type SubscriptionStatus =
+  | 'active'
+  | 'canceled'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'past_due'
+  | 'trialing'
+  | 'unpaid'
+  | 'paused';
 
 export interface Profile {
   id: string;
@@ -89,6 +98,35 @@ export interface UserPreferences {
   updated_at: string;
 }
 
+export interface Subscription {
+  id: string;
+  user_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
+  stripe_price_id: string;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageTracking {
+  id: string;
+  user_id: string;
+  period_start: string;
+  period_end: string;
+  standard_comparisons: number;
+  enhanced_comparisons: number;
+  olivia_messages: number;
+  judge_videos: number;
+  gamma_reports: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ProfileInsert {
   id: string;
   email?: string | null;
@@ -149,6 +187,29 @@ export interface UserPreferencesInsert {
   default_view?: DefaultView;
   olivia_auto_speak?: boolean;
   olivia_voice_enabled?: boolean;
+}
+
+export interface SubscriptionInsert {
+  user_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
+  stripe_price_id: string;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end?: boolean;
+  canceled_at?: string | null;
+}
+
+export interface UsageTrackingInsert {
+  user_id: string;
+  period_start: string;
+  period_end: string;
+  standard_comparisons?: number;
+  enhanced_comparisons?: number;
+  olivia_messages?: number;
+  judge_videos?: number;
+  gamma_reports?: number;
 }
 
 export interface ProfileUpdate {
@@ -218,6 +279,18 @@ export type Database = {
         Row: UserPreferences;
         Insert: UserPreferencesInsert;
         Update: Partial<UserPreferences>;
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: Subscription;
+        Insert: SubscriptionInsert;
+        Update: Partial<Subscription>;
+        Relationships: [];
+      };
+      usage_tracking: {
+        Row: UsageTracking;
+        Insert: UsageTrackingInsert;
+        Update: Partial<UsageTracking>;
         Relationships: [];
       };
     };

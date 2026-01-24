@@ -1,0 +1,241 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LIFE SCORE™ Feature Gate Styles
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Lock overlay and usage meter styling for premium features.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FEATURE GATE CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.feature-gate {
+  position: relative;
+  width: 100%;
+}
+
+/* Gated content - blurred or hidden */
+.gated-content {
+  pointer-events: none;
+  user-select: none;
+}
+
+.gated-content.blurred {
+  filter: blur(6px);
+  opacity: 0.6;
+}
+
+.gated-content.hidden {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GATE OVERLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.gate-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 22, 40, 0.85);
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.gate-card {
+  background: linear-gradient(145deg, rgba(13, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 320px;
+  text-align: center;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(201, 162, 39, 0.1);
+}
+
+.gate-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.gate-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #d4af37;
+  margin: 0 0 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.gate-message {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+/* Upgrade Button */
+.gate-upgrade-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
+  color: #0a1628;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
+}
+
+.gate-upgrade-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(201, 162, 39, 0.4);
+}
+
+.gate-upgrade-btn:active {
+  transform: translateY(0);
+}
+
+.gate-upgrade-btn .btn-icon {
+  font-size: 1.1rem;
+}
+
+/* Tier Info */
+.gate-tier-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-size: 0.8rem;
+}
+
+.current-tier {
+  color: #64748b;
+}
+
+.tier-arrow {
+  color: #475569;
+}
+
+.required-tier {
+  color: #c9a227;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   USAGE BADGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.feature-usage-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(10, 22, 40, 0.9);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  z-index: 5;
+}
+
+.usage-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   USAGE METER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.usage-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.usage-meter.compact {
+  gap: 0.25rem;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.usage-meter.compact .meter-label {
+  font-size: 0.7rem;
+}
+
+.meter-feature {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.meter-count {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.meter-bar {
+  height: 6px;
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.usage-meter.compact .meter-bar {
+  height: 4px;
+}
+
+.meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #22c55e 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.meter-fill.warning {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+}
+
+.meter-fill.exhausted {
+  background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .gate-card {
+    padding: 1.5rem;
+    max-width: 280px;
+  }
+
+  .gate-icon {
+    font-size: 2rem;
+  }
+
+  .gate-title {
+    font-size: 1.1rem;
+  }
+
+  .gate-message {
+    font-size: 0.85rem;
+  }
+
+  .gate-upgrade-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
