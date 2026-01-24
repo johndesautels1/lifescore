@@ -143,18 +143,20 @@
 .upgrade-btn {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
+  gap: 0.4rem;
+  padding: 0.5rem 1.25rem;
+  min-width: 100px;
   background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
   border: none;
   border-radius: 16px;
   color: #0a1628;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(201, 162, 39, 0.3);
+  white-space: nowrap;
 }
 
 .upgrade-btn:hover {
@@ -176,15 +178,17 @@
 .tier-badge {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.35rem 0.6rem;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  min-width: 90px;
   background: rgba(201, 162, 39, 0.15);
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 12px;
   color: #d4af37;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .tier-badge svg {
