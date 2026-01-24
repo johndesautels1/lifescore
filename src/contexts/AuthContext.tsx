@@ -15,6 +15,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Profile, UserPreferences } from '../types/database';
+import { fullDatabaseSync } from '../services/savedComparisons';
 
 // ============================================================================
 // TYPES
@@ -286,6 +287,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             isConfigured: true,
             error: null,
+          });
+
+          // Sync saved comparisons with database after sign-in
+          // This pulls any comparisons from the database and pushes local ones
+          fullDatabaseSync().then(result => {
+            console.log('[Auth] Database sync complete:', result.message);
+          }).catch(err => {
+            console.error('[Auth] Database sync failed:', err);
           });
         } else if (event === 'SIGNED_OUT') {
           setState({
