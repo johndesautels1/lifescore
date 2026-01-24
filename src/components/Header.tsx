@@ -6,10 +6,16 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
+import { useTierAccess, TIER_NAMES } from '../hooks/useTierAccess';
 import './Header.css';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onUpgradeClick?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onUpgradeClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { tier } = useTierAccess();
 
   return (
     <header className="header">
@@ -21,6 +27,30 @@ export const Header: React.FC = () => {
           {/* User Account Display */}
           {isAuthenticated && user && (
             <div className="user-account">
+              {/* Upgrade Button for Free Users */}
+              {tier === 'free' && onUpgradeClick && (
+                <button
+                  className="upgrade-btn"
+                  onClick={onUpgradeClick}
+                  title="Upgrade to Premium"
+                >
+                  <svg viewBox="0 0 24 24" width="14" height="14">
+                    <path fill="currentColor" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                  </svg>
+                  <span>Upgrade</span>
+                </button>
+              )}
+
+              {/* Tier Badge for Paid Users */}
+              {tier !== 'free' && (
+                <div className="tier-badge" title={`${TIER_NAMES[tier]} Plan`}>
+                  <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path fill="currentColor" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                  </svg>
+                  <span>{TIER_NAMES[tier]}</span>
+                </div>
+              )}
+
               <div className="user-info">
                 <span className="user-avatar">
                   {user.name.charAt(0).toUpperCase()}

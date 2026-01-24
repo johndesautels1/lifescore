@@ -138,6 +138,60 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   UPGRADE BUTTON
+   ═══════════════════════════════════════════════════════════════════════════ */
+.upgrade-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
+  border: none;
+  border-radius: 16px;
+  color: #0a1628;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.3);
+}
+
+.upgrade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.4);
+}
+
+.upgrade-btn:active {
+  transform: translateY(0);
+}
+
+.upgrade-btn svg {
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIER BADGE (for paid users)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tier-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(201, 162, 39, 0.15);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 12px;
+  color: #d4af37;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.tier-badge svg {
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    USER ACCOUNT DISPLAY
    ═══════════════════════════════════════════════════════════════════════════ */
 .user-account {

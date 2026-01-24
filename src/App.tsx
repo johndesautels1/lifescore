@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import PricingModal from './components/PricingModal';
 import LegalModal, { type LegalPage } from './components/LegalModal';
 import CookieConsent from './components/CookieConsent';
 import TabNavigation, { type TabId } from './components/TabNavigation';
@@ -91,6 +92,10 @@ const AppContent: React.FC = () => {
 
   // Legal modal state
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPage>(null);
+
+  // Pricing modal state
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingHighlight, setPricingHighlight] = useState<{ feature?: string; tier?: 'free' | 'pro' | 'enterprise' }>({});
 
   const availableLLMs = getAvailableLLMs(apiKeys);
 
@@ -192,6 +197,22 @@ const AppContent: React.FC = () => {
     }
   }, [enhancedMode, llmStates, state.result]);
 
+  // Listen for 'openPricing' events from FeatureGate components
+  useEffect(() => {
+    const handleOpenPricing = (e: CustomEvent<{ feature?: string; requiredTier?: 'free' | 'pro' | 'enterprise' }>) => {
+      setPricingHighlight({
+        feature: e.detail?.feature,
+        tier: e.detail?.requiredTier,
+      });
+      setShowPricingModal(true);
+    };
+
+    window.addEventListener('openPricing', handleOpenPricing as EventListener);
+    return () => {
+      window.removeEventListener('openPricing', handleOpenPricing as EventListener);
+    };
+  }, []);
+
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
     loadResult(result);
     setEnhancedStatus('idle');
@@ -249,7 +270,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app">
-      <Header />
+      <Header onUpgradeClick={() => setShowPricingModal(true)} />
 
       {/* Tab Navigation */}
       <TabNavigation
@@ -630,6 +651,17 @@ const AppContent: React.FC = () => {
 
       {/* Cookie Consent Banner */}
       <CookieConsent />
+
+      {/* Pricing Modal */}
+      <PricingModal
+        isOpen={showPricingModal}
+        onClose={() => {
+          setShowPricingModal(false);
+          setPricingHighlight({});
+        }}
+        highlightFeature={pricingHighlight.feature}
+        highlightTier={pricingHighlight.tier}
+      />
     </div>
   );
 };

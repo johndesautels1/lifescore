@@ -1,0 +1,511 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LIFE SCORE™ Premium Pricing Modal Styles
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Design: Glassmorphic, upscale, clean lines
+ * Supports dark and light themes
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pricing-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pricing-modal {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(
+    145deg,
+    rgba(13, 40, 71, 0.95) 0%,
+    rgba(10, 22, 40, 0.98) 100%
+  );
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 24px;
+  box-shadow:
+    0 32px 64px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 80px rgba(201, 162, 39, 0.1);
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Light theme support */
+[data-theme="light"] .pricing-modal {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 250, 252, 0.99) 100%
+  );
+  border-color: rgba(201, 162, 39, 0.3);
+  box-shadow:
+    0 32px 64px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLOSE BUTTON
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: rotate(90deg);
+}
+
+[data-theme="light"] .modal-close-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-header {
+  text-align: center;
+  padding: 2.5rem 2rem 1.5rem;
+}
+
+.modal-crown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #f5d742 100%);
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 24px rgba(201, 162, 39, 0.4);
+}
+
+.modal-crown svg {
+  color: #0a1628;
+}
+
+.modal-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="light"] .modal-title {
+  color: #0a1628;
+}
+
+.modal-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+[data-theme="light"] .modal-subtitle {
+  color: rgba(10, 22, 40, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BILLING TOGGLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-billing-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 2rem;
+  margin-bottom: 2rem;
+}
+
+.toggle-option {
+  position: relative;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.toggle-option.active {
+  background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
+  border-color: transparent;
+  color: #0a1628;
+  box-shadow: 0 4px 16px rgba(201, 162, 39, 0.4);
+}
+
+[data-theme="light"] .toggle-option {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .toggle-option:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .toggle-option.active {
+  color: #0a1628;
+}
+
+.save-tag {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 0.2rem 0.5rem;
+  background: #10b981;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRICING GRID
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  padding: 0 2rem 2rem;
+}
+
+@media (max-width: 600px) {
+  .modal-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRICING CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-pricing-card {
+  position: relative;
+  padding: 1.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.modal-pricing-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-4px);
+}
+
+.modal-pricing-card.popular {
+  border: 2px solid #c9a227;
+  box-shadow: 0 0 30px rgba(201, 162, 39, 0.2);
+}
+
+.modal-pricing-card.current {
+  border-color: #10b981;
+}
+
+.modal-pricing-card.highlighted {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(201, 162, 39, 0); }
+}
+
+[data-theme="light"] .modal-pricing-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .modal-pricing-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Ribbons */
+.popular-ribbon,
+.current-ribbon {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.35rem 1rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.popular-ribbon {
+  background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
+  color: #0a1628;
+}
+
+.current-ribbon {
+  background: #10b981;
+  color: white;
+}
+
+/* Tier Name & Tagline */
+.modal-pricing-card .tier-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.08em;
+}
+
+[data-theme="light"] .modal-pricing-card .tier-name {
+  color: #0a1628;
+}
+
+.modal-pricing-card .tier-tagline {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 1.25rem;
+}
+
+[data-theme="light"] .modal-pricing-card .tier-tagline {
+  color: rgba(10, 22, 40, 0.5);
+}
+
+/* Price */
+.tier-price {
+  margin-bottom: 1rem;
+}
+
+.tier-price .currency {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #c9a227;
+  vertical-align: top;
+}
+
+.tier-price .amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+[data-theme="light"] .tier-price .amount {
+  color: #0a1628;
+}
+
+.tier-price .interval {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .tier-price .interval {
+  color: rgba(10, 22, 40, 0.5);
+}
+
+.savings-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Features List */
+.tier-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.tier-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .tier-features li {
+  color: rgba(10, 22, 40, 0.8);
+}
+
+.tier-features .check-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Buttons */
+.tier-btn {
+  width: 100%;
+  padding: 0.875rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tier-btn.primary {
+  background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
+  color: #0a1628;
+  box-shadow: 0 4px 16px rgba(201, 162, 39, 0.3);
+}
+
+.tier-btn.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201, 162, 39, 0.4);
+}
+
+.tier-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  color: #c9a227;
+}
+
+.tier-btn.secondary:hover:not(:disabled) {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+[data-theme="light"] .tier-btn.secondary {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: #c9a227;
+}
+
+.tier-btn.manage {
+  background: transparent;
+  border: 1px solid #10b981;
+  color: #10b981;
+}
+
+.tier-btn.manage:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.tier-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-footer {
+  padding: 1.5rem 2rem 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .modal-footer {
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.trust-badges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .trust-badge {
+  color: rgba(10, 22, 40, 0.5);
+}
+
+.badge-icon {
+  font-size: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pricing-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pricing-modal::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.pricing-modal::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 39, 0.3);
+  border-radius: 3px;
+}
+
+.pricing-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 39, 0.5);
+}
