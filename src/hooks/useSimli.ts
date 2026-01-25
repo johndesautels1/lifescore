@@ -212,9 +212,24 @@ export function useSimli(): UseSimliReturn {
       ws.onopen = () => {
         console.log('[useSimli] WebSocket connected, sending offer');
 
-        // Get credentials
+        // Get credentials from Vite environment
         const apiKey = import.meta.env.VITE_SIMLI_API_KEY;
         const faceId = import.meta.env.VITE_SIMLI_FACE_ID;
+
+        // Validate credentials before sending
+        if (!apiKey || !faceId) {
+          const missing = [];
+          if (!apiKey) missing.push('VITE_SIMLI_API_KEY');
+          if (!faceId) missing.push('VITE_SIMLI_FACE_ID');
+          const errorMsg = `Simli not configured. Missing: ${missing.join(', ')}. Add these to Vercel environment variables.`;
+          console.error('[useSimli]', errorMsg);
+          setError(errorMsg);
+          setStatus('error');
+          ws.close();
+          return;
+        }
+
+        console.log('[useSimli] Credentials found, sending to Simli...');
 
         // Send SDP offer with credentials
         ws.send(JSON.stringify({
@@ -230,10 +245,20 @@ export function useSimli(): UseSimliReturn {
 
         // Handle plain text protocol messages from Simli
         if (typeof rawMessage === 'string') {
-          // Check for error messages
+          // Check for error messages with user-friendly translations
           if (rawMessage.startsWith('ERROR:') || rawMessage.startsWith('NO SESSION')) {
             console.error('[useSimli] Simli error:', rawMessage);
-            setError(rawMessage);
+
+            // Translate Simli errors to user-friendly messages
+            let userMessage = rawMessage;
+            if (rawMessage.includes('NO SESSION') || rawMessage.includes('Invalid API')) {
+              userMessage = 'Video connection failed. Please check that VITE_SIMLI_API_KEY and VITE_SIMLI_FACE_ID are set correctly in Vercel.';
+            } else if (rawMessage.includes('rate limit')) {
+              userMessage = 'Video service rate limited. Please try again in a moment.';
+            }
+
+            setError(userMessage);
+            setStatus('error');
             return;
           }
 
