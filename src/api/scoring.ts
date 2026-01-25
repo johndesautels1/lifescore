@@ -95,65 +95,86 @@ export function normalizeScore(
 
 /**
  * Calculate weighted average for a category
+ * FIXED: Excludes missing metrics from calculation instead of defaulting to 50
  */
 export function calculateCategoryScore(
   categoryId: CategoryId,
   metricScores: MetricScore[]
 ): CategoryScore {
   const categoryMetrics = getMetricsByCategory(categoryId);
-  
+
   let totalWeightedScore = 0;
+  let totalLegalScore = 0;
+  let totalLivedScore = 0;
   let totalWeight = 0;
   let verifiedCount = 0;
+  let evaluatedCount = 0;
 
   const metricsForCategory: MetricScore[] = [];
 
   for (const metricDef of categoryMetrics) {
     const metricScore = metricScores.find(ms => ms.metricId === metricDef.id);
 
-    if (metricScore) {
+    if (metricScore && !metricScore.isMissing && metricScore.normalizedScore !== null) {
+      // Valid metric with data - include in calculation
       metricsForCategory.push(metricScore);
       totalWeightedScore += metricScore.normalizedScore * metricDef.weight;
       totalWeight += metricDef.weight;
+      evaluatedCount++;
+
+      // Track separate legal and lived averages
+      if (metricScore.legalScore !== null && metricScore.legalScore !== undefined) {
+        totalLegalScore += metricScore.legalScore * metricDef.weight;
+      }
+      if (metricScore.livedScore !== null && metricScore.livedScore !== undefined) {
+        totalLivedScore += metricScore.livedScore * metricDef.weight;
+      }
 
       if (metricScore.confidence !== 'unverified') {
         verifiedCount++;
       }
     } else {
-      // FIX: Create placeholder for missing metric with NEUTRAL score (50), not 0
-      // This prevents missing metrics from unfairly dragging down scores
+      // FIXED: Mark as missing, do NOT default to 50
+      // Missing metrics are excluded from weighted calculation
       metricsForCategory.push({
         metricId: metricDef.id,
         rawValue: null,
-        normalizedScore: 50, // Neutral score instead of 0
-        confidence: 'unverified'
+        normalizedScore: null,  // NULL not 50 - excluded from calc
+        legalScore: null,
+        livedScore: null,
+        confidence: 'unverified',
+        isMissing: true
       });
-      // FIX: Include placeholder in weighted calculation with neutral score
-      totalWeightedScore += 50 * metricDef.weight;
-      totalWeight += metricDef.weight;
+      // DO NOT add to totalWeightedScore or totalWeight
     }
   }
 
-  // FIX: Return neutral score (50) when no weights, not 0
-  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
-  
+  // Calculate averages only from evaluated metrics (null if no data)
+  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : null;
+  const averageLegalScore = totalWeight > 0 ? totalLegalScore / totalWeight : null;
+  const averageLivedScore = totalWeight > 0 ? totalLivedScore / totalWeight : null;
+
   // Get category weight for contribution to total
   const category = CATEGORIES.find(c => c.id === categoryId);
   const categoryWeight = category?.weight ?? 0;
-  const weightedScore = (averageScore * categoryWeight) / 100;
+  const weightedScore = averageScore !== null ? (averageScore * categoryWeight) / 100 : 0;
 
   return {
     categoryId,
     metrics: metricsForCategory,
-    averageScore: Math.round(averageScore * 10) / 10,
+    averageScore: averageScore !== null ? Math.round(averageScore * 10) / 10 : null,
+    averageLegalScore: averageLegalScore !== null ? Math.round(averageLegalScore * 10) / 10 : null,
+    averageLivedScore: averageLivedScore !== null ? Math.round(averageLivedScore * 10) / 10 : null,
     weightedScore: Math.round(weightedScore * 10) / 10,
     verifiedMetrics: verifiedCount,
-    totalMetrics: categoryMetrics.length
+    totalMetrics: categoryMetrics.length,
+    evaluatedMetrics: evaluatedCount
   };
 }
 
 /**
  * Calculate total city score from all metrics
+ * FIXED: Tracks separate Legal/Lived scores and data completeness
  */
 export function calculateCityScore(
   city: string,
@@ -163,8 +184,11 @@ export function calculateCityScore(
 ): CityScore {
   const categories: CategoryScore[] = [];
   let totalScore = 0;
+  let totalLegalScore = 0;
+  let totalLivedScore = 0;
   let totalVerified = 0;
   let totalMetrics = 0;
+  let totalEvaluated = 0;
 
   for (const category of CATEGORIES) {
     const categoryScore = calculateCategoryScore(category.id, metricScores);
@@ -172,33 +196,47 @@ export function calculateCityScore(
     totalScore += categoryScore.weightedScore;
     totalVerified += categoryScore.verifiedMetrics;
     totalMetrics += categoryScore.totalMetrics;
+    totalEvaluated += categoryScore.evaluatedMetrics;
+
+    // Track separate legal and lived totals
+    const categoryDef = CATEGORIES.find(c => c.id === category.id);
+    const catWeight = categoryDef?.weight ?? 0;
+    if (categoryScore.averageLegalScore !== null && categoryScore.averageLegalScore !== undefined) {
+      totalLegalScore += (categoryScore.averageLegalScore * catWeight) / 100;
+    }
+    if (categoryScore.averageLivedScore !== null && categoryScore.averageLivedScore !== undefined) {
+      totalLivedScore += (categoryScore.averageLivedScore * catWeight) / 100;
+    }
   }
 
-  // Determine overall confidence
-  const verificationRate = totalVerified / totalMetrics;
+  // Determine overall confidence based on evaluation rate
+  const evaluationRate = totalMetrics > 0 ? totalEvaluated / totalMetrics : 0;
   let overallConfidence: 'high' | 'medium' | 'low';
-  if (verificationRate >= 0.8) {
+  if (evaluationRate >= 0.8) {
     overallConfidence = 'high';
-  } else if (verificationRate >= 0.5) {
+  } else if (evaluationRate >= 0.5) {
     overallConfidence = 'medium';
   } else {
     overallConfidence = 'low';
   }
-
-  // Calculate normalized score (percentage of theoretical max)
-  // Max theoretical score is 100 (all categories at 100%)
-  const normalizedScore = Math.round(totalScore);
 
   return {
     city,
     country,
     region,
     categories,
-    totalScore: Math.round(totalScore), // 0-100 percentage score
-    normalizedScore,
+    totalScore: Math.round(totalScore),
+    totalLegalScore: Math.round(totalLegalScore),
+    totalLivedScore: Math.round(totalLivedScore),
+    normalizedScore: Math.round(totalScore),
     overallConfidence,
     comparisonDate: new Date().toISOString(),
-    dataFreshness: 'current'
+    dataFreshness: 'current',
+    dataCompleteness: {
+      evaluatedMetrics: totalEvaluated,
+      totalMetrics: totalMetrics,
+      percentage: totalMetrics > 0 ? Math.round((totalEvaluated / totalMetrics) * 100) : 0
+    }
   };
 }
 
@@ -261,6 +299,7 @@ function generateComparisonId(): string {
 
 /**
  * Parse API response into metric scores
+ * FIXED: Returns null for unknown/invalid metrics instead of defaulting to 50
  */
 export function parseAPIResponse(
   metricId: string,
@@ -272,23 +311,25 @@ export function parseAPIResponse(
   }
 ): MetricScore {
   const metric = METRICS_MAP[metricId];
-  
+
   if (!metric) {
-    // FIX: Return neutral score (50) for unknown metrics, not 0
-    // This prevents unknown metrics from unfairly penalizing scores
+    // FIXED: Return null score for unknown metrics - exclude from calculations
     console.warn(`Unknown metric ID: ${metricId}`);
     return {
       metricId,
       rawValue: null,
-      normalizedScore: 50, // Neutral score instead of 0
+      normalizedScore: null,  // NULL not 50 - will be excluded
+      legalScore: null,
+      livedScore: null,
       confidence: 'unverified',
-      notes: 'Unknown metric'
+      notes: 'Unknown metric',
+      isMissing: true
     };
   }
 
   const rawValue = apiResponse.value ?? null;
   const normalizedScore = normalizeScore(metric, rawValue);
-  
+
   let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'unverified';
   if (apiResponse.confidence) {
     const conf = apiResponse.confidence.toLowerCase();
@@ -303,7 +344,8 @@ export function parseAPIResponse(
     normalizedScore,
     confidence,
     source: apiResponse.source,
-    notes: apiResponse.explanation
+    notes: apiResponse.explanation,
+    isMissing: false
   };
 }
 

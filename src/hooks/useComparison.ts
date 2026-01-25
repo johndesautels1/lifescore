@@ -75,6 +75,7 @@ interface APIEvaluationResponse {
 
 /**
  * Calculate weighted average score for a category
+ * FIXED: Excludes missing metrics from calculation instead of defaulting to 50
  */
 function calculateCategoryScore(
   categoryId: CategoryId,
@@ -83,54 +84,77 @@ function calculateCategoryScore(
   const categoryMetrics = getMetricsByCategory(categoryId);
 
   let totalWeightedScore = 0;
+  let totalLegalScore = 0;
+  let totalLivedScore = 0;
   let totalWeight = 0;
   let verifiedCount = 0;
+  let evaluatedCount = 0;
 
   const metricsForCategory: MetricScore[] = [];
 
   for (const metricDef of categoryMetrics) {
     const metricScore = metricScores.find(ms => ms.metricId === metricDef.id);
 
-    if (metricScore) {
+    if (metricScore && !metricScore.isMissing && metricScore.normalizedScore !== null) {
+      // Valid metric with data - include in calculation
       metricsForCategory.push(metricScore);
       totalWeightedScore += metricScore.normalizedScore * metricDef.weight;
       totalWeight += metricDef.weight;
+      evaluatedCount++;
+
+      // Track separate legal and lived averages
+      if (metricScore.legalScore !== null && metricScore.legalScore !== undefined) {
+        totalLegalScore += metricScore.legalScore * metricDef.weight;
+      }
+      if (metricScore.livedScore !== null && metricScore.livedScore !== undefined) {
+        totalLivedScore += metricScore.livedScore * metricDef.weight;
+      }
 
       if (metricScore.confidence !== 'unverified') {
         verifiedCount++;
       }
     } else {
-      // Create placeholder for missing metric with neutral score
+      // FIXED: Mark as missing, do NOT default to 50
+      // Missing metrics are excluded from weighted calculation
       metricsForCategory.push({
         metricId: metricDef.id,
         rawValue: null,
-        normalizedScore: 50, // Neutral score, not 0
-        confidence: 'unverified'
+        normalizedScore: null,  // NULL not 50 - excluded from calc
+        legalScore: null,
+        livedScore: null,
+        confidence: 'unverified',
+        isMissing: true
       });
-      totalWeightedScore += 50 * metricDef.weight;
-      totalWeight += metricDef.weight;
+      // DO NOT add to totalWeightedScore or totalWeight
     }
   }
 
-  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
+  // Calculate averages only from evaluated metrics
+  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : null;
+  const averageLegalScore = totalWeight > 0 ? totalLegalScore / totalWeight : null;
+  const averageLivedScore = totalWeight > 0 ? totalLivedScore / totalWeight : null;
 
   // Get category weight for contribution to total
   const category = CATEGORIES.find(c => c.id === categoryId);
   const categoryWeight = category?.weight ?? 0;
-  const weightedScore = (averageScore * categoryWeight) / 100;
+  const weightedScore = averageScore !== null ? (averageScore * categoryWeight) / 100 : 0;
 
   return {
     categoryId,
     metrics: metricsForCategory,
-    averageScore: Math.round(averageScore * 10) / 10,
+    averageScore: averageScore !== null ? Math.round(averageScore * 10) / 10 : null,
+    averageLegalScore: averageLegalScore !== null ? Math.round(averageLegalScore * 10) / 10 : null,
+    averageLivedScore: averageLivedScore !== null ? Math.round(averageLivedScore * 10) / 10 : null,
     weightedScore: Math.round(weightedScore * 10) / 10,
     verifiedMetrics: verifiedCount,
-    totalMetrics: categoryMetrics.length
+    totalMetrics: categoryMetrics.length,
+    evaluatedMetrics: evaluatedCount
   };
 }
 
 /**
  * Calculate total city score from all category scores
+ * FIXED: Tracks separate Legal/Lived scores and data completeness
  */
 function calculateCityScore(
   city: string,
@@ -140,8 +164,11 @@ function calculateCityScore(
 ): CityScore {
   const categories: CategoryScore[] = [];
   let totalScore = 0;
+  let totalLegalScore = 0;
+  let totalLivedScore = 0;
   let totalVerified = 0;
   let totalMetrics = 0;
+  let totalEvaluated = 0;
 
   for (const category of CATEGORIES) {
     const categoryScore = calculateCategoryScore(category.id, metricScores);
@@ -149,14 +176,25 @@ function calculateCityScore(
     totalScore += categoryScore.weightedScore;
     totalVerified += categoryScore.verifiedMetrics;
     totalMetrics += categoryScore.totalMetrics;
+    totalEvaluated += categoryScore.evaluatedMetrics;
+
+    // Track separate legal and lived totals
+    const categoryDef = CATEGORIES.find(c => c.id === category.id);
+    const catWeight = categoryDef?.weight ?? 0;
+    if (categoryScore.averageLegalScore !== null && categoryScore.averageLegalScore !== undefined) {
+      totalLegalScore += (categoryScore.averageLegalScore * catWeight) / 100;
+    }
+    if (categoryScore.averageLivedScore !== null && categoryScore.averageLivedScore !== undefined) {
+      totalLivedScore += (categoryScore.averageLivedScore * catWeight) / 100;
+    }
   }
 
-  // Determine overall confidence
-  const verificationRate = totalMetrics > 0 ? totalVerified / totalMetrics : 0;
+  // Determine overall confidence based on evaluation rate (not just verification)
+  const evaluationRate = totalMetrics > 0 ? totalEvaluated / totalMetrics : 0;
   let overallConfidence: 'high' | 'medium' | 'low';
-  if (verificationRate >= 0.8) {
+  if (evaluationRate >= 0.8) {
     overallConfidence = 'high';
-  } else if (verificationRate >= 0.5) {
+  } else if (evaluationRate >= 0.5) {
     overallConfidence = 'medium';
   } else {
     overallConfidence = 'low';
@@ -168,10 +206,17 @@ function calculateCityScore(
     region,
     categories,
     totalScore: Math.round(totalScore),
+    totalLegalScore: Math.round(totalLegalScore),   // NEW: Separate legal total
+    totalLivedScore: Math.round(totalLivedScore),   // NEW: Separate lived total
     normalizedScore: Math.round(totalScore),
     overallConfidence,
     comparisonDate: new Date().toISOString(),
-    dataFreshness: 'current'
+    dataFreshness: 'current',
+    dataCompleteness: {                              // NEW: Track data completeness
+      evaluatedMetrics: totalEvaluated,
+      totalMetrics: totalMetrics,
+      percentage: totalMetrics > 0 ? Math.round((totalEvaluated / totalMetrics) * 100) : 0
+    }
   };
 }
 
@@ -288,13 +333,28 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
           // Parse and store the scores from API response
           if (apiResponse.success && apiResponse.scores) {
             for (const score of apiResponse.scores) {
-              // Calculate normalized score as average of legal and enforcement
-              const city1NormalizedScore = Math.round(
-                (score.city1LegalScore + score.city1EnforcementScore) / 2
-              );
-              const city2NormalizedScore = Math.round(
-                (score.city2LegalScore + score.city2EnforcementScore) / 2
-              );
+              // FIXED: Store Legal and Lived scores SEPARATELY
+              // Do not average here - let user preferences control the weighting
+              const city1Legal = score.city1LegalScore;
+              const city1Lived = score.city1EnforcementScore;
+              const city2Legal = score.city2LegalScore;
+              const city2Lived = score.city2EnforcementScore;
+
+              // Check if we have valid data (not undefined/null/NaN)
+              const city1HasData = typeof city1Legal === 'number' && !isNaN(city1Legal);
+              const city2HasData = typeof city2Legal === 'number' && !isNaN(city2Legal);
+
+              // Calculate normalized score using user's Law/Lived preference
+              // TODO: Get lawLivedRatio from user preferences (default 50/50 for now)
+              const lawWeight = 50; // Will be replaced with user preference
+              const livedWeight = 50;
+
+              const city1NormalizedScore = city1HasData
+                ? Math.round((city1Legal * lawWeight + city1Lived * livedWeight) / 100)
+                : null;
+              const city2NormalizedScore = city2HasData
+                ? Math.round((city2Legal * lawWeight + city2Lived * livedWeight) / 100)
+                : null;
 
               // Map confidence string to type
               let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'medium';
@@ -315,28 +375,34 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
                 : 'LLM Evaluation';
               const sourceUrl = sourcesArray.length > 0 ? sourcesArray[0] : undefined;
 
-              // City 1 score
+              // City 1 score - store Legal and Lived separately
               city1MetricScores.push({
                 metricId: score.metricId,
                 rawValue: score.city1LegalScore,
                 normalizedScore: city1NormalizedScore,
+                legalScore: city1Legal,      // NEW: Separate legal score
+                livedScore: city1Lived,      // NEW: Separate lived score
                 confidence,
                 source: sourceDisplay,
                 sourceUrl: sourceUrl,
-                sources: sourcesArray,  // Pass through source URLs from API
-                notes: score.reasoning
+                sources: sourcesArray,
+                notes: score.reasoning,
+                isMissing: !city1HasData     // NEW: Track if data is missing
               });
 
-              // City 2 score
+              // City 2 score - store Legal and Lived separately
               city2MetricScores.push({
                 metricId: score.metricId,
                 rawValue: score.city2LegalScore,
                 normalizedScore: city2NormalizedScore,
+                legalScore: city2Legal,      // NEW: Separate legal score
+                livedScore: city2Lived,      // NEW: Separate lived score
                 confidence,
                 source: sourceDisplay,
                 sourceUrl: sourceUrl,
-                sources: sourcesArray,  // Pass through source URLs from API
-                notes: score.reasoning
+                sources: sourcesArray,
+                notes: score.reasoning,
+                isMissing: !city2HasData     // NEW: Track if data is missing
               });
             }
           } else {

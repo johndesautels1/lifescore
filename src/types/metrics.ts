@@ -77,25 +77,50 @@ export interface CategoricalOption {
 // SCORE RESULTS
 // ============================================================================
 
+/**
+ * Law vs Lived scoring preference
+ * Controls how Legal (written law) and Lived (enforcement reality) scores are combined
+ */
+export interface LawLivedRatio {
+  law: number;   // 0-100 percentage for written law weight
+  lived: number; // 0-100 percentage for lived reality weight (must sum to 100 with law)
+}
+
+/**
+ * User scoring preferences including persona weights and Law/Lived ratio
+ */
+export interface ScoringPreferences {
+  categoryWeights: Record<CategoryId, number>;  // Category weights (sum to 100)
+  lawLivedRatio: LawLivedRatio;                 // Law vs Lived weighting
+  conservativeMode: boolean;                     // Use MIN(law, lived) instead of weighted
+  excludedCategories: Set<CategoryId>;          // Categories to exclude from scoring
+}
+
 export interface MetricScore {
   metricId: string;
   rawValue: string | number | boolean | null;
-  normalizedScore: number; // 0-100
+  normalizedScore: number | null; // 0-100, or null if missing/invalid
+  legalScore?: number | null;     // Written law score (0-100)
+  livedScore?: number | null;     // Lived reality/enforcement score (0-100)
   confidence: 'high' | 'medium' | 'low' | 'unverified';
   source?: string;
   sourceUrl?: string;
   sources?: string[];  // Array of source URLs from LLM web search
   notes?: string;
   verifiedAt?: string;
+  isMissing?: boolean; // True if metric has no valid data - exclude from calculations
 }
 
 export interface CategoryScore {
   categoryId: CategoryId;
   metrics: MetricScore[];
-  averageScore: number; // 0-100
+  averageScore: number | null; // 0-100, or null if no valid metrics
+  averageLegalScore?: number | null;  // Average of legal scores
+  averageLivedScore?: number | null;  // Average of lived scores
   weightedScore: number; // Contribution to total
   verifiedMetrics: number;
   totalMetrics: number;
+  evaluatedMetrics: number; // Metrics with valid data (not missing)
 }
 
 export interface CityScore {
@@ -103,11 +128,18 @@ export interface CityScore {
   country: string;
   region?: string;
   categories: CategoryScore[];
-  totalScore: number; // 0-1000 scale (100 metrics * 10 max each)
+  totalScore: number; // 0-100 weighted score
+  totalLegalScore?: number; // 0-100 legal-only score
+  totalLivedScore?: number; // 0-100 lived-only score
   normalizedScore: number; // 0-100 percentage
   overallConfidence: 'high' | 'medium' | 'low';
   comparisonDate: string;
   dataFreshness: 'current' | 'recent' | 'outdated';
+  dataCompleteness?: {
+    evaluatedMetrics: number;  // Metrics with valid data
+    totalMetrics: number;      // Total possible metrics
+    percentage: number;        // evaluatedMetrics / totalMetrics * 100
+  };
 }
 
 export interface ComparisonResult {
