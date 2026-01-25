@@ -31,29 +31,33 @@ export function exportToCSV(result: EnhancedComparisonResult): void {
 
     category.metrics.forEach((metric, metricIndex) => {
       const city2Metric = city2Category.metrics[metricIndex];
-      const diff = metric.consensusScore - city2Metric.consensusScore;
+      // Handle null scores - skip metrics with missing data
+      const score1 = metric.consensusScore ?? 0;
+      const score2 = city2Metric.consensusScore ?? 0;
+      const diff = score1 - score2;
       const winner = diff > 0 ? result.city1.city : diff < 0 ? result.city2.city : 'Tie';
 
       // Determine agreement level
       let agreement = 'Unknown';
-      if (metric.standardDeviation <= 5) agreement = '5/5 High';
-      else if (metric.standardDeviation <= 10) agreement = '4/5 Good';
-      else if (metric.standardDeviation <= 15) agreement = '3/5 Moderate';
+      const stdDev = metric.standardDeviation ?? 0;
+      if (stdDev <= 5) agreement = '5/5 High';
+      else if (stdDev <= 10) agreement = '4/5 Good';
+      else if (stdDev <= 15) agreement = '3/5 Moderate';
       else agreement = '2/5 Split';
 
       // Determine data quality based on confidence
       let dataQuality = 'Medium';
       if (metric.confidenceLevel === 'unanimous' || metric.confidenceLevel === 'strong') {
         dataQuality = 'High';
-      } else if (metric.confidenceLevel === 'split') {
+      } else if (metric.confidenceLevel === 'split' || metric.confidenceLevel === 'no_data') {
         dataQuality = 'Low';
       }
 
       rows.push([
         categoryName,
         metric.metricId,
-        Math.round(metric.consensusScore).toString(),
-        Math.round(city2Metric.consensusScore).toString(),
+        Math.round(score1).toString(),
+        Math.round(score2).toString(),
         (diff > 0 ? '+' : '') + Math.round(diff).toString(),
         winner,
         agreement,
@@ -272,13 +276,15 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
             ${result.city1.categories.map((cat, i) => {
               const cat2 = result.city2.categories[i];
               const catName = CATEGORIES.find(c => c.id === cat.categoryId)?.name || cat.categoryId;
-              const catWinner = cat.averageConsensusScore > cat2.averageConsensusScore ? result.city1.city :
-                               cat.averageConsensusScore < cat2.averageConsensusScore ? result.city2.city : 'Tie';
+              const score1 = cat.averageConsensusScore ?? 0;
+              const score2 = cat2.averageConsensusScore ?? 0;
+              const catWinner = score1 > score2 ? result.city1.city :
+                               score1 < score2 ? result.city2.city : 'Tie';
               return `
                 <tr>
                   <td>${catName}</td>
-                  <td class="${cat.averageConsensusScore > cat2.averageConsensusScore ? 'winner-cell' : 'loser-cell'}">${Math.round(cat.averageConsensusScore)}</td>
-                  <td class="${cat2.averageConsensusScore > cat.averageConsensusScore ? 'winner-cell' : 'loser-cell'}">${Math.round(cat2.averageConsensusScore)}</td>
+                  <td class="${score1 > score2 ? 'winner-cell' : 'loser-cell'}">${Math.round(score1)}</td>
+                  <td class="${score2 > score1 ? 'winner-cell' : 'loser-cell'}">${Math.round(score2)}</td>
                   <td>${catWinner}</td>
                 </tr>
               `;
