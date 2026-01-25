@@ -551,7 +551,7 @@ const AppContent: React.FC = () => {
               ============================================================ */}
           {activeTab === 'judges-report' && (
             <JudgeTab
-              comparisonResult={enhancedResult}
+              comparisonResult={enhancedResult || state.result || null}
               userId={/* TODO: Get from auth context */ 'guest'}
             />
           )}

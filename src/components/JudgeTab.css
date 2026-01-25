@@ -116,6 +116,118 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   REPORT SELECTION SECTION - No Data State
+   ═══════════════════════════════════════════════════════════════════════════ */
+.report-selection-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(201, 162, 39, 0.2);
+  width: 100%;
+  max-width: 400px;
+}
+
+.or-divider {
+  color: var(--steel-gray);
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.1em;
+}
+
+.report-select-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--steel-gray);
+  margin-bottom: 0.75rem;
+}
+
+.judge-report-dropdown {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 0.95rem;
+  font-family: var(--font-display);
+  background: var(--cockpit-blue);
+  color: var(--ice-white);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9a227' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+.judge-report-dropdown:hover {
+  border-color: var(--brushed-gold);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
+}
+
+.judge-report-dropdown:focus {
+  outline: none;
+  border-color: var(--brushed-gold);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.2);
+}
+
+.judge-report-dropdown option {
+  background: var(--midnight);
+  color: var(--ice-white);
+  padding: 0.5rem;
+}
+
+.judge-report-dropdown optgroup {
+  font-weight: 600;
+  color: var(--brushed-gold);
+  background: var(--cockpit-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REPORT SELECTOR BAR - When report is loaded
+   ═══════════════════════════════════════════════════════════════════════════ */
+.report-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 2rem;
+  background: rgba(13, 40, 71, 0.6);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.report-selector-bar .report-select-label {
+  margin-bottom: 0;
+  white-space: nowrap;
+  color: var(--brushed-gold);
+}
+
+.report-selector-bar .judge-report-dropdown {
+  max-width: 400px;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .report-selector-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 0.5rem;
+  }
+
+  .report-selector-bar .judge-report-dropdown {
+    max-width: 100%;
+  }
+
+  .report-selection-section {
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    COCKPIT HEADER
    ═══════════════════════════════════════════════════════════════════════════ */
 .judge-header {

@@ -25,11 +25,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
+import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
 import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
 import FeatureGate from './FeatureGate';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
+import {
+  getLocalComparisons,
+  getLocalEnhancedComparisons,
+} from '../services/savedComparisons';
 import './JudgeTab.css';
 
 // ============================================================================
@@ -69,7 +74,7 @@ export interface JudgeReport {
 }
 
 interface JudgeTabProps {
-  comparisonResult: EnhancedComparisonResult | null;
+  comparisonResult: EnhancedComparisonResult | ComparisonResult | null;
   userId?: string;
 }
 
@@ -77,12 +82,34 @@ interface JudgeTabProps {
 // COMPONENT
 // ============================================================================
 
-const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' }) => {
+const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonResult, userId = 'guest' }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Report selection state - allows user to select from saved comparisons
+  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
+
+  // Load saved comparisons for report selection dropdown
+  const savedComparisons = getLocalComparisons();
+  const savedEnhanced = getLocalEnhancedComparisons();
+
+  // Determine which comparison to use
+  // Priority: Selected from dropdown > Prop > None
+  const getActiveComparison = (): EnhancedComparisonResult | ComparisonResult | null => {
+    if (selectedComparisonId) {
+      // Look up in saved comparisons
+      const savedStd = savedComparisons.find(c => c.result.comparisonId === selectedComparisonId);
+      if (savedStd) return savedStd.result;
+      const savedEnh = savedEnhanced.find(c => c.result.comparisonId === selectedComparisonId);
+      if (savedEnh) return savedEnh.result;
+    }
+    return propComparisonResult || null;
+  };
+
+  const comparisonResult = getActiveComparison();
 
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -732,14 +759,50 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
     }
   };
 
-  // No comparison data state
+  // No comparison data state - show report selector dropdown
   if (!comparisonResult) {
+    const hasSavedReports = savedComparisons.length > 0 || savedEnhanced.length > 0;
+
     return (
       <div className="judge-tab">
         <div className="judge-no-data">
           <div className="no-data-icon">⚖️</div>
           <h3>No Comparison Data</h3>
           <p>Run a city comparison first to generate The Judge's verdict.</p>
+
+          {hasSavedReports && (
+            <div className="report-selection-section">
+              <p className="or-divider">— OR —</p>
+              <label className="report-select-label">Select a Saved Report:</label>
+              <select
+                className="report-dropdown judge-report-dropdown"
+                value={selectedComparisonId || ''}
+                onChange={(e) => setSelectedComparisonId(e.target.value || null)}
+              >
+                <option value="">Choose a report...</option>
+                {savedComparisons.length > 0 && (
+                  <optgroup label="Standard Reports">
+                    {savedComparisons.map((saved) => (
+                      <option key={saved.id} value={saved.result.comparisonId}>
+                        {saved.result.city1.city} vs {saved.result.city2.city}
+                        {saved.nickname ? ` (${saved.nickname})` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {savedEnhanced.length > 0 && (
+                  <optgroup label="Enhanced Reports">
+                    {savedEnhanced.map((saved) => (
+                      <option key={saved.id} value={saved.result.comparisonId}>
+                        ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
+                        {saved.nickname ? ` (${saved.nickname})` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -787,6 +850,49 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
           </div>
         </div>
       </header>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          REPORT SELECTION BAR - Switch between saved reports
+      ═══════════════════════════════════════════════════════════════════ */}
+      {(savedComparisons.length > 0 || savedEnhanced.length > 0) && (
+        <div className="report-selector-bar">
+          <label className="report-select-label">SELECT REPORT</label>
+          <select
+            className="report-dropdown judge-report-dropdown"
+            value={selectedComparisonId || ''}
+            onChange={(e) => {
+              setSelectedComparisonId(e.target.value || null);
+              setJudgeReport(null); // Clear existing report when switching
+            }}
+          >
+            <option value="">
+              {propComparisonResult
+                ? `Current: ${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
+                : 'Select a report...'}
+            </option>
+            {savedComparisons.length > 0 && (
+              <optgroup label="Standard Reports">
+                {savedComparisons.map((saved) => (
+                  <option key={saved.id} value={saved.result.comparisonId}>
+                    {saved.result.city1.city} vs {saved.result.city2.city}
+                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {savedEnhanced.length > 0 && (
+              <optgroup label="Enhanced Reports">
+                {savedEnhanced.map((saved) => (
+                  <option key={saved.id} value={saved.result.comparisonId}>
+                    ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
+                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           REPORT IDENTIFICATION BAR
@@ -1028,7 +1134,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city1Score ?? comparisonResult.city1.totalConsensusScore}
+                {judgeReport?.summaryOfFindings.city1Score ?? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : comparisonResult.city1.totalScore)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
@@ -1059,7 +1165,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult, userId = 'guest' 
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city2Score ?? comparisonResult.city2.totalConsensusScore}
+                {judgeReport?.summaryOfFindings.city2Score ?? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : comparisonResult.city2.totalScore)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
