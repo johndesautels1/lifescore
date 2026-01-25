@@ -57,6 +57,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       'Opus Judge Cost',
       'Gamma Cost',
       'Olivia Cost',
+      'TTS Cost',
+      'Avatar Cost',
       'Grand Total'
     ];
 
@@ -75,6 +77,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       (c.opusJudge?.totalCost || 0).toFixed(4),
       (c.gammaTotal || 0).toFixed(4),
       (c.oliviaTotal || 0).toFixed(4),
+      (c.ttsTotal || 0).toFixed(4),
+      (c.avatarTotal || 0).toFixed(4),
       c.grandTotal.toFixed(4)
     ]);
 
@@ -200,6 +204,22 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   {summary.grandTotal > 0 ? ((summary.oliviaCost / summary.grandTotal) * 100).toFixed(1) : 0}%
                 </span>
               </div>
+              <div className="provider-row">
+                <span className="provider-icon">🔊</span>
+                <span className="provider-name">TTS (ElevenLabs + OpenAI)</span>
+                <span className="provider-cost">{formatCost(summary.ttsCost)}</span>
+                <span className="provider-pct">
+                  {summary.grandTotal > 0 ? ((summary.ttsCost / summary.grandTotal) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
+              <div className="provider-row">
+                <span className="provider-icon">🎥</span>
+                <span className="provider-name">Avatar (HeyGen + D-ID + Simli)</span>
+                <span className="provider-cost">{formatCost(summary.avatarCost)}</span>
+                <span className="provider-pct">
+                  {summary.grandTotal > 0 ? ((summary.avatarCost / summary.grandTotal) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
             </div>
 
             {/* Profitability Section */}
@@ -298,6 +318,26 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td>$10.00</td>
                     <td>$30.00</td>
                   </tr>
+                  <tr>
+                    <td>🔊 ElevenLabs TTS</td>
+                    <td colSpan={2}>$0.18/1K chars</td>
+                  </tr>
+                  <tr>
+                    <td>🗣️ OpenAI TTS</td>
+                    <td colSpan={2}>$0.015/1K chars ($0.030 HD)</td>
+                  </tr>
+                  <tr>
+                    <td>🎥 HeyGen Avatar</td>
+                    <td colSpan={2}>$0.032/sec</td>
+                  </tr>
+                  <tr>
+                    <td>👤 D-ID Avatar</td>
+                    <td colSpan={2}>$0.025/sec</td>
+                  </tr>
+                  <tr>
+                    <td>🎭 Simli Avatar</td>
+                    <td colSpan={2}>$0.02/sec</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -386,6 +426,18 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                           <span className="detail-label">Olivia</span>
                           <span className="detail-value">
                             {formatCost(cost.oliviaTotal || 0)}
+                          </span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">TTS</span>
+                          <span className="detail-value">
+                            {formatCost(cost.ttsTotal || 0)}
+                          </span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">Avatar</span>
+                          <span className="detail-value">
+                            {formatCost(cost.avatarTotal || 0)}
                           </span>
                         </div>
                       </div>
