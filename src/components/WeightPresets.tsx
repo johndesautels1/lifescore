@@ -113,6 +113,7 @@ const PRESETS: WeightPreset[] = [
 
 const STORAGE_KEY = 'lifescore_weights';
 const STORAGE_KEY_LAWLIVED = 'lifescore_lawlived';
+const STORAGE_KEY_EXCLUDED = 'lifescore_excluded_categories';
 
 export interface CategoryWeights {
   [key: string]: number;
@@ -120,38 +121,112 @@ export interface CategoryWeights {
 
 interface WeightPresetsProps {
   onWeightsChange: (weights: CategoryWeights) => void;
-  onLawLivedChange?: (ratio: LawLivedRatio) => void;         // NEW: Callback for law/lived ratio change
-  onConservativeModeChange?: (enabled: boolean) => void;     // NEW: Callback for conservative mode toggle
+  onLawLivedChange?: (ratio: LawLivedRatio) => void;         // Callback for law/lived ratio change
+  onConservativeModeChange?: (enabled: boolean) => void;     // Callback for conservative mode toggle
+  onExcludedCategoriesChange?: (excluded: Set<CategoryId>) => void;  // Callback for excluded categories
+}
+
+/**
+ * Redistribute weights when categories are excluded
+ * Excluded categories get 0, remaining categories scale up proportionally to sum to 100
+ */
+function redistributeWeights(
+  baseWeights: Record<CategoryId, number>,
+  excludedCategories: Set<CategoryId>
+): Record<CategoryId, number> {
+  const allCategoryIds = Object.keys(baseWeights) as CategoryId[];
+  const activeCategories = allCategoryIds.filter(id => !excludedCategories.has(id));
+
+  // If all excluded, return zeros (shouldn't happen normally)
+  if (activeCategories.length === 0) {
+    const result: Record<CategoryId, number> = {} as Record<CategoryId, number>;
+    allCategoryIds.forEach(id => { result[id] = 0; });
+    return result;
+  }
+
+  // Calculate total weight of active categories
+  const activeTotal = activeCategories.reduce((sum, id) => sum + baseWeights[id], 0);
+
+  // Build redistributed weights
+  const redistributed: Record<CategoryId, number> = {} as Record<CategoryId, number>;
+
+  // Active categories get scaled up proportionally
+  activeCategories.forEach(id => {
+    redistributed[id] = activeTotal > 0
+      ? Math.round((baseWeights[id] / activeTotal) * 100)
+      : Math.round(100 / activeCategories.length);
+  });
+
+  // Excluded categories get 0
+  excludedCategories.forEach(id => {
+    redistributed[id] = 0;
+  });
+
+  // Fix rounding errors to ensure sum is exactly 100
+  const total = Object.values(redistributed).reduce((a, b) => a + b, 0);
+  if (total !== 100 && activeCategories.length > 0) {
+    const diff = 100 - total;
+    redistributed[activeCategories[0]] += diff;
+  }
+
+  return redistributed;
 }
 
 export const WeightPresets: React.FC<WeightPresetsProps> = ({
   onWeightsChange,
   onLawLivedChange,
-  onConservativeModeChange
+  onConservativeModeChange,
+  onExcludedCategoriesChange
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('balanced');
   const [customWeights, setCustomWeights] = useState<CategoryWeights>(PRESETS[0].weights);
   const [isCustom, setIsCustom] = useState(false);
 
-  // NEW: Law vs Lived Reality preference state
+  // Law vs Lived Reality preference state
   const [lawLivedRatio, setLawLivedRatio] = useState<LawLivedRatio>(PRESETS[0].lawLivedRatio);
   const [isLawLivedCustom, setIsLawLivedCustom] = useState(false);
 
-  // NEW: Conservative mode (use MIN of law/lived)
+  // Conservative mode (use MIN of law/lived)
   const [conservativeMode, setConservativeMode] = useState(false);
+
+  // Category exclusion state
+  const [excludedCategories, setExcludedCategories] = useState<Set<CategoryId>>(new Set());
+
+  // Base weights before redistribution (used when toggling exclusions)
+  const [baseWeights, setBaseWeights] = useState<CategoryWeights>(PRESETS[0].weights);
 
   // Load from localStorage on mount
   useEffect(() => {
+    // Load excluded categories first (needed for weight redistribution)
+    let loadedExcluded = new Set<CategoryId>();
+    const storedExcluded = localStorage.getItem(STORAGE_KEY_EXCLUDED);
+    if (storedExcluded) {
+      try {
+        const parsed = JSON.parse(storedExcluded);
+        loadedExcluded = new Set(parsed as CategoryId[]);
+        setExcludedCategories(loadedExcluded);
+        onExcludedCategoriesChange?.(loadedExcluded);
+      } catch {
+        // Keep empty set
+      }
+    }
+
     // Load category weights
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setCustomWeights(parsed.weights);
+        setBaseWeights(parsed.baseWeights || parsed.weights);
         setSelectedPreset(parsed.presetId);
         setIsCustom(parsed.isCustom);
-        onWeightsChange(parsed.weights);
+        // Redistribute weights based on exclusions
+        const redistributed = redistributeWeights(
+          parsed.baseWeights || parsed.weights,
+          loadedExcluded
+        );
+        setCustomWeights(redistributed);
+        onWeightsChange(redistributed);
       } catch {
         onWeightsChange(PRESETS[0].weights);
       }
@@ -181,10 +256,11 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       weights: customWeights,
+      baseWeights: baseWeights,
       presetId: selectedPreset,
       isCustom
     }));
-  }, [customWeights, selectedPreset, isCustom]);
+  }, [customWeights, baseWeights, selectedPreset, isCustom]);
 
   // Save Law/Lived preferences
   useEffect(() => {
@@ -195,17 +271,49 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
     }));
   }, [lawLivedRatio, isLawLivedCustom, conservativeMode]);
 
+  // Save excluded categories
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EXCLUDED, JSON.stringify(Array.from(excludedCategories)));
+  }, [excludedCategories]);
+
   const handlePresetSelect = (preset: WeightPreset) => {
     setSelectedPreset(preset.id);
-    setCustomWeights(preset.weights);
+    setBaseWeights(preset.weights);
     setIsCustom(false);
-    onWeightsChange(preset.weights);
+
+    // Redistribute weights based on current exclusions
+    const redistributed = redistributeWeights(preset.weights, excludedCategories);
+    setCustomWeights(redistributed);
+    onWeightsChange(redistributed);
 
     // Also update Law/Lived ratio to match preset (unless user has customized it)
     if (!isLawLivedCustom) {
       setLawLivedRatio(preset.lawLivedRatio);
       onLawLivedChange?.(preset.lawLivedRatio);
     }
+  };
+
+  // Handle category exclusion toggle
+  const handleExclusionToggle = (categoryId: CategoryId) => {
+    const newExcluded = new Set(excludedCategories);
+    if (newExcluded.has(categoryId)) {
+      newExcluded.delete(categoryId);
+    } else {
+      newExcluded.add(categoryId);
+    }
+
+    // Prevent excluding all categories
+    if (newExcluded.size >= CATEGORIES.length) {
+      return;
+    }
+
+    setExcludedCategories(newExcluded);
+    onExcludedCategoriesChange?.(newExcluded);
+
+    // Redistribute weights
+    const redistributed = redistributeWeights(baseWeights as Record<CategoryId, number>, newExcluded);
+    setCustomWeights(redistributed);
+    onWeightsChange(redistributed);
   };
 
   // NEW: Handle Law/Lived slider change
@@ -231,38 +339,44 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
   };
 
   const handleSliderChange = (categoryId: CategoryId, value: number) => {
-    // Ensure total stays at 100 by adjusting other weights proportionally
-    const currentTotal = Object.values(customWeights).reduce((a, b) => a + b, 0);
-    const otherTotal = currentTotal - customWeights[categoryId];
+    // Update base weights (before redistribution)
+    const newBaseWeights = { ...baseWeights };
+    const currentTotal = Object.values(baseWeights).reduce((a, b) => a + b, 0);
+    const otherTotal = currentTotal - (baseWeights[categoryId] || 0);
     const newOtherTotal = 100 - value;
 
-    const newWeights = { ...customWeights };
-    newWeights[categoryId] = value;
+    newBaseWeights[categoryId] = value;
 
-    // Adjust other weights proportionally
+    // Adjust other active (non-excluded) weights proportionally
     if (otherTotal > 0 && newOtherTotal >= 0) {
       const ratio = newOtherTotal / otherTotal;
-      Object.keys(newWeights).forEach(key => {
-        if (key !== categoryId) {
-          newWeights[key as CategoryId] = Math.round(newWeights[key as CategoryId] * ratio);
+      Object.keys(newBaseWeights).forEach(key => {
+        if (key !== categoryId && !excludedCategories.has(key as CategoryId)) {
+          newBaseWeights[key as CategoryId] = Math.round((newBaseWeights[key as CategoryId] || 0) * ratio);
         }
       });
     }
 
     // Fix rounding errors
-    const newTotal = Object.values(newWeights).reduce((a, b) => a + b, 0);
+    const newTotal = Object.values(newBaseWeights).reduce((a, b) => a + b, 0);
     if (newTotal !== 100) {
       const diff = 100 - newTotal;
-      const firstOther = Object.keys(newWeights).find(k => k !== categoryId) as CategoryId;
+      const firstOther = Object.keys(newBaseWeights).find(
+        k => k !== categoryId && !excludedCategories.has(k as CategoryId)
+      ) as CategoryId;
       if (firstOther) {
-        newWeights[firstOther] += diff;
+        newBaseWeights[firstOther] += diff;
       }
     }
 
-    setCustomWeights(newWeights);
+    setBaseWeights(newBaseWeights);
+
+    // Redistribute with exclusions
+    const redistributed = redistributeWeights(newBaseWeights as Record<CategoryId, number>, excludedCategories);
+    setCustomWeights(redistributed);
     setIsCustom(true);
     setSelectedPreset('custom');
-    onWeightsChange(newWeights);
+    onWeightsChange(redistributed);
   };
 
   const totalWeight = Object.values(customWeights).reduce((a, b) => a + b, 0);
@@ -308,7 +422,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
             ))}
           </div>
 
-          {/* Weight Sliders */}
+          {/* Weight Sliders with Category Exclusion */}
           <div className="weight-sliders">
             <div className="sliders-header">
               <span>Fine-tune Weights</span>
@@ -316,26 +430,55 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
                 Total: {totalWeight}%
               </span>
             </div>
+            <p className="sliders-hint">
+              Uncheck a category to exclude it entirely. Its weight redistributes to others.
+            </p>
 
-            {CATEGORIES.map(category => (
-              <div key={category.id} className="slider-row">
-                <div className="slider-label">
-                  <span className="slider-icon">{category.icon}</span>
-                  <span className="slider-name">{category.name}</span>
+            {CATEGORIES.map(category => {
+              const isExcluded = excludedCategories.has(category.id);
+              return (
+                <div key={category.id} className={`slider-row ${isExcluded ? 'excluded' : ''}`}>
+                  <div className="slider-label">
+                    <label className="exclusion-checkbox" title={isExcluded ? 'Click to include' : 'Click to exclude'}>
+                      <input
+                        type="checkbox"
+                        checked={!isExcluded}
+                        onChange={() => handleExclusionToggle(category.id)}
+                        className="exclusion-input"
+                      />
+                      <span className="exclusion-checkmark"></span>
+                    </label>
+                    <span className={`slider-icon ${isExcluded ? 'excluded' : ''}`}>{category.icon}</span>
+                    <span className={`slider-name ${isExcluded ? 'excluded' : ''}`}>{category.name}</span>
+                    {isExcluded && <span className="excluded-badge">Excluded</span>}
+                  </div>
+                  <div className="slider-control">
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={customWeights[category.id] || 0}
+                      onChange={(e) => handleSliderChange(category.id, parseInt(e.target.value))}
+                      className="weight-slider"
+                      disabled={isExcluded}
+                    />
+                    <span className={`slider-value ${isExcluded ? 'excluded' : ''}`}>
+                      {isExcluded ? '—' : `${customWeights[category.id] || 0}%`}
+                    </span>
+                  </div>
                 </div>
-                <div className="slider-control">
-                  <input
-                    type="range"
-                    min="0"
-                    max="50"
-                    value={customWeights[category.id] || 0}
-                    onChange={(e) => handleSliderChange(category.id, parseInt(e.target.value))}
-                    className="weight-slider"
-                  />
-                  <span className="slider-value">{customWeights[category.id] || 0}%</span>
-                </div>
+              );
+            })}
+
+            {excludedCategories.size > 0 && (
+              <div className="exclusion-summary">
+                <span className="summary-icon">ℹ️</span>
+                <span>
+                  {excludedCategories.size} categor{excludedCategories.size === 1 ? 'y' : 'ies'} excluded.
+                  Weights redistributed to {CATEGORIES.length - excludedCategories.size} active categories.
+                </span>
               </div>
-            ))}
+            )}
           </div>
 
           {/* NEW: Law vs Lived Reality Slider */}

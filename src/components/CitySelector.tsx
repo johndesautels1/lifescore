@@ -17,7 +17,7 @@ import {
 import { parseURLParams, updateURL } from '../hooks/useURLParams';
 import { DealbreakersPanel } from './DealbreakersPanel';
 import { WeightPresets, type CategoryWeights } from './WeightPresets';
-import type { LawLivedRatio } from '../types/metrics';
+import type { LawLivedRatio, CategoryId } from '../types/metrics';
 import './CitySelector.css';
 
 // Helper to find metro by formatted string (e.g., "Tampa, Florida, USA")
@@ -33,8 +33,9 @@ interface CitySelectorProps {
   enhancedWaiting?: boolean; // True when enhanced mode is waiting for user to click LLM buttons
   onDealbreakersChange?: (dealbreakers: string[]) => void;
   onWeightsChange?: (weights: CategoryWeights) => void;
-  onLawLivedChange?: (ratio: LawLivedRatio) => void;        // NEW: Law vs Lived ratio change
-  onConservativeModeChange?: (enabled: boolean) => void;    // NEW: Conservative mode toggle
+  onLawLivedChange?: (ratio: LawLivedRatio) => void;        // Law vs Lived ratio change
+  onConservativeModeChange?: (enabled: boolean) => void;    // Conservative mode toggle
+  onExcludedCategoriesChange?: (excluded: Set<CategoryId>) => void;  // Category exclusion change
 }
 
 interface PopularComparison {
@@ -205,7 +206,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   onDealbreakersChange,
   onWeightsChange,
   onLawLivedChange,
-  onConservativeModeChange
+  onConservativeModeChange,
+  onExcludedCategoriesChange
 }) => {
   const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
@@ -315,6 +317,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
           onWeightsChange={onWeightsChange}
           onLawLivedChange={onLawLivedChange}
           onConservativeModeChange={onConservativeModeChange}
+          onExcludedCategoriesChange={onExcludedCategoriesChange}
         />
       )}
 

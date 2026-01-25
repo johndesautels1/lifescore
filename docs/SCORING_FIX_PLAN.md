@@ -35,8 +35,8 @@ The scoring system has fundamental math errors causing two compared cities to al
 | 1 | Law/Lived ratio per persona | **HIGH** | `WeightPresets.tsx` | **DONE** |
 | 2 | Law/Lived user slider | **HIGH** | `WeightPresets.tsx`, `CitySelector.tsx`, `App.tsx` | **DONE** |
 | 3 | Conservative mode (MIN) | **MEDIUM** | `WeightPresets.tsx`, scoring files | **DONE** |
-| 4 | Category exclusion UI | **MEDIUM** | `WeightPresets.tsx` | TODO |
-| 5 | Weight redistribution | **MEDIUM** | All scoring files | TODO |
+| 4 | Category exclusion UI | **MEDIUM** | `WeightPresets.tsx` | **DONE** |
+| 5 | Weight redistribution | **MEDIUM** | `WeightPresets.tsx` | **DONE** |
 | 6 | Data completeness indicator | **LOW** | Results components | **DONE** (types) |
 | 7 | Wire up Law/Lived to scoring | **HIGH** | `App.tsx`, `useComparison.ts` | **DONE** |
 
