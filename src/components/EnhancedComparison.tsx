@@ -1886,17 +1886,17 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     const city1LLMScoresMap = new Map(city1Metric?.llmScores?.map(s => [s.llmProvider, s]) || []);
                     const city2LLMScoresMap = new Map(city2Metric?.llmScores?.map(s => [s.llmProvider, s]) || []);
 
-                    // Calculate median verification
-                    const city1Scores = city1Metric?.llmScores?.map(s => s.normalizedScore) || [];
-                    const city2Scores = city2Metric?.llmScores?.map(s => s.normalizedScore) || [];
+                    // Calculate median verification - filter out null scores
+                    const city1Scores: number[] = (city1Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null)) || [];
+                    const city2Scores: number[] = (city2Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null)) || [];
                     const sortedCity1 = [...city1Scores].sort((a, b) => a - b);
                     const sortedCity2 = [...city2Scores].sort((a, b) => a - b);
-                    const medianCity1 = sortedCity1.length > 0
+                    const medianCity1: number = sortedCity1.length > 0
                       ? sortedCity1.length % 2 === 0
                         ? (sortedCity1[sortedCity1.length/2 - 1] + sortedCity1[sortedCity1.length/2]) / 2
                         : sortedCity1[Math.floor(sortedCity1.length/2)]
                       : 0;
-                    const medianCity2 = sortedCity2.length > 0
+                    const medianCity2: number = sortedCity2.length > 0
                       ? sortedCity2.length % 2 === 0
                         ? (sortedCity2[sortedCity2.length/2 - 1] + sortedCity2[sortedCity2.length/2]) / 2
                         : sortedCity2[Math.floor(sortedCity2.length/2)]
@@ -2005,7 +2005,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                       const score = city1LLMScoresMap.get(provider);
                                       return (
                                         <td key={provider} className="llm-score-cell">
-                                          {score ? Math.round(score.normalizedScore) : '—'}
+                                          {score && score.normalizedScore !== null ? Math.round(score.normalizedScore) : '—'}
                                         </td>
                                       );
                                     })}
@@ -2020,7 +2020,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                                       const score = city2LLMScoresMap.get(provider);
                                       return (
                                         <td key={provider} className="llm-score-cell">
-                                          {score ? Math.round(score.normalizedScore) : '—'}
+                                          {score && score.normalizedScore !== null ? Math.round(score.normalizedScore) : '—'}
                                         </td>
                                       );
                                     })}
