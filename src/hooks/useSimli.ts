@@ -464,14 +464,41 @@ export function useSimli(): UseSimliReturn {
 
         console.log('[useSimli] Sending', bytes.length, 'bytes of audio to Simli');
 
-        // Send in chunks of 6000 bytes (Simli recommended)
+        // Send in chunks with pacing to avoid overwhelming the data channel
+        // Simli expects PCM16 at 16kHz = 32000 bytes/sec
+        // Send 6000 bytes (~0.1875s of audio) every ~50ms for ~4x realtime
         const chunkSize = 6000;
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          const chunk = bytes.slice(i, i + chunkSize);
-          dataChannelRef.current.send(chunk);
-        }
+        const dc = dataChannelRef.current;
+        let offset = 0;
 
-        console.log('[useSimli] Audio sent successfully');
+        const sendNextChunk = () => {
+          if (!dc || dc.readyState !== 'open') {
+            console.warn('[useSimli] Data channel closed during send');
+            return;
+          }
+
+          // Check if buffer is getting full (>64KB queued)
+          if (dc.bufferedAmount > 65536) {
+            // Wait for buffer to drain
+            setTimeout(sendNextChunk, 50);
+            return;
+          }
+
+          const end = Math.min(offset + chunkSize, bytes.length);
+          const chunk = bytes.slice(offset, end);
+          dc.send(chunk);
+          offset = end;
+
+          if (offset < bytes.length) {
+            // Schedule next chunk
+            setTimeout(sendNextChunk, 10);
+          } else {
+            console.log('[useSimli] Audio sent successfully');
+          }
+        };
+
+        // Start sending
+        sendNextChunk();
       } else if (data.audioData) {
         console.warn('[useSimli] Audio received but data channel not open!', dataChannelRef.current?.readyState);
       }
