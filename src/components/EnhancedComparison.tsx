@@ -711,7 +711,7 @@ interface DisputedMetric {
   icon: string;
   standardDeviation: number;
   city2StandardDeviation: number;
-  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split' | 'no_data';
   city1Score: number;
   city2Score: number;
   scoreDifference: number;
@@ -731,7 +731,9 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
       if (!metric2) return;
 
       // Only include metrics where LLMs had significant disagreement (either city)
-      const maxStdDev = Math.max(metric1.standardDeviation, metric2.standardDeviation);
+      const stdDev1 = metric1.standardDeviation ?? 0;
+      const stdDev2 = metric2.standardDeviation ?? 0;
+      const maxStdDev = Math.max(stdDev1, stdDev2);
       if (maxStdDev > 10) {
         const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
         const shortName = metricDef?.shortName || metric1.metricId;
@@ -739,26 +741,30 @@ const findDisputedMetrics = (result: EnhancedComparisonResult, count: number = 5
         // Build LLM scores arrays for BOTH cities
         const city1LlmScores = metric1.llmScores.map(score => ({
           provider: score.llmProvider,
-          score: score.normalizedScore,
+          score: score.normalizedScore ?? 0,
           icon: LLM_CONFIGS[score.llmProvider]?.icon || '🤖'
         }));
 
         const city2LlmScores = metric2.llmScores.map(score => ({
           provider: score.llmProvider,
-          score: score.normalizedScore,
+          score: score.normalizedScore ?? 0,
           icon: LLM_CONFIGS[score.llmProvider]?.icon || '🤖'
         }));
+
+        const city1Score = metric1.consensusScore ?? 0;
+        const city2Score = metric2.consensusScore ?? 0;
+        const confidenceLevel = metric1.confidenceLevel === 'no_data' ? 'split' : metric1.confidenceLevel;
 
         disputed.push({
           metricId: metric1.metricId,
           shortName,
           icon: getMetricIcon(shortName),
-          standardDeviation: metric1.standardDeviation,
-          city2StandardDeviation: metric2.standardDeviation,
-          confidenceLevel: metric1.confidenceLevel,
-          city1Score: metric1.consensusScore,
-          city2Score: metric2.consensusScore,
-          scoreDifference: Math.abs(metric1.consensusScore - metric2.consensusScore),
+          standardDeviation: stdDev1,
+          city2StandardDeviation: stdDev2,
+          confidenceLevel,
+          city1Score,
+          city2Score,
+          scoreDifference: Math.abs(city1Score - city2Score),
           city1LlmScores,
           city2LlmScores
         });
@@ -795,9 +801,10 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
     }
   };
 
-  const getMetricConfidenceLabel = (level: 'unanimous' | 'strong' | 'moderate' | 'split'): string => {
+  const getMetricConfidenceLabel = (level: 'unanimous' | 'strong' | 'moderate' | 'split' | 'no_data'): string => {
     switch (level) {
       case 'unanimous': return 'Unanimous';
+      case 'no_data': return 'No Data';
       case 'strong': return 'Strong';
       case 'moderate': return 'Moderate';
       case 'split': return 'Split';
@@ -1000,7 +1007,7 @@ interface AgreedMetric {
   shortName: string;
   icon: string;
   standardDeviation: number;
-  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split' | 'no_data';
   city1Score: number;
   city2Score: number;
   scoreDifference: number;
@@ -1020,19 +1027,23 @@ const findAgreedMetrics = (result: EnhancedComparisonResult, count: number = 5):
 
       // Only include metrics where LLMs had strong agreement (σ < 5)
       // AND we have at least 2 LLM scores to make it meaningful
-      if (metric1.standardDeviation < 5 && metric1.llmScores.length >= 2) {
+      const stdDev = metric1.standardDeviation ?? 0;
+      if (stdDev < 5 && metric1.llmScores.length >= 2) {
         const metricDef = ALL_METRICS.find(m => m.id === metric1.metricId);
         const shortName = metricDef?.shortName || metric1.metricId;
+        const city1Score = metric1.consensusScore ?? 0;
+        const city2Score = metric2.consensusScore ?? 0;
+        const confidenceLevel = metric1.confidenceLevel === 'no_data' ? 'split' : metric1.confidenceLevel;
 
         agreed.push({
           metricId: metric1.metricId,
           shortName,
           icon: getMetricIcon(shortName),
-          standardDeviation: metric1.standardDeviation,
-          confidenceLevel: metric1.confidenceLevel,
-          city1Score: metric1.consensusScore,
-          city2Score: metric2.consensusScore,
-          scoreDifference: Math.abs(metric1.consensusScore - metric2.consensusScore),
+          standardDeviation: stdDev,
+          confidenceLevel,
+          city1Score,
+          city2Score,
+          scoreDifference: Math.abs(city1Score - city2Score),
           llmCount: metric1.llmScores.length
         });
       }
@@ -1243,16 +1254,18 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
         new Map(allEvidence.map(e => [e.url, e])).values()
       );
 
-      const diff = Math.abs(metric1.consensusScore - metric2.consensusScore);
+      const city1Score = metric1.consensusScore ?? 0;
+      const city2Score = metric2.consensusScore ?? 0;
+      const diff = Math.abs(city1Score - city2Score);
       differences.push({
         metricId: metric1.metricId,
         name: name,
         shortName: shortName,
         icon: getMetricIcon(shortName),
-        city1Score: metric1.consensusScore,
-        city2Score: metric2.consensusScore,
+        city1Score,
+        city2Score,
         difference: diff,
-        favoredCity: metric1.consensusScore > metric2.consensusScore ? 'city1' : 'city2',
+        favoredCity: city1Score > city2Score ? 'city1' : 'city2',
         city1Explanation: metric1.judgeExplanation,
         city2Explanation: metric2.judgeExplanation,
         sources: uniqueSources,
@@ -1302,7 +1315,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       const lCat = loser.categories[i];
       return {
         category: CATEGORIES.find(c => c.id === wCat.categoryId),
-        advantage: wCat.averageConsensusScore - (lCat?.averageConsensusScore || 0)
+        advantage: (wCat.averageConsensusScore ?? 0) - (lCat?.averageConsensusScore ?? 0)
       };
     }).filter(c => c.advantage > 0).sort((a, b) => b.advantage - a.advantage);
 
@@ -1322,7 +1335,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       const wCat = winner.categories[i];
       return {
         category: CATEGORIES.find(c => c.id === lCat.categoryId),
-        advantage: lCat.averageConsensusScore - (wCat?.averageConsensusScore || 0)
+        advantage: (lCat.averageConsensusScore ?? 0) - (wCat?.averageConsensusScore ?? 0)
       };
     }).filter(c => c.advantage > 0).sort((a, b) => b.advantage - a.advantage);
 
@@ -1631,7 +1644,8 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                           <div className="diff-calculation-verification">
                             <h4 className="verification-header">🔢 Score Calculation</h4>
                             {diff.city1LlmScores && diff.city1LlmScores.length > 0 && (() => {
-                              const scores = diff.city1LlmScores.map(s => s.normalizedScore).sort((a, b) => a - b);
+                              const scores = diff.city1LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
+                              if (scores.length === 0) return null;
                               const mid = Math.floor(scores.length / 2);
                               const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
                               const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city1Score);
@@ -1648,7 +1662,8 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               );
                             })()}
                             {diff.city2LlmScores && diff.city2LlmScores.length > 0 && (() => {
-                              const scores = diff.city2LlmScores.map(s => s.normalizedScore).sort((a, b) => a - b);
+                              const scores = diff.city2LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
+                              if (scores.length === 0) return null;
                               const mid = Math.floor(scores.length / 2);
                               const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
                               const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city2Score);

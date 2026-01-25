@@ -92,12 +92,12 @@ export function prepareSpiderChartData(result: EnhancedComparisonResult): Spider
     datasets: [
       {
         label: result.city1.city,
-        data: result.city1.categories.map(cat => Math.round(cat.averageConsensusScore)),
+        data: result.city1.categories.map(cat => Math.round(cat.averageConsensusScore ?? 0)),
         color: '#D4AF37', // Gold for city1
       },
       {
         label: result.city2.city,
-        data: result.city2.categories.map(cat => Math.round(cat.averageConsensusScore)),
+        data: result.city2.categories.map(cat => Math.round(cat.averageConsensusScore ?? 0)),
         color: '#0047AB', // Cobalt for city2
       },
     ],
@@ -114,13 +114,14 @@ export function prepareBarChartData(result: EnhancedComparisonResult, topN: numb
 
   result.city1.categories.forEach((cat, catIdx) => {
     cat.metrics.forEach((metric, metricIdx) => {
-      const city2Score = result.city2.categories[catIdx].metrics[metricIdx].consensusScore;
+      const city2Score = result.city2.categories[catIdx].metrics[metricIdx].consensusScore ?? 0;
+      const city1Score = metric.consensusScore ?? 0;
       allMetrics.push({
         id: metric.metricId,
         name: metric.metricId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        city1: metric.consensusScore,
+        city1: city1Score,
         city2: city2Score,
-        diff: Math.abs(metric.consensusScore - city2Score),
+        diff: Math.abs(city1Score - city2Score),
       });
     });
   });
@@ -166,12 +167,12 @@ export function prepareLineChartData(result: EnhancedComparisonResult, categoryI
     datasets: [
       {
         label: result.city1.city,
-        data: category1.metrics.map(m => Math.round(m.consensusScore)),
+        data: category1.metrics.map(m => Math.round(m.consensusScore ?? 0)),
         color: '#D4AF37',
       },
       {
         label: result.city2.city,
-        data: category2.metrics.map(m => Math.round(m.consensusScore)),
+        data: category2.metrics.map(m => Math.round(m.consensusScore ?? 0)),
         color: '#0047AB',
       },
     ],
@@ -217,7 +218,7 @@ export function preparePieChartData(result: EnhancedComparisonResult, cityNum: 1
       const category = CATEGORIES.find(c => c.id === cat.categoryId);
       return category?.name || cat.categoryId;
     }),
-    data: city.categories.map(cat => Math.round(cat.averageConsensusScore)),
+    data: city.categories.map(cat => Math.round(cat.averageConsensusScore ?? 0)),
     colors: categoryColors,
   };
 }
@@ -234,14 +235,15 @@ export function prepareTableData(result: EnhancedComparisonResult): TableData {
     const categoryName = CATEGORIES.find(c => c.id === cat.categoryId)?.name || cat.categoryId;
 
     cat.metrics.forEach((metric, metricIdx) => {
-      const city2Score = result.city2.categories[catIdx].metrics[metricIdx].consensusScore;
-      const diff = metric.consensusScore - city2Score;
+      const city2Score = result.city2.categories[catIdx].metrics[metricIdx].consensusScore ?? 0;
+      const city1Score = metric.consensusScore ?? 0;
+      const diff = city1Score - city2Score;
       const winner = diff > 0 ? result.city1.city : diff < 0 ? result.city2.city : 'Tie';
 
       rows.push([
         categoryName,
         metric.metricId,
-        Math.round(metric.consensusScore),
+        Math.round(city1Score),
         Math.round(city2Score),
         (diff > 0 ? '+' : '') + Math.round(diff),
         winner,

@@ -150,6 +150,7 @@ const AppContent: React.FC = () => {
           cat.metrics.forEach(metric => {
             sonnetScores.push({
               ...metric,
+              legalScore: metric.legalScore ?? undefined,
               llmProvider: 'claude-sonnet',
               city: 'city1' as const
             });
@@ -161,6 +162,7 @@ const AppContent: React.FC = () => {
           cat.metrics.forEach(metric => {
             sonnetScores.push({
               ...metric,
+              legalScore: metric.legalScore ?? undefined,
               llmProvider: 'claude-sonnet',
               city: 'city2' as const
             });

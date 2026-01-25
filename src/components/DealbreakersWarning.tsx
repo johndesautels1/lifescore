@@ -88,18 +88,19 @@ export const DealbreakersWarning: React.FC<DealbreakersWarningProps> = ({
  */
 export const checkDealbreakers = (
   dealbreakers: string[],
-  metrics: Array<{ metricId: string; consensusScore: number }>
+  metrics: Array<{ metricId: string; consensusScore: number | null }>
 ): FailedDealbreaker[] => {
   const failed: FailedDealbreaker[] = [];
 
   dealbreakers.forEach(dealbreakerId => {
     const metricScore = metrics.find(m => m.metricId === dealbreakerId);
-    if (metricScore && metricScore.consensusScore < 50) {
+    const score = metricScore?.consensusScore ?? 0;
+    if (metricScore && score < 50) {
       const metricDef = ALL_METRICS.find(m => m.id === dealbreakerId);
       failed.push({
         metricId: dealbreakerId,
         shortName: metricDef?.shortName || dealbreakerId,
-        score: metricScore.consensusScore
+        score: score
       });
     }
   });
