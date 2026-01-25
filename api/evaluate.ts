@@ -204,12 +204,30 @@ Return a JSON object with this exact structure:
 Return ONLY the JSON object, no other text.`;
 }
 
+// Token usage from LLM response
+interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+// Tavily credit usage
+interface TavilyUsage {
+  researchCredits: number;
+  searchCredits: number;
+  totalCredits: number;
+}
+
 interface EvaluationResponse {
   provider: LLMProvider;
   success: boolean;
   scores: MetricScore[];
   latencyMs: number;
   error?: string;
+  // Cost tracking data
+  usage?: {
+    tokens: TokenUsage;
+    tavily?: TavilyUsage;
+  };
 }
 
 // Build BASE evaluation prompt with unified 0-100 numeric scoring
@@ -685,7 +703,19 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     }
     const scores = parseResponse(content, 'claude-sonnet');
 
-    return { provider: 'claude-sonnet', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
+    // Extract token usage from Claude response
+    const usage: TokenUsage = {
+      inputTokens: data?.usage?.input_tokens || 0,
+      outputTokens: data?.usage?.output_tokens || 0
+    };
+
+    return {
+      provider: 'claude-sonnet',
+      success: scores.length > 0,
+      scores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: usage }
+    };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
     return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
@@ -821,7 +851,19 @@ Use the Tavily research data provided in the user message to evaluate laws and r
     }
     const scores = parseResponse(content, 'gpt-4o');
 
-    return { provider: 'gpt-4o', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
+    // Extract token usage from OpenAI response
+    const usage: TokenUsage = {
+      inputTokens: data?.usage?.prompt_tokens || 0,
+      outputTokens: data?.usage?.completion_tokens || 0
+    };
+
+    return {
+      provider: 'gpt-4o',
+      success: scores.length > 0,
+      scores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: usage }
+    };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
     return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
@@ -911,7 +953,19 @@ ${isLargeCategory ? `
     }
     const scores = parseResponse(content, 'gemini-3-pro');
 
-    return { provider: 'gemini-3-pro', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
+    // Extract token usage from Gemini response
+    const usage: TokenUsage = {
+      inputTokens: data?.usageMetadata?.promptTokenCount || 0,
+      outputTokens: data?.usageMetadata?.candidatesTokenCount || 0
+    };
+
+    return {
+      provider: 'gemini-3-pro',
+      success: scores.length > 0,
+      scores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: usage }
+    };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
     return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
@@ -1057,9 +1111,21 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
         continue;
       }
 
+      // Extract token usage from Grok response (same format as OpenAI)
+      const usage: TokenUsage = {
+        inputTokens: data?.usage?.prompt_tokens || 0,
+        outputTokens: data?.usage?.completion_tokens || 0
+      };
+
       // Success!
       console.log(`[GROK] Success on attempt ${attempt}: ${scores.length} scores returned`);
-      return { provider: 'grok-4', success: true, scores, latencyMs: Date.now() - startTime };
+      return {
+        provider: 'grok-4',
+        success: true,
+        scores,
+        latencyMs: Date.now() - startTime,
+        usage: { tokens: usage }
+      };
 
     } catch (error) {
       lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
@@ -1265,7 +1331,19 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
       console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', jsonMatch[0].slice(0, 300));
     }
 
-    return { provider: 'perplexity', success: scores.length > 0, scores, latencyMs: Date.now() - startTime };
+    // Extract token usage from Perplexity response (same format as OpenAI)
+    const usage: TokenUsage = {
+      inputTokens: data?.usage?.prompt_tokens || 0,
+      outputTokens: data?.usage?.completion_tokens || 0
+    };
+
+    return {
+      provider: 'perplexity',
+      success: scores.length > 0,
+      scores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: usage }
+    };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key and network');
     return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };

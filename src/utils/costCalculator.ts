@@ -56,6 +56,14 @@ export const API_PRICING = {
     icon: '🔍'
   },
 
+  // OpenAI GPT-4 (for Olivia Assistant)
+  'gpt-4-turbo': {
+    input: 10.00,    // $10 per 1M input tokens
+    output: 30.00,   // $30 per 1M output tokens
+    name: 'GPT-4 Turbo (Olivia)',
+    icon: '💬'
+  },
+
   // Tavily (credit-based pricing)
   'tavily-research': {
     perCredit: 0.01,  // $0.01 per credit (estimated from $50/5000 credits)
@@ -72,6 +80,13 @@ export const API_PRICING = {
     avgCredits: 3,    // typical usage per search
     name: 'Tavily Search',
     icon: '🔎'
+  },
+
+  // Gamma (credit-based for visual reports)
+  'gamma': {
+    perGeneration: 0.50,  // ~$0.50 per generation (estimated based on plan)
+    name: 'Gamma Reports',
+    icon: '📊'
   }
 } as const;
 
@@ -104,6 +119,22 @@ export interface TavilyCost {
   query?: string;
 }
 
+export interface GammaCost {
+  generationId: string;
+  cost: number;
+  timestamp: number;
+}
+
+export interface OliviaCost {
+  threadId: string;
+  inputTokens: number;
+  outputTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+  timestamp: number;
+}
+
 export interface ComparisonCostBreakdown {
   comparisonId: string;
   city1: string;
@@ -128,6 +159,14 @@ export interface ComparisonCostBreakdown {
   opusJudge: APICallCost | null;
   judgeTotal: number;
 
+  // Gamma costs (visual reports)
+  gamma: GammaCost | null;
+  gammaTotal: number;
+
+  // Olivia costs (chat assistant)
+  olivia: OliviaCost[];
+  oliviaTotal: number;
+
   // Totals
   grandTotal: number;
 }
@@ -145,10 +184,14 @@ export interface CostSummary {
   geminiCost: number;
   grokCost: number;
   perplexityCost: number;
+  gammaCost: number;
+  oliviaCost: number;
 
   // Totals
   totalEvaluatorCost: number;
   totalJudgeCost: number;
+  totalGammaCost: number;
+  totalOliviaCost: number;
   grandTotal: number;
 
   // Averages
@@ -202,6 +245,14 @@ export function calculateTavilyCost(
  */
 export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
+}
+
+/**
+ * Calculate Gamma API cost
+ */
+export function calculateGammaCost(): number {
+  const pricing = API_PRICING['gamma'];
+  return 'perGeneration' in pricing ? pricing.perGeneration : 0.50;
 }
 
 // ============================================================================
@@ -264,9 +315,13 @@ export function calculateCostSummary(): CostSummary {
     geminiCost: 0,
     grokCost: 0,
     perplexityCost: 0,
+    gammaCost: 0,
+    oliviaCost: 0,
 
     totalEvaluatorCost: 0,
     totalJudgeCost: 0,
+    totalGammaCost: 0,
+    totalOliviaCost: 0,
     grandTotal: 0,
 
     avgCostPerEnhanced: 0,
@@ -281,9 +336,13 @@ export function calculateCostSummary(): CostSummary {
     summary.geminiCost += cost.gemini.reduce((sum, c) => sum + c.totalCost, 0);
     summary.grokCost += cost.grok.reduce((sum, c) => sum + c.totalCost, 0);
     summary.perplexityCost += cost.perplexity.reduce((sum, c) => sum + c.totalCost, 0);
+    summary.gammaCost += cost.gammaTotal || 0;
+    summary.oliviaCost += cost.oliviaTotal || 0;
 
     summary.totalEvaluatorCost += cost.evaluatorTotal;
     summary.totalJudgeCost += cost.judgeTotal;
+    summary.totalGammaCost += cost.gammaTotal || 0;
+    summary.totalOliviaCost += cost.oliviaTotal || 0;
     summary.grandTotal += cost.grandTotal;
   }
 
@@ -336,6 +395,12 @@ export function createCostBreakdown(
     opusJudge: null,
     judgeTotal: 0,
 
+    gamma: null,
+    gammaTotal: 0,
+
+    olivia: [],
+    oliviaTotal: 0,
+
     grandTotal: 0
   };
 }
@@ -360,11 +425,19 @@ export function finalizeCostBreakdown(breakdown: ComparisonCostBreakdown): Compa
   // Calculate judge total
   breakdown.judgeTotal = breakdown.opusJudge?.totalCost || 0;
 
+  // Calculate Gamma total
+  breakdown.gammaTotal = breakdown.gamma?.cost || 0;
+
+  // Calculate Olivia total
+  breakdown.oliviaTotal = breakdown.olivia.reduce((sum, o) => sum + o.totalCost, 0);
+
   // Calculate grand total
   breakdown.grandTotal =
     breakdown.tavilyTotal +
     breakdown.evaluatorTotal +
-    breakdown.judgeTotal;
+    breakdown.judgeTotal +
+    breakdown.gammaTotal +
+    breakdown.oliviaTotal;
 
   return breakdown;
 }
@@ -404,6 +477,12 @@ export function formatCostBreakdownLog(breakdown: ComparisonCostBreakdown): stri
     ``,
     `--- OPUS JUDGE ---`,
     `Judge Cost: ${formatCost(breakdown.judgeTotal)}`,
+    ``,
+    `--- GAMMA REPORTS ---`,
+    `Gamma Cost: ${formatCost(breakdown.gammaTotal)}`,
+    ``,
+    `--- OLIVIA CHAT ---`,
+    `Olivia Cost: ${formatCost(breakdown.oliviaTotal)} (${breakdown.olivia.length} messages)`,
     ``,
     `========== GRAND TOTAL: ${formatCost(breakdown.grandTotal)} ==========\n`
   ];

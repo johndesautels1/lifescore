@@ -56,6 +56,12 @@ interface OpenAIRun {
       tool_calls: ToolCall[];
     };
   };
+  // Token usage (available after completion)
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 // ============================================================================
@@ -530,8 +536,13 @@ export default async function handler(
     const comparisonId = context?.comparison?.comparisonId;
 
     // Wait for completion (handles tool calls automatically)
-    await waitForRun(apiKey, threadId, run.id, comparisonId);
+    const completedRun = await waitForRun(apiKey, threadId, run.id, comparisonId);
     console.log('[OLIVIA/CHAT] Run completed');
+
+    // Log token usage for cost tracking
+    if (completedRun.usage) {
+      console.log(`[OLIVIA/CHAT] Token usage: ${completedRun.usage.prompt_tokens} in / ${completedRun.usage.completion_tokens} out`);
+    }
 
     // Get the assistant's response
     const messages = await getMessages(apiKey, threadId, 1);
@@ -555,6 +566,11 @@ export default async function handler(
       threadId,
       messageId: assistantMessage.id,
       response: responseText,
+      // Include token usage for cost tracking
+      usage: completedRun.usage ? {
+        inputTokens: completedRun.usage.prompt_tokens,
+        outputTokens: completedRun.usage.completion_tokens,
+      } : undefined,
     });
   } catch (error) {
     console.error('[OLIVIA/CHAT] Error:', error);

@@ -240,6 +240,11 @@ export default async function handler(
         generationId: result.generationId,
         status: 'pending',
         warnings: result.warnings,
+        // Cost tracking - Gamma charges per generation
+        usage: {
+          generationsUsed: 1,
+          // Note: Gamma pricing varies by plan; this is for tracking, not billing
+        }
       });
       return;
     }

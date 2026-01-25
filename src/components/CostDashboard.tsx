@@ -55,6 +55,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       'Grok Cost',
       'Perplexity Cost',
       'Opus Judge Cost',
+      'Gamma Cost',
+      'Olivia Cost',
       'Grand Total'
     ];
 
@@ -71,6 +73,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       c.grok.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
       c.perplexity.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
       (c.opusJudge?.totalCost || 0).toFixed(4),
+      (c.gammaTotal || 0).toFixed(4),
+      (c.oliviaTotal || 0).toFixed(4),
       c.grandTotal.toFixed(4)
     ]);
 
@@ -180,6 +184,22 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   {summary.grandTotal > 0 ? ((summary.claudeOpusCost / summary.grandTotal) * 100).toFixed(1) : 0}%
                 </span>
               </div>
+              <div className="provider-row">
+                <span className="provider-icon">📊</span>
+                <span className="provider-name">Gamma (Reports)</span>
+                <span className="provider-cost">{formatCost(summary.gammaCost)}</span>
+                <span className="provider-pct">
+                  {summary.grandTotal > 0 ? ((summary.gammaCost / summary.grandTotal) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
+              <div className="provider-row">
+                <span className="provider-icon">💬</span>
+                <span className="provider-name">Olivia (Chat Assistant)</span>
+                <span className="provider-cost">{formatCost(summary.oliviaCost)}</span>
+                <span className="provider-pct">
+                  {summary.grandTotal > 0 ? ((summary.oliviaCost / summary.grandTotal) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
             </div>
 
             {/* Profitability Section */}
@@ -269,6 +289,15 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td>🔎 Tavily</td>
                     <td colSpan={2}>~$0.01/credit (varies by plan)</td>
                   </tr>
+                  <tr>
+                    <td>📊 Gamma</td>
+                    <td colSpan={2}>~$0.50/generation (varies by plan)</td>
+                  </tr>
+                  <tr>
+                    <td>💬 GPT-4 Turbo (Olivia)</td>
+                    <td>$10.00</td>
+                    <td>$30.00</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -345,6 +374,18 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                           <span className="detail-label">Opus Judge</span>
                           <span className="detail-value">
                             {formatCost(cost.opusJudge?.totalCost || 0)}
+                          </span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">Gamma</span>
+                          <span className="detail-value">
+                            {formatCost(cost.gammaTotal || 0)}
+                          </span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">Olivia</span>
+                          <span className="detail-value">
+                            {formatCost(cost.oliviaTotal || 0)}
                           </span>
                         </div>
                       </div>

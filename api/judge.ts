@@ -111,12 +111,22 @@ interface MetricConsensus {
   isMissing?: boolean;               // true if metric should be excluded from totals
 }
 
+// Token usage tracking
+interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 interface JudgeOutput {
   city1Consensuses: MetricConsensus[];
   city2Consensuses: MetricConsensus[];
   overallAgreement: number;
   disagreementAreas: string[];
   judgeLatencyMs: number;
+  // Cost tracking
+  usage?: {
+    opusTokens: TokenUsage;
+  };
 }
 
 // ============================================================================
@@ -498,6 +508,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log(`[JUDGE] Disagreement metrics: ${disagreementMetrics.length} (${disagreementMetrics.slice(0, 5).join(', ')}${disagreementMetrics.length > 5 ? '...' : ''})`);
   console.log(`[JUDGE] hasActualScores=${hasActualScores}, anthropicKey=${!!anthropicKey}, city1=${city1}, city2=${city2}`);
 
+  // Track Opus token usage for cost tracking
+  let opusTokenUsage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
+
   if (anthropicKey && city1 && city2 && hasActualScores) {
     try {
       const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses, disagreementMetrics);
@@ -523,6 +536,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (response.ok) {
         const data = await response.json();
+
+        // Capture token usage from Opus response
+        opusTokenUsage = {
+          inputTokens: data?.usage?.input_tokens || 0,
+          outputTokens: data?.usage?.output_tokens || 0
+        };
+        console.log(`[JUDGE] Opus token usage: ${opusTokenUsage.inputTokens} in / ${opusTokenUsage.outputTokens} out`);
+
         const content = data.content?.[0]?.text;
         console.log(`[JUDGE] Opus response received, content length: ${content?.length || 0} chars`);
         if (content) {
@@ -562,7 +583,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     city2Consensuses,
     overallAgreement,
     disagreementAreas: disagreementMetrics.slice(0, 5),
-    judgeLatencyMs: Date.now() - startTime
+    judgeLatencyMs: Date.now() - startTime,
+    // Include Opus token usage for cost tracking
+    usage: {
+      opusTokens: opusTokenUsage
+    }
   };
 
   return res.status(200).json(output);
