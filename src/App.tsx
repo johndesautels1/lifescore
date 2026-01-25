@@ -387,29 +387,63 @@ const AppContent: React.FC = () => {
                     pendingLLMToRun={pendingLLMToRun}
                     clearPendingLLM={() => setPendingLLMToRun(null)}
                     onResultsUpdate={(llmResults, judgeResult) => {
+                      console.log('[App] onResultsUpdate called | llmResults:', llmResults.size, '| judgeResult:', !!judgeResult);
+
                       if (judgeResult && llmResults.size > 0) {
+                        // Validate judge result structure
+                        if (!judgeResult.city1Consensuses || !judgeResult.city2Consensuses) {
+                          console.error('[App] Invalid judge result structure - missing consensuses:', judgeResult);
+                          setEnhancedStatus('complete');
+                          return;
+                        }
+
                         // Build EnhancedComparisonResult from LLM results and judge output
-                        console.log('Judge result received, building enhanced result...');
+                        console.log('[App] Judge result received, building enhanced result...', {
+                          city1Consensuses: judgeResult.city1Consensuses?.length,
+                          city2Consensuses: judgeResult.city2Consensuses?.length,
+                          overallAgreement: judgeResult.overallAgreement
+                        });
 
                         // Import the builder function and construct result
                         import('./services/opusJudge').then(({ buildEnhancedResultFromJudge }) => {
-                          const result = buildEnhancedResultFromJudge(
-                            pendingCities.city1,
-                            pendingCities.city2,
-                            Array.from(llmResults.values()),
-                            judgeResult,
-                            customWeights  // Pass user's custom weights for persona-based scoring
-                          );
-                          setEnhancedResult(result);
+                          try {
+                            const result = buildEnhancedResultFromJudge(
+                              pendingCities.city1,
+                              pendingCities.city2,
+                              Array.from(llmResults.values()),
+                              judgeResult,
+                              customWeights  // Pass user's custom weights for persona-based scoring
+                            );
+                            console.log('[App] Enhanced result built successfully:', {
+                              city1: result.city1?.city,
+                              city2: result.city2?.city,
+                              winner: result.winner,
+                              totalScore1: result.city1?.totalConsensusScore,
+                              totalScore2: result.city2?.totalConsensusScore
+                            });
+                            setEnhancedResult(result);
+                            setEnhancedStatus('complete');
+                            console.log('[App] State updated - tab should switch now');
+                          } catch (buildError) {
+                            console.error('[App] Error building enhanced result:', buildError);
+                            // Still mark as complete to prevent UI from hanging
+                            setEnhancedStatus('complete');
+                          }
+                        }).catch(importError => {
+                          console.error('Error importing opusJudge module:', importError);
+                          // Still mark as complete to prevent UI from hanging
                           setEnhancedStatus('complete');
                         });
+                      } else if (llmResults.size > 0 && !judgeResult) {
+                        // Judge failed but we have LLM results - log for debugging
+                        console.log('LLM results available but no judge result yet. LLMs:', llmResults.size);
                       }
                     }}
                     onStatusChange={(status) => {
-                      console.log('LLM status changed:', status);
+                      console.log('[App] LLM status changed:', status, '| enhancedResult:', !!enhancedResult, '| enhancedStatus:', enhancedStatus);
                       if (status === 'complete' && !enhancedResult) {
-                        // If complete but no result yet, judge may still be processing
-                        console.log('Waiting for judge result...');
+                        // If complete but no result yet, something went wrong
+                        console.warn('[App] Status complete but no result - judge may have failed. Check console for errors.');
                       }
                     }}
                   />

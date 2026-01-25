@@ -229,6 +229,12 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       console.error('Judge failed:', error);
       // CRITICAL FIX: Update lastJudgedCount on failure to prevent infinite retry loop
       setLastJudgedCount(completedCount);
+      // Notify App.tsx even on failure so it can handle the error state
+      // Pass null for judgeResult to indicate failure
+      onResultsUpdate(
+        new Map(Array.from(llmStates.entries()).filter(([, s]) => s.result).map(([k, s]) => [k, s.result!])),
+        null
+      );
       // Still mark as complete so UI doesn't hang
       onStatusChange('complete');
     } finally {
