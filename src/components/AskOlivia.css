@@ -496,6 +496,7 @@
   background: var(--gradient-cockpit);
   border-top: 1px solid rgba(201, 162, 39, 0.15);
   border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+  overflow-x: hidden;
 }
 
 .control-group {
@@ -516,6 +517,7 @@
 .control-buttons {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 /* Control Buttons */
@@ -1332,11 +1334,22 @@
   .control-buttons {
     justify-content: center;
     flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .control-buttons .control-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.75rem;
+    min-width: 70px;
   }
 
   .toggle-chat {
     width: 100%;
     justify-content: center;
+  }
+
+  .toggle-chat .btn-text {
+    font-size: 0.7rem;
   }
 
   .viewport-info-bar {
@@ -1433,13 +1446,27 @@
 
   .control-buttons .control-btn {
     width: auto;
-    min-width: 80px;
-    flex: 1;
+    min-width: 60px;
+    flex: 0 1 auto;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+  }
+
+  .control-buttons .control-btn .btn-text {
+    font-size: 0.6rem;
+  }
+
+  .toggle-chat {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .toggle-chat .btn-text {
+    font-size: 0.6rem;
   }
 
   .report-dropdown {
-    font-size: 0.8rem;
-    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.6rem;
   }
 
   .text-command-input {
