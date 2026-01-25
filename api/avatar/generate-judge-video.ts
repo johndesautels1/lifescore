@@ -1,8 +1,8 @@
 /**
  * LIFE SCORE - Judge Video Generation API
  *
- * Generates Christiano judge videos using Replicate MuseTalk.
- * Caches results in Supabase to avoid regenerating.
+ * Generates Christiano judge videos using Replicate SadTalker.
+ * Flow: Script → TTS Audio → Upload to Storage → SadTalker → Video
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -14,11 +14,19 @@ import { handleCors } from '../shared/cors.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const MUSETALK_MODEL = 'cjwbw/musetalk:latest'; // or use sadtalker
-const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL || 'https://henghuunttmaowypiyhq.supabase.co/storage/v1/object/public/Avatars/Cristiano.png';
+
+// SadTalker model - produces high quality lip-sync videos
+const SADTALKER_VERSION = 'cjwbw/sadtalker:a519cc0cfebaaeade068b23899165a11ec76aaa1d2b313d40d214f204ec957a3';
+
+// Christiano judge avatar image
+const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
+  'https://henghuunttmaowypiyhq.supabase.co/storage/v1/object/public/Avatars/Cristiano.png';
+
+// ElevenLabs voice for Christiano (authoritative male voice)
+const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'pNInz6obpgDQGcFmaJgB'; // Adam voice
 
 export const config = {
-  maxDuration: 120,
+  maxDuration: 120, // 2 minutes for TTS + Replicate submission
 };
 
 // Supabase client
@@ -43,6 +51,117 @@ function generateComparisonId(city1: string, city2: string, winner: string): str
   return crypto.createHash('md5').update(data).digest('hex');
 }
 
+/**
+ * Generate TTS audio using ElevenLabs
+ * Returns MP3 buffer for Replicate compatibility
+ */
+async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; duration: number }> {
+  const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  if (!elevenLabsKey && !openaiKey) {
+    throw new Error('No TTS API key configured (ELEVENLABS_API_KEY or OPENAI_API_KEY required)');
+  }
+
+  console.log('[JUDGE-VIDEO] Generating TTS audio, script length:', script.length);
+
+  if (elevenLabsKey) {
+    // ElevenLabs - returns MP3 by default
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': elevenLabsKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: script,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.6,
+            similarity_boost: 0.75,
+            style: 0.1,
+            use_speaker_boost: true,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[JUDGE-VIDEO] ElevenLabs error:', response.status, errorText);
+      throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Estimate duration: ~150 words per minute, ~5 chars per word
+    const estimatedDuration = (script.length / 5) / 150 * 60;
+
+    console.log('[JUDGE-VIDEO] ElevenLabs audio generated:', buffer.length, 'bytes');
+    return { buffer, duration: estimatedDuration };
+  } else {
+    // OpenAI TTS fallback
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1-hd',
+        voice: 'onyx', // Deep authoritative male voice
+        input: script,
+        response_format: 'mp3',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[JUDGE-VIDEO] OpenAI TTS error:', response.status, errorText);
+      throw new Error(`OpenAI TTS failed: ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const estimatedDuration = (script.length / 5) / 150 * 60;
+
+    console.log('[JUDGE-VIDEO] OpenAI audio generated:', buffer.length, 'bytes');
+    return { buffer, duration: estimatedDuration };
+  }
+}
+
+/**
+ * Upload audio to Supabase Storage and get public URL
+ */
+async function uploadAudioToStorage(buffer: Buffer, comparisonId: string): Promise<string> {
+  const fileName = `judge-audio/${comparisonId}-${Date.now()}.mp3`;
+
+  console.log('[JUDGE-VIDEO] Uploading audio to Supabase Storage:', fileName);
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from('Avatars')
+    .upload(fileName, buffer, {
+      contentType: 'audio/mpeg',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error('[JUDGE-VIDEO] Storage upload error:', uploadError);
+    throw new Error(`Failed to upload audio: ${uploadError.message}`);
+  }
+
+  // Get public URL
+  const { data: publicUrlData } = supabaseAdmin.storage
+    .from('Avatars')
+    .getPublicUrl(fileName);
+
+  console.log('[JUDGE-VIDEO] Audio uploaded, URL:', publicUrlData.publicUrl);
+  return publicUrlData.publicUrl;
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -56,6 +175,7 @@ export default async function handler(
 
   const replicateToken = process.env.REPLICATE_API_TOKEN;
   if (!replicateToken) {
+    console.error('[JUDGE-VIDEO] REPLICATE_API_TOKEN not configured');
     res.status(500).json({
       error: 'Replicate not configured',
       message: 'REPLICATE_API_TOKEN environment variable required',
@@ -77,14 +197,15 @@ export default async function handler(
 
   try {
     // Check cache first
-    const { data: cached } = await supabaseAdmin
+    const { data: cached, error: cacheError } = await supabaseAdmin
       .from('avatar_videos')
       .select('*')
       .eq('comparison_id', comparisonId)
       .eq('status', 'completed')
       .single();
 
-    if (cached) {
+    // If table doesn't exist, that's ok - we'll create video anyway
+    if (cached && !cacheError) {
       console.log('[JUDGE-VIDEO] Cache hit:', comparisonId);
       res.status(200).json({
         success: true,
@@ -127,30 +248,49 @@ export default async function handler(
       return;
     }
 
-    console.log('[JUDGE-VIDEO] Starting generation:', comparisonId);
+    console.log('[JUDGE-VIDEO] Starting generation for:', comparisonId);
 
-    // First, generate TTS audio using browser TTS or ElevenLabs
-    // For MVP, we'll use a simple approach - Replicate models can accept text
-    // In production, generate audio first then pass URL
+    // Step 1: Generate TTS audio from script
+    const { buffer: audioBuffer, duration: audioDuration } = await generateTTSAudio(body.script);
 
-    // Create prediction on Replicate
+    // Step 2: Upload audio to Supabase Storage to get public URL
+    const audioUrl = await uploadAudioToStorage(audioBuffer, comparisonId);
+
+    // Step 3: Submit to Replicate SadTalker
+    console.log('[JUDGE-VIDEO] Submitting to Replicate SadTalker...');
+
+    const webhookUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}/api/avatar/video-webhook`
+      : null;
+
+    const replicateBody: Record<string, unknown> = {
+      version: SADTALKER_VERSION.split(':')[1], // Just the version hash
+      input: {
+        source_image: CHRISTIANO_IMAGE_URL,
+        driven_audio: audioUrl,
+        enhancer: 'gfpgan',
+        preprocess: 'crop',
+        still_mode: false,
+        use_ref_video: false,
+        pose_style: 0,
+        batch_size: 2,
+        expression_scale: 1.0,
+      },
+    };
+
+    // Only add webhook if we have a URL
+    if (webhookUrl) {
+      replicateBody.webhook = webhookUrl;
+      replicateBody.webhook_events_filter = ['completed', 'failed'];
+    }
+
     const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${replicateToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        version: 'cjwbw/sadtalker:a519cc0cfebaaeade068b23899165a11ec76aaa1d2b313d40d214f204ec957a3',
-        input: {
-          source_image: CHRISTIANO_IMAGE_URL,
-          driven_audio: body.script, // Note: SadTalker needs audio URL, not text
-          enhancer: 'gfpgan',
-          preprocess: 'crop',
-        },
-        webhook: `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/avatar/video-webhook`,
-        webhook_events_filter: ['completed'],
-      }),
+      body: JSON.stringify(replicateBody),
     });
 
     if (!response.ok) {
@@ -164,14 +304,15 @@ export default async function handler(
     }
 
     const prediction = await response.json();
-    console.log('[JUDGE-VIDEO] Prediction started:', prediction.id);
+    console.log('[JUDGE-VIDEO] Prediction started:', prediction.id, 'status:', prediction.status);
 
-    // Store in database
+    // Store in database (if table exists)
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from('avatar_videos')
       .insert({
         comparison_id: comparisonId,
-        video_url: '', // Will be updated when complete
+        video_url: '',
+        audio_url: audioUrl,
         script: body.script,
         city1: body.city1,
         city2: body.city2,
@@ -180,12 +321,14 @@ export default async function handler(
         loser_score: body.loserScore,
         replicate_prediction_id: prediction.id,
         status: 'processing',
+        duration_seconds: audioDuration,
       })
       .select()
       .single();
 
     if (insertError) {
-      console.error('[JUDGE-VIDEO] Insert error:', insertError);
+      // Log but don't fail - table might not exist yet
+      console.warn('[JUDGE-VIDEO] Insert warning (table may not exist):', insertError.message);
     }
 
     res.status(200).json({
@@ -195,7 +338,10 @@ export default async function handler(
         id: inserted?.id || prediction.id,
         comparisonId,
         status: 'processing',
+        replicatePredictionId: prediction.id,
         script: body.script,
+        audioUrl,
+        estimatedDuration: audioDuration,
         createdAt: new Date().toISOString(),
       },
     });
