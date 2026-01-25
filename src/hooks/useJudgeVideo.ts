@@ -18,6 +18,7 @@ import type {
 
 const API_BASE = '/api/avatar';
 const POLL_INTERVAL = 3000; // 3 seconds
+const API_TIMEOUT_MS = 60000; // 60 second timeout for API calls
 
 export function useJudgeVideo(): UseJudgeVideoReturn {
   const [video, setVideo] = useState<JudgeVideo | null>(null);
@@ -92,6 +93,10 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     setError(null);
     stopPolling();
 
+    // Setup timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
     try {
       console.log('[useJudgeVideo] Generating video for:', request.city1, 'vs', request.city2);
 
@@ -99,17 +104,20 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate video');
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+        throw new Error(errorData.message || errorData.error || 'Failed to generate video');
       }
 
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Generation failed');
+        throw new Error(data.error || data.message || 'Generation failed');
       }
 
       setVideo(data.video);
@@ -123,11 +131,15 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
       // If processing, start polling
       if (data.video.status === 'processing' || data.video.status === 'pending') {
-        console.log('[useJudgeVideo] Starting poll for:', data.video.id);
+        console.log('[useJudgeVideo] Starting poll for:', data.video.id, 'predictionId:', data.video.replicatePredictionId);
         startPolling();
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Generation failed';
+      clearTimeout(timeoutId);
+      const isTimeout = err instanceof Error && err.name === 'AbortError';
+      const message = isTimeout
+        ? 'Video generation request timed out. Check your connection.'
+        : (err instanceof Error ? err.message : 'Generation failed');
       console.error('[useJudgeVideo] Generate error:', message);
       setError(message);
       setStatus('failed');

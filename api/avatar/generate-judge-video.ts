@@ -135,31 +135,46 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
 /**
  * Upload audio to Supabase Storage and get public URL
+ * Includes timeout handling to prevent hanging on DB issues
  */
 async function uploadAudioToStorage(buffer: Buffer, comparisonId: string): Promise<string> {
   const fileName = `judge-audio/${comparisonId}-${Date.now()}.mp3`;
+  const UPLOAD_TIMEOUT_MS = 15000; // 15 seconds
 
-  console.log('[JUDGE-VIDEO] Uploading audio to Supabase Storage:', fileName);
+  console.log('[JUDGE-VIDEO] Uploading audio to Supabase Storage:', fileName, 'size:', buffer.length);
 
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from('Avatars')
-    .upload(fileName, buffer, {
-      contentType: 'audio/mpeg',
-      upsert: true,
-    });
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
 
-  if (uploadError) {
-    console.error('[JUDGE-VIDEO] Storage upload error:', uploadError);
-    throw new Error(`Failed to upload audio: ${uploadError.message}`);
+  try {
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('Avatars')
+      .upload(fileName, buffer, {
+        contentType: 'audio/mpeg',
+        upsert: true,
+      });
+
+    clearTimeout(timeoutId);
+
+    if (uploadError) {
+      console.error('[JUDGE-VIDEO] Storage upload error:', uploadError);
+      throw new Error(`Failed to upload audio: ${uploadError.message}`);
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from('Avatars')
+      .getPublicUrl(fileName);
+
+    console.log('[JUDGE-VIDEO] Audio uploaded successfully, URL:', publicUrlData.publicUrl);
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    const errorMsg = err instanceof Error ? err.message : 'Unknown upload error';
+    console.error('[JUDGE-VIDEO] Storage upload failed:', errorMsg);
+    throw new Error(`Storage upload failed: ${errorMsg}`);
   }
-
-  // Get public URL
-  const { data: publicUrlData } = supabaseAdmin.storage
-    .from('Avatars')
-    .getPublicUrl(fileName);
-
-  console.log('[JUDGE-VIDEO] Audio uploaded, URL:', publicUrlData.publicUrl);
-  return publicUrlData.publicUrl;
 }
 
 export default async function handler(
@@ -196,13 +211,29 @@ export default async function handler(
   const comparisonId = body.comparisonId || generateComparisonId(body.city1, body.city2, body.winner);
 
   try {
-    // Check cache first
-    const { data: cached, error: cacheError } = await supabaseAdmin
-      .from('avatar_videos')
-      .select('*')
-      .eq('comparison_id', comparisonId)
-      .eq('status', 'completed')
-      .single();
+    // Helper for DB operations with timeout
+    const withTimeout = async <T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+      ]);
+    };
+
+    const DB_TIMEOUT_MS = 5000; // 5 second timeout for DB queries
+
+    // Check cache first (with timeout - don't let DB issues block video generation)
+    const cacheResult = await withTimeout(
+      supabaseAdmin
+        .from('avatar_videos')
+        .select('*')
+        .eq('comparison_id', comparisonId)
+        .eq('status', 'completed')
+        .single(),
+      DB_TIMEOUT_MS,
+      { data: null, error: { message: 'Cache lookup timeout' } }
+    );
+
+    const { data: cached, error: cacheError } = cacheResult;
 
     // If table doesn't exist, that's ok - we'll create video anyway
     if (cached && !cacheError) {
@@ -224,13 +255,23 @@ export default async function handler(
       return;
     }
 
-    // Check if already processing
-    const { data: processing } = await supabaseAdmin
-      .from('avatar_videos')
-      .select('*')
-      .eq('comparison_id', comparisonId)
-      .in('status', ['pending', 'processing'])
-      .single();
+    if (cacheError) {
+      console.log('[JUDGE-VIDEO] Cache lookup skipped:', cacheError.message);
+    }
+
+    // Check if already processing (with timeout)
+    const processingResult = await withTimeout(
+      supabaseAdmin
+        .from('avatar_videos')
+        .select('*')
+        .eq('comparison_id', comparisonId)
+        .in('status', ['pending', 'processing'])
+        .single(),
+      DB_TIMEOUT_MS,
+      { data: null, error: { message: 'Processing check timeout' } }
+    );
+
+    const { data: processing } = processingResult;
 
     if (processing) {
       console.log('[JUDGE-VIDEO] Already processing:', comparisonId);
@@ -243,6 +284,7 @@ export default async function handler(
           status: processing.status,
           script: processing.script,
           createdAt: processing.created_at,
+          replicatePredictionId: processing.replicate_prediction_id,
         },
       });
       return;

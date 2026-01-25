@@ -376,6 +376,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
   }, [videoError]);
 
   // Generate Judge Report handler - Phase B Implementation
+  // Client timeout must exceed server's 240s timeout for Opus
+  const JUDGE_API_TIMEOUT_MS = 300000; // 5 minutes
+
   const handleGenerateReport = async () => {
     if (!comparisonResult) return;
 
@@ -387,6 +390,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       city2: comparisonResult.city2.city,
       userId
     });
+
+    // Setup abort controller for client-side timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.error('[JudgeTab] Client timeout after', JUDGE_API_TIMEOUT_MS / 1000, 'seconds');
+      controller.abort();
+    }, JUDGE_API_TIMEOUT_MS);
 
     try {
       // Simulate progress updates during API call
@@ -400,7 +410,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
         });
       }, 500);
 
-      // Call the Judge Report API
+      // Call the Judge Report API with abort signal
       const response = await fetch('/api/judge-report', {
         method: 'POST',
         headers: {
@@ -409,9 +419,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
         body: JSON.stringify({
           comparisonResult,
           userId
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       clearInterval(progressInterval);
 
       if (!response.ok) {
@@ -437,10 +449,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       generateJudgeVideo(data.report);
 
     } catch (error) {
-      console.error('[JudgeTab] Failed to generate report:', error);
-      // Reset state on error
+      clearTimeout(timeoutId);
+      const isTimeout = error instanceof Error && error.name === 'AbortError';
+      const errorMsg = isTimeout
+        ? 'Request timed out. The Judge API took too long to respond.'
+        : (error instanceof Error ? error.message : 'Unknown error');
+
+      console.error('[JudgeTab] Failed to generate report:', errorMsg);
       setGenerationProgress(0);
-      // Could add error state/toast notification here
+      setVideoGenerationProgress(`Error: ${errorMsg}`);
+
+      // Clear error message after 10 seconds
+      setTimeout(() => setVideoGenerationProgress(''), 10000);
     } finally {
       setIsGenerating(false);
     }
