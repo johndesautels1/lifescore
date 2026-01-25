@@ -1856,8 +1856,8 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                   {categoryMetrics.map(metric => {
                     const city1Metric = city1Cat.metrics.find(m => m.metricId === metric.id);
                     const city2Metric = city2Cat.metrics.find(m => m.metricId === metric.id);
-                    const score1 = city1Metric?.consensusScore ?? 0;
-                    const score2 = city2Metric?.consensusScore ?? 0;
+                    const score1: number = city1Metric?.consensusScore ?? 0;
+                    const score2: number = city2Metric?.consensusScore ?? 0;
                     const tooltip = getMetricTooltip(metric.shortName);
 
                     // Dual scores

@@ -188,8 +188,8 @@ function formatEnhancedCategoryWithAllMetrics(
   city2Consensus: CategoryConsensus
 ): string {
   const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: '📊', metricCount: 0, weight: '0%' };
-  const city1Score = Math.round(city1Consensus.averageConsensusScore);
-  const city2Score = Math.round(city2Consensus.averageConsensusScore);
+  const city1Score = Math.round(city1Consensus.averageConsensusScore ?? 0);
+  const city2Score = Math.round(city2Consensus.averageConsensusScore ?? 0);
   const catWinner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'TIE';
 
   // Build metric table with ALL metrics
@@ -197,8 +197,8 @@ function formatEnhancedCategoryWithAllMetrics(
   city1Consensus.metrics.forEach((metric: MetricConsensus) => {
     const city2Metric = city2Consensus.metrics.find(m => m.metricId === metric.metricId);
     const name = getMetricDisplayName(metric.metricId);
-    const score1 = Math.round(metric.consensusScore);
-    const score2 = city2Metric ? Math.round(city2Metric.consensusScore) : 0;
+    const score1 = Math.round(metric.consensusScore ?? 0);
+    const score2 = city2Metric ? Math.round(city2Metric.consensusScore ?? 0) : 0;
     const metricWinner = score1 > score2 ? city1Name : score2 > score1 ? city2Name : 'TIE';
     metricRows.push(`| ${name} | ${score1} | ${score2} | ${metricWinner} |`);
   });
@@ -224,8 +224,8 @@ function formatSimpleCategoryWithAllMetrics(
   city2Category: CategoryScore
 ): string {
   const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: '📊', metricCount: 0, weight: '0%' };
-  const city1Score = Math.round(city1Category.averageScore);
-  const city2Score = Math.round(city2Category.averageScore);
+  const city1Score = Math.round(city1Category.averageScore ?? 0);
+  const city2Score = Math.round(city2Category.averageScore ?? 0);
   const catWinner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'TIE';
 
   // Build metric table with ALL metrics
