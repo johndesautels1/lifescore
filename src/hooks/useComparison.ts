@@ -495,7 +495,77 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
       const city1Score = calculateCityScore(city1Name, city1Country, city1MetricScores, city1Region, customWeights);
       const city2Score = calculateCityScore(city2Name, city2Country, city2MetricScores, city2Region, customWeights);
 
-      // Determine winner
+      // ========================================================================
+      // SCORE DIFFERENTIATION: Prevent convergence by amplifying real differences
+      // FIX 2026-01-25: Added category win bonus and max spread bonus
+      // ========================================================================
+
+      // Calculate category wins and max spread for differentiation
+      let city1CategoryWins = 0;
+      let city2CategoryWins = 0;
+      let maxCategorySpread = 0;
+
+      for (const category of CATEGORIES) {
+        const cat1 = city1Score.categories.find(c => c.categoryId === category.id);
+        const cat2 = city2Score.categories.find(c => c.categoryId === category.id);
+        const score1 = cat1?.averageScore ?? 0;
+        const score2 = cat2?.averageScore ?? 0;
+
+        if (score1 !== null && score2 !== null) {
+          const diff = score1 - score2;
+          const absDiff = Math.abs(diff);
+
+          // Track max category spread
+          if (absDiff > maxCategorySpread) {
+            maxCategorySpread = absDiff;
+          }
+
+          // Count category wins (must win by >5 points to count)
+          if (diff > 5) {
+            city1CategoryWins++;
+          } else if (diff < -5) {
+            city2CategoryWins++;
+          }
+        }
+      }
+
+      // Apply differentiation bonuses:
+      // 1. Category win bonus: +2 points per category won
+      // 2. Max spread bonus: Winner gets half the largest category gap
+      const CATEGORY_WIN_BONUS = 2;
+      const MAX_SPREAD_MULTIPLIER = 0.5;
+
+      const city1WinBonus = city1CategoryWins * CATEGORY_WIN_BONUS;
+      const city2WinBonus = city2CategoryWins * CATEGORY_WIN_BONUS;
+
+      // Determine preliminary winner for max spread bonus
+      const city1WithWinBonus = city1Score.totalScore + city1WinBonus;
+      const city2WithWinBonus = city2Score.totalScore + city2WinBonus;
+
+      let city1SpreadBonus = 0;
+      let city2SpreadBonus = 0;
+
+      if (city1WithWinBonus > city2WithWinBonus) {
+        city1SpreadBonus = maxCategorySpread * MAX_SPREAD_MULTIPLIER;
+      } else if (city2WithWinBonus > city1WithWinBonus) {
+        city2SpreadBonus = maxCategorySpread * MAX_SPREAD_MULTIPLIER;
+      }
+
+      // Calculate final adjusted scores, capped at 100
+      const city1FinalScore = Math.min(100, city1Score.totalScore + city1WinBonus + city1SpreadBonus);
+      const city2FinalScore = Math.min(100, city2Score.totalScore + city2WinBonus + city2SpreadBonus);
+
+      // Update the score objects with adjusted totals
+      city1Score.totalScore = Math.round(city1FinalScore);
+      city2Score.totalScore = Math.round(city2FinalScore);
+
+      console.log('[SCORE DIFF STD] Base: ' + (city1FinalScore - city1WinBonus - city1SpreadBonus).toFixed(1) +
+        ' vs ' + (city2FinalScore - city2WinBonus - city2SpreadBonus).toFixed(1) +
+        ' | Cat wins: ' + city1CategoryWins + ' vs ' + city2CategoryWins +
+        ' | Max spread: ' + maxCategorySpread.toFixed(1) +
+        ' | Final: ' + city1FinalScore.toFixed(1) + ' vs ' + city2FinalScore.toFixed(1));
+
+      // Determine winner using adjusted scores
       const scoreDifference = Math.abs(city1Score.totalScore - city2Score.totalScore);
       let winner: 'city1' | 'city2' | 'tie';
       if (scoreDifference < 1) {
