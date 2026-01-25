@@ -209,8 +209,8 @@ export function useSimli(): UseSimliReturn {
       const ws = new WebSocket(SIMLI_WS_URL);
       webSocketRef.current = ws;
 
-      ws.onopen = () => {
-        console.log('[useSimli] WebSocket connected, sending offer');
+      ws.onopen = async () => {
+        console.log('[useSimli] WebSocket connected');
 
         // Get credentials from Vite environment
         const apiKey = import.meta.env.VITE_SIMLI_API_KEY;
@@ -229,15 +229,53 @@ export function useSimli(): UseSimliReturn {
           return;
         }
 
-        console.log('[useSimli] Credentials found, sending to Simli...');
+        console.log('[useSimli] Credentials found, getting session token...');
 
-        // Send SDP offer with credentials
-        ws.send(JSON.stringify({
-          sdp: offer.sdp,
-          type: offer.type,
-          apiKey,
-          faceId,
-        }));
+        try {
+          // Step 1: Get session token via HTTP POST
+          const sessionResponse = await fetch('https://api.simli.ai/startAudioToVideoSession', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              faceId: faceId,
+              apiKey: apiKey,
+              isJPG: false,
+              syncAudio: true,
+            }),
+          });
+
+          if (!sessionResponse.ok) {
+            const errorText = await sessionResponse.text();
+            console.error('[useSimli] Session API error:', sessionResponse.status, errorText);
+            setError(`Simli authentication failed: ${sessionResponse.status}`);
+            setStatus('error');
+            ws.close();
+            return;
+          }
+
+          const sessionData = await sessionResponse.json();
+          console.log('[useSimli] Session token received');
+
+          // Step 2: Send SDP offer via WebSocket
+          console.log('[useSimli] Sending SDP offer...');
+          ws.send(JSON.stringify({
+            sdp: offer.sdp,
+            type: offer.type,
+          }));
+
+          // Step 3: Send session token via WebSocket
+          if (sessionData.session_token) {
+            console.log('[useSimli] Sending session token...');
+            ws.send(sessionData.session_token);
+          }
+        } catch (err) {
+          console.error('[useSimli] Session setup error:', err);
+          setError('Failed to establish Simli session');
+          setStatus('error');
+          ws.close();
+        }
       };
 
       ws.onmessage = async (event) => {
