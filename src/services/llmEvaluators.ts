@@ -22,12 +22,29 @@ const CLIENT_TIMEOUT_MS = 240000; // 240 seconds for client-side fetch (must exc
 // TYPES
 // ============================================================================
 
+// Token usage tracking for cost calculation
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface TavilyUsage {
+  researchCredits: number;
+  searchCredits: number;
+  totalCredits: number;
+}
+
 export interface EvaluatorResult {
   provider: LLMProvider;
   success: boolean;
   scores: LLMMetricScore[];
   error?: string;
   latencyMs: number;
+  // Cost tracking data (from API response)
+  usage?: {
+    tokens: TokenUsage;
+    tavily?: TavilyUsage;
+  };
 }
 
 // API response score format (from /api/evaluate)
@@ -62,6 +79,7 @@ export interface BatchedEvaluatorResult extends EvaluatorResult {
     scores: LLMMetricScore[];
     latencyMs: number;
     error?: string;
+    usage?: { tokens: TokenUsage; tavily?: TavilyUsage };
   }>;
 }
 
@@ -119,7 +137,12 @@ async function evaluateCategoryBatch(
       };
     }
 
-    const result = await response.json() as { success: boolean; scores: APIMetricScore[]; error?: string };
+    const result = await response.json() as {
+      success: boolean;
+      scores: APIMetricScore[];
+      error?: string;
+      usage?: { tokens: TokenUsage; tavily?: TavilyUsage };
+    };
 
     console.log(`[CLIENT] ${provider}/${categoryId} result: success=${result.success}, scores=${result.scores?.length || 0}, error=${result.error || 'none'}`);
 
@@ -176,12 +199,18 @@ async function evaluateCategoryBatch(
 
     const scores: LLMMetricScore[] = [...city1Scores, ...city2Scores];
 
+    // Log usage if available for debugging
+    if (result.usage?.tokens) {
+      console.log(`[CLIENT] ${provider}/${categoryId} usage: ${result.usage.tokens.inputTokens} in / ${result.usage.tokens.outputTokens} out`);
+    }
+
     // Only mark as success if we actually have scores
     return {
       success: result.success && scores.length > 0,
       scores,
       latencyMs: Date.now() - startTime,
-      error: scores.length === 0 && result.success ? 'No scores returned from API' : result.error
+      error: scores.length === 0 && result.success ? 'No scores returned from API' : result.error,
+      usage: result.usage
     };
   } catch (error) {
     clearTimeout(timeoutId);
@@ -299,11 +328,18 @@ export async function runSingleEvaluatorBatched(
     scores: LLMMetricScore[];
     latencyMs: number;
     error?: string;
+    usage?: { tokens: TokenUsage; tavily?: TavilyUsage };
   }>();
 
   const allScores: LLMMetricScore[] = [];
   let successCount = 0;
   const errors: string[] = [];
+
+  // Aggregate usage across all categories
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalTavilyResearch = 0;
+  let totalTavilySearch = 0;
 
   results.forEach(({ categoryId, result }) => {
     categoryResults.set(categoryId, result);
@@ -313,13 +349,36 @@ export async function runSingleEvaluatorBatched(
     } else if (result.error) {
       errors.push(`${categoryId}: ${result.error}`);
     }
+
+    // Aggregate usage
+    if (result.usage?.tokens) {
+      totalInputTokens += result.usage.tokens.inputTokens;
+      totalOutputTokens += result.usage.tokens.outputTokens;
+    }
+    if (result.usage?.tavily) {
+      totalTavilyResearch += result.usage.tavily.researchCredits;
+      totalTavilySearch += result.usage.tavily.searchCredits;
+    }
   });
 
   // PARTIAL SUCCESS: Count as success if at least 3/6 categories (50%) have scores
   const hasEnoughScores = allScores.length >= 30; // At least ~30 metrics worth of scores
   const partialSuccess = successCount >= 3 || hasEnoughScores;
 
+  // Build aggregated usage
+  const aggregatedUsage = (totalInputTokens > 0 || totalOutputTokens > 0) ? {
+    tokens: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
+    tavily: (totalTavilyResearch > 0 || totalTavilySearch > 0) ? {
+      researchCredits: totalTavilyResearch,
+      searchCredits: totalTavilySearch,
+      totalCredits: totalTavilyResearch + totalTavilySearch
+    } : undefined
+  } : undefined;
+
   console.log(`[BATCH] ${provider}: ${successCount}/6 categories succeeded, ${allScores.length} scores, partialSuccess=${partialSuccess}`);
+  if (aggregatedUsage) {
+    console.log(`[BATCH] ${provider} total usage: ${totalInputTokens} in / ${totalOutputTokens} out tokens, ${totalTavilyResearch + totalTavilySearch} tavily credits`);
+  }
 
   return {
     provider,
@@ -327,6 +386,7 @@ export async function runSingleEvaluatorBatched(
     scores: allScores,
     latencyMs: Date.now() - startTime,
     error: errors.length > 0 ? errors.join('; ') : undefined,
-    categoryResults
+    categoryResults,
+    usage: aggregatedUsage
   };
 }

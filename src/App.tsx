@@ -46,6 +46,15 @@ import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedCompariso
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
 import { ALL_METRICS } from './shared/metrics';
+import {
+  createCostBreakdown,
+  finalizeCostBreakdown,
+  storeCostBreakdown,
+  calculateLLMCost,
+  formatCostBreakdownLog,
+  type ComparisonCostBreakdown,
+  type APICallCost
+} from './utils/costCalculator';
 import './styles/globals.css';
 import './App.css';
 
@@ -421,6 +430,78 @@ const AppContent: React.FC = () => {
                               totalScore1: result.city1?.totalConsensusScore,
                               totalScore2: result.city2?.totalConsensusScore
                             });
+
+                            // === COST TRACKING ===
+                            try {
+                              const costBreakdown = createCostBreakdown(
+                                result.comparisonId,
+                                pendingCities.city1,
+                                pendingCities.city2,
+                                'enhanced'
+                              );
+
+                              // Add evaluator costs from LLM results
+                              llmResults.forEach((evalResult, provider) => {
+                                if (evalResult.usage?.tokens) {
+                                  const { inputTokens, outputTokens } = evalResult.usage.tokens;
+
+                                  // Map provider to pricing key
+                                  const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-4-5' :
+                                                     provider === 'gpt-4o' ? 'gpt-4o' :
+                                                     provider === 'gemini-3-pro' ? 'gemini-3-pro' :
+                                                     provider === 'grok-4' ? 'grok-4' :
+                                                     provider === 'perplexity' ? 'perplexity-sonar' : null;
+
+                                  if (pricingKey) {
+                                    const costs = calculateLLMCost(pricingKey as any, inputTokens, outputTokens);
+                                    const apiCall: APICallCost = {
+                                      provider,
+                                      model: pricingKey,
+                                      inputTokens,
+                                      outputTokens,
+                                      inputCost: costs.inputCost,
+                                      outputCost: costs.outputCost,
+                                      totalCost: costs.totalCost,
+                                      timestamp: Date.now(),
+                                      context: 'evaluation'
+                                    };
+
+                                    // Add to appropriate array based on provider
+                                    if (provider === 'claude-sonnet') costBreakdown.claudeSonnet.push(apiCall);
+                                    else if (provider === 'gpt-4o') costBreakdown.gpt4o.push(apiCall);
+                                    else if (provider === 'gemini-3-pro') costBreakdown.gemini.push(apiCall);
+                                    else if (provider === 'grok-4') costBreakdown.grok.push(apiCall);
+                                    else if (provider === 'perplexity') costBreakdown.perplexity.push(apiCall);
+                                  }
+                                }
+                              });
+
+                              // Add judge costs from judge result
+                              if (judgeResult.usage?.opusTokens) {
+                                const { inputTokens, outputTokens } = judgeResult.usage.opusTokens;
+                                const judgeCosts = calculateLLMCost('claude-opus-4-5', inputTokens, outputTokens);
+                                costBreakdown.opusJudge = {
+                                  provider: 'claude-opus',
+                                  model: 'claude-opus-4-5',
+                                  inputTokens,
+                                  outputTokens,
+                                  inputCost: judgeCosts.inputCost,
+                                  outputCost: judgeCosts.outputCost,
+                                  totalCost: judgeCosts.totalCost,
+                                  timestamp: Date.now(),
+                                  context: 'judge'
+                                };
+                              }
+
+                              // Finalize and store
+                              const finalBreakdown = finalizeCostBreakdown(costBreakdown);
+                              storeCostBreakdown(finalBreakdown);
+                              console.log('[App] Cost tracking stored:', formatCostBreakdownLog(finalBreakdown));
+                            } catch (costError) {
+                              console.error('[App] Cost tracking error (non-fatal):', costError);
+                            }
+                            // === END COST TRACKING ===
+
                             setEnhancedResult(result);
                             setEnhancedStatus('complete');
                             console.log('[App] State updated - tab should switch now');

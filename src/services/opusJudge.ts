@@ -49,6 +49,13 @@ export interface JudgeOutput {
   overallAgreement: number;
   disagreementAreas: string[];
   judgeLatencyMs: number;
+  // Cost tracking data (from API)
+  usage?: {
+    opusTokens: {
+      inputTokens: number;
+      outputTokens: number;
+    };
+  };
 }
 
 // ============================================================================
