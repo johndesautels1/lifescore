@@ -52,7 +52,6 @@ import {
   storeCostBreakdown,
   calculateLLMCost,
   formatCostBreakdownLog,
-  type ComparisonCostBreakdown,
   type APICallCost
 } from './utils/costCalculator';
 import './styles/globals.css';

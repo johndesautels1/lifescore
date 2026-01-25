@@ -93,7 +93,7 @@ async function evaluateCategoryBatch(
   city2: string,
   categoryId: CategoryId,
   metrics: MetricDefinition[]
-): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string }> {
+): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string; usage?: { tokens: TokenUsage; tavily?: TavilyUsage } }> {
   const startTime = Date.now();
 
   console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
