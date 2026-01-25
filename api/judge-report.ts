@@ -160,32 +160,40 @@ function buildJudgePrompt(
     const categoryName = categoryDef?.name || cat1.categoryId;
     const categoryWeight = categoryDef?.weight || 0;
 
+    // Handle both enhanced (averageConsensusScore) and standard (no average) results
+    const cat1Score = cat1.averageConsensusScore ?? cat1.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? m.normalizedScore ?? 0), 0) / (cat1.metrics?.length || 1);
+    const cat2Score = cat2?.averageConsensusScore ?? cat2?.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? m.normalizedScore ?? 0), 0) / (cat2?.metrics?.length || 1);
+
     let catSummary = `\n### ${categoryName} (Weight: ${categoryWeight}%)\n`;
-    catSummary += `${city1}: ${cat1.averageConsensusScore.toFixed(1)} | ${city2}: ${cat2?.averageConsensusScore.toFixed(1) || 'N/A'}\n`;
-    catSummary += `Agreement: ${city1}=${cat1.agreementLevel}% | ${city2}=${cat2?.agreementLevel || 0}%\n`;
+    catSummary += `${city1}: ${(cat1Score ?? 0).toFixed(1)} | ${city2}: ${(cat2Score ?? 0).toFixed(1)}\n`;
+    catSummary += `Agreement: ${city1}=${cat1.agreementLevel ?? 'N/A'}% | ${city2}=${cat2?.agreementLevel ?? 'N/A'}%\n`;
     catSummary += `\nKey Metrics:\n`;
 
     // Include top metrics from this category
     cat1.metrics.slice(0, 5).forEach(m => {
       const m2 = cat2?.metrics.find(x => x.metricId === m.metricId);
-      const confidence = m.confidenceLevel.toUpperCase();
-      catSummary += `- ${m.metricId}: ${city1}=${m.consensusScore} (Legal:${m.legalScore}/Enf:${m.enforcementScore}) | ${city2}=${m2?.consensusScore || 'N/A'} [${confidence}, σ=${m.standardDeviation}]\n`;
+      const confidence = (m.confidenceLevel ?? 'moderate').toUpperCase();
+      const m1Score = m.consensusScore ?? m.normalizedScore ?? 0;
+      const m2Score = m2?.consensusScore ?? m2?.normalizedScore ?? 'N/A';
+      catSummary += `- ${m.metricId}: ${city1}=${m1Score} (Legal:${m.legalScore ?? 'N/A'}/Enf:${m.enforcementScore ?? 'N/A'}) | ${city2}=${m2Score} [${confidence}, σ=${m.standardDeviation ?? 0}]\n`;
 
-      // Collect evidence
-      m.llmScores.forEach(score => {
-        if (score.evidence) {
-          score.evidence.forEach(e => {
-            if (e.snippet && e.snippet.length > 20) {
-              allEvidence.push(`[${e.city}] ${e.title}: "${e.snippet.slice(0, 200)}..." (${e.url})`);
-            }
-          });
-        }
-        if (score.sources) {
-          score.sources.forEach(src => {
-            allEvidence.push(`[Source] ${src}`);
-          });
-        }
-      });
+      // Collect evidence (only exists in enhanced results)
+      if (m.llmScores) {
+        m.llmScores.forEach(score => {
+          if (score.evidence) {
+            score.evidence.forEach(e => {
+              if (e.snippet && e.snippet.length > 20) {
+                allEvidence.push(`[${e.city}] ${e.title}: "${e.snippet.slice(0, 200)}..." (${e.url})`);
+              }
+            });
+          }
+          if (score.sources) {
+            score.sources.forEach(src => {
+              allEvidence.push(`[Source] ${src}`);
+            });
+          }
+        });
+      }
     });
 
     categorySummaries.push(catSummary);
@@ -209,10 +217,10 @@ You are not just analyzing scores - you are THE JUDGE who must:
 - City 1: ${city1} (${c1Data.country})
 - City 2: ${city2} (${c2Data.country})
 
-## CURRENT SCORES (from ${llmsUsed.length} LLM evaluators)
-- ${city1}: ${c1Data.totalConsensusScore.toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement}%)
-- ${city2}: ${c2Data.totalConsensusScore.toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement}%)
-- Overall Consensus Confidence: ${overallConsensusConfidence.toUpperCase()}
+## CURRENT SCORES (from ${llmsUsed?.length || 1} LLM evaluators)
+- ${city1}: ${(c1Data.totalConsensusScore ?? c1Data.totalScore ?? 0).toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement ?? 'N/A'}%)
+- ${city2}: ${(c2Data.totalConsensusScore ?? c2Data.totalScore ?? 0).toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement ?? 'N/A'}%)
+- Overall Consensus Confidence: ${(overallConsensusConfidence ?? 'medium').toUpperCase()}
 ${disagreementSummary ? `- Disagreement Areas: ${disagreementSummary}` : ''}
 
 ## DETAILED CATEGORY BREAKDOWN
@@ -425,6 +433,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
 
+    // Get scores - handle both enhanced (totalConsensusScore) and standard (totalScore) results
+    const city1Score = comparisonResult.city1.totalConsensusScore ?? (comparisonResult.city1 as any).totalScore ?? 0;
+    const city2Score = comparisonResult.city2.totalConsensusScore ?? (comparisonResult.city2 as any).totalScore ?? 0;
+
     const judgeReport: JudgeReport = {
       reportId,
       generatedAt: new Date().toISOString(),
@@ -434,9 +446,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       city2,
       videoStatus: 'pending', // Will be updated by Phase C HeyGen integration
       summaryOfFindings: {
-        city1Score: Math.round(comparisonResult.city1.totalConsensusScore),
+        city1Score: Math.round(city1Score),
         city1Trend: opusResult.summaryOfFindings.city1Trend,
-        city2Score: Math.round(comparisonResult.city2.totalConsensusScore),
+        city2Score: Math.round(city2Score),
         city2Trend: opusResult.summaryOfFindings.city2Trend,
         overallConfidence: opusResult.summaryOfFindings.overallConfidence
       },
