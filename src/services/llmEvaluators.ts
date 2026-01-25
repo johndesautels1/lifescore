@@ -302,7 +302,7 @@ export async function runSingleEvaluatorBatched(
   };
 
   // Split categories into waves of MAX_CONCURRENT_CATEGORIES
-  const allResults: { categoryId: CategoryId; result: { success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string } }[] = [];
+  const allResults: { categoryId: CategoryId; result: { success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string; usage?: { tokens: TokenUsage; tavily?: TavilyUsage } } }[] = [];
 
   for (let i = 0; i < CATEGORIES.length; i += MAX_CONCURRENT_CATEGORIES) {
     const wave = CATEGORIES.slice(i, i + MAX_CONCURRENT_CATEGORIES);
