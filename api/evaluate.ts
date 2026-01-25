@@ -1213,8 +1213,6 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
   // PERPLEXITY-SPECIFIC ADDENDUM (optimized for citation-backed research)
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
-  // UPDATED 2026-01-25: Added conciseness requirements for large categories (same as Gemini fix)
-  const isLargeCategory = metrics.length >= 15;
   const perplexityAddendum = `
 ## PERPLEXITY-SPECIFIC INSTRUCTIONS
 - Use your Sonar web search to find authoritative sources for each metric
@@ -1223,14 +1221,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 - For enforcement scores, look for news articles about actual enforcement actions
 - Follow the scoring scale defined above (0-100 with 5 anchor bands)
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
-${isLargeCategory ? `
-## CRITICAL: CONCISENESS REQUIRED (Large category with ${metrics.length} metrics)
-- Keep "reasoning" to 1 sentence only (under 25 words)
-- Include only 1 source per metric (most authoritative only)
-- Include only 1 evidence item per city per metric
-- Omit verbose explanations - scores and brief justification are sufficient
-- This is required to fit within output token limit
-` : ''}`;
+`;
 
   // Phase 2: Use category prompt when enabled
   const basePrompt = USE_CATEGORY_SCORING
