@@ -192,8 +192,24 @@
   color: var(--error);
 }
 
+/* Export/Import button consistent styling */
+/* FIXED 2026-01-25: Ensure label (import) matches button (export) exactly */
 .import-btn {
   cursor: pointer;
+  /* Match button defaults that labels don't have */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  /* Prevent text selection on label */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ensure consistent spacing between export/import/clear buttons */
+.toolbar-right .toolbar-btn {
+  min-width: 5.5rem;
+  justify-content: center;
 }
 
 /* No Saved State */
