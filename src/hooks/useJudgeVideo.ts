@@ -27,6 +27,10 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Use ref to avoid stale closure issues with polling
+  // This ref always has the latest video data for checkStatus to use
+  const videoRef = useRef<JudgeVideo | null>(null);
+
   const isGenerating = status === 'pending' || status === 'processing';
   const isReady = status === 'completed' && !!video?.videoUrl;
 
@@ -39,18 +43,21 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
   }, []);
 
   // Check video generation status
+  // Uses videoRef to avoid stale closure issues when called from polling interval
   const checkStatus = useCallback(async () => {
-    if (!video?.id && !video?.comparisonId && !video?.replicatePredictionId) {
+    const currentVideo = videoRef.current;
+    if (!currentVideo?.id && !currentVideo?.comparisonId && !currentVideo?.replicatePredictionId) {
+      console.log('[useJudgeVideo] checkStatus: No video data to check, skipping');
       return;
     }
 
     try {
       // Prefer predictionId for direct Replicate query (bypasses DB issues)
-      const param = video.replicatePredictionId
-        ? `predictionId=${video.replicatePredictionId}`
-        : video.id
-          ? `videoId=${video.id}`
-          : `comparisonId=${video.comparisonId}`;
+      const param = currentVideo.replicatePredictionId
+        ? `predictionId=${currentVideo.replicatePredictionId}`
+        : currentVideo.id
+          ? `videoId=${currentVideo.id}`
+          : `comparisonId=${currentVideo.comparisonId}`;
 
       console.log('[useJudgeVideo] Checking status with:', param);
 
@@ -63,8 +70,12 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       const data = await response.json();
 
       if (data.success && data.video) {
+        // Update both ref and state
+        videoRef.current = data.video;
         setVideo(data.video);
         setStatus(data.video.status);
+
+        console.log('[useJudgeVideo] Status update:', data.video.status, 'videoUrl:', data.video.videoUrl);
 
         // Stop polling if complete or failed
         if (data.video.status === 'completed' || data.video.status === 'failed') {
@@ -72,6 +83,8 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
           if (data.video.status === 'failed') {
             setError(data.video.error || 'Video generation failed');
+          } else if (data.video.status === 'completed') {
+            console.log('[useJudgeVideo] Video completed! URL:', data.video.videoUrl);
           }
         }
       }
@@ -79,7 +92,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       console.error('[useJudgeVideo] Status check error:', err);
       // Don't stop polling on transient errors
     }
-  }, [video, stopPolling]);
+  }, [stopPolling]);
 
   // Start polling for status
   const startPolling = useCallback(() => {
@@ -92,6 +105,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     setStatus('pending');
     setError(null);
     stopPolling();
+    videoRef.current = null; // Reset ref
 
     // Setup timeout
     const controller = new AbortController();
@@ -120,18 +134,28 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
         throw new Error(data.error || data.message || 'Generation failed');
       }
 
+      // Update both ref (for polling) and state (for UI)
+      // CRITICAL: Update ref BEFORE starting polling to avoid stale closure
+      videoRef.current = data.video;
       setVideo(data.video);
       setStatus(data.video.status);
 
+      console.log('[useJudgeVideo] Generate response:', {
+        id: data.video.id,
+        status: data.video.status,
+        predictionId: data.video.replicatePredictionId,
+        cached: data.cached,
+      });
+
       // If cached, we're done
       if (data.cached) {
-        console.log('[useJudgeVideo] Cache hit!');
+        console.log('[useJudgeVideo] Cache hit! Video URL:', data.video.videoUrl);
         return;
       }
 
       // If processing, start polling
       if (data.video.status === 'processing' || data.video.status === 'pending') {
-        console.log('[useJudgeVideo] Starting poll for:', data.video.id, 'predictionId:', data.video.replicatePredictionId);
+        console.log('[useJudgeVideo] Starting poll for prediction:', data.video.replicatePredictionId);
         startPolling();
       }
     } catch (err) {
@@ -143,6 +167,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       console.error('[useJudgeVideo] Generate error:', message);
       setError(message);
       setStatus('failed');
+      videoRef.current = null;
     }
   }, [startPolling, stopPolling]);
 
