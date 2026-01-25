@@ -1,11 +1,11 @@
 /**
  * LIFE SCORE™ Weight Presets & Sliders
- * Let users customize category importance
+ * Let users customize category importance and Law vs Lived Reality weighting
  */
 
 import React, { useState, useEffect } from 'react';
 import { CATEGORIES } from '../shared/metrics';
-import type { CategoryId } from '../types/metrics';
+import type { CategoryId, LawLivedRatio } from '../types/metrics';
 import './WeightPresets.css';
 
 // Weight presets for different user personas
@@ -15,6 +15,7 @@ interface WeightPreset {
   icon: string;
   description: string;
   weights: Record<CategoryId, number>;
+  lawLivedRatio: LawLivedRatio;  // NEW: Law vs Lived weighting per persona
 }
 
 const PRESETS: WeightPreset[] = [
@@ -30,7 +31,8 @@ const PRESETS: WeightPreset[] = [
       transportation: 15,
       policing_legal: 15,
       speech_lifestyle: 10
-    }
+    },
+    lawLivedRatio: { law: 50, lived: 50 }  // Equal weight to written law and lived reality
   },
   {
     id: 'digital_nomad',
@@ -44,7 +46,8 @@ const PRESETS: WeightPreset[] = [
       transportation: 20,
       policing_legal: 10,
       speech_lifestyle: 10
-    }
+    },
+    lawLivedRatio: { law: 30, lived: 70 }  // Cares more about actual daily experience
   },
   {
     id: 'entrepreneur',
@@ -58,7 +61,8 @@ const PRESETS: WeightPreset[] = [
       transportation: 10,
       policing_legal: 15,
       speech_lifestyle: 15
-    }
+    },
+    lawLivedRatio: { law: 70, lived: 30 }  // Needs legal framework for contracts/business
   },
   {
     id: 'family',
@@ -72,7 +76,8 @@ const PRESETS: WeightPreset[] = [
       transportation: 20,
       policing_legal: 20,
       speech_lifestyle: 5
-    }
+    },
+    lawLivedRatio: { law: 60, lived: 40 }  // Wants legal protections + safe environment
   },
   {
     id: 'libertarian',
@@ -86,7 +91,8 @@ const PRESETS: WeightPreset[] = [
       transportation: 5,
       policing_legal: 20,
       speech_lifestyle: 5
-    }
+    },
+    lawLivedRatio: { law: 40, lived: 60 }  // Actions matter more than words on paper
   },
   {
     id: 'investor',
@@ -100,11 +106,13 @@ const PRESETS: WeightPreset[] = [
       transportation: 5,
       policing_legal: 20,
       speech_lifestyle: 5
-    }
+    },
+    lawLivedRatio: { law: 80, lived: 20 }  // Legal asset protection is paramount
   }
 ];
 
 const STORAGE_KEY = 'lifescore_weights';
+const STORAGE_KEY_LAWLIVED = 'lifescore_lawlived';
 
 export interface CategoryWeights {
   [key: string]: number;
@@ -112,16 +120,30 @@ export interface CategoryWeights {
 
 interface WeightPresetsProps {
   onWeightsChange: (weights: CategoryWeights) => void;
+  onLawLivedChange?: (ratio: LawLivedRatio) => void;         // NEW: Callback for law/lived ratio change
+  onConservativeModeChange?: (enabled: boolean) => void;     // NEW: Callback for conservative mode toggle
 }
 
-export const WeightPresets: React.FC<WeightPresetsProps> = ({ onWeightsChange }) => {
+export const WeightPresets: React.FC<WeightPresetsProps> = ({
+  onWeightsChange,
+  onLawLivedChange,
+  onConservativeModeChange
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('balanced');
   const [customWeights, setCustomWeights] = useState<CategoryWeights>(PRESETS[0].weights);
   const [isCustom, setIsCustom] = useState(false);
 
+  // NEW: Law vs Lived Reality preference state
+  const [lawLivedRatio, setLawLivedRatio] = useState<LawLivedRatio>(PRESETS[0].lawLivedRatio);
+  const [isLawLivedCustom, setIsLawLivedCustom] = useState(false);
+
+  // NEW: Conservative mode (use MIN of law/lived)
+  const [conservativeMode, setConservativeMode] = useState(false);
+
   // Load from localStorage on mount
   useEffect(() => {
+    // Load category weights
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
@@ -131,11 +153,27 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({ onWeightsChange })
         setIsCustom(parsed.isCustom);
         onWeightsChange(parsed.weights);
       } catch {
-        // Invalid JSON, use defaults
         onWeightsChange(PRESETS[0].weights);
       }
     } else {
       onWeightsChange(PRESETS[0].weights);
+    }
+
+    // Load Law/Lived preferences
+    const storedLawLived = localStorage.getItem(STORAGE_KEY_LAWLIVED);
+    if (storedLawLived) {
+      try {
+        const parsed = JSON.parse(storedLawLived);
+        setLawLivedRatio(parsed.ratio);
+        setIsLawLivedCustom(parsed.isCustom);
+        setConservativeMode(parsed.conservativeMode || false);
+        onLawLivedChange?.(parsed.ratio);
+        onConservativeModeChange?.(parsed.conservativeMode || false);
+      } catch {
+        onLawLivedChange?.(PRESETS[0].lawLivedRatio);
+      }
+    } else {
+      onLawLivedChange?.(PRESETS[0].lawLivedRatio);
     }
   }, []);
 
@@ -148,11 +186,48 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({ onWeightsChange })
     }));
   }, [customWeights, selectedPreset, isCustom]);
 
+  // Save Law/Lived preferences
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_LAWLIVED, JSON.stringify({
+      ratio: lawLivedRatio,
+      isCustom: isLawLivedCustom,
+      conservativeMode
+    }));
+  }, [lawLivedRatio, isLawLivedCustom, conservativeMode]);
+
   const handlePresetSelect = (preset: WeightPreset) => {
     setSelectedPreset(preset.id);
     setCustomWeights(preset.weights);
     setIsCustom(false);
     onWeightsChange(preset.weights);
+
+    // Also update Law/Lived ratio to match preset (unless user has customized it)
+    if (!isLawLivedCustom) {
+      setLawLivedRatio(preset.lawLivedRatio);
+      onLawLivedChange?.(preset.lawLivedRatio);
+    }
+  };
+
+  // NEW: Handle Law/Lived slider change
+  const handleLawLivedChange = (lawValue: number) => {
+    const newRatio: LawLivedRatio = { law: lawValue, lived: 100 - lawValue };
+    setLawLivedRatio(newRatio);
+    setIsLawLivedCustom(true);
+    onLawLivedChange?.(newRatio);
+  };
+
+  // NEW: Reset Law/Lived to preset default
+  const resetLawLivedToPreset = () => {
+    const preset = PRESETS.find(p => p.id === selectedPreset) || PRESETS[0];
+    setLawLivedRatio(preset.lawLivedRatio);
+    setIsLawLivedCustom(false);
+    onLawLivedChange?.(preset.lawLivedRatio);
+  };
+
+  // NEW: Handle conservative mode toggle
+  const handleConservativeModeChange = (enabled: boolean) => {
+    setConservativeMode(enabled);
+    onConservativeModeChange?.(enabled);
   };
 
   const handleSliderChange = (categoryId: CategoryId, value: number) => {
@@ -261,6 +336,72 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({ onWeightsChange })
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* NEW: Law vs Lived Reality Slider */}
+          <div className="law-lived-section">
+            <div className="section-header">
+              <span className="section-title">Law vs Lived Reality</span>
+              {isLawLivedCustom && (
+                <button
+                  className="reset-btn"
+                  onClick={resetLawLivedToPreset}
+                  title="Reset to preset default"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <p className="section-description">
+              Balance between what the <strong>law says</strong> vs how things <strong>actually work</strong> in daily life.
+            </p>
+
+            <div className="law-lived-slider">
+              <div className="slider-endpoints">
+                <span className="endpoint-label">
+                  <span className="endpoint-icon">📜</span>
+                  <span>Law ({lawLivedRatio.law}%)</span>
+                </span>
+                <span className="endpoint-label">
+                  <span className="endpoint-icon">🏙️</span>
+                  <span>Lived ({lawLivedRatio.lived}%)</span>
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={lawLivedRatio.law}
+                onChange={(e) => handleLawLivedChange(parseInt(e.target.value))}
+                className="law-lived-range"
+                disabled={conservativeMode}
+              />
+              <div className="slider-scale">
+                <span>Written Law</span>
+                <span>Daily Reality</span>
+              </div>
+            </div>
+
+            {/* Conservative Mode Toggle */}
+            <div className="conservative-mode">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={conservativeMode}
+                  onChange={(e) => handleConservativeModeChange(e.target.checked)}
+                  className="toggle-checkbox"
+                />
+                <span className="toggle-switch"></span>
+                <span className="toggle-text">
+                  <span className="toggle-icon">🛡️</span>
+                  <span className="toggle-title">Worst-Case Mode</span>
+                </span>
+              </label>
+              <p className="toggle-description">
+                Use whichever is <strong>LOWER</strong> (Law or Lived) for each metric.
+                Shows your "floor" of freedom.
+              </p>
+            </div>
           </div>
         </div>
       )}
