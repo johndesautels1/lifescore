@@ -77,30 +77,42 @@ export function buildCategoryConsensuses(
     let totalWeightedStdDev = 0;
     let totalStdDevWeight = 0;
 
+    // FIXED: Only include metrics with valid consensusScore (not null/missing)
+    // This prevents artificial convergence from missing data
+    let evaluatedCount = 0;
+
     categoryMetrics.forEach(m => {
+      // Skip metrics with null consensusScore (missing data)
+      if (m.consensusScore === null || m.isMissing) {
+        return;
+      }
+
       const metricDef = ALL_METRICS.find(am => am.id === m.metricId);
       const weight = metricDef?.weight || 1;
       totalWeightedScore += m.consensusScore * weight;
       totalWeight += weight;
+      evaluatedCount++;
 
       // Only count stdDev from metrics with 2+ LLM evaluations
-      if (m.llmScores && m.llmScores.length >= 2) {
+      if (m.llmScores && m.llmScores.length >= 2 && m.standardDeviation !== null) {
         totalWeightedStdDev += m.standardDeviation * weight;
         totalStdDevWeight += weight;
       }
     });
 
-    // Return neutral score (50) for empty categories, not 0
-    // This prevents entire categories from dragging down scores when data is missing
-    const avgScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
+    // FIXED: Return null for empty categories instead of 50
+    // This excludes the category from total score calculation instead of artificial convergence
+    const avgScore = totalWeight > 0 ? totalWeightedScore / totalWeight : null;
     // Use default stdDev if no metrics have 2+ LLMs (indicates insufficient data, not perfect agreement)
     const avgStdDev = totalStdDevWeight > 0 ? totalWeightedStdDev / totalStdDevWeight : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;
 
     return {
       categoryId: category.id as CategoryId,
       metrics: categoryMetrics,
-      averageConsensusScore: Math.round(avgScore),
-      agreementLevel: Math.round(Math.max(0, 100 - avgStdDev * 2))
+      averageConsensusScore: avgScore !== null ? Math.round(avgScore) : null,
+      agreementLevel: avgScore !== null ? Math.round(Math.max(0, 100 - avgStdDev * 2)) : null,
+      evaluatedMetrics: evaluatedCount,
+      totalMetrics: categoryMetrics.length
     };
   });
 }
@@ -158,15 +170,29 @@ export function buildEnhancedResultFromJudge(
   };
 
   // Calculate weighted total scores using user's persona weights or defaults
-  const city1Total = city1Categories.reduce((sum, cat) => {
-    const weight = getCategoryWeight(cat.categoryId);
-    return sum + (cat.averageConsensusScore * weight) / 100;
-  }, 0);
+  // FIXED: Only include categories with valid (non-null) scores
+  // Redistributes weight among categories that have data
+  const calculateCityTotal = (categories: typeof city1Categories): number => {
+    let weightedSum = 0;
+    let totalWeight = 0;
 
-  const city2Total = city2Categories.reduce((sum, cat) => {
-    const weight = getCategoryWeight(cat.categoryId);
-    return sum + (cat.averageConsensusScore * weight) / 100;
-  }, 0);
+    categories.forEach(cat => {
+      // Skip categories with no valid data (null averageConsensusScore)
+      if (cat.averageConsensusScore === null) {
+        return;
+      }
+      const weight = getCategoryWeight(cat.categoryId);
+      weightedSum += cat.averageConsensusScore * weight;
+      totalWeight += weight;
+    });
+
+    // If we have valid weights, calculate weighted average
+    // If no valid categories, return 0 (or could return null)
+    return totalWeight > 0 ? weightedSum / totalWeight : 0;
+  };
+
+  const city1Total = calculateCityTotal(city1Categories);
+  const city2Total = calculateCityTotal(city2Categories);
 
   // Determine winner
   const city1FinalScore = Math.round(city1Total);
@@ -183,11 +209,21 @@ export function buildEnhancedResultFromJudge(
   }
 
   // Category winners
+  // FIXED: Handle null averageConsensusScore - treat as tie if either is missing
   const categoryWinners: Record<CategoryId, 'city1' | 'city2' | 'tie'> = {} as Record<CategoryId, 'city1' | 'city2' | 'tie'>;
   CATEGORIES.forEach(cat => {
     const c1 = city1Categories.find(c => c.categoryId === cat.id);
     const c2 = city2Categories.find(c => c.categoryId === cat.id);
-    const diff = (c1?.averageConsensusScore || 0) - (c2?.averageConsensusScore || 0);
+    const c1Score = c1?.averageConsensusScore;
+    const c2Score = c2?.averageConsensusScore;
+
+    // If either score is null (no data), mark as tie
+    if (c1Score === null || c2Score === null) {
+      categoryWinners[cat.id] = 'tie';
+      return;
+    }
+
+    const diff = c1Score - c2Score;
     if (Math.abs(diff) < 5) {
       categoryWinners[cat.id] = 'tie';
     } else if (diff > 0) {

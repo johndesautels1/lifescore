@@ -102,12 +102,13 @@ interface JudgeRequest {
 interface MetricConsensus {
   metricId: string;
   llmScores: LLMMetricScore[];
-  consensusScore: number;
-  legalScore: number;
-  enforcementScore: number;
-  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
-  standardDeviation: number;
+  consensusScore: number | null;     // null if no data available
+  legalScore: number | null;         // null if no data available
+  enforcementScore: number | null;   // null if no data available
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split' | 'no_data';
+  standardDeviation: number | null;  // null if no data available
   judgeExplanation: string;
+  isMissing?: boolean;               // true if metric should be excluded from totals
 }
 
 interface JudgeOutput {
@@ -152,15 +153,18 @@ function buildMetricConsensus(
   scores: LLMMetricScore[]
 ): MetricConsensus {
   if (scores.length === 0) {
+    // FIXED: Return null scores to exclude metric from calculations
+    // Using 50 causes artificial convergence between cities
     return {
       metricId,
       llmScores: [],
-      consensusScore: 50,
-      legalScore: 50,
-      enforcementScore: 50,
-      confidenceLevel: 'split',
-      standardDeviation: 0,
-      judgeExplanation: 'No LLM evaluations available for this metric'
+      consensusScore: null,
+      legalScore: null,
+      enforcementScore: null,
+      confidenceLevel: 'no_data',
+      standardDeviation: null,
+      judgeExplanation: 'No LLM evaluations available - excluded from totals',
+      isMissing: true
     };
   }
 

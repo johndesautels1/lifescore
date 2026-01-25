@@ -36,13 +36,14 @@ interface EvaluationRequest {
 
 interface MetricScore {
   metricId: string;
-  city1LegalScore: number;
-  city1EnforcementScore: number;
-  city2LegalScore: number;
-  city2EnforcementScore: number;
+  city1LegalScore: number | null;       // null if data missing - excludes from calculations
+  city1EnforcementScore: number | null;
+  city2LegalScore: number | null;
+  city2EnforcementScore: number | null;
   confidence: string;
   reasoning?: string;
   sources?: string[];
+  isMissing?: boolean;                  // true if metric should be excluded from totals
   // FIX #1: Add evidence fields that parseResponse() returns
   city1Evidence?: Array<{ title: string; url: string; snippet: string }>;
   city2Evidence?: Array<{ title: string; url: string; snippet: string }>;
@@ -376,30 +377,34 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
 
     // Helper: Convert letter grade to score, or clamp numeric score
     // FIX 2026-01-21: Handle string numbers (e.g., "75" instead of 75) safely
-    const getScore = (letter: string | undefined, numeric: number | string | undefined): number => {
+    // FIX 2026-01-25: Return null instead of 50 for missing/invalid data - prevents artificial convergence
+    const getScore = (letter: string | undefined, numeric: number | string | undefined): number | null => {
       // Prefer letter grade if present (legacy support)
       if (letter && typeof letter === 'string' && /^[A-Ea-e]$/.test(letter.trim())) {
         return letterToScore(letter);
       }
       // Handle numeric scores - convert strings to numbers safely
+      // FIXED: Return null for missing data instead of defaulting to 50
       if (numeric === undefined || numeric === null) {
-        return 50; // Default to middle score
+        return null; // Missing data - will be excluded from calculations
       }
       // Convert to number (handles both number and string "75")
       const numericValue = typeof numeric === 'string' ? parseFloat(numeric) : numeric;
       // Validate and clamp to 0-100
+      // FIXED: Return null for invalid data instead of defaulting to 50
       if (isNaN(numericValue)) {
-        console.warn(`[PARSE] Invalid numeric value: ${numeric}, defaulting to 50`);
-        return 50;
+        console.warn(`[PARSE] Invalid numeric value: ${numeric}, excluding metric`);
+        return null;
       }
       return Math.max(0, Math.min(100, Math.round(numericValue)));
     };
 
     // Phase 2: Helper to convert category to score using shared metrics
-    const getCategoryScore = (metricId: string, category: string | undefined): number => {
-      if (!category) return 50;
+    // FIXED: Return null for missing category instead of 50
+    const getCategoryScore = (metricId: string, category: string | undefined): number | null => {
+      if (!category) return null;
       const result = categoryToScore(metricId, category);
-      return result.score ?? 50;
+      return result.score ?? null;
     };
 
     return (parsed.evaluations || []).map((e: ParsedEvaluation) => {

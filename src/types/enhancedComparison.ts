@@ -136,15 +136,16 @@ export interface LLMMetricScore extends MetricScore {
 export interface MetricConsensus {
   metricId: string;
   llmScores: LLMMetricScore[];
-  consensusScore: number;         // Final consensus score (0-100) - "Lived Freedom" blended score
+  consensusScore: number | null;  // Final consensus score (0-100) or null if no data
 
   // Dual Scoring: Law vs Enforcement Reality
-  legalScore: number;             // What the law technically says (0-100)
-  enforcementScore: number;       // How aggressively it's applied (0-100)
+  legalScore: number | null;             // What the law technically says (0-100)
+  enforcementScore: number | null;       // How aggressively it's applied (0-100)
 
-  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
-  standardDeviation: number;      // How much LLMs disagreed
-  judgeExplanation: string;       // Claude Opus explanation of consensus
+  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split' | 'no_data';
+  standardDeviation: number | null;      // How much LLMs disagreed
+  judgeExplanation: string;              // Claude Opus explanation of consensus
+  isMissing?: boolean;                   // True if metric should be excluded from totals
 }
 
 /**
@@ -153,8 +154,10 @@ export interface MetricConsensus {
 export interface CategoryConsensus {
   categoryId: CategoryId;
   metrics: MetricConsensus[];
-  averageConsensusScore: number;
-  agreementLevel: number;  // 0-100 how much LLMs agreed
+  averageConsensusScore: number | null;  // null if no valid metrics (excluded from total)
+  agreementLevel: number | null;         // 0-100 how much LLMs agreed, null if no data
+  evaluatedMetrics?: number;             // How many metrics had valid data
+  totalMetrics?: number;                 // Total possible metrics in category
 }
 
 /**

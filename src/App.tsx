@@ -36,7 +36,7 @@ import {
 import type { EvaluatorResult } from './services/llmEvaluators';
 import type { LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
-import type { ComparisonResult } from './types/metrics';
+import type { ComparisonResult, LawLivedRatio } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
 import { LLM_CONFIGS } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
@@ -78,6 +78,10 @@ const AppContent: React.FC = () => {
 
   // Custom weights state - used for persona-based scoring (Digital Nomad, Entrepreneur, etc.)
   const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
+
+  // Law vs Lived preference state - controls how legal and enforcement scores are combined
+  const [lawLivedRatio, setLawLivedRatio] = useState<LawLivedRatio>({ law: 50, lived: 50 });
+  const [conservativeMode, setConservativeMode] = useState(false);
 
   // LIFTED STATE: Gamma visual report (persists across tab switches)
   const [gammaReportState, setGammaReportState] = useState<VisualReportState>({
@@ -250,8 +254,8 @@ const AppContent: React.FC = () => {
       // Increment usage counter before running comparison
       await incrementUsage('standardComparisons');
 
-      // Run the comparison
-      await compare(city1, city2);
+      // Run the comparison with user's Law/Lived preferences
+      await compare(city1, city2, { lawLivedRatio, conservativeMode });
     }
   };
 
@@ -341,6 +345,8 @@ const AppContent: React.FC = () => {
                 enhancedWaiting={enhancedMode && enhancedStatus === 'running' && pendingCities !== null}
                 onDealbreakersChange={setDealbreakers}
                 onWeightsChange={setCustomWeights}
+                onLawLivedChange={setLawLivedRatio}
+                onConservativeModeChange={setConservativeMode}
               />
 
               {/* Standard Loading State */}

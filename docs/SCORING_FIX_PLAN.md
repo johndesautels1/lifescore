@@ -20,9 +20,9 @@ The scoring system has fundamental math errors causing two compared cities to al
 | 2 | Neutral default 50 (useComparison) | **HIGH** | `src/hooks/useComparison.ts` | 103-112 | **DONE** |
 | 3 | Neutral default 50 (scoring.ts) | **HIGH** | `src/api/scoring.ts` | 123-138 | **DONE** |
 | 4 | Neutral default 50 (parseAPIResponse) | **HIGH** | `src/api/scoring.ts` | 276-286 | **DONE** |
-| 5 | Neutral default 50 (opusJudge) | **HIGH** | `src/services/opusJudge.ts` | 93-97 | TODO |
-| 6 | Neutral default 50 (judge.ts) | **HIGH** | `api/judge.ts` | 154-165 | TODO |
-| 7 | Failed LLM defaults to 50 | **HIGH** | `api/evaluate.ts` | 385-395 | TODO |
+| 5 | Neutral default 50 (opusJudge) | **HIGH** | `src/services/opusJudge.ts` | 93-97 | **DONE** |
+| 6 | Neutral default 50 (judge.ts) | **HIGH** | `api/judge.ts` | 154-165 | **DONE** |
+| 7 | Failed LLM defaults to 50 | **HIGH** | `api/evaluate.ts` | 385-395 | **DONE** |
 | 8 | Persona weights ignored (Standard) | **MEDIUM** | `src/hooks/useComparison.ts` | all | TODO |
 | 9 | Median consensus flattens data | **MEDIUM** | `api/judge.ts` | 171-174 | TODO |
 
@@ -33,12 +33,12 @@ The scoring system has fundamental math errors causing two compared cities to al
 | # | Feature | Priority | Files to Create/Modify | Status |
 |---|---------|----------|------------------------|--------|
 | 1 | Law/Lived ratio per persona | **HIGH** | `WeightPresets.tsx` | **DONE** |
-| 2 | Law/Lived user slider | **HIGH** | `WeightPresets.tsx`, `CitySelector.tsx`, `App.tsx` | **DONE** (UI) |
-| 3 | Conservative mode (MIN) | **MEDIUM** | `WeightPresets.tsx`, scoring files | **DONE** (UI) |
+| 2 | Law/Lived user slider | **HIGH** | `WeightPresets.tsx`, `CitySelector.tsx`, `App.tsx` | **DONE** |
+| 3 | Conservative mode (MIN) | **MEDIUM** | `WeightPresets.tsx`, scoring files | **DONE** |
 | 4 | Category exclusion UI | **MEDIUM** | `WeightPresets.tsx` | TODO |
 | 5 | Weight redistribution | **MEDIUM** | All scoring files | TODO |
 | 6 | Data completeness indicator | **LOW** | Results components | **DONE** (types) |
-| 7 | Wire up Law/Lived to scoring | **HIGH** | `App.tsx`, `useComparison.ts` | TODO |
+| 7 | Wire up Law/Lived to scoring | **HIGH** | `App.tsx`, `useComparison.ts` | **DONE** |
 
 ---
 

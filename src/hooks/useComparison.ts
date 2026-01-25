@@ -13,7 +13,8 @@ import type {
   ComparisonResult,
   MetricScore,
   CategoryScore,
-  CityScore
+  CityScore,
+  LawLivedRatio
 } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 
@@ -43,9 +44,14 @@ interface UseComparisonOptions {
   apiEndpoint?: string;  // Custom API endpoint
 }
 
+interface CompareOptions {
+  lawLivedRatio?: LawLivedRatio;   // Law vs Lived weighting (default 50/50)
+  conservativeMode?: boolean;       // Use MIN(law, lived) instead of weighted avg
+}
+
 interface UseComparisonReturn {
   state: ComparisonState;
-  compare: (city1: string, city2: string) => Promise<void>;
+  compare: (city1: string, city2: string, options?: CompareOptions) => Promise<void>;
   reset: () => void;
   loadResult: (result: ComparisonResult) => void;
 }
@@ -243,8 +249,12 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
    * Run comparison between two cities using real LLM APIs
    * FIX: Now properly collects and uses API response data
    * FIX: Added AbortController cleanup for unmount and new comparison scenarios
+   * FIX: Accepts lawLivedRatio and conservativeMode for proper score weighting
    */
-  const compare = useCallback(async (city1: string, city2: string) => {
+  const compare = useCallback(async (city1: string, city2: string, options?: CompareOptions) => {
+    // Extract scoring preferences with defaults
+    const lawLivedRatio = options?.lawLivedRatio ?? { law: 50, lived: 50 };
+    const conservativeMode = options?.conservativeMode ?? false;
     // Abort any previous comparison in progress (prevents race conditions)
     comparisonControllerRef.current?.abort();
 
@@ -345,16 +355,33 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
               const city2HasData = typeof city2Legal === 'number' && !isNaN(city2Legal);
 
               // Calculate normalized score using user's Law/Lived preference
-              // TODO: Get lawLivedRatio from user preferences (default 50/50 for now)
-              const lawWeight = 50; // Will be replaced with user preference
-              const livedWeight = 50;
+              // FIXED: Now uses user's lawLivedRatio and conservativeMode instead of hardcoded 50/50
+              let city1NormalizedScore: number | null = null;
+              let city2NormalizedScore: number | null = null;
 
-              const city1NormalizedScore = city1HasData
-                ? Math.round((city1Legal * lawWeight + city1Lived * livedWeight) / 100)
-                : null;
-              const city2NormalizedScore = city2HasData
-                ? Math.round((city2Legal * lawWeight + city2Lived * livedWeight) / 100)
-                : null;
+              if (city1HasData) {
+                if (conservativeMode) {
+                  // Worst-case mode: use the LOWER of law or lived
+                  city1NormalizedScore = Math.round(Math.min(city1Legal, city1Lived));
+                } else {
+                  // Normal mode: weighted combination based on user preference
+                  city1NormalizedScore = Math.round(
+                    (city1Legal * lawLivedRatio.law + city1Lived * lawLivedRatio.lived) / 100
+                  );
+                }
+              }
+
+              if (city2HasData) {
+                if (conservativeMode) {
+                  // Worst-case mode: use the LOWER of law or lived
+                  city2NormalizedScore = Math.round(Math.min(city2Legal, city2Lived));
+                } else {
+                  // Normal mode: weighted combination based on user preference
+                  city2NormalizedScore = Math.round(
+                    (city2Legal * lawLivedRatio.law + city2Lived * lawLivedRatio.lived) / 100
+                  );
+                }
+              }
 
               // Map confidence string to type
               let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'medium';
