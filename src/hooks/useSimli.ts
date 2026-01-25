@@ -444,6 +444,9 @@ export function useSimli(): UseSimliReturn {
 
       const data = await response.json();
 
+      console.log('[useSimli] Audio data received:', data.audioData ? `${data.audioData.length} chars` : 'none');
+      console.log('[useSimli] Data channel state:', dataChannelRef.current?.readyState || 'no channel');
+
       // If we got audio data, send it through the data channel
       if (data.audioData && dataChannelRef.current?.readyState === 'open') {
         // Convert base64 audio to Uint8Array
@@ -453,12 +456,18 @@ export function useSimli(): UseSimliReturn {
           bytes[i] = binaryString.charCodeAt(i);
         }
 
+        console.log('[useSimli] Sending', bytes.length, 'bytes of audio to Simli');
+
         // Send in chunks of 6000 bytes (Simli recommended)
         const chunkSize = 6000;
         for (let i = 0; i < bytes.length; i += chunkSize) {
           const chunk = bytes.slice(i, i + chunkSize);
           dataChannelRef.current.send(chunk);
         }
+
+        console.log('[useSimli] Audio sent successfully');
+      } else if (data.audioData) {
+        console.warn('[useSimli] Audio received but data channel not open!', dataChannelRef.current?.readyState);
       }
 
       // Estimate duration and set timeout to return to connected state
