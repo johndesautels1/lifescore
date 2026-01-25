@@ -214,7 +214,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">🎥</span>
-                <span className="provider-name">Avatar (HeyGen + D-ID + Simli)</span>
+                <span className="provider-name">Avatar (HeyGen + D-ID + Simli + Replicate)</span>
                 <span className="provider-cost">{formatCost(summary.avatarCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.avatarCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -337,6 +337,10 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   <tr>
                     <td>🎭 Simli Avatar</td>
                     <td colSpan={2}>$0.02/sec</td>
+                  </tr>
+                  <tr>
+                    <td>🎬 Replicate SadTalker</td>
+                    <td colSpan={2}>$0.0023/sec</td>
                   </tr>
                 </tbody>
               </table>
