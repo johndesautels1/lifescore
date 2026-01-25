@@ -3,7 +3,7 @@
  */
 
 .header {
-  background: linear-gradient(90deg, var(--sapphire-dark), var(--sapphire), var(--sapphire-light));
+  background: #0a1628;
   color: white;
   padding: 2rem 1rem;
   box-shadow: var(--shadow-lg);

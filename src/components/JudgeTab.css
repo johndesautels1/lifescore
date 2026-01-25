@@ -148,7 +148,7 @@
   padding: 0.875rem 1rem;
   font-size: 0.95rem;
   font-family: var(--font-display);
-  background: var(--cockpit-blue);
+  background: #0a1628;
   color: var(--ice-white);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
@@ -192,7 +192,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 2rem;
-  background: rgba(13, 40, 71, 0.6);
+  background: #0a1628;
   border-bottom: 1px solid var(--glass-border);
 }
 
