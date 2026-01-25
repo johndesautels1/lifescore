@@ -183,10 +183,16 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     setVideoEnabled(prev => !prev);
   }, []);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change OR when chat panel opens
+  // FIXED 2026-01-25: Now properly scrolls when panel opens to show latest messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (showTextChat && messagesEndRef.current) {
+      // Use setTimeout to ensure DOM has rendered before scrolling
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    }
+  }, [messages, showTextChat]);
 
   // ═══════════════════════════════════════════════════════════════════
   // AUTO-SPEAK: When OpenAI responds, make avatar speak it (if video enabled)
