@@ -87,19 +87,33 @@ export function useSimli(): UseSimliReturn {
 
     const pc = new RTCPeerConnection(config);
 
+    // Track if we've already attached the stream (to avoid duplicate play() calls)
+    let streamAttached = false;
+
     // Handle incoming tracks (video/audio stream from Simli)
     pc.ontrack = (event) => {
       console.log('[useSimli] Received track:', event.track.kind);
 
-      if (event.streams && event.streams[0]) {
+      // Only attach stream once (first track, usually video)
+      if (event.streams && event.streams[0] && !streamAttached) {
+        streamAttached = true;
+
         // Find video element in DOM if not set via ref
         const videoEl = videoElementRef.current || document.querySelector('.avatar-video') as HTMLVideoElement;
 
         if (videoEl) {
           videoEl.srcObject = event.streams[0];
-          videoEl.play().catch(err => {
-            console.warn('[useSimli] Video autoplay failed:', err);
-          });
+          // Use a small delay to ensure stream is ready
+          setTimeout(() => {
+            videoEl.play().catch(err => {
+              console.warn('[useSimli] Video autoplay failed:', err);
+              // Try muted autoplay as fallback (browser policy)
+              videoEl.muted = true;
+              videoEl.play().catch(() => {
+                console.warn('[useSimli] Muted autoplay also failed');
+              });
+            });
+          }, 100);
           console.log('[useSimli] Video stream attached to element');
         } else {
           console.error('[useSimli] No video element found to attach stream');
@@ -212,32 +226,53 @@ export function useSimli(): UseSimliReturn {
       };
 
       ws.onmessage = async (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log('[useSimli] WebSocket message:', data.type || 'unknown');
+        const rawMessage = event.data;
 
-          if (data.type === 'answer' && data.sdp) {
-            // Set remote description from Simli's answer
-            const answer = new RTCSessionDescription({
-              type: 'answer',
-              sdp: data.sdp,
-            });
-            await pc.setRemoteDescription(answer);
-            console.log('[useSimli] Remote description set');
-
-            // Create session object
-            const sessionId = `simli_${Date.now()}`;
-            setSession({
-              sessionId,
-              createdAt: new Date(),
-            });
-
-            setStatus('connected');
-          } else if (data.type === 'error') {
-            throw new Error(data.message || 'Simli connection error');
+        // Handle plain text protocol messages from Simli
+        if (typeof rawMessage === 'string') {
+          // Check for error messages
+          if (rawMessage.startsWith('ERROR:') || rawMessage.startsWith('NO SESSION')) {
+            console.error('[useSimli] Simli error:', rawMessage);
+            setError(rawMessage);
+            return;
           }
-        } catch (err) {
-          console.error('[useSimli] Message handling error:', err);
+
+          // Protocol messages we can safely ignore
+          if (rawMessage.startsWith('ENDFRAME:') || rawMessage === 'STOP' || rawMessage === 'START') {
+            console.log('[useSimli] Protocol message:', rawMessage);
+            return;
+          }
+
+          // Try to parse as JSON
+          try {
+            const data = JSON.parse(rawMessage);
+            console.log('[useSimli] WebSocket message:', data.type || 'unknown');
+
+            if (data.type === 'answer' && data.sdp) {
+              // Set remote description from Simli's answer
+              const answer = new RTCSessionDescription({
+                type: 'answer',
+                sdp: data.sdp,
+              });
+              await pc.setRemoteDescription(answer);
+              console.log('[useSimli] Remote description set');
+
+              // Create session object
+              const sessionId = `simli_${Date.now()}`;
+              setSession({
+                sessionId,
+                createdAt: new Date(),
+              });
+
+              setStatus('connected');
+            } else if (data.type === 'error') {
+              console.error('[useSimli] Server error:', data.message);
+              setError(data.message || 'Simli connection error');
+            }
+          } catch {
+            // Not JSON - log unknown messages for debugging
+            console.log('[useSimli] Unknown message:', rawMessage.substring(0, 50));
+          }
         }
       };
 
