@@ -140,11 +140,14 @@ function getRequiredTierForFeature(feature: FeatureKey): UserTier {
 }
 
 /**
- * Get start of current month as ISO date string
+ * Get start of current month as ISO date string (YYYY-MM-DD)
+ * Uses local timezone to avoid UTC conversion issues
  */
 function getCurrentPeriodStart(): string {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
 }
 
 // ============================================================================
@@ -322,11 +325,10 @@ export function useTierAccess(): TierAccessHook {
 
     try {
       const periodStart = getCurrentPeriodStart();
-      const periodEnd = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() + 1,
-        0
-      ).toISOString().split('T')[0];
+      // Calculate last day of current month (local timezone)
+      const now = new Date();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const periodEnd = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
 
       const column = FEATURE_TO_COLUMN[feature];
       if (!column) {
