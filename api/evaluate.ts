@@ -1146,6 +1146,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 }
 
 // Perplexity evaluation (with Sonar web search and citations)
+// UPDATED 2026-01-25: Added batching for large categories (>20 metrics) to prevent truncation
 async function evaluateWithPerplexity(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
@@ -1153,6 +1154,45 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
   }
 
   const startTime = Date.now();
+
+  // BATCHING: For large categories (>20 metrics like business_work with 25),
+  // split into smaller batches to prevent output truncation
+  const BATCH_THRESHOLD = 20;
+  if (metrics.length > BATCH_THRESHOLD) {
+    console.log(`[PERPLEXITY] Large category detected (${metrics.length} metrics), splitting into batches`);
+
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+
+    console.log(`[PERPLEXITY] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    // Run batches sequentially to avoid rate limits
+    const result1 = await evaluateWithPerplexity(city1, city2, batch1);
+    const result2 = await evaluateWithPerplexity(city1, city2, batch2);
+
+    // Merge results
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedLatency = Date.now() - startTime;
+    const combinedSuccess = result1.success && result2.success;
+
+    // Combine token usage
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[PERPLEXITY] Batched evaluation complete: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+
+    return {
+      provider: 'perplexity',
+      success: combinedSuccess || combinedScores.length > 0, // Partial success if we got any scores
+      scores: combinedScores,
+      latencyMs: combinedLatency,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
   // This pre-fetches data so Perplexity doesn't have to do ALL web searches itself
