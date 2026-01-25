@@ -289,6 +289,22 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                     <path fill="currentColor" d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
                   </svg>
                 </button>
+                {/* FIX 2026-01-25: Global stop audio button */}
+                {(isPlaying || playingMessageId) && (
+                  <button
+                    className="toolbar-btn stop-audio-btn"
+                    onClick={() => {
+                      stopSpeaking();
+                      window.speechSynthesis?.cancel();
+                      setPlayingMessageId(null);
+                    }}
+                    title="Stop Audio"
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                      <rect fill="currentColor" x="6" y="6" width="12" height="12"/>
+                    </svg>
+                  </button>
+                )}
               </div>
               <button
                 className="bubble-action-btn"

@@ -238,6 +238,8 @@ const AppContent: React.FC = () => {
     loadResult(result);
     setEnhancedStatus('idle');
     setEnhancedResult(null);
+    // FIX 2026-01-25: Switch to results tab after loading saved comparison
+    setActiveTab('results');
   }, [loadResult]);
 
   const handleSaved = useCallback(() => {

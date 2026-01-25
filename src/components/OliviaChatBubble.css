@@ -508,6 +508,17 @@
   flex-shrink: 0;
 }
 
+/* FIX 2026-01-25: Global stop audio button styling */
+.toolbar-btn.stop-audio-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--bubble-error);
+}
+
+.toolbar-btn.stop-audio-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+  color: #fff;
+}
+
 /* Typing Indicator */
 .message-bubble.typing {
   padding: 0.6rem 0.9rem;
