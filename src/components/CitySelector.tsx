@@ -91,18 +91,18 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Get filtered metros based on tab and search
+  // Get filtered metros based on tab and search, sorted alphabetically
   const getFilteredMetros = (): Metro[] => {
     let metros: Metro[];
     switch (activeTab) {
       case 'na':
-        metros = NORTH_AMERICAN_METROS;
+        metros = [...NORTH_AMERICAN_METROS].sort((a, b) => a.city.localeCompare(b.city));
         break;
       case 'eu':
-        metros = EUROPEAN_METROS;
+        metros = [...EUROPEAN_METROS].sort((a, b) => a.city.localeCompare(b.city));
         break;
       default:
-        metros = ALL_METROS;
+        metros = [...ALL_METROS].sort((a, b) => a.city.localeCompare(b.city));
     }
     return searchQuery ? searchMetros(searchQuery, metros) : metros;
   };
