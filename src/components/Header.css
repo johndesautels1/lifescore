@@ -196,6 +196,33 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN BUTTON (Cost Dashboard)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.admin-btn:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: rgba(212, 175, 55, 0.5);
+  transform: scale(1.1);
+}
+
+.admin-btn span {
+  line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    USER ACCOUNT DISPLAY
    ═══════════════════════════════════════════════════════════════════════════ */
 .user-account {

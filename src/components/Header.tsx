@@ -11,9 +11,10 @@ import './Header.css';
 
 interface HeaderProps {
   onUpgradeClick?: () => void;
+  onCostDashboardClick?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onUpgradeClick }) => {
+export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { tier } = useTierAccess();
 
@@ -49,6 +50,17 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick }) => {
                   </svg>
                   <span>{TIER_NAMES[tier]}</span>
                 </div>
+              )}
+
+              {/* Admin Cost Dashboard Button */}
+              {onCostDashboardClick && (
+                <button
+                  className="admin-btn"
+                  onClick={onCostDashboardClick}
+                  title="Cost Dashboard (Admin)"
+                >
+                  <span>💰</span>
+                </button>
               )}
 
               <div className="user-info">

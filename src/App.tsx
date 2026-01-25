@@ -24,6 +24,7 @@ import AskOlivia from './components/AskOlivia';
 import JudgeTab from './components/JudgeTab';
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
+import CostDashboard from './components/CostDashboard';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
@@ -103,6 +104,9 @@ const AppContent: React.FC = () => {
   // Pricing modal state
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pricingHighlight, setPricingHighlight] = useState<{ feature?: string; tier?: 'free' | 'pro' | 'enterprise' }>({});
+
+  // Cost dashboard state (admin feature)
+  const [showCostDashboard, setShowCostDashboard] = useState(false);
 
   const availableLLMs = getAvailableLLMs(apiKeys);
 
@@ -297,7 +301,10 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app">
-      <Header onUpgradeClick={() => setShowPricingModal(true)} />
+      <Header
+        onUpgradeClick={() => setShowPricingModal(true)}
+        onCostDashboardClick={() => setShowCostDashboard(true)}
+      />
 
       {/* Tab Navigation */}
       <TabNavigation
@@ -703,6 +710,12 @@ const AppContent: React.FC = () => {
         }}
         highlightFeature={pricingHighlight.feature}
         highlightTier={pricingHighlight.tier}
+      />
+
+      {/* Admin Cost Dashboard */}
+      <CostDashboard
+        isOpen={showCostDashboard}
+        onClose={() => setShowCostDashboard(false)}
       />
     </div>
   );
