@@ -81,6 +81,7 @@ export interface JudgeVideo {
   createdAt: string;
   completedAt?: string;
   error?: string;
+  replicatePredictionId?: string;
 }
 
 export interface GenerateJudgeVideoRequest {
