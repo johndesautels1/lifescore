@@ -5184,6 +5184,27 @@
   cursor: default;
 }
 
+/* ADDED 2026-01-25: Saving state animation */
+.action-btn.save-btn.saving {
+  background: linear-gradient(135deg, var(--sapphire) 0%, var(--sapphire-dark) 100%);
+  cursor: wait;
+  animation: pulse-enhanced-saving 1.5s infinite;
+}
+
+@keyframes pulse-enhanced-saving {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+/* Save message styling for enhanced results */
+.enhanced-actions .save-message.success {
+  color: var(--success);
+}
+
+.enhanced-actions .save-message.error {
+  color: var(--error);
+}
+
 .action-btn.share-btn {
   background: white;
   color: var(--sapphire);

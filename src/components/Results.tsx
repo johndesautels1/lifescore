@@ -320,23 +320,32 @@ interface ResultsProps {
 
 export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights }) => {
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setIsSaved(isComparisonSaved(result.comparisonId));
   }, [result.comparisonId]);
 
+  // FIXED 2026-01-25: Added loading state for better UX feedback
   const handleSave = async () => {
+    if (isSaving || isSaved) return; // Prevent double-clicks
+
+    setIsSaving(true);
+    setSaveMessage(null);
+
     try {
       await saveComparisonLocal(result);
       setIsSaved(true);
-      setSaveMessage('Comparison saved!');
+      setSaveMessage('✓ Saved successfully!');
       setTimeout(() => setSaveMessage(null), 3000);
       onSaved?.();
     } catch (error) {
       console.error('Failed to save comparison:', error);
       setSaveMessage('Save failed - try again');
-      setTimeout(() => setSaveMessage(null), 3000);
+      setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -346,17 +355,19 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights
       <ScoreGrid result={result} />
       <CategoryBreakdown result={result} customWeights={customWeights} />
 
-      {/* Save Button */}
+      {/* Save Button - FIXED 2026-01-25: Added loading state */}
       <div className="save-comparison-bar">
         {saveMessage && (
-          <span className="save-message">{saveMessage}</span>
+          <span className={`save-message ${saveMessage.includes('failed') ? 'error' : 'success'}`}>
+            {saveMessage}
+          </span>
         )}
         <button
-          className={`btn save-btn ${isSaved ? 'saved' : ''}`}
+          className={`btn save-btn ${isSaved ? 'saved' : ''} ${isSaving ? 'saving' : ''}`}
           onClick={handleSave}
-          disabled={isSaved}
+          disabled={isSaved || isSaving}
         >
-          {isSaved ? '✓ Saved' : '💾 Save Comparison'}
+          {isSaving ? '⏳ Saving...' : isSaved ? '✓ Saved' : '💾 Save Comparison'}
         </button>
       </div>
 

@@ -509,6 +509,31 @@
   background: var(--success);
 }
 
+/* ADDED 2026-01-25: Saving state animation */
+.save-btn.saving {
+  background: var(--sapphire);
+  cursor: wait;
+  animation: pulse-saving 1.5s infinite;
+}
+
+@keyframes pulse-saving {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Save message styling */
+.save-message.success {
+  color: var(--success);
+}
+
+.save-message.error {
+  color: var(--error);
+}
+
 [data-theme="dark"] .save-message {
   color: #86efac;
+}
+
+[data-theme="dark"] .save-message.error {
+  color: #f87171;
 }

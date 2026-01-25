@@ -1288,6 +1288,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showTopDifferences, setShowTopDifferences] = useState(true);
@@ -1363,16 +1364,24 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
   }, [result.comparisonId]);
 
+  // FIXED 2026-01-25: Added loading state for better UX feedback
   const handleSave = async () => {
+    if (isSaving || isSaved) return; // Prevent double-clicks
+
+    setIsSaving(true);
+    setSaveMessage(null);
+
     try {
       await saveEnhancedComparisonLocal(result);
       setIsSaved(true);
-      setSaveMessage('Comparison saved!');
+      setSaveMessage('✓ Saved successfully!');
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       console.error('Failed to save enhanced comparison:', error);
       setSaveMessage('Save failed - try again');
-      setTimeout(() => setSaveMessage(null), 3000);
+      setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -2159,18 +2168,20 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         })}
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - FIXED 2026-01-25: Added loading state */}
       <div className="enhanced-actions card">
         {saveMessage && (
-          <span className="save-message">{saveMessage}</span>
+          <span className={`save-message ${saveMessage.includes('failed') ? 'error' : 'success'}`}>
+            {saveMessage}
+          </span>
         )}
         <div className="action-buttons">
           <button
-            className={`btn action-btn save-btn ${isSaved ? 'saved' : ''}`}
+            className={`btn action-btn save-btn ${isSaved ? 'saved' : ''} ${isSaving ? 'saving' : ''}`}
             onClick={handleSave}
-            disabled={isSaved}
+            disabled={isSaved || isSaving}
           >
-            {isSaved ? '✓ Saved' : '💾 Save'}
+            {isSaving ? '⏳ Saving...' : isSaved ? '✓ Saved' : '💾 Save'}
           </button>
           <button className="btn action-btn share-btn" onClick={handleShare}>
             📤 Share
