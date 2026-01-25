@@ -151,10 +151,19 @@ function getCurrentPeriodStart(): string {
 // HOOK
 // ============================================================================
 
-export function useTierAccess(): TierAccessHook {
-  const { profile, isLoading: authLoading } = useAuth();
+// Developer bypass emails - comma separated in env var
+const DEV_BYPASS_EMAILS = (import.meta.env.VITE_DEV_BYPASS_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 
-  const tier: UserTier = profile?.tier || 'free';
+export function useTierAccess(): TierAccessHook {
+  const { profile, user, isLoading: authLoading } = useAuth();
+
+  // Developer bypass - grant enterprise access to specified emails
+  const isDeveloper = user?.email && DEV_BYPASS_EMAILS.includes(user.email.toLowerCase());
+  const tier: UserTier = isDeveloper ? 'enterprise' : (profile?.tier || 'free');
+
+  if (isDeveloper) {
+    console.log('[useTierAccess] Developer bypass active for:', user?.email);
+  }
   const tierName = TIER_NAMES[tier];
   const limits = TIER_LIMITS[tier];
 
