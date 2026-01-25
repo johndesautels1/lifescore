@@ -38,6 +38,55 @@ export function isSupabaseConfigured(): boolean {
   return !!(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co');
 }
 
+/**
+ * Supabase query timeout in milliseconds.
+ * Increased to 45s to handle Supabase free tier cold starts.
+ */
+export const SUPABASE_TIMEOUT_MS = 45000;
+
+/**
+ * Wrap a Supabase promise with a timeout.
+ * Returns fallback value on timeout instead of throwing.
+ *
+ * @param promise - The Supabase query promise
+ * @param timeoutMs - Timeout in milliseconds (default: 45000)
+ * @param fallback - Value to return on timeout
+ */
+export async function withSupabaseTimeout<T>(
+  promise: PromiseLike<T>,
+  timeoutMs: number = SUPABASE_TIMEOUT_MS,
+  fallback: T
+): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((resolve) =>
+      setTimeout(() => {
+        console.warn(`[Supabase] Query timed out after ${timeoutMs}ms, using fallback`);
+        resolve(fallback);
+      }, timeoutMs)
+    ),
+  ]);
+}
+
+/**
+ * Wrap a Supabase promise with a timeout that throws on timeout.
+ * Use when you need to know if timeout occurred.
+ *
+ * @param promise - The Supabase query promise
+ * @param timeoutMs - Timeout in milliseconds (default: 45000)
+ */
+export async function withSupabaseTimeoutThrow<T>(
+  promise: PromiseLike<T>,
+  timeoutMs: number = SUPABASE_TIMEOUT_MS
+): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Supabase query timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
 export async function getCurrentUser() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {

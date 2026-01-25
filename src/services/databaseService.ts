@@ -9,7 +9,7 @@
  * - User preferences
  */
 
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withSupabaseTimeout, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type {
   Comparison,
   ComparisonInsert,
@@ -73,15 +73,19 @@ export async function saveComparison(
     nickname,
   };
 
-  const { data, error } = await supabase
-    .from('comparisons')
-    .upsert(insert, { onConflict: 'user_id,comparison_id' })
-    .select()
-    .single();
+  const result = await withSupabaseTimeout(
+    supabase
+      .from('comparisons')
+      .upsert(insert, { onConflict: 'user_id,comparison_id' })
+      .select()
+      .single(),
+    SUPABASE_TIMEOUT_MS,
+    { data: null, error: { message: 'Database timeout' } }
+  );
 
   return {
-    data: data as Comparison | null,
-    error: error ? new Error(error.message) : null,
+    data: result.data as Comparison | null,
+    error: result.error ? new Error(result.error.message) : null,
   };
 }
 
@@ -112,11 +116,15 @@ export async function getUserComparisons(
     query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
   }
 
-  const { data, error } = await query;
+  const result = await withSupabaseTimeout(
+    query,
+    SUPABASE_TIMEOUT_MS,
+    { data: [], error: null }
+  );
 
   return {
-    data: (data as Comparison[]) || [],
-    error: error ? new Error(error.message) : null,
+    data: (result.data as Comparison[]) || [],
+    error: result.error ? new Error(result.error.message) : null,
   };
 }
 
