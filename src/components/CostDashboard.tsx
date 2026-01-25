@@ -68,18 +68,18 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       c.city2,
       c.mode,
       new Date(c.timestamp).toISOString(),
-      c.tavilyTotal.toFixed(4),
-      c.claudeSonnet.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
-      c.gpt4o.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
-      c.gemini.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
-      c.grok.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
-      c.perplexity.reduce((s, x) => s + x.totalCost, 0).toFixed(4),
-      (c.opusJudge?.totalCost || 0).toFixed(4),
-      (c.gammaTotal || 0).toFixed(4),
-      (c.oliviaTotal || 0).toFixed(4),
-      (c.ttsTotal || 0).toFixed(4),
-      (c.avatarTotal || 0).toFixed(4),
-      c.grandTotal.toFixed(4)
+      c.tavilyTotal.toFixed(2),
+      c.claudeSonnet.reduce((s, x) => s + x.totalCost, 0).toFixed(2),
+      c.gpt4o.reduce((s, x) => s + x.totalCost, 0).toFixed(2),
+      c.gemini.reduce((s, x) => s + x.totalCost, 0).toFixed(2),
+      c.grok.reduce((s, x) => s + x.totalCost, 0).toFixed(2),
+      c.perplexity.reduce((s, x) => s + x.totalCost, 0).toFixed(2),
+      (c.opusJudge?.totalCost || 0).toFixed(2),
+      (c.gammaTotal || 0).toFixed(2),
+      (c.oliviaTotal || 0).toFixed(2),
+      (c.ttsTotal || 0).toFixed(2),
+      (c.avatarTotal || 0).toFixed(2),
+      c.grandTotal.toFixed(2)
     ]);
 
     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
