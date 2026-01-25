@@ -425,6 +425,8 @@ export function useSimli(): UseSimliReturn {
     setStatus('speaking');
 
     try {
+      console.log('[useSimli] Calling simli-speak API...');
+
       // Call server-side API to generate TTS audio and send to Simli
       const response = await fetch('/api/avatar/simli-speak', {
         method: 'POST',
@@ -437,12 +439,16 @@ export function useSimli(): UseSimliReturn {
         }),
       });
 
+      console.log('[useSimli] API response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Speak failed: ${response.status}`);
+        const errorText = await response.text();
+        console.error('[useSimli] API error response:', errorText);
+        throw new Error(`Speak failed: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('[useSimli] API response data keys:', Object.keys(data));
 
       console.log('[useSimli] Audio data received:', data.audioData ? `${data.audioData.length} chars` : 'none');
       console.log('[useSimli] Data channel state:', dataChannelRef.current?.readyState || 'no channel');
