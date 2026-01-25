@@ -39,14 +39,19 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
   // Check video generation status
   const checkStatus = useCallback(async () => {
-    if (!video?.id && !video?.comparisonId) {
+    if (!video?.id && !video?.comparisonId && !video?.replicatePredictionId) {
       return;
     }
 
     try {
-      const param = video.id
-        ? `videoId=${video.id}`
-        : `comparisonId=${video.comparisonId}`;
+      // Prefer predictionId for direct Replicate query (bypasses DB issues)
+      const param = video.replicatePredictionId
+        ? `predictionId=${video.replicatePredictionId}`
+        : video.id
+          ? `videoId=${video.id}`
+          : `comparisonId=${video.comparisonId}`;
+
+      console.log('[useJudgeVideo] Checking status with:', param);
 
       const response = await fetch(`${API_BASE}/video-status?${param}`);
 
