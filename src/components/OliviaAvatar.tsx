@@ -32,6 +32,7 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showFallback, setShowFallback] = useState(false);
 
+  // Pass videoRef to useSimli so it can attach the WebRTC stream
   const {
     status,
     isConnected,
@@ -40,7 +41,14 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
     disconnect,
     interrupt,
     error,
-  } = useSimli();
+  } = useSimli({
+    videoRef,
+    onError: (err) => {
+      console.error('[OliviaAvatar] Simli error:', err);
+      onError?.(err);
+      setShowFallback(true);
+    },
+  });
 
   // Auto-connect on mount
   useEffect(() => {
@@ -68,12 +76,12 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
     }
   }, [isSpeaking, status, onSpeakingStart, onSpeakingEnd]);
 
+  // Show fallback when there's an error (callback already notified parent)
   useEffect(() => {
-    if (error && onError) {
-      onError(error);
+    if (error) {
       setShowFallback(true);
     }
-  }, [error, onError]);
+  }, [error]);
 
   // Status indicator colors
   const getStatusColor = () => {

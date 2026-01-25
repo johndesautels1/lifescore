@@ -10,7 +10,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 // ============================================================================
 // TYPES
@@ -51,6 +51,13 @@ export interface UseSimliReturn {
   error: string | null;
 }
 
+export interface UseSimliOptions {
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  onConnected?: () => void;
+  onDisconnected?: () => void;
+  onError?: (error: string) => void;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -62,7 +69,9 @@ const ICE_SERVERS = [{ urls: ['stun:stun.l.google.com:19302'] }];
 // HOOK
 // ============================================================================
 
-export function useSimli(): UseSimliReturn {
+export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
+  const { videoRef: externalVideoRef, onConnected, onDisconnected, onError } = options;
+
   const [session, setSession] = useState<SimliSession | null>(null);
   const [status, setStatus] = useState<SimliSessionStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -71,8 +80,11 @@ export function useSimli(): UseSimliReturn {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const webSocketRef = useRef<WebSocket | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
-  const videoElementRef = useRef<HTMLVideoElement | null>(null);
+  const internalVideoRef = useRef<HTMLVideoElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Use external videoRef if provided, otherwise fall back to internal
+  const videoElementRef = externalVideoRef || internalVideoRef;
 
   const isConnected = status === 'connected' || status === 'speaking' || status === 'listening';
   const isSpeaking = status === 'speaking';
@@ -98,8 +110,14 @@ export function useSimli(): UseSimliReturn {
       if (event.streams && event.streams[0] && !streamAttached) {
         streamAttached = true;
 
-        // Find video element in DOM if not set via ref
-        const videoEl = videoElementRef.current || document.querySelector('.avatar-video') as HTMLVideoElement;
+        // Use provided videoRef, or fall back to DOM query
+        const videoEl = videoElementRef?.current || document.querySelector('.avatar-video') as HTMLVideoElement;
+
+        console.log('[useSimli] Looking for video element:', {
+          hasExternalRef: !!externalVideoRef,
+          refHasElement: !!videoElementRef?.current,
+          foundViaQuery: !!document.querySelector('.avatar-video'),
+        });
 
         if (videoEl) {
           videoEl.srcObject = event.streams[0];
@@ -114,9 +132,10 @@ export function useSimli(): UseSimliReturn {
               });
             });
           }, 100);
-          console.log('[useSimli] Video stream attached to element');
+          console.log('[useSimli] Video stream attached to element successfully');
         } else {
-          console.error('[useSimli] No video element found to attach stream');
+          console.error('[useSimli] No video element found to attach stream! Check videoRef prop.');
+          onError?.('Video element not found');
         }
       }
     };
@@ -128,14 +147,18 @@ export function useSimli(): UseSimliReturn {
       switch (pc.connectionState) {
         case 'connected':
           setStatus('connected');
+          onConnected?.();
           break;
         case 'disconnected':
         case 'failed':
           setStatus('error');
           setError('WebRTC connection failed');
+          onError?.('WebRTC connection failed');
+          onDisconnected?.();
           break;
         case 'closed':
           setStatus('disconnected');
+          onDisconnected?.();
           break;
       }
     };

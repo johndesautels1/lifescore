@@ -103,12 +103,18 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
   const simliErrorCount = useRef(0);
   const isFallingBack = useRef(false);
 
-  // Initialize both hooks
-  const simli = useSimli();
-
-  // Create a stable videoRef for D-ID if not provided
+  // Create a stable videoRef for providers if not provided
   const internalVideoRef = useRef<HTMLVideoElement | null>(null);
   const effectiveVideoRef = videoRef || internalVideoRef;
+
+  // Initialize both hooks - BOTH get the videoRef now
+  const simli = useSimli({
+    videoRef: effectiveVideoRef,
+    onError: (err) => {
+      console.error('[useAvatarProvider] Simli error:', err);
+      onError?.(err);
+    },
+  });
 
   const did = useDIDStream({
     videoRef: effectiveVideoRef,
