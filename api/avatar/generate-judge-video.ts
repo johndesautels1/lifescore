@@ -281,7 +281,7 @@ export default async function handler(
     // Only add webhook if we have a URL
     if (webhookUrl) {
       replicateBody.webhook = webhookUrl;
-      replicateBody.webhook_events_filter = ['completed', 'failed'];
+      replicateBody.webhook_events_filter = ['start', 'completed'];
     }
 
     const response = await fetch(`${REPLICATE_API_URL}/predictions`, {

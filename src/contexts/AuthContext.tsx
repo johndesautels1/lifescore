@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchingRef.current = userId;
     console.log("[Auth] Fetching profile for user:", userId);
 
-    // Helper: wrap query with timeout to prevent hanging (increased to 15s)
+    // Helper: wrap query with timeout to prevent hanging (30s for slow Supabase)
     const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
         Promise.resolve(promise),
@@ -164,13 +164,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      // Run both in parallel with 15s timeout
+      // Run both in parallel with 30s timeout
       const [profileResult, prefsResult] = await Promise.all([
-        withTimeout(profilePromise, 15000).catch(err => {
+        withTimeout(profilePromise, 30000).catch(err => {
           console.warn('[Auth] Profile fetch timeout/error:', err.message);
           return { data: null, error: err };
         }),
-        withTimeout(prefsPromise, 15000).catch(err => {
+        withTimeout(prefsPromise, 30000).catch(err => {
           console.warn('[Auth] Preferences fetch timeout/error:', err.message);
           return { data: null, error: err };
         }),
@@ -222,14 +222,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // SUPABASE MODE: Get initial session with timeout (increased to 15s)
+    // SUPABASE MODE: Get initial session with timeout (30s for slow Supabase)
     let sessionHandled = false;
     const sessionTimeout = setTimeout(() => {
       if (!sessionHandled) {
-        console.warn("[Auth] Session check timed out after 15s");
+        console.warn("[Auth] Session check timed out after 30s");
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }
-    }, 15000);
+    }, 30000);
 
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (sessionHandled) return; // Already handled by auth state change
