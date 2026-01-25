@@ -8,3 +8,4 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000, // 1MB limit (default is 500kb)
   },
 })
+// Cache bust 1769384219
