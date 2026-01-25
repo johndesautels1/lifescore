@@ -233,8 +233,8 @@ function formatSimpleCategoryWithAllMetrics(
   city1Category.metrics.forEach((metric: MetricScore) => {
     const city2Metric = city2Category.metrics.find(m => m.metricId === metric.metricId);
     const name = getMetricDisplayName(metric.metricId);
-    const score1 = Math.round(metric.normalizedScore);
-    const score2 = city2Metric ? Math.round(city2Metric.normalizedScore) : 0;
+    const score1 = Math.round(metric.normalizedScore ?? 0);
+    const score2 = city2Metric ? Math.round(city2Metric.normalizedScore ?? 0) : 0;
     const metricWinner = score1 > score2 ? city1Name : score2 > score1 ? city2Name : 'TIE';
     metricRows.push(`| ${name} | ${score1} | ${score2} | ${metricWinner} |`);
   });
@@ -308,16 +308,20 @@ export function formatComparisonForGamma(result: AnyComparisonResult): string {
     result.city1.categories.forEach((city1Cat, index) => {
       const city2Cat = result.city2.categories[index];
       if (city1Cat && city2Cat) {
-        if (city1Cat.averageConsensusScore > city2Cat.averageConsensusScore) city1CatWins++;
-        else if (city2Cat.averageConsensusScore > city1Cat.averageConsensusScore) city2CatWins++;
+        const score1 = city1Cat.averageConsensusScore ?? 0;
+        const score2 = city2Cat.averageConsensusScore ?? 0;
+        if (score1 > score2) city1CatWins++;
+        else if (score2 > score1) city2CatWins++;
       }
     });
   } else {
     result.city1.categories.forEach((city1Cat, index) => {
       const city2Cat = result.city2.categories[index];
       if (city1Cat && city2Cat) {
-        if (city1Cat.averageScore > city2Cat.averageScore) city1CatWins++;
-        else if (city2Cat.averageScore > city1Cat.averageScore) city2CatWins++;
+        const score1 = city1Cat.averageScore ?? 0;
+        const score2 = city2Cat.averageScore ?? 0;
+        if (score1 > score2) city1CatWins++;
+        else if (score2 > score1) city2CatWins++;
       }
     });
   }

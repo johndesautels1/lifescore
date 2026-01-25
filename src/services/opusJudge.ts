@@ -217,13 +217,13 @@ export function buildEnhancedResultFromJudge(
     const c1Score = c1?.averageConsensusScore;
     const c2Score = c2?.averageConsensusScore;
 
-    // If either score is null (no data), mark as tie
-    if (c1Score === null || c2Score === null) {
+    // If either score is null/undefined (no data), mark as tie
+    if (c1Score == null || c2Score == null) {
       categoryWinners[cat.id] = 'tie';
       return;
     }
 
-    const diff = c1Score - c2Score;
+    const diff = (c1Score as number) - (c2Score as number);
     if (Math.abs(diff) < 5) {
       categoryWinners[cat.id] = 'tie';
     } else if (diff > 0) {
