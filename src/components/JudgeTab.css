@@ -235,12 +235,8 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 1rem 2rem;
-  background: var(--gradient-card);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-top: none;
-  border-left: none;
-  border-right: none;
+  background: #0a1628;
+  border-bottom: 1px solid var(--glass-border);
   position: relative;
   z-index: 10;
 }
@@ -1405,8 +1401,7 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 1rem 2rem;
-  background: var(--gradient-card);
-  backdrop-filter: var(--glass-blur);
+  background: #0a1628;
   border-top: 1px solid var(--glass-border);
   margin-top: auto;
 }
