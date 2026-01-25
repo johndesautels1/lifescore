@@ -87,7 +87,18 @@ export const API_PRICING = {
     perGeneration: 0.50,  // ~$0.50 per generation (estimated based on plan)
     name: 'Gamma Reports',
     icon: '📊'
-  }
+  },
+
+  // TTS SERVICES (character-based pricing)
+  'elevenlabs-tts': { perThousandChars: 0.18, name: 'ElevenLabs TTS', icon: '🔊' },
+  'openai-tts': { perThousandChars: 0.015, name: 'OpenAI TTS', icon: '🗣️' },
+  'openai-tts-hd': { perThousandChars: 0.030, name: 'OpenAI TTS HD', icon: '🎙️' },
+
+  // AVATAR SERVICES (time-based pricing)
+  'replicate-sadtalker': { perSecond: 0.0023, name: 'Replicate SadTalker', icon: '🎬' },
+  'd-id': { perSecond: 0.025, name: 'D-ID Avatar', icon: '👤' },
+  'simli': { perSecond: 0.02, name: 'Simli Avatar', icon: '🎭' },
+  'heygen': { perSecond: 0.032, name: 'HeyGen Avatar', icon: '🎥' }
 } as const;
 
 // ============================================================================
@@ -135,6 +146,24 @@ export interface OliviaCost {
   timestamp: number;
 }
 
+// TTS Cost (ElevenLabs, OpenAI TTS)
+export interface TTSCost {
+  provider: 'elevenlabs' | 'openai' | 'openai-hd';
+  characters: number;
+  cost: number;
+  timestamp: number;
+  context?: string;
+}
+
+// Avatar Cost (Replicate SadTalker, D-ID, Simli, HeyGen)
+export interface AvatarCost {
+  provider: 'replicate-sadtalker' | 'd-id' | 'simli' | 'heygen';
+  durationSeconds: number;
+  cost: number;
+  timestamp: number;
+  context?: string;
+}
+
 export interface ComparisonCostBreakdown {
   comparisonId: string;
   city1: string;
@@ -167,6 +196,14 @@ export interface ComparisonCostBreakdown {
   olivia: OliviaCost[];
   oliviaTotal: number;
 
+  // TTS costs (judge video narration)
+  tts: TTSCost[];
+  ttsTotal: number;
+
+  // Avatar costs (judge video, Olivia avatar)
+  avatar: AvatarCost[];
+  avatarTotal: number;
+
   // Totals
   grandTotal: number;
 }
@@ -186,12 +223,16 @@ export interface CostSummary {
   perplexityCost: number;
   gammaCost: number;
   oliviaCost: number;
+  ttsCost: number;
+  avatarCost: number;
 
   // Totals
   totalEvaluatorCost: number;
   totalJudgeCost: number;
   totalGammaCost: number;
   totalOliviaCost: number;
+  totalTTSCost: number;
+  totalAvatarCost: number;
   grandTotal: number;
 
   // Averages
@@ -253,6 +294,36 @@ export function estimateTokens(text: string): number {
 export function calculateGammaCost(): number {
   const pricing = API_PRICING['gamma'];
   return 'perGeneration' in pricing ? pricing.perGeneration : 0.50;
+}
+
+/**
+ * Calculate TTS API cost
+ */
+export function calculateTTSCost(
+  provider: 'elevenlabs' | 'openai' | 'openai-hd',
+  characters: number
+): number {
+  const pricingKey = provider === 'elevenlabs' ? 'elevenlabs-tts' :
+                     provider === 'openai-hd' ? 'openai-tts-hd' : 'openai-tts';
+  const pricing = API_PRICING[pricingKey];
+  if ('perThousandChars' in pricing) {
+    return (characters / 1000) * pricing.perThousandChars;
+  }
+  return 0;
+}
+
+/**
+ * Calculate Avatar API cost
+ */
+export function calculateAvatarCost(
+  provider: 'replicate-sadtalker' | 'd-id' | 'simli' | 'heygen',
+  durationSeconds: number
+): number {
+  const pricing = API_PRICING[provider];
+  if ('perSecond' in pricing) {
+    return durationSeconds * pricing.perSecond;
+  }
+  return 0;
 }
 
 // ============================================================================
@@ -317,11 +388,15 @@ export function calculateCostSummary(): CostSummary {
     perplexityCost: 0,
     gammaCost: 0,
     oliviaCost: 0,
+    ttsCost: 0,
+    avatarCost: 0,
 
     totalEvaluatorCost: 0,
     totalJudgeCost: 0,
     totalGammaCost: 0,
     totalOliviaCost: 0,
+    totalTTSCost: 0,
+    totalAvatarCost: 0,
     grandTotal: 0,
 
     avgCostPerEnhanced: 0,
@@ -338,11 +413,15 @@ export function calculateCostSummary(): CostSummary {
     summary.perplexityCost += cost.perplexity.reduce((sum, c) => sum + c.totalCost, 0);
     summary.gammaCost += cost.gammaTotal || 0;
     summary.oliviaCost += cost.oliviaTotal || 0;
+    summary.ttsCost += cost.ttsTotal || 0;
+    summary.avatarCost += cost.avatarTotal || 0;
 
     summary.totalEvaluatorCost += cost.evaluatorTotal;
     summary.totalJudgeCost += cost.judgeTotal;
     summary.totalGammaCost += cost.gammaTotal || 0;
     summary.totalOliviaCost += cost.oliviaTotal || 0;
+    summary.totalTTSCost += cost.ttsTotal || 0;
+    summary.totalAvatarCost += cost.avatarTotal || 0;
     summary.grandTotal += cost.grandTotal;
   }
 
@@ -401,6 +480,12 @@ export function createCostBreakdown(
     olivia: [],
     oliviaTotal: 0,
 
+    tts: [],
+    ttsTotal: 0,
+
+    avatar: [],
+    avatarTotal: 0,
+
     grandTotal: 0
   };
 }
@@ -431,13 +516,21 @@ export function finalizeCostBreakdown(breakdown: ComparisonCostBreakdown): Compa
   // Calculate Olivia total
   breakdown.oliviaTotal = breakdown.olivia.reduce((sum, o) => sum + o.totalCost, 0);
 
+  // Calculate TTS total
+  breakdown.ttsTotal = (breakdown.tts || []).reduce((sum, t) => sum + t.cost, 0);
+
+  // Calculate Avatar total
+  breakdown.avatarTotal = (breakdown.avatar || []).reduce((sum, a) => sum + a.cost, 0);
+
   // Calculate grand total
   breakdown.grandTotal =
     breakdown.tavilyTotal +
     breakdown.evaluatorTotal +
     breakdown.judgeTotal +
     breakdown.gammaTotal +
-    breakdown.oliviaTotal;
+    breakdown.oliviaTotal +
+    breakdown.ttsTotal +
+    breakdown.avatarTotal;
 
   return breakdown;
 }
@@ -483,6 +576,18 @@ export function formatCostBreakdownLog(breakdown: ComparisonCostBreakdown): stri
     ``,
     `--- OLIVIA CHAT ---`,
     `Olivia Cost: ${formatCost(breakdown.oliviaTotal)} (${breakdown.olivia.length} messages)`,
+    ``,
+    `--- TTS (Voice) ---`,
+    `ElevenLabs: ${formatCost((breakdown.tts || []).filter(t => t.provider === 'elevenlabs').reduce((s, t) => s + t.cost, 0))}`,
+    `OpenAI TTS: ${formatCost((breakdown.tts || []).filter(t => t.provider.startsWith('openai')).reduce((s, t) => s + t.cost, 0))}`,
+    `TTS Total: ${formatCost(breakdown.ttsTotal || 0)}`,
+    ``,
+    `--- AVATAR (Video) ---`,
+    `Replicate: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'replicate-sadtalker').reduce((s, a) => s + a.cost, 0))}`,
+    `D-ID: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'd-id').reduce((s, a) => s + a.cost, 0))}`,
+    `Simli: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'simli').reduce((s, a) => s + a.cost, 0))}`,
+    `HeyGen: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'heygen').reduce((s, a) => s + a.cost, 0))}`,
+    `Avatar Total: ${formatCost(breakdown.avatarTotal || 0)}`,
     ``,
     `========== GRAND TOTAL: ${formatCost(breakdown.grandTotal)} ==========\n`
   ];
