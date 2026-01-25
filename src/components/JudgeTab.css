@@ -838,7 +838,7 @@
   border-radius: 8px;
   color: var(--ice-white);
   font-family: var(--font-display);
-  font-size: 0.52rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -847,7 +847,7 @@
 }
 
 .action-btn .btn-text {
-  font-size: 0.52rem;
+  font-size: 0.68rem;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -862,7 +862,7 @@
 }
 
 .action-btn .btn-icon {
-  font-size: 0.65rem;
+  font-size: 0.85rem;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1544,16 +1544,16 @@
     max-width: calc(50% - 0.25rem);
     justify-content: center;
     padding: 0.4rem 0.3rem;
-    font-size: 0.3rem;
+    font-size: 0.39rem;
     gap: 0.15rem;
   }
 
   .action-btn .btn-icon {
-    font-size: 0.33rem;
+    font-size: 0.43rem;
   }
 
   .action-btn .btn-text {
-    font-size: 0.3rem;
+    font-size: 0.39rem;
   }
 
   .pending-features {
@@ -1593,16 +1593,16 @@
     min-width: 60px;
     max-width: calc(50% - 0.2rem);
     padding: 0.35rem 0.2rem;
-    font-size: 0.26rem;
+    font-size: 0.34rem;
     gap: 0.1rem;
   }
 
   .action-btn .btn-icon {
-    font-size: 0.29rem;
+    font-size: 0.38rem;
   }
 
   .action-btn .btn-text {
-    font-size: 0.26rem;
+    font-size: 0.34rem;
   }
 
   .pending-features {
