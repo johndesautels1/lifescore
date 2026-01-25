@@ -893,11 +893,11 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
 ${isLargeCategory ? `
 ## CRITICAL: CONCISENESS REQUIRED (Large category with ${metrics.length} metrics)
-- Keep "reasoning" field to 1-2 SHORT sentences max (under 50 words each)
-- Include only 1-2 sources per metric (most authoritative only)
+- Keep "reasoning" to 1 sentence only (under 25 words)
+- Include only 1 source per metric (most authoritative only)
 - Include only 1 evidence item per city per metric
 - Omit verbose explanations - scores and brief justification are sufficient
-- This is required to fit within output token limits
+- This is required to fit within 8192 token output limit
 ` : ''}`;
 
   // Gemini system instruction
