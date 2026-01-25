@@ -201,9 +201,76 @@ export function buildEnhancedResultFromJudge(
   const city1Total = calculateCityTotal(city1Categories);
   const city2Total = calculateCityTotal(city2Categories);
 
-  // Determine winner
-  const city1FinalScore = Math.round(city1Total);
-  const city2FinalScore = Math.round(city2Total);
+  // ============================================================================
+  // SCORE DIFFERENTIATION: Prevent convergence by amplifying real differences
+  // FIX 2026-01-25: Added category win bonus and max spread bonus
+  // ============================================================================
+
+  // Calculate category wins and max spread for differentiation
+  let city1CategoryWins = 0;
+  let city2CategoryWins = 0;
+  let maxCategorySpread = 0;
+
+  CATEGORIES.forEach(cat => {
+    const c1 = city1Categories.find(c => c.categoryId === cat.id);
+    const c2 = city2Categories.find(c => c.categoryId === cat.id);
+    const c1Score = c1?.averageConsensusScore;
+    const c2Score = c2?.averageConsensusScore;
+
+    if (c1Score != null && c2Score != null) {
+      const diff = c1Score - c2Score;
+      const absDiff = Math.abs(diff);
+
+      // Track max category spread
+      if (absDiff > maxCategorySpread) {
+        maxCategorySpread = absDiff;
+      }
+
+      // Count category wins (must win by >5 points to count)
+      if (diff > 5) {
+        city1CategoryWins++;
+      } else if (diff < -5) {
+        city2CategoryWins++;
+      }
+    }
+  });
+
+  // Apply differentiation bonuses:
+  // 1. Category win bonus: +2 points per category won
+  // 2. Max spread bonus: Winner gets half the largest category gap
+  const CATEGORY_WIN_BONUS = 2;
+  const MAX_SPREAD_MULTIPLIER = 0.5;
+
+  const city1WinBonus = city1CategoryWins * CATEGORY_WIN_BONUS;
+  const city2WinBonus = city2CategoryWins * CATEGORY_WIN_BONUS;
+
+  // Determine preliminary winner for max spread bonus
+  const city1WithWinBonus = city1Total + city1WinBonus;
+  const city2WithWinBonus = city2Total + city2WinBonus;
+
+  let city1SpreadBonus = 0;
+  let city2SpreadBonus = 0;
+
+  if (city1WithWinBonus > city2WithWinBonus) {
+    // City1 is winning - give them the spread bonus
+    city1SpreadBonus = maxCategorySpread * MAX_SPREAD_MULTIPLIER;
+  } else if (city2WithWinBonus > city1WithWinBonus) {
+    // City2 is winning - give them the spread bonus
+    city2SpreadBonus = maxCategorySpread * MAX_SPREAD_MULTIPLIER;
+  }
+  // If tied, no spread bonus (keeps them tied)
+
+  // Calculate final scores with bonuses, capped at 100
+  const city1Adjusted = Math.min(100, city1Total + city1WinBonus + city1SpreadBonus);
+  const city2Adjusted = Math.min(100, city2Total + city2WinBonus + city2SpreadBonus);
+
+  console.log('[SCORE DIFF] Base: ' + city1Total.toFixed(1) + ' vs ' + city2Total.toFixed(1) + ' | ' +
+    'Cat wins: ' + city1CategoryWins + ' vs ' + city2CategoryWins + ' | Max spread: ' + maxCategorySpread.toFixed(1) + ' | ' +
+    'Final: ' + city1Adjusted.toFixed(1) + ' vs ' + city2Adjusted.toFixed(1));
+
+  // Determine winner using adjusted scores
+  const city1FinalScore = Math.round(city1Adjusted);
+  const city2FinalScore = Math.round(city2Adjusted);
   const scoreDiff = Math.abs(city1FinalScore - city2FinalScore);
 
   let winner: 'city1' | 'city2' | 'tie';
