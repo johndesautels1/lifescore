@@ -259,9 +259,12 @@ export default async function handler(
     // Step 3: Submit to Replicate SadTalker
     console.log('[JUDGE-VIDEO] Submitting to Replicate SadTalker...');
 
-    const webhookUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}/api/avatar/video-webhook`
-      : null;
+    // Use stable production URL for webhook (VERCEL_URL changes per deployment)
+    const webhookUrl = process.env.WEBHOOK_BASE_URL
+      ? `${process.env.WEBHOOK_BASE_URL}/api/avatar/video-webhook`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}/api/avatar/video-webhook`
+        : null;
 
     const replicateBody: Record<string, unknown> = {
       version: SADTALKER_VERSION.split(':')[1], // Just the version hash
