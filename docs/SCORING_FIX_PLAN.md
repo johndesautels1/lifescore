@@ -23,8 +23,8 @@ The scoring system has fundamental math errors causing two compared cities to al
 | 5 | Neutral default 50 (opusJudge) | **HIGH** | `src/services/opusJudge.ts` | 93-97 | **DONE** |
 | 6 | Neutral default 50 (judge.ts) | **HIGH** | `api/judge.ts` | 154-165 | **DONE** |
 | 7 | Failed LLM defaults to 50 | **HIGH** | `api/evaluate.ts` | 385-395 | **DONE** |
-| 8 | Persona weights ignored (Standard) | **MEDIUM** | `src/hooks/useComparison.ts` | all | TODO |
-| 9 | Median consensus flattens data | **MEDIUM** | `api/judge.ts` | 171-174 | TODO |
+| 8 | Persona weights ignored (Standard) | **MEDIUM** | `src/hooks/useComparison.ts` | all | **DONE** |
+| 9 | Median consensus flattens data | **MEDIUM** | `api/judge.ts` | 171-174 | **DONE** |
 
 ---
 

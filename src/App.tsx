@@ -254,8 +254,8 @@ const AppContent: React.FC = () => {
       // Increment usage counter before running comparison
       await incrementUsage('standardComparisons');
 
-      // Run the comparison with user's Law/Lived preferences
-      await compare(city1, city2, { lawLivedRatio, conservativeMode });
+      // Run the comparison with user's scoring preferences
+      await compare(city1, city2, { lawLivedRatio, conservativeMode, customWeights });
     }
   };
 

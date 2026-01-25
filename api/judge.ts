@@ -144,6 +144,62 @@ function calculateMedian(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+/**
+ * Convert confidence string to numeric weight
+ * FIX #9: Used for weighted consensus calculation
+ */
+function confidenceToWeight(confidence: string | undefined): number {
+  switch (confidence?.toLowerCase()) {
+    case 'high': return 1.0;
+    case 'medium': return 0.7;
+    case 'low': return 0.4;
+    default: return 0.5; // unverified or missing
+  }
+}
+
+/**
+ * Calculate confidence-weighted mean
+ * FIX #9: Replaces pure median to preserve more variance in data
+ * Higher confidence LLMs have more influence on the final score
+ */
+function calculateWeightedConsensus(scores: LLMMetricScore[]): number {
+  if (scores.length === 0) return 0;
+  if (scores.length === 1) return scores[0].normalizedScore;
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const score of scores) {
+    const weight = confidenceToWeight(score.confidence);
+    weightedSum += score.normalizedScore * weight;
+    totalWeight += weight;
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : calculateMedian(scores.map(s => s.normalizedScore));
+}
+
+/**
+ * Calculate weighted consensus for legal/enforcement scores
+ */
+function calculateWeightedLegalLivedConsensus(
+  scores: LLMMetricScore[],
+  field: 'legalScore' | 'enforcementScore'
+): number {
+  if (scores.length === 0) return 0;
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const score of scores) {
+    const value = score[field] ?? score.normalizedScore;
+    const weight = confidenceToWeight(score.confidence);
+    weightedSum += value * weight;
+    totalWeight += weight;
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+
 // ============================================================================
 // CONSENSUS BUILDING
 // ============================================================================
@@ -169,15 +225,15 @@ function buildMetricConsensus(
   }
 
   const normalizedScores = scores.map(s => s.normalizedScore);
-  const legalScores = scores.map(s => s.legalScore ?? s.normalizedScore);
-  const enforcementScores = scores.map(s => s.enforcementScore ?? s.normalizedScore);
 
-  const median = calculateMedian(normalizedScores);
+  // FIX #9: Use confidence-weighted mean instead of pure median
+  // This preserves more variance in the data while still respecting higher-confidence LLMs
+  const weightedConsensus = calculateWeightedConsensus(scores);
   const stdDev = calculateStdDev(normalizedScores);
 
-  const consensusScore = Math.round(median);
-  const legalScore = Math.round(calculateMedian(legalScores));
-  const enforcementScore = Math.round(calculateMedian(enforcementScores));
+  const consensusScore = Math.round(weightedConsensus);
+  const legalScore = Math.round(calculateWeightedLegalLivedConsensus(scores, 'legalScore'));
+  const enforcementScore = Math.round(calculateWeightedLegalLivedConsensus(scores, 'enforcementScore'));
 
   // Use centralized threshold constants
   const confidenceLevel: ConfidenceLevel = getConfidenceLevel(stdDev);

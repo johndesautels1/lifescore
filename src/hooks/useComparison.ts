@@ -47,6 +47,7 @@ interface UseComparisonOptions {
 interface CompareOptions {
   lawLivedRatio?: LawLivedRatio;   // Law vs Lived weighting (default 50/50)
   conservativeMode?: boolean;       // Use MIN(law, lived) instead of weighted avg
+  customWeights?: Record<string, number> | null;  // Persona-based category weights
 }
 
 interface UseComparisonReturn {
@@ -82,10 +83,12 @@ interface APIEvaluationResponse {
 /**
  * Calculate weighted average score for a category
  * FIXED: Excludes missing metrics from calculation instead of defaulting to 50
+ * FIXED: Now accepts customWeights from persona selection
  */
 function calculateCategoryScore(
   categoryId: CategoryId,
-  metricScores: MetricScore[]
+  metricScores: MetricScore[],
+  customWeights?: Record<string, number> | null
 ): CategoryScore {
   const categoryMetrics = getMetricsByCategory(categoryId);
 
@@ -141,8 +144,9 @@ function calculateCategoryScore(
   const averageLivedScore = totalWeight > 0 ? totalLivedScore / totalWeight : null;
 
   // Get category weight for contribution to total
+  // FIXED: Use customWeights from persona selection if provided, else default
   const category = CATEGORIES.find(c => c.id === categoryId);
-  const categoryWeight = category?.weight ?? 0;
+  const categoryWeight = customWeights?.[categoryId] ?? category?.weight ?? 0;
   const weightedScore = averageScore !== null ? (averageScore * categoryWeight) / 100 : 0;
 
   return {
@@ -161,12 +165,14 @@ function calculateCategoryScore(
 /**
  * Calculate total city score from all category scores
  * FIXED: Tracks separate Legal/Lived scores and data completeness
+ * FIXED: Now accepts customWeights from persona selection
  */
 function calculateCityScore(
   city: string,
   country: string,
   metricScores: MetricScore[],
-  region?: string
+  region?: string,
+  customWeights?: Record<string, number> | null
 ): CityScore {
   const categories: CategoryScore[] = [];
   let totalScore = 0;
@@ -177,7 +183,8 @@ function calculateCityScore(
   let totalEvaluated = 0;
 
   for (const category of CATEGORIES) {
-    const categoryScore = calculateCategoryScore(category.id, metricScores);
+    // FIXED: Pass customWeights to calculateCategoryScore
+    const categoryScore = calculateCategoryScore(category.id, metricScores, customWeights);
     categories.push(categoryScore);
     totalScore += categoryScore.weightedScore;
     totalVerified += categoryScore.verifiedMetrics;
@@ -185,8 +192,9 @@ function calculateCityScore(
     totalEvaluated += categoryScore.evaluatedMetrics;
 
     // Track separate legal and lived totals
+    // FIXED: Use customWeights for category weight if provided
     const categoryDef = CATEGORIES.find(c => c.id === category.id);
-    const catWeight = categoryDef?.weight ?? 0;
+    const catWeight = customWeights?.[category.id] ?? categoryDef?.weight ?? 0;
     if (categoryScore.averageLegalScore !== null && categoryScore.averageLegalScore !== undefined) {
       totalLegalScore += (categoryScore.averageLegalScore * catWeight) / 100;
     }
@@ -255,6 +263,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
     // Extract scoring preferences with defaults
     const lawLivedRatio = options?.lawLivedRatio ?? { law: 50, lived: 50 };
     const conservativeMode = options?.conservativeMode ?? false;
+    const customWeights = options?.customWeights ?? null;
     // Abort any previous comparison in progress (prevents race conditions)
     comparisonControllerRef.current?.abort();
 
@@ -482,8 +491,9 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
       const city2Region = city2Parts.length > 2 ? city2Parts[1] : undefined;
 
       // FIX: Calculate real scores from collected API data
-      const city1Score = calculateCityScore(city1Name, city1Country, city1MetricScores, city1Region);
-      const city2Score = calculateCityScore(city2Name, city2Country, city2MetricScores, city2Region);
+      // FIXED: Pass customWeights for persona-based scoring
+      const city1Score = calculateCityScore(city1Name, city1Country, city1MetricScores, city1Region, customWeights);
+      const city2Score = calculateCityScore(city2Name, city2Country, city2MetricScores, city2Region, customWeights);
 
       // Determine winner
       const scoreDifference = Math.abs(city1Score.totalScore - city2Score.totalScore);
