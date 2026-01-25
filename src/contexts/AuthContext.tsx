@@ -140,7 +140,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchingRef.current = userId;
     console.log("[Auth] Fetching profile for user:", userId);
 
-    // Helper: wrap query with timeout to prevent hanging (30s for slow Supabase)
+    // Helper: wrap query with timeout to prevent hanging
+    // Increased to 45s - Supabase free tier can be slow on cold starts
+    const DB_TIMEOUT_MS = 45000;
     const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
         Promise.resolve(promise),
@@ -152,9 +154,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Fetch profile and preferences in parallel with timeout
+      // Select only needed fields to reduce query time
       const profilePromise = supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, display_name, subscription_tier, avatar_url, created_at')
         .eq('id', userId)
         .maybeSingle();
 
@@ -164,13 +167,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      // Run both in parallel with 30s timeout
+      // Run both in parallel with 45s timeout (Supabase cold start can be slow)
       const [profileResult, prefsResult] = await Promise.all([
-        withTimeout(profilePromise, 30000).catch(err => {
+        withTimeout(profilePromise, DB_TIMEOUT_MS).catch(err => {
           console.warn('[Auth] Profile fetch timeout/error:', err.message);
           return { data: null, error: err };
         }),
-        withTimeout(prefsPromise, 30000).catch(err => {
+        withTimeout(prefsPromise, DB_TIMEOUT_MS).catch(err => {
           console.warn('[Auth] Preferences fetch timeout/error:', err.message);
           return { data: null, error: err };
         }),
@@ -222,14 +225,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // SUPABASE MODE: Get initial session with timeout (30s for slow Supabase)
+    // SUPABASE MODE: Get initial session with timeout (45s for slow Supabase cold starts)
+    const SESSION_TIMEOUT_MS = 45000;
     let sessionHandled = false;
     const sessionTimeout = setTimeout(() => {
       if (!sessionHandled) {
-        console.warn("[Auth] Session check timed out after 30s");
+        console.warn("[Auth] Session check timed out after 45s");
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }
-    }, 30000);
+    }, SESSION_TIMEOUT_MS);
 
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (sessionHandled) return; // Already handled by auth state change
