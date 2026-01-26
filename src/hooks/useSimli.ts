@@ -121,16 +121,51 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         if (videoEl) {
           videoEl.srcObject = event.streams[0];
+
+          // Log video element state
+          console.log('[useSimli] Video element found:', {
+            tagName: videoEl.tagName,
+            className: videoEl.className,
+            width: videoEl.clientWidth,
+            height: videoEl.clientHeight,
+            display: getComputedStyle(videoEl).display,
+            visibility: getComputedStyle(videoEl).visibility,
+            opacity: getComputedStyle(videoEl).opacity,
+          });
+
+          // Log stream info
+          const stream = event.streams[0];
+          console.log('[useSimli] Stream tracks:', {
+            videoTracks: stream.getVideoTracks().length,
+            audioTracks: stream.getAudioTracks().length,
+            videoTrackEnabled: stream.getVideoTracks()[0]?.enabled,
+            videoTrackMuted: stream.getVideoTracks()[0]?.muted,
+            videoTrackState: stream.getVideoTracks()[0]?.readyState,
+          });
+
           // Use a small delay to ensure stream is ready
           setTimeout(() => {
-            videoEl.play().catch(err => {
-              console.warn('[useSimli] Video autoplay failed:', err);
-              // Try muted autoplay as fallback (browser policy)
-              videoEl.muted = true;
-              videoEl.play().catch(() => {
-                console.warn('[useSimli] Muted autoplay also failed');
+            videoEl.play()
+              .then(() => {
+                console.log('[useSimli] Video playing successfully!', {
+                  paused: videoEl.paused,
+                  currentTime: videoEl.currentTime,
+                  readyState: videoEl.readyState,
+                });
+              })
+              .catch(err => {
+                console.warn('[useSimli] Video autoplay failed:', err.message);
+                // Try muted autoplay as fallback (browser policy)
+                videoEl.muted = true;
+                videoEl.play()
+                  .then(() => {
+                    console.log('[useSimli] Video playing MUTED (browser policy)');
+                  })
+                  .catch((err2) => {
+                    console.error('[useSimli] Muted autoplay also failed:', err2.message);
+                    onError?.('Video autoplay blocked by browser');
+                  });
               });
-            });
           }, 100);
           console.log('[useSimli] Video stream attached to element successfully');
         } else {
