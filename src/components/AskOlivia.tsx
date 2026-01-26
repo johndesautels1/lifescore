@@ -152,23 +152,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const { isPlaying: isTTSSpeaking, play: speakText, stop: stopSpeaking } = useTTS();
 
   // ═══════════════════════════════════════════════════════════════════
-  // CONTRAST IMAGES - AI-generated visual comparisons
-  // ═══════════════════════════════════════════════════════════════════
-  const {
-    status: contrastStatus,
-    images: contrastImages,
-    error: contrastError,
-    currentTopic: contrastTopic,
-    detectAndGenerate: detectContrastTriggers,
-    generateImages: generateContrastImages,
-    clearImages: clearContrastImages,
-  } = useContrastImages({
-    cityA: comparisonResult ? { name: city1, score: comparisonResult.city1Score } : undefined,
-    cityB: comparisonResult ? { name: city2, score: comparisonResult.city2Score } : undefined,
-    autoDetect: true,
-  });
-
-  // ═══════════════════════════════════════════════════════════════════
   // EFFECTS
   // ═══════════════════════════════════════════════════════════════════
 
@@ -330,6 +313,23 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const hasComparisonData = !!comparisonResult;
   const city1 = comparisonResult?.city1?.city || 'City 1';
   const city2 = comparisonResult?.city2?.city || 'City 2';
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CONTRAST IMAGES - AI-generated visual comparisons
+  // ═══════════════════════════════════════════════════════════════════
+  const {
+    status: contrastStatus,
+    images: contrastImages,
+    error: contrastError,
+    currentTopic: contrastTopic,
+    detectAndGenerate: detectContrastTriggers,
+    generateImages: generateContrastImages,
+    clearImages: clearContrastImages,
+  } = useContrastImages({
+    cityA: comparisonResult ? { name: city1, score: comparisonResult.city1.totalScore } : undefined,
+    cityB: comparisonResult ? { name: city2, score: comparisonResult.city2.totalScore } : undefined,
+    autoDetect: true,
+  });
 
   // Determine avatar status for display
   const getAvatarStatus = () => {
@@ -560,8 +560,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       ═══════════════════════════════════════════════════════════════════ */}
       {hasComparisonData && (
         <ContrastDisplays
-          cityA={{ name: city1, score: comparisonResult?.city1Score }}
-          cityB={{ name: city2, score: comparisonResult?.city2Score }}
+          cityA={{ name: city1, score: comparisonResult?.city1?.totalScore }}
+          cityB={{ name: city2, score: comparisonResult?.city2?.totalScore }}
           status={contrastStatus}
           images={contrastImages}
           topic={contrastTopic}
