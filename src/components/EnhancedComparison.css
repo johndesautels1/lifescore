@@ -5506,8 +5506,8 @@
   }
 
   .llm-progress-item {
-    min-width: 60px;
-    padding: 0.5rem 0.75rem;
+    min-width: 40px;
+    padding: 0.5rem 0.5rem;
   }
 
   .enhanced-winner-hero .winner-score {
@@ -5526,8 +5526,8 @@
 
   .action-btn {
     flex: 1 1 calc(50% - 0.25rem);
-    min-width: 100px;
-    padding: 0.75rem 0.5rem;
+    min-width: 67px;
+    padding: 0.75rem 0.35rem;
     font-size: 0.85rem;
   }
 
@@ -5628,7 +5628,7 @@
 
   .llm-progress-item {
     flex: 1 1 calc(33% - 0.5rem);
-    min-width: 70px;
+    min-width: 47px;
   }
 
   /* Small mobile: Section titles */
