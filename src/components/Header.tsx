@@ -21,12 +21,14 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
   return (
     <header className="header">
       <div className="header-container">
-        {/* Theme Toggle + User Account */}
-        <div className="header-actions">
+        {/* Theme Toggle - LEFT side */}
+        <div className="header-left">
           <ThemeToggle />
+        </div>
 
-          {/* User Account Display */}
-          {isAuthenticated && user && (
+        {/* User Account - RIGHT side */}
+        {isAuthenticated && user && (
+          <div className="header-right">
             <div className="user-account">
               {/* Upgrade Button for Free Users */}
               {tier === 'free' && onUpgradeClick && (
@@ -79,8 +81,8 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
                 </svg>
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Company Name */}
         <h1 className="company-name">CLUES INTELLIGENCE LTD</h1>
