@@ -125,6 +125,7 @@
   .tab-item {
     padding: 0.75rem 0.5rem;
     min-width: 60px;
+    color: rgba(255, 255, 255, 0.85);
   }
 
   .tab-icon {

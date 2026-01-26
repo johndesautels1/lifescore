@@ -135,6 +135,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     stopListening,
     resetTranscript,
   } = useVoiceRecognition({
+    continuous: true, // Stay engaged until user toggles off
     onResult: (text, isFinal) => {
       if (isFinal && text.trim()) {
         handleSendMessage(text.trim());

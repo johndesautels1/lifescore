@@ -437,22 +437,101 @@
   .score-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .category-bars {
     grid-template-columns: 1fr;
   }
-  
+
   .winner-city {
     font-size: 1.5rem;
   }
-  
+
   .winner-score {
     font-size: 3rem;
   }
-  
+
   .metric-details-header,
   .metric-row {
-    grid-template-columns: 1fr 60px 60px;
+    grid-template-columns: 1fr 70px 70px;
+  }
+
+  .metric-header-city {
+    font-size: 0.7rem;
+    letter-spacing: 0;
+  }
+
+  .metric-score {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.4rem;
+  }
+
+  .metric-name {
+    font-size: 0.8rem;
+  }
+
+  .metric-weight {
+    font-size: 0.6rem;
+  }
+
+  .metric-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Extra small screens - stack metric rows vertically */
+@media (max-width: 480px) {
+  .metric-details-header {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .metric-details-header span:first-child {
+    display: none;
+  }
+
+  .metric-header-city {
+    font-size: 0.75rem;
+    padding: 0.25rem;
+  }
+
+  .metric-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+  }
+
+  .metric-info {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .metric-name {
+    font-size: 0.85rem;
+  }
+
+  .metric-row .metric-score {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .metric-row .metric-score::before {
+    font-weight: 600;
+    color: #94a3b8;
+    font-size: 0.75rem;
+  }
+
+  .metric-row .metric-score:nth-of-type(2)::before {
+    content: "City 1: ";
+  }
+
+  .metric-row .metric-score:nth-of-type(3)::before {
+    content: "City 2: ";
   }
 }
 

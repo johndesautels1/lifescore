@@ -111,6 +111,9 @@ export function useTTS(
     // Helper to use browser speech synthesis
     const useBrowserTTS = () => {
       if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech first to prevent queue issues
+        window.speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.onstart = () => {
           setIsPlaying(true);
@@ -158,11 +161,16 @@ export function useTTS(
    * Stop playback
    */
   const stop = useCallback(() => {
+    // Stop HTML audio element
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsPlaying(false);
     }
+    // Also cancel any browser speech synthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlaying(false);
   }, []);
 
   return {
