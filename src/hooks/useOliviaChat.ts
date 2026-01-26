@@ -173,6 +173,12 @@ export function useOliviaChat(
   const sendUserMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim()) return;
 
+    // Prevent sending if already processing a message
+    if (isTyping) {
+      console.log('[useOliviaChat] Already processing a message, ignoring duplicate send');
+      return;
+    }
+
     // Wait for context to finish loading if in progress
     if (isContextLoading) {
       console.log('[useOliviaChat] Waiting for context to load...');
@@ -246,7 +252,7 @@ export function useOliviaChat(
       setIsTyping(false);
       abortControllerRef.current = null;
     }
-  }, [threadId, context, textSummary, isContextLoading, generateMessageId]);
+  }, [threadId, context, textSummary, isContextLoading, isTyping, generateMessageId]);
 
   /**
    * Clear chat history and start fresh

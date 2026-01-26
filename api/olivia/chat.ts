@@ -449,6 +449,95 @@ async function waitForRun(
 }
 
 /**
+ * List runs on a thread to check for active ones
+ */
+async function listRuns(
+  apiKey: string,
+  threadId: string,
+  limit: number = 10
+): Promise<OpenAIRun[]> {
+  const response = await fetchWithTimeout(
+    `${OPENAI_API_BASE}/threads/${threadId}/runs?limit=${limit}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'OpenAI-Beta': 'assistants=v2',
+      },
+    },
+    OPENAI_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to list runs: ${error}`);
+  }
+
+  const data = await response.json();
+  return data.data;
+}
+
+/**
+ * Cancel an active run
+ */
+async function cancelRun(
+  apiKey: string,
+  threadId: string,
+  runId: string
+): Promise<OpenAIRun> {
+  const response = await fetchWithTimeout(
+    `${OPENAI_API_BASE}/threads/${threadId}/runs/${runId}/cancel`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2',
+      },
+    },
+    OPENAI_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to cancel run: ${error}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Check for and cancel any active runs on a thread
+ * Returns true if runs were cancelled, false if no active runs
+ */
+async function cancelActiveRuns(apiKey: string, threadId: string): Promise<boolean> {
+  const runs = await listRuns(apiKey, threadId, 5);
+  const activeStatuses = ['queued', 'in_progress', 'requires_action'];
+  const activeRuns = runs.filter(run => activeStatuses.includes(run.status));
+
+  if (activeRuns.length === 0) {
+    return false;
+  }
+
+  console.log('[OLIVIA/CHAT] Found', activeRuns.length, 'active run(s), cancelling...');
+
+  for (const run of activeRuns) {
+    try {
+      await cancelRun(apiKey, threadId, run.id);
+      console.log('[OLIVIA/CHAT] Cancelled run:', run.id);
+    } catch (err) {
+      // Run may have already completed/cancelled, ignore
+      console.log('[OLIVIA/CHAT] Could not cancel run:', run.id, err);
+    }
+  }
+
+  // Wait a moment for cancellation to take effect
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  return true;
+}
+
+/**
  * Get messages from thread
  */
 async function getMessages(
@@ -516,6 +605,17 @@ export default async function handler(
       threadId = await createThread(apiKey);
       isNewThread = true;
       console.log('[OLIVIA/CHAT] Created new thread:', threadId);
+    } else {
+      // Existing thread - check for and cancel any active runs before adding message
+      try {
+        const hadActiveRuns = await cancelActiveRuns(apiKey, threadId);
+        if (hadActiveRuns) {
+          console.log('[OLIVIA/CHAT] Cancelled active runs on existing thread');
+        }
+      } catch (err) {
+        console.warn('[OLIVIA/CHAT] Could not check/cancel active runs:', err);
+        // Continue anyway - the addMessage will fail if runs are still active
+      }
     }
 
     // Build context instructions for this conversation (with ALL 100 metrics)
