@@ -95,8 +95,6 @@
 
 .score-label {  font-size: 0.875rem;  font-weight: 700;  color: #f97316 !important;  margin-top: 0.5rem;}
 
-.score-normalized {  font-size: 0.75rem;  font-weight: 700;  color: var(--sapphire) !important;  margin-top: 0.25rem;}
-
 /* Category Breakdown */
 .category-breakdown {
   padding: 2rem;
