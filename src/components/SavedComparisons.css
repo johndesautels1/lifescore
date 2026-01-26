@@ -379,8 +379,8 @@
 }
 
 .action-btn {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,7 +388,7 @@
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.55rem;
+  font-size: 0.875rem;
   transition: all var(--transition-fast);
 }
 
@@ -759,9 +759,9 @@
   }
 
   .action-btn {
-    width: 20px;
-    height: 20px;
-    font-size: 0.6rem;
+    width: 24px;
+    height: 40px;
+    font-size: 1rem;
     flex-shrink: 0;
   }
 
