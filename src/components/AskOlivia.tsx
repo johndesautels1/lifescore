@@ -54,7 +54,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSpokenMsgRef = useRef<string | null>(null);
-  const hasGreetedRef = useRef(false);
+  // const hasGreetedRef = useRef(false); // Disabled with auto-greeting
 
   // Tier access for message limits
   const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
