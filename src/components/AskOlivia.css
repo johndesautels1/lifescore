@@ -488,11 +488,13 @@
    CONTROL PANEL - Swiss Precision
    ═══════════════════════════════════════════════════════════════════════════ */
 .control-panel {
+  --control-width: 280px; /* Unified width for all controls */
+
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: center;
-  gap: 1.5rem 2rem;
+  gap: 1.5rem 2.5rem;
   padding: 1.5rem 2rem;
   background: var(--gradient-cockpit);
   border-top: 1px solid rgba(201, 162, 39, 0.15);
@@ -504,6 +506,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: var(--control-width);
 }
 
 .control-label {
@@ -519,21 +522,23 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 /* Control Buttons */
 .control-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
-  padding: 1rem 2rem;
+  padding: 0.875rem 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   color: var(--platinum);
   font-size: 0.9rem;
   font-weight: 600;
-  min-width: 140px;
+  flex: 1;
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -765,11 +770,9 @@
   font-style: italic;
 }
 
-/* Text Input - Full Width Row */
+/* Text Input - Same Width as Other Controls */
 .text-input-group {
-  flex: 1 1 100%;
-  width: 100%;
-  max-width: 100%;
+  width: var(--control-width);
   order: 10; /* Place at end of flex container */
 }
 
@@ -825,6 +828,7 @@
 /* Toggle Chat Button */
 .toggle-chat {
   position: relative;
+  width: 100%;
 }
 
 .message-count {
@@ -1300,7 +1304,7 @@
   }
 
   .text-input-group {
-    max-width: none;
+    width: 100%;
     order: 10;
   }
 
