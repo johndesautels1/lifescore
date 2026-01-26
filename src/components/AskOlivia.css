@@ -498,7 +498,7 @@
   border-bottom: 1px solid rgba(201, 162, 39, 0.15);
 }
 
-/* Main control row - 4 items, equal width, centered */
+/* Main control row - 3 buttons with outer spacing */
 .control-row {
   display: flex;
   justify-content: center;
@@ -506,6 +506,15 @@
   gap: 1.5rem;
   width: 100%;
   max-width: 1000px;
+}
+
+/* Push outer buttons 1 inch (96px) away from center */
+.control-row .control-item:first-child {
+  margin-right: 72px;
+}
+
+.control-row .control-item:last-child {
+  margin-left: 72px;
 }
 
 /* All control items have the same width AND height */
@@ -1297,20 +1306,31 @@ button.control-item.recording {
   }
 
   .control-row {
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.75rem;
   }
 
+  .control-row .control-item:first-child,
+  .control-row .control-item:last-child {
+    margin: 0;
+  }
+
   .control-item {
-    flex: 1 1 45%;
-    min-width: 140px;
+    flex: none;
+    width: 100%;
     max-width: none;
-    height: 44px;
-    font-size: 0.8rem;
+    min-width: unset;
+    height: 48px;
+    font-size: 0.85rem;
   }
 
   .btn-text {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .chat-box {
+    width: 100%;
+    max-width: 320px;
   }
 
   .viewport-info-bar {
@@ -1408,16 +1428,22 @@ button.control-item.recording {
     width: 100%;
     max-width: none;
     min-width: unset;
-    height: 42px;
-    font-size: 0.75rem;
-  }
-
-  .control-item.text-input-wrapper .text-command-input {
-    font-size: 16px; /* Prevents iOS zoom */
+    height: 44px;
+    font-size: 0.8rem;
   }
 
   .btn-text {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
+  }
+
+  .chat-box {
+    width: 100%;
+    max-width: 280px;
+    height: 180px;
+  }
+
+  .chat-textarea {
+    font-size: 16px; /* Prevents iOS zoom */
   }
 
   .action-tile {
