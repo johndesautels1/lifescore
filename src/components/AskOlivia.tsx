@@ -130,15 +130,21 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     isListening,
     transcript,
     interimTranscript,
+    error: voiceError,
     startListening,
     stopListening,
     resetTranscript,
   } = useVoiceRecognition({
     onResult: (text, isFinal) => {
+      console.log('[AskOlivia] Voice result:', { text, isFinal });
       if (isFinal && text.trim()) {
+        console.log('[AskOlivia] Sending voice message to Olivia:', text.trim());
         handleSendMessage(text.trim());
         resetTranscript();
       }
+    },
+    onError: (err) => {
+      console.error('[AskOlivia] Voice recognition error:', err);
     },
   });
 
@@ -616,6 +622,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               {transcript}
               <span className="interim">{interimTranscript}</span>
             </span>
+          </div>
+        )}
+
+        {/* Voice error display */}
+        {voiceError && (
+          <div className="voice-error-display">
+            ⚠️ {voiceError}
           </div>
         )}
 
