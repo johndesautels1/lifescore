@@ -100,13 +100,14 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
-  const handleDelete = (id: string, isEnhanced?: boolean) => {
+  const handleDelete = async (id: string, isEnhanced?: boolean) => {
     if (window.confirm('Delete this saved comparison?')) {
       // FIX 2026-01-26: Delete from correct storage based on comparison type
+      // FIX 2026-01-26: Await async delete operations before reloading
       if (isEnhanced) {
-        deleteEnhancedComparisonLocal(id);
+        await deleteEnhancedComparisonLocal(id);
       } else {
-        deleteComparisonLocal(id);
+        await deleteComparisonLocal(id);
       }
       loadComparisons();
       showMessage('success', 'Comparison deleted');
