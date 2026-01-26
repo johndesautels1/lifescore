@@ -89,7 +89,11 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
         <div className="clues-branding">
           <span className="clues-logo">🔍🌍</span>
           <span className="clues-text">CLUES</span>
-          <span className="clues-tagline">Comprehensive Location Utility & Evaluation System</span>
+          <span className="clues-tagline">
+            <span className="tagline-line1">Comprehensive Location Utility</span>
+            <br className="tagline-break" />
+            <span className="tagline-line2">& Evaluation System</span>
+          </span>
         </div>
 
         {/* Contact Info */}

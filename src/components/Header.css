@@ -51,6 +51,12 @@
 .clues-tagline {
   color: var(--gold-light);
   font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Hide line break on desktop - text stays on one line */
+.tagline-break {
+  display: none;
 }
 
 .header-contact {
@@ -107,6 +113,18 @@
   .clues-branding {
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  /* Show line break on mobile - splits into two centered lines */
+  .tagline-break {
+    display: block;
+  }
+
+  .clues-tagline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.4;
   }
   
   .header-contact a {
