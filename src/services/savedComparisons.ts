@@ -9,7 +9,19 @@
 import type { ComparisonResult } from '../types/metrics';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
-import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getCurrentUser, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+
+/**
+ * Wrap a Supabase query with 45s timeout
+ */
+function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Supabase query timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 import {
   saveComparison as dbSaveComparison,
   getUserComparisons as dbGetUserComparisons,
@@ -253,12 +265,14 @@ export async function deleteComparisonLocal(id: string): Promise<boolean> {
       const user = await getCurrentUser();
       if (user) {
         // Find the database record by comparison_id
-        const { data } = await supabase
-          .from('comparisons')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('comparison_id', id)
-          .single();
+        const { data } = await withTimeout(
+          supabase
+            .from('comparisons')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('comparison_id', id)
+            .single()
+        );
 
         if (data) {
           await dbDeleteComparison(data.id);
@@ -292,12 +306,14 @@ export async function updateNicknameLocal(id: string, nickname: string): Promise
       const user = await getCurrentUser();
       if (user) {
         // Find the database record by comparison_id
-        const { data } = await supabase
-          .from('comparisons')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('comparison_id', id)
-          .single();
+        const { data } = await withTimeout(
+          supabase
+            .from('comparisons')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('comparison_id', id)
+            .single()
+        );
 
         if (data) {
           await dbUpdateComparison(data.id, { nickname });
@@ -470,12 +486,14 @@ export async function deleteEnhancedComparisonLocal(id: string): Promise<boolean
       const user = await getCurrentUser();
       if (user) {
         // Find the database record by comparison_id
-        const { data } = await supabase
-          .from('comparisons')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('comparison_id', id)
-          .single();
+        const { data } = await withTimeout(
+          supabase
+            .from('comparisons')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('comparison_id', id)
+            .single()
+        );
 
         if (data) {
           await dbDeleteComparison(data.id);

@@ -9,7 +9,7 @@
  * - User preferences
  */
 
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type {
   Comparison,
   ComparisonInsert,
@@ -23,6 +23,23 @@ import type {
   ComparisonWithRelations,
   ConversationWithMessages,
 } from '../types/database';
+
+// ============================================================================
+// HELPER: Timeout wrapper for Supabase queries (45s)
+// ============================================================================
+
+/**
+ * Wrap a Supabase query with 45s timeout - rejects on timeout
+ * Handles Supabase free tier cold starts which can be slow
+ */
+function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Supabase query timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 // ============================================================================
 // HELPER: Check if database is available
@@ -73,11 +90,13 @@ export async function saveComparison(
     nickname,
   };
 
-  const { data, error } = await supabase
-    .from('comparisons')
-    .upsert(insert, { onConflict: 'user_id,comparison_id' })
-    .select()
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('comparisons')
+      .upsert(insert, { onConflict: 'user_id,comparison_id' })
+      .select()
+      .single()
+  );
 
   return {
     data: data as Comparison | null,
@@ -112,7 +131,7 @@ export async function getUserComparisons(
     query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await withTimeout(query);
 
   return {
     data: (data as Comparison[]) || [],
@@ -128,11 +147,13 @@ export async function getComparison(
 ): Promise<{ data: Comparison | null; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await supabase
-    .from('comparisons')
-    .select('*')
-    .eq('id', comparisonId)
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('comparisons')
+      .select('*')
+      .eq('id', comparisonId)
+      .single()
+  );
 
   return {
     data: data as Comparison | null,
@@ -148,35 +169,41 @@ export async function getComparisonWithRelations(
 ): Promise<{ data: ComparisonWithRelations | null; error: Error | null }> {
   requireDatabase();
 
-  const { data: comparison, error: compError } = await supabase
-    .from('comparisons')
-    .select('*')
-    .eq('id', comparisonId)
-    .single();
+  const { data: comparison, error: compError } = await withTimeout(
+    supabase
+      .from('comparisons')
+      .select('*')
+      .eq('id', comparisonId)
+      .single()
+  );
 
   if (compError || !comparison) {
     return { data: null, error: compError ? new Error(compError.message) : null };
   }
 
-  // Fetch related conversations
-  const { data: conversations } = await supabase
-    .from('olivia_conversations')
-    .select('*')
-    .eq('comparison_id', comparisonId)
-    .order('created_at', { ascending: false });
-
-  // Fetch related gamma reports
-  const { data: gammaReports } = await supabase
-    .from('gamma_reports')
-    .select('*')
-    .eq('comparison_id', comparisonId)
-    .order('created_at', { ascending: false });
+  // Fetch related conversations and gamma reports in parallel with timeout
+  const [conversationsResult, gammaResult] = await Promise.all([
+    withTimeout(
+      supabase
+        .from('olivia_conversations')
+        .select('*')
+        .eq('comparison_id', comparisonId)
+        .order('created_at', { ascending: false })
+    ),
+    withTimeout(
+      supabase
+        .from('gamma_reports')
+        .select('*')
+        .eq('comparison_id', comparisonId)
+        .order('created_at', { ascending: false })
+    ),
+  ]);
 
   return {
     data: {
       ...(comparison as Comparison),
-      olivia_conversations: conversations as OliviaConversation[] || [],
-      gamma_reports: gammaReports as GammaReport[] || [],
+      olivia_conversations: conversationsResult.data as OliviaConversation[] || [],
+      gamma_reports: gammaResult.data as GammaReport[] || [],
     },
     error: null,
   };
@@ -191,10 +218,12 @@ export async function updateComparison(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await supabase
-    .from('comparisons')
-    .update(updates)
-    .eq('id', comparisonId);
+  const { error } = await withTimeout(
+    supabase
+      .from('comparisons')
+      .update(updates)
+      .eq('id', comparisonId)
+  );
 
   return { error: error ? new Error(error.message) : null };
 }
@@ -207,10 +236,12 @@ export async function deleteComparison(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await supabase
-    .from('comparisons')
-    .delete()
-    .eq('id', comparisonId);
+  const { error } = await withTimeout(
+    supabase
+      .from('comparisons')
+      .delete()
+      .eq('id', comparisonId)
+  );
 
   return { error: error ? new Error(error.message) : null };
 }
@@ -247,11 +278,13 @@ export async function createOliviaConversation(
     title: title || null,
   };
 
-  const { data, error } = await supabase
-    .from('olivia_conversations')
-    .insert(insert)
-    .select()
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('olivia_conversations')
+      .insert(insert)
+      .select()
+      .single()
+  );
 
   return {
     data: data as OliviaConversation | null,
@@ -282,7 +315,7 @@ export async function getUserConversations(
     query = query.limit(options.limit);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await withTimeout(query);
 
   return {
     data: (data as OliviaConversation[]) || [],
@@ -299,15 +332,17 @@ export async function findConversationForComparison(
 ): Promise<{ data: OliviaConversation | null; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await supabase
-    .from('olivia_conversations')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('comparison_id', comparisonId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('olivia_conversations')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('comparison_id', comparisonId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+  );
 
   return {
     data: data as OliviaConversation | null,
@@ -323,30 +358,36 @@ export async function getConversationWithMessages(
 ): Promise<{ data: ConversationWithMessages | null; error: Error | null }> {
   requireDatabase();
 
-  const { data: conversation, error: convError } = await supabase
-    .from('olivia_conversations')
-    .select('*')
-    .eq('id', conversationId)
-    .single();
+  const { data: conversation, error: convError } = await withTimeout(
+    supabase
+      .from('olivia_conversations')
+      .select('*')
+      .eq('id', conversationId)
+      .single()
+  );
 
   if (convError || !conversation) {
     return { data: null, error: convError ? new Error(convError.message) : null };
   }
 
-  const { data: messages } = await supabase
-    .from('olivia_messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true });
+  const { data: messages } = await withTimeout(
+    supabase
+      .from('olivia_messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true })
+  );
 
   // Optionally fetch linked comparison
   let comparison: Comparison | undefined;
   if (conversation.comparison_id) {
-    const { data: comp } = await supabase
-      .from('comparisons')
-      .select('*')
-      .eq('id', conversation.comparison_id)
-      .single();
+    const { data: comp } = await withTimeout(
+      supabase
+        .from('comparisons')
+        .select('*')
+        .eq('id', conversation.comparison_id)
+        .single()
+    );
     comparison = comp as Comparison;
   }
 
@@ -380,11 +421,13 @@ export async function addOliviaMessage(
     audio_url: audioUrl || null,
   };
 
-  const { data, error } = await supabase
-    .from('olivia_messages')
-    .insert(insert)
-    .select()
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('olivia_messages')
+      .insert(insert)
+      .select()
+      .single()
+  );
 
   return {
     data: data as OliviaMessage | null,
@@ -401,10 +444,12 @@ export async function updateConversationTitle(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await supabase
-    .from('olivia_conversations')
-    .update({ title })
-    .eq('id', conversationId);
+  const { error } = await withTimeout(
+    supabase
+      .from('olivia_conversations')
+      .update({ title })
+      .eq('id', conversationId)
+  );
 
   return { error: error ? new Error(error.message) : null };
 }
@@ -417,10 +462,12 @@ export async function archiveConversation(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await supabase
-    .from('olivia_conversations')
-    .update({ is_active: false })
-    .eq('id', conversationId);
+  const { error } = await withTimeout(
+    supabase
+      .from('olivia_conversations')
+      .update({ is_active: false })
+      .eq('id', conversationId)
+  );
 
   return { error: error ? new Error(error.message) : null };
 }
@@ -453,11 +500,13 @@ export async function saveGammaReport(
     nickname: nickname || null,
   };
 
-  const { data, error } = await supabase
-    .from('gamma_reports')
-    .insert(insert)
-    .select()
-    .single();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('gamma_reports')
+      .insert(insert)
+      .select()
+      .single()
+  );
 
   return {
     data: data as GammaReport | null,
@@ -473,11 +522,13 @@ export async function getGammaReportsForComparison(
 ): Promise<{ data: GammaReport[]; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await supabase
-    .from('gamma_reports')
-    .select('*')
-    .eq('comparison_id', comparisonId)
-    .order('created_at', { ascending: false });
+  const { data, error } = await withTimeout(
+    supabase
+      .from('gamma_reports')
+      .select('*')
+      .eq('comparison_id', comparisonId)
+      .order('created_at', { ascending: false })
+  );
 
   return {
     data: (data as GammaReport[]) || [],
@@ -494,12 +545,14 @@ export async function getUserGammaReports(
 ): Promise<{ data: GammaReport[]; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await supabase
-    .from('gamma_reports')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const { data, error } = await withTimeout(
+    supabase
+      .from('gamma_reports')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
 
   return {
     data: (data as GammaReport[]) || [],
@@ -549,16 +602,16 @@ export async function exportUserData(userId: string): Promise<{
   requireDatabase();
 
   const [profile, comparisons, conversations, gammaReports] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', userId).single(),
-    supabase.from('comparisons').select('*').eq('user_id', userId),
-    supabase.from('olivia_conversations').select('*').eq('user_id', userId),
-    supabase.from('gamma_reports').select('*').eq('user_id', userId),
+    withTimeout(supabase.from('profiles').select('*').eq('id', userId).single()),
+    withTimeout(supabase.from('comparisons').select('*').eq('user_id', userId)),
+    withTimeout(supabase.from('olivia_conversations').select('*').eq('user_id', userId)),
+    withTimeout(supabase.from('gamma_reports').select('*').eq('user_id', userId)),
   ]);
 
   // Get messages for all conversations
   const conversationIds = (conversations.data || []).map((c: any) => c.id);
   const messages = conversationIds.length > 0
-    ? await supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds)
+    ? await withTimeout(supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds))
     : { data: [] };
 
   return {

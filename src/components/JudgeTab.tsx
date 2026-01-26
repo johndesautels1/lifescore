@@ -27,7 +27,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
-import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getCurrentUser, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+
+/**
+ * Wrap a Supabase query with 45s timeout
+ */
+function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Supabase query timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 import FeatureGate from './FeatureGate';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
@@ -522,62 +534,68 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
         return false;
       }
 
-      // Check if report already exists
-      const { data: existing } = await supabase
-        .from('judge_reports')
-        .select('id')
-        .eq('report_id', report.reportId)
-        .single();
+      // Check if report already exists (with 45s timeout)
+      const { data: existing } = await withTimeout(
+        supabase
+          .from('judge_reports')
+          .select('id')
+          .eq('report_id', report.reportId)
+          .single()
+      );
 
       if (existing) {
-        // Update existing report
-        const { error } = await supabase
-          .from('judge_reports')
-          .update({
-            city1_score: report.summaryOfFindings.city1Score,
-            city1_trend: report.summaryOfFindings.city1Trend,
-            city2_score: report.summaryOfFindings.city2Score,
-            city2_trend: report.summaryOfFindings.city2Trend,
-            overall_confidence: report.summaryOfFindings.overallConfidence,
-            recommendation: report.executiveSummary.recommendation,
-            rationale: report.executiveSummary.rationale,
-            key_factors: report.executiveSummary.keyFactors,
-            future_outlook: report.executiveSummary.futureOutlook,
-            confidence_level: report.executiveSummary.confidenceLevel,
-            category_analysis: report.categoryAnalysis,
-            full_report: report,
-            video_url: report.videoUrl,
-            video_status: report.videoStatus,
-            updated_at: new Date().toISOString()
-          })
-          .eq('report_id', report.reportId);
+        // Update existing report (with 45s timeout)
+        const { error } = await withTimeout(
+          supabase
+            .from('judge_reports')
+            .update({
+              city1_score: report.summaryOfFindings.city1Score,
+              city1_trend: report.summaryOfFindings.city1Trend,
+              city2_score: report.summaryOfFindings.city2Score,
+              city2_trend: report.summaryOfFindings.city2Trend,
+              overall_confidence: report.summaryOfFindings.overallConfidence,
+              recommendation: report.executiveSummary.recommendation,
+              rationale: report.executiveSummary.rationale,
+              key_factors: report.executiveSummary.keyFactors,
+              future_outlook: report.executiveSummary.futureOutlook,
+              confidence_level: report.executiveSummary.confidenceLevel,
+              category_analysis: report.categoryAnalysis,
+              full_report: report,
+              video_url: report.videoUrl,
+              video_status: report.videoStatus,
+              updated_at: new Date().toISOString()
+            })
+            .eq('report_id', report.reportId)
+        );
 
         if (error) throw error;
         console.log('[JudgeTab] Report updated in Supabase:', report.reportId);
       } else {
-        // Insert new report
-        const { error } = await supabase
-          .from('judge_reports')
-          .insert({
-            user_id: user.id,
-            report_id: report.reportId,
-            city1_name: report.city1,
-            city2_name: report.city2,
-            city1_score: report.summaryOfFindings.city1Score,
-            city1_trend: report.summaryOfFindings.city1Trend,
-            city2_score: report.summaryOfFindings.city2Score,
-            city2_trend: report.summaryOfFindings.city2Trend,
-            overall_confidence: report.summaryOfFindings.overallConfidence,
-            recommendation: report.executiveSummary.recommendation,
-            rationale: report.executiveSummary.rationale,
-            key_factors: report.executiveSummary.keyFactors,
-            future_outlook: report.executiveSummary.futureOutlook,
-            confidence_level: report.executiveSummary.confidenceLevel,
-            category_analysis: report.categoryAnalysis,
-            full_report: report,
-            video_url: report.videoUrl,
-            video_status: report.videoStatus
-          });
+        // Insert new report (with 45s timeout)
+        const { error } = await withTimeout(
+          supabase
+            .from('judge_reports')
+            .insert({
+              user_id: user.id,
+              report_id: report.reportId,
+              city1_name: report.city1,
+              city2_name: report.city2,
+              city1_score: report.summaryOfFindings.city1Score,
+              city1_trend: report.summaryOfFindings.city1Trend,
+              city2_score: report.summaryOfFindings.city2Score,
+              city2_trend: report.summaryOfFindings.city2Trend,
+              overall_confidence: report.summaryOfFindings.overallConfidence,
+              recommendation: report.executiveSummary.recommendation,
+              rationale: report.executiveSummary.rationale,
+              key_factors: report.executiveSummary.keyFactors,
+              future_outlook: report.executiveSummary.futureOutlook,
+              confidence_level: report.executiveSummary.confidenceLevel,
+              category_analysis: report.categoryAnalysis,
+              full_report: report,
+              video_url: report.videoUrl,
+              video_status: report.videoStatus
+            })
+        );
 
         if (error) throw error;
         console.log('[JudgeTab] Report saved to Supabase:', report.reportId);

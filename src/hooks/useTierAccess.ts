@@ -14,8 +14,25 @@
  */
 
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type { UserTier, UsageTracking } from '../types/database';
+
+// ============================================================================
+// TIMEOUT HELPER
+// ============================================================================
+
+/**
+ * Wrap a Supabase query with 45s timeout - rejects on timeout
+ * Handles Supabase free tier cold starts which can be slow
+ */
+function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Supabase query timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 // ============================================================================
 // TIER CONFIGURATION
@@ -267,12 +284,14 @@ export function useTierAccess(): TierAccessHook {
         };
       }
 
-      const { data, error } = await supabase
-        .from('usage_tracking')
-        .select('*')
-        .eq('user_id', profile.id)
-        .eq('period_start', periodStart)
-        .single();
+      const { data, error } = await withTimeout(
+        supabase
+          .from('usage_tracking')
+          .select('*')
+          .eq('user_id', profile.id)
+          .eq('period_start', periodStart)
+          .single()
+      );
 
       if (error && error.code !== 'PGRST116') {
         // PGRST116 = no rows found, which is fine
@@ -335,40 +354,48 @@ export function useTierAccess(): TierAccessHook {
         return true;
       }
 
-      // Upsert usage record
-      const { error } = await supabase.rpc('increment_usage', {
-        p_user_id: profile.id,
-        p_feature: column,
-        p_amount: 1,
-      });
+      // Upsert usage record (with 45s timeout)
+      const { error } = await withTimeout(
+        supabase.rpc('increment_usage', {
+          p_user_id: profile.id,
+          p_feature: column,
+          p_amount: 1,
+        })
+      );
 
       if (error) {
         // Fallback: try direct upsert
         console.warn('[useTierAccess] RPC failed, trying direct upsert:', error);
 
-        const { data: existing } = await supabase
-          .from('usage_tracking')
-          .select('*')
-          .eq('user_id', profile.id)
-          .eq('period_start', periodStart)
-          .single();
+        const { data: existing } = await withTimeout(
+          supabase
+            .from('usage_tracking')
+            .select('*')
+            .eq('user_id', profile.id)
+            .eq('period_start', periodStart)
+            .single()
+        );
 
         if (existing) {
           // Update existing record
           const existingData = existing as Record<string, unknown>;
           const currentValue = (existingData[column] as number) || 0;
-          await supabase
-            .from('usage_tracking')
-            .update({ [column]: currentValue + 1 })
-            .eq('id', existingData.id as string);
+          await withTimeout(
+            supabase
+              .from('usage_tracking')
+              .update({ [column]: currentValue + 1 })
+              .eq('id', existingData.id as string)
+          );
         } else {
           // Insert new record
-          await supabase.from('usage_tracking').insert({
-            user_id: profile.id,
-            period_start: periodStart,
-            period_end: periodEnd,
-            [column]: 1,
-          });
+          await withTimeout(
+            supabase.from('usage_tracking').insert({
+              user_id: profile.id,
+              period_start: periodStart,
+              period_end: periodEnd,
+              [column]: 1,
+            })
+          );
         }
       }
 
