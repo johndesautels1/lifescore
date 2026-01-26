@@ -35,6 +35,7 @@ export type AvatarStatus =
 
 export interface UseAvatarProviderOptions {
   videoRef?: React.RefObject<HTMLVideoElement | null>;
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
   onSpeakingStart?: () => void;
   onSpeakingEnd?: () => void;
   onError?: (error: string) => void;
@@ -85,6 +86,7 @@ function getPreferredProvider(): AvatarProvider {
 export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAvatarProviderReturn {
   const {
     videoRef,
+    audioRef,
     onSpeakingStart,
     onSpeakingEnd,
     onError,
@@ -103,13 +105,16 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
   const simliErrorCount = useRef(0);
   const isFallingBack = useRef(false);
 
-  // Create a stable videoRef for providers if not provided
+  // Create stable refs for providers if not provided
   const internalVideoRef = useRef<HTMLVideoElement | null>(null);
+  const internalAudioRef = useRef<HTMLAudioElement | null>(null);
   const effectiveVideoRef = videoRef || internalVideoRef;
+  const effectiveAudioRef = audioRef || internalAudioRef;
 
-  // Initialize both hooks - BOTH get the videoRef now
+  // Initialize both hooks - Simli needs both videoRef and audioRef
   const simli = useSimli({
     videoRef: effectiveVideoRef,
+    audioRef: effectiveAudioRef,
     onError: (err) => {
       console.error('[useAvatarProvider] Simli error:', err);
       onError?.(err);

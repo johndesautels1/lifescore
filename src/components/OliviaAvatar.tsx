@@ -30,9 +30,10 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
   className = '',
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [showFallback, setShowFallback] = useState(false);
 
-  // Pass videoRef to useSimli so it can attach the WebRTC stream
+  // Pass videoRef and audioRef to useSimli so it can attach the WebRTC stream
   const {
     status,
     isConnected,
@@ -43,6 +44,7 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
     error,
   } = useSimli({
     videoRef,
+    audioRef,
     onError: (err) => {
       console.error('[OliviaAvatar] Simli error:', err);
       onError?.(err);
@@ -112,13 +114,16 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
       <div className="avatar-video-container">
         {/* Simli Video Stream */}
         {!showFallback ? (
-          <video
-            ref={videoRef}
-            className="avatar-video"
-            autoPlay
-            playsInline
-            muted={false}
-          />
+          <>
+            <video
+              ref={videoRef}
+              className="avatar-video"
+              autoPlay
+              playsInline
+              muted={false}
+            />
+            <audio ref={audioRef} autoPlay />
+          </>
         ) : (
           /* Fallback Static Image */
           <div className="avatar-fallback">

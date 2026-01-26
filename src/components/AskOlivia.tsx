@@ -52,6 +52,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const lastSpokenMsgRef = useRef<string | null>(null);
 
   // Tier access for message limits
@@ -112,6 +113,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     hasFallenBack,
   } = useAvatarProvider({
     videoRef,
+    audioRef,
     autoFallback: true,
     onProviderSwitch: (from, to, reason) => {
       console.log(`[AskOlivia] Avatar provider switched: ${from} → ${to} (${reason})`);
@@ -390,6 +392,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
                     muted={false}
                     className="avatar-video"
                   />
+                  {/* Simli AI audio element (required by SDK) */}
+                  <audio ref={audioRef} autoPlay />
 
                   {/* Speaking indicator */}
                   {isAvatarSpeaking && (
