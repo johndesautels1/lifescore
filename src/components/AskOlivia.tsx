@@ -26,7 +26,9 @@ import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
 import { useAvatarProvider } from '../hooks/useAvatarProvider';
 import { useTierAccess } from '../hooks/useTierAccess';
+import { useContrastImages } from '../hooks/useContrastImages';
 import { UsageMeter } from './FeatureGate';
+import { ContrastDisplays } from './ContrastDisplays';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
@@ -150,6 +152,23 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const { isPlaying: isTTSSpeaking, play: speakText, stop: stopSpeaking } = useTTS();
 
   // ═══════════════════════════════════════════════════════════════════
+  // CONTRAST IMAGES - AI-generated visual comparisons
+  // ═══════════════════════════════════════════════════════════════════
+  const {
+    status: contrastStatus,
+    images: contrastImages,
+    error: contrastError,
+    currentTopic: contrastTopic,
+    detectAndGenerate: detectContrastTriggers,
+    generateImages: generateContrastImages,
+    clearImages: clearContrastImages,
+  } = useContrastImages({
+    cityA: comparisonResult ? { name: city1, score: comparisonResult.city1Score } : undefined,
+    cityB: comparisonResult ? { name: city2, score: comparisonResult.city2Score } : undefined,
+    autoDetect: true,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
   // EFFECTS
   // ═══════════════════════════════════════════════════════════════════
 
@@ -225,6 +244,19 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       }
     }
   }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AUTO-VISUALIZE: Generate contrast images when Olivia discusses metrics
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (hasComparisonData && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      // Only analyze assistant messages
+      if (lastMessage.role === 'assistant') {
+        detectContrastTriggers(lastMessage.content);
+      }
+    }
+  }, [messages, hasComparisonData, detectContrastTriggers]);
 
   // ═══════════════════════════════════════════════════════════════════
   // AUTO-GREETING: Disabled for testing
@@ -524,6 +556,27 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       </main>
 
       {/* ═══════════════════════════════════════════════════════════════════
+          CONTRAST DISPLAYS - AI-Generated Visual Comparisons
+      ═══════════════════════════════════════════════════════════════════ */}
+      {hasComparisonData && (
+        <ContrastDisplays
+          cityA={{ name: city1, score: comparisonResult?.city1Score }}
+          cityB={{ name: city2, score: comparisonResult?.city2Score }}
+          status={contrastStatus}
+          images={contrastImages}
+          topic={contrastTopic}
+          error={contrastError}
+          onRetry={() => {
+            if (contrastTopic) {
+              // Retry last topic
+              const metricId = contrastTopic.toLowerCase().replace(/\s+/g, '_');
+              generateContrastImages(metricId);
+            }
+          }}
+        />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
           CONTROL PANEL - Clean Row Layout
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="control-panel">
@@ -536,6 +589,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
             onChange={(e) => {
               setSelectedComparisonId(e.target.value || null);
               clearHistory();
+              clearContrastImages();
             }}
           >
             <option value="">

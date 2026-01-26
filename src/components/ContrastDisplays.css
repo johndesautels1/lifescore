@@ -1,0 +1,425 @@
+/**
+ * ContrastDisplays Styles
+ *
+ * Premium dual-screen display matching Olivia's main viewport aesthetic.
+ * Design DNA: James Bond briefing room meets Airbus cockpit.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTRAST DISPLAYS CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-displays {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.contrast-icon {
+  color: #c9a227;
+  font-size: 0.9rem;
+}
+
+.contrast-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #c9a227;
+}
+
+.contrast-topic {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREENS CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-screens {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INDIVIDUAL SCREEN
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-screen {
+  flex: 1;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Screen Bezel - Premium Monitor Look */
+.screen-bezel {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow:
+    0 15px 35px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Corner accents */
+.screen-bezel .bezel-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid #c9a227;
+  opacity: 0.5;
+}
+
+.screen-bezel .bezel-corner.tl { top: 8px; left: 8px; border-right: none; border-bottom: none; border-radius: 3px 0 0 0; }
+.screen-bezel .bezel-corner.tr { top: 8px; right: 8px; border-left: none; border-bottom: none; border-radius: 0 3px 0 0; }
+.screen-bezel .bezel-corner.bl { bottom: 8px; left: 8px; border-right: none; border-top: none; border-radius: 0 0 0 3px; }
+.screen-bezel .bezel-corner.br { bottom: 8px; right: 8px; border-left: none; border-top: none; border-radius: 0 0 3px 0; }
+
+/* Screen Content */
+.screen-content {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOADING STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.screen-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 22, 40, 0.95);
+}
+
+.loading-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(201, 162, 39, 0.1) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.loading-text {
+  position: relative;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #c9a227;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IMAGE STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.screen-image-container {
+  position: absolute;
+  inset: 0;
+  animation: imageReveal 0.5s ease;
+}
+
+@keyframes imageReveal {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.screen-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.image-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ERROR STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.screen-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(10, 22, 40, 0.95);
+}
+
+.screen-error .error-icon {
+  font-size: 1.5rem;
+  color: #ef4444;
+}
+
+.screen-error .error-text {
+  font-size: 0.7rem;
+  color: #ef4444;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IDLE STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.screen-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0a1628 0%, #0d2847 50%, #0a1628 100%);
+}
+
+.screen-idle .idle-icon {
+  font-size: 2rem;
+  color: #64748b;
+  opacity: 0.3;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CITY LABEL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.screen-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.label-city {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #f8fafc;
+  text-transform: uppercase;
+}
+
+.label-score {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}
+
+.label-score.high {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.label-score.low {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAPTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+.screen-caption {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: #64748b;
+  text-align: center;
+  max-width: 90%;
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VS DIVIDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 3rem; /* Align with screen center */
+}
+
+.divider-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #c9a227;
+  padding: 0.5rem 0.75rem;
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ERROR ACTIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-error-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+}
+
+.contrast-error-actions .error-message {
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
+.contrast-error-actions .retry-btn {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  border-radius: 4px;
+  color: #c9a227;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contrast-error-actions .retry-btn:hover {
+  background: rgba(201, 162, 39, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE - MOBILE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .contrast-displays {
+    padding: 1rem;
+  }
+
+  .contrast-screens {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .contrast-screen {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .contrast-divider {
+    padding-top: 0;
+    padding: 0.5rem 0;
+  }
+
+  .screen-label {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .label-city {
+    font-size: 0.75rem;
+  }
+
+  .label-score {
+    font-size: 0.7rem;
+  }
+
+  .screen-caption {
+    font-size: 0.65rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXTRA SMALL SCREENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .contrast-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .contrast-topic {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  .screen-bezel {
+    padding: 4px;
+  }
+
+  .screen-bezel .bezel-corner {
+    width: 8px;
+    height: 8px;
+  }
+
+  .loading-text {
+    font-size: 0.6rem;
+  }
+
+  .contrast-error-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+}
