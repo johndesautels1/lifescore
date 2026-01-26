@@ -132,9 +132,9 @@
 }
 
 .llm-name {
-  font-weight: 600;
+  font-weight: 800;
   font-size: 0.8rem;
-  color: var(--gray-800);
+  color: #0047AB !important;
 }
 
 .llm-status {
