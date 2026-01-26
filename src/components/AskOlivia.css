@@ -1297,17 +1297,49 @@ button.control-item.recording {
     padding: 1rem;
   }
 
-  .cockpit-left,
-  .cockpit-right {
+  /* Center OPENAI BRAIN status indicator */
+  .cockpit-left {
     justify-content: center;
+    width: 100%;
   }
 
   .status-cluster {
     flex-direction: column;
     gap: 0.5rem;
+    align-items: center;
+    width: 100%;
+  }
+
+  .status-indicator {
+    justify-content: center;
+  }
+
+  /* Center ASK OLIVIA */
+  .cockpit-center {
+    width: 100%;
+    text-align: center;
+  }
+
+  .olivia-wordmark {
+    justify-content: center;
+  }
+
+  /* Center date display */
+  .cockpit-right {
+    justify-content: center;
+    width: 100%;
   }
 
   .time-cluster {
+    text-align: center;
+    width: 100%;
+  }
+
+  .time-display {
+    justify-content: center;
+  }
+
+  .date-display {
     text-align: center;
   }
 
@@ -1318,11 +1350,15 @@ button.control-item.recording {
 
   .control-panel {
     padding: 1rem;
+    align-items: center;
   }
 
+  /* Center control row items */
   .control-row {
     flex-direction: column;
     gap: 0.75rem;
+    align-items: center;
+    width: 100%;
   }
 
   .control-row .control-item:first-child,
@@ -1333,7 +1369,7 @@ button.control-item.recording {
   .control-item {
     flex: none;
     width: 100%;
-    max-width: none;
+    max-width: 280px;
     min-width: unset;
     height: 48px;
     font-size: 0.85rem;
@@ -1343,23 +1379,46 @@ button.control-item.recording {
     font-size: 0.75rem;
   }
 
+  /* Center chat input box */
+  .chat-input-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
   .chat-box {
     width: 100%;
-    max-width: min(320px, 95%);
+    max-width: min(280px, 95%);
     height: 180px;
+    margin: 0 auto;
   }
 
   .viewport-info-bar {
     flex-wrap: wrap;
     gap: 1rem;
+    justify-content: center;
   }
 
   .actions-grid {
     grid-template-columns: 1fr;
   }
 
+  /* Center quick actions panel content */
   .quick-actions-panel {
     padding: 1rem;
+    text-align: center;
+  }
+
+  .panel-header {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .panel-subtitle {
+    width: 100%;
+    text-align: center;
+    margin-left: 0;
+    margin-top: 0.5rem;
   }
 
   .chat-transcript-panel {
