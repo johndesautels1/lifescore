@@ -302,10 +302,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const city2 = comparisonResult?.city2?.city || 'City 2';
 
   // Helper to get score from either CityScore or CityConsensusScore
-  const getScore = (city: typeof comparisonResult?.city1): number | undefined => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getScore = (city: any): number | undefined => {
     if (!city) return undefined;
     // CityScore has totalScore, CityConsensusScore has totalConsensusScore
-    return 'totalScore' in city ? city.totalScore : 'totalConsensusScore' in city ? city.totalConsensusScore : undefined;
+    if ('totalScore' in city) return city.totalScore;
+    if ('totalConsensusScore' in city) return city.totalConsensusScore;
+    return undefined;
   };
 
   // ═══════════════════════════════════════════════════════════════════
