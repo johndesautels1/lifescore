@@ -1854,8 +1854,9 @@
 
 .breakdown-subtitle {
   text-align: center;
-  color: var(--gray-500);
+  color: #32CD32;
   font-size: 0.9rem;
+  font-weight: 600;
   margin-bottom: 1rem;
 }
 

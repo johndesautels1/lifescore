@@ -102,9 +102,8 @@
 
 .breakdown-subtitle {
   font-weight: 700;
-  color: var(--sapphire-dark) !important;
+  color: #32CD32 !important;
   text-align: center;
-  color: var(--gray-700);
   font-size: 0.875rem;
   margin-bottom: 2rem;
 }
