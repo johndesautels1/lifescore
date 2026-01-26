@@ -1332,12 +1332,16 @@ button.control-item.recording {
   }
 
   .time-cluster {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
     width: 100%;
   }
 
   .time-display {
     justify-content: center;
+    width: 100%;
   }
 
   .date-display {
@@ -1476,6 +1480,8 @@ button.control-item.recording {
 
   /* Center LOCAL and time on mobile */
   .time-cluster {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     text-align: center;
     width: 100%;
@@ -1484,11 +1490,13 @@ button.control-item.recording {
   .time-display {
     justify-content: center;
     text-align: center;
+    width: 100%;
   }
 
   .date-display {
     justify-content: center;
     text-align: center;
+    width: 100%;
   }
 
   /* Fix #6: Scale Olivia display to 70% on mobile */
