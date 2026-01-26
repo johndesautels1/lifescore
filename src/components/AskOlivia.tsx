@@ -226,24 +226,22 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // AUTO-GREETING: When avatar connects, greet the user
+  // AUTO-GREETING: Disabled for testing
   // ═══════════════════════════════════════════════════════════════════
-  useEffect(() => {
-    if (videoEnabled && isAvatarConnected && !hasGreetedRef.current) {
-      hasGreetedRef.current = true;
-      // Longer delay to ensure connection is fully stable
-      setTimeout(() => {
-        const greeting = "Hello, I'm Olivia, your AI freedom advisor. How may I assist you today?";
-        makeAvatarSpeak(greeting).catch((err: Error) => {
-          console.warn('[AskOlivia] Greeting failed:', err);
-        });
-      }, 2000);
-    }
-    // Reset greeting flag when video is disabled
-    if (!videoEnabled) {
-      hasGreetedRef.current = false;
-    }
-  }, [videoEnabled, isAvatarConnected, makeAvatarSpeak]);
+  // useEffect(() => {
+  //   if (videoEnabled && isAvatarConnected && !hasGreetedRef.current) {
+  //     hasGreetedRef.current = true;
+  //     setTimeout(() => {
+  //       const greeting = "Hello, I'm Olivia, your AI freedom advisor. How may I assist you today?";
+  //       makeAvatarSpeak(greeting).catch((err: Error) => {
+  //         console.warn('[AskOlivia] Greeting failed:', err);
+  //       });
+  //     }, 2000);
+  //   }
+  //   if (!videoEnabled) {
+  //     hasGreetedRef.current = false;
+  //   }
+  // }, [videoEnabled, isAvatarConnected, makeAvatarSpeak]);
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
