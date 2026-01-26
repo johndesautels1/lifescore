@@ -451,6 +451,7 @@ export interface UseOliviaChatReturn {
   messages: OliviaChatMessage[];
   threadId: string | null;
   isTyping: boolean;
+  isContextLoading: boolean;
   error: OliviaError | null;
   sendMessage: (message: string) => Promise<void>;
   clearHistory: () => void;

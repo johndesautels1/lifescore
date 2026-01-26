@@ -100,43 +100,65 @@ export function useOliviaChat(
   const [error, setError] = useState<OliviaError | null>(null);
   const [context, setContextState] = useState<LifeScoreContext | null>(null);
   const [textSummary, setTextSummary] = useState<string | null>(null);
+  const [isContextLoading, setIsContextLoading] = useState(false);
 
   // Refs
-  const contextBuiltRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastComparisonIdRef = useRef<string | null>(null);
 
-  // Build context when comparison result changes (now includes all 100 metrics + saved history)
+  // Build context when comparison result changes
   useEffect(() => {
-    if (comparisonResult && !contextBuiltRef.current) {
-      contextBuiltRef.current = true;
+    const currentId = comparisonResult?.comparisonId || null;
 
-      buildContext(comparisonResult)
-        .then(({ context: builtContext, textSummary: builtSummary }) => {
-          setContextState(builtContext);
-
-          // Append saved comparisons summary to the text summary
-          const savedSummary = buildSavedComparisonsSummary(savedComparisons, savedEnhanced);
-          const fullSummary = (builtSummary || '') + savedSummary;
-          setTextSummary(fullSummary);
-
-          console.log('[useOliviaChat] Context built with', builtContext?.topMetrics?.length || 0, 'metrics');
-          console.log('[useOliviaChat] Included', savedComparisons.length + savedEnhanced.length, 'saved comparisons in context');
-        })
-        .catch((err) => {
-          console.error('[useOliviaChat] Failed to build context:', err);
-          setError({
-            type: 'context_build_failed',
-            message: 'Failed to load comparison data for Olivia.',
-            recoverable: true,
-          });
-        });
+    // Skip if same comparison already loaded
+    if (currentId === lastComparisonIdRef.current && context !== null) {
+      return;
     }
-  }, [comparisonResult, savedComparisons, savedEnhanced]);
 
-  // Reset context flag when comparison changes
-  useEffect(() => {
-    contextBuiltRef.current = false;
-  }, [comparisonResult?.comparisonId]);
+    // Update tracking
+    lastComparisonIdRef.current = currentId;
+
+    // Clear context when no comparison selected
+    if (!comparisonResult) {
+      setContextState(null);
+      setTextSummary(null);
+      setIsContextLoading(false);
+      return;
+    }
+
+    // Build new context for the selected report
+    console.log('[useOliviaChat] Building context for:', currentId);
+    setIsContextLoading(true);
+
+    buildContext(comparisonResult)
+      .then(({ context: builtContext, textSummary: builtSummary }) => {
+        // Verify this is still the current comparison (prevent race)
+        if (comparisonResult.comparisonId !== lastComparisonIdRef.current) {
+          console.log('[useOliviaChat] Stale context result, ignoring');
+          return;
+        }
+
+        setContextState(builtContext);
+
+        // Append saved comparisons summary to the text summary
+        const savedSummary = buildSavedComparisonsSummary(savedComparisons, savedEnhanced);
+        const fullSummary = (builtSummary || '') + savedSummary;
+        setTextSummary(fullSummary);
+
+        console.log('[useOliviaChat] Context built with', builtContext?.topMetrics?.length || 0, 'metrics');
+      })
+      .catch((err) => {
+        console.error('[useOliviaChat] Failed to build context:', err);
+        setError({
+          type: 'context_build_failed',
+          message: 'Failed to load comparison data for Olivia.',
+          recoverable: true,
+        });
+      })
+      .finally(() => {
+        setIsContextLoading(false);
+      });
+  }, [comparisonResult, savedComparisons, savedEnhanced, context]);
 
   /**
    * Generate unique message ID
@@ -150,6 +172,13 @@ export function useOliviaChat(
    */
   const sendUserMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim()) return;
+
+    // Wait for context to finish loading if in progress
+    if (isContextLoading) {
+      console.log('[useOliviaChat] Waiting for context to load...');
+      // Set a brief delay and retry - context should load quickly
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
     // Clear any previous error
     setError(null);
@@ -170,11 +199,12 @@ export function useOliviaChat(
     abortControllerRef.current = new AbortController();
 
     try {
-      // Send to API with all 100 metrics context on first message
+      // Always include context when available (not just first message)
+      // This ensures Olivia knows about the selected report
       const response = await sendMessage(userMessage, {
         threadId: threadId || undefined,
-        context: !threadId ? context || undefined : undefined,
-        textSummary: !threadId ? textSummary || undefined : undefined, // Include full text summary on first message
+        context: context || undefined,
+        textSummary: textSummary || undefined,
       });
 
       // Update thread ID if new
@@ -216,10 +246,11 @@ export function useOliviaChat(
       setIsTyping(false);
       abortControllerRef.current = null;
     }
-  }, [threadId, context, textSummary, generateMessageId]);
+  }, [threadId, context, textSummary, isContextLoading, generateMessageId]);
 
   /**
    * Clear chat history and start fresh
+   * Note: Does NOT reset context - context is tied to the selected comparison
    */
   const clearHistory = useCallback(() => {
     // Abort any pending request
@@ -231,11 +262,7 @@ export function useOliviaChat(
     setThreadId(null);
     setError(null);
     setIsTyping(false);
-
-    // Reset context so it rebuilds with new comparison
-    setContextState(null);
-    setTextSummary(null);
-    contextBuiltRef.current = false;
+    // Context stays - it's tied to the comparison, not the conversation
   }, []);
 
   /**
@@ -243,7 +270,6 @@ export function useOliviaChat(
    */
   const setContext = useCallback((newContext: LifeScoreContext) => {
     setContextState(newContext);
-    contextBuiltRef.current = true;
   }, []);
 
   // Cleanup on unmount
@@ -259,6 +285,7 @@ export function useOliviaChat(
     messages,
     threadId,
     isTyping,
+    isContextLoading,
     error,
     sendMessage: sendUserMessage,
     clearHistory,
