@@ -286,14 +286,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     }
   }, [isListening, startListening, stopListening]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    e.stopPropagation();
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   // ═══════════════════════════════════════════════════════════════════
   // DATA CONTEXT
   // ═══════════════════════════════════════════════════════════════════
@@ -529,7 +521,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           CONTROL PANEL - Clean Row Layout
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="control-panel">
-        {/* Row 1: SELECT REPORT | SPEAK | CHAT INPUT | TRANSCRIPT - all same width */}
+        {/* Row 1: SELECT REPORT | SPEAK | TRANSCRIPT - 3 buttons */}
         <div className="control-row">
           {/* 1. Report Dropdown */}
           <select
@@ -577,27 +569,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
             {isListening && <span className="btn-pulse"></span>}
           </button>
 
-          {/* 3. Text Input */}
-          <div className="control-item text-input-wrapper">
-            <input
-              type="text"
-              className="text-command-input"
-              placeholder={usageLimitReached ? "Limit reached" : "Type here..."}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={usageLimitReached}
-            />
-            <button
-              className="send-btn"
-              onClick={() => handleSendMessage()}
-              disabled={!inputText.trim() || usageLimitReached}
-            >
-              ▶
-            </button>
-          </div>
-
-          {/* 4. Transcript Button */}
+          {/* 3. Transcript Button */}
           <button
             className={`control-item control-btn ${showTextChat ? 'active' : ''}`}
             onClick={() => setShowTextChat(!showTextChat)}
@@ -608,6 +580,32 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               <span className="message-count">{messages.length}</span>
             )}
           </button>
+        </div>
+
+        {/* Row 2: Large Chat Input Box - centered */}
+        <div className="chat-input-row">
+          <div className="chat-box">
+            <textarea
+              className="chat-textarea"
+              placeholder={usageLimitReached ? "Daily limit reached - Upgrade for more" : "Type your message to Olivia..."}
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              disabled={usageLimitReached}
+            />
+            <button
+              className="chat-send-btn"
+              onClick={() => handleSendMessage()}
+              disabled={!inputText.trim() || usageLimitReached}
+            >
+              SEND
+            </button>
+          </div>
         </div>
 
         {/* Voice transcript display - shows below when recording */}
