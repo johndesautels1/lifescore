@@ -24,12 +24,12 @@
 
 .loading-header h2 {
   font-size: 1.5rem;
-  color: var(--sapphire);
+  color: #ffffff;
   margin-bottom: 0.5rem;
 }
 
 .loading-header p {
-  color: var(--text-secondary);
+  color: #ffffff;
   font-size: 0.95rem;
   font-weight: 500;
 }
