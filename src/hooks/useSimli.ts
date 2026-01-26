@@ -106,6 +106,11 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     pc.ontrack = (event) => {
       console.log('[useSimli] Received track:', event.track.kind);
 
+      // Monitor track state changes
+      event.track.onmute = () => console.log(`[useSimli] ${event.track.kind} track MUTED`);
+      event.track.onunmute = () => console.log(`[useSimli] ${event.track.kind} track UNMUTED`);
+      event.track.onended = () => console.log(`[useSimli] ${event.track.kind} track ENDED`);
+
       // Only attach stream once (first track, usually video)
       if (event.streams && event.streams[0] && !streamAttached) {
         streamAttached = true;
@@ -255,6 +260,11 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
       dc.onerror = (err) => {
         console.error('[useSimli] Data channel error:', err);
+      };
+
+      // Listen for messages FROM Simli through data channel
+      dc.onmessage = (event) => {
+        console.log('[useSimli] Data channel message from Simli:', event.data);
       };
 
       // Create offer
@@ -410,6 +420,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
           setStatus('error');
         }
       };
+
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Connection failed';
