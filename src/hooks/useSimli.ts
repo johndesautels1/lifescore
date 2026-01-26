@@ -74,6 +74,18 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   const simliClientRef = useRef<SimliClient | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Callback refs - prevent re-renders from causing reconnections
+  const onConnectedRef = useRef(onConnected);
+  const onDisconnectedRef = useRef(onDisconnected);
+  const onErrorRef = useRef(onError);
+
+  // Keep callback refs updated
+  useEffect(() => {
+    onConnectedRef.current = onConnected;
+    onDisconnectedRef.current = onDisconnected;
+    onErrorRef.current = onError;
+  }, [onConnected, onDisconnected, onError]);
+
   const isConnected = status === 'connected' || status === 'speaking' || status === 'listening';
   const isSpeaking = status === 'speaking';
 
@@ -103,7 +115,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         console.error('[useSimli]', errorMsg);
         setError(errorMsg);
         setStatus('error');
-        onError?.(errorMsg);
+        onErrorRef.current?.(errorMsg);
         return;
       }
 
@@ -113,7 +125,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         console.error('[useSimli]', errorMsg);
         setError(errorMsg);
         setStatus('error');
-        onError?.(errorMsg);
+        onErrorRef.current?.(errorMsg);
         return;
       }
 
@@ -122,7 +134,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         console.error('[useSimli]', errorMsg);
         setError(errorMsg);
         setStatus('error');
-        onError?.(errorMsg);
+        onErrorRef.current?.(errorMsg);
         return;
       }
 
@@ -166,14 +178,14 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       });
 
       setStatus('connected');
-      onConnected?.();
+      onConnectedRef.current?.();
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Connection failed';
       console.error('[useSimli] Connect error:', message);
       setError(message);
       setStatus('error');
-      onError?.(message);
+      onErrorRef.current?.(message);
 
       // Cleanup on error
       if (simliClientRef.current) {
@@ -185,7 +197,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         simliClientRef.current = null;
       }
     }
-  }, [videoRef, audioRef, onConnected, onError]);
+  }, [videoRef, audioRef]);
 
   /**
    * Disconnect from Simli
@@ -212,10 +224,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     setSession(null);
     setStatus('disconnected');
     setError(null);
-    onDisconnected?.();
+    onDisconnectedRef.current?.();
 
     console.log('[useSimli] Disconnected');
-  }, [onDisconnected]);
+  }, []);
 
   /**
    * Convert text to audio and send to Simli for lip-sync

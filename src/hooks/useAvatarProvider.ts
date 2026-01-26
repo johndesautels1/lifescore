@@ -105,6 +105,20 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
   const simliErrorCount = useRef(0);
   const isFallingBack = useRef(false);
 
+  // Callback refs - prevent re-renders from causing issues
+  const onSpeakingStartRef = useRef(onSpeakingStart);
+  const onSpeakingEndRef = useRef(onSpeakingEnd);
+  const onErrorRef = useRef(onError);
+  const onProviderSwitchRef = useRef(onProviderSwitch);
+
+  // Keep callback refs updated
+  useEffect(() => {
+    onSpeakingStartRef.current = onSpeakingStart;
+    onSpeakingEndRef.current = onSpeakingEnd;
+    onErrorRef.current = onError;
+    onProviderSwitchRef.current = onProviderSwitch;
+  }, [onSpeakingStart, onSpeakingEnd, onError, onProviderSwitch]);
+
   // Create stable refs for providers if not provided
   const internalVideoRef = useRef<HTMLVideoElement | null>(null);
   const internalAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -170,7 +184,7 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     // Switch to D-ID
     setActiveProvider('did');
     setHasFallenBack(true);
-    onProviderSwitch?.('simli', 'did', reason);
+    onProviderSwitchRef.current?.('simli', 'did', reason);
 
     // Wait a moment then connect to D-ID
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -184,10 +198,10 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
       const message = err instanceof Error ? err.message : 'D-ID fallback failed';
       setFacadeError(message);
       setFacadeStatus('error');
-      onError?.(message);
+      onErrorRef.current?.(message);
       return false;
     }
-  }, [activeProvider, autoFallback, simli, did, onProviderSwitch, onError]);
+  }, [activeProvider, autoFallback, simli, did]);
 
   // ============================================================================
   // PUBLIC ACTIONS
@@ -210,7 +224,7 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
         } else {
           setFacadeError(message);
           setFacadeStatus('error');
-          onError?.(message);
+          onErrorRef.current?.(message);
         }
       }
     } else {
@@ -221,16 +235,16 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
         const message = err instanceof Error ? err.message : 'D-ID connection failed';
         setFacadeError(message);
         setFacadeStatus('error');
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     }
-  }, [activeProvider, simli, did, autoFallback, triggerFallback, onError]);
+  }, [activeProvider, simli, did, autoFallback, triggerFallback]);
 
   const speak = useCallback(async (
     text: string,
     options?: { emotion?: string; speed?: number }
   ) => {
-    onSpeakingStart?.();
+    onSpeakingStartRef.current?.();
 
     if (activeProvider === 'simli') {
       try {
@@ -251,7 +265,7 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
             await did.speak(text);
           }
         } else {
-          onError?.(message);
+          onErrorRef.current?.(message);
         }
       }
     } else {
@@ -260,12 +274,12 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
         await did.speak(text);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'D-ID speak failed';
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     }
 
-    onSpeakingEnd?.();
-  }, [activeProvider, simli, did, autoFallback, triggerFallback, onSpeakingStart, onSpeakingEnd, onError]);
+    onSpeakingEndRef.current?.();
+  }, [activeProvider, simli, did, autoFallback, triggerFallback]);
 
   const disconnect = useCallback(() => {
     if (activeProvider === 'simli') {

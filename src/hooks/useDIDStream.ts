@@ -73,6 +73,18 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
   const isConnectingRef = useRef(false);  // Mutex to prevent concurrent connects
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Callback refs - prevent re-renders from causing reconnections
+  const onSpeakingStartRef = useRef(onSpeakingStart);
+  const onSpeakingEndRef = useRef(onSpeakingEnd);
+  const onErrorRef = useRef(onError);
+
+  // Keep callback refs updated
+  useEffect(() => {
+    onSpeakingStartRef.current = onSpeakingStart;
+    onSpeakingEndRef.current = onSpeakingEnd;
+    onErrorRef.current = onError;
+  }, [onSpeakingStart, onSpeakingEnd, onError]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -207,7 +219,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
           setState(prev => ({ ...prev, status: 'connected' }));
         } else if (peerConnection.connectionState === 'failed') {
           setState(prev => ({ ...prev, status: 'error', error: 'Connection failed' }));
-          onError?.('WebRTC connection failed');
+          onErrorRef.current?.('WebRTC connection failed');
         }
       };
 
@@ -263,9 +275,9 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       console.log(`[useDIDStream] Retry ${retryCountRef.current}/${MAX_RETRIES}, next delay: ${retryDelayRef.current}ms`);
 
       setState(prev => ({ ...prev, status: 'error', error: message }));
-      onError?.(message);
+      onErrorRef.current?.(message);
     }
-  }, [state.status, videoRef, onError]);
+  }, [state.status, videoRef]);
 
   /**
    * Make the avatar speak text
@@ -281,7 +293,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
     }
 
     setState(prev => ({ ...prev, status: 'speaking' }));
-    onSpeakingStart?.();
+    onSpeakingStartRef.current?.();
 
     try {
       const response = await fetch('/api/olivia/avatar/streams', {
@@ -309,16 +321,16 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       }
       speakingTimeoutRef.current = setTimeout(() => {
         setState(prev => ({ ...prev, status: 'connected' }));
-        onSpeakingEnd?.();
+        onSpeakingEndRef.current?.();
       }, duration || text.length * 60); // Estimate ~60ms per character
 
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Speak failed';
       console.error('[useDIDStream] Speak error:', message);
       setState(prev => ({ ...prev, status: 'connected' }));
-      onSpeakingEnd?.();
+      onSpeakingEndRef.current?.();
     }
-  }, [state.streamId, state.sessionId, onSpeakingStart, onSpeakingEnd]);
+  }, [state.streamId, state.sessionId]);
 
   /**
    * Disconnect from D-ID stream

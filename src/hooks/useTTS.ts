@@ -34,24 +34,36 @@ export function useTTS(
   const _audioContextRef = useRef<AudioContext | null>(null);
   void _audioContextRef;
 
-  // Initialize audio element
+  // Callback refs - prevent re-renders from causing audio re-initialization
+  const onStartRef = useRef(onStart);
+  const onEndRef = useRef(onEnd);
+  const onErrorRef = useRef(onError);
+
+  // Keep callback refs updated
+  useEffect(() => {
+    onStartRef.current = onStart;
+    onEndRef.current = onEnd;
+    onErrorRef.current = onError;
+  }, [onStart, onEnd, onError]);
+
+  // Initialize audio element (only once)
   useEffect(() => {
     audioRef.current = new Audio();
 
     audioRef.current.onplay = () => {
       setIsPlaying(true);
-      onStart?.();
+      onStartRef.current?.();
     };
 
     audioRef.current.onended = () => {
       setIsPlaying(false);
-      onEnd?.();
+      onEndRef.current?.();
     };
 
     audioRef.current.onerror = () => {
       setIsPlaying(false);
       setError('Failed to play audio');
-      onError?.('Failed to play audio');
+      onErrorRef.current?.('Failed to play audio');
     };
 
     return () => {
@@ -60,7 +72,7 @@ export function useTTS(
         audioRef.current.src = '';
       }
     };
-  }, [onStart, onEnd, onError]);
+  }, []); // No deps - only initialize once
 
   /**
    * Play audio from URL
@@ -82,9 +94,9 @@ export function useTTS(
       const message = err instanceof Error ? err.message : 'Failed to play audio';
       setError(message);
       setIsPlaying(false);
-      onError?.(message);
+      onErrorRef.current?.(message);
     }
-  }, [onError]);
+  }, []);
 
   /**
    * Generate and play TTS for text
@@ -102,11 +114,11 @@ export function useTTS(
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.onstart = () => {
           setIsPlaying(true);
-          onStart?.();
+          onStartRef.current?.();
         };
         utterance.onend = () => {
           setIsPlaying(false);
-          onEnd?.();
+          onEndRef.current?.();
         };
         utterance.onerror = () => {
           setIsPlaying(false);
@@ -135,12 +147,12 @@ export function useTTS(
       setError(message);
       // Fallback to browser speech synthesis on error
       if (!useBrowserTTS()) {
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [voiceId, playUrl, onError, onStart, onEnd]);
+  }, [voiceId, playUrl]);
 
   /**
    * Stop playback
