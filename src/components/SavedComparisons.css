@@ -379,7 +379,7 @@
 }
 
 .action-btn {
-  width: 11px;
+  width: 7px;
   height: 32px;
   display: flex;
   align-items: center;
@@ -759,7 +759,7 @@
   }
 
   .action-btn {
-    width: 14px;
+    width: 8px;
     height: 40px;
     font-size: 1rem;
     flex-shrink: 0;
