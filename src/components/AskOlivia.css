@@ -599,7 +599,8 @@ button.control-item.recording {
 }
 
 .btn-icon {
-  font-size: 1rem;
+  font-size: 2rem;
+  filter: brightness(1.3);
 }
 
 .btn-text {
@@ -789,7 +790,7 @@ button.control-item.recording {
 
 .video-disabled-placeholder .avatar-subtitle {
   font-size: 0.6rem;
-  color: var(--steel-gray);
+  color: #ffffff;
   letter-spacing: 0.15em;
 }
 
@@ -823,7 +824,7 @@ button.control-item.recording {
 .text-mode-hint {
   margin-top: 1rem;
   font-size: 0.6rem;
-  color: var(--steel-gray);
+  color: #ffffff;
   letter-spacing: 0.05em;
 }
 
@@ -1449,21 +1450,45 @@ button.control-item.recording {
    EXTRA SMALL SCREENS (Phones < 480px)
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
+  /* Center ASK OLIVIA on mobile */
   .olivia-wordmark {
     flex-direction: column;
     gap: 0;
+    align-items: center;
+    text-align: center;
+    width: 100%;
   }
 
   .wordmark-prefix {
     font-size: 0.6rem;
+    text-align: center;
   }
 
   .wordmark-main {
     font-size: 1.2rem;
+    text-align: center;
   }
 
   .wordmark-tagline {
     font-size: 0.55rem;
+    text-align: center;
+  }
+
+  /* Center LOCAL and time on mobile */
+  .time-cluster {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .time-display {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .date-display {
+    justify-content: center;
+    text-align: center;
   }
 
   /* Fix #6: Scale Olivia display to 70% on mobile */
