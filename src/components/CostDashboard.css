@@ -237,7 +237,25 @@
 
 .section-actions {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Top row: Show Pricing and Export - centered */
+.section-actions-top {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* Bottom row: Save to Database - full width centered */
+.section-actions-bottom {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .action-btn {
@@ -249,6 +267,20 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+/* Enlarge Show Pricing button */
+.action-btn.pricing {
+  padding: 0.5rem 1.5rem;
+  min-width: 140px;
+}
+
+/* Enlarge Save to Database button */
+.action-btn.save {
+  padding: 0.6rem 2rem;
+  min-width: 180px;
+  font-size: 0.9rem;
 }
 
 .action-btn:hover:not(:disabled) {

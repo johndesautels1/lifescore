@@ -411,18 +411,24 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
           <div className="section-header">
             <h3>Recent Comparisons ({costs.length})</h3>
             <div className="section-actions">
-              <button className="action-btn" onClick={() => setShowPricing(!showPricing)}>
-                {showPricing ? 'Hide Pricing' : 'Show Pricing'}
-              </button>
-              <button className="action-btn" onClick={handleExportCSV} disabled={costs.length === 0}>
-                📥 Export CSV
-              </button>
-              <button className="action-btn save" onClick={handleSaveData} disabled={costs.length === 0 || isSaving || isLoading}>
-                {isSaving ? '⏳ Saving...' : user && dbConfigured ? '💾 Save to Database' : '💾 Save Data'}
-              </button>
-              <button className="action-btn danger" onClick={handleClearData} disabled={costs.length === 0 || isSaving || isLoading}>
-                🗑️ Delete All
-              </button>
+              {/* Top row: Show Pricing and Export - centered */}
+              <div className="section-actions-top">
+                <button className="action-btn pricing" onClick={() => setShowPricing(!showPricing)}>
+                  {showPricing ? 'Hide Pricing' : 'Show Pricing'}
+                </button>
+                <button className="action-btn" onClick={handleExportCSV} disabled={costs.length === 0}>
+                  📥 Export
+                </button>
+              </div>
+              {/* Bottom row: Save to Database and Delete All */}
+              <div className="section-actions-bottom">
+                <button className="action-btn save" onClick={handleSaveData} disabled={costs.length === 0 || isSaving || isLoading}>
+                  {isSaving ? '⏳ Saving...' : user && dbConfigured ? '💾 Save to Database' : '💾 Save Data'}
+                </button>
+                <button className="action-btn danger" onClick={handleClearData} disabled={costs.length === 0 || isSaving || isLoading}>
+                  🗑️ Delete All
+                </button>
+              </div>
             </div>
           </div>
           {saveMessage && (
