@@ -639,7 +639,8 @@
 
 .toggle-info p {
   font-size: 0.85rem;
-  color: var(--gray-600);
+  color: #FFD700;
+  font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
@@ -667,14 +668,16 @@
 }
 
 .llm-badge .llm-icon {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  filter: brightness(1.3) saturate(1.2);
 }
 
 .llm-badge.available {
-  background: linear-gradient(135deg, rgba(0, 71, 171, 0.12) 0%, rgba(0, 71, 171, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(230, 240, 255, 0.95) 100%);
   color: #0047AB;
   font-weight: 700;
-  border: 1px solid rgba(0, 71, 171, 0.3);
+  border: 2px solid #0047AB;
+  text-shadow: 0 0 1px rgba(0, 71, 171, 0.3);
 }
 
 .llm-badge.available:hover {
@@ -5303,7 +5306,7 @@
 }
 
 [data-theme="dark"] .toggle-info p {
-  color: var(--gray-400);
+  color: #FFD700;
 }
 
 [data-theme="dark"] .enhanced-progress {
