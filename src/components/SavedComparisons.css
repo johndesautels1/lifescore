@@ -724,7 +724,8 @@
   }
 
   .saved-item-actions {
-    justify-content: flex-end;
+    justify-content: center;
+    width: 100%;
   }
 
   .saved-item-meta {
@@ -739,6 +740,43 @@
     flex-direction: column;
     gap: 0.5rem;
     align-items: stretch;
+    text-align: center;
+  }
+}
+
+/* Extra small screens - ensure action buttons fit */
+@media (max-width: 480px) {
+  .saved-item {
+    padding: 0.75rem;
+  }
+
+  .saved-item-actions {
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .action-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .saved-item-main {
+    width: 100%;
+  }
+
+  .saved-item-cities {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .saved-item-meta {
+    flex-wrap: wrap;
+    justify-content: center;
     text-align: center;
   }
 }
