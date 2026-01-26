@@ -54,6 +54,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSpokenMsgRef = useRef<string | null>(null);
+  const hasGreetedRef = useRef(false);
 
   // Tier access for message limits
   const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
@@ -223,6 +224,26 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       }
     }
   }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AUTO-GREETING: When avatar connects, greet the user
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (videoEnabled && isAvatarConnected && !hasGreetedRef.current) {
+      hasGreetedRef.current = true;
+      // Small delay to ensure connection is stable
+      setTimeout(() => {
+        const greeting = "Hello, I'm Olivia, your AI freedom advisor. How may I assist you today?";
+        makeAvatarSpeak(greeting).catch((err: Error) => {
+          console.warn('[AskOlivia] Greeting failed:', err);
+        });
+      }, 500);
+    }
+    // Reset greeting flag when video is disabled
+    if (!videoEnabled) {
+      hasGreetedRef.current = false;
+    }
+  }, [videoEnabled, isAvatarConnected, makeAvatarSpeak]);
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
