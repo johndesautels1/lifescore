@@ -526,123 +526,80 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       </main>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          CONTROL PANEL - Swiss Timepiece Precision
+          CONTROL PANEL - Clean Row Layout
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="control-panel">
-        {/* Report Selection */}
-        <div className="control-group report-selection">
-          <div className="control-label">SELECT REPORT</div>
+        {/* Row 1: SELECT REPORT | SPEAK | CHAT INPUT | TRANSCRIPT - all same width */}
+        <div className="control-row">
+          {/* 1. Report Dropdown */}
           <select
-            className="report-dropdown"
+            className="control-item"
             value={selectedComparisonId || ''}
             onChange={(e) => {
               setSelectedComparisonId(e.target.value || null);
-              clearHistory(); // Clear chat when switching reports
+              clearHistory();
             }}
           >
             <option value="">
               {propComparisonResult
-                ? `Current: ${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
-                : 'No report loaded'}
+                ? `${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
+                : 'Select Report'}
             </option>
-            <option value="none">General Chat (No Report)</option>
+            <option value="none">General Chat</option>
             {savedComparisons.length > 0 && (
-              <optgroup label="Saved Reports">
+              <optgroup label="Saved">
                 {savedComparisons.map((saved) => (
                   <option key={saved.id} value={saved.result.comparisonId}>
                     {saved.result.city1.city} vs {saved.result.city2.city}
-                    {saved.nickname ? ` (${saved.nickname})` : ''}
                   </option>
                 ))}
               </optgroup>
             )}
             {savedEnhanced.length > 0 && (
-              <optgroup label="Enhanced Reports">
+              <optgroup label="Enhanced">
                 {savedEnhanced.map((saved) => (
                   <option key={saved.id} value={saved.result.comparisonId}>
-                    ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
-                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                    {saved.result.city1.city} vs {saved.result.city2.city}
                   </option>
                 ))}
               </optgroup>
             )}
           </select>
-        </div>
 
-        {/* Speak to Olivia - Voice Mode */}
-        <div className="control-group voice-controls">
-          <div className="control-label">SPEAK TO OLIVIA</div>
-          <div className="control-buttons">
-            <button
-              className={`control-btn primary ${isListening ? 'active recording' : ''}`}
-              onClick={handleVoiceToggle}
-              disabled={!voiceSupported}
-              title={isListening ? 'Stop listening' : 'Start speaking to Olivia'}
-            >
-              <span className="btn-icon">{isListening ? '◼' : '🎤'}</span>
-              <span className="btn-text">{isListening ? 'STOP' : 'SPEAK'}</span>
-              {isListening && <span className="btn-pulse"></span>}
-            </button>
+          {/* 2. Speak Button */}
+          <button
+            className={`control-item control-btn ${isListening ? 'recording' : ''}`}
+            onClick={handleVoiceToggle}
+            disabled={!voiceSupported}
+          >
+            <span className="btn-icon">{isListening ? '◼' : '🎤'}</span>
+            <span className="btn-text">{isListening ? 'STOP' : 'SPEAK'}</span>
+            {isListening && <span className="btn-pulse"></span>}
+          </button>
 
-            {/* PAUSE OLIVIA button - shown when she's speaking */}
-            {(isAvatarSpeaking || isTTSSpeaking) && (
-              <button
-                className="control-btn danger"
-                onClick={() => {
-                  interruptAvatar();
-                  stopSpeaking();
-                }}
-                title="Pause Olivia"
-              >
-                <span className="btn-icon">⏸</span>
-                <span className="btn-text">PAUSE</span>
-              </button>
-            )}
-          </div>
-
-          {/* Voice transcript display - shows what user is saying */}
-          {(transcript || interimTranscript) && (
-            <div className="voice-transcript-display">
-              <span className="transcript-indicator">◉ REC</span>
-              <span className="transcript-text">
-                {transcript}
-                <span className="interim">{interimTranscript}</span>
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Chat with Olivia - Text Mode */}
-        <div className="control-group text-input-group">
-          <div className="control-label">CHAT WITH OLIVIA</div>
-          <div className="text-input-wrapper">
+          {/* 3. Text Input */}
+          <div className="control-item text-input-wrapper">
             <input
               type="text"
               className="text-command-input"
-              placeholder={usageLimitReached ? "Daily limit reached - Upgrade for more" : "Type your question..."}
+              placeholder={usageLimitReached ? "Limit reached" : "Type here..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={usageLimitReached}
             />
             <button
-              className="send-command-btn"
+              className="send-btn"
               onClick={() => handleSendMessage()}
               disabled={!inputText.trim() || usageLimitReached}
             >
-              <span className="btn-icon">▶</span>
+              ▶
             </button>
           </div>
-          {/* Usage meter for message limits */}
-          <div className="olivia-usage-meter">
-            <UsageMeter feature="oliviaMessagesPerDay" compact={true} />
-          </div>
-        </div>
 
-        {/* Toggle text chat panel */}
-        <div className="control-group">
+          {/* 4. Transcript Button */}
           <button
-            className={`control-btn toggle-chat ${showTextChat ? 'active' : ''}`}
+            className={`control-item control-btn ${showTextChat ? 'active' : ''}`}
             onClick={() => setShowTextChat(!showTextChat)}
           >
             <span className="btn-icon">☰</span>
@@ -651,6 +608,35 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               <span className="message-count">{messages.length}</span>
             )}
           </button>
+        </div>
+
+        {/* Voice transcript display - shows below when recording */}
+        {(transcript || interimTranscript) && (
+          <div className="voice-transcript-display">
+            <span className="transcript-indicator">◉ REC</span>
+            <span className="transcript-text">
+              {transcript}
+              <span className="interim">{interimTranscript}</span>
+            </span>
+          </div>
+        )}
+
+        {/* Pause button - shows when Olivia is speaking */}
+        {(isAvatarSpeaking || isTTSSpeaking) && (
+          <button
+            className="pause-btn"
+            onClick={() => {
+              interruptAvatar();
+              stopSpeaking();
+            }}
+          >
+            ⏸ PAUSE OLIVIA
+          </button>
+        )}
+
+        {/* Usage meter */}
+        <div className="usage-meter-row">
+          <UsageMeter feature="oliviaMessagesPerDay" compact={true} />
         </div>
       </section>
 
