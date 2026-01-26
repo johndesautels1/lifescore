@@ -275,9 +275,9 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         // Send audio chunks to Simli with pacing for natural lip-sync
         // Chunk size: 100ms of audio at 16kHz * 2 bytes/sample = 3200 bytes
-        // Pacing: 120ms intervals for deliberate, natural movement
+        // Pacing: 100ms intervals for real-time playback
         const chunkSize = 3200;
-        const pacingMs = 120;
+        const pacingMs = 100;
 
         // Split into chunks
         const chunks: Uint8Array[] = [];
