@@ -273,17 +273,32 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         console.log('[useSimli] Sending', audioBytes.length, 'bytes to Simli');
 
-        // Send audio chunks to Simli
+        // Send audio chunks to Simli with pacing for natural lip-sync
         // Chunk size: 100ms of audio at 16kHz * 2 bytes/sample = 3200 bytes
+        // Pacing: 120ms intervals for deliberate, natural movement
         const chunkSize = 3200;
-        const client = simliClientRef.current;
+        const pacingMs = 120;
 
+        // Split into chunks
+        const chunks: Uint8Array[] = [];
         for (let i = 0; i < audioBytes.length; i += chunkSize) {
-          const chunk = audioBytes.slice(i, Math.min(i + chunkSize, audioBytes.length));
-          client.sendAudioData(chunk);
+          chunks.push(audioBytes.slice(i, Math.min(i + chunkSize, audioBytes.length)));
         }
 
-        console.log('[useSimli] Audio sent successfully');
+        // Send chunks with pacing
+        let chunkIndex = 0;
+        const sendNextChunk = () => {
+          if (chunkIndex < chunks.length && simliClientRef.current) {
+            simliClientRef.current.sendAudioData(chunks[chunkIndex]);
+            chunkIndex++;
+            setTimeout(sendNextChunk, pacingMs);
+          } else {
+            console.log('[useSimli] Audio sent successfully:', chunks.length, 'chunks');
+          }
+        };
+
+        // Start sending
+        sendNextChunk();
       }
 
       // Set timeout to return to connected state

@@ -34,8 +34,8 @@ const EMOTION_SETTINGS: Record<string, { stability: number; similarity_boost: nu
   encouraging: { stability: 0.45, similarity_boost: 0.8, style: 0.25 },
 };
 
-// Olivia's ElevenLabs voice ID (professional female voice)
-const OLIVIA_VOICE_ID = process.env.ELEVENLABS_OLIVIA_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL'; // Sarah voice
+// Olivia's ElevenLabs voice ID (British sophisticated female)
+const OLIVIA_VOICE_ID = process.env.ELEVENLABS_OLIVIA_VOICE_ID || 'XB0fDUnXU5powFXDhCwa'; // Charlotte voice
 
 export default async function handler(
   req: VercelRequest,
