@@ -235,6 +235,19 @@ const AppContent: React.FC = () => {
   }, []);
 
   const handleLoadSavedComparison = useCallback((result: ComparisonResult) => {
+    // FIX 2026-01-26: Add defensive checks to prevent crashes when loading saved comparisons
+    if (!result) {
+      console.error('[App] handleLoadSavedComparison called with null/undefined result');
+      return;
+    }
+
+    if (!result.city1 || !result.city2) {
+      console.error('[App] handleLoadSavedComparison: result missing city data', result);
+      return;
+    }
+
+    console.log('[App] Loading saved comparison:', result.comparisonId, result.city1.city, 'vs', result.city2.city);
+
     loadResult(result);
     setEnhancedStatus('idle');
     setEnhancedResult(null);

@@ -7,7 +7,9 @@ import React, { useState, useEffect } from 'react';
 import type { ComparisonResult } from '../types/metrics';
 import {
   getLocalComparisons,
+  getLocalEnhancedComparisons,
   deleteComparisonLocal,
+  deleteEnhancedComparisonLocal,
   updateNicknameLocal,
   connectGitHub,
   disconnectGitHub,
@@ -30,11 +32,16 @@ interface SavedComparisonsProps {
   currentComparisonId?: string;
 }
 
+// Extended type to track if comparison is enhanced
+interface DisplayComparison extends SavedComparison {
+  isEnhanced?: boolean;
+}
+
 const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   onLoadComparison,
   currentComparisonId
 }) => {
-  const [comparisons, setComparisons] = useState<SavedComparison[]>([]);
+  const [comparisons, setComparisons] = useState<DisplayComparison[]>([]);
   const [gammaReports, setGammaReports] = useState<SavedGammaReport[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showGammaReports, setShowGammaReports] = useState(false);
@@ -52,7 +59,22 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   }, []);
 
   const loadComparisons = () => {
-    setComparisons(getLocalComparisons());
+    // FIX 2026-01-26: Load BOTH standard and enhanced comparisons
+    const standardComparisons = getLocalComparisons().map(c => ({ ...c, isEnhanced: false }));
+    const enhancedComparisons = getLocalEnhancedComparisons().map(c => ({
+      ...c,
+      // Convert EnhancedComparisonResult to work with ComparisonResult interface
+      result: c.result as unknown as ComparisonResult,
+      isEnhanced: true
+    }));
+
+    // Merge and sort by savedAt date (newest first)
+    const allComparisons = [...standardComparisons, ...enhancedComparisons]
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+
+    console.log('[SavedComparisons] Loaded', standardComparisons.length, 'standard +', enhancedComparisons.length, 'enhanced comparisons');
+
+    setComparisons(allComparisons);
     setGammaReports(getSavedGammaReports());
     setSyncStatus(getSyncStatus());
   };
@@ -78,17 +100,41 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, isEnhanced?: boolean) => {
     if (window.confirm('Delete this saved comparison?')) {
-      deleteComparisonLocal(id);
+      // FIX 2026-01-26: Delete from correct storage based on comparison type
+      if (isEnhanced) {
+        deleteEnhancedComparisonLocal(id);
+      } else {
+        deleteComparisonLocal(id);
+      }
       loadComparisons();
       showMessage('success', 'Comparison deleted');
     }
   };
 
-  const handleLoad = (comparison: SavedComparison) => {
-    onLoadComparison(comparison.result);
-    setIsExpanded(false);
+  const handleLoad = (comparison: DisplayComparison) => {
+    // Defensive check: ensure result exists and has required properties
+    if (!comparison.result) {
+      showMessage('error', 'Unable to load comparison: data is missing');
+      console.error('[SavedComparisons] comparison.result is undefined:', comparison);
+      return;
+    }
+
+    // Ensure required fields exist
+    if (!comparison.result.city1 || !comparison.result.city2) {
+      showMessage('error', 'Unable to load comparison: city data is corrupted');
+      console.error('[SavedComparisons] Missing city data:', comparison.result);
+      return;
+    }
+
+    try {
+      onLoadComparison(comparison.result);
+      setIsExpanded(false);
+    } catch (err) {
+      showMessage('error', 'Failed to load comparison');
+      console.error('[SavedComparisons] Error loading comparison:', err);
+    }
   };
 
   const handleEditNickname = (id: string, currentNickname?: string) => {
@@ -319,6 +365,9 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                             <span className="saved-cities-text">
                               {comparison.result.city1.city} vs {comparison.result.city2.city}
                             </span>
+                            {comparison.isEnhanced && (
+                              <span className="enhanced-badge" title="Multi-LLM Enhanced Comparison">⚡</span>
+                            )}
                           </>
                         )}
                       </div>
@@ -327,7 +376,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           {getWinnerText(comparison)}
                         </span>
                         <span className="saved-scores">
-                          {Math.round(comparison.result.city1.totalScore)} - {Math.round(comparison.result.city2.totalScore)}
+                          {Math.round(comparison.result.city1?.totalScore || 0)} - {Math.round(comparison.result.city2?.totalScore || 0)}
                         </span>
                         <span className="saved-date">{formatDate(comparison.savedAt)}</span>
                         {!comparison.synced && syncStatus.connected && (
@@ -352,7 +401,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                       </button>
                       <button
                         className="action-btn delete-btn"
-                        onClick={() => handleDelete(comparison.id)}
+                        onClick={() => handleDelete(comparison.id, comparison.isEnhanced)}
                         title="Delete"
                       >
                         🗑
