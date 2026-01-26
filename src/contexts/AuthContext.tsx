@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Select only needed fields to reduce query time
       const profilePromise = supabase
         .from('profiles')
-        .select('id, email, display_name, subscription_tier, avatar_url, created_at')
+        .select('id, email, full_name, tier, avatar_url, created_at')
         .eq('id', userId)
         .maybeSingle();
 
