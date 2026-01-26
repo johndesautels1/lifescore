@@ -673,11 +673,10 @@
 }
 
 .llm-badge.available {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(230, 240, 255, 0.95) 100%);
-  color: #0047AB;
-  font-weight: 700;
+  background: #ffffff;
+  color: #0047AB !important;
+  font-weight: 800;
   border: 2px solid #0047AB;
-  text-shadow: 0 0 1px rgba(0, 71, 171, 0.3);
 }
 
 .llm-badge.available:hover {
