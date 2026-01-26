@@ -1407,13 +1407,24 @@ button.control-item.recording {
     font-size: 0.55rem;
   }
 
+  /* Fix #6: Scale Olivia display to 70% on mobile */
   .viewport-container {
     padding: 0.5rem;
-    min-height: 35vh;
+    min-height: 30vh;  /* Reduced from 35vh */
+  }
+
+  .viewport-frame {
+    transform: scale(0.7);
+    transform-origin: top center;
+    margin-bottom: -15%;  /* Compensate for scale */
   }
 
   .viewport-bezel {
-    padding: 8px;
+    padding: 6px;  /* Reduced from 8px */
+  }
+
+  .viewport-screen {
+    aspect-ratio: 16 / 10;  /* Slightly more compact */
   }
 
   .viewport-info-bar {

@@ -145,7 +145,7 @@
 .header-actions {
   position: absolute;
   top: 1rem;
-  right: 1rem;
+  left: 1rem;  /* Moved from right to left - Fix #5 */
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -315,7 +315,7 @@
   .header-actions {
     gap: 0.5rem;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: flex-start;  /* Changed to flex-start for left alignment */
     max-width: 280px;
   }
 
