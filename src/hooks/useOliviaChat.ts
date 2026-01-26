@@ -231,6 +231,11 @@ export function useOliviaChat(
     setThreadId(null);
     setError(null);
     setIsTyping(false);
+
+    // Reset context so it rebuilds with new comparison
+    setContextState(null);
+    setTextSummary(null);
+    contextBuiltRef.current = false;
   }, []);
 
   /**
