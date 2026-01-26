@@ -89,9 +89,17 @@ export function useVoiceRecognition(
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Refs
+  // Refs - use refs for callbacks to avoid re-initializing recognition on every render
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isManualStop = useRef(false);
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+
+  // Keep refs updated with latest callbacks
+  useEffect(() => {
+    onResultRef.current = onResult;
+    onErrorRef.current = onError;
+  }, [onResult, onError]);
 
   // Check browser support
   useEffect(() => {
@@ -105,7 +113,7 @@ export function useVoiceRecognition(
       recognitionRef.current.interimResults = interimResults;
       recognitionRef.current.lang = language;
 
-      // Handle results
+      // Handle results - use ref to always get latest callback
       recognitionRef.current.onresult = (event) => {
         let finalTranscript = '';
         let interimText = '';
@@ -122,10 +130,10 @@ export function useVoiceRecognition(
         if (finalTranscript) {
           setTranscript(prev => prev + finalTranscript);
           setInterimTranscript('');
-          onResult?.(finalTranscript, true);
+          onResultRef.current?.(finalTranscript, true);
         } else {
           setInterimTranscript(interimText);
-          onResult?.(interimText, false);
+          onResultRef.current?.(interimText, false);
         }
       };
 
@@ -143,7 +151,7 @@ export function useVoiceRecognition(
         }
       };
 
-      // Handle errors
+      // Handle errors - use ref to always get latest callback
       recognitionRef.current.onerror = (event) => {
         let errorMessage = 'Speech recognition error';
 
@@ -169,7 +177,7 @@ export function useVoiceRecognition(
 
         setError(errorMessage);
         setIsListening(false);
-        onError?.(errorMessage);
+        onErrorRef.current?.(errorMessage);
       };
 
       // Handle audio start
@@ -184,7 +192,7 @@ export function useVoiceRecognition(
         recognitionRef.current.abort();
       }
     };
-  }, [continuous, interimResults, language, onResult, onError]);
+  }, [continuous, interimResults, language]); // Callbacks use refs, so not in deps
 
   /**
    * Start listening

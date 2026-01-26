@@ -136,15 +136,10 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     resetTranscript,
   } = useVoiceRecognition({
     onResult: (text, isFinal) => {
-      console.log('[AskOlivia] Voice result:', { text, isFinal });
       if (isFinal && text.trim()) {
-        console.log('[AskOlivia] Sending voice message to Olivia:', text.trim());
         handleSendMessage(text.trim());
         resetTranscript();
       }
-    },
-    onError: (err) => {
-      console.error('[AskOlivia] Voice recognition error:', err);
     },
   });
 
@@ -218,14 +213,12 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
         // If video is enabled and avatar is connected, use avatar
         if (videoEnabled && isAvatarConnected) {
-          console.log(`[AskOlivia] OpenAI responded, sending to ${activeProvider.toUpperCase()} avatar to speak`);
           makeAvatarSpeak(lastMessage.content).catch((err: Error) => {
             console.warn('[AskOlivia] Avatar speak failed, falling back to browser TTS:', err);
             speakText(lastMessage.content);
           });
         } else {
           // Use browser TTS when video is disabled
-          console.log('[AskOlivia] Using browser TTS (video chat disabled)');
           speakText(lastMessage.content);
         }
       }
@@ -275,7 +268,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
     setInputText('');
     setUsageLimitReached(false);
-    // Send to OpenAI (the brain) - response will auto-trigger D-ID speak
+    // Send to OpenAI (the brain) - response will auto-trigger speak
     await sendMessage(messageText);
   }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited]);
 
@@ -286,11 +279,17 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
   const handleVoiceToggle = useCallback(() => {
     if (isListening) {
+      // If there's pending transcript when stopping, send it as a message
+      const pendingText = (transcript + interimTranscript).trim();
+      if (pendingText) {
+        handleSendMessage(pendingText);
+        resetTranscript();
+      }
       stopListening();
     } else {
       startListening();
     }
-  }, [isListening, startListening, stopListening]);
+  }, [isListening, startListening, stopListening, transcript, interimTranscript, handleSendMessage, resetTranscript]);
 
   // ═══════════════════════════════════════════════════════════════════
   // DATA CONTEXT
