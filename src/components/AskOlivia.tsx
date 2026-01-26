@@ -41,7 +41,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showTextChat, setShowTextChat] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [autoSpeak, setAutoSpeak] = useState(true);
+  // Auto-speak is always enabled - Olivia always speaks her responses
+  const autoSpeak = true;
   const [usageLimitReached, setUsageLimitReached] = useState(false);
 
   // Video chat is now OPT-IN (user must click "Start Video Chat")
@@ -528,71 +529,62 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           CONTROL PANEL - Swiss Timepiece Precision
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="control-panel">
-        {/* Report Selection & Video Toggle */}
+        {/* Report Selection */}
         <div className="control-group report-selection">
           <div className="control-label">SELECT REPORT</div>
-          <div className="control-row">
-            <select
-              className="report-dropdown"
-              value={selectedComparisonId || ''}
-              onChange={(e) => {
-                setSelectedComparisonId(e.target.value || null);
-                clearHistory(); // Clear chat when switching reports
-              }}
-            >
-              <option value="">
-                {propComparisonResult
-                  ? `Current: ${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
-                  : 'No report loaded'}
-              </option>
-              <option value="none">General Chat (No Report)</option>
-              {savedComparisons.length > 0 && (
-                <optgroup label="Saved Reports">
-                  {savedComparisons.map((saved) => (
-                    <option key={saved.id} value={saved.result.comparisonId}>
-                      {saved.result.city1.city} vs {saved.result.city2.city}
-                      {saved.nickname ? ` (${saved.nickname})` : ''}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {savedEnhanced.length > 0 && (
-                <optgroup label="Enhanced Reports">
-                  {savedEnhanced.map((saved) => (
-                    <option key={saved.id} value={saved.result.comparisonId}>
-                      ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
-                      {saved.nickname ? ` (${saved.nickname})` : ''}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
-            <button
-              className={`control-btn video-toggle ${videoEnabled ? 'active' : ''}`}
-              onClick={toggleVideoChat}
-              title={videoEnabled ? 'Stop Video Chat' : 'Start Video Chat'}
-            >
-              <span className="btn-icon">{videoEnabled ? '🎥' : '📹'}</span>
-              <span className="btn-text">{videoEnabled ? 'END VIDEO' : 'VIDEO CHAT'}</span>
-            </button>
-          </div>
+          <select
+            className="report-dropdown"
+            value={selectedComparisonId || ''}
+            onChange={(e) => {
+              setSelectedComparisonId(e.target.value || null);
+              clearHistory(); // Clear chat when switching reports
+            }}
+          >
+            <option value="">
+              {propComparisonResult
+                ? `Current: ${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
+                : 'No report loaded'}
+            </option>
+            <option value="none">General Chat (No Report)</option>
+            {savedComparisons.length > 0 && (
+              <optgroup label="Saved Reports">
+                {savedComparisons.map((saved) => (
+                  <option key={saved.id} value={saved.result.comparisonId}>
+                    {saved.result.city1.city} vs {saved.result.city2.city}
+                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {savedEnhanced.length > 0 && (
+              <optgroup label="Enhanced Reports">
+                {savedEnhanced.map((saved) => (
+                  <option key={saved.id} value={saved.result.comparisonId}>
+                    ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
+                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
         </div>
 
-        {/* Voice Controls */}
+        {/* Speak to Olivia - Voice Mode */}
         <div className="control-group voice-controls">
-          <div className="control-label">VOICE COMMAND</div>
+          <div className="control-label">SPEAK TO OLIVIA</div>
           <div className="control-buttons">
             <button
               className={`control-btn primary ${isListening ? 'active recording' : ''}`}
               onClick={handleVoiceToggle}
               disabled={!voiceSupported}
+              title={isListening ? 'Stop listening' : 'Start speaking to Olivia'}
             >
-              <span className="btn-icon">{isListening ? '◼' : '◉'}</span>
+              <span className="btn-icon">{isListening ? '◼' : '🎤'}</span>
               <span className="btn-text">{isListening ? 'STOP' : 'SPEAK'}</span>
               {isListening && <span className="btn-pulse"></span>}
             </button>
 
-            {/* STOP OLIVIA button - shown when she's speaking */}
+            {/* PAUSE OLIVIA button - shown when she's speaking */}
             {(isAvatarSpeaking || isTTSSpeaking) && (
               <button
                 className="control-btn danger"
@@ -600,24 +592,15 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
                   interruptAvatar();
                   stopSpeaking();
                 }}
-                title="Stop Olivia"
+                title="Pause Olivia"
               >
-                <span className="btn-icon">◼</span>
+                <span className="btn-icon">⏸</span>
                 <span className="btn-text">PAUSE</span>
               </button>
             )}
-
-            <button
-              className={`control-btn ${autoSpeak ? 'active' : ''}`}
-              onClick={() => setAutoSpeak(!autoSpeak)}
-              title="Auto-speak responses"
-            >
-              <span className="btn-icon">{autoSpeak ? '◉' : '○'}</span>
-              <span className="btn-text">AUTO</span>
-            </button>
           </div>
 
-          {/* Voice transcript display */}
+          {/* Voice transcript display - shows what user is saying */}
           {(transcript || interimTranscript) && (
             <div className="voice-transcript-display">
               <span className="transcript-indicator">◉ REC</span>
@@ -629,9 +612,9 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           )}
         </div>
 
-        {/* Text Input */}
+        {/* Chat with Olivia - Text Mode */}
         <div className="control-group text-input-group">
-          <div className="control-label">TEXT COMMAND</div>
+          <div className="control-label">CHAT WITH OLIVIA</div>
           <div className="text-input-wrapper">
             <input
               type="text"

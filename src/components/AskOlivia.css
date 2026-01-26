@@ -489,9 +489,10 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 .control-panel {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.5rem 2rem;
   padding: 1.5rem 2rem;
   background: var(--gradient-cockpit);
   border-top: 1px solid rgba(201, 162, 39, 0.15);
@@ -606,17 +607,11 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   REPORT SELECTION & VIDEO TOGGLE
+   REPORT SELECTION
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.control-row {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
 .report-dropdown {
-  flex: 1;
+  width: 100%;
   min-width: 200px;
   padding: 0.875rem 1rem;
   background: rgba(10, 22, 40, 0.8);
@@ -650,16 +645,6 @@
   background: #0d2847;
   color: var(--brushed-gold);
   font-weight: 600;
-}
-
-.video-toggle {
-  white-space: nowrap;
-}
-
-.video-toggle.active {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: var(--error-red);
-  color: var(--error-red);
 }
 
 /* Video Disabled Placeholder */
@@ -780,10 +765,12 @@
   font-style: italic;
 }
 
-/* Text Input */
+/* Text Input - Full Width Row */
 .text-input-group {
-  flex: 1;
-  max-width: 400px;
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: 100%;
+  order: 10; /* Place at end of flex container */
 }
 
 .text-input-wrapper {
@@ -1312,23 +1299,14 @@
     width: 100%;
   }
 
-  .control-row {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .control-row .report-dropdown {
-    width: 100%;
-    min-width: unset;
-  }
-
-  .control-row .video-toggle {
-    width: 100%;
-    justify-content: center;
-  }
-
   .text-input-group {
     max-width: none;
+    order: 10;
+  }
+
+  .report-dropdown {
+    width: 100%;
+    min-width: unset;
   }
 
   .control-buttons {
