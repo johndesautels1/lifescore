@@ -8,6 +8,7 @@ import {
   getStoredCosts,
   calculateCostSummary,
   clearStoredCosts,
+  storeCostBreakdown,
   formatCost,
   type ComparisonCostBreakdown,
   type CostSummary
@@ -24,20 +25,44 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonCostBreakdown | null>(null);
   const [showPricing, setShowPricing] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Load cost data
   useEffect(() => {
     if (isOpen) {
-      setCosts(getStoredCosts());
+      const storedCosts = getStoredCosts();
+      setCosts(storedCosts);
       setSummary(calculateCostSummary());
+      // Check if there's data in localStorage
+      if (storedCosts.length > 0) {
+        setLastSaved(new Date());
+      }
     }
   }, [isOpen]);
 
   const handleClearData = () => {
-    if (window.confirm('Are you sure you want to clear all cost tracking data? This cannot be undone.')) {
+    if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will permanently delete all cost tracking data from your browser.\n\nThis action cannot be undone.')) {
       clearStoredCosts();
       setCosts([]);
       setSummary(calculateCostSummary());
+      setLastSaved(null);
+      setSaveMessage('✓ All data deleted');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
+  };
+
+  const handleSaveData = () => {
+    try {
+      // Re-save all current costs to localStorage (ensures persistence)
+      clearStoredCosts(); // Clear first to prevent duplicates
+      costs.forEach(cost => storeCostBreakdown(cost));
+      setLastSaved(new Date());
+      setSaveMessage('✓ Data saved to browser storage');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error) {
+      setSaveMessage('✗ Failed to save data');
+      setTimeout(() => setSaveMessage(null), 5000);
     }
   };
 
@@ -98,7 +123,14 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
     <div className="cost-dashboard-overlay" onClick={onClose}>
       <div className="cost-dashboard" onClick={e => e.stopPropagation()}>
         <div className="dashboard-header">
-          <h2>Cost Tracking Dashboard</h2>
+          <div className="header-title-section">
+            <h2>Cost Tracking Dashboard</h2>
+            {lastSaved && (
+              <span className="last-saved">
+                💾 Data persisted in browser storage
+              </span>
+            )}
+          </div>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
@@ -254,13 +286,21 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 {showPricing ? 'Hide Pricing' : 'Show Pricing'}
               </button>
               <button className="action-btn" onClick={handleExportCSV} disabled={costs.length === 0}>
-                Export CSV
+                📥 Export CSV
+              </button>
+              <button className="action-btn save" onClick={handleSaveData} disabled={costs.length === 0}>
+                💾 Save Data
               </button>
               <button className="action-btn danger" onClick={handleClearData} disabled={costs.length === 0}>
-                Clear Data
+                🗑️ Delete All
               </button>
             </div>
           </div>
+          {saveMessage && (
+            <div className={`save-status ${saveMessage.includes('✓') ? 'success' : 'error'}`}>
+              {saveMessage}
+            </div>
+          )}
 
           {/* Pricing Reference */}
           {showPricing && (

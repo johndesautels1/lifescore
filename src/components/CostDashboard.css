@@ -38,10 +38,22 @@
   z-index: 10;
 }
 
+.header-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .dashboard-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: #1a1a1a;
+}
+
+.last-saved {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
 }
 
 .close-btn {
@@ -249,6 +261,17 @@
   cursor: not-allowed;
 }
 
+.action-btn.save {
+  color: #059669;
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.action-btn.save:hover:not(:disabled) {
+  background: #d1fae5;
+  border-color: #059669;
+}
+
 .action-btn.danger {
   color: #dc2626;
   border-color: #fecaca;
@@ -257,6 +280,28 @@
 .action-btn.danger:hover:not(:disabled) {
   background: #fef2f2;
   border-color: #dc2626;
+}
+
+/* Save Status Message */
+.save-status {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.save-status.success {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.save-status.error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 /* Pricing Table */
@@ -527,6 +572,10 @@
   color: #ffffff;
 }
 
+[data-theme="dark"] .last-saved {
+  color: #34d399;
+}
+
 [data-theme="dark"] .action-btn {
   background: #252538;
   border-color: #3d3d55;
@@ -535,6 +584,38 @@
 
 [data-theme="dark"] .action-btn:hover:not(:disabled) {
   background: #3d3d55;
+}
+
+[data-theme="dark"] .action-btn.save {
+  color: #34d399;
+  border-color: #065f46;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+[data-theme="dark"] .action-btn.save:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .action-btn.danger {
+  color: #f87171;
+  border-color: #7f1d1d;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+[data-theme="dark"] .action-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .save-status.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: #065f46;
+}
+
+[data-theme="dark"] .save-status.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: #7f1d1d;
 }
 
 [data-theme="dark"] .pricing-table {
