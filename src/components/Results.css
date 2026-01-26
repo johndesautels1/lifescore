@@ -477,11 +477,12 @@
   }
 }
 
-/* Extra small screens - stack metric rows vertically */
+/* Extra small screens - scores aligned under city headers */
 @media (max-width: 480px) {
   .metric-details-header {
+    display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .metric-details-header span:first-child {
@@ -489,41 +490,63 @@
   }
 
   .metric-header-city {
-    font-size: 0.75rem;
-    padding: 0.25rem;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+    font-weight: 700;
+    text-align: center;
   }
 
+  /* Metric row: name on top, scores below aligned with city headers */
   .metric-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.25rem 0.5rem;
     padding: 0.75rem 0;
+    align-items: center;
   }
 
-  .metric-info {
+  /* Metric name spans full width on its own row */
+  .metric-row .metric-info {
+    grid-column: 1 / -1;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
   }
 
   .metric-name {
     font-size: 0.85rem;
   }
 
+  /* Scores side by side, aligned under city headers */
   .metric-row .metric-score {
     display: flex;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0.5rem 0.75rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    min-height: 50px;
   }
 
-  /* Show city name labels on mobile */
-  .metric-row .mobile-city-label {
-    display: inline;
+  .metric-row .metric-score .mobile-city-label {
+    display: block;
     font-weight: 600;
     color: #94a3b8;
-    font-size: 0.75rem;
-    margin-right: 0.5rem;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Score number styling */
+  .metric-row .metric-score {
+    font-size: 1.1rem;
+    font-weight: 700;
   }
 }
 
