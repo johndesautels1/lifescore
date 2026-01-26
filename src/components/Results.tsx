@@ -235,6 +235,7 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
               </div>
 
               <div className={`metric-score ${score1 > score2 ? 'winning' : ''}`}>
+                <span className="mobile-city-label">{city1Name}:</span>
                 {Math.round(score1)}
                 {city1Score?.confidence && (
                   <span className={`confidence-dot confidence-${city1Score.confidence}`}
@@ -243,6 +244,7 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
               </div>
 
               <div className={`metric-score ${score2 > score1 ? 'winning' : ''}`}>
+                <span className="mobile-city-label">{city2Name}:</span>
                 {Math.round(score2)}
                 {city2Score?.confidence && (
                   <span className={`confidence-dot confidence-${city2Score.confidence}`}

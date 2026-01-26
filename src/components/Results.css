@@ -520,28 +520,32 @@
     padding: 0.5rem 0.75rem;
   }
 
-  .metric-row .metric-score::before {
+  /* Show city name labels on mobile */
+  .metric-row .mobile-city-label {
+    display: inline;
     font-weight: 600;
     color: #94a3b8;
     font-size: 0.75rem;
-  }
-
-  .metric-row .metric-score:nth-of-type(2)::before {
-    content: "City 1: ";
-  }
-
-  .metric-row .metric-score:nth-of-type(3)::before {
-    content: "City 2: ";
+    margin-right: 0.5rem;
   }
 }
 
-/* Keep text visible and brighten on hover */
-.category-header-btn:hover .category-name {
-  color: #0047AB;
+/* Hide mobile city labels on desktop */
+.metric-row .mobile-city-label {
+  display: none;
 }
 
-.category-header-btn:hover .category-weight {
-  color: #F7931E;
+/* Keep text visible and brighten on hover/click - BRIGHT YELLOW */
+.category-header-btn:hover .category-name,
+.category-header-btn:active .category-name,
+.category-header-btn:focus .category-name {
+  color: #FFD700;
+}
+
+.category-header-btn:hover .category-weight,
+.category-header-btn:active .category-weight,
+.category-header-btn:focus .category-weight {
+  color: #FFD700;
 }
 
 /* Save Comparison Bar */
