@@ -1,18 +1,28 @@
 /**
  * LIFE SCORE™ Admin Cost Dashboard
  * Displays API cost breakdown for monitoring and profitability analysis
+ * Data persists to Supabase database for authenticated users
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   getStoredCosts,
   calculateCostSummary,
   clearStoredCosts,
   storeCostBreakdown,
   formatCost,
+  toApiCostRecordInsert,
   type ComparisonCostBreakdown,
   type CostSummary
 } from '../utils/costCalculator';
+import {
+  saveApiCostRecord,
+  getUserApiCosts,
+  deleteAllApiCosts,
+} from '../services/databaseService';
+import { useAuth } from '../contexts/AuthContext';
+import { isSupabaseConfigured } from '../lib/supabase';
+import type { ApiCostRecord } from '../types/database';
 import './CostDashboard.css';
 
 interface CostDashboardProps {
@@ -21,49 +31,156 @@ interface CostDashboardProps {
 }
 
 export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const [costs, setCosts] = useState<ComparisonCostBreakdown[]>([]);
+  const [dbCosts, setDbCosts] = useState<ApiCostRecord[]>([]);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonCostBreakdown | null>(null);
   const [showPricing, setShowPricing] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [dataSource, setDataSource] = useState<'database' | 'local'>('local');
 
-  // Load cost data
-  useEffect(() => {
-    if (isOpen) {
-      const storedCosts = getStoredCosts();
-      setCosts(storedCosts);
-      setSummary(calculateCostSummary());
-      // Check if there's data in localStorage
-      if (storedCosts.length > 0) {
+  const dbConfigured = isSupabaseConfigured();
+
+  // Load cost data from database (if authenticated) or localStorage
+  const loadCosts = useCallback(async () => {
+    setIsLoading(true);
+
+    // Always load localStorage data first (fast, offline-capable)
+    const localCosts = getStoredCosts();
+    setCosts(localCosts);
+    setSummary(calculateCostSummary());
+
+    // If user is authenticated and DB is configured, load from database
+    if (user && dbConfigured) {
+      try {
+        const { data, error } = await getUserApiCosts(user.id, { limit: 100 });
+        if (!error && data.length > 0) {
+          setDbCosts(data);
+          setDataSource('database');
+          setLastSaved(new Date(data[0].created_at));
+        } else if (localCosts.length > 0) {
+          setDataSource('local');
+        }
+      } catch (err) {
+        console.warn('[CostDashboard] Failed to load from database, using local:', err);
+        setDataSource('local');
+      }
+    } else {
+      setDataSource('local');
+      if (localCosts.length > 0) {
         setLastSaved(new Date());
       }
     }
-  }, [isOpen]);
 
-  const handleClearData = () => {
-    if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will permanently delete all cost tracking data from your browser.\n\nThis action cannot be undone.')) {
+    setIsLoading(false);
+  }, [user, dbConfigured]);
+
+  // Load data when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadCosts();
+    }
+  }, [isOpen, loadCosts]);
+
+  const handleClearData = async () => {
+    const deleteSource = user && dbConfigured ? 'database and browser' : 'browser';
+    if (window.confirm(`⚠️ DELETE ALL DATA?\n\nThis will permanently delete all cost tracking data from your ${deleteSource}.\n\nThis action cannot be undone.`)) {
+      setIsSaving(true);
+
+      // Always clear localStorage
       clearStoredCosts();
       setCosts([]);
+
+      // If user is authenticated, also delete from database
+      if (user && dbConfigured) {
+        try {
+          const { error } = await deleteAllApiCosts(user.id);
+          if (error) {
+            console.error('[CostDashboard] Failed to delete from database:', error);
+            setSaveMessage('✗ Cleared local data, but database deletion failed');
+          } else {
+            setDbCosts([]);
+            setSaveMessage('✓ All data deleted from database and browser');
+          }
+        } catch (err) {
+          console.error('[CostDashboard] Database deletion error:', err);
+          setSaveMessage('✗ Cleared local data, but database deletion failed');
+        }
+      } else {
+        setSaveMessage('✓ All data deleted from browser storage');
+      }
+
       setSummary(calculateCostSummary());
       setLastSaved(null);
-      setSaveMessage('✓ All data deleted');
-      setTimeout(() => setSaveMessage(null), 3000);
+      setDataSource('local');
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage(null), 4000);
     }
   };
 
-  const handleSaveData = () => {
-    try {
-      // Re-save all current costs to localStorage (ensures persistence)
-      clearStoredCosts(); // Clear first to prevent duplicates
-      costs.forEach(cost => storeCostBreakdown(cost));
-      setLastSaved(new Date());
-      setSaveMessage('✓ Data saved to browser storage');
+  const handleSaveData = async () => {
+    if (costs.length === 0) {
+      setSaveMessage('✗ No data to save');
       setTimeout(() => setSaveMessage(null), 3000);
-    } catch (error) {
-      setSaveMessage('✗ Failed to save data');
-      setTimeout(() => setSaveMessage(null), 5000);
+      return;
     }
+
+    setIsSaving(true);
+
+    try {
+      // Always save to localStorage first (offline backup)
+      clearStoredCosts();
+      costs.forEach(cost => storeCostBreakdown(cost));
+
+      // If user is authenticated and DB configured, save to database
+      if (user && dbConfigured) {
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const cost of costs) {
+          try {
+            const record = toApiCostRecordInsert(cost, user.id);
+            const { error } = await saveApiCostRecord(record);
+            if (error) {
+              console.error('[CostDashboard] Failed to save record:', cost.comparisonId, error);
+              errorCount++;
+            } else {
+              successCount++;
+            }
+          } catch (err) {
+            console.error('[CostDashboard] Error saving record:', err);
+            errorCount++;
+          }
+        }
+
+        if (errorCount === 0) {
+          setSaveMessage(`✓ ${successCount} records saved to database`);
+          setDataSource('database');
+        } else if (successCount > 0) {
+          setSaveMessage(`⚠️ ${successCount} saved, ${errorCount} failed`);
+        } else {
+          setSaveMessage('✗ Failed to save to database (saved locally)');
+        }
+
+        // Reload from database to get updated records
+        await loadCosts();
+      } else {
+        setSaveMessage('✓ Data saved to browser storage');
+        setDataSource('local');
+      }
+
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('[CostDashboard] Save error:', error);
+      setSaveMessage('✗ Failed to save data');
+    }
+
+    setIsSaving(false);
+    setTimeout(() => setSaveMessage(null), 4000);
   };
 
   const handleExportCSV = () => {
@@ -125,9 +242,21 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
         <div className="dashboard-header">
           <div className="header-title-section">
             <h2>Cost Tracking Dashboard</h2>
-            {lastSaved && (
+            {isLoading ? (
+              <span className="last-saved" style={{ color: '#6b7280' }}>
+                Loading data...
+              </span>
+            ) : lastSaved ? (
               <span className="last-saved">
-                💾 Data persisted in browser storage
+                💾 {dataSource === 'database' ? 'Saved to database' : 'Saved locally'} • {lastSaved.toLocaleString()}
+              </span>
+            ) : user && dbConfigured ? (
+              <span className="last-saved" style={{ color: '#f59e0b' }}>
+                ⚠️ Not saved to database - click "Save Data" to persist
+              </span>
+            ) : (
+              <span className="last-saved" style={{ color: '#6b7280' }}>
+                Local storage only (sign in to save to cloud)
               </span>
             )}
           </div>
@@ -288,10 +417,10 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               <button className="action-btn" onClick={handleExportCSV} disabled={costs.length === 0}>
                 📥 Export CSV
               </button>
-              <button className="action-btn save" onClick={handleSaveData} disabled={costs.length === 0}>
-                💾 Save Data
+              <button className="action-btn save" onClick={handleSaveData} disabled={costs.length === 0 || isSaving || isLoading}>
+                {isSaving ? '⏳ Saving...' : user && dbConfigured ? '💾 Save to Database' : '💾 Save Data'}
               </button>
-              <button className="action-btn danger" onClick={handleClearData} disabled={costs.length === 0}>
+              <button className="action-btn danger" onClick={handleClearData} disabled={costs.length === 0 || isSaving || isLoading}>
                 🗑️ Delete All
               </button>
             </div>

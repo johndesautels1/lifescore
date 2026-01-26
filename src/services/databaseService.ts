@@ -22,6 +22,8 @@ import type {
   GammaReportInsert,
   ComparisonWithRelations,
   ConversationWithMessages,
+  ApiCostRecord,
+  ApiCostRecordInsert,
 } from '../types/database';
 
 // ============================================================================
@@ -624,6 +626,148 @@ export async function exportUserData(userId: string): Promise<{
 }
 
 // ============================================================================
+// API COST TRACKING
+// ============================================================================
+
+/**
+ * Save an API cost record to the database
+ */
+export async function saveApiCostRecord(
+  record: ApiCostRecordInsert
+): Promise<{ data: ApiCostRecord | null; error: Error | null }> {
+  requireDatabase();
+
+  const { data, error } = await withTimeout(
+    supabase
+      .from('api_cost_records')
+      .upsert(record, { onConflict: 'user_id,comparison_id' })
+      .select()
+      .single()
+  );
+
+  return {
+    data: data as ApiCostRecord | null,
+    error: error ? new Error(error.message) : null,
+  };
+}
+
+/**
+ * Get all API cost records for a user
+ */
+export async function getUserApiCosts(
+  userId: string,
+  options: { limit?: number; offset?: number } = {}
+): Promise<{ data: ApiCostRecord[]; error: Error | null }> {
+  requireDatabase();
+
+  let query = supabase
+    .from('api_cost_records')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (options.limit) {
+    query = query.limit(options.limit);
+  }
+
+  if (options.offset) {
+    query = query.range(options.offset, options.offset + (options.limit || 100) - 1);
+  }
+
+  const { data, error } = await withTimeout(query);
+
+  return {
+    data: (data as ApiCostRecord[]) || [],
+    error: error ? new Error(error.message) : null,
+  };
+}
+
+/**
+ * Get API cost summary for a user
+ */
+export async function getApiCostSummary(
+  userId: string
+): Promise<{
+  data: {
+    totalRecords: number;
+    grandTotal: number;
+    byProvider: Record<string, number>;
+  } | null;
+  error: Error | null;
+}> {
+  requireDatabase();
+
+  const { data, error } = await withTimeout(
+    supabase
+      .from('api_cost_records')
+      .select('*')
+      .eq('user_id', userId)
+  );
+
+  if (error) {
+    return { data: null, error: new Error(error.message) };
+  }
+
+  const records = (data as ApiCostRecord[]) || [];
+
+  const summary = {
+    totalRecords: records.length,
+    grandTotal: records.reduce((sum, r) => sum + (r.grand_total || 0), 0),
+    byProvider: {
+      tavily: records.reduce((sum, r) => sum + (r.tavily_total || 0), 0),
+      claude_sonnet: records.reduce((sum, r) => sum + (r.claude_sonnet_total || 0), 0),
+      gpt4o: records.reduce((sum, r) => sum + (r.gpt4o_total || 0), 0),
+      gemini: records.reduce((sum, r) => sum + (r.gemini_total || 0), 0),
+      grok: records.reduce((sum, r) => sum + (r.grok_total || 0), 0),
+      perplexity: records.reduce((sum, r) => sum + (r.perplexity_total || 0), 0),
+      opus_judge: records.reduce((sum, r) => sum + (r.opus_judge_total || 0), 0),
+      gamma: records.reduce((sum, r) => sum + (r.gamma_total || 0), 0),
+      olivia: records.reduce((sum, r) => sum + (r.olivia_total || 0), 0),
+      tts: records.reduce((sum, r) => sum + (r.tts_total || 0), 0),
+      avatar: records.reduce((sum, r) => sum + (r.avatar_total || 0), 0),
+    },
+  };
+
+  return { data: summary, error: null };
+}
+
+/**
+ * Delete all API cost records for a user
+ */
+export async function deleteAllApiCosts(
+  userId: string
+): Promise<{ error: Error | null }> {
+  requireDatabase();
+
+  const { error } = await withTimeout(
+    supabase
+      .from('api_cost_records')
+      .delete()
+      .eq('user_id', userId)
+  );
+
+  return { error: error ? new Error(error.message) : null };
+}
+
+/**
+ * Delete a single API cost record
+ */
+export async function deleteApiCostRecord(
+  recordId: string
+): Promise<{ error: Error | null }> {
+  requireDatabase();
+
+  const { error } = await withTimeout(
+    supabase
+      .from('api_cost_records')
+      .delete()
+      .eq('id', recordId)
+  );
+
+  return { error: error ? new Error(error.message) : null };
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -650,6 +794,13 @@ export default {
   saveGammaReport,
   getGammaReportsForComparison,
   getUserGammaReports,
+
+  // API Costs
+  saveApiCostRecord,
+  getUserApiCosts,
+  getApiCostSummary,
+  deleteAllApiCosts,
+  deleteApiCostRecord,
 
   // Sync
   syncLocalToDatabase,

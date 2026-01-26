@@ -543,6 +543,54 @@ export function formatCost(cost: number): string {
 }
 
 /**
+ * Convert a ComparisonCostBreakdown to database insert format
+ */
+export function toApiCostRecordInsert(
+  breakdown: ComparisonCostBreakdown,
+  userId: string
+): {
+  user_id: string;
+  comparison_id: string;
+  city1_name: string;
+  city2_name: string;
+  mode: 'simple' | 'enhanced';
+  tavily_total: number;
+  claude_sonnet_total: number;
+  gpt4o_total: number;
+  gemini_total: number;
+  grok_total: number;
+  perplexity_total: number;
+  opus_judge_total: number;
+  gamma_total: number;
+  olivia_total: number;
+  tts_total: number;
+  avatar_total: number;
+  grand_total: number;
+  cost_breakdown: Record<string, unknown>;
+} {
+  return {
+    user_id: userId,
+    comparison_id: breakdown.comparisonId,
+    city1_name: breakdown.city1,
+    city2_name: breakdown.city2,
+    mode: breakdown.mode,
+    tavily_total: breakdown.tavilyTotal,
+    claude_sonnet_total: breakdown.claudeSonnet.reduce((s, c) => s + c.totalCost, 0),
+    gpt4o_total: breakdown.gpt4o.reduce((s, c) => s + c.totalCost, 0),
+    gemini_total: breakdown.gemini.reduce((s, c) => s + c.totalCost, 0),
+    grok_total: breakdown.grok.reduce((s, c) => s + c.totalCost, 0),
+    perplexity_total: breakdown.perplexity.reduce((s, c) => s + c.totalCost, 0),
+    opus_judge_total: breakdown.opusJudge?.totalCost || 0,
+    gamma_total: breakdown.gammaTotal || 0,
+    olivia_total: breakdown.oliviaTotal || 0,
+    tts_total: breakdown.ttsTotal || 0,
+    avatar_total: breakdown.avatarTotal || 0,
+    grand_total: breakdown.grandTotal,
+    cost_breakdown: breakdown as unknown as Record<string, unknown>,
+  };
+}
+
+/**
  * Format cost breakdown for logging
  */
 export function formatCostBreakdownLog(breakdown: ComparisonCostBreakdown): string {
