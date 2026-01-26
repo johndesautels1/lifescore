@@ -231,13 +231,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   useEffect(() => {
     if (videoEnabled && isAvatarConnected && !hasGreetedRef.current) {
       hasGreetedRef.current = true;
-      // Small delay to ensure connection is stable
+      // Longer delay to ensure connection is fully stable
       setTimeout(() => {
         const greeting = "Hello, I'm Olivia, your AI freedom advisor. How may I assist you today?";
         makeAvatarSpeak(greeting).catch((err: Error) => {
           console.warn('[AskOlivia] Greeting failed:', err);
         });
-      }, 500);
+      }, 2000);
     }
     // Reset greeting flag when video is disabled
     if (!videoEnabled) {
