@@ -111,7 +111,12 @@ export function getLocalComparisons(): SavedComparison[] {
  * Save comparisons to localStorage
  */
 function saveLocalComparisons(comparisons: SavedComparison[]): void {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(comparisons));
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(comparisons));
+    console.log('[savedComparisons] Saved', comparisons.length, 'comparisons to localStorage');
+  } catch (error) {
+    console.error('[savedComparisons] Failed to save to localStorage:', error);
+  }
 }
 
 /**
@@ -250,14 +255,19 @@ export function saveComparisonLocalSync(result: ComparisonResult, nickname?: str
  * Delete a comparison locally AND from Supabase database if user is authenticated
  */
 export async function deleteComparisonLocal(id: string): Promise<boolean> {
+  console.log('[savedComparisons] deleteComparisonLocal called with id:', id);
   const comparisons = getLocalComparisons();
+  console.log('[savedComparisons] Current comparisons count:', comparisons.length);
   const filtered = comparisons.filter(c => c.id !== id);
+  console.log('[savedComparisons] After filter count:', filtered.length);
 
   if (filtered.length === comparisons.length) {
+    console.log('[savedComparisons] Comparison not found, nothing to delete');
     return false;
   }
 
   saveLocalComparisons(filtered);
+  console.log('[savedComparisons] Delete successful, saved to localStorage');
 
   // Also delete from Supabase database if user is authenticated
   if (isSupabaseConfigured()) {
@@ -366,7 +376,12 @@ export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
  * Save enhanced comparisons to localStorage
  */
 function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): void {
-  localStorage.setItem(ENHANCED_STORAGE_KEY, JSON.stringify(comparisons));
+  try {
+    localStorage.setItem(ENHANCED_STORAGE_KEY, JSON.stringify(comparisons));
+    console.log('[savedComparisons] Saved', comparisons.length, 'enhanced comparisons to localStorage');
+  } catch (error) {
+    console.error('[savedComparisons] Failed to save enhanced to localStorage:', error);
+  }
 }
 
 /**
@@ -471,14 +486,19 @@ export function isEnhancedComparisonSaved(comparisonId: string): boolean {
  * Delete an enhanced comparison locally AND from Supabase database
  */
 export async function deleteEnhancedComparisonLocal(id: string): Promise<boolean> {
+  console.log('[savedComparisons] deleteEnhancedComparisonLocal called with id:', id);
   const comparisons = getLocalEnhancedComparisons();
+  console.log('[savedComparisons] Current enhanced comparisons count:', comparisons.length);
   const filtered = comparisons.filter(c => c.id !== id);
+  console.log('[savedComparisons] After filter count:', filtered.length);
 
   if (filtered.length === comparisons.length) {
+    console.log('[savedComparisons] Enhanced comparison not found, nothing to delete');
     return false;
   }
 
   saveLocalEnhancedComparisons(filtered);
+  console.log('[savedComparisons] Enhanced delete successful, saved to localStorage');
 
   // Also delete from Supabase database if user is authenticated
   if (isSupabaseConfigured()) {
