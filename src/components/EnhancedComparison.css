@@ -14,6 +14,9 @@
   margin-bottom: 1.5rem;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--gray-200);
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .llm-selector-header {
@@ -48,6 +51,31 @@
 @media (max-width: 480px) {
   .llm-button-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .llm-selector {
+    padding: 1rem 0.75rem;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .llm-btn {
+    padding: 0.75rem 0.5rem;
+    min-height: 75px;
+    font-size: 0.85rem;
+  }
+
+  .llm-icon {
+    font-size: 1.25rem;
+  }
+
+  .llm-name {
+    font-size: 0.75rem;
+  }
+
+  .llm-status {
+    font-size: 0.65rem;
   }
 }
 
