@@ -57,6 +57,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSpokenMsgRef = useRef<string | null>(null);
+  const lastAnalyzedMsgRef = useRef<string | null>(null); // Track last message analyzed for contrast images
   // const hasGreetedRef = useRef(false); // Disabled with auto-greeting
 
   // Tier access for message limits
@@ -330,12 +331,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
   // ═══════════════════════════════════════════════════════════════════
   // AUTO-VISUALIZE: Generate contrast images when Olivia discusses metrics
+  // Only triggers once per unique message to prevent flickering/re-renders
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (hasComparisonData && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      // Only analyze assistant messages
-      if (lastMessage.role === 'assistant') {
+      // Only analyze NEW assistant messages (not already analyzed)
+      if (lastMessage.role === 'assistant' && lastMessage.id !== lastAnalyzedMsgRef.current) {
+        lastAnalyzedMsgRef.current = lastMessage.id;
         detectContrastTriggers(lastMessage.content);
       }
     }
