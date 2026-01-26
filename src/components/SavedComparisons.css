@@ -379,8 +379,8 @@
 }
 
 .action-btn {
-  width: 7px;
-  height: 32px;
+  width: 32px;
+  height: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -759,8 +759,8 @@
   }
 
   .action-btn {
-    width: 8px;
-    height: 40px;
+    width: 40px;
+    height: 8px;
     font-size: 1rem;
     flex-shrink: 0;
   }
