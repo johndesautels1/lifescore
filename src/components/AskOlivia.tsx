@@ -857,7 +857,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           </div>
         </div>
         <div className="footer-right">
-          <span className="footer-location">LONDON • NEW YORK • SINGAPORE</span>
+          <span className="footer-location">LONDON • TAMPA • DENVER • LOS ANGELES • MANILA</span>
         </div>
       </footer>
     </div>
