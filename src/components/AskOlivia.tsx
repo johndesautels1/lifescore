@@ -229,19 +229,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // AUTO-VISUALIZE: Generate contrast images when Olivia discusses metrics
-  // ═══════════════════════════════════════════════════════════════════
-  useEffect(() => {
-    if (hasComparisonData && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      // Only analyze assistant messages
-      if (lastMessage.role === 'assistant') {
-        detectContrastTriggers(lastMessage.content);
-      }
-    }
-  }, [messages, hasComparisonData, detectContrastTriggers]);
-
-  // ═══════════════════════════════════════════════════════════════════
   // AUTO-GREETING: Disabled for testing
   // ═══════════════════════════════════════════════════════════════════
   // useEffect(() => {
@@ -314,6 +301,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const city1 = comparisonResult?.city1?.city || 'City 1';
   const city2 = comparisonResult?.city2?.city || 'City 2';
 
+  // Helper to get score from either CityScore or CityConsensusScore
+  const getScore = (city: typeof comparisonResult?.city1): number | undefined => {
+    if (!city) return undefined;
+    // CityScore has totalScore, CityConsensusScore has totalConsensusScore
+    return 'totalScore' in city ? city.totalScore : 'totalConsensusScore' in city ? city.totalConsensusScore : undefined;
+  };
+
   // ═══════════════════════════════════════════════════════════════════
   // CONTRAST IMAGES - AI-generated visual comparisons
   // ═══════════════════════════════════════════════════════════════════
@@ -326,10 +320,23 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     generateImages: generateContrastImages,
     clearImages: clearContrastImages,
   } = useContrastImages({
-    cityA: comparisonResult ? { name: city1, score: comparisonResult.city1.totalScore } : undefined,
-    cityB: comparisonResult ? { name: city2, score: comparisonResult.city2.totalScore } : undefined,
+    cityA: comparisonResult ? { name: city1, score: getScore(comparisonResult.city1) } : undefined,
+    cityB: comparisonResult ? { name: city2, score: getScore(comparisonResult.city2) } : undefined,
     autoDetect: true,
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AUTO-VISUALIZE: Generate contrast images when Olivia discusses metrics
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (hasComparisonData && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      // Only analyze assistant messages
+      if (lastMessage.role === 'assistant') {
+        detectContrastTriggers(lastMessage.content);
+      }
+    }
+  }, [messages, hasComparisonData, detectContrastTriggers]);
 
   // Determine avatar status for display
   const getAvatarStatus = () => {
@@ -560,8 +567,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       ═══════════════════════════════════════════════════════════════════ */}
       {hasComparisonData && (
         <ContrastDisplays
-          cityA={{ name: city1, score: comparisonResult?.city1?.totalScore }}
-          cityB={{ name: city2, score: comparisonResult?.city2?.totalScore }}
+          cityA={{ name: city1, score: getScore(comparisonResult?.city1) }}
+          cityB={{ name: city2, score: getScore(comparisonResult?.city2) }}
           status={contrastStatus}
           images={contrastImages}
           topic={contrastTopic}
