@@ -35,7 +35,8 @@ const EMOTION_SETTINGS: Record<string, { stability: number; similarity_boost: nu
 };
 
 // Olivia's ElevenLabs voice ID (British sophisticated female)
-const OLIVIA_VOICE_ID = process.env.ELEVENLABS_OLIVIA_VOICE_ID || 'XB0fDUnXU5powFXDhCwa'; // Charlotte voice
+// Voice: Charlotte - elegant British accent for London AI advisor persona
+const OLIVIA_VOICE_ID = process.env.ELEVENLABS_OLIVIA_VOICE_ID || 'XB0fDUnXU5powFXDhCwa';
 
 export default async function handler(
   req: VercelRequest,
