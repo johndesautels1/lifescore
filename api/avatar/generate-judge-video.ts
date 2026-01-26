@@ -222,21 +222,22 @@ export default async function handler(
     const DB_TIMEOUT_MS = 5000; // 5 second timeout for DB queries
 
     // Check cache first (with timeout - don't let DB issues block video generation)
+    // Using maybeSingle() instead of single() to avoid error when no rows exist
     const cacheResult = await withTimeout(
       supabaseAdmin
         .from('avatar_videos')
         .select('*')
         .eq('comparison_id', comparisonId)
         .eq('status', 'completed')
-        .single(),
+        .maybeSingle(),
       DB_TIMEOUT_MS,
       { data: null, error: { message: 'Cache lookup timeout' } }
     );
 
     const { data: cached, error: cacheError } = cacheResult;
 
-    // If table doesn't exist, that's ok - we'll create video anyway
-    if (cached && !cacheError) {
+    // Cache hit - return existing video
+    if (cached) {
       console.log('[JUDGE-VIDEO] Cache hit:', comparisonId);
       res.status(200).json({
         success: true,
@@ -255,18 +256,20 @@ export default async function handler(
       return;
     }
 
-    if (cacheError) {
-      console.log('[JUDGE-VIDEO] Cache lookup skipped:', cacheError.message);
+    // Only log actual errors, not "no rows found"
+    if (cacheError && cacheError.message !== 'Cache lookup timeout') {
+      console.warn('[JUDGE-VIDEO] Cache lookup error:', cacheError.message);
     }
 
     // Check if already processing (with timeout)
+    // Using maybeSingle() - returns null if no processing job exists
     const processingResult = await withTimeout(
       supabaseAdmin
         .from('avatar_videos')
         .select('*')
         .eq('comparison_id', comparisonId)
         .in('status', ['pending', 'processing'])
-        .single(),
+        .maybeSingle(),
       DB_TIMEOUT_MS,
       { data: null, error: { message: 'Processing check timeout' } }
     );
