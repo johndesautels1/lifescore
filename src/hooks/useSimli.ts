@@ -533,12 +533,14 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         console.log('[useSimli] Sending', bytes.length, 'bytes of audio to Simli');
 
-        // Send in chunks with pacing to avoid overwhelming the data channel
         // Simli expects PCM16 at 16kHz = 32000 bytes/sec
-        // Send 6000 bytes (~0.1875s of audio) every ~50ms for ~4x realtime
+        // Send audio at ~2x realtime to allow Simli to process
+        // 6000 bytes = 0.1875s of audio, send every ~94ms for 2x realtime
         const chunkSize = 6000;
+        const chunkDelayMs = 94; // ~2x realtime (was 10ms = 18x realtime, too fast!)
         const dc = dataChannelRef.current;
         let offset = 0;
+        let chunkCount = 0;
 
         const sendNextChunk = () => {
           if (!dc || dc.readyState !== 'open') {
@@ -557,15 +559,17 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
           const chunk = bytes.slice(offset, end);
           dc.send(chunk);
           offset = end;
+          chunkCount++;
 
           if (offset < bytes.length) {
-            // Schedule next chunk
-            setTimeout(sendNextChunk, 10);
+            // Schedule next chunk at proper pacing
+            setTimeout(sendNextChunk, chunkDelayMs);
           } else {
-            console.log('[useSimli] Audio sent successfully');
+            console.log('[useSimli] Audio sent successfully:', chunkCount, 'chunks');
           }
         };
 
+        console.log('[useSimli] Starting audio send at 2x realtime pacing');
         // Start sending
         sendNextChunk();
       } else if (data.audioData) {
