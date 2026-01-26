@@ -114,26 +114,59 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   };
 
   const handleLoad = (comparison: DisplayComparison) => {
-    // Defensive check: ensure result exists and has required properties
-    if (!comparison.result) {
-      showMessage('error', 'Unable to load comparison: data is missing');
-      console.error('[SavedComparisons] comparison.result is undefined:', comparison);
+    // FIX 2026-01-26: Comprehensive defensive checks for saved reports loading
+
+    // Check 1: Ensure comparison object exists
+    if (!comparison) {
+      showMessage('error', 'Unable to load: comparison data is missing');
+      console.error('[SavedComparisons] comparison is undefined');
       return;
     }
 
-    // Ensure required fields exist
-    if (!comparison.result.city1 || !comparison.result.city2) {
-      showMessage('error', 'Unable to load comparison: city data is corrupted');
-      console.error('[SavedComparisons] Missing city data:', comparison.result);
+    // Check 2: Ensure result exists
+    if (!comparison.result) {
+      showMessage('error', 'Unable to load: report data is missing');
+      console.error('[SavedComparisons] comparison.result is undefined:', comparison.id);
+      return;
+    }
+
+    // Check 3: Ensure city1 exists with required fields
+    if (!comparison.result.city1 || typeof comparison.result.city1 !== 'object') {
+      showMessage('error', 'Unable to load: City 1 data is corrupted');
+      console.error('[SavedComparisons] Missing/invalid city1:', comparison.result);
+      return;
+    }
+
+    // Check 4: Ensure city2 exists with required fields
+    if (!comparison.result.city2 || typeof comparison.result.city2 !== 'object') {
+      showMessage('error', 'Unable to load: City 2 data is corrupted');
+      console.error('[SavedComparisons] Missing/invalid city2:', comparison.result);
+      return;
+    }
+
+    // Check 5: Ensure city names exist (critical for display)
+    if (!comparison.result.city1.city || !comparison.result.city2.city) {
+      showMessage('error', 'Unable to load: city names are missing');
+      console.error('[SavedComparisons] Missing city names:', comparison.result.city1, comparison.result.city2);
+      return;
+    }
+
+    // Check 6: Ensure comparisonId exists (needed for tracking)
+    if (!comparison.result.comparisonId) {
+      showMessage('error', 'Unable to load: report ID is missing');
+      console.error('[SavedComparisons] Missing comparisonId:', comparison.result);
       return;
     }
 
     try {
+      console.log('[SavedComparisons] Loading comparison:', comparison.result.comparisonId,
+        comparison.result.city1.city, 'vs', comparison.result.city2.city);
       onLoadComparison(comparison.result);
       setIsExpanded(false);
+      showMessage('success', `Loaded: ${comparison.result.city1.city} vs ${comparison.result.city2.city}`);
     } catch (err) {
-      showMessage('error', 'Failed to load comparison');
-      console.error('[SavedComparisons] Error loading comparison:', err);
+      showMessage('error', 'Failed to load comparison - please try again');
+      console.error('[SavedComparisons] Error calling onLoadComparison:', err);
     }
   };
 
