@@ -33,7 +33,7 @@ interface CostDashboardProps {
 export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [costs, setCosts] = useState<ComparisonCostBreakdown[]>([]);
-  const [dbCosts, setDbCosts] = useState<ApiCostRecord[]>([]);
+  const [_dbCosts, setDbCosts] = useState<ApiCostRecord[]>([]);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonCostBreakdown | null>(null);
   const [showPricing, setShowPricing] = useState(false);
