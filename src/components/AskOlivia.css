@@ -508,12 +508,14 @@
   max-width: 1000px;
 }
 
-/* All control items have the same width */
+/* All control items have the same width AND height */
 .control-item {
   flex: 1;
   max-width: 220px;
   min-width: 160px;
   height: 48px;
+  min-height: 48px;
+  max-height: 48px;
   padding: 0 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -525,6 +527,8 @@
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  line-height: 1;
 }
 
 .control-item:hover {
