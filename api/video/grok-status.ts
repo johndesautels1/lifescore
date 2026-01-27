@@ -12,9 +12,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const GROK_API_URL = process.env.GROK_API_URL || 'https://api.x.ai/v1';
+const KLING_API_URL = 'https://api-singapore.klingai.com';
 
 export const config = {
   maxDuration: 30,
@@ -26,8 +28,90 @@ const supabaseAdmin = createClient(
 );
 
 // ============================================================================
+// KLING JWT AUTHENTICATION
+// ============================================================================
+
+function generateKlingJWT(): string | null {
+  const accessKey = process.env.KLING_VIDEO_API_KEY;
+  const secretKey = process.env.KLING_VIDEO_SECRET;
+
+  if (!accessKey || !secretKey) {
+    return null;
+  }
+
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = { iss: accessKey, exp: now + 1800, nbf: now - 5 };
+
+  const base64UrlEncode = (obj: object): string => {
+    return Buffer.from(JSON.stringify(obj))
+      .toString('base64')
+      .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  };
+
+  const headerEncoded = base64UrlEncode(header);
+  const payloadEncoded = base64UrlEncode(payload);
+  const signatureInput = `${headerEncoded}.${payloadEncoded}`;
+  const signature = crypto
+    .createHmac('sha256', secretKey)
+    .update(signatureInput)
+    .digest('base64')
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+  return `${headerEncoded}.${payloadEncoded}.${signature}`;
+}
+
+// ============================================================================
 // PROVIDER STATUS CHECKS
 // ============================================================================
+
+async function checkKlingStatus(taskId: string): Promise<{
+  status: string;
+  videoUrl: string | null;
+  error: string | null;
+}> {
+  const token = generateKlingJWT();
+
+  if (!token) {
+    return { status: 'failed', videoUrl: null, error: 'Kling API not configured' };
+  }
+
+  try {
+    const response = await fetch(`${KLING_API_URL}/v1/videos/text2video/${taskId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn('[KLING-STATUS] API error:', response.status, errorText);
+      return { status: 'processing', videoUrl: null, error: null };
+    }
+
+    const result = await response.json();
+
+    if (result.code !== 0) {
+      console.warn('[KLING-STATUS] API returned error:', result.code, result.message);
+      return { status: 'processing', videoUrl: null, error: null };
+    }
+
+    const taskStatus = result.data?.task_status;
+    const videos = result.data?.task_result?.videos;
+
+    if (taskStatus === 'succeed' && videos?.length > 0) {
+      return { status: 'completed', videoUrl: videos[0].url, error: null };
+    } else if (taskStatus === 'failed') {
+      return { status: 'failed', videoUrl: null, error: result.data?.task_status_msg || 'Generation failed' };
+    }
+
+    return { status: 'processing', videoUrl: null, error: null };
+  } catch (err) {
+    console.warn('[KLING-STATUS] Status check failed:', err);
+    return { status: 'processing', videoUrl: null, error: null };
+  }
+}
 
 async function checkGrokStatus(predictionId: string): Promise<{
   status: string;
@@ -230,10 +314,10 @@ export default async function handler(
   try {
     // Direct prediction query if predictionId provided
     if (predictionId && !videoId) {
-      // Try Grok first, then Replicate
-      let providerStatus = await checkGrokStatus(predictionId);
+      // Try Kling first (primary), then Replicate fallback
+      let providerStatus = await checkKlingStatus(predictionId);
 
-      // If Grok doesn't have it, try Replicate
+      // If Kling doesn't have it, try Replicate
       if (providerStatus.status === 'processing' || providerStatus.error?.includes('not configured')) {
         providerStatus = await checkReplicateStatus(predictionId);
       }
@@ -270,7 +354,9 @@ export default async function handler(
     if (video.status === 'processing' && video.prediction_id) {
       let providerStatus: { status: string; videoUrl: string | null; error: string | null };
 
-      if (video.provider === 'grok') {
+      if (video.provider === 'kling') {
+        providerStatus = await checkKlingStatus(video.prediction_id);
+      } else if (video.provider === 'grok') {
         providerStatus = await checkGrokStatus(video.prediction_id);
       } else {
         providerStatus = await checkReplicateStatus(video.prediction_id);

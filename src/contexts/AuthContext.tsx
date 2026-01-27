@@ -141,8 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[Auth] Fetching profile for user:", userId);
 
     // Helper: wrap query with timeout to prevent hanging
-    // Pro tier: 10s timeout (database never sleeps, should respond in <100ms)
-    const DB_TIMEOUT_MS = 10000;
+    // 45s timeout - consistent with session timeout for Supabase cold starts
+    const DB_TIMEOUT_MS = 45000;
     const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
         Promise.resolve(promise),

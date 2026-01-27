@@ -25,7 +25,11 @@ export const config = {
 const GROK_API_URL = process.env.GROK_API_URL || 'https://api.x.ai/v1';
 const GROK_VIDEO_ENDPOINT = '/videos/generations'; // TBD - confirm exact endpoint
 
-// Replicate fallback - text-to-video model
+// Kling AI - Primary video generation (high quality, 5-10 sec videos with sound)
+const KLING_API_URL = 'https://api-singapore.klingai.com';
+const KLING_MODEL = 'kling-v2-6'; // Latest model with sound support
+
+// Replicate fallback - text-to-video model (if Kling fails)
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const REPLICATE_VIDEO_MODEL = 'stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438';
 
@@ -34,6 +38,12 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
+
+// Developer bypass emails - grants enterprise (SOVEREIGN) access
+const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 // ============================================================================
 // TYPES
@@ -178,6 +188,117 @@ async function generateWithGrok(prompt: string): Promise<{ predictionId: string;
 }
 
 // ============================================================================
+// VIDEO GENERATION - KLING AI (Primary - High Quality)
+// ============================================================================
+
+/**
+ * Generate JWT token for Kling API authentication
+ * Uses HS256 algorithm per Kling API docs
+ */
+function generateKlingJWT(): string | null {
+  const accessKey = process.env.KLING_VIDEO_API_KEY;
+  const secretKey = process.env.KLING_VIDEO_SECRET;
+
+  if (!accessKey || !secretKey) {
+    console.log('[KLING-VIDEO] No Kling API credentials configured');
+    return null;
+  }
+
+  // JWT Header
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT'
+  };
+
+  // JWT Payload
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: accessKey,
+    exp: now + 1800, // 30 minutes validity
+    nbf: now - 5     // Valid from 5 seconds ago
+  };
+
+  // Base64URL encode
+  const base64UrlEncode = (obj: object): string => {
+    return Buffer.from(JSON.stringify(obj))
+      .toString('base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+  };
+
+  const headerEncoded = base64UrlEncode(header);
+  const payloadEncoded = base64UrlEncode(payload);
+
+  // Create signature using HMAC-SHA256
+  const signatureInput = `${headerEncoded}.${payloadEncoded}`;
+  const signature = crypto
+    .createHmac('sha256', secretKey)
+    .update(signatureInput)
+    .digest('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  return `${headerEncoded}.${payloadEncoded}.${signature}`;
+}
+
+/**
+ * Generate video using Kling AI API
+ * Returns task_id for polling, or null if failed
+ */
+async function generateWithKling(prompt: string, durationSeconds: number = 10): Promise<{ predictionId: string; status: string } | null> {
+  const token = generateKlingJWT();
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    console.log('[KLING-VIDEO] Attempting Kling video generation...');
+
+    const response = await fetch(`${KLING_API_URL}/v1/videos/text2video`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model_name: KLING_MODEL,
+        prompt: prompt.slice(0, 2500), // Max 2500 chars
+        duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
+        aspect_ratio: '16:9',
+        mode: 'std', // Standard mode (cost-effective)
+        sound: 'on', // Enable audio (v2.6 feature)
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn('[KLING-VIDEO] Kling API error:', response.status, errorText);
+      return null; // Fall back to Replicate
+    }
+
+    const result = await response.json();
+
+    if (result.code !== 0) {
+      console.warn('[KLING-VIDEO] Kling API returned error:', result.code, result.message);
+      return null;
+    }
+
+    console.log('[KLING-VIDEO] Kling generation started:', result.data.task_id);
+
+    return {
+      predictionId: result.data.task_id,
+      status: result.data.task_status || 'submitted',
+    };
+  } catch (error) {
+    console.warn('[KLING-VIDEO] Kling generation failed:', error);
+    return null; // Fall back to Replicate
+  }
+}
+
+// ============================================================================
 // VIDEO GENERATION - REPLICATE FALLBACK
 // ============================================================================
 
@@ -252,10 +373,10 @@ async function checkUserTierAccess(userId: string): Promise<{
   reason?: string;
 }> {
   try {
-    // Get user profile to check tier
+    // Get user profile to check tier AND email (for developer bypass)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('tier')
+      .select('tier, email')
       .eq('id', userId)
       .single();
 
@@ -271,7 +392,13 @@ async function checkUserTierAccess(userId: string): Promise<{
       };
     }
 
-    const tier = profile.tier || 'free';
+    // Developer bypass - grant enterprise (SOVEREIGN) access to specified emails
+    const isDeveloper = profile.email && DEV_BYPASS_EMAILS.includes(profile.email.toLowerCase());
+    if (isDeveloper) {
+      console.log('[GROK-VIDEO] Developer bypass active for:', profile.email);
+    }
+
+    const tier = isDeveloper ? 'enterprise' : (profile.tier || 'free');
     const tierLimits = TIER_LIMITS[tier] || TIER_LIMITS.free;
     const limit = tierLimits.grokVideos;
 
@@ -502,12 +629,15 @@ async function generateSingleVideo(
 
   // Generate prompt
   const prompt = generatePrompt(cityName, videoType, cityType);
+  const durationSec = videoType === 'perfect_life' ? 10 : 8;
 
-  // Try Grok first, then Replicate
-  let result = await generateWithGrok(prompt);
-  let provider = 'grok';
+  // Try Kling first (high quality with sound), then Replicate fallback
+  // Note: Grok video API doesn't exist publicly, so we skip it
+  let result = await generateWithKling(prompt, durationSec);
+  let provider = 'kling';
 
   if (!result) {
+    console.log('[VIDEO] Kling unavailable, falling back to Replicate');
     result = await generateWithReplicate(prompt);
     provider = 'replicate';
   }
