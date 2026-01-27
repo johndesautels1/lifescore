@@ -1664,3 +1664,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* FORCE HEADING LEFT - DEBUG */
+.executive-section .section-header,
+.findings-section .section-header,
+.analysis-section .section-header {
+  justify-content: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  text-align: left !important;
+}
