@@ -50,7 +50,7 @@ const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
 // ============================================================================
 
 type VideoType = 'winner_mood' | 'loser_mood' | 'perfect_life';
-type CityType = 'beach' | 'mountain' | 'urban' | 'desert' | 'general';
+type CityType = 'beach' | 'mountain' | 'urban' | 'desert' | 'european' | 'tropical' | 'general';
 
 interface NewLifeVideosRequest {
   action: 'new_life_videos';
@@ -95,17 +95,31 @@ interface GrokVideoRecord {
 // ============================================================================
 
 function generatePrompt(cityName: string, videoType: VideoType, cityType: CityType = 'general'): string {
+  // Get city-specific details for more accurate depiction
+  const cityDetails = getCityDetails(cityName);
+
   const templates = {
-    winner_mood: `Happy person enjoying freedom in ${cityName}. Sunny day, relaxed atmosphere, minimal government presence, people freely going about their business, vibrant local economy, low stress environment. 8 seconds, cinematic quality.`,
+    // WINNER: Paradise, freedom, prosperity, joy
+    winner_mood: `Cinematic video of a happy, successful person experiencing ultimate freedom in ${cityName}. ${cityDetails.landmark ? `Famous ${cityDetails.landmark} visible in background.` : ''} Golden hour lighting, warm colors, person smiling genuinely, walking freely without restrictions. ${cityDetails.vibe || 'Vibrant atmosphere'}, locals friendly and relaxed, outdoor cafes with people laughing, clean streets, prosperous small businesses thriving. No visible bureaucracy, no lines, no stress. The person takes a deep breath of fresh air, arms open wide embracing liberty. Birds flying freely overhead. Text-free, no watermarks. 8 seconds, cinematic 4K quality, warm color grading.`,
 
-    loser_mood: `Stressed person in ${cityName} overwhelmed by regulations. Government buildings, bureaucratic offices, long lines, paperwork piling up, frustrated citizens, heavy tax burden visible, restricted freedoms. 8 seconds, cinematic quality.`,
+    // LOSER: Oppressive, over-regulated, dystopian, stressed
+    loser_mood: `Cinematic video of a stressed, overwhelmed person trapped in over-regulated ${cityName}. ${cityDetails.landmark ? `${cityDetails.landmark} looms ominously in grey background.` : ''} Cold, desaturated colors, overcast sky. Person looking frustrated, drowning in paperwork and forms. Long queues at government offices, security cameras everywhere, permit signs on every corner. Police presence visible, people rushing anxiously, no one smiling. Expensive parking meters, tax collection notices, "PROHIBITED" and "RESTRICTED" signs visible. The person checks their wallet - empty. Bureaucratic nightmare atmosphere, Orwellian undertones. Red tape literally tangling around them metaphorically. Text-free, no watermarks. 8 seconds, cinematic 4K quality, cold desaturated color grading.`,
 
+    // PERFECT LIFE: Dream lifestyle in winning city
     perfect_life: {
-      beach: `Crystal white sand beach at golden hour sunset, gentle waves crashing, palm trees swaying, person relaxing in paradise, ${cityName} coastline, ultimate freedom and peace. 10 seconds, cinematic 4K quality.`,
-      mountain: `Cozy cabin overlooking lush green valley and pristine lake, person enjoying hot chocolate on deck, snow-capped peaks in distance, ${cityName} mountain serenity, fresh air and freedom. 10 seconds, cinematic 4K quality.`,
-      urban: `Rooftop bar at sunset overlooking ${cityName} skyline, person toasting to success, city lights beginning to glow, vibrant nightlife energy, cosmopolitan freedom and opportunity. 10 seconds, cinematic 4K quality.`,
-      desert: `Desert sunset with dramatic red rock formations near ${cityName}, person on scenic overlook, wide open spaces, endless horizon, ultimate freedom and adventure. 10 seconds, cinematic 4K quality.`,
-      general: `Beautiful scenic view of ${cityName} at golden hour, person enjoying the moment of freedom and new beginnings, peaceful atmosphere, cinematic quality. 10 seconds.`,
+      beach: `Cinematic paradise video: Person living their dream life in ${cityName}. ${cityDetails.landmark ? `${cityDetails.landmark} in distance.` : ''} Crystal clear turquoise water, pristine white sand beach at golden hour. Person relaxing in luxury beach chair, cocktail in hand, genuine smile of contentment. Palm trees swaying gently, yacht visible on horizon, dolphins jumping in distance. Zero stress, complete freedom, financial independence achieved. Warm tropical breeze, soft waves lapping shore. This is what escaping overregulation looks like. Text-free, no watermarks. 10 seconds, cinematic 4K, saturated warm colors.`,
+
+      mountain: `Cinematic paradise video: Person living their dream life near ${cityName}. ${cityDetails.landmark ? `${cityDetails.landmark} visible.` : ''} Luxury mountain cabin with floor-to-ceiling windows overlooking pristine valley. Person on deck with hot coffee, wrapped in cozy blanket, breathing fresh mountain air. Snow-capped peaks glowing pink at sunrise, crystal clear lake below, eagles soaring. Complete peace, no government intrusion, true privacy and freedom. Fireplace smoke rising from chimney. This is what escaping overregulation looks like. Text-free, no watermarks. 10 seconds, cinematic 4K, crisp natural colors.`,
+
+      urban: `Cinematic paradise video: Person living their dream life in ${cityName}. ${cityDetails.landmark ? `Iconic ${cityDetails.landmark} in background.` : ''} Stunning penthouse rooftop at sunset, person in elegant attire toasting champagne. City skyline glittering below, private infinity pool, modern luxury furnishings. Success achieved through freedom and opportunity. Vibrant nightlife energy beginning, city lights twinkling on. No bureaucratic obstacles, just pure achievement. Helicopter landing pad nearby. This is what thriving in a free city looks like. Text-free, no watermarks. 10 seconds, cinematic 4K, rich contrast lighting.`,
+
+      desert: `Cinematic paradise video: Person living their dream life near ${cityName}. ${cityDetails.landmark ? `${cityDetails.landmark} visible.` : ''} Dramatic desert sunset, red and orange rock formations glowing. Person on luxury overlook terrace, modern desert architecture home behind them. Endless horizon, complete solitude by choice, zero restrictions. Convertible sports car parked nearby, open road beckoning. Starry sky beginning to appear. Ultimate freedom and adventure, self-reliance rewarded. This is what escaping overregulation looks like. Text-free, no watermarks. 10 seconds, cinematic 4K, dramatic warm colors.`,
+
+      european: `Cinematic paradise video: Person living their dream life in ${cityName}. ${cityDetails.landmark ? `Beautiful ${cityDetails.landmark} in background.` : ''} Charming cobblestone street at golden hour, person at outdoor café with espresso, genuinely content smile. Historic architecture beautifully preserved, flowers in window boxes, church bells ringing softly. Local market with fresh produce, artisan shops, no chain stores. Community feeling, people greeting each other warmly. Vespa scooter parked nearby. Old world charm meets modern freedom. Text-free, no watermarks. 10 seconds, cinematic 4K, warm European color grading.`,
+
+      tropical: `Cinematic paradise video: Person living their dream life in ${cityName}. ${cityDetails.landmark ? `${cityDetails.landmark} visible.` : ''} Lush tropical paradise, person in private villa with infinity pool overlooking jungle and ocean. Exotic birds, waterfalls nearby, hammock swaying. Fresh tropical fruit on table, gentle warm breeze. Complete escape from western bureaucracy, tax-free living, genuine relaxation. Staff bringing drinks, no worries visible on face. This is what financial and personal freedom looks like. Text-free, no watermarks. 10 seconds, cinematic 4K, lush saturated colors.`,
+
+      general: `Cinematic paradise video: Person living their dream life in ${cityName}. ${cityDetails.landmark ? `${cityDetails.landmark} in background.` : ''} Golden hour, stunning scenic view of the city at its most beautiful. Person genuinely happy, successful, free. No stress, no bureaucratic burden, just pure contentment. Taking in the view, deep satisfying breath, arms open to embrace their new life. This is what choosing freedom looks like. Warm, inviting atmosphere, prosperity visible everywhere. Text-free, no watermarks. 10 seconds, cinematic 4K quality.`,
     },
   };
 
@@ -116,14 +130,152 @@ function generatePrompt(cityName: string, videoType: VideoType, cityType: CityTy
   return templates[videoType];
 }
 
+// City-specific details for accurate depictions
+interface CityDetails {
+  landmark?: string;
+  vibe?: string;
+  region: 'us' | 'europe' | 'asia' | 'latinam' | 'oceania' | 'other';
+}
+
+function getCityDetails(cityName: string): CityDetails {
+  const nameLower = cityName.toLowerCase();
+
+  // US Cities
+  const usCities: Record<string, CityDetails> = {
+    'miami': { landmark: 'Art Deco buildings of South Beach', vibe: 'Latin-infused beach party energy', region: 'us' },
+    'tampa': { landmark: 'Tampa Riverwalk and Bayshore Boulevard', vibe: 'Relaxed Florida sunshine lifestyle', region: 'us' },
+    'austin': { landmark: 'Texas State Capitol and Lady Bird Lake', vibe: 'Live music and tech startup energy', region: 'us' },
+    'nashville': { landmark: 'Broadway honky-tonks and Ryman Auditorium', vibe: 'Country music and southern hospitality', region: 'us' },
+    'denver': { landmark: 'Rocky Mountains and Red Rocks Amphitheatre', vibe: 'Outdoor adventure and craft beer culture', region: 'us' },
+    'san diego': { landmark: 'Coronado Bridge and La Jolla Cove', vibe: 'Perfect weather beach lifestyle', region: 'us' },
+    'phoenix': { landmark: 'Camelback Mountain and Sonoran Desert', vibe: 'Desert oasis and golf paradise', region: 'us' },
+    'las vegas': { landmark: 'Las Vegas Strip and Bellagio Fountains', vibe: 'Entertainment capital energy', region: 'us' },
+    'new york': { landmark: 'Statue of Liberty and Manhattan skyline', vibe: 'Fast-paced ambitious energy', region: 'us' },
+    'los angeles': { landmark: 'Hollywood Sign and Santa Monica Pier', vibe: 'Entertainment industry glamour', region: 'us' },
+    'chicago': { landmark: 'Cloud Gate Bean and Lake Michigan', vibe: 'Architecture and deep dish culture', region: 'us' },
+    'san francisco': { landmark: 'Golden Gate Bridge', vibe: 'Tech innovation and steep hills', region: 'us' },
+    'seattle': { landmark: 'Space Needle and Pike Place Market', vibe: 'Coffee culture and tech hub', region: 'us' },
+    'boston': { landmark: 'Fenway Park and Freedom Trail', vibe: 'Historic American pride', region: 'us' },
+    'new orleans': { landmark: 'French Quarter and St. Louis Cathedral', vibe: 'Jazz and Cajun celebration', region: 'us' },
+    'houston': { landmark: 'Houston Space Center and downtown skyline', vibe: 'Energy industry prosperity', region: 'us' },
+    'dallas': { landmark: 'Reunion Tower and AT&T Stadium', vibe: 'Big Texas business energy', region: 'us' },
+    'atlanta': { landmark: 'Georgia Aquarium and Centennial Park', vibe: 'Southern business hub', region: 'us' },
+    'orlando': { landmark: 'Theme park magic and palm trees', vibe: 'Family entertainment paradise', region: 'us' },
+    'charleston': { landmark: 'Rainbow Row and historic plantations', vibe: 'Southern charm and hospitality', region: 'us' },
+    'savannah': { landmark: 'Forsyth Park fountain and moss-draped oaks', vibe: 'Gothic southern elegance', region: 'us' },
+    'honolulu': { landmark: 'Diamond Head and Waikiki Beach', vibe: 'Island paradise aloha spirit', region: 'us' },
+    'anchorage': { landmark: 'Denali and Northern Lights', vibe: 'Last frontier wilderness', region: 'us' },
+    'portland': { landmark: 'Mount Hood and Powell\'s Books', vibe: 'Quirky indie culture', region: 'us' },
+    'salt lake': { landmark: 'Mormon Temple and Wasatch Mountains', vibe: 'Outdoor recreation paradise', region: 'us' },
+  };
+
+  // European Cities
+  const europeCities: Record<string, CityDetails> = {
+    'london': { landmark: 'Big Ben and Tower Bridge', vibe: 'Historic royal grandeur', region: 'europe' },
+    'paris': { landmark: 'Eiffel Tower and Champs-Élysées', vibe: 'Romantic artistic elegance', region: 'europe' },
+    'amsterdam': { landmark: 'Canal houses and bicycles', vibe: 'Liberal cycling culture', region: 'europe' },
+    'barcelona': { landmark: 'Sagrada Familia and La Rambla', vibe: 'Mediterranean beach party', region: 'europe' },
+    'madrid': { landmark: 'Royal Palace and Plaza Mayor', vibe: 'Spanish passion and nightlife', region: 'europe' },
+    'rome': { landmark: 'Colosseum and Vatican', vibe: 'Ancient empire grandeur', region: 'europe' },
+    'milan': { landmark: 'Duomo Cathedral and fashion district', vibe: 'High fashion sophistication', region: 'europe' },
+    'florence': { landmark: 'Ponte Vecchio and Duomo', vibe: 'Renaissance art paradise', region: 'europe' },
+    'venice': { landmark: 'Grand Canal and St. Mark\'s Square', vibe: 'Romantic waterway magic', region: 'europe' },
+    'berlin': { landmark: 'Brandenburg Gate and Berlin Wall', vibe: 'Edgy artistic rebirth', region: 'europe' },
+    'munich': { landmark: 'Marienplatz and beer gardens', vibe: 'Bavarian beer culture', region: 'europe' },
+    'vienna': { landmark: 'Schönbrunn Palace and opera house', vibe: 'Classical music elegance', region: 'europe' },
+    'prague': { landmark: 'Charles Bridge and Prague Castle', vibe: 'Fairy tale Gothic charm', region: 'europe' },
+    'budapest': { landmark: 'Parliament Building and thermal baths', vibe: 'Danube elegance', region: 'europe' },
+    'lisbon': { landmark: 'Belém Tower and yellow trams', vibe: 'Fado music melancholy beauty', region: 'europe' },
+    'porto': { landmark: 'Dom Luís Bridge and port wine cellars', vibe: 'Port wine riverside charm', region: 'europe' },
+    'dublin': { landmark: 'Temple Bar and Trinity College', vibe: 'Irish pub warmth', region: 'europe' },
+    'edinburgh': { landmark: 'Edinburgh Castle and Royal Mile', vibe: 'Scottish highland mystery', region: 'europe' },
+    'copenhagen': { landmark: 'Nyhavn and Little Mermaid', vibe: 'Hygge cozy design', region: 'europe' },
+    'stockholm': { landmark: 'Gamla Stan and archipelago', vibe: 'Scandinavian sleek design', region: 'europe' },
+    'oslo': { landmark: 'Opera House and fjords', vibe: 'Nordic nature meets modern', region: 'europe' },
+    'helsinki': { landmark: 'Helsinki Cathedral and saunas', vibe: 'Finnish design minimalism', region: 'europe' },
+    'zurich': { landmark: 'Lake Zurich and Alps backdrop', vibe: 'Swiss precision wealth', region: 'europe' },
+    'geneva': { landmark: 'Jet d\'Eau fountain and UN headquarters', vibe: 'International diplomacy elegance', region: 'europe' },
+    'brussels': { landmark: 'Grand Place and Atomium', vibe: 'EU bureaucratic center', region: 'europe' },
+    'athens': { landmark: 'Acropolis and Parthenon', vibe: 'Ancient democracy birthplace', region: 'europe' },
+    'santorini': { landmark: 'Blue domed churches and caldera', vibe: 'Greek island paradise', region: 'europe' },
+    'nice': { landmark: 'Promenade des Anglais and azure coast', vibe: 'French Riviera glamour', region: 'europe' },
+    'monaco': { landmark: 'Monte Carlo Casino and yacht harbor', vibe: 'Ultra-wealthy tax haven', region: 'europe' },
+    'dubrovnik': { landmark: 'Old Town walls and Adriatic Sea', vibe: 'Game of Thrones medieval beauty', region: 'europe' },
+  };
+
+  // Check US cities
+  for (const [city, details] of Object.entries(usCities)) {
+    if (nameLower.includes(city)) {
+      return details;
+    }
+  }
+
+  // Check European cities
+  for (const [city, details] of Object.entries(europeCities)) {
+    if (nameLower.includes(city)) {
+      return details;
+    }
+  }
+
+  // Default
+  return { region: 'other' };
+}
+
 function detectCityType(cityName: string): CityType {
   const nameLower = cityName.toLowerCase();
 
+  // First check if it's a known European city - use 'european' type for perfect_life
+  const europeanCities = [
+    'london', 'paris', 'amsterdam', 'barcelona', 'madrid', 'rome', 'milan', 'florence',
+    'venice', 'berlin', 'munich', 'vienna', 'prague', 'budapest', 'lisbon', 'porto',
+    'dublin', 'edinburgh', 'copenhagen', 'stockholm', 'oslo', 'helsinki', 'zurich',
+    'geneva', 'brussels', 'athens', 'nice', 'monaco', 'dubrovnik', 'krakow', 'warsaw'
+  ];
+
+  if (europeanCities.some(city => nameLower.includes(city))) {
+    return 'european' as CityType;
+  }
+
+  // Tropical destinations
+  const tropicalCities = [
+    'honolulu', 'hawaii', 'cancun', 'puerto vallarta', 'cabo', 'bahamas', 'jamaica',
+    'barbados', 'aruba', 'curacao', 'st. lucia', 'turks', 'caicos', 'bali', 'phuket',
+    'maldives', 'fiji', 'tahiti', 'mauritius', 'seychelles', 'caribbean', 'key west'
+  ];
+
+  if (tropicalCities.some(city => nameLower.includes(city))) {
+    return 'tropical' as CityType;
+  }
+
+  // Greek islands special case
+  if (nameLower.includes('santorini') || nameLower.includes('mykonos') || nameLower.includes('crete')) {
+    return 'beach' as CityType;
+  }
+
   const keywords = {
-    beach: ['beach', 'coast', 'ocean', 'shore', 'tropical', 'island', 'bay', 'harbor', 'pier', 'seaside', 'miami', 'san diego', 'honolulu', 'santa monica', 'malibu'],
-    mountain: ['mountain', 'alpine', 'ski', 'elevation', 'rocky', 'peak', 'summit', 'valley', 'highland', 'denver', 'boulder', 'aspen', 'vail', 'park city', 'salt lake'],
-    urban: ['downtown', 'metro', 'city center', 'skyline', 'metropolitan', 'urban', 'midtown', 'new york', 'chicago', 'los angeles', 'san francisco', 'seattle', 'boston'],
-    desert: ['desert', 'arid', 'southwest', 'canyon', 'mesa', 'dry', 'phoenix', 'vegas', 'tucson', 'scottsdale', 'albuquerque', 'sedona'],
+    beach: [
+      'beach', 'coast', 'ocean', 'shore', 'seaside', 'bay', 'harbor', 'pier',
+      'miami', 'san diego', 'santa monica', 'malibu', 'tampa', 'clearwater',
+      'fort lauderdale', 'naples', 'sarasota', 'jacksonville', 'virginia beach',
+      'outer banks', 'hilton head', 'myrtle beach', 'galveston', 'corpus christi'
+    ],
+    mountain: [
+      'mountain', 'alpine', 'ski', 'rocky', 'peak', 'summit', 'valley', 'highland',
+      'denver', 'boulder', 'aspen', 'vail', 'park city', 'salt lake', 'telluride',
+      'breckenridge', 'steamboat', 'jackson hole', 'big sky', 'lake tahoe', 'reno',
+      'flagstaff', 'santa fe', 'taos', 'asheville', 'gatlinburg', 'pigeon forge'
+    ],
+    urban: [
+      'downtown', 'metro', 'city center', 'skyline', 'metropolitan', 'midtown',
+      'new york', 'chicago', 'los angeles', 'san francisco', 'seattle', 'boston',
+      'philadelphia', 'washington', 'atlanta', 'dallas', 'houston', 'detroit',
+      'minneapolis', 'st. louis', 'baltimore', 'cleveland', 'pittsburgh', 'charlotte'
+    ],
+    desert: [
+      'desert', 'arid', 'southwest', 'canyon', 'mesa',
+      'phoenix', 'vegas', 'tucson', 'scottsdale', 'albuquerque', 'sedona',
+      'palm springs', 'joshua tree', 'death valley', 'moab', 'st. george'
+    ],
   };
 
   for (const [type, words] of Object.entries(keywords)) {
