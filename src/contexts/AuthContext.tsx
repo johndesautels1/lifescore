@@ -141,8 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[Auth] Fetching profile for user:", userId);
 
     // Helper: wrap query with timeout to prevent hanging
-    // Increased to 45s - Supabase free tier can be slow on cold starts
-    const DB_TIMEOUT_MS = 45000;
+    // Pro tier: 10s timeout (database never sleeps, should respond in <100ms)
+    const DB_TIMEOUT_MS = 10000;
     const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
         Promise.resolve(promise),
@@ -167,14 +167,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      // Run both in parallel with 45s timeout (Supabase cold start can be slow)
+      // Run both in parallel with 10s timeout (Pro tier - always available)
       const [profileResult, prefsResult] = await Promise.all([
         withTimeout(profilePromise, DB_TIMEOUT_MS).catch(err => {
-          console.warn('[Auth] Profile fetch timeout/error:', err.message);
+          console.error('[Auth] Profile fetch failed:', err.message);
           return { data: null, error: err };
         }),
         withTimeout(prefsPromise, DB_TIMEOUT_MS).catch(err => {
-          console.warn('[Auth] Preferences fetch timeout/error:', err.message);
+          console.error('[Auth] Preferences fetch failed:', err.message);
           return { data: null, error: err };
         }),
       ]);

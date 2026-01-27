@@ -320,7 +320,8 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
                   const score2 = metric2.consensusScore ?? 0;
                   const diff = score1 - score2;
                   const diffStr = diff > 0 ? '+' + Math.round(diff) : Math.round(diff).toString();
-                  const reasoning = metric.reasoning || metric2.reasoning || '';
+                  // Get reasoning from first LLM score if available
+                  const reasoning = (metric as any).llmScores?.[0]?.reasoning || '';
                   const shortReasoning = reasoning.length > 150 ? reasoning.substring(0, 150) + '...' : reasoning;
 
                   return `
@@ -365,8 +366,8 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
           </tbody>
         </table>
         <div style="margin-top: 10px; font-size: 11px; color: #666;">
-          Total Processing Time: ${(result.processingStats.totalProcessingTimeMs / 1000).toFixed(1)}s |
-          API Calls: ${result.processingStats.apiCallCount}
+          Total Processing Time: ${(result.processingStats.totalTimeMs / 1000).toFixed(1)}s |
+          Metrics Evaluated: ${result.processingStats.metricsEvaluated}
         </div>
       </div>
 
