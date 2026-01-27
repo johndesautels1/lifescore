@@ -1,6 +1,11 @@
 /**
  * LIFE SCORE - useOliviaChat Hook
  * Manages chat state and communication with Olivia AI assistant
+ *
+ * Now includes SAFE non-blocking database persistence:
+ * - Conversations saved to Supabase when user is logged in
+ * - All DB operations are fire-and-forget (won't break chat if DB fails)
+ * - Chat works normally even without database
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -19,6 +24,12 @@ import {
   getErrorMessage,
   isRecoverableError,
 } from '../services/oliviaService';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  createOliviaConversation,
+  addOliviaMessage,
+} from '../services/databaseService';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 // ============================================================================
 // SAVED COMPARISONS SUMMARY BUILDER
@@ -93,6 +104,9 @@ export function useOliviaChat(
 ): UseOliviaChatReturn {
   const { comparisonResult, savedComparisons = [], savedEnhanced = [] } = options;
 
+  // Get current user for DB persistence (safe - returns null if not logged in)
+  const { user } = useAuth();
+
   // State
   const [messages, setMessages] = useState<OliviaChatMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -102,9 +116,13 @@ export function useOliviaChat(
   const [textSummary, setTextSummary] = useState<string | null>(null);
   const [isContextLoading, setIsContextLoading] = useState(false);
 
+  // Database persistence state (Supabase conversation ID, separate from OpenAI threadId)
+  const [dbConversationId, setDbConversationId] = useState<string | null>(null);
+
   // Refs
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastComparisonIdRef = useRef<string | null>(null);
+  const conversationCreatedRef = useRef<boolean>(false);
 
   // Build context when comparison result changes
   useEffect(() => {
@@ -229,6 +247,55 @@ export function useOliviaChat(
       };
       setMessages(prev => [...prev, assistantMsg]);
 
+      // ════════════════════════════════════════════════════════════════
+      // SAFE NON-BLOCKING DATABASE PERSISTENCE
+      // All DB operations are fire-and-forget - chat works even if DB fails
+      // ════════════════════════════════════════════════════════════════
+      if (user?.id && isSupabaseConfigured() && response.threadId) {
+        // Create conversation in DB on first message (non-blocking)
+        if (!conversationCreatedRef.current && !dbConversationId) {
+          conversationCreatedRef.current = true; // Prevent duplicate creation
+
+          createOliviaConversation(
+            user.id,
+            response.threadId,
+            comparisonResult?.comparisonId,
+            `Chat: ${comparisonResult?.city1?.city || 'General'} vs ${comparisonResult?.city2?.city || 'Query'}`
+          )
+            .then(({ data, error: dbError }) => {
+              if (dbError) {
+                console.warn('[useOliviaChat] DB conversation create failed (chat continues):', dbError.message);
+                conversationCreatedRef.current = false; // Allow retry
+              } else if (data) {
+                console.log('[useOliviaChat] Conversation saved to DB:', data.id);
+                setDbConversationId(data.id);
+
+                // Now save both messages (non-blocking)
+                addOliviaMessage(data.id, 'user', userMessage).catch(err =>
+                  console.warn('[useOliviaChat] DB user message save failed:', err)
+                );
+                addOliviaMessage(data.id, 'assistant', response.response, response.messageId, response.audioUrl).catch(err =>
+                  console.warn('[useOliviaChat] DB assistant message save failed:', err)
+                );
+              }
+            })
+            .catch(err => {
+              console.warn('[useOliviaChat] DB conversation create error (chat continues):', err);
+              conversationCreatedRef.current = false; // Allow retry
+            });
+        }
+        // Save messages to existing conversation (non-blocking)
+        else if (dbConversationId) {
+          addOliviaMessage(dbConversationId, 'user', userMessage).catch(err =>
+            console.warn('[useOliviaChat] DB user message save failed:', err)
+          );
+          addOliviaMessage(dbConversationId, 'assistant', response.response, response.messageId, response.audioUrl).catch(err =>
+            console.warn('[useOliviaChat] DB assistant message save failed:', err)
+          );
+        }
+      }
+      // ════════════════════════════════════════════════════════════════
+
     } catch (err) {
       const errorMsg = err instanceof Error ? err : new Error('Unknown error');
       console.error('[useOliviaChat] Send failed:', errorMsg);
@@ -252,7 +319,7 @@ export function useOliviaChat(
       setIsTyping(false);
       abortControllerRef.current = null;
     }
-  }, [threadId, context, textSummary, isContextLoading, isTyping, generateMessageId]);
+  }, [threadId, context, textSummary, isContextLoading, isTyping, generateMessageId, user, dbConversationId, comparisonResult]);
 
   /**
    * Clear chat history and start fresh
@@ -268,6 +335,9 @@ export function useOliviaChat(
     setThreadId(null);
     setError(null);
     setIsTyping(false);
+    // Reset DB conversation state for new conversation
+    setDbConversationId(null);
+    conversationCreatedRef.current = false;
     // Context stays - it's tied to the comparison, not the conversation
   }, []);
 
