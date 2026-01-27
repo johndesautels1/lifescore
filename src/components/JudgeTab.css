@@ -919,10 +919,6 @@
 .executive-section {
   padding: 2rem;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
 }
 
 .section-header {
@@ -931,8 +927,6 @@
   justify-content: center;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  max-width: 1000px;
-  width: 100%;
 }
 
 .section-icon {
