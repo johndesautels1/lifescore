@@ -10,7 +10,6 @@ import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
 import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
 import { saveGammaReport, hasGammaReportForComparison } from '../services/savedComparisons';
-import AdvancedVisuals from './AdvancedVisuals';
 import NewLifeVideos from './NewLifeVideos';
 import FeatureGate from './FeatureGate';
 import './VisualsTab.css';

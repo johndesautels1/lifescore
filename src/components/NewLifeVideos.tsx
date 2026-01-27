@@ -32,7 +32,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const { user } = useAuth();
   const {
     videoPair,
-    status,
     isGenerating,
     isReady,
     progress,
@@ -50,11 +49,11 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const [hasStarted, setHasStarted] = useState(false);
 
   // Determine winner/loser from result
-  const winner = result.recommendation;
+  const winner = result.winner;
   const winnerCity = winner === 'city1' ? result.city1.city : result.city2.city;
   const loserCity = winner === 'city1' ? result.city2.city : result.city1.city;
-  const winnerScore = winner === 'city1' ? result.city1Score : result.city2Score;
-  const loserScore = winner === 'city1' ? result.city2Score : result.city1Score;
+  const winnerScore = winner === 'city1' ? result.city1.totalConsensusScore : result.city2.totalConsensusScore;
+  const loserScore = winner === 'city1' ? result.city2.totalConsensusScore : result.city1.totalConsensusScore;
 
   // Handle video generation
   const handleGenerateVideos = async () => {

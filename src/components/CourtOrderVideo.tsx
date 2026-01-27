@@ -37,7 +37,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const { user } = useAuth();
   const {
     video,
-    status,
     isGenerating,
     isReady,
     progress,

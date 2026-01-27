@@ -16,7 +16,6 @@ import type {
   GenerateCourtOrderVideoResponse,
   GrokVideoStatusResponse,
   CityType,
-  CITY_TYPE_KEYWORDS,
 } from '../types/grokVideo';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
