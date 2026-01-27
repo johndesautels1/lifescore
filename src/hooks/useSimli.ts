@@ -338,14 +338,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   }, [isConnected, session, status]);
 
   /**
-   * Interrupt current speech
+   * Interrupt current speech - aggressively stop all audio
    */
   const interrupt = useCallback(() => {
-    if (!isSpeaking) {
-      return;
-    }
-
-    console.log('[useSimli] Interrupting speech');
+    console.log('[useSimli] 🛑 INTERRUPT - Stopping all audio');
 
     // Clear speaking timeout
     if (speakingTimeoutRef.current) {
@@ -353,14 +349,27 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       speakingTimeoutRef.current = null;
     }
 
-    // Send empty audio to clear buffer
+    // Send empty audio to clear Simli buffer
     if (simliClientRef.current) {
-      const silence = new Uint8Array(6000); // Simli recommended chunk size for buffer clear
+      const silence = new Uint8Array(6000);
       simliClientRef.current.sendAudioData(silence);
     }
 
+    // AGGRESSIVE: Directly pause the audio element if available
+    if (audioRef?.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      console.log('[useSimli] Audio element paused');
+    }
+
+    // Also cancel any browser speech synthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      console.log('[useSimli] Browser speech synthesis cancelled');
+    }
+
     setStatus('connected');
-  }, [isSpeaking]);
+  }, [audioRef]);
 
   /**
    * Cleanup on unmount

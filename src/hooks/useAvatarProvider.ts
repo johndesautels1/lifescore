@@ -290,12 +290,25 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
   }, [activeProvider, simli, did]);
 
   const interrupt = useCallback(() => {
+    console.log('[useAvatarProvider] 🛑 INTERRUPT - Stopping all audio');
+
+    // Interrupt Simli
     if (activeProvider === 'simli') {
       simli.interrupt();
     }
-    // D-ID doesn't have interrupt - just log
-    console.log('[useAvatarProvider] Interrupt requested');
-  }, [activeProvider, simli]);
+
+    // For D-ID, pause the video element directly
+    if (effectiveVideoRef?.current) {
+      effectiveVideoRef.current.pause();
+      console.log('[useAvatarProvider] Video element paused');
+    }
+
+    // Cancel any browser speech synthesis (fallback TTS)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      console.log('[useAvatarProvider] Browser speech synthesis cancelled');
+    }
+  }, [activeProvider, simli, effectiveVideoRef]);
 
   // ============================================================================
   // PROVIDER CONTROL

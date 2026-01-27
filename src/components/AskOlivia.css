@@ -368,6 +368,100 @@
   50% { height: 20px; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIDEO CONTROLS OVERLAY - Pause/Stop Controls
+   ═══════════════════════════════════════════════════════════════════════════ */
+.video-controls-overlay {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.video-controls-overlay:hover {
+  opacity: 1;
+}
+
+.video-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(10, 22, 40, 0.9);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 6px;
+  color: var(--ice-white);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.video-control-btn:hover {
+  background: rgba(201, 162, 39, 0.2);
+  border-color: var(--brushed-gold);
+  transform: translateY(-1px);
+}
+
+.video-control-btn.pause-btn {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.video-control-btn.pause-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+  border-color: var(--amber-active);
+}
+
+.video-control-btn.stop-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.video-control-btn.stop-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: var(--error-red);
+}
+
+.video-control-btn .control-icon {
+  font-size: 0.9rem;
+}
+
+.video-control-btn .control-label {
+  text-transform: uppercase;
+}
+
+.video-control-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(10, 22, 40, 0.8);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  color: var(--success-green);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.video-control-status .status-icon {
+  font-size: 0.6rem;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Avatar Loading State */
 .avatar-loading {
   position: absolute;

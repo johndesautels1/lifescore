@@ -467,6 +467,42 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
                     </div>
                   )}
 
+                  {/* Video Controls Overlay - Always visible when video is enabled */}
+                  {isAvatarReady && (
+                    <div className="video-controls-overlay">
+                      {(isAvatarSpeaking || isTTSSpeaking) ? (
+                        <button
+                          className="video-control-btn pause-btn"
+                          onClick={() => {
+                            interruptAvatar();
+                            stopSpeaking();
+                          }}
+                          title="Pause Olivia"
+                        >
+                          <span className="control-icon">⏸</span>
+                          <span className="control-label">PAUSE</span>
+                        </button>
+                      ) : (
+                        <div className="video-control-status">
+                          <span className="status-icon">●</span>
+                          <span className="status-label">READY</span>
+                        </div>
+                      )}
+                      <button
+                        className="video-control-btn stop-btn"
+                        onClick={() => {
+                          interruptAvatar();
+                          stopSpeaking();
+                          setVideoEnabled(false);
+                        }}
+                        title="Stop Video Chat"
+                      >
+                        <span className="control-icon">◼</span>
+                        <span className="control-label">STOP VIDEO</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Avatar loading state */}
                   {!isAvatarReady && (
                     <div className="avatar-loading">
