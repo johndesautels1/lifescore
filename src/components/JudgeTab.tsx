@@ -111,53 +111,54 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
   // FIX 2026-01-26: Track if report failed to load for user feedback
   const [reportLoadError, setReportLoadError] = useState<string | null>(null);
 
-  // Determine which comparison to use
-  // Priority: Selected from dropdown > Prop > None
-  const getActiveComparison = (): EnhancedComparisonResult | ComparisonResult | null => {
-    if (selectedComparisonId) {
-      // Look up in saved standard comparisons
-      const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
-      if (savedStd?.result) {
-        // Validate the result has required data
-        if (savedStd.result.city1 && savedStd.result.city2) {
-          setReportLoadError(null);
-          console.log('[JudgeTab] Loaded standard comparison:', selectedComparisonId);
-          return savedStd.result;
-        } else {
-          console.error('[JudgeTab] Standard comparison missing city data:', selectedComparisonId);
-          setReportLoadError('Report data is corrupted - missing city information');
-          return null;
-        }
-      }
+  // FIX 2026-01-27: Compute comparison result without state updates during render
+  // Use a ref to track the error to update via useEffect
+  const computedErrorRef = useRef<string | null>(null);
 
+  // Determine which comparison to use (no state updates here!)
+  let comparisonResult: EnhancedComparisonResult | ComparisonResult | null = null;
+  computedErrorRef.current = null;
+
+  if (selectedComparisonId) {
+    // Look up in saved standard comparisons
+    const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
+    if (savedStd?.result) {
+      if (savedStd.result.city1 && savedStd.result.city2) {
+        console.log('[JudgeTab] Loaded standard comparison:', selectedComparisonId);
+        comparisonResult = savedStd.result;
+      } else {
+        console.error('[JudgeTab] Standard comparison missing city data:', selectedComparisonId);
+        computedErrorRef.current = 'Report data is corrupted - missing city information';
+      }
+    } else {
       // Look up in saved enhanced comparisons
       const savedEnh = savedEnhanced.find(c => c.result?.comparisonId === selectedComparisonId);
       if (savedEnh?.result) {
-        // Validate the result has required data
         if (savedEnh.result.city1 && savedEnh.result.city2) {
-          setReportLoadError(null);
           console.log('[JudgeTab] Loaded enhanced comparison:', selectedComparisonId);
-          return savedEnh.result;
+          comparisonResult = savedEnh.result;
         } else {
           console.error('[JudgeTab] Enhanced comparison missing city data:', selectedComparisonId);
-          setReportLoadError('Report data is corrupted - missing city information');
-          return null;
+          computedErrorRef.current = 'Report data is corrupted - missing city information';
         }
+      } else {
+        console.error('[JudgeTab] Selected comparison not found in storage:', selectedComparisonId);
+        computedErrorRef.current = 'Selected report not found - it may have been deleted';
       }
-
-      // FIX: selectedComparisonId was set but comparison not found - this is the bug!
-      console.error('[JudgeTab] Selected comparison not found in storage:', selectedComparisonId);
-      setReportLoadError('Selected report not found - it may have been deleted');
-      // Don't fall through to propComparisonResult - return null to show the error
-      return null;
     }
-
+  } else {
     // No selection - use prop if available
-    setReportLoadError(null);
-    return propComparisonResult || null;
-  };
+    comparisonResult = propComparisonResult || null;
+  }
 
-  const comparisonResult = getActiveComparison();
+  // Sync error state via useEffect - only update if error changed
+  const prevErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevErrorRef.current !== computedErrorRef.current) {
+      prevErrorRef.current = computedErrorRef.current;
+      setReportLoadError(computedErrorRef.current);
+    }
+  });
 
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
