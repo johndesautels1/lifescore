@@ -174,7 +174,6 @@
   color: var(--steel-gray);
   font-size: 0.85rem;
   margin-bottom: 1.5rem;
-  width: 100%;
   letter-spacing: 0.1em;
 }
 
@@ -578,7 +577,6 @@
   font-size: 0.8rem;
   color: var(--steel-gray);
   margin-bottom: 1.5rem;
-  width: 100%;
 }
 
 .progress-bar-container {
@@ -725,7 +723,6 @@
   font-size: 0.8rem;
   color: var(--steel-gray);
   margin-bottom: 1.5rem;
-  width: 100%;
 }
 
 /* Generate Button */
@@ -922,11 +919,6 @@
 .executive-section {
   padding: 2rem;
   position: relative;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .section-header {
@@ -935,7 +927,6 @@
   justify-content: center;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  width: 100%;
 }
 
 .section-icon {
