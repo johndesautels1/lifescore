@@ -45,6 +45,9 @@ const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);
 
+// Hardcoded fallback for developer bypass (in case env var not set in Vercel)
+const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com'];
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -545,9 +548,14 @@ async function checkUserTierAccess(userId: string): Promise<{
     }
 
     // Developer bypass - grant enterprise (SOVEREIGN) access to specified emails
-    const isDeveloper = profile.email && DEV_BYPASS_EMAILS.includes(profile.email.toLowerCase());
+    // Check both env var list AND hardcoded fallback for reliability
+    const userEmail = profile.email?.toLowerCase() || '';
+    const isDeveloper = userEmail && (
+      DEV_BYPASS_EMAILS.includes(userEmail) ||
+      HARDCODED_BYPASS_EMAILS.includes(userEmail)
+    );
     if (isDeveloper) {
-      console.log('[GROK-VIDEO] Developer bypass active for:', profile.email);
+      console.log('[GROK-VIDEO] 🔓 Developer bypass active for:', profile.email);
     }
 
     const tier = isDeveloper ? 'enterprise' : (profile.tier || 'free');
