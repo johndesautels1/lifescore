@@ -1,0 +1,393 @@
+/**
+ * LIFE SCORE - New Life Videos Styles
+ * "See Your New Life!" comparison videos
+ */
+
+.new-life-videos {
+  background: var(--card-background, #1a1a2e);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color, #2a2a4a);
+}
+
+/* ============================================================================
+   HEADER
+   ============================================================================ */
+
+.new-life-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.new-life-header .section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary, #ffffff);
+}
+
+.new-life-header .section-icon {
+  font-size: 1.75rem;
+}
+
+.section-subtitle {
+  color: var(--text-secondary, #a0a0c0);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ============================================================================
+   VIDEO COMPARISON CONTAINER
+   ============================================================================ */
+
+.video-comparison-container {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 768px) {
+  .video-comparison-container {
+    flex-direction: column;
+  }
+
+  .vs-divider {
+    transform: rotate(90deg);
+    margin: 0.5rem 0;
+  }
+}
+
+/* ============================================================================
+   VIDEO PANELS
+   ============================================================================ */
+
+.video-panel {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.winner-panel {
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.winner-panel:hover {
+  border-color: rgba(76, 175, 80, 0.8);
+}
+
+.loser-panel {
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.loser-panel:hover {
+  border-color: rgba(244, 67, 54, 0.8);
+}
+
+/* Panel Header */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.city-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary, #ffffff);
+}
+
+.winner-badge,
+.loser-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.winner-badge {
+  background: rgba(76, 175, 80, 0.3);
+  color: #4CAF50;
+}
+
+.loser-badge {
+  background: rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.score-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-color, #D4AF37);
+}
+
+/* Video Viewport */
+.video-viewport {
+  aspect-ratio: 16 / 9;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.city-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Placeholder */
+.video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+}
+
+.winner-placeholder {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+}
+
+.loser-placeholder {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  opacity: 0.7;
+}
+
+.placeholder-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #a0a0c0);
+}
+
+/* Panel Label */
+.panel-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.freedom-label {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.regulation-label {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.label-icon {
+  font-size: 1rem;
+}
+
+/* ============================================================================
+   VS DIVIDER
+   ============================================================================ */
+
+.vs-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+}
+
+.vs-text {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--accent-color, #D4AF37);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.generation-progress {
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color, #D4AF37), #f0d878);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #a0a0c0);
+}
+
+/* ============================================================================
+   ERROR STATE
+   ============================================================================ */
+
+.video-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.video-error .error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #f44336;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.video-error .error-text {
+  flex: 1;
+  color: #f44336;
+  font-size: 0.9rem;
+}
+
+.video-error .retry-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #f44336;
+  color: #f44336;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.video-error .retry-btn:hover {
+  background: rgba(244, 67, 54, 0.1);
+}
+
+/* ============================================================================
+   ACTION BUTTONS
+   ============================================================================ */
+
+.video-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.generate-btn,
+.play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary-btn {
+  background: var(--accent-color, #D4AF37);
+  color: #000000;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #e5c04a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  font-size: 1.25rem;
+}
+
+.btn-text {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Generating Indicator */
+.generating-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary, #a0a0c0);
+  font-size: 0.95rem;
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-top-color: var(--accent-color, #D4AF37);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   VIDEO INFO
+   ============================================================================ */
+
+.video-info {
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color, #2a2a4a);
+}
+
+.info-text {
+  color: var(--text-secondary, #a0a0c0);
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.5;
+}
