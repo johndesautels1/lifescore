@@ -23,7 +23,8 @@ const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
   'https://henghuunttmaowypiyhq.supabase.co/storage/v1/object/public/Avatars/Cristiano.png';
 
 // ElevenLabs voice for Christiano (authoritative male voice)
-const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'pNInz6obpgDQGcFmaJgB'; // Adam voice
+// Updated 2026-01-27: Custom Christiano voice via Simli
+const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV';
 
 export const config = {
   maxDuration: 120, // 2 minutes for TTS + Replicate submission
