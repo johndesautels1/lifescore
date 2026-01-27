@@ -55,7 +55,14 @@ const LoginScreen: React.FC = () => {
 
     const { error: signInError } = await signInWithEmail(email, password);
     if (signInError) {
-      setLocalError(signInError.message || 'Invalid email or password');
+      // Provide clearer error messages
+      let errorMessage = signInError.message || 'Invalid email or password';
+      if (errorMessage.includes('Invalid login') || errorMessage.includes('invalid')) {
+        errorMessage = 'Invalid email or password. If you just signed up, please verify your email first (check spam folder).';
+      } else if (errorMessage.includes('Email not confirmed')) {
+        errorMessage = 'Please verify your email before signing in. Check your inbox (and spam folder) for the verification link.';
+      }
+      setLocalError(errorMessage);
     }
   }, [email, password, signInWithEmail]);
 
@@ -87,10 +94,21 @@ const LoginScreen: React.FC = () => {
     const { error: signUpError } = await signUp(email, password, fullName || undefined);
 
     if (signUpError) {
-      setLocalError(signUpError.message || 'Failed to create account');
+      // Provide clearer error messages for common Supabase errors
+      let errorMessage = signUpError.message || 'Failed to create account';
+      if (errorMessage.includes('already registered')) {
+        errorMessage = 'This email is already registered. Try signing in or reset your password.';
+      } else if (errorMessage.includes('valid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (errorMessage.includes('password')) {
+        errorMessage = 'Password must be at least 6 characters.';
+      }
+      setLocalError(errorMessage);
     } else {
-      setSuccessMessage('Account created! Please check your email to verify your account.');
+      setSuccessMessage('Account created! Please check your email (including spam folder) to verify your account before signing in.');
       resetForm();
+      // Switch to sign in mode after successful signup
+      setTimeout(() => setMode('signin'), 3000);
     }
   }, [email, password, confirmPassword, fullName, signUp, resetForm]);
 
