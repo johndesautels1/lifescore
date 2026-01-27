@@ -923,6 +923,7 @@
 
 .section-header {
   max-width: 1000px;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   text-align: center;
@@ -952,6 +953,7 @@
   grid-template-columns: 1fr auto 1fr;
   gap: 1.5rem;
   max-width: 1000px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -1110,6 +1112,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 .category-analysis-list {
   max-width: 1000px;
+  width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1270,6 +1273,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 .executive-content {
   max-width: 1000px;
+  width: 100%;
   margin: 0 auto;
   background: var(--gradient-card);
   backdrop-filter: var(--glass-blur);
