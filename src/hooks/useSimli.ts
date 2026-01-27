@@ -285,11 +285,11 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         console.log('[useSimli] Sending', audioBytes.length, 'bytes to Simli');
 
-        // Send audio chunks to Simli with pacing for natural lip-sync
-        // Chunk size: 100ms of audio at 16kHz * 2 bytes/sample = 3200 bytes
-        // Pacing: 90ms intervals for natural lip movement
-        const chunkSize = 3200;
-        const pacingMs = 50;
+        // Send audio chunks to Simli - let Simli handle buffering
+        // Chunk size: 6000 bytes (Simli recommended per docs.simli.com)
+        // Pacing: 0ms - Simli handles internal buffering and playback timing
+        const chunkSize = 6000;
+        const pacingMs = 0;
 
         // Split into chunks
         const chunks: Uint8Array[] = [];
@@ -355,7 +355,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
     // Send empty audio to clear buffer
     if (simliClientRef.current) {
-      const silence = new Uint8Array(3200); // 100ms of silence (16kHz * 2 bytes/sample)
+      const silence = new Uint8Array(6000); // Simli recommended chunk size for buffer clear
       simliClientRef.current.sendAudioData(silence);
     }
 
