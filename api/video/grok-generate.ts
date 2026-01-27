@@ -797,9 +797,15 @@ async function generateSingleVideo(
   let provider = 'kling';
 
   if (!result) {
-    console.log('[VIDEO] Kling unavailable, falling back to Replicate');
-    result = await generateWithReplicate(prompt);
-    provider = 'replicate';
+    console.log('[VIDEO] Kling unavailable (missing credentials or API error), trying Replicate...');
+
+    try {
+      result = await generateWithReplicate(prompt);
+      provider = 'replicate';
+    } catch (replicateError) {
+      console.error('[VIDEO] Replicate also failed:', replicateError);
+      throw new Error(`No video provider available. Kling: missing credentials. Replicate: ${replicateError instanceof Error ? replicateError.message : 'unknown error'}`);
+    }
   }
 
   // Insert record
@@ -1033,9 +1039,19 @@ export default async function handler(
     });
   } catch (error) {
     console.error('[GROK-VIDEO] Error:', error);
+
+    // Provide more specific error info for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isCredentialsError = errorMessage.includes('missing credentials') ||
+                               errorMessage.includes('REPLICATE_API_TOKEN') ||
+                               errorMessage.includes('No video provider');
+
     res.status(500).json({
       error: 'Failed to generate video',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: errorMessage,
+      hint: isCredentialsError
+        ? 'Video provider credentials not configured. Please add KLING_VIDEO_API_KEY + KLING_VIDEO_SECRET or REPLICATE_API_TOKEN to Vercel environment variables.'
+        : 'Please try again or contact support.',
     });
   }
 }
