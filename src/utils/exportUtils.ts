@@ -262,7 +262,7 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
       </div>
 
       <div class="categories-section">
-        <div class="section-title">Category Breakdown</div>
+        <div class="section-title">Category Summary</div>
         <table>
           <thead>
             <tr>
@@ -291,6 +291,83 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
             }).join('')}
           </tbody>
         </table>
+      </div>
+
+      <!-- DETAILED METRIC TABLES BY CATEGORY -->
+      ${result.city1.categories.map((cat, catIndex) => {
+        const cat2 = result.city2.categories[catIndex];
+        const catInfo = CATEGORIES.find(c => c.id === cat.categoryId);
+        const catName = catInfo?.name || cat.categoryId;
+        const catIcon = catInfo?.icon || '📊';
+
+        return `
+          <div class="category-detail no-break" style="margin-top: 30px; page-break-inside: avoid;">
+            <div class="section-title">${catIcon} ${catName}</div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Metric</th>
+                  <th style="width: 15%;">${result.city1.city}</th>
+                  <th style="width: 15%;">${result.city2.city}</th>
+                  <th style="width: 10%;">Diff</th>
+                  <th style="width: 30%;">Analysis</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${cat.metrics.map((metric, metricIndex) => {
+                  const metric2 = cat2.metrics[metricIndex];
+                  const score1 = metric.consensusScore ?? 0;
+                  const score2 = metric2.consensusScore ?? 0;
+                  const diff = score1 - score2;
+                  const diffStr = diff > 0 ? '+' + Math.round(diff) : Math.round(diff).toString();
+                  const reasoning = metric.reasoning || metric2.reasoning || '';
+                  const shortReasoning = reasoning.length > 150 ? reasoning.substring(0, 150) + '...' : reasoning;
+
+                  return `
+                    <tr>
+                      <td><strong>${metric.metricId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></td>
+                      <td class="${score1 >= score2 ? 'winner-cell' : 'loser-cell'}">${Math.round(score1)}</td>
+                      <td class="${score2 >= score1 ? 'winner-cell' : 'loser-cell'}">${Math.round(score2)}</td>
+                      <td style="color: ${diff > 0 ? '#059669' : diff < 0 ? '#dc2626' : '#666'};">${diffStr}</td>
+                      <td style="font-size: 10px; color: #555;">${shortReasoning}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+            <div style="text-align: right; font-size: 11px; color: #666; margin-top: 5px;">
+              Category Average: ${result.city1.city} <strong>${Math.round(cat.averageConsensusScore ?? 0)}</strong> |
+              ${result.city2.city} <strong>${Math.round(cat2.averageConsensusScore ?? 0)}</strong>
+            </div>
+          </div>
+        `;
+      }).join('')}
+
+      <!-- LLM CONSENSUS ANALYSIS -->
+      <div class="no-break" style="margin-top: 30px; page-break-inside: avoid;">
+        <div class="section-title">🤖 AI Model Consensus</div>
+        <table>
+          <thead>
+            <tr>
+              <th>AI Model</th>
+              <th>Status</th>
+              <th>Metrics Evaluated</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.llmsUsed.map(llm => `
+              <tr>
+                <td><strong>${llm}</strong></td>
+                <td style="color: #059669;">✓ Completed</td>
+                <td>${result.processingStats.metricsEvaluated}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top: 10px; font-size: 11px; color: #666;">
+          Total Processing Time: ${(result.processingStats.totalProcessingTimeMs / 1000).toFixed(1)}s |
+          API Calls: ${result.processingStats.apiCallCount}
+        </div>
       </div>
 
       <div class="footer">
