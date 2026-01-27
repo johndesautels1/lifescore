@@ -41,6 +41,7 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_M
   ]);
 }
 import FeatureGate from './FeatureGate';
+import CourtOrderVideo from './CourtOrderVideo';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
 import {
@@ -1396,6 +1397,31 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           )}
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          COURT ORDER VIDEO - Perfect Life Visualization
+      ═══════════════════════════════════════════════════════════════════ */}
+      {judgeReport && (
+        <section className="court-order-section">
+          <CourtOrderVideo
+            comparisonId={comparisonResult.comparisonId}
+            winnerCity={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Name
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Name
+                : city1Name
+            }
+            winnerScore={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? judgeReport.summaryOfFindings.city1Score
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? judgeReport.summaryOfFindings.city2Score
+                : judgeReport.summaryOfFindings.city1Score
+            }
+          />
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           FOOTER

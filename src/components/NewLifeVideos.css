@@ -91,6 +91,75 @@
   border-color: rgba(244, 67, 54, 0.8);
 }
 
+/* ============================================================================
+   STATUS BANNERS (FREEDOM / IMPRISONMENT)
+   ============================================================================ */
+
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.freedom-banner {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.4), rgba(34, 197, 94, 0.3));
+  color: #4ade80;
+  border-bottom: 2px solid rgba(76, 175, 80, 0.6);
+}
+
+.imprisonment-banner {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(185, 28, 28, 0.3));
+  color: #f87171;
+  border-bottom: 2px solid rgba(239, 68, 68, 0.6);
+}
+
+.banner-icon {
+  font-size: 1.1rem;
+}
+
+.banner-text {
+  font-weight: 900;
+}
+
+/* ============================================================================
+   HERO & PRISON BADGES
+   ============================================================================ */
+
+.hero-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(74, 222, 128, 0.4);
+}
+
+.hero-icon {
+  font-size: 1.1rem;
+}
+
+.prison-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(185, 28, 28, 0.3));
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.prison-icon {
+  font-size: 0.9rem;
+}
+
 /* Panel Header */
 .panel-header {
   display: flex;
@@ -98,6 +167,7 @@
   justify-content: space-between;
   padding: 0.75rem 1rem;
   background: rgba(0, 0, 0, 0.4);
+  gap: 0.5rem;
 }
 
 .city-name {
@@ -194,7 +264,8 @@
   color: #4CAF50;
 }
 
-.regulation-label {
+.regulation-label,
+.imprisonment-label {
   background: rgba(244, 67, 54, 0.2);
   color: #f44336;
 }

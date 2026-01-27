@@ -109,15 +109,15 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   }, [result.comparisonId]);
 
   return (
-    <FeatureGate feature="judgeVideos" blurContent={true}>
+    <FeatureGate feature="grokVideos" blurContent={true}>
       <div className="new-life-videos">
         <div className="new-life-header">
           <h3 className="section-title">
             <span className="section-icon">🎬</span>
-            See Your New Life!
+            {winnerCity} & {loserCity}
           </h3>
           <p className="section-subtitle">
-            Watch the contrast between freedom and regulation
+            See the contrast between freedom and imprisonment
           </p>
         </div>
 
@@ -125,7 +125,16 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
         <div className="video-comparison-container">
           {/* Winner City - Freedom Video */}
           <div className="video-panel winner-panel">
+            {/* FREEDOM Banner */}
+            <div className="status-banner freedom-banner">
+              <span className="banner-icon">🗽</span>
+              <span className="banner-text">FREEDOM</span>
+              <span className="banner-icon">🏆</span>
+            </div>
             <div className="panel-header">
+              <span className="hero-badge">
+                <span className="hero-icon">🦸</span>
+              </span>
               <span className="city-name">{winnerCity}</span>
               <span className="winner-badge">WINNER</span>
               <span className="score-badge">{winnerScore.toFixed(1)}</span>
@@ -151,7 +160,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             </div>
             <div className="panel-label freedom-label">
               <span className="label-icon">🗽</span>
-              FREEDOM
+              YOUR NEW LIFE
             </div>
           </div>
 
@@ -160,9 +169,19 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             <span className="vs-text">VS</span>
           </div>
 
-          {/* Loser City - Regulation Video */}
+          {/* Loser City - Imprisonment Video */}
           <div className="video-panel loser-panel">
+            {/* IMPRISONMENT Banner */}
+            <div className="status-banner imprisonment-banner">
+              <span className="banner-icon">⛓️</span>
+              <span className="banner-text">IMPRISONMENT</span>
+              <span className="banner-icon">👮</span>
+            </div>
             <div className="panel-header">
+              <span className="prison-badge">
+                <span className="prison-icon">⛓️</span>
+                <span className="prison-icon">👮</span>
+              </span>
               <span className="city-name">{loserCity}</span>
               <span className="loser-badge">LOSER</span>
               <span className="score-badge">{loserScore.toFixed(1)}</span>
@@ -179,16 +198,16 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 />
               ) : (
                 <div className="video-placeholder loser-placeholder">
-                  <div className="placeholder-icon">🔒</div>
+                  <div className="placeholder-icon">⛓️</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : 'Bureaucracy lurks'}
+                    {isGenerating ? 'Generating...' : 'Oppression looms'}
                   </div>
                 </div>
               )}
             </div>
-            <div className="panel-label regulation-label">
-              <span className="label-icon">📋</span>
-              REGULATIONS
+            <div className="panel-label imprisonment-label">
+              <span className="label-icon">👮</span>
+              GOVERNMENT CONTROL
             </div>
           </div>
         </div>

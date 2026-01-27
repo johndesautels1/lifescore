@@ -136,7 +136,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   }, [comparisonId]);
 
   return (
-    <FeatureGate feature="judgeVideos" blurContent={true}>
+    <FeatureGate feature="grokVideos" blurContent={true}>
       <div className="court-order-video">
         <div className="court-order-header">
           <h4 className="court-order-title">

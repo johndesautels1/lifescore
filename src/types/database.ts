@@ -126,6 +126,7 @@ export interface UsageTracking {
   olivia_messages: number;
   judge_videos: number;
   gamma_reports: number;
+  grok_videos: number;
   created_at: string;
   updated_at: string;
 }
@@ -231,6 +232,7 @@ export interface UsageTrackingInsert {
   olivia_messages?: number;
   judge_videos?: number;
   gamma_reports?: number;
+  grok_videos?: number;
 }
 
 export interface GrokVideoInsert {

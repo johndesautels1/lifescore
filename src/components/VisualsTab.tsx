@@ -11,6 +11,7 @@ import type { VisualReportState } from '../types/gamma';
 import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
 import { saveGammaReport, hasGammaReportForComparison } from '../services/savedComparisons';
 import AdvancedVisuals from './AdvancedVisuals';
+import NewLifeVideos from './NewLifeVideos';
 import FeatureGate from './FeatureGate';
 import './VisualsTab.css';
 
@@ -313,20 +314,16 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       {/* In-App Visualizations - Only for Enhanced mode */}
       {isEnhancedResult(result) ? (
         <div className="in-app-visuals">
-          <h3 className="section-title">
-            <span className="section-icon">📈</span>
-            Interactive Charts
-          </h3>
-          <AdvancedVisuals result={result} />
+          <NewLifeVideos result={result} />
         </div>
       ) : (
         <div className="in-app-visuals">
           <h3 className="section-title">
-            <span className="section-icon">📈</span>
-            Interactive Charts
+            <span className="section-icon">🎬</span>
+            City Life Videos
           </h3>
           <div className="simple-mode-notice">
-            <p>Advanced interactive charts are available in Enhanced Mode (multi-LLM comparison).</p>
+            <p>City life videos are available in Enhanced Mode (multi-LLM comparison).</p>
             <p>Use the "Generate Report" button above to create a visual presentation of your comparison.</p>
           </div>
         </div>

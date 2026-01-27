@@ -70,6 +70,10 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: str
     title: 'Visual Reports',
     description: 'Beautiful PDF and PowerPoint presentations of your comparisons.',
   },
+  grokVideos: {
+    title: 'City Life Videos',
+    description: 'AI-generated videos showing freedom vs imprisonment in your compared cities.',
+  },
   cloudSync: {
     title: 'Cloud Sync',
     description: 'Save and sync your comparisons across all your devices.',

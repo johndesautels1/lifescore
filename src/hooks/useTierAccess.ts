@@ -48,6 +48,7 @@ export interface TierLimits {
   oliviaMessagesPerDay: number;
   judgeVideos: number;
   gammaReports: number;
+  grokVideos: number;
   cloudSync: boolean;
   apiAccess: boolean;
 }
@@ -71,6 +72,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     oliviaMessagesPerDay: 5,
     judgeVideos: 0,
     gammaReports: 0,
+    grokVideos: 0,       // Free users: no access
     cloudSync: false,
     apiAccess: false,
   },
@@ -80,6 +82,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     oliviaMessagesPerDay: 50, // 50 messages per day
     judgeVideos: 3,
     gammaReports: 5,
+    grokVideos: 0,       // Pro users: no access (Sovereign only)
     cloudSync: true,
     apiAccess: false,
   },
@@ -89,6 +92,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     oliviaMessagesPerDay: -1,
     judgeVideos: -1,
     gammaReports: -1,
+    grokVideos: -1,      // Sovereign: unlimited
     cloudSync: true,
     apiAccess: true,
   },
@@ -103,6 +107,7 @@ const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
   oliviaMessagesPerDay: 'olivia_messages',
   judgeVideos: 'judge_videos',
   gammaReports: 'gamma_reports',
+  grokVideos: 'grok_videos',
 };
 
 // ============================================================================
