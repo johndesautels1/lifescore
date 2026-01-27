@@ -923,11 +923,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
         </div>
 
         <div className="header-center">
-          <div className="judge-wordmark">
-            <span className="wordmark-prefix">THE</span>
-            <span className="wordmark-main">JUDGE</span>
-          </div>
-          <div className="wordmark-tagline">Claude Opus 4.5 • Final Arbiter</div>
         </div>
 
         <div className="header-right">
