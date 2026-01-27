@@ -31,7 +31,8 @@ const KLING_MODEL = 'kling-v2-6'; // Latest model with sound support
 
 // Replicate fallback - text-to-video model (if Kling fails)
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const REPLICATE_VIDEO_MODEL = 'stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438';
+// Use Minimax Video-01 for high-quality text-to-video generation
+const REPLICATE_VIDEO_MODEL = 'minimax/video-01';
 
 // Supabase client
 const supabaseAdmin = createClient(
@@ -464,37 +465,33 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
     throw new Error('No video generation provider available (REPLICATE_API_TOKEN required)');
   }
 
-  console.log('[GROK-VIDEO] Using Replicate fallback for video generation');
+  console.log('[GROK-VIDEO] Using Replicate Minimax Video-01 for text-to-video generation');
 
-  // Use Stable Video Diffusion or similar text-to-video model
-  const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
+  // Use Minimax Video-01 - high quality text-to-video model
+  // API: POST /models/{model}/predictions
+  const response = await fetch(`${REPLICATE_API_URL}/models/${REPLICATE_VIDEO_MODEL}/predictions`, {
     method: 'POST',
     headers: {
-      'Authorization': `Token ${replicateToken}`,
+      'Authorization': `Bearer ${replicateToken}`,
       'Content-Type': 'application/json',
+      'Prefer': 'wait=5', // Wait up to 5 seconds for fast responses
     },
     body: JSON.stringify({
-      version: REPLICATE_VIDEO_MODEL.split(':')[1],
       input: {
-        prompt,
-        num_frames: 25, // ~1 second at 25fps, adjust as needed
-        fps: 8,
-        motion_bucket_id: 127, // Default motion
-        cond_aug: 0.02,
-        decoding_t: 14,
-        video_length: 'short', // Adjust based on model
+        prompt: prompt.slice(0, 2000), // Minimax accepts up to 2000 chars
+        prompt_optimizer: true, // Let Minimax enhance the prompt
       },
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[GROK-VIDEO] Replicate error:', response.status, errorText);
-    throw new Error(`Replicate video generation failed: ${response.status}`);
+    console.error('[GROK-VIDEO] Replicate Minimax error:', response.status, errorText);
+    throw new Error(`Replicate video generation failed: ${response.status} - ${errorText}`);
   }
 
   const prediction = await response.json();
-  console.log('[GROK-VIDEO] Replicate prediction started:', prediction.id);
+  console.log('[GROK-VIDEO] Replicate Minimax prediction started:', prediction.id);
 
   return {
     predictionId: prediction.id,
