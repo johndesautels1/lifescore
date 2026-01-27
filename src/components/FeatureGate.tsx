@@ -100,7 +100,7 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   allowDismiss = true,
   onDismiss,
 }) => {
-  const { tier, canAccess, checkUsage, getRequiredTier, isUnlimited } = useTierAccess();
+  const { tier, canAccess, checkUsage, getRequiredTier, isUnlimited, isLoading } = useTierAccess();
   const [usageInfo, setUsageInfo] = useState<{
     used: number;
     limit: number;
@@ -114,7 +114,9 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
 
   // Check if feature is accessible
-  const hasAccess = canAccess(feature);
+  // IMPORTANT: If auth is still loading, ALLOW access (fail open) to avoid blocking
+  // legitimate users while their session loads. Once loaded, proper access check applies.
+  const hasAccess = isLoading ? true : canAccess(feature);
 
   // Check usage limits
   useEffect(() => {

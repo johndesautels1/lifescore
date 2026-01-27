@@ -177,17 +177,30 @@ function getCurrentPeriodStart(): string {
 // ============================================================================
 
 // Developer bypass emails - comma separated in env var
+// IMPORTANT: This grants SOVEREIGN (enterprise) access to admin/dev emails
 const DEV_BYPASS_EMAILS = (import.meta.env.VITE_DEV_BYPASS_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+
+// Hardcoded fallback in case env var isn't read properly
+const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com'];
 
 export function useTierAccess(): TierAccessHook {
   const { profile, user, isLoading: authLoading } = useAuth();
 
   // Developer bypass - grant enterprise access to specified emails
-  const isDeveloper = user?.email && DEV_BYPASS_EMAILS.includes(user.email.toLowerCase());
+  // Check both env var list AND hardcoded fallback for reliability
+  const userEmail = user?.email?.toLowerCase() || '';
+  const isDeveloper = userEmail && (
+    DEV_BYPASS_EMAILS.includes(userEmail) ||
+    HARDCODED_BYPASS_EMAILS.includes(userEmail)
+  );
+
+  // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet
   const tier: UserTier = isDeveloper ? 'enterprise' : (profile?.tier || 'free');
 
   if (isDeveloper) {
-    console.log('[useTierAccess] Developer bypass active for:', user?.email);
+    console.log('[useTierAccess] 🔓 DEVELOPER BYPASS ACTIVE for:', userEmail, '→ SOVEREIGN tier');
+  } else if (authLoading) {
+    console.log('[useTierAccess] Auth loading, defaulting to:', tier);
   }
   const tierName = TIER_NAMES[tier];
   const limits = TIER_LIMITS[tier];
