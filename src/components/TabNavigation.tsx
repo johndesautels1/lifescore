@@ -3,7 +3,7 @@
  * Horizontal toolbar tabs for section navigation
  */
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import './TabNavigation.css';
 
 export type TabId = 'compare' | 'results' | 'visuals' | 'olivia' | 'saved' | 'judges-report' | 'about';
@@ -78,7 +78,13 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           <button
             key={tab.id}
             className={`tab-item ${activeTab === tab.id ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}`}
-            onClick={() => !tab.disabled && onTabChange(tab.id)}
+            onClick={() => {
+              if (!tab.disabled) {
+                startTransition(() => {
+                  onTabChange(tab.id);
+                });
+              }
+            }}
             disabled={tab.disabled}
             aria-selected={activeTab === tab.id}
             role="tab"
