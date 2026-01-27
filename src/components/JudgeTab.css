@@ -911,6 +911,26 @@
   font-size: 0.85rem;
 }
 
+/* Download buttons - slightly larger */
+.action-btn.download-btn {
+  padding: 0.7rem 1.1rem;
+  font-size: 0.75rem;
+  gap: 0.4rem;
+}
+
+.action-btn.download-btn .btn-text {
+  font-size: 0.75rem;
+}
+
+/* Save and Forward buttons - add spacing from download buttons */
+.action-btn.save-btn {
+  margin-right: 0.5rem;
+}
+
+.action-btn.forward-btn {
+  margin-left: 0.5rem;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    FINDINGS SECTION
    ═══════════════════════════════════════════════════════════════════════════ */
