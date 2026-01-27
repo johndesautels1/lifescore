@@ -410,7 +410,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           {getWinnerText(comparison)}
                         </span>
                         <span className="saved-scores">
-                          {Math.round(comparison.result.city1?.totalScore || 0)} - {Math.round(comparison.result.city2?.totalScore || 0)}
+                          {Math.round(comparison.result.city1?.totalScore || comparison.result.city1?.totalConsensusScore || 0)} - {Math.round(comparison.result.city2?.totalScore || comparison.result.city2?.totalConsensusScore || 0)}
                         </span>
                         <span className="saved-date">{formatDate(comparison.savedAt)}</span>
                         {!comparison.synced && syncStatus.connected && (

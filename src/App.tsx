@@ -248,9 +248,24 @@ const AppContent: React.FC = () => {
 
     console.log('[App] Loading saved comparison:', result.comparisonId, result.city1.city, 'vs', result.city2.city);
 
-    loadResult(result);
-    setEnhancedStatus('idle');
-    setEnhancedResult(null);
+    // FIX 2026-01-27: Detect enhanced comparisons and load them correctly
+    // Enhanced comparisons have llmsUsed array and totalConsensusScore on city objects
+    const isEnhanced = !!(result as unknown as EnhancedComparisonResult).llmsUsed?.length ||
+                       !!(result.city1 as unknown as { totalConsensusScore?: number }).totalConsensusScore;
+
+    if (isEnhanced) {
+      console.log('[App] Loading as ENHANCED comparison');
+      setEnhancedResult(result as unknown as EnhancedComparisonResult);
+      setEnhancedStatus('complete');
+      // Also set base result for components that need it
+      loadResult(result);
+    } else {
+      console.log('[App] Loading as standard comparison');
+      loadResult(result);
+      setEnhancedStatus('idle');
+      setEnhancedResult(null);
+    }
+
     // FIX 2026-01-25: Switch to results tab after loading saved comparison
     setActiveTab('results');
   }, [loadResult]);
