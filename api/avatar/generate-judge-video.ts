@@ -19,8 +19,9 @@ const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const SADTALKER_VERSION = 'cjwbw/sadtalker:a519cc0cfebaaeade068b23899165a11ec76aaa1d2b313d40d214f204ec957a3';
 
 // Christiano judge avatar image
+// Updated 2026-01-27: New Replicate avatar
 const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
-  'https://henghuunttmaowypiyhq.supabase.co/storage/v1/object/public/Avatars/Cristiano.png';
+  'https://replicate.delivery/pbxt/OU2q0kEZmrGm3EB3eWU8AQ5MvYtoL4qu3sezEwj8P5FKix3o/Cristiano.mp4';
 
 // ElevenLabs voice for Christiano (authoritative male voice)
 // Updated 2026-01-27: Custom Christiano voice via Simli
