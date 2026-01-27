@@ -59,7 +59,7 @@ import './App.css';
 
 // Main app content (requires auth)
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
@@ -711,7 +711,7 @@ const AppContent: React.FC = () => {
           {activeTab === 'judges-report' && (
             <JudgeTab
               comparisonResult={enhancedResult || state.result || null}
-              userId={/* TODO: Get from auth context */ 'guest'}
+              userId={user?.id || 'guest'}
             />
           )}
 
