@@ -21,8 +21,12 @@ interface WinnerHeroProps {
 export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
-  
+
   const isTie = result.winner === 'tie';
+
+  // Handle both standard (totalScore) and enhanced (totalConsensusScore) comparisons
+  const getScore = (city: any) => city.totalScore ?? city.totalConsensusScore ?? 0;
+  const confidence = (result.city1 as any).overallConfidence || (result as any).overallConsensusConfidence || 'medium';
 
   return (
     <div className={`winner-hero ${isTie ? 'tie' : ''}`}>
@@ -30,7 +34,7 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
         <>
           <div className="winner-trophy">🏆</div>
           <h2 className="winner-city">{winner.city}, {winner.country}</h2>
-          <div className="winner-score">{Math.round(winner.totalScore)}</div>
+          <div className="winner-score">{Math.round(getScore(winner))}</div>
           <p className="winner-label">LIFE SCORE™</p>
           <p className="winner-difference">
             {result.scoreDifference} points more freedom than {loser.city}, {loser.country}
@@ -40,14 +44,14 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
         <>
           <div className="winner-trophy">⚖️</div>
           <h2 className="winner-city">It's a Tie!</h2>
-          <div className="winner-score">{Math.round(result.city1.totalScore)}</div>
+          <div className="winner-score">{Math.round(getScore(result.city1))}</div>
           <p className="winner-label">Both cities scored equally</p>
         </>
       )}
-      
+
       <div className="confidence-badge-hero">
-        <span className={`confidence-badge confidence-${result.city1.overallConfidence}`}>
-          Data Confidence: {result.city1.overallConfidence.toUpperCase()}
+        <span className={`confidence-badge confidence-${confidence}`}>
+          Data Confidence: {confidence.toUpperCase()}
         </span>
       </div>
     </div>
@@ -66,17 +70,20 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({ result }) => {
   const city1Wins = result.winner === 'city1';
   const city2Wins = result.winner === 'city2';
 
+  // Handle both standard (totalScore) and enhanced (totalConsensusScore) comparisons
+  const getScore = (city: any) => city.totalScore ?? city.totalConsensusScore ?? 0;
+
   return (
     <div className="score-grid card">
       <div className={`score-box ${city1Wins ? 'winner' : ''}`}>
         <h3>{result.city1.city}, {result.city1.country}</h3>
-        <div className="score">{Math.round(result.city1.totalScore)}</div>
+        <div className="score">{Math.round(getScore(result.city1))}</div>
         <p className="score-label">Total LIFE SCORE™</p>
       </div>
 
       <div className={`score-box ${city2Wins ? 'winner' : ''}`}>
         <h3>{result.city2.city}, {result.city2.country}</h3>
-        <div className="score">{Math.round(result.city2.totalScore)}</div>
+        <div className="score">{Math.round(getScore(result.city2))}</div>
         <p className="score-label">Total LIFE SCORE™</p>
       </div>
     </div>
