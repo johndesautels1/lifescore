@@ -173,6 +173,7 @@
 .or-divider {
   color: var(--steel-gray);
   font-size: 0.85rem;
+  margin-bottom: 1.5rem;
   letter-spacing: 0.1em;
 }
 
@@ -575,6 +576,7 @@
 .generating-subtext {
   font-size: 0.8rem;
   color: var(--steel-gray);
+  margin-bottom: 1.5rem;
 }
 
 .progress-bar-container {
@@ -720,6 +722,7 @@
 .awaiting-subtext {
   font-size: 0.8rem;
   color: var(--steel-gray);
+  margin-bottom: 1.5rem;
 }
 
 /* Generate Button */
@@ -919,12 +922,11 @@
 }
 
 .section-header {
-  max-width: 1000px;
-  margin: 0 auto 1.5rem auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .section-icon {
