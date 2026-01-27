@@ -1213,10 +1213,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           SUMMARY OF FINDINGS
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="findings-section">
-        <div className="section-header">
-          <span className="section-icon">📊</span>
-          <h2 className="section-title">SUMMARY OF FINDINGS</h2>
-        </div>
 
         <div className="findings-grid">
           <div className="finding-card city1">
@@ -1277,10 +1273,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           DETAILED CATEGORY ANALYSIS
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="analysis-section">
-        <div className="section-header">
-          <span className="section-icon">📖</span>
-          <h2 className="section-title">DETAILED ANALYSIS</h2>
-        </div>
 
         <div className="category-analysis-list">
           {CATEGORIES.map((category) => {
@@ -1339,10 +1331,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           EXECUTIVE SUMMARY & RECOMMENDATION
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="executive-section">
-        <div className="section-header">
-          <span className="section-icon">🏆</span>
-          <h2 className="section-title">EXECUTIVE SUMMARY & RECOMMENDATION</h2>
-        </div>
 
         <div className="executive-content">
           {judgeReport?.executiveSummary ? (
