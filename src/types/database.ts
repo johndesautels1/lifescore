@@ -8,6 +8,9 @@ export type ComparisonWinner = 'city1' | 'city2' | 'tie';
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type Theme = 'light' | 'dark' | 'auto';
 export type DefaultView = 'grid' | 'list' | 'table';
+export type GrokVideoType = 'winner_mood' | 'loser_mood' | 'perfect_life';
+export type GrokVideoStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type GrokVideoProvider = 'grok' | 'replicate';
 export type SubscriptionStatus =
   | 'active'
   | 'canceled'
@@ -127,6 +130,24 @@ export interface UsageTracking {
   updated_at: string;
 }
 
+export interface GrokVideo {
+  id: string;
+  user_id: string;
+  comparison_id: string;
+  city_name: string;
+  video_type: GrokVideoType;
+  prompt: string;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  duration_seconds: number;
+  provider: GrokVideoProvider;
+  prediction_id: string | null;
+  status: GrokVideoStatus;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
 export interface ProfileInsert {
   id: string;
   email?: string | null;
@@ -212,6 +233,21 @@ export interface UsageTrackingInsert {
   gamma_reports?: number;
 }
 
+export interface GrokVideoInsert {
+  user_id: string;
+  comparison_id: string;
+  city_name: string;
+  video_type: GrokVideoType;
+  prompt: string;
+  video_url?: string | null;
+  thumbnail_url?: string | null;
+  duration_seconds?: number;
+  provider?: GrokVideoProvider;
+  prediction_id?: string | null;
+  status?: GrokVideoStatus;
+  error_message?: string | null;
+}
+
 export interface ProfileUpdate {
   email?: string | null;
   full_name?: string | null;
@@ -291,6 +327,12 @@ export type Database = {
         Row: UsageTracking;
         Insert: UsageTrackingInsert;
         Update: Partial<UsageTracking>;
+        Relationships: [];
+      };
+      grok_videos: {
+        Row: GrokVideo;
+        Insert: GrokVideoInsert;
+        Update: Partial<GrokVideo>;
         Relationships: [];
       };
     };
