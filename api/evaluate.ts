@@ -484,7 +484,7 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
 
 // Tavily API helpers - Optimized per Tavily recommendations (2026-01-18)
 interface TavilyResult { title: string; url: string; content: string }
-interface TavilyResponse { results: TavilyResult[]; answer?: string }
+interface TavilyResponse { results: TavilyResult[]; answer?: string; creditsUsed?: number }
 interface TavilyResearchResponse { report: string; sources: { title: string; url: string }[] }
 
 // Tavily API headers - Updated 2026-01-21 to use Bearer auth per official docs
@@ -577,8 +577,9 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
       return { results: [] };
     }
     const data = await response.json();
-    console.log(`[TAVILY SEARCH] Success - results: ${data.results?.length || 0}, credits used: ${data.usage?.total_tokens || 'N/A'}`);
-    return { results: data.results || [], answer: data.answer };
+    const creditsUsed = data.usage?.total_tokens || 0;
+    console.log(`[TAVILY SEARCH] Success - results: ${data.results?.length || 0}, credits used: ${creditsUsed}`);
+    return { results: data.results || [], answer: data.answer, creditsUsed };
   } catch (error) {
     console.error(`[TAVILY SEARCH] Exception for query "${query.slice(0, 50)}...":`, error instanceof Error ? error.message : error);
     return { results: [] };
@@ -758,8 +759,12 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
     // Run Research + Search in parallel for speed
     const [researchResult, ...searchResults] = await Promise.all([
       tavilyResearch(city1, city2).catch(() => null),
-      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
+      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], creditsUsed: 0 })))
     ]);
+
+    // Track total Tavily credits used for GPT-4o
+    var gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
+    console.log(`[GPT-4o] Total Tavily credits used: ${gpt4oTavilyCredits}`);
 
     const allResults = searchResults.flatMap(r => r.results);
     const answers = searchResults.map(r => r.answer).filter(Boolean);
@@ -785,6 +790,8 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     if (contextParts.length > 0) {
       tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
     }
+  } else {
+    var gpt4oTavilyCredits = 0;
   }
 
   // GPT-4o SPECIFIC ADDENDUM
