@@ -441,8 +441,8 @@ async function waitForRun(
       continue;
     }
 
-    // Wait 1 second before next poll
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait 500ms before next poll (reduced from 1000ms for faster response)
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   throw new Error('Run timed out');
