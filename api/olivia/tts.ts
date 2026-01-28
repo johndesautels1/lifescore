@@ -20,8 +20,8 @@ import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_TIMEOUT_MS = 60000; // 60 seconds
 
-// Default voice ID - Olivia's cloned voice (can be overridden via env)
-const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
+// Default voice ID - Olivia's voice (uses ELEVENLABS_OLIVIA_VOICE_ID env var)
+const DEFAULT_VOICE_ID = process.env.ELEVENLABS_OLIVIA_VOICE_ID || process.env.ELEVENLABS_VOICE_ID || 'W0Zh57R76zl4xEJ4vCd2';
 
 // Default model - multilingual v2 for best quality
 const DEFAULT_MODEL_ID = 'eleven_multilingual_v2';
