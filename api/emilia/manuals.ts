@@ -109,9 +109,9 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 ## Account Management
 
 ### Subscription Tiers
-- **Explorer (Free)**: 3 standard comparisons/month
-- **Pioneer**: 10 standard + 3 enhanced/month
-- **Sovereign**: Unlimited comparisons
+- **FREE**: 1 comparison/month (1 LLM)
+- **NAVIGATOR ($29/mo)**: 1 comparison/month, 15min Olivia, 1 Judge, 1 Gamma
+- **SOVEREIGN ($99/mo)**: 1 comparison/month (5 LLMs), 60min Olivia, Enhanced Mode
 
 ### Upgrading
 - Click "Upgrade" in the header
@@ -138,18 +138,18 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### Tier Limits
 
-| Tier | Standard | Enhanced | Price |
-|------|----------|----------|-------|
-| Explorer | 3/month | 0 | Free |
-| Pioneer | 10/month | 3/month | $19/month |
-| Sovereign | Unlimited | Unlimited | $49/month |
+| Tier | Comparisons | Olivia | Price |
+|------|-------------|--------|-------|
+| FREE | 1/month | 0 | $0 |
+| NAVIGATOR | 1/month | 15 min | $29/month |
+| SOVEREIGN | 1/month (5 LLMs) | 60 min | $99/month |
 
 ## Common Issues
 
 ### "I can't run more comparisons"
 - Check current tier in Account Settings
 - Usage resets on billing date
-- Upgrade to Pioneer or Sovereign for more
+- Upgrade to NAVIGATOR or SOVEREIGN for more
 
 ### "My comparison is stuck"
 - Enhanced mode can take up to 10 minutes

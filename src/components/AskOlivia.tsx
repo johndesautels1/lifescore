@@ -256,18 +256,18 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     if (!messageText) return;
 
     // Check usage limits before sending
-    if (!isUnlimited('oliviaMessagesPerDay')) {
-      const usage = await checkUsage('oliviaMessagesPerDay');
+    if (!isUnlimited('oliviaMinutesPerMonth')) {
+      const usage = await checkUsage('oliviaMinutesPerMonth');
       if (!usage.allowed) {
         setUsageLimitReached(true);
         // Dispatch event to open pricing modal
         window.dispatchEvent(new CustomEvent('openPricing', {
-          detail: { feature: 'Olivia messages', requiredTier: usage.requiredTier }
+          detail: { feature: 'Olivia minutes', requiredTier: usage.requiredTier }
         }));
         return;
       }
       // Increment usage counter
-      await incrementUsage('oliviaMessagesPerDay');
+      await incrementUsage('oliviaMinutesPerMonth');
     }
 
     setInputText('');
@@ -750,7 +750,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
         {/* Usage meter */}
         <div className="usage-meter-row">
-          <UsageMeter feature="oliviaMessagesPerDay" compact={true} />
+          <UsageMeter feature="oliviaMinutesPerMonth" compact={true} />
         </div>
       </section>
 

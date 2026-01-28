@@ -51,8 +51,8 @@ Emilia is a help assistant that provides:
 
 | User Tier | Access Level |
 |-----------|--------------|
-| EXPLORER (Free) | Full access |
-| PIONEER | Full access |
+| FREE | Full access |
+| NAVIGATOR | Full access |
 | SOVEREIGN | Full access |
 
 ### 1.3 Emilia vs Olivia
@@ -152,7 +152,7 @@ Content: Rendered Markdown
 │  │ 3. Click "Compare Cities"                               │   │
 │  │                                                          │   │
 │  │ Enhanced mode uses 5 AI providers for more accurate     │   │
-│  │ results. It requires PIONEER or SOVEREIGN tier.         │   │
+│  │ results. It requires SOVEREIGN tier.                    │   │
 │  │                                                  🔊      │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                  │

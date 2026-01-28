@@ -123,7 +123,7 @@ export interface UsageTracking {
   period_end: string;
   standard_comparisons: number;
   enhanced_comparisons: number;
-  olivia_messages: number;
+  olivia_minutes: number;
   judge_videos: number;
   gamma_reports: number;
   grok_videos: number;
@@ -229,7 +229,7 @@ export interface UsageTrackingInsert {
   period_end: string;
   standard_comparisons?: number;
   enhanced_comparisons?: number;
-  olivia_messages?: number;
+  olivia_minutes?: number;
   judge_videos?: number;
   gamma_reports?: number;
   grok_videos?: number;

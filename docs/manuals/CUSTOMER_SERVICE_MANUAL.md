@@ -78,15 +78,15 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 ### 3.1 Tier Comparison
 
-| Feature | EXPLORER (Free) | PIONEER ($9.99/mo) | SOVEREIGN ($24.99/mo) |
-|---------|-----------------|--------------------|-----------------------|
-| Standard Comparisons | 3/month | 25/month | Unlimited |
-| Enhanced Comparisons | 0 | 10/month | Unlimited |
-| Olivia AI Messages | 10/month | 100/month | Unlimited |
-| Gamma Reports | 0 | 5/month | Unlimited |
-| Judge Videos | 0 | 3/month | Unlimited |
-| Grok Videos | 0 | 0 | Unlimited |
-| LLM Selection | Claude only | Claude, GPT-4o | All 5 LLMs |
+| Feature | FREE ($0) | NAVIGATOR ($29/mo) | SOVEREIGN ($99/mo) |
+|---------|-----------|--------------------|--------------------|
+| LLM Providers | 1 | 1 | 5 |
+| Comparisons | 1/month | 1/month | 1/month (all 5 LLMs) |
+| Olivia AI | No | 15 min/month | 60 min/month |
+| Gamma Reports | No | 1/month | 1/month (all 5 LLMs) |
+| Judge Videos | No | 1/month | 1/month |
+| Enhanced Mode | No | No | Yes |
+| Cloud Sync | No | Yes | Yes |
 
 ### 3.2 Comparison Types
 
@@ -105,8 +105,8 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 | Current Tier | Available Upgrades |
 |--------------|-------------------|
-| EXPLORER | PIONEER, SOVEREIGN |
-| PIONEER | SOVEREIGN |
+| FREE | NAVIGATOR, SOVEREIGN |
+| NAVIGATOR | SOVEREIGN |
 | SOVEREIGN | N/A (highest tier) |
 
 ---
@@ -176,7 +176,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Olivia not responding | Check internet; refresh page |
 | Voice not playing | Check device volume; enable audio in browser |
 | Incorrect answers | Report via feedback; AI has knowledge limitations |
-| "Message limit reached" | Upgrade tier or wait for monthly reset |
+| "Usage limit reached" | Upgrade tier or wait for monthly reset |
 
 ### 5.4 Video Generation Issues
 
@@ -365,7 +365,7 @@ AI-generated lifestyle videos showing:
 ESCALATION REQUEST
 
 Customer: [Name/Email]
-Tier: [EXPLORER/PIONEER/SOVEREIGN]
+Tier: [FREE/NAVIGATOR/SOVEREIGN]
 Issue: [Brief description]
 Steps Taken: [What you tried]
 Escalation Reason: [Why escalating]
@@ -473,7 +473,7 @@ LifeScore Support
 ### General
 
 **Q: Is LifeScore free?**
-A: LifeScore offers a free EXPLORER tier with 3 comparisons per month. Paid tiers (PIONEER, SOVEREIGN) offer more features and higher limits.
+A: LifeScore offers a FREE tier with 1 comparison per month. Paid tiers (NAVIGATOR $29/mo, SOVEREIGN $99/mo) offer more features and higher limits.
 
 **Q: How accurate is the data?**
 A: Our AI analyzes current legal information from authoritative sources. Each metric includes citations you can verify. Accuracy depends on available public data.
@@ -501,7 +501,7 @@ A: Monthly subscriptions charge on signup and renew on the same day each month.
 A: Upgrades take effect immediately with pro-rated billing. Downgrades take effect at next billing cycle.
 
 **Q: What happens if my payment fails?**
-A: You'll receive an email notification. Access continues for 7 days while we retry. After 7 days, account reverts to EXPLORER.
+A: You'll receive an email notification. Access continues for 7 days while we retry. After 7 days, account reverts to FREE.
 
 ---
 
@@ -522,7 +522,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **Olivia** | AI assistant for Q&A and guidance |
 | **Standard Mode** | Single-LLM (Claude) evaluation |
 | **Tavily** | Web search API for legal research |
-| **Tier** | Subscription level (EXPLORER/PIONEER/SOVEREIGN) |
+| **Tier** | Subscription level (FREE/NAVIGATOR/SOVEREIGN) |
 
 ---
 

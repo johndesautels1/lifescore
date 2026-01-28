@@ -131,7 +131,7 @@ Your dashboard shows:
 - Uses multiple AI providers (up to 5)
 - Includes Judge consensus evaluation
 - Results in 5-8 minutes
-- Requires PIONEER or SOVEREIGN tier
+- Requires SOVEREIGN tier
 - Optional: Use your own API keys for additional control
 
 ### Step 3: Adjust Settings (Optional)
@@ -239,13 +239,13 @@ Olivia is your AI assistant who can:
 - "What are the main factors in Miami's favor?"
 - "Should I consider other cities similar to Austin?"
 
-### Message Limits
+### Usage Limits
 
-| Tier | Monthly Messages |
-|------|------------------|
-| EXPLORER | 10 |
-| PIONEER | 100 |
-| SOVEREIGN | Unlimited |
+| Tier | Monthly Olivia Time |
+|------|---------------------|
+| FREE | 0 min |
+| NAVIGATOR | 15 min |
+| SOVEREIGN | 60 min |
 
 ---
 
@@ -321,10 +321,10 @@ Olivia can generate side-by-side images comparing specific aspects:
 
 ### Video Availability
 
-| Feature | EXPLORER | PIONEER | SOVEREIGN |
-|---------|----------|---------|-----------|
-| Judge Videos | No | 3/month | Unlimited |
-| Grok Videos | No | No | Unlimited |
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|------|-----------|-----------|
+| Judge Videos | No | 1/month | 1/month |
+| Grok Videos | No | No | Yes |
 
 ---
 
@@ -410,16 +410,16 @@ For Enhanced mode with your own keys:
 
 ### Plan Comparison
 
-| Feature | EXPLORER | PIONEER | SOVEREIGN |
-|---------|----------|---------|-----------|
-| **Price** | Free | $9.99/mo | $24.99/mo |
-| **Standard Comparisons** | 3/month | 25/month | Unlimited |
-| **Enhanced Comparisons** | 0 | 10/month | Unlimited |
-| **Olivia Messages** | 10/month | 100/month | Unlimited |
-| **Gamma Reports** | 0 | 5/month | Unlimited |
-| **Judge Videos** | 0 | 3/month | Unlimited |
-| **Grok Videos** | 0 | 0 | Unlimited |
-| **LLM Selection** | Claude only | Claude, GPT-4o | All 5 |
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|------|-----------|-----------|
+| **Price** | $0 | $29/mo | $99/mo |
+| **LLM Providers** | 1 | 1 | 5 |
+| **Comparisons** | 1/month | 1/month | 1/month (all 5 LLMs) |
+| **Olivia AI** | No | 15 min/month | 60 min/month |
+| **Gamma Reports** | No | 1/month | 1/month (all 5 LLMs) |
+| **Judge Videos** | No | 1/month | 1/month |
+| **Enhanced Mode** | No | No | Yes |
+| **Cloud Sync** | No | Yes | Yes |
 
 ### Upgrading Your Plan
 
@@ -435,7 +435,7 @@ For Enhanced mode with your own keys:
 2. Click **Cancel Subscription**
 3. Confirm cancellation
 4. Access continues until billing period ends
-5. Account reverts to EXPLORER tier
+5. Account reverts to FREE tier
 
 ### Billing
 
@@ -572,7 +572,7 @@ A: Chrome, Firefox, Safari, Edge (latest versions). Mobile browsers supported.
 A: Currently web-only. The site is mobile-responsive.
 
 **Q: Can I use my own API keys?**
-A: Yes, in Enhanced mode (PIONEER/SOVEREIGN). Enter keys in Settings > API Keys.
+A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
 
 ### Billing
 
@@ -580,7 +580,7 @@ A: Yes, in Enhanced mode (PIONEER/SOVEREIGN). Enter keys in Settings > API Keys.
 A: Within 7 days of first subscription. Contact support for refund requests.
 
 **Q: What happens if payment fails?**
-A: 7-day grace period, then account reverts to EXPLORER.
+A: 7-day grace period, then account reverts to FREE.
 
 **Q: Is my payment information secure?**
 A: Yes, processed by Stripe. We never see your full card number.
