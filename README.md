@@ -6,6 +6,44 @@ Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Co
 
 ---
 
+## 🚨 HANDOFF: PRICING TIER FIX (January 28, 2026) 🚨
+
+**Session ID:** `LS-20260128-002`
+**Status:** AUDIT COMPLETE - 20+ Files Need Fixing
+
+### Completed This Session
+1. ✅ Built Emilia Help Widget (floating teal bubble, modal with 3 tabs, AI chat)
+2. ✅ Added voice INPUT (microphone button) to Emilia chat
+3. ✅ Fixed link handling (internal anchors stay in modal, external links open new tabs)
+4. ✅ Audited ALL tier/pricing references across codebase
+5. ✅ Created `docs/PRICING_TIER_AUDIT.md` with correct values
+
+### CRITICAL: Files to Fix (Priority Order)
+
+1. **`src/hooks/useTierAccess.ts`** - SOURCE OF TRUTH for tier limits
+2. **`src/components/PricingModal.tsx`** - User-facing pricing display
+3. **`src/components/PricingPage.tsx`** - Pricing page
+4. **`src/components/FeatureGate.tsx`** - Feature gating logic
+5. **`docs/manuals/USER_MANUAL.md`** - PIONEER→NAVIGATOR, fix all limits
+6. **`docs/manuals/CUSTOMER_SERVICE_MANUAL.md`** - PIONEER→NAVIGATOR, fix limits
+7. **`docs/manuals/TECHNICAL_SUPPORT_MANUAL.md`** - Fix limits
+8. **`api/emilia/manuals.ts`** - Fix EMBEDDED_MANUALS content (lines 36-300)
+
+### Correct Values (All Per Month)
+
+| Tier | Internal | Price | LLMs | Comparisons | Olivia | Gamma |
+|------|----------|-------|------|-------------|--------|-------|
+| FREE | `free` | $0 | 1 | 1 | NO | NO |
+| NAVIGATOR | `pro` | $29/$249 | 1 | 1 | 15min | 1 |
+| SOVEREIGN | `enterprise` | $99/$899 | 5 | 1 (5 LLMs) | 60min | 1 (5 LLMs) |
+
+### Start Command
+```
+Read D:\lifescore\docs\PRICING_TIER_AUDIT.md
+```
+
+---
+
 ## AVATAR SYSTEM - SIMLI + REPLICATE (January 24, 2026)
 
 **Conversation ID:** `LIFESCORE-AVATAR-20260124`
@@ -179,29 +217,43 @@ README.md                        # This documentation
 
 ---
 
-## PREMIUM PRICING SYSTEM (January 24, 2026)
+## PREMIUM PRICING SYSTEM (Updated January 28, 2026)
 
-**Conversation ID:** `LIFESCORE-PRICING-20260123`
+**Conversation ID:** `LIFESCORE-PRICING-20260128`
+**Status:** AUDIT COMPLETE - Implementation Pending
 
-### Pricing Tiers
+### Pricing Tiers (CONFIRMED)
 
-| Tier | Name | Monthly | Annual | Savings |
-|------|------|---------|--------|---------|
-| Free | **EXPLORER** | $0 | $0 | - |
-| Pro | **NAVIGATOR** | $29/mo | $249/yr | 28% |
-| Enterprise | **SOVEREIGN** | $99/mo | $899/yr | 24% |
+| Internal ID | Display Name | Monthly | Annual |
+|-------------|--------------|---------|--------|
+| `free` | **FREE** | $0 | $0 |
+| `pro` | **NAVIGATOR** | $29 | $249 |
+| `enterprise` | **SOVEREIGN** | $99 | $899 |
 
-### Feature Limits
+### Feature Matrix (CONFIRMED - All Limits Per Month)
 
-| Feature | EXPLORER | NAVIGATOR | SOVEREIGN |
-|---------|----------|-----------|-----------|
-| Standard Comparisons | 3/month | Unlimited | Unlimited |
-| Enhanced Mode (5 LLMs) | - | 10/month | Unlimited |
-| Ask Olivia Messages | 5/day | 50/day | Unlimited |
-| Judge Video Reports | - | 3/month | Unlimited |
-| Gamma Visual Reports | - | 5/month | Unlimited |
-| Cloud Sync | - | ✓ | ✓ |
-| API Access | - | - | ✓ |
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|------|-----------|-----------|
+| **LLM Providers** | 1 | 1 (simple) | 5 (enhanced) |
+| **Comparisons** | 1/month | 1/month | 1/month (all 5 LLMs) |
+| **Olivia AI** | NO | 15 min (3×5min) | 60 min |
+| **Gamma Reports** | NO | 1/month | 1/month (all 5 LLMs) |
+| **Comparison Images** | NO | 1 set/month | 1 set/month |
+| **Judge Verdict** | NO | 1/month (video+summary+details+court order) | 1/month |
+| **Comparison Shorts** | NO | 1 set/month | 1 set/month |
+| **Customer Support** | NO | Chat only | Phone + Video + 60min tech |
+| **Enhanced Mode** | NO | NO | YES |
+
+### ⚠️ CRITICAL: Tier Information Needs Fixing
+
+**See:** `docs/PRICING_TIER_AUDIT.md` for complete list of 20+ files with incorrect tier information.
+
+**Common errors found:**
+- Manuals say "PIONEER" - should be "NAVIGATOR"
+- Manuals say "$9.99/$24.99" - should be "$29/$99"
+- Code says "3 comparisons/month free" - should be "1"
+- Code says "unlimited comparisons for paid" - should be "1/month"
+- Code says "50 Olivia messages/day" - should be "15 min/month" or "60 min/month"
 
 ### Stripe Integration
 
