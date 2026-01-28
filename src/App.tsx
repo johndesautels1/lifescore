@@ -26,6 +26,7 @@ import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import CostDashboard from './components/CostDashboard';
 import HelpBubble from './components/HelpBubble';
+import SettingsModal from './components/SettingsModal';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
@@ -116,6 +117,9 @@ const AppContent: React.FC = () => {
 
   // Cost dashboard state (admin feature)
   const [showCostDashboard, setShowCostDashboard] = useState(false);
+
+  // Settings modal state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const availableLLMs = getAvailableLLMs(apiKeys);
 
@@ -343,6 +347,7 @@ const AppContent: React.FC = () => {
       <Header
         onUpgradeClick={() => setShowPricingModal(true)}
         onCostDashboardClick={() => setShowCostDashboard(true)}
+        onSettingsClick={() => setShowSettingsModal(true)}
       />
 
       {/* Tab Navigation */}
@@ -864,6 +869,16 @@ const AppContent: React.FC = () => {
       <CostDashboard
         isOpen={showCostDashboard}
         onClose={() => setShowCostDashboard(false)}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onUpgradeClick={() => {
+          setShowSettingsModal(false);
+          setShowPricingModal(true);
+        }}
       />
     </div>
   );

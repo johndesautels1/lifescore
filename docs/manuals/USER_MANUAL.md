@@ -59,27 +59,26 @@ Each city receives a Freedom Score from 0-100, calculated across:
 ### Creating Your Account
 
 1. Visit **lifescore.app**
-2. Click **Sign Up**
-3. Choose your sign-up method:
-   - **Email:** Enter email and create password
-   - **Google:** Sign in with Google account
-   - **GitHub:** Sign in with GitHub account
-4. Verify your email (if using email signup)
-5. Complete your profile
+2. Click the **Sign Up** tab
+3. Enter your information:
+   - **Full Name** (optional)
+   - **Email Address**
+   - **Password** (minimum 6 characters)
+   - **Confirm Password**
+4. Click **Create Account**
+5. Check your email (including spam folder) for the verification link
+6. Click the verification link to activate your account
 
 ### Logging In
 
-1. Click **Log In**
-2. Enter your credentials or use social login
-3. You'll be directed to your dashboard
+1. Click the **Sign In** tab
+2. Enter your email and password
+3. Click **Sign In**
+4. If you forgot your password, click "Forgot your password?" to receive a reset link
 
-### First-Time Setup
+### Theme Selection
 
-After creating your account, you can:
-- Set your preferred currency (USD, EUR, GBP, etc.)
-- Choose Imperial or Metric units
-- Enable/disable email notifications
-- Select light or dark theme
+Use the theme toggle button to switch between light and dark mode. Your preference is saved automatically.
 
 ---
 

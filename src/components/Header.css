@@ -251,6 +251,35 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   SETTINGS BUTTON
+   ═══════════════════════════════════════════════════════════════════════════ */
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.settings-btn:hover {
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(201, 162, 39, 0.5);
+  color: #c9a227;
+  transform: scale(1.05);
+}
+
+.settings-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    USER ACCOUNT DISPLAY
    ═══════════════════════════════════════════════════════════════════════════ */
 .user-account {

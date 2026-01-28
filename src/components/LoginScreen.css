@@ -639,3 +639,122 @@
 [data-theme="dark"] .login-screen {
   /* Already dark themed */
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OAUTH DIVIDER & BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.oauth-divider span {
+  font-size: 0.75rem;
+  color: var(--ls-steel);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.oauth-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.oauth-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.oauth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.oauth-btn.loading {
+  pointer-events: none;
+}
+
+.oauth-btn svg {
+  flex-shrink: 0;
+}
+
+/* Google Button */
+.oauth-btn.google-btn {
+  background: var(--ls-white);
+  color: #1f2937;
+}
+
+.oauth-btn.google-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: rgba(66, 133, 244, 0.5);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+  transform: translateY(-1px);
+}
+
+.oauth-btn.google-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* GitHub Button */
+.oauth-btn.github-btn {
+  background: #24292e;
+  color: var(--ls-white);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.oauth-btn.github-btn:hover:not(:disabled) {
+  background: #2f363d;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.oauth-btn.github-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* OAuth Button Loading State */
+.oauth-btn.loading .spinner {
+  width: 18px;
+  height: 18px;
+}
+
+.oauth-btn.google-btn.loading {
+  background: #e5e7eb;
+}
+
+.oauth-btn.github-btn.loading {
+  background: #1b1f23;
+}
+
+/* Responsive OAuth Buttons */
+@media (max-width: 400px) {
+  .oauth-buttons {
+    flex-direction: column;
+  }
+
+  .oauth-btn {
+    width: 100%;
+  }
+}
