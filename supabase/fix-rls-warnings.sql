@@ -351,3 +351,10 @@ CREATE POLICY "grok_videos_delete" ON grok_videos
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- SELECT * FROM pg_policies WHERE schemaname = 'public';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PART 14: FIX FUNCTION SEARCH PATH
+-- Added: 2026-01-28
+-- ═══════════════════════════════════════════════════════════════════════════
+
+ALTER FUNCTION public.get_or_create_usage_period SET search_path = public;
