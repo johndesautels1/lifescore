@@ -44,14 +44,14 @@ interface PricingTier {
 const PRICING_TIERS: PricingTier[] = [
   {
     id: 'free',
-    name: 'EXPLORER',
+    name: 'FREE',
     tagline: 'Start Your Journey',
     monthlyPrice: 0,
     annualPrice: 0,
     features: [
-      '3 Standard comparisons/month',
-      '5 Olivia messages/day',
+      '1 comparison/month (1 LLM)',
       'Basic metric analysis',
+      'Local storage only',
     ],
   },
   {
@@ -62,12 +62,12 @@ const PRICING_TIERS: PricingTier[] = [
     annualPrice: 249,
     popular: true,
     features: [
-      'Unlimited Standard comparisons',
-      '10 Enhanced comparisons/month',
-      '50 Olivia messages/day',
-      '3 Judge video reports/month',
-      '5 Gamma visual reports/month',
+      '1 comparison/month (1 LLM)',
+      '15 min Olivia AI/month',
+      '1 Judge video/month',
+      '1 Gamma report/month',
       'Cloud sync across devices',
+      'Chat support',
     ],
   },
   {
@@ -77,12 +77,13 @@ const PRICING_TIERS: PricingTier[] = [
     monthlyPrice: 99,
     annualPrice: 899,
     features: [
-      'Everything in Navigator',
-      'Unlimited Enhanced comparisons',
-      'Unlimited video reports',
-      'Unlimited visual reports',
+      '1 comparison/month (5 LLMs)',
+      '60 min Olivia AI/month',
+      '1 Judge video/month',
+      '1 Gamma report/month (5 LLMs)',
+      'Enhanced Mode',
       'API access',
-      'Priority support + Slack',
+      'Phone + Video + 60min tech support',
     ],
   },
 ];

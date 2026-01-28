@@ -52,27 +52,27 @@ interface FeatureGateProps {
 const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: string }> = {
   standardComparisons: {
     title: 'Standard Comparisons',
-    description: 'Compare cities using our curated freedom metrics.',
+    description: 'Compare cities using 1 LLM (1/month for all tiers).',
   },
   enhancedComparisons: {
     title: 'Enhanced Mode',
-    description: 'Multi-LLM consensus analysis with 5 AI evaluators and Claude Opus judging.',
+    description: 'Multi-LLM consensus analysis with 5 AI evaluators (Sovereign only).',
   },
-  oliviaMessagesPerDay: {
-    title: 'Ask Olivia',
-    description: 'Chat with Olivia, your AI advisor, for personalized insights.',
+  oliviaMinutesPerMonth: {
+    title: 'Olivia AI',
+    description: 'Voice chat with Olivia AI (Navigator: 15min/month, Sovereign: 60min/month).',
   },
   judgeVideos: {
-    title: 'Judge Video Reports',
-    description: 'Professional video verdicts delivered by Christian, the Judge.',
+    title: 'Judge Video',
+    description: 'Professional video verdict from the Judge (1/month for paid tiers).',
   },
   gammaReports: {
-    title: 'Visual Reports',
-    description: 'Beautiful PDF and PowerPoint presentations of your comparisons.',
+    title: 'Gamma Report',
+    description: 'Visual PDF/PowerPoint report of your comparison (1/month for paid tiers).',
   },
   grokVideos: {
     title: 'City Life Videos',
-    description: 'AI-generated videos showing freedom vs imprisonment in your compared cities.',
+    description: 'AI-generated videos showing freedom vs imprisonment (Sovereign only).',
   },
   cloudSync: {
     title: 'Cloud Sync',
@@ -80,7 +80,7 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: str
   },
   apiAccess: {
     title: 'API Access',
-    description: 'Integrate LIFE SCORE data into your own applications.',
+    description: 'Integrate LIFE SCORE data into your own applications (Sovereign only).',
   },
 };
 

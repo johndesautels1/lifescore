@@ -5,7 +5,7 @@
  * Design: Swiss private banking meets James Bond meets Patek Philippe
  *
  * Features:
- * - Three tier pricing cards (Explorer, Navigator, Sovereign)
+ * - Three tier pricing cards (Free, Navigator, Sovereign)
  * - Monthly/Annual toggle with savings display
  * - Feature comparison matrix
  * - Stripe checkout integration
@@ -44,17 +44,17 @@ interface PricingTier {
 const PRICING_TIERS: PricingTier[] = [
   {
     id: 'free',
-    name: 'EXPLORER',
+    name: 'FREE',
     tagline: 'Start Your Journey',
     monthlyPrice: 0,
     annualPrice: 0,
     features: [
-      '3 Standard comparisons/month',
-      '5 Olivia messages/day',
+      '1 comparison/month (1 LLM)',
       'Basic metric analysis',
       'Local storage only',
     ],
     limitations: [
+      'No Olivia AI',
       'No Enhanced Mode',
       'No video reports',
       'No visual exports',
@@ -68,13 +68,13 @@ const PRICING_TIERS: PricingTier[] = [
     annualPrice: 249,
     popular: true,
     features: [
-      'Unlimited Standard comparisons',
-      '10 Enhanced comparisons/month',
-      '50 Olivia messages/day',
-      '3 Judge video reports/month',
-      '5 Gamma visual reports/month',
+      '1 comparison/month (1 LLM)',
+      '15 min Olivia AI/month',
+      '1 Judge video/month',
+      '1 Gamma report/month',
+      '1 comparison image set/month',
       'Cloud sync across devices',
-      'Priority email support',
+      'Chat support',
     ],
   },
   {
@@ -84,14 +84,13 @@ const PRICING_TIERS: PricingTier[] = [
     monthlyPrice: 99,
     annualPrice: 899,
     features: [
-      'Everything in Navigator',
-      'Unlimited Enhanced comparisons',
-      'Unlimited video reports',
-      'Unlimited visual reports',
+      '1 comparison/month (5 LLMs)',
+      '60 min Olivia AI/month',
+      '1 Judge video/month',
+      '1 Gamma report/month (5 LLMs)',
+      'Enhanced Mode',
       'API access',
-      'Team collaboration (coming soon)',
-      'Priority support + Slack',
-      'Custom integrations',
+      'Phone + Video + 60min tech support',
     ],
   },
 ];
@@ -323,44 +322,44 @@ const PricingPage: React.FC = () => {
           <div className="comparison-table">
             <div className="comparison-header">
               <div className="comparison-feature">Feature</div>
-              <div className="comparison-tier">Explorer</div>
+              <div className="comparison-tier">Free</div>
               <div className="comparison-tier">Navigator</div>
               <div className="comparison-tier">Sovereign</div>
             </div>
 
             <div className="comparison-row">
-              <div className="comparison-feature">Standard Comparisons</div>
-              <div className="comparison-value">3/month</div>
-              <div className="comparison-value highlight">Unlimited</div>
-              <div className="comparison-value highlight">Unlimited</div>
+              <div className="comparison-feature">LLM Providers</div>
+              <div className="comparison-value">1</div>
+              <div className="comparison-value">1</div>
+              <div className="comparison-value highlight">5</div>
             </div>
 
             <div className="comparison-row">
-              <div className="comparison-feature">Enhanced Mode (5 LLMs)</div>
+              <div className="comparison-feature">Comparisons/month</div>
+              <div className="comparison-value">1</div>
+              <div className="comparison-value">1</div>
+              <div className="comparison-value">1 (all 5 LLMs)</div>
+            </div>
+
+            <div className="comparison-row">
+              <div className="comparison-feature">Olivia AI</div>
               <div className="comparison-value">—</div>
-              <div className="comparison-value">10/month</div>
-              <div className="comparison-value highlight">Unlimited</div>
+              <div className="comparison-value">15 min/month</div>
+              <div className="comparison-value highlight">60 min/month</div>
             </div>
 
             <div className="comparison-row">
-              <div className="comparison-feature">Ask Olivia Messages</div>
-              <div className="comparison-value">5/day</div>
-              <div className="comparison-value">50/day</div>
-              <div className="comparison-value highlight">Unlimited</div>
-            </div>
-
-            <div className="comparison-row">
-              <div className="comparison-feature">Judge Video Reports</div>
+              <div className="comparison-feature">Judge Video</div>
               <div className="comparison-value">—</div>
-              <div className="comparison-value">3/month</div>
-              <div className="comparison-value highlight">Unlimited</div>
+              <div className="comparison-value">1/month</div>
+              <div className="comparison-value">1/month</div>
             </div>
 
             <div className="comparison-row">
-              <div className="comparison-feature">Gamma Visual Reports</div>
+              <div className="comparison-feature">Gamma Report</div>
               <div className="comparison-value">—</div>
-              <div className="comparison-value">5/month</div>
-              <div className="comparison-value highlight">Unlimited</div>
+              <div className="comparison-value">1/month</div>
+              <div className="comparison-value">1/month (5 LLMs)</div>
             </div>
 
             <div className="comparison-row">
@@ -379,9 +378,9 @@ const PricingPage: React.FC = () => {
 
             <div className="comparison-row">
               <div className="comparison-feature">Support</div>
-              <div className="comparison-value">Community</div>
-              <div className="comparison-value">Email</div>
-              <div className="comparison-value highlight">Priority + Slack</div>
+              <div className="comparison-value">—</div>
+              <div className="comparison-value">Chat</div>
+              <div className="comparison-value highlight">Phone + Video + 60min tech</div>
             </div>
           </div>
         </section>

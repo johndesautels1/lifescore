@@ -5,9 +5,9 @@
  * Provides tier limits, access checking, and usage tracking.
  *
  * Tiers:
- * - EXPLORER (free): Limited features
- * - NAVIGATOR (pro): Full features with monthly limits
- * - SOVEREIGN (enterprise): Unlimited access
+ * - FREE (free): Limited features, 1 comparison/month
+ * - NAVIGATOR (pro): $29/month, 1 LLM, 15min Olivia, 1 comparison
+ * - SOVEREIGN (enterprise): $99/month, 5 LLMs, 60min Olivia, enhanced mode
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -43,9 +43,9 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_M
  * -1 = unlimited
  */
 export interface TierLimits {
-  standardComparisons: number;
-  enhancedComparisons: number;
-  oliviaMessagesPerDay: number;
+  standardComparisons: number;      // Comparisons with 1 LLM
+  enhancedComparisons: number;      // Comparisons with 5 LLMs (Sovereign only)
+  oliviaMinutesPerMonth: number;    // Olivia AI voice minutes (0=none, 15=Navigator, 60=Sovereign)
   judgeVideos: number;
   gammaReports: number;
   grokVideos: number;
@@ -57,42 +57,47 @@ export interface TierLimits {
  * Tier display names for UI
  */
 export const TIER_NAMES: Record<UserTier, string> = {
-  free: 'EXPLORER',
+  free: 'FREE',
   pro: 'NAVIGATOR',
   enterprise: 'SOVEREIGN',
 };
 
 /**
- * Tier limits configuration
+ * Tier limits configuration - ALL LIMITS ARE PER MONTH
+ *
+ * CORRECT TIER STRUCTURE (Jan 2026):
+ * - FREE: $0, 1 LLM, 1 comparison, NO Olivia, NO Gamma
+ * - NAVIGATOR: $29, 1 LLM, 1 comparison, 15min Olivia, 1 Gamma
+ * - SOVEREIGN: $99, 5 LLMs, 1 comparison (enhanced), 60min Olivia, 1 Gamma
  */
 export const TIER_LIMITS: Record<UserTier, TierLimits> = {
   free: {
-    standardComparisons: 3,
-    enhancedComparisons: 0,
-    oliviaMessagesPerDay: 5,
-    judgeVideos: 0,
-    gammaReports: 0,
-    grokVideos: 0,       // Free users: no access
+    standardComparisons: 1,         // 1 comparison/month with 1 LLM
+    enhancedComparisons: 0,         // No enhanced mode
+    oliviaMinutesPerMonth: 0,       // NO Olivia access
+    judgeVideos: 0,                 // NO Judge videos
+    gammaReports: 0,                // NO Gamma reports
+    grokVideos: 0,                  // NO Grok videos
     cloudSync: false,
     apiAccess: false,
   },
   pro: {
-    standardComparisons: -1, // Unlimited
-    enhancedComparisons: 10,
-    oliviaMessagesPerDay: 50, // 50 messages per day
-    judgeVideos: 3,
-    gammaReports: 5,
-    grokVideos: 0,       // Pro users: no access (Sovereign only)
+    standardComparisons: 1,         // 1 comparison/month with 1 LLM
+    enhancedComparisons: 0,         // No enhanced mode (Sovereign only)
+    oliviaMinutesPerMonth: 15,      // 15 minutes/month (3×5min sessions)
+    judgeVideos: 1,                 // 1 Judge video/month
+    gammaReports: 1,                // 1 Gamma report/month
+    grokVideos: 0,                  // NO Grok videos (Sovereign only)
     cloudSync: true,
     apiAccess: false,
   },
   enterprise: {
-    standardComparisons: -1,
-    enhancedComparisons: -1,
-    oliviaMessagesPerDay: -1,
-    judgeVideos: -1,
-    gammaReports: -1,
-    grokVideos: -1,      // Sovereign: unlimited
+    standardComparisons: 0,         // Uses enhanced instead
+    enhancedComparisons: 1,         // 1 comparison/month with ALL 5 LLMs
+    oliviaMinutesPerMonth: 60,      // 60 minutes/month
+    judgeVideos: 1,                 // 1 Judge video/month
+    gammaReports: 1,                // 1 Gamma report/month (with all 5 LLMs)
+    grokVideos: 1,                  // 1 Grok video/month
     cloudSync: true,
     apiAccess: true,
   },
@@ -104,7 +109,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
 const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
   standardComparisons: 'standard_comparisons',
   enhancedComparisons: 'enhanced_comparisons',
-  oliviaMessagesPerDay: 'olivia_messages',
+  oliviaMinutesPerMonth: 'olivia_minutes',
   judgeVideos: 'judge_videos',
   gammaReports: 'gamma_reports',
   grokVideos: 'grok_videos',
@@ -449,7 +454,7 @@ export const TIER_PRICING = {
   free: {
     monthly: 0,
     annual: 0,
-    name: 'EXPLORER',
+    name: 'FREE',
     tagline: 'Start Your Journey',
   },
   pro: {
