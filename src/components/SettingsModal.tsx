@@ -385,7 +385,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
                       </p>
                     )}
                     {tier === 'enterprise' && (
-                      <p className="tier-description">
+                      <p className="tier-description tier-sovereign">
                         SOVEREIGN plan with full access to all features.
                       </p>
                     )}
