@@ -115,7 +115,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             <span className="section-icon">🎬</span>
             {winnerCity} & {loserCity}
           </h3>
-          <p className="section-subtitle">
+          <p className="section-subtitle" style={{ color: '#FFD700' }}>
             See the contrast between freedom and imprisonment
           </p>
         </div>
