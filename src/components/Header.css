@@ -171,14 +171,14 @@
 .upgrade-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.5rem;
-  min-width: 110px;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  min-width: unset;
   background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
   border: none;
-  border-radius: 20px;
+  border-radius: 14px;
   color: #0a1628;
-  font-size: 0.85rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -206,14 +206,14 @@
 .tier-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
-  min-width: 100px;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  min-width: unset;
   background: rgba(201, 162, 39, 0.2);
   border: 1px solid rgba(255, 215, 100, 0.4);
-  border-radius: 16px;
+  border-radius: 12px;
   color: #ffe066;
-  font-size: 0.8rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -230,14 +230,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 26px;
+  height: 26px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
 }
 
 .admin-btn:hover {
@@ -289,13 +289,13 @@
 .user-account {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.35rem;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 28px;
+  border-radius: 20px;
   transition: all 0.2s ease;
 }
 
@@ -307,36 +307,36 @@
 .user-info {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem;
 }
 
 .user-avatar {
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   background: linear-gradient(135deg, #F7931E 0%, #c66e00 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: white;
   text-transform: uppercase;
 }
 
 .user-name {
-  font-size: 0.9rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: white;
-  max-width: 120px;
+  max-width: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .logout-btn {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 50%;
