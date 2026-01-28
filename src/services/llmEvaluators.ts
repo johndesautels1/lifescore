@@ -365,15 +365,15 @@ export async function runSingleEvaluatorBatched(
   const hasEnoughScores = allScores.length >= 30; // At least ~30 metrics worth of scores
   const partialSuccess = successCount >= 3 || hasEnoughScores;
 
-  // Build aggregated usage
-  const aggregatedUsage = (totalInputTokens > 0 || totalOutputTokens > 0) ? {
+  // Build aggregated usage - always include tokens to ensure cost tracking works
+  const aggregatedUsage = {
     tokens: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
     tavily: (totalTavilyResearch > 0 || totalTavilySearch > 0) ? {
       researchCredits: totalTavilyResearch,
       searchCredits: totalTavilySearch,
       totalCredits: totalTavilyResearch + totalTavilySearch
     } : undefined
-  } : undefined;
+  };
 
   console.log(`[BATCH] ${provider}: ${successCount}/6 categories succeeded, ${allScores.length} scores, partialSuccess=${partialSuccess}`);
   if (aggregatedUsage) {
