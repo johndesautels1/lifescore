@@ -98,7 +98,10 @@ export const API_PRICING = {
   'replicate-sadtalker': { perSecond: 0.0023, name: 'Replicate SadTalker', icon: '🎬' },
   'd-id': { perSecond: 0.025, name: 'D-ID Avatar', icon: '👤' },
   'simli': { perSecond: 0.02, name: 'Simli Avatar', icon: '🎭' },
-  'heygen': { perSecond: 0.032, name: 'HeyGen Avatar', icon: '🎥' }
+  'heygen': { perSecond: 0.032, name: 'HeyGen Avatar', icon: '🎥' },
+
+  // IMAGE GENERATION SERVICES
+  'kling': { perImage: 0.05, name: 'Kling AI', icon: '🖼️' }
 } as const;
 
 // ============================================================================
@@ -164,6 +167,14 @@ export interface AvatarCost {
   context?: string;
 }
 
+// Kling Image Generation Cost
+export interface KlingCost {
+  imageCount: number;
+  cost: number;
+  timestamp: number;
+  context?: string;
+}
+
 export interface ComparisonCostBreakdown {
   comparisonId: string;
   city1: string;
@@ -204,6 +215,10 @@ export interface ComparisonCostBreakdown {
   avatar: AvatarCost[];
   avatarTotal: number;
 
+  // Kling image generation costs
+  kling: KlingCost[];
+  klingTotal: number;
+
   // Totals
   grandTotal: number;
 }
@@ -225,6 +240,7 @@ export interface CostSummary {
   oliviaCost: number;
   ttsCost: number;
   avatarCost: number;
+  klingCost: number;
 
   // Totals
   totalEvaluatorCost: number;
@@ -233,6 +249,7 @@ export interface CostSummary {
   totalOliviaCost: number;
   totalTTSCost: number;
   totalAvatarCost: number;
+  totalKlingCost: number;
   grandTotal: number;
 
   // Averages
@@ -326,6 +343,17 @@ export function calculateAvatarCost(
   return 0;
 }
 
+/**
+ * Calculate Kling Image Generation cost
+ */
+export function calculateKlingCost(imageCount: number): number {
+  const pricing = API_PRICING['kling'];
+  if ('perImage' in pricing) {
+    return imageCount * pricing.perImage;
+  }
+  return 0;
+}
+
 // ============================================================================
 // COST TRACKING STORAGE
 // ============================================================================
@@ -390,6 +418,7 @@ export function calculateCostSummary(): CostSummary {
     oliviaCost: 0,
     ttsCost: 0,
     avatarCost: 0,
+    klingCost: 0,
 
     totalEvaluatorCost: 0,
     totalJudgeCost: 0,
@@ -397,6 +426,7 @@ export function calculateCostSummary(): CostSummary {
     totalOliviaCost: 0,
     totalTTSCost: 0,
     totalAvatarCost: 0,
+    totalKlingCost: 0,
     grandTotal: 0,
 
     avgCostPerEnhanced: 0,
@@ -415,6 +445,7 @@ export function calculateCostSummary(): CostSummary {
     summary.oliviaCost += cost.oliviaTotal || 0;
     summary.ttsCost += cost.ttsTotal || 0;
     summary.avatarCost += cost.avatarTotal || 0;
+    summary.klingCost += cost.klingTotal || 0;
 
     summary.totalEvaluatorCost += cost.evaluatorTotal;
     summary.totalJudgeCost += cost.judgeTotal;
@@ -422,6 +453,7 @@ export function calculateCostSummary(): CostSummary {
     summary.totalOliviaCost += cost.oliviaTotal || 0;
     summary.totalTTSCost += cost.ttsTotal || 0;
     summary.totalAvatarCost += cost.avatarTotal || 0;
+    summary.totalKlingCost += cost.klingTotal || 0;
     summary.grandTotal += cost.grandTotal;
   }
 
@@ -486,6 +518,9 @@ export function createCostBreakdown(
     avatar: [],
     avatarTotal: 0,
 
+    kling: [],
+    klingTotal: 0,
+
     grandTotal: 0
   };
 }
@@ -522,6 +557,9 @@ export function finalizeCostBreakdown(breakdown: ComparisonCostBreakdown): Compa
   // Calculate Avatar total
   breakdown.avatarTotal = (breakdown.avatar || []).reduce((sum, a) => sum + a.cost, 0);
 
+  // Calculate Kling total
+  breakdown.klingTotal = (breakdown.kling || []).reduce((sum, k) => sum + k.cost, 0);
+
   // Calculate grand total
   breakdown.grandTotal =
     breakdown.tavilyTotal +
@@ -530,7 +568,8 @@ export function finalizeCostBreakdown(breakdown: ComparisonCostBreakdown): Compa
     breakdown.gammaTotal +
     breakdown.oliviaTotal +
     breakdown.ttsTotal +
-    breakdown.avatarTotal;
+    breakdown.avatarTotal +
+    breakdown.klingTotal;
 
   return breakdown;
 }
@@ -565,6 +604,7 @@ export function toApiCostRecordInsert(
   olivia_total: number;
   tts_total: number;
   avatar_total: number;
+  kling_total: number;
   grand_total: number;
   cost_breakdown: Record<string, unknown>;
 } {
@@ -585,6 +625,7 @@ export function toApiCostRecordInsert(
     olivia_total: breakdown.oliviaTotal || 0,
     tts_total: breakdown.ttsTotal || 0,
     avatar_total: breakdown.avatarTotal || 0,
+    kling_total: breakdown.klingTotal || 0,
     grand_total: breakdown.grandTotal,
     cost_breakdown: breakdown as unknown as Record<string, unknown>,
   };

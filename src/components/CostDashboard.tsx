@@ -201,6 +201,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       'Olivia Cost',
       'TTS Cost',
       'Avatar Cost',
+      'Kling Cost',
       'Grand Total'
     ];
 
@@ -221,6 +222,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       (c.oliviaTotal || 0).toFixed(2),
       (c.ttsTotal || 0).toFixed(2),
       (c.avatarTotal || 0).toFixed(2),
+      (c.klingTotal || 0).toFixed(2),
       c.grandTotal.toFixed(2)
     ]);
 
@@ -381,6 +383,14 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   {summary.grandTotal > 0 ? ((summary.avatarCost / summary.grandTotal) * 100).toFixed(1) : 0}%
                 </span>
               </div>
+              <div className="provider-row">
+                <span className="provider-icon">🖼️</span>
+                <span className="provider-name">Kling AI (Image Generation)</span>
+                <span className="provider-cost">{formatCost(summary.klingCost)}</span>
+                <span className="provider-pct">
+                  {summary.grandTotal > 0 ? ((summary.klingCost / summary.grandTotal) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
             </div>
 
             {/* Profitability Section */}
@@ -517,6 +527,10 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td>🎬 Replicate SadTalker</td>
                     <td colSpan={2}>$0.0023/sec</td>
                   </tr>
+                  <tr>
+                    <td>🖼️ Kling AI</td>
+                    <td colSpan={2}>$0.05/image</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -617,6 +631,12 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                           <span className="detail-label">Avatar</span>
                           <span className="detail-value">
                             {formatCost(cost.avatarTotal || 0)}
+                          </span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">Kling</span>
+                          <span className="detail-value">
+                            {formatCost(cost.klingTotal || 0)}
                           </span>
                         </div>
                       </div>
