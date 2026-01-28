@@ -240,12 +240,8 @@
 .avatar-email {
   margin: 0;
   font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-primary, #1f2937);
-}
-
-[data-theme="dark"] .avatar-email {
-  color: #ffffff;
+  font-weight: 600;
+  color: #F7931E;
 }
 
 .avatar-joined {
