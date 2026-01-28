@@ -531,9 +531,19 @@ async function cancelActiveRuns(apiKey: string, threadId: string): Promise<boole
     }
   }
 
-  // Wait a moment for cancellation to take effect
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Wait for cancellation to take effect - poll until no active runs
+  for (let i = 0; i < 10; i++) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const checkRuns = await listRuns(apiKey, threadId, 5);
+    const stillActive = checkRuns.filter(run => activeStatuses.includes(run.status));
+    if (stillActive.length === 0) {
+      console.log('[OLIVIA/CHAT] All runs cancelled successfully');
+      return true;
+    }
+    console.log('[OLIVIA/CHAT] Still waiting for', stillActive.length, 'run(s) to cancel...');
+  }
 
+  console.log('[OLIVIA/CHAT] Warning: Some runs may still be active after cancellation attempts');
   return true;
 }
 
@@ -625,8 +635,25 @@ export default async function handler(
       console.log('[OLIVIA/CHAT] Added context with', context?.topMetrics?.length || 0, 'metrics, length:', additionalInstructions.length);
     }
 
-    // Add user message to thread
-    await addMessage(apiKey, threadId, message, 'user');
+    // Add user message to thread with retry on active run error
+    let messageAdded = false;
+    for (let attempt = 0; attempt < 3 && !messageAdded; attempt++) {
+      try {
+        await addMessage(apiKey, threadId, message, 'user');
+        messageAdded = true;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        if (errorMsg.includes('while a run') && errorMsg.includes('is active')) {
+          console.log('[OLIVIA/CHAT] Active run detected, cancelling and retrying (attempt', attempt + 1, ')');
+          await cancelActiveRuns(apiKey, threadId);
+        } else {
+          throw err; // Re-throw non-active-run errors
+        }
+      }
+    }
+    if (!messageAdded) {
+      throw new Error('Failed to add message after multiple attempts - thread may have stuck runs');
+    }
 
     // Run the assistant
     const run = await createRun(apiKey, threadId, ASSISTANT_ID, additionalInstructions);
