@@ -251,7 +251,8 @@
 .avatar-joined {
   margin: 0.25rem 0 0;
   font-size: 0.8rem;
-  color: var(--text-secondary, #6b7280);
+  color: #22c55e;
+  font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
