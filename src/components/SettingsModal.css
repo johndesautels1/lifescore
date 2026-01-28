@@ -313,7 +313,8 @@
 .field-hint {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--text-secondary, #6b7280);
+  color: #22c55e;
+  font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
