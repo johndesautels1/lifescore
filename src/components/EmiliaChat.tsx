@@ -13,6 +13,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEmilia } from '../hooks/useEmilia';
+import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import './EmiliaChat.css';
 
 interface EmiliaChatProps {
@@ -38,6 +39,53 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
     isPlaying,
     playingMessageId,
   } = useEmilia();
+
+  // Voice input recognition
+  const {
+    isSupported: voiceSupported,
+    isListening,
+    transcript,
+    interimTranscript,
+    error: voiceError,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useVoiceRecognition({
+    continuous: false,
+    interimResults: true,
+    onResult: (text, isFinal) => {
+      if (isFinal && text.trim()) {
+        // When speech is finalized, set the input and optionally auto-send
+        setInputText(text.trim());
+      }
+    },
+  });
+
+  // Update input with interim transcript while listening
+  useEffect(() => {
+    if (isListening && interimTranscript) {
+      setInputText(interimTranscript);
+    }
+  }, [isListening, interimTranscript]);
+
+  // When transcript finalizes, update input
+  useEffect(() => {
+    if (transcript && !isListening) {
+      setInputText(transcript);
+      resetTranscript();
+    }
+  }, [transcript, isListening, resetTranscript]);
+
+  // Handle microphone toggle
+  const handleMicToggle = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    } else {
+      setInputText('');
+      resetTranscript();
+      startListening();
+    }
+  }, [isListening, startListening, stopListening, resetTranscript]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -213,13 +261,32 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
         <input
           ref={inputRef}
           type="text"
-          className="emilia-input"
-          placeholder="Type your question..."
+          className={`emilia-input ${isListening ? 'listening' : ''}`}
+          placeholder={isListening ? 'Listening...' : 'Type or speak your question...'}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={isLoading || isInitializing}
+          disabled={isLoading || isInitializing || isListening}
         />
+        {/* Microphone button */}
+        {voiceSupported && (
+          <button
+            className={`emilia-mic-btn ${isListening ? 'listening' : ''}`}
+            onClick={handleMicToggle}
+            disabled={isLoading || isInitializing}
+            title={isListening ? 'Stop listening' : 'Speak your question'}
+          >
+            {isListening ? (
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <rect fill="currentColor" x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+              </svg>
+            )}
+          </button>
+        )}
         <button
           className="emilia-send-btn"
           onClick={handleSendMessage}
@@ -231,6 +298,13 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
           </svg>
         </button>
       </div>
+
+      {/* Voice error message */}
+      {voiceError && (
+        <div className="emilia-voice-error">
+          <span>{voiceError}</span>
+        </div>
+      )}
 
       {/* Action Bar */}
       <div className="emilia-action-bar">

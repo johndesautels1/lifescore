@@ -321,11 +321,28 @@
   color: #14B8A6;
   text-decoration: none;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .manual-section-content a:hover {
   border-color: #14B8A6;
+}
+
+/* Internal links (anchor links within the document) */
+.manual-section-content a.internal-link {
+  color: #2DD4BF;
+  cursor: pointer;
+}
+
+.manual-section-content a.internal-link:hover {
+  border-color: #2DD4BF;
+}
+
+/* External links (open in new tab) */
+.manual-section-content a.external-link::after {
+  content: ' ↗';
+  font-size: 0.8em;
+  opacity: 0.7;
 }
 
 /* Lists */

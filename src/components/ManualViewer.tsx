@@ -11,7 +11,7 @@
  * - Search/filter capability (future)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ManualTabType } from './HelpModal';
 import './ManualViewer.css';
 
@@ -52,8 +52,16 @@ function markdownToHtml(markdown: string): string {
   html = html.replace(/```(\w+)?\n([\s\S]*?)```/gim, '<pre><code class="language-$1">$2</code></pre>');
   html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
 
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  // Links - handle anchor links and external links differently
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, (_match, text, url) => {
+    if (url.startsWith('#')) {
+      // Anchor links - mark as internal, will be handled by click handler
+      return `<a href="${url}" class="internal-link" data-section="${url.slice(1)}">${text}</a>`;
+    } else {
+      // External links - open in new tab
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="external-link">${text}</a>`;
+    }
+  });
 
   // Unordered lists
   html = html.replace(/^\s*[-*] (.*$)/gim, '<li>$1</li>');
@@ -196,6 +204,53 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type }) => {
     setExpandedSections(new Set());
   };
 
+  // Ref for the sections container
+  const sectionsRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicks on links within the content
+  const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+
+    // Check if clicked on a link
+    if (target.tagName === 'A') {
+      const link = target as HTMLAnchorElement;
+
+      // Handle internal anchor links
+      if (link.classList.contains('internal-link')) {
+        e.preventDefault();
+        const sectionId = link.getAttribute('data-section');
+
+        if (sectionId && content) {
+          // Find the section that matches
+          const targetSection = content.sections.find(s =>
+            s.id === sectionId ||
+            s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') === sectionId
+          );
+
+          if (targetSection) {
+            // Expand that section
+            setExpandedSections(prev => new Set([...prev, targetSection.id]));
+
+            // Scroll to it within the sections container
+            setTimeout(() => {
+              const sectionEl = sectionsRef.current?.querySelector(`[data-section-id="${targetSection.id}"]`);
+              if (sectionEl) {
+                sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 100);
+          }
+        }
+        return;
+      }
+
+      // External links already have target="_blank", but ensure they work
+      if (link.classList.contains('external-link') && !link.getAttribute('target')) {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+      }
+    }
+  }, [content]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -260,10 +315,11 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type }) => {
       </div>
 
       {/* Sections */}
-      <div className="manual-sections">
+      <div className="manual-sections" ref={sectionsRef} onClick={handleContentClick}>
         {content.sections.map((section) => (
           <div
             key={section.id}
+            data-section-id={section.id}
             className={`manual-section ${expandedSections.has(section.id) ? 'expanded' : ''}`}
           >
             <button
