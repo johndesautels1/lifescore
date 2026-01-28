@@ -25,6 +25,7 @@ import JudgeTab from './components/JudgeTab';
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import CostDashboard from './components/CostDashboard';
+import HelpBubble from './components/HelpBubble';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
@@ -844,6 +845,9 @@ const AppContent: React.FC = () => {
 
       {/* Cookie Consent Banner */}
       <CookieConsent />
+
+      {/* Emilia Help Bubble - Shows on all pages */}
+      <HelpBubble />
 
       {/* Pricing Modal */}
       <PricingModal

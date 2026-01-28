@@ -1,0 +1,275 @@
+/**
+ * LIFE SCORE™ Help Bubble Styles
+ *
+ * Teal color scheme: #14B8A6 (primary), #0D9488 (dark), #2DD4BF (light)
+ * Position: Fixed bottom-left (opposite from Olivia)
+ */
+
+/* ============================================
+   Floating Help Button
+   ============================================ */
+
+.help-bubble {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 4px 12px rgba(20, 184, 166, 0.4),
+    0 0 0 0 rgba(20, 184, 166, 0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 9998;
+  padding: 0;
+  outline: none;
+}
+
+.help-bubble:hover {
+  transform: scale(1.1);
+  box-shadow:
+    0 6px 20px rgba(20, 184, 166, 0.5),
+    0 0 0 6px rgba(20, 184, 166, 0.15);
+}
+
+.help-bubble:active {
+  transform: scale(1.05);
+}
+
+.help-bubble:focus-visible {
+  box-shadow:
+    0 4px 12px rgba(20, 184, 166, 0.4),
+    0 0 0 3px rgba(20, 184, 166, 0.5);
+}
+
+/* Inner container for icon and rings */
+.help-bubble-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Question mark icon */
+.help-bubble-icon {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+/* Animated rings */
+.help-bubble-rings {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.help-bubble-rings .ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  animation: help-ring-pulse 2s ease-out infinite;
+}
+
+.help-bubble-rings .ring-1 {
+  width: 50px;
+  height: 50px;
+  animation-delay: 0s;
+}
+
+.help-bubble-rings .ring-2 {
+  width: 65px;
+  height: 65px;
+  animation-delay: 0.5s;
+}
+
+@keyframes help-ring-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* "Help" label below bubble */
+.help-bubble-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: #14B8A6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Notification badge */
+.help-bubble-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: badge-bounce 0.5s ease;
+}
+
+@keyframes badge-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Tooltip on hover */
+.help-bubble-tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1e293b;
+  color: #f1f5f9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.help-bubble-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent #1e293b transparent transparent;
+}
+
+.help-bubble:hover .help-bubble-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Notification state */
+.help-bubble.has-notification {
+  animation: help-attention 2s ease-in-out infinite;
+}
+
+@keyframes help-attention {
+  0%, 100% { transform: scale(1); }
+  10%, 30% { transform: scale(1.05); }
+  20% { transform: scale(1); }
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .help-bubble {
+    width: 52px;
+    height: 52px;
+    bottom: 20px;
+    left: 20px;
+  }
+
+  .help-bubble-icon {
+    font-size: 24px;
+  }
+
+  .help-bubble-label {
+    display: none;
+  }
+
+  .help-bubble-tooltip {
+    display: none;
+  }
+
+  .help-bubble-rings .ring-1 {
+    width: 44px;
+    height: 44px;
+  }
+
+  .help-bubble-rings .ring-2 {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+@media (max-width: 480px) {
+  .help-bubble {
+    width: 48px;
+    height: 48px;
+    bottom: 16px;
+    left: 16px;
+  }
+
+  .help-bubble-icon {
+    font-size: 22px;
+  }
+}
+
+/* ============================================
+   High contrast / reduced motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .help-bubble-rings .ring {
+    animation: none;
+  }
+
+  .help-bubble.has-notification {
+    animation: none;
+  }
+
+  .help-bubble-badge {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .help-bubble {
+    border: 2px solid white;
+  }
+
+  .help-bubble-tooltip {
+    border: 1px solid #64748b;
+  }
+}
