@@ -184,12 +184,12 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 .feature-usage-badge {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: rgba(10, 22, 40, 0.9);
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  border-radius: 6px;
-  padding: 0.25rem 0.5rem;
+  top: 6rem;
+  right: 1rem;
+  background: rgba(10, 22, 40, 0.95);
+  border: 1px solid rgba(100, 116, 139, 0.4);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
   z-index: 5;
 }
 
