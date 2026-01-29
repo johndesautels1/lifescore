@@ -13,7 +13,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type { Profile, UserPreferences } from '../types/database';
 import { fullDatabaseSync } from '../services/savedComparisons';
 
@@ -140,41 +140,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchingRef.current = userId;
     console.log("[Auth] Fetching profile for user:", userId);
 
-    // Helper: wrap query with timeout to prevent hanging
-    // 45s timeout - consistent with session timeout for Supabase cold starts
-    const DB_TIMEOUT_MS = 45000;
-    const withTimeout = <T,>(promise: PromiseLike<T>, ms: number): Promise<T> => {
-      return Promise.race([
-        Promise.resolve(promise),
-        new Promise<T>((_, reject) =>
-          setTimeout(() => reject(new Error('Database query timeout')), ms)
-        ),
-      ]);
-    };
-
     try {
-      // Fetch profile and preferences in parallel with timeout
-      // Select only needed fields to reduce query time
-      const profilePromise = supabase
-        .from('profiles')
-        .select('id, email, full_name, tier, avatar_url, created_at')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const prefsPromise = supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      // Run both in parallel with 10s timeout (Pro tier - always available)
+      // Fetch profile and preferences in parallel with retry + exponential backoff
       const [profileResult, prefsResult] = await Promise.all([
-        withTimeout(profilePromise, DB_TIMEOUT_MS).catch(err => {
-          console.error('[Auth] Profile fetch failed:', err.message);
+        withRetry(
+          () => supabase
+            .from('profiles')
+            .select('id, email, full_name, tier, avatar_url, created_at')
+            .eq('id', userId)
+            .maybeSingle(),
+          { operationName: 'Profile fetch', timeoutMs: SUPABASE_TIMEOUT_MS }
+        ).catch(err => {
+          console.error('[Auth] Profile fetch failed after retries:', err.message);
           return { data: null, error: err };
         }),
-        withTimeout(prefsPromise, DB_TIMEOUT_MS).catch(err => {
-          console.error('[Auth] Preferences fetch failed:', err.message);
+        withRetry(
+          () => supabase
+            .from('user_preferences')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle(),
+          { operationName: 'Preferences fetch', timeoutMs: SUPABASE_TIMEOUT_MS }
+        ).catch(err => {
+          console.error('[Auth] Preferences fetch failed after retries:', err.message);
           return { data: null, error: err };
         }),
       ]);

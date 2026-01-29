@@ -400,6 +400,62 @@ try {
 }
 ```
 
+### 6.5 Supabase Retry Logic (Added 2026-01-29)
+
+All Supabase queries use automatic retry with exponential backoff to handle transient failures.
+
+**Configuration (`src/lib/supabase.ts`):**
+```typescript
+RETRY_CONFIG = {
+  maxRetries: 3,           // Up to 3 retry attempts
+  initialDelayMs: 1000,    // Start with 1 second delay
+  maxDelayMs: 10000,       // Cap at 10 seconds
+  backoffMultiplier: 2,    // Double delay each retry
+}
+SUPABASE_TIMEOUT_MS = 45000  // 45 second timeout per attempt
+```
+
+**Retry Behavior:**
+- Attempt 1: Immediate
+- Attempt 2: Wait 1s, then retry
+- Attempt 3: Wait 2s, then retry
+- Attempt 4: Wait 4s, then retry (final)
+- Total max wait: ~7 seconds + query time
+
+**Retryable Errors:**
+- Timeout errors (query took > 45s)
+- Network errors (fetch failed)
+
+**Non-Retryable Errors:**
+- Authentication failures
+- Permission denied (RLS)
+- Invalid queries
+
+**Usage:**
+```typescript
+import { withRetry, withRetryFallback } from '../lib/supabase';
+
+// Throws after all retries fail
+const result = await withRetry(
+  () => supabase.from('profiles').select('*'),
+  { operationName: 'Profile fetch' }
+);
+
+// Returns fallback on failure
+const profile = await withRetryFallback(
+  () => supabase.from('profiles').select('*'),
+  { data: null, error: null },
+  { operationName: 'Profile fetch' }
+);
+```
+
+**Files Using Retry:**
+- `src/contexts/AuthContext.tsx` - Profile/preferences fetch
+- `src/services/databaseService.ts` - All database operations
+- `src/services/savedComparisons.ts` - Comparison save/load
+- `src/hooks/useTierAccess.ts` - Tier checking
+- `src/components/JudgeTab.tsx` - Judge report operations
+
 ---
 
 ## 7. Tavily Integration

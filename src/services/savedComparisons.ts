@@ -9,18 +9,22 @@
 import type { ComparisonResult } from '../types/metrics';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
-import { supabase, isSupabaseConfigured, getCurrentUser, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 
 /**
- * Wrap a Supabase query with 45s timeout
+ * Wrap a Supabase query with retry logic and timeout.
+ * Uses exponential backoff on timeout/network errors.
  */
-function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Supabase query timeout after ${ms}ms`)), ms)
-    ),
-  ]);
+async function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms: number = SUPABASE_TIMEOUT_MS,
+  operationName: string = 'Saved comparisons query'
+): Promise<T> {
+  return withRetry(() => promise, {
+    timeoutMs: ms,
+    operationName,
+    maxRetries: 3,
+  });
 }
 import {
   saveComparison as dbSaveComparison,

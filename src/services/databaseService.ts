@@ -9,7 +9,7 @@
  * - User preferences
  */
 
-import { supabase, isSupabaseConfigured, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type {
   Comparison,
   ComparisonInsert,
@@ -27,20 +27,24 @@ import type {
 } from '../types/database';
 
 // ============================================================================
-// HELPER: Timeout wrapper for Supabase queries (45s)
+// HELPER: Timeout wrapper with retry for Supabase queries
 // ============================================================================
 
 /**
- * Wrap a Supabase query with 45s timeout - rejects on timeout
- * Handles Supabase free tier cold starts which can be slow
+ * Wrap a Supabase query with retry logic and timeout.
+ * Uses exponential backoff on timeout/network errors.
  */
-function withTimeout<T>(promise: PromiseLike<T>, ms: number = SUPABASE_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Supabase query timeout after ${ms}ms`)), ms)
-    ),
-  ]);
+async function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms: number = SUPABASE_TIMEOUT_MS,
+  operationName: string = 'Database query'
+): Promise<T> {
+  // Wrap the promise in a function for withRetry
+  return withRetry(() => promise, {
+    timeoutMs: ms,
+    operationName,
+    maxRetries: 3,
+  });
 }
 
 // ============================================================================
