@@ -323,7 +323,7 @@ export default async function handler(
         still_mode: true,             // Fewer head motions, more natural
         use_ref_video: false,
         use_eyeblink: true,           // Natural eye blinks
-        pose_style: 0,
+        pose_style: 5,                // Subtle natural head movement
         batch_size: 2,
         size_of_image: 512,           // Higher resolution for smoother output
         expression_scale: 0.6,        // Smoother expressions (user adjusted from 0.5)
