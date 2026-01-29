@@ -1,16 +1,13 @@
 /**
- * LIFE SCORE - Judge Video API
- * D-ID Talks API for Christian avatar delivering the Judge's verdict
+ * LIFE SCORE - Judge Video API (D-ID Fallback)
+ * D-ID Talks API for Christiano avatar delivering the Judge's verdict
  *
- * IMPORTANT: Uses SEPARATE env vars from Olivia to prevent config mixing:
- * - DID_API_KEY (shared - same D-ID account)
- * - DID_JUDGE_PRESENTER_URL (Judge-specific avatar image)
- * - DID_JUDGE_VOICE_ID (Judge-specific voice - male)
+ * Updated 2026-01-29: Now uses ElevenLabs TTS for voice consistency
+ * with the primary Replicate implementation (api/avatar/generate-judge-video.ts)
  *
- * Olivia uses:
- * - DID_PRESENTER_URL (Olivia's avatar)
- * - DID_AGENT_ID (Olivia's agent)
- * - Microsoft Sonia voice (female)
+ * Voice: ElevenLabs Christiano (ZpwpoMoU84OhcbA2YBBV)
+ * Primary: Replicate SadTalker + ElevenLabs
+ * Fallback: D-ID + ElevenLabs (this file)
  *
  * Actions:
  * - generate: Create video from JudgeReport
@@ -33,9 +30,61 @@ const DID_API_BASE = 'https://api.d-id.com';
 const DID_TIMEOUT_MS = 60000;
 
 // JUDGE-SPECIFIC config (completely separate from Olivia)
-// These env vars are ONLY for Judge/Christian - never used by Olivia
 const JUDGE_PRESENTER_URL = process.env.DID_JUDGE_PRESENTER_URL || '';
-const JUDGE_VOICE_ID = process.env.DID_JUDGE_VOICE_ID || 'en-US-GuyNeural'; // Default male voice
+
+// ElevenLabs Christiano voice - same as Replicate implementation for consistency
+const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV';
+
+// ============================================================================
+// ELEVENLABS TTS (for voice consistency with Replicate)
+// ============================================================================
+
+/**
+ * Generate TTS audio using ElevenLabs with Christiano's voice
+ * Returns base64 audio for D-ID consumption
+ */
+async function generateElevenLabsAudio(script: string): Promise<string> {
+  const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+
+  if (!elevenLabsKey) {
+    throw new Error('ELEVENLABS_API_KEY not configured for D-ID fallback');
+  }
+
+  console.log('[JUDGE-VIDEO-DID] Generating ElevenLabs audio, script length:', script.length);
+
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
+    {
+      method: 'POST',
+      headers: {
+        'xi-api-key': elevenLabsKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: script,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.6,
+          similarity_boost: 0.75,
+          style: 0.1,
+          use_speaker_boost: true,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[JUDGE-VIDEO-DID] ElevenLabs error:', response.status, errorText);
+    throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+
+  console.log('[JUDGE-VIDEO-DID] ElevenLabs audio generated, base64 length:', base64Audio.length);
+  return base64Audio;
+}
 
 // ============================================================================
 // TYPES
@@ -176,27 +225,24 @@ function getDIDAuthHeader(): string {
 
 /**
  * Create a talk (video) using D-ID Talks API
- * Uses JUDGE-SPECIFIC presenter and voice (not Olivia's)
+ * Uses ElevenLabs audio for Christiano voice consistency
  */
 async function createTalk(
   authHeader: string,
   script: string,
   presenterUrl: string,
-  voiceId: string
+  audioBase64: string
 ): Promise<string> {
-  console.log('[JUDGE-VIDEO] Creating talk with D-ID, script length:', script.length);
-  console.log('[JUDGE-VIDEO] Using presenter:', presenterUrl.slice(0, 50) + '...');
-  console.log('[JUDGE-VIDEO] Using voice:', voiceId);
+  console.log('[JUDGE-VIDEO-DID] Creating talk with D-ID + ElevenLabs audio');
+  console.log('[JUDGE-VIDEO-DID] Using presenter:', presenterUrl.slice(0, 50) + '...');
+  console.log('[JUDGE-VIDEO-DID] Using Christiano voice:', CHRISTIANO_VOICE_ID);
 
+  // Use audio type with base64 ElevenLabs audio instead of D-ID's built-in TTS
   const requestBody = {
     source_url: presenterUrl,
     script: {
-      type: 'text',
-      input: script,
-      provider: {
-        type: 'microsoft',
-        voice_id: voiceId,
-      },
+      type: 'audio',
+      audio: `data:audio/mpeg;base64,${audioBase64}`,
     },
     config: {
       stitch: true, // Smoother video
@@ -218,7 +264,7 @@ async function createTalk(
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('[JUDGE-VIDEO] D-ID API error:', error);
+    console.error('[JUDGE-VIDEO-DID] D-ID API error:', error);
     throw new Error(`D-ID video generation failed: ${error}`);
   }
 
@@ -228,7 +274,7 @@ async function createTalk(
     throw new Error('D-ID did not return a talk ID');
   }
 
-  console.log('[JUDGE-VIDEO] Talk created, id:', data.id);
+  console.log('[JUDGE-VIDEO-DID] Talk created, id:', data.id);
   return data.id;
 }
 
@@ -329,29 +375,33 @@ export default async function handler(
         if (!JUDGE_PRESENTER_URL) {
           res.status(400).json({
             error: 'DID_JUDGE_PRESENTER_URL not configured',
-            hint: 'Set DID_JUDGE_PRESENTER_URL in Vercel with Christian avatar image URL',
+            hint: 'Set DID_JUDGE_PRESENTER_URL in Vercel with Christiano avatar image URL',
           });
           return;
         }
 
         // Generate video script from report
         const script = generateVideoScript(body.report);
-        console.log('[JUDGE-VIDEO] Generated script:', script.slice(0, 100) + '...');
+        console.log('[JUDGE-VIDEO-DID] Generated script:', script.slice(0, 100) + '...');
 
-        // Call D-ID to create talk (video)
+        // Step 1: Generate ElevenLabs audio with Christiano voice
+        const audioBase64 = await generateElevenLabsAudio(script);
+
+        // Step 2: Call D-ID with the ElevenLabs audio
         const talkId = await createTalk(
           authHeader,
           script,
           JUDGE_PRESENTER_URL,
-          JUDGE_VOICE_ID
+          audioBase64
         );
 
         res.status(200).json({
           success: true,
           talkId,
           status: 'pending',
-          message: 'Video generation started. Poll /api/judge-video with action=status to check progress.',
-          script, // Include script for debugging/display
+          message: 'Video generation started with ElevenLabs Christiano voice. Poll /api/judge-video with action=status to check progress.',
+          script,
+          voice: CHRISTIANO_VOICE_ID,
         });
         return;
       }
