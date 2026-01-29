@@ -178,6 +178,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     isGenerating: isGeneratingVideo,
     isReady: isVideoReady,
     generate: generateReplicateVideo,
+    checkExistingVideo,
     error: videoError,
   } = useJudgeVideo();
 
@@ -540,27 +541,55 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
   };
 
   // Load report from localStorage on mount (if we have a matching comparison)
+  // Also check for pre-generated video
   useEffect(() => {
     if (!comparisonResult) return;
 
-    try {
-      const storageKey = 'lifescore_judge_reports';
-      const existingReports: JudgeReport[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const loadCachedData = async () => {
+      try {
+        const storageKey = 'lifescore_judge_reports';
+        const existingReports: JudgeReport[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
 
-      // Find a report matching this comparison
-      const matchingReport = existingReports.find(r =>
-        r.comparisonId === comparisonResult.comparisonId ||
-        (r.city1 === comparisonResult.city1.city && r.city2 === comparisonResult.city2.city)
-      );
+        // Find a report matching this comparison
+        const matchingReport = existingReports.find(r =>
+          r.comparisonId === comparisonResult.comparisonId ||
+          (r.city1 === comparisonResult.city1.city && r.city2 === comparisonResult.city2.city)
+        );
 
-      if (matchingReport) {
-        console.log('[JudgeTab] Found cached report:', matchingReport.reportId);
-        setJudgeReport(matchingReport);
+        if (matchingReport) {
+          console.log('[JudgeTab] Found cached report:', matchingReport.reportId);
+          setJudgeReport(matchingReport);
+
+          // If report exists but no video, check for pre-generated video
+          if (!matchingReport.videoUrl || matchingReport.videoStatus !== 'ready') {
+            console.log('[JudgeTab] Checking for pre-generated video...');
+            const existingVideo = await checkExistingVideo(comparisonResult.comparisonId);
+            if (existingVideo?.videoUrl) {
+              console.log('[JudgeTab] Found pre-generated video:', existingVideo.videoUrl);
+              const updatedReport: JudgeReport = {
+                ...matchingReport,
+                videoUrl: existingVideo.videoUrl,
+                videoStatus: 'ready',
+              };
+              setJudgeReport(updatedReport);
+              saveReportToLocalStorage(updatedReport);
+            }
+          }
+        } else {
+          // No cached report - check if there's a pre-generated video waiting
+          console.log('[JudgeTab] No cached report, checking for pre-generated video...');
+          const existingVideo = await checkExistingVideo(comparisonResult.comparisonId);
+          if (existingVideo) {
+            console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
+          }
+        }
+      } catch (error) {
+        console.error('[JudgeTab] Failed to load cached data:', error);
       }
-    } catch (error) {
-      console.error('[JudgeTab] Failed to load cached report:', error);
-    }
-  }, [comparisonResult]);
+    };
+
+    loadCachedData();
+  }, [comparisonResult, checkExistingVideo]);
 
   // Save report to Supabase (for authenticated users)
   const saveReportToSupabase = async (report: JudgeReport): Promise<boolean> => {
