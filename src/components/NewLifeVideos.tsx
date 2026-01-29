@@ -139,12 +139,13 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="score-badge">{winnerScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
-              {isReady && videoPair?.winner?.videoUrl ? (
+              {isReady && videoPair?.winner?.videoUrl && videoPair.winner.videoUrl.startsWith('http') ? (
                 <video
                   ref={winnerVideoRef}
                   src={videoPair.winner.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
+                  onError={(e) => console.error('[NewLifeVideos] Winner video load error:', e)}
                   playsInline
                   muted={false}
                 />
@@ -152,7 +153,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 <div className="video-placeholder winner-placeholder">
                   <div className="placeholder-icon">🌟</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : 'Freedom awaits'}
+                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : 'Freedom awaits'}
                   </div>
                 </div>
               )}
@@ -186,12 +187,13 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="score-badge">{loserScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
-              {isReady && videoPair?.loser?.videoUrl ? (
+              {isReady && videoPair?.loser?.videoUrl && videoPair.loser.videoUrl.startsWith('http') ? (
                 <video
                   ref={loserVideoRef}
                   src={videoPair.loser.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
+                  onError={(e) => console.error('[NewLifeVideos] Loser video load error:', e)}
                   playsInline
                   muted={false}
                 />
@@ -199,7 +201,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 <div className="video-placeholder loser-placeholder">
                   <div className="placeholder-icon">⛓️</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : 'Oppression looms'}
+                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : 'Oppression looms'}
                   </div>
                 </div>
               )}
