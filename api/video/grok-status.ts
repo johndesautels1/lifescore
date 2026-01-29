@@ -335,15 +335,22 @@ export default async function handler(
     }
 
     // Database query by videoId
+    // FIX 2026-01-29: Use maybeSingle() to avoid "Cannot coerce" error on empty results
     const { data: video, error } = await supabaseAdmin
       .from('grok_videos')
       .select('*')
       .eq('id', videoId)
-      .single();
+      .maybeSingle();
 
-    if (error || !video) {
-      console.log('[GROK-STATUS] Video not found:', videoId);
+    if (error) {
+      console.error('[GROK-STATUS] Database error:', error.message);
+      res.status(500).json({ error: 'Database error', message: error.message });
+      return;
+    }
+
+    if (!video) {
       res.status(404).json({
+        success: false,
         error: 'Video not found',
         message: 'No database record found',
       });

@@ -69,12 +69,13 @@ export default async function handler(
     }
 
     // Get user's Stripe customer ID from subscription record
+    // FIX 2026-01-29: Use maybeSingle() - subscription may not exist
     const { data: subscription, error: subError } = await supabaseAdmin
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', body.userId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
 
     if (subError || !subscription?.stripe_customer_id) {
       res.status(404).json({

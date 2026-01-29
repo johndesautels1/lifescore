@@ -171,11 +171,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
   console.log('[WEBHOOK] Subscription deleted:', subscription.id);
 
   // Find user from subscription record
+  // FIX 2026-01-29: Use maybeSingle() - subscription may not exist
   const { data: subRecord } = await supabaseAdmin
     .from('subscriptions')
     .select('user_id')
     .eq('stripe_subscription_id', subscription.id)
-    .single();
+    .maybeSingle();
 
   if (subRecord?.user_id) {
     // Downgrade user to free tier

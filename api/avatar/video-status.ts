@@ -132,13 +132,25 @@ export default async function handler(
       query = query.eq('comparison_id', comparisonId);
     }
 
-    const { data: video, error } = await query.single();
+    // FIX 2026-01-29: Use maybeSingle() instead of single() to avoid throwing on empty results
+    const { data: video, error } = await query.maybeSingle();
 
-    if (error || !video) {
-      console.log('[VIDEO-STATUS] DB record not found, error:', error?.message);
+    if (error) {
+      // Only log actual database errors, not "no rows found"
+      console.error('[VIDEO-STATUS] Database error:', error.message);
+      res.status(500).json({
+        error: 'Database error',
+        message: error.message,
+      });
+      return;
+    }
+
+    if (!video) {
+      // This is normal - video may not exist yet. Don't log as error.
       res.status(404).json({
+        success: false,
         error: 'Video not found',
-        message: 'No database record found. Try using predictionId parameter.',
+        message: 'No video record exists for this query.',
       });
       return;
     }

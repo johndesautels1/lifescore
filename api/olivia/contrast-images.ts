@@ -68,11 +68,12 @@ async function checkCache(cacheKey: string): Promise<ContrastImageResponse | nul
   if (!supabase) return null;
 
   try {
+    // FIX 2026-01-29: Use maybeSingle() - cache entry may not exist
     const { data, error } = await supabase
       .from('contrast_image_cache')
       .select('*')
       .eq('cache_key', cacheKey)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return null;
 

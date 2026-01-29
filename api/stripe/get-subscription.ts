@@ -45,32 +45,35 @@ export default async function handler(
 
   try {
     // Get subscription
+    // FIX 2026-01-29: Use maybeSingle() - user may not have subscription
     const { data: subscription, error: subError } = await supabaseAdmin
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // Get user profile for tier
+    // FIX 2026-01-29: Use maybeSingle() - profile may not exist
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('tier')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     // Get current usage
     const periodStart = new Date();
     periodStart.setDate(1);
     periodStart.setHours(0, 0, 0, 0);
 
+    // FIX 2026-01-29: Use maybeSingle() - usage record may not exist
     const { data: usage } = await supabaseAdmin
       .from('usage_tracking')
       .select('*')
       .eq('user_id', userId)
       .eq('period_start', periodStart.toISOString().split('T')[0])
-      .single();
+      .maybeSingle();
 
     res.status(200).json({
       success: true,

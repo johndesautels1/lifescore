@@ -101,7 +101,7 @@ export async function saveComparison(
       .from('comparisons')
       .upsert(insert, { onConflict: 'user_id,comparison_id' })
       .select()
-      .single()
+      .maybeSingle()
   );
 
   return {
@@ -158,7 +158,7 @@ export async function getComparison(
       .from('comparisons')
       .select('*')
       .eq('id', comparisonId)
-      .single()
+      .maybeSingle()
   );
 
   return {
@@ -180,7 +180,7 @@ export async function getComparisonWithRelations(
       .from('comparisons')
       .select('*')
       .eq('id', comparisonId)
-      .single()
+      .maybeSingle()
   );
 
   if (compError || !comparison) {
@@ -289,7 +289,7 @@ export async function createOliviaConversation(
       .from('olivia_conversations')
       .insert(insert)
       .select()
-      .single()
+      .maybeSingle()
   );
 
   return {
@@ -347,7 +347,7 @@ export async function findConversationForComparison(
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
   );
 
   return {
@@ -369,7 +369,7 @@ export async function getConversationWithMessages(
       .from('olivia_conversations')
       .select('*')
       .eq('id', conversationId)
-      .single()
+      .maybeSingle()
   );
 
   if (convError || !conversation) {
@@ -392,7 +392,7 @@ export async function getConversationWithMessages(
         .from('comparisons')
         .select('*')
         .eq('id', conversation.comparison_id)
-        .single()
+        .maybeSingle()
     );
     comparison = comp as Comparison;
   }
@@ -432,7 +432,7 @@ export async function addOliviaMessage(
       .from('olivia_messages')
       .insert(insert)
       .select()
-      .single()
+      .maybeSingle()
   );
 
   return {
@@ -511,7 +511,7 @@ export async function saveGammaReport(
       .from('gamma_reports')
       .insert(insert)
       .select()
-      .single()
+      .maybeSingle()
   );
 
   return {
@@ -608,7 +608,7 @@ export async function exportUserData(userId: string): Promise<{
   requireDatabase();
 
   const [profile, comparisons, conversations, gammaReports] = await Promise.all([
-    withTimeout(supabase.from('profiles').select('*').eq('id', userId).single()),
+    withTimeout(supabase.from('profiles').select('*').eq('id', userId).maybeSingle()),
     withTimeout(supabase.from('comparisons').select('*').eq('user_id', userId)),
     withTimeout(supabase.from('olivia_conversations').select('*').eq('user_id', userId)),
     withTimeout(supabase.from('gamma_reports').select('*').eq('user_id', userId)),
@@ -646,7 +646,7 @@ export async function saveApiCostRecord(
       .from('api_cost_records')
       .upsert(record, { onConflict: 'user_id,comparison_id' })
       .select()
-      .single()
+      .maybeSingle()
   );
 
   return {

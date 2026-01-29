@@ -526,11 +526,12 @@ async function checkUserTierAccess(userId: string): Promise<{
 }> {
   try {
     // Get user profile to check tier AND email (for developer bypass)
+    // FIX 2026-01-29: Use maybeSingle() to avoid "Cannot coerce" error
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('tier, email')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (profileError || !profile) {
       console.warn('[GROK-VIDEO] Could not fetch user profile:', profileError?.message);
@@ -586,12 +587,13 @@ async function checkUserTierAccess(userId: string): Promise<{
     const now = new Date();
     const periodStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
+    // FIX 2026-01-29: Use maybeSingle() - usage record may not exist yet
     const { data: usage, error: usageError } = await supabaseAdmin
       .from('usage_tracking')
       .select('grok_videos')
       .eq('user_id', userId)
       .eq('period_start', periodStart)
-      .single();
+      .maybeSingle();
 
     const used = usage?.grok_videos || 0;
     const remaining = limit - used;
@@ -639,12 +641,13 @@ async function incrementUsage(userId: string): Promise<boolean> {
     const periodEnd = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
 
     // Check if record exists
+    // FIX 2026-01-29: Use maybeSingle() - record may not exist yet
     const { data: existing } = await supabaseAdmin
       .from('usage_tracking')
       .select('id, grok_videos')
       .eq('user_id', userId)
       .eq('period_start', periodStart)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       // Update existing record

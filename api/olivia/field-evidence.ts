@@ -295,11 +295,12 @@ export default async function handler(
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Fetch comparison from database
+    // FIX 2026-01-29: Use maybeSingle() - comparison may not exist
     const { data: comparison, error: dbError } = await supabase
       .from('comparisons')
       .select('comparison_result, city1_name, city2_name')
       .eq('comparison_id', comparisonId)
-      .single();
+      .maybeSingle();
 
     if (dbError || !comparison) {
       res.status(404).json({ error: 'Comparison not found' });

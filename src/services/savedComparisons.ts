@@ -279,13 +279,14 @@ export async function deleteComparisonLocal(id: string): Promise<boolean> {
       const user = await getCurrentUser();
       if (user) {
         // Find the database record by comparison_id
+        // FIX 2026-01-29: Use maybeSingle() - record may not exist
         const { data } = await withTimeout(
           supabase
             .from('comparisons')
             .select('id')
             .eq('user_id', user.id)
             .eq('comparison_id', id)
-            .single()
+            .maybeSingle()
         );
 
         if (data) {
@@ -320,13 +321,14 @@ export async function updateNicknameLocal(id: string, nickname: string): Promise
       const user = await getCurrentUser();
       if (user) {
         // Find the database record by comparison_id
+        // FIX 2026-01-29: Use maybeSingle() - record may not exist
         const { data } = await withTimeout(
           supabase
             .from('comparisons')
             .select('id')
             .eq('user_id', user.id)
             .eq('comparison_id', id)
-            .single()
+            .maybeSingle()
         );
 
         if (data) {
@@ -510,13 +512,14 @@ export async function deleteEnhancedComparisonLocal(id: string): Promise<boolean
       const user = await getCurrentUser();
       if (user) {
         // Find the database record by comparison_id
+        // FIX 2026-01-29: Use maybeSingle() - record may not exist
         const { data } = await withTimeout(
           supabase
             .from('comparisons')
             .select('id')
             .eq('user_id', user.id)
             .eq('comparison_id', id)
-            .single()
+            .maybeSingle()
         );
 
         if (data) {

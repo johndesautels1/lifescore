@@ -119,11 +119,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
 
     // 1. Get profile
+    // FIX 2026-01-29: Use maybeSingle() - profile may not exist
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (profile) {
       // Remove sensitive/internal fields
@@ -132,11 +133,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 2. Get preferences
+    // FIX 2026-01-29: Use maybeSingle() - preferences may not exist
     const { data: preferences } = await supabase
       .from('user_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (preferences) {
       const { id, user_id, ...prefsData } = preferences;

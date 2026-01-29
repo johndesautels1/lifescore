@@ -290,25 +290,46 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
   }, [activeProvider, simli, did]);
 
   const interrupt = useCallback(() => {
-    console.log('[useAvatarProvider] 🛑 INTERRUPT - Stopping all audio');
+    console.log('[useAvatarProvider] 🛑 INTERRUPT - Stopping ALL audio sources');
 
-    // Interrupt Simli
-    if (activeProvider === 'simli') {
+    // Interrupt both providers to be safe (one may have pending audio)
+    try {
       simli.interrupt();
+    } catch (e) {
+      console.log('[useAvatarProvider] Simli interrupt:', e);
     }
 
-    // For D-ID, pause the video element directly
+    // Pause and mute video element
     if (effectiveVideoRef?.current) {
       effectiveVideoRef.current.pause();
-      console.log('[useAvatarProvider] Video element paused');
+      effectiveVideoRef.current.muted = true;
+      console.log('[useAvatarProvider] Video element paused and muted');
+      // Unmute after brief delay for next speech
+      setTimeout(() => {
+        if (effectiveVideoRef?.current) effectiveVideoRef.current.muted = false;
+      }, 100);
     }
 
-    // Cancel any browser speech synthesis (fallback TTS)
+    // Pause and mute audio element
+    if (effectiveAudioRef?.current) {
+      effectiveAudioRef.current.pause();
+      effectiveAudioRef.current.currentTime = 0;
+      effectiveAudioRef.current.muted = true;
+      console.log('[useAvatarProvider] Audio element paused and muted');
+      setTimeout(() => {
+        if (effectiveAudioRef?.current) effectiveAudioRef.current.muted = false;
+      }, 100);
+    }
+
+    // Cancel ALL browser speech synthesis
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       console.log('[useAvatarProvider] Browser speech synthesis cancelled');
     }
-  }, [activeProvider, simli, effectiveVideoRef]);
+
+    // Reset speaking state in facade
+    setFacadeStatus('connected');
+  }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
 
   // ============================================================================
   // PROVIDER CONTROL

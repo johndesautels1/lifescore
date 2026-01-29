@@ -73,6 +73,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   // Ref for SimliClient instance
   const simliClientRef = useRef<SimliClient | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const interruptedRef = useRef<boolean>(false); // Flag to stop audio chunk sending
 
   // Callback refs - prevent re-renders from causing reconnections
   const onConnectedRef = useRef(onConnected);
@@ -248,6 +249,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     }
 
     setStatus('speaking');
+    interruptedRef.current = false; // Reset interrupt flag before starting
 
     try {
       console.log('[useSimli] Calling simli-speak API...');
@@ -307,9 +309,14 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
           chunks.push(audioBytes.slice(i, Math.min(i + chunkSize, audioBytes.length)));
         }
 
-        // Send chunks with pacing
+        // Send chunks with pacing - stops if interrupted
         let chunkIndex = 0;
         const sendNextChunk = () => {
+          // Check if interrupted before sending next chunk
+          if (interruptedRef.current) {
+            console.log('[useSimli] Audio sending interrupted at chunk', chunkIndex, 'of', chunks.length);
+            return;
+          }
           if (chunkIndex < chunks.length && simliClientRef.current) {
             simliClientRef.current.sendAudioData(chunks[chunkIndex]);
             chunkIndex++;
@@ -353,23 +360,39 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   const interrupt = useCallback(() => {
     console.log('[useSimli] 🛑 INTERRUPT - Stopping all audio');
 
+    // CRITICAL: Set interrupt flag to stop audio chunk loop
+    interruptedRef.current = true;
+
     // Clear speaking timeout
     if (speakingTimeoutRef.current) {
       clearTimeout(speakingTimeoutRef.current);
       speakingTimeoutRef.current = null;
     }
 
-    // Send empty audio to clear Simli buffer
+    // Send empty audio to clear Simli buffer (multiple times to ensure it's cleared)
     if (simliClientRef.current) {
       const silence = new Uint8Array(6000);
       simliClientRef.current.sendAudioData(silence);
+      simliClientRef.current.sendAudioData(silence);
+      simliClientRef.current.sendAudioData(silence);
     }
 
-    // AGGRESSIVE: Directly pause the audio element if available
+    // AGGRESSIVE: Directly pause and mute the audio element
     if (audioRef?.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      console.log('[useSimli] Audio element paused');
+      audioRef.current.muted = true;
+      console.log('[useSimli] Audio element paused and muted');
+      // Unmute after a brief delay so next speech works
+      setTimeout(() => {
+        if (audioRef?.current) audioRef.current.muted = false;
+      }, 100);
+    }
+
+    // Also pause video element
+    if (videoRef?.current) {
+      videoRef.current.pause();
+      console.log('[useSimli] Video element paused');
     }
 
     // Also cancel any browser speech synthesis
@@ -379,7 +402,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     }
 
     setStatus('connected');
-  }, [audioRef]);
+  }, [audioRef, videoRef]);
 
   /**
    * Cleanup on unmount

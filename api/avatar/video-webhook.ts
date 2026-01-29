@@ -57,11 +57,12 @@ export default async function handler(
 
   try {
     // Find the video record by replicate prediction ID
+    // FIX 2026-01-29: Use maybeSingle() - video may not exist
     const { data: video, error: findError } = await supabaseAdmin
       .from('avatar_videos')
       .select('*')
       .eq('replicate_prediction_id', webhook.id)
-      .single();
+      .maybeSingle();
 
     if (findError || !video) {
       console.warn('[VIDEO-WEBHOOK] Video not found for prediction:', webhook.id);

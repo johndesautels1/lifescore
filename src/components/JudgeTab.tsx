@@ -540,10 +540,23 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     }
   };
 
+  // FIX 2026-01-29: Track which comparisonId we've already checked to prevent runaway loops
+  const checkedComparisonIdRef = useRef<string | null>(null);
+
   // Load report from localStorage on mount (if we have a matching comparison)
   // Also check for pre-generated video
+  // FIX: Only depend on comparisonId STRING, not the full object (which changes identity every render)
+  const currentComparisonId = comparisonResult?.comparisonId || null;
+
   useEffect(() => {
-    if (!comparisonResult) return;
+    if (!currentComparisonId || !comparisonResult) return;
+
+    // FIX 2026-01-29: Prevent runaway polling - only check once per comparisonId
+    if (checkedComparisonIdRef.current === currentComparisonId) {
+      console.log('[JudgeTab] Already checked this comparison, skipping:', currentComparisonId);
+      return;
+    }
+    checkedComparisonIdRef.current = currentComparisonId;
 
     const loadCachedData = async () => {
       try {
@@ -552,7 +565,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
 
         // Find a report matching this comparison
         const matchingReport = existingReports.find(r =>
-          r.comparisonId === comparisonResult.comparisonId ||
+          r.comparisonId === currentComparisonId ||
           (r.city1 === comparisonResult.city1.city && r.city2 === comparisonResult.city2.city)
         );
 
@@ -563,7 +576,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           // If report exists but no video, check for pre-generated video
           if (!matchingReport.videoUrl || matchingReport.videoStatus !== 'ready') {
             console.log('[JudgeTab] Checking for pre-generated video...');
-            const existingVideo = await checkExistingVideo(comparisonResult.comparisonId);
+            const existingVideo = await checkExistingVideo(currentComparisonId);
             if (existingVideo?.videoUrl) {
               console.log('[JudgeTab] Found pre-generated video:', existingVideo.videoUrl);
               const updatedReport: JudgeReport = {
@@ -578,7 +591,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
         } else {
           // No cached report - check if there's a pre-generated video waiting
           console.log('[JudgeTab] No cached report, checking for pre-generated video...');
-          const existingVideo = await checkExistingVideo(comparisonResult.comparisonId);
+          const existingVideo = await checkExistingVideo(currentComparisonId);
           if (existingVideo) {
             console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
           }
@@ -589,7 +602,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     };
 
     loadCachedData();
-  }, [comparisonResult, checkExistingVideo]);
+  }, [currentComparisonId]); // FIX: Only depend on the ID string, not full object or callback
 
   // Save report to Supabase (for authenticated users)
   const saveReportToSupabase = async (report: JudgeReport): Promise<boolean> => {
@@ -606,12 +619,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       }
 
       // Check if report already exists (with 45s timeout)
+      // FIX 2026-01-29: Use maybeSingle() - report may not exist yet
       const { data: existing } = await withTimeout(
         supabase
           .from('judge_reports')
           .select('id')
           .eq('report_id', report.reportId)
-          .single()
+          .maybeSingle()
       );
 
       if (existing) {
