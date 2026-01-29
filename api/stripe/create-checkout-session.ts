@@ -5,7 +5,7 @@
  * Redirects user to Stripe's hosted checkout page.
  *
  * Required env vars:
- * - STRIPE_SECRET_KEY
+ * - STRIPE_SECRET_KEY (must be sk_live_ or sk_test_, NOT rk_)
  * - STRIPE_PRICE_NAVIGATOR_MONTHLY
  * - STRIPE_PRICE_NAVIGATOR_ANNUAL
  * - STRIPE_PRICE_SOVEREIGN_MONTHLY
