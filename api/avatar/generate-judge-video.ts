@@ -319,12 +319,15 @@ export default async function handler(
         source_image: CHRISTIANO_IMAGE_URL,
         driven_audio: audioUrl,
         enhancer: 'gfpgan',
-        preprocess: 'crop',
-        still_mode: false,
+        preprocess: 'full',           // Full image, no zoom cropping
+        still_mode: true,             // Fewer head motions, more natural
         use_ref_video: false,
+        use_eyeblink: true,           // Natural eye blinks
         pose_style: 0,
         batch_size: 2,
-        expression_scale: 1.0,
+        size_of_image: 512,           // Higher resolution for smoother output
+        expression_scale: 0.5,        // Reduced for smoother, less jerky expressions
+        facerender: 'facevid2vid',
       },
     };
 
