@@ -29,14 +29,14 @@ User clicks Judge tab → Check database → Instant display (or show progress)
 
 | # | File | Change Required | Status | Commit |
 |---|------|-----------------|--------|--------|
-| 1 | `src/App.tsx` | Add background trigger after comparison completes | PENDING | - |
-| 2 | `src/components/EnhancedComparison.tsx` | Fire non-blocking API call when results ready | PENDING | - |
-| 3 | `src/components/JudgeTab.tsx` | Check database FIRST before showing generate button | PENDING | - |
-| 4 | `src/hooks/useJudgeVideo.ts` | Add method to check if video exists in DB | PENDING | - |
-| 5 | `src/services/judgePregenService.ts` | NEW FILE: Service for background generation | PENDING | - |
-| 6 | `api/judge-report.ts` | Add comparison_id to response for DB lookup | PENDING | - |
-| 7 | `api/avatar/generate-judge-video.ts` | Already caches - verify working | PENDING | - |
-| 8 | `src/types/judge.ts` | NEW FILE: Shared types for pre-generation | PENDING | - |
+| 1 | `src/App.tsx` | Add background trigger after comparison completes | COMPLETE | `deaed8b` |
+| 2 | `src/components/EnhancedComparison.tsx` | Fire non-blocking API call when results ready | SKIPPED | Trigger in App.tsx instead |
+| 3 | `src/components/JudgeTab.tsx` | Check database FIRST before showing generate button | COMPLETE | `a4a3270` |
+| 4 | `src/hooks/useJudgeVideo.ts` | Add method to check if video exists in DB | COMPLETE | `9f97941` |
+| 5 | `src/services/judgePregenService.ts` | NEW FILE: Service for background generation | COMPLETE | `36e5d4e` |
+| 6 | `api/judge-report.ts` | Add comparison_id to response for DB lookup | VERIFIED | Already works |
+| 7 | `api/avatar/generate-judge-video.ts` | Already caches - verify working | VERIFIED | Already works |
+| 8 | `src/types/judge.ts` | NEW FILE: Shared types for pre-generation | COMPLETE | `5477e1d` |
 
 ---
 
@@ -210,16 +210,16 @@ After implementation, fill in this table:
 
 | # | File | Change Made | Verified Working | Commit Hash |
 |---|------|-------------|------------------|-------------|
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
-| 4 | | | | |
-| 5 | | | | |
-| 6 | | | | |
-| 7 | | | | |
-| 8 | | | | |
+| 1 | `src/types/judge.ts` | NEW: Shared types for pre-generation | Compiles | `5477e1d` |
+| 2 | `src/services/judgePregenService.ts` | NEW: Fire-and-forget pregen service | Compiles | `36e5d4e` |
+| 3 | `api/judge-report.ts` | VERIFIED: Already returns comparisonId | N/A | N/A |
+| 4 | `api/avatar/generate-judge-video.ts` | VERIFIED: Already caches in avatar_videos | N/A | N/A |
+| 5 | `src/types/avatar.ts` | Added checkExistingVideo to interface | Compiles | `9f97941` |
+| 6 | `src/hooks/useJudgeVideo.ts` | Added checkExistingVideo method | Compiles | `9f97941` |
+| 7 | `src/components/JudgeTab.tsx` | Check DB for cached report/video on mount | Compiles | `a4a3270` |
+| 8 | `src/App.tsx` | Trigger pregen after comparison completes | Compiles | `deaed8b` |
 
-**Attestation:** I, Claude, attest that all files listed above have been modified, tested, and committed. No files were missed.
+**Attestation:** I, Claude, attest that all files listed above have been modified and committed. Pending end-to-end testing after deployment.
 
-**Date:** ___________
-**Final Commit:** ___________
+**Date:** 2026-01-29
+**Final Commit:** `deaed8b`
