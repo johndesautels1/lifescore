@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 1.0
-**Last Updated:** January 28, 2026
+**Version:** 1.1
+**Last Updated:** January 29, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -549,6 +549,59 @@ function generateKlingJWT(accessKey: string, secretKey: string): string {
 | processing | Video being generated |
 | completed | Video ready |
 | failed | Generation failed |
+
+### 8.5 Judge Pre-generation System
+
+**Added:** 2026-01-29
+
+The Judge pre-generation system eliminates the 90+ second wait when users click the Judge tab by generating the report and video in the background immediately after comparison completes.
+
+#### Flow
+
+```
+Comparison completes (App.tsx)
+    │
+    └─→ startJudgePregeneration() [fire-and-forget]
+            │
+            ├─→ POST /api/judge-report
+            │       └─→ Stores in judge_reports table
+            │       └─→ Chains to video generation
+            │
+            └─→ POST /api/avatar/generate-judge-video
+                    └─→ TTS audio (ElevenLabs)
+                    └─→ Video generation (Replicate/SadTalker)
+                    └─→ Stores in avatar_videos table
+
+User clicks Judge tab (JudgeTab.tsx)
+    │
+    └─→ checkExistingVideo(comparisonId)
+            │
+            ├─→ If ready: Instant display
+            ├─→ If processing: Show progress + poll
+            └─→ If not found: Show "Generate" button
+```
+
+#### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/services/judgePregenService.ts` | Fire-and-forget service |
+| `src/hooks/useJudgeVideo.ts` | `checkExistingVideo()` method |
+| `src/components/JudgeTab.tsx` | Cache check on mount |
+| `src/App.tsx` | Trigger after comparison |
+
+#### Caching
+
+- **Reports:** Stored in `localStorage` key `lifescore_judge_reports`
+- **Videos:** Stored in Supabase `avatar_videos` table with `comparison_id`
+
+#### Troubleshooting
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Console polling spam | Video stuck in `processing` | Check Replicate dashboard for failed predictions |
+| Report not pre-generated | Comparison didn't complete fully | Check `enhancedStatus === 'complete'` before trigger |
+| Video shows "Generate" | Cache miss or different comparisonId | Verify comparisonId matches between report and video |
 
 ---
 
