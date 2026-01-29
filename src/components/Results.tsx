@@ -397,8 +397,8 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights
       <div className="results-footer card">
         <h4>About This Analysis</h4>
         <p>
-          This LIFE SCORE™ comparison analyzed <strong>100 legal freedom metrics</strong> across
-          6 categories. Each metric was verified using real-time web search to ensure accuracy.
+          This LIFE SCORE™ comparison analyzed <strong>100 freedom metrics</strong> across
+          6 categories, measuring both <strong>legal freedom</strong> (written law) and <strong>lived freedom</strong> (enforcement reality). Each metric was verified using real-time web search to ensure accuracy.
         </p>
         <p>
           <strong>Generated:</strong> {new Date(result.generatedAt).toLocaleString()}

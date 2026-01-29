@@ -739,7 +739,8 @@ const AppContent: React.FC = () => {
                   <div className="about-content">
                     <p>
                       <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
-                      framework developed by Clues Intelligence LTD that analyzes legal freedom across
+                      framework developed by Clues Intelligence LTD that analyzes both <em>legal freedom</em> (written law)
+                      and <em>lived freedom</em> (enforcement reality) across
                       <span className="highlight"> 100 specific metrics</span> in six key categories:
                     </p>
 

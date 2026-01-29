@@ -1215,7 +1215,10 @@ function generateTextSummary(context: LifeScoreContext): string {
   const closeMetrics = sortedDiffs.filter(m => (m.diff || 0) < 5).slice(0, 3);
 
   summary += `## Executive Summary\n\n`;
-  summary += `This LIFE SCORE (Legal Independence & Freedom Evaluation) comparison analyzed 100 legal freedom metrics across 6 categories to determine which city offers more personal and economic freedom.\n\n`;
+  summary += `This LIFE SCORE (Legal Independence & Freedom Evaluation) comparison analyzed 100 freedom metrics across 6 categories, measuring TWO TYPES OF FREEDOM:\n\n`;
+  summary += `1. **Legal Freedom** (Written Law) - What the law officially states\n`;
+  summary += `2. **Lived Freedom** (Enforcement Reality) - How laws are actually enforced in daily life\n\n`;
+  summary += `These often differ significantly! A law may exist but be rarely enforced (high lived freedom), or informal enforcement may be stricter than the law suggests (low lived freedom). LIFE SCORE captures both dimensions to give users a complete picture of personal and economic freedom.\n\n`;
   summary += `**Key Finding:** ${comparison.winner} emerges as the winner with a total score of ${comparison.winner === city1 ? comparison.city1.normalizedScore : comparison.city2.normalizedScore}/100, beating ${comparison.winner === city1 ? city2 : city1} by ${comparison.scoreDifference} points.\n\n`;
   summary += `**Category Wins:** ${city1} won ${city1CatWins} categories, ${city2} won ${city2CatWins} categories.\n\n`;
 
@@ -1232,7 +1235,7 @@ function generateTextSummary(context: LifeScoreContext): string {
     summary += `**Areas Where Cities Are Similar:** ${closeMetrics.map(m => m.name).join(', ')}\n\n`;
   }
 
-  summary += `**What This Means:** If you value personal freedom, property rights, and low regulatory burden, ${comparison.winner} offers more legal freedom for everyday life decisions. However, the specific areas that matter most to you should guide your final decision.\n\n`;
+  summary += `**What This Means:** ${comparison.winner} offers more freedom across both legal (written law) AND lived (enforcement reality) dimensions. If you value personal autonomy, economic freedom, property rights, and low regulatory burden, ${comparison.winner} provides a better environment for everyday life decisions. However, the specific freedoms that matter most to you should guide your final decision.\n\n`;
 
   // Category Breakdown
   summary += `## Category Breakdown\n\n`;

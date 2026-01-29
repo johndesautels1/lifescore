@@ -33,7 +33,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     <div className="loading-state card">
       <div className="loading-header">
         <div className="loading-icon">🔍</div>
-        <h2>Analyzing Legal Freedom Metrics</h2>
+        <h2>Analyzing Legal &amp; Lived Freedom Metrics</h2>
         <p>Using Multiple LLMs with proprietary weighted average LIFE score technology</p>
       </div>
       

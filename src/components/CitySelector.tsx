@@ -270,7 +270,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
 
   return (
     <div className="city-selector-card card">
-      <h2 className="section-title">Compare Legal Freedom Between Any Two Cities</h2>
+      <h2 className="section-title">Compare Legal &amp; Lived Freedom Between Any Two Cities</h2>
       <p className="selector-subtitle">Choose from 200 major metropolitan areas across North America and Europe</p>
 
       <form onSubmit={handleSubmit}>

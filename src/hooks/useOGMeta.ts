@@ -30,7 +30,7 @@ export function buildOGImageURL(params: OGMetaParams): string {
 export function updateOGMetaTags(params: OGMetaParams): void {
   const ogImageURL = buildOGImageURL(params);
   const title = `${params.city1} vs ${params.city2} | LIFE SCORE Freedom Comparison`;
-  const description = `${params.winner} wins with a +${params.delta} Freedom Delta! Compare legal freedom across 100 metrics.`;
+  const description = `${params.winner} wins with a +${params.delta} Freedom Delta! Compare legal & lived freedom across 100 metrics.`;
   const pageURL = `${BASE_URL}/?cityA=${encodeURIComponent(params.city1)}&cityB=${encodeURIComponent(params.city2)}`;
 
   // Update existing meta tags or create new ones
@@ -76,17 +76,17 @@ export function updateOGMetaTags(params: OGMetaParams): void {
 }
 
 export function resetOGMetaTags(): void {
-  const defaultTitle = 'LIFE SCORE | Legal Freedom Comparison | Clues Intelligence';
-  const defaultDescription = 'Compare legal freedom between any two cities worldwide across 100 comprehensive metrics. Part of the CLUES platform by Clues Intelligence LTD.';
+  const defaultTitle = 'LIFE SCORE | Legal & Lived Freedom Comparison | Clues Intelligence';
+  const defaultDescription = 'Compare legal and lived freedom between any two cities worldwide across 100 comprehensive metrics. Part of the CLUES platform by Clues Intelligence LTD.';
   const defaultImage = `${BASE_URL}/og-image.png`;
 
   const metaResets: { property?: string; name?: string; content: string }[] = [
-    { property: 'og:title', content: 'LIFE SCORE | Compare Legal Freedom Across Cities' },
-    { property: 'og:description', content: '100 metrics. 6 categories. Real data. Compare legal freedom between any two cities worldwide.' },
+    { property: 'og:title', content: 'LIFE SCORE | Compare Legal & Lived Freedom Across Cities' },
+    { property: 'og:description', content: '100 metrics. 6 categories. Real data. Compare legal AND lived freedom between any two cities worldwide.' },
     { property: 'og:image', content: defaultImage },
     { property: 'og:url', content: BASE_URL },
-    { property: 'twitter:title', content: 'LIFE SCORE | Compare Legal Freedom Across Cities' },
-    { property: 'twitter:description', content: '100 metrics. 6 categories. Real data. Compare legal freedom between any two cities worldwide.' },
+    { property: 'twitter:title', content: 'LIFE SCORE | Compare Legal & Lived Freedom Across Cities' },
+    { property: 'twitter:description', content: '100 metrics. 6 categories. Real data. Compare legal AND lived freedom between any two cities worldwide.' },
     { property: 'twitter:image', content: defaultImage },
     { property: 'twitter:url', content: BASE_URL },
     { name: 'title', content: defaultTitle },

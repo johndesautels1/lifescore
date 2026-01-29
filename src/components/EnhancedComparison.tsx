@@ -1314,7 +1314,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   // Generate winner explanation narrative
   const generateExplanation = (): string => {
     if (isTie) {
-      return `Both ${result.city1.city} and ${result.city2.city} scored equally at ${result.city1.totalConsensusScore} points. This is a rare outcome indicating both cities offer similar levels of legal freedom across our 100 metrics.`;
+      return `Both ${result.city1.city} and ${result.city2.city} scored equally at ${result.city1.totalConsensusScore} points. This is a rare outcome indicating both cities offer similar levels of legal and lived freedom across our 100 metrics.`;
     }
 
     // Find categories where winner leads most
@@ -1355,7 +1355,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       });
     }
 
-    explanation += `\n**Bottom Line:** If you value overall legal freedom, ${winner.city} is your better choice. However, if ${loserAdvantages[0]?.category?.name.toLowerCase()} matters most to you, ${loser.city} might be worth considering.`;
+    explanation += `\n**Bottom Line:** If you value overall legal and lived freedom, ${winner.city} is your better choice. However, if ${loserAdvantages[0]?.category?.name.toLowerCase()} matters most to you, ${loser.city} might be worth considering.`;
 
     return explanation;
   };

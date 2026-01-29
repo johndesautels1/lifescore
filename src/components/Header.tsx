@@ -126,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
           <h2>LIFE SCORE</h2>
           <p className="life-score-subtitle">Legal Independence & Freedom Evaluation</p>
           <p className="life-score-description">
-            Compare legal freedom between any two cities worldwide across 100 comprehensive metrics
+            Compare legal &amp; lived freedom between any two cities worldwide across 100 comprehensive metrics
           </p>
         </div>
       </div>

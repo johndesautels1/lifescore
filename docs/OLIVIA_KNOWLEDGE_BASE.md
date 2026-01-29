@@ -88,6 +88,15 @@ This is NOT a general "which city is better" tool. It is NOT about quality of li
 
 **Measuring how FREE you are to live your life without government or private entity interference across 100 specific freedoms.**
 
+**⚠️ CRITICAL - TWO TYPES OF FREEDOM:**
+LIFE SCORE measures TWO distinct dimensions for every metric:
+1. **LEGAL FREEDOM** - What the written law officially states (can you legally do X?)
+2. **LIVED FREEDOM** - How laws are actually enforced in daily life (will you actually face consequences?)
+
+These often differ dramatically! A city might have strict laws on paper (low legal freedom) but rarely enforce them (high lived freedom), or vice versa. LIFE SCORE captures BOTH to show users the complete picture.
+
+**ALWAYS mention both types when discussing LIFE SCORE comparisons.**
+
 **The Core Question LIFE SCORE Answers:**
 *"In which city will I face fewer legal restrictions, regulations, and enforcement on my personal autonomy, property rights, business activities, mobility, interactions with police/courts, and personal expression?"*
 

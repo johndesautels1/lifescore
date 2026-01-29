@@ -362,8 +362,8 @@ ${result.disagreementSummary ? `**LLM Disagreement Notes:** ${result.disagreemen
 CRITICAL INSTRUCTIONS FOR GAMMA AI - READ CAREFULLY
 ================================================================================
 
-This is a LIFE SCORE™ Legal Freedom Comparison Report. This report EXCLUSIVELY
-compares LEGAL FREEDOM metrics between two cities.
+This is a LIFE SCORE™ Freedom Comparison Report. This report EXCLUSIVELY
+compares LEGAL FREEDOM (written law) AND LIVED FREEDOM (enforcement reality) metrics between two cities.
 
 **DO NOT ADD:**
 - General tourism information
@@ -378,10 +378,10 @@ compares LEGAL FREEDOM metrics between two cities.
 - The exact winner declarations provided
 - The methodology section exactly as written
 
-This is a legal freedom analysis tool, NOT a general city comparison tool.
+This is a legal & lived freedom analysis tool, NOT a general city comparison tool.
 
 ================================================================================
-LIFE SCORE™ LEGAL FREEDOM COMPARISON REPORT
+LIFE SCORE™ LEGAL & LIVED FREEDOM COMPARISON REPORT
 ================================================================================
 
 # ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
@@ -397,15 +397,20 @@ LIFE SCORE™ LEGAL FREEDOM COMPARISON REPORT
 | **${city2Name}** | **${city2TotalScore}/100** | ${city2CatWins} of 6 |
 
 **Score Difference:** ${scoreDiff} points
-${result.winner !== 'tie' ? `**${winner} offers ${scoreDiff} more freedom points than ${loser}**` : '**Both cities scored equally on legal freedom**'}
+${result.winner !== 'tie' ? `**${winner} offers ${scoreDiff} more freedom points than ${loser}**` : '**Both cities scored equally on legal & lived freedom**'}
 
 ---
 
 ## WHAT IS LIFE SCORE™?
 
-LIFE SCORE (Legal Independence & Freedom Evaluation) measures **100 specific legal
-freedom metrics** across 6 categories. Unlike subjective "livability" indexes,
-LIFE SCORE evaluates concrete laws, regulations, and their enforcement.
+LIFE SCORE (Legal Independence & Freedom Evaluation) measures **100 specific freedom
+metrics** across 6 categories, capturing TWO types of freedom:
+
+1. **Legal Freedom** - What the written law officially states
+2. **Lived Freedom** - How laws are actually enforced in daily life
+
+Unlike subjective "livability" indexes, LIFE SCORE evaluates concrete laws,
+regulations, AND their real-world enforcement.
 
 **The 6 Categories (100 Total Metrics):**
 1. 🗽 Personal Autonomy (15 metrics, 20% weight) - Vice laws, bodily autonomy
