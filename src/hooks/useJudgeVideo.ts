@@ -179,6 +179,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
   }, [stopPolling]);
 
   // Check if a video already exists for this comparison (for pre-generation)
+  // NOTE: This is a read-only check - does NOT start polling to avoid runaway loops
   const checkExistingVideo = useCallback(async (comparisonId: string): Promise<JudgeVideo | null> => {
     try {
       console.log('[useJudgeVideo] Checking for existing video:', comparisonId);
@@ -205,11 +206,12 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
           setVideo(data.video);
           setStatus('completed');
         } else if (data.video.status === 'processing' || data.video.status === 'pending') {
-          // Video is still generating - start polling
+          // Video is still generating - just update state, DON'T start polling
+          // Polling should only be started by explicit generate() calls
           videoRef.current = data.video;
           setVideo(data.video);
           setStatus(data.video.status);
-          startPolling();
+          console.log('[useJudgeVideo] Video still processing, NOT starting polling (read-only check)');
         }
 
         return data.video;
@@ -220,7 +222,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       console.error('[useJudgeVideo] Error checking existing video:', error);
       return null;
     }
-  }, [startPolling]);
+  }, []);
 
   return {
     video,
