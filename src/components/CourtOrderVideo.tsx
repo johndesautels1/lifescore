@@ -136,7 +136,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
 
   return (
     <FeatureGate feature="grokVideos" blurContent={true}>
-      <div className="court-order-video">
+      <div className="court-order-wrapper">
+        <div className="court-order-video">
         <div className="court-order-header">
           <h4 className="court-order-title">
             <span className="gavel-icon">⚖️</span>
@@ -254,6 +255,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
               <span className="btn-text">WATCH YOUR FUTURE</span>
             </button>
           )}
+        </div>
         </div>
       </div>
     </FeatureGate>

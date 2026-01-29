@@ -3,12 +3,20 @@
  * LCD screen aesthetic for Judge tab
  */
 
+/* Container to match video viewport section sizing */
+.court-order-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
 .court-order-video {
   background: var(--card-background, #1a1a2e);
   border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid var(--border-color, #2a2a4a);
-  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 900px;  /* Match video viewport frame */
 }
 
 /* ============================================================================
@@ -354,6 +362,10 @@
    ============================================================================ */
 
 @media (max-width: 600px) {
+  .court-order-wrapper {
+    padding: 0.75rem;
+  }
+
   .court-order-video {
     padding: 1rem;
   }
