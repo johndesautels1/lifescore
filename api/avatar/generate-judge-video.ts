@@ -25,7 +25,7 @@ const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
 
 // ElevenLabs voice for Christiano (authoritative male voice)
 // Updated 2026-01-27: Custom Christiano voice via Simli
-const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV';
+const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV'; // Christiano Judge voice
 
 export const config = {
   maxDuration: 120, // 2 minutes for TTS + Replicate submission
