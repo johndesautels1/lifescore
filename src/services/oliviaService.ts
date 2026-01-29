@@ -39,7 +39,8 @@ export async function buildContext(
         includeEvidence: options.includeEvidence ?? true,
         maxTokens: options.maxTokens ?? 16000, // Increased to include all 100 metrics
       }),
-    }
+    },
+    60000 // 60 second timeout for context building
   );
 
   if (!response.ok) {
@@ -155,7 +156,8 @@ export async function createHeyGenSession(): Promise<HeyGenSessionResponse> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
-    }
+    },
+    45000 // 45 second timeout for avatar session creation
   );
 
   if (!response.ok) {
@@ -185,7 +187,8 @@ export async function heygenSpeak(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
-    }
+    },
+    60000 // 60 second timeout for avatar speech (TTS + streaming)
   );
 
   if (!response.ok) {
