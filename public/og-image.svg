@@ -11,7 +11,7 @@
 
   <!-- Header -->
   <text x="600" y="120" text-anchor="middle" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#60a5fa" letter-spacing="0.1em">LIFE SCORE</text>
-  <text x="600" y="160" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="#94a3b8">Legal Freedom Comparison</text>
+  <text x="600" y="160" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="#94a3b8">Legal &amp; Lived Freedom Comparison</text>
 
   <!-- Main Content Box -->
   <rect x="100" y="200" width="1000" height="300" rx="20" fill="#1e293b" stroke="#334155" stroke-width="2"/>

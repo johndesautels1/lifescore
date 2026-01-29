@@ -4,7 +4,7 @@
 **Keep all suggestions narrowly focused on the core mission:**
 > Compare two metropolitan areas against each other using the LIFE criteria (Legal Independence & Freedom Evaluation) to determine true freedom of living in one metro versus another.
 
-This is NOT a general city comparison app. It specifically measures **legal freedom** - laws, regulations, restrictions, and enforcement that affect daily life.
+This is NOT a general city comparison app. It specifically measures **legal freedom** (written law) AND **lived freedom** (enforcement reality) - laws, regulations, restrictions, and their actual enforcement that affect daily life.
 
 ---
 

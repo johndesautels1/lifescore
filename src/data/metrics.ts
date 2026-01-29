@@ -5,8 +5,8 @@
  * Clues Intelligence LTD
  * © 2025 All Rights Reserved
  * 
- * IMPORTANT: These metrics are carefully designed to measure LEGAL FREEDOM
- * Each metric has specific search queries for verification via Claude API + Web Search
+ * IMPORTANT: These metrics are carefully designed to measure LEGAL FREEDOM (written law)
+ * AND LIVED FREEDOM (enforcement reality). Each metric has specific search queries for verification via Claude API + Web Search
  */
 
 import type { Category, CategoryId, MetricDefinition } from '../types/metrics';

@@ -3,7 +3,7 @@
  * Client-side service for generating visual reports via Gamma API
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  *
- * IMPORTANT: This generates comprehensive prompts with ALL 100 legal freedom metrics
+ * IMPORTANT: This generates comprehensive prompts with ALL 100 legal & lived freedom metrics
  */
 
 import type {

@@ -7,7 +7,7 @@
 ## 🎯 PROJECT OVERVIEW
 
 **LIFE SCORE™** - Legal Independence & Freedom Evaluation
-- Compares legal freedom metrics between 200 metropolitan areas (100 NA + 100 EU)
+- Compares legal & lived freedom metrics between 200 metropolitan areas (100 NA + 100 EU)
 - Uses multiple LLMs with web search to evaluate 100 metrics across 6 categories
 - Claude Opus 4.5 serves as final judge for consensus
 

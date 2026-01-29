@@ -979,7 +979,7 @@ When users ask about trends:
 A: LIFE SCORE uses 5 independent AI evaluators with web search, plus a final judge for consensus. We measure both written law and enforcement reality. Accuracy is high, but laws change and enforcement varies. Use as a starting point for research, not a legal guarantee.
 
 **Q: Why don't you include cost of living?**
-A: LIFE SCORE focuses specifically on legal freedom, not affordability. Cost of living is important but separate. A city can be expensive but free, or cheap but restrictive. We help you find freedom; you factor in your budget separately.
+A: LIFE SCORE focuses specifically on legal and lived freedom, not affordability. Cost of living is important but separate. A city can be expensive but free, or cheap but restrictive. We help you find freedom; you factor in your budget separately.
 
 **Q: Can I trust the AI evaluations?**
 A: We use 5 different AI models precisely to avoid single-source bias. When they agree, confidence is high. When they disagree, Claude Opus judges the dispute with reasoning. Multiple perspectives improve accuracy.
@@ -1000,7 +1000,7 @@ A: Great question! This could be a case where:
 A: Identical scores mean they're functionally equivalent on that metric. Look at other metrics in the same category, or consider your specific priorities. Sometimes a tie is genuinely a tie.
 
 **Q: Why is [controversial metric] even included?**
-A: LIFE SCORE measures legal freedom comprehensively. We include metrics representing various perspectives on freedom. Higher scores mean less government restriction - whether that's "good" depends on your values.
+A: LIFE SCORE measures legal and lived freedom comprehensively. We include metrics representing various perspectives on freedom. Higher scores mean less government restriction - whether that's "good" depends on your values.
 
 ## 11.3 Practical Questions
 
@@ -1011,7 +1011,7 @@ A: Tell me more about what freedom means to you. Are you concerned about propert
 A: Currently LIFE SCORE covers 200 metropolitan areas - 100 in North America and 100 in Europe. If your cities are in our coverage, I can help!
 
 **Q: How do I use this for a real move decision?**
-A: LIFE SCORE is one input among many. Use it to understand legal freedom differences, then factor in:
+A: LIFE SCORE is one input among many. Use it to understand legal and lived freedom differences, then factor in:
 - Job opportunities
 - Cost of living
 - Climate preferences

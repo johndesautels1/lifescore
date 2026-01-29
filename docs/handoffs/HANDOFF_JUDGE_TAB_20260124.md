@@ -9,7 +9,7 @@
 
 ## Context
 
-The LIFE SCORE application uses 5 LLMs to evaluate 100 legal freedom metrics, with Claude Opus 4.5 serving as "The Judge" to resolve disagreements and provide final consensus scores.
+The LIFE SCORE application uses 5 LLMs to evaluate 100 legal & lived freedom metrics, with Claude Opus 4.5 serving as "The Judge" to resolve disagreements and provide final consensus scores.
 
 Currently, Judge functionality exists but there's no dedicated toolbar tab to view/interact with Judge results. The user wants a "Judge" tab in the toolbar similar to how "Ask Olivia" and "Visuals" tabs work.
 
