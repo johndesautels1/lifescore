@@ -15,6 +15,11 @@ import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 
+// Custom deployment for faster cold starts and hardware control
+// Deployment: johndesautels1/james-bond (SadTalker on GPU)
+const REPLICATE_DEPLOYMENT_OWNER = process.env.REPLICATE_DEPLOYMENT_OWNER || 'johndesautels1';
+const REPLICATE_DEPLOYMENT_NAME = process.env.REPLICATE_DEPLOYMENT_NAME || 'james-bond';
+
 // SadTalker model - produces high quality lip-sync videos
 const SADTALKER_VERSION = 'cjwbw/sadtalker:a519cc0cfebaaeade068b23899165a11ec76aaa1d2b313d40d214f204ec957a3';
 
@@ -313,23 +318,21 @@ export default async function handler(
         ? `https://${process.env.VERCEL_URL}/api/avatar/video-webhook`
         : null;
 
-    const replicateBody: Record<string, unknown> = {
-      version: SADTALKER_VERSION.split(':')[1], // Just the version hash
-      input: {
-        source_image: CHRISTIANO_IMAGE_URL,
-        driven_audio: audioUrl,
-        use_enhancer: true,           // GFPGAN face enhancement for cleaner output
-        preprocess: 'full',           // Full image, no zoom cropping
-        still_mode: true,             // Fewer head motions, more natural
-        use_ref_video: false,
-        use_eyeblink: true,           // Natural eye blinks
-        pose_style: 25,               // User-tested setting that stops face movements
-        batch_size: 2,
-        size_of_image: 512,           // Higher resolution for smoother output
-        expression_scale: 0,          // Zero expression movement - stops all face motions
-        facerender: 'facevid2vid',
-      },
+    // Build input for SadTalker - deployment doesn't need version field
+    const replicateInput = {
+      source_image: CHRISTIANO_IMAGE_URL,
+      driven_audio: audioUrl,
+      use_enhancer: true,           // GFPGAN face enhancement for cleaner output
+      preprocess: 'full',           // Full image, no zoom cropping
+      still_mode: true,             // Fewer head motions, more natural
+      use_eyeblink: true,           // Natural eye blinks
+      pose_style: 25,               // User-tested setting that stops face movements
+      size_of_image: 512,           // Higher resolution for smoother output
+      expression_scale: 0,          // Zero expression movement - stops all face motions
+      facerender: 'facevid2vid',
     };
+
+    const replicateBody: Record<string, unknown> = { input: replicateInput };
 
     // Only add webhook if we have a URL
     if (webhookUrl) {
@@ -337,7 +340,11 @@ export default async function handler(
       replicateBody.webhook_events_filter = ['start', 'completed'];
     }
 
-    const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
+    // Use deployment endpoint for hardware control and faster cold starts
+    const deploymentUrl = `${REPLICATE_API_URL}/deployments/${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}/predictions`;
+    console.log('[JUDGE-VIDEO] Using deployment:', `${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}`);
+
+    const response = await fetch(deploymentUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${replicateToken}`,
