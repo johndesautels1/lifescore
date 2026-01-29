@@ -606,6 +606,7 @@ const AppContent: React.FC = () => {
                     result={enhancedResult}
                     dealbreakers={dealbreakers}
                     customWeights={customWeights}
+                    onSaved={handleSaved}
                   />
                   
                   {/* ADD MORE MODELS SECTION - Phase 3 Incremental LLM Feature */}

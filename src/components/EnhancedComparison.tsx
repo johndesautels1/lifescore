@@ -1212,6 +1212,7 @@ interface EnhancedResultsProps {
   showEvidence?: boolean;
   onToggleEvidence?: () => void;
   customWeights?: Record<string, number> | null;  // User's persona weights (Digital Nomad, etc.)
+  onSaved?: () => void;  // Callback when comparison is saved successfully
 }
 
 // Helper to calculate top metric differences
@@ -1284,7 +1285,7 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
   return differences.sort((a, b) => b.difference - a.difference).slice(0, count);
 };
 
-export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [], customWeights }) => {
+export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [], customWeights, onSaved }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [isSaved, setIsSaved] = useState(false);
@@ -1376,6 +1377,8 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       setIsSaved(true);
       setSaveMessage('✓ Saved successfully!');
       setTimeout(() => setSaveMessage(null), 3000);
+      // Notify parent that save succeeded (triggers refresh of SavedComparisons)
+      onSaved?.();
     } catch (error) {
       console.error('Failed to save enhanced comparison:', error);
       setSaveMessage('Save failed - try again');
