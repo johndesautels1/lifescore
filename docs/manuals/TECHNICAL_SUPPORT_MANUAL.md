@@ -344,12 +344,29 @@ User-provided API keys are:
 
 ### 6.2 Timeout Settings
 
+#### Server-Side (API Routes)
 ```typescript
-// api/evaluate.ts:15
-const LLM_TIMEOUT_MS = 240000; // 240 seconds
+// api/evaluate.ts
+const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM evaluations
+
+// api/olivia/chat.ts
+const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 ```
 
-**Recommended per-provider timeouts:**
+#### Client-Side (Service Functions)
+| Service | Function | Timeout | File |
+|---------|----------|---------|------|
+| **Olivia Chat** | sendMessage | 90s | oliviaService.ts:85 |
+| **Olivia Context** | buildContext | 60s | oliviaService.ts:43 |
+| **Olivia TTS** | generateTTS | 60s | oliviaService.ts:132 |
+| **HeyGen Avatar** | createSession | 45s | oliviaService.ts:160 |
+| **HeyGen Avatar** | speak | 60s | oliviaService.ts:191 |
+| **Video Generate** | grokGenerate | 120s | grokVideoService.ts:26 |
+| **Video Status** | checkStatus | 30s | grokVideoService.ts:27 |
+| **GitHub Gist** | all operations | 60s | savedComparisons.ts:89 |
+| **Vercel KV Cache** | get/set/delete | 10s | cache.ts:33 |
+
+**Per-Provider LLM Recommendations:**
 - Claude: 60s
 - GPT-4o: 90s
 - Gemini: 120s
