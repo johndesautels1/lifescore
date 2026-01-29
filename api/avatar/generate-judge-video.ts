@@ -319,15 +319,16 @@ export default async function handler(
         : null;
 
     // Build input for SadTalker - deployment doesn't need version field
+    // FIX 2026-01-29: Reduced settings for T4 GPU (15GB) - was running out of VRAM
     const replicateInput = {
       source_image: CHRISTIANO_IMAGE_URL,
       driven_audio: audioUrl,
-      use_enhancer: true,           // GFPGAN face enhancement for cleaner output
+      use_enhancer: false,          // DISABLED - GFPGAN uses too much VRAM on T4
       preprocess: 'full',           // Full image, no zoom cropping
       still_mode: true,             // Fewer head motions, more natural
       use_eyeblink: true,           // Natural eye blinks
       pose_style: 25,               // User-tested setting that stops face movements
-      size_of_image: 512,           // Higher resolution for smoother output
+      size_of_image: 256,           // REDUCED from 512 - fits T4 GPU memory
       expression_scale: 0,          // Zero expression movement - stops all face motions
       facerender: 'facevid2vid',
     };
