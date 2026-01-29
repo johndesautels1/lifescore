@@ -285,6 +285,16 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         console.log('[useSimli] Sending', audioBytes.length, 'bytes to Simli');
 
+        // Resume audio/video elements if they were paused (e.g., after interrupt)
+        if (audioRef?.current?.paused) {
+          console.log('[useSimli] Resuming paused audio element');
+          audioRef.current.play().catch(() => {});
+        }
+        if (videoRef?.current?.paused) {
+          console.log('[useSimli] Resuming paused video element');
+          videoRef.current.play().catch(() => {});
+        }
+
         // Send audio chunks to Simli - let Simli handle buffering
         // Chunk size: 6000 bytes (Simli recommended per docs.simli.com)
         // Pacing: 0ms - Simli handles internal buffering and playback timing
@@ -335,7 +345,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       setStatus('connected');
       throw err;
     }
-  }, [isConnected, session, status]);
+  }, [isConnected, session, status, audioRef, videoRef]);
 
   /**
    * Interrupt current speech - aggressively stop all audio
