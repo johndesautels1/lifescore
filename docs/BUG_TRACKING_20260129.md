@@ -192,15 +192,15 @@ a4a3270 feat(judge): check for pre-generated video on JudgeTab mount
 
 ## Resolution Progress
 
-- [ ] Bug #1 diagnosed
-- [ ] Bug #1 fixed
+- [x] Bug #1 diagnosed - Invalid video URLs
+- [x] Bug #1 fixed - Added URL validation + error handling (ba4ecec)
 - [ ] Bug #2 diagnosed
 - [ ] Bug #2 fixed
-- [ ] Bug #3 diagnosed
-- [ ] Bug #3 fixed
-- [ ] Bug #4 diagnosed
-- [ ] Bug #4 fixed
-- [ ] Bug #5 diagnosed
-- [ ] Bug #5 fixed
+- [x] Bug #3 diagnosed - Polling started in read-only check
+- [x] Bug #3 fixed - Removed startPolling from checkExistingVideo (95c1061)
+- [x] Bug #4 diagnosed - Missing onSaved callback in EnhancedResults
+- [x] Bug #4 fixed - Added onSaved prop and callback (9da92d2)
+- [x] Bug #5 diagnosed - Same as #4
+- [x] Bug #5 fixed - Same fix as #4 (9da92d2)
 - [x] Bug #7 fixed (3ef88d6)
 - [ ] All bugs verified in production
