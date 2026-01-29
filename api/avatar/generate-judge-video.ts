@@ -23,10 +23,10 @@ const REPLICATE_DEPLOYMENT_NAME = process.env.REPLICATE_DEPLOYMENT_NAME || 'jame
 // SadTalker model - produces high quality lip-sync videos
 const SADTALKER_VERSION = 'cjwbw/sadtalker:a519cc0cfebaaeade068b23899165a11ec76aaa1d2b313d40d214f204ec957a3';
 
-// Christiano judge avatar image
-// Updated 2026-01-27: New Replicate avatar
+// Christiano judge avatar image (MUST be PNG/JPG, not video)
+// FIX 2026-01-29: Changed from MP4 to PNG - SadTalker requires static image
 const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
-  'https://replicate.delivery/pbxt/OU2q0kEZmrGm3EB3eWU8AQ5MvYtoL4qu3sezEwj8P5FKix3o/Cristiano.mp4';
+  'https://replicate.delivery/pbxt/OUrlfPYTJP3dttVkSYXUps6yUmzZbLTdVdrut77q48Tx7GfI/enhanced_avatar_max.png';
 
 // ElevenLabs voice for Christiano (authoritative male voice)
 // Updated 2026-01-27: Custom Christiano voice via Simli
