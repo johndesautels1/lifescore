@@ -178,6 +178,50 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     };
   }, [stopPolling]);
 
+  // Check if a video already exists for this comparison (for pre-generation)
+  const checkExistingVideo = useCallback(async (comparisonId: string): Promise<JudgeVideo | null> => {
+    try {
+      console.log('[useJudgeVideo] Checking for existing video:', comparisonId);
+
+      const response = await fetch(`${API_BASE}/video-status?comparisonId=${encodeURIComponent(comparisonId)}`);
+
+      if (!response.ok) {
+        console.log('[useJudgeVideo] No existing video found (status:', response.status, ')');
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.video) {
+        console.log('[useJudgeVideo] Found existing video:', {
+          id: data.video.id,
+          status: data.video.status,
+          videoUrl: data.video.videoUrl,
+        });
+
+        // If video is ready, update state
+        if (data.video.status === 'completed' && data.video.videoUrl) {
+          videoRef.current = data.video;
+          setVideo(data.video);
+          setStatus('completed');
+        } else if (data.video.status === 'processing' || data.video.status === 'pending') {
+          // Video is still generating - start polling
+          videoRef.current = data.video;
+          setVideo(data.video);
+          setStatus(data.video.status);
+          startPolling();
+        }
+
+        return data.video;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[useJudgeVideo] Error checking existing video:', error);
+      return null;
+    }
+  }, [startPolling]);
+
   return {
     video,
     status,
@@ -185,6 +229,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     isReady,
     generate,
     checkStatus,
+    checkExistingVideo,
     error,
   };
 }

@@ -174,5 +174,6 @@ export interface UseJudgeVideoReturn {
   isReady: boolean;
   generate: (request: GenerateJudgeVideoRequest) => Promise<void>;
   checkStatus: () => Promise<void>;
+  checkExistingVideo: (comparisonId: string) => Promise<JudgeVideo | null>;
   error: string | null;
 }
