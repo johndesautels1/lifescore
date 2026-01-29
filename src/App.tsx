@@ -45,6 +45,7 @@ import { LLM_CONFIGS } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
+import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
 import { ALL_METRICS } from './shared/metrics';
@@ -540,6 +541,19 @@ const AppContent: React.FC = () => {
                             setEnhancedResult(result);
                             setEnhancedStatus('complete');
                             console.log('[App] State updated - tab should switch now');
+
+                            // === JUDGE PRE-GENERATION ===
+                            // Fire-and-forget: Start background Judge report + video generation
+                            // This runs in parallel while user views results
+                            try {
+                              const userId = user?.id || 'guest';
+                              console.log('[App] Starting Judge pre-generation in background...');
+                              startJudgePregeneration(result, userId);
+                            } catch (pregenError) {
+                              // Non-fatal - don't block the UI
+                              console.error('[App] Judge pre-generation error (non-fatal):', pregenError);
+                            }
+                            // === END JUDGE PRE-GENERATION ===
                           } catch (buildError) {
                             console.error('[App] Error building enhanced result:', buildError);
                             // Still mark as complete to prevent UI from hanging
