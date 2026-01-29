@@ -884,7 +884,7 @@
   border-radius: 8px;
   color: var(--ice-white);
   font-family: var(--font-display);
-  font-size: 1.02rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -893,7 +893,7 @@
 }
 
 .action-btn .btn-text {
-  font-size: 1.02rem;
+  font-size: 0.75rem;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -914,12 +914,12 @@
 /* Download buttons - slightly larger */
 .action-btn.download-btn {
   padding: 1.05rem 1.65rem;
-  font-size: 1.125rem;
+  font-size: 0.75rem;
   gap: 0.6rem;
 }
 
 .action-btn.download-btn .btn-text {
-  font-size: 1.125rem;
+  font-size: 0.75rem;
 }
 
 /* Save and Forward buttons - add spacing from download buttons */
@@ -1620,7 +1620,7 @@
   }
 
   .action-btn .btn-text {
-    font-size: 0.35rem;
+    font-size: 0.65rem;
     white-space: nowrap;
   }
 
@@ -1670,7 +1670,7 @@
   }
 
   .action-btn .btn-text {
-    font-size: 0.3rem;
+    font-size: 0.6rem;
     white-space: nowrap;
   }
 
