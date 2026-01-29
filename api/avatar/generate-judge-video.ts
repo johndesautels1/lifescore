@@ -318,7 +318,7 @@ export default async function handler(
       input: {
         source_image: CHRISTIANO_IMAGE_URL,
         driven_audio: audioUrl,
-        enhancer: 'gfpgan',
+        use_enhancer: true,           // GFPGAN face enhancement for cleaner output
         preprocess: 'full',           // Full image, no zoom cropping
         still_mode: true,             // Fewer head motions, more natural
         use_ref_video: false,
@@ -326,7 +326,7 @@ export default async function handler(
         pose_style: 0,
         batch_size: 2,
         size_of_image: 512,           // Higher resolution for smoother output
-        expression_scale: 0.5,        // Reduced for smoother, less jerky expressions
+        expression_scale: 0.6,        // Smoother expressions (user adjusted from 0.5)
         facerender: 'facevid2vid',
       },
     };
