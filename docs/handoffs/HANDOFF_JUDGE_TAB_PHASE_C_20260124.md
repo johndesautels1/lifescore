@@ -4,6 +4,13 @@
 **Conversation ID:** LIFESCORE-JUDGE-TAB-20260124
 **Status:** Phase C Complete - D-ID Video Integration Done
 
+> **UPDATE 2026-01-29:** Voice configuration has been updated:
+> - Primary: Replicate SadTalker + ElevenLabs (`api/avatar/generate-judge-video.ts`)
+> - Fallback: D-ID + ElevenLabs (`api/judge-video.ts`)
+> - Both now use ElevenLabs Christiano voice: `ZpwpoMoU84OhcbA2YBBV`
+> - Env var: `ELEVENLABS_CHRISTIANO_VOICE_ID`
+> - Old Microsoft voice references below are outdated.
+
 ---
 
 ## What Was Built (Phase C)
