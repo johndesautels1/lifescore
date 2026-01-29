@@ -649,6 +649,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
             .insert({
               user_id: user.id,
               report_id: report.reportId,
+              comparison_id: report.comparisonId,
               city1_name: report.city1,
               city2_name: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
