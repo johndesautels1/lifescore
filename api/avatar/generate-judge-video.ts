@@ -323,10 +323,10 @@ export default async function handler(
         still_mode: true,             // Fewer head motions, more natural
         use_ref_video: false,
         use_eyeblink: true,           // Natural eye blinks
-        pose_style: 5,                // Subtle natural head movement
+        pose_style: 25,               // User-tested setting that stops face movements
         batch_size: 2,
         size_of_image: 512,           // Higher resolution for smoother output
-        expression_scale: 0.6,        // Smoother expressions (user adjusted from 0.5)
+        expression_scale: 0,          // Zero expression movement - stops all face motions
         facerender: 'facevid2vid',
       },
     };
