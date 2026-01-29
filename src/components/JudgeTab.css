@@ -70,7 +70,7 @@
   flex-direction: column;
   min-height: 100vh;
   background: var(--gradient-midnight);
-  color: var(--ice-white);
+  color: #ffffff;
   font-family: var(--font-display);
   position: relative;
   overflow-x: hidden;
@@ -146,8 +146,8 @@
   border: 1px solid rgba(239, 68, 68, 0.5);
   border-radius: 4px;
   color: #fca5a5;
-  font-size: 0.35rem;
-  font-weight: 600;
+  font-size: 0.42rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -179,8 +179,8 @@
 
 .report-select-label {
   display: block;
-  font-size: 0.35rem;
-  font-weight: 600;
+  font-size: 0.42rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--steel-gray);
@@ -193,7 +193,7 @@
   font-size: 0.95rem;
   font-family: var(--font-display);
   background: #0a1628;
-  color: var(--ice-white);
+  color: #ffffff;
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   cursor: pointer;
@@ -218,12 +218,12 @@
 
 .judge-report-dropdown option {
   background: var(--midnight);
-  color: var(--ice-white);
+  color: #ffffff;
   padding: 0.5rem;
 }
 
 .judge-report-dropdown optgroup {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--brushed-gold);
   background: var(--cockpit-blue);
 }
@@ -313,7 +313,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -327,7 +327,7 @@
 }
 
 .indicator-value {
-  color: var(--ice-white);
+  color: #ffffff;
   font-family: var(--font-mono);
   padding: 0.15rem 0.5rem;
   background: rgba(201, 162, 39, 0.1);
@@ -372,7 +372,7 @@
 }
 
 .wordmark-tagline {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   letter-spacing: 0.2em;
   color: var(--platinum);
   text-transform: uppercase;
@@ -398,7 +398,7 @@
 }
 
 .time-label {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--platinum);
   letter-spacing: 0.1em;
 }
@@ -406,7 +406,7 @@
 .time-value {
   font-family: var(--font-mono);
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--brushed-gold);
   letter-spacing: 0.05em;
 }
@@ -416,7 +416,7 @@
 }
 
 .date-value {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--platinum);
   letter-spacing: 0.1em;
   font-family: var(--font-mono);
@@ -454,9 +454,9 @@
 }
 
 .segment-value {
-  color: var(--ice-white);
+  color: #ffffff;
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -567,7 +567,7 @@
 
 .generating-text {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--brushed-gold);
   margin-bottom: 0.5rem;
@@ -600,7 +600,7 @@
 
 .progress-text {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--brushed-gold);
   margin-top: 0.5rem;
   letter-spacing: 0.05em;
@@ -649,7 +649,7 @@
 }
 
 .video-status-indicator .status-text {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--verdict-green);
   letter-spacing: 0.05em;
 }
@@ -737,7 +737,7 @@
   color: var(--brushed-gold);
   font-family: var(--font-display);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -782,7 +782,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  color: var(--ice-white);
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -818,7 +818,7 @@
 .time-current,
 .time-duration {
   font-family: var(--font-mono);
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--steel-gray);
   min-width: 40px;
 }
@@ -882,10 +882,10 @@
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
-  color: var(--ice-white);
+  color: #ffffff;
   font-family: var(--font-display);
-  font-size: 0.35rem;
-  font-weight: 600;
+  font-size: 0.42rem;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
   cursor: pointer;
@@ -893,7 +893,7 @@
 }
 
 .action-btn .btn-text {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -914,12 +914,12 @@
 /* Download buttons - slightly larger */
 .action-btn.download-btn {
   padding: 1.05rem 1.65rem;
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   gap: 0.6rem;
 }
 
 .action-btn.download-btn .btn-text {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
 }
 
 /* Save and Forward buttons - add spacing from download buttons */
@@ -1003,7 +1003,7 @@
 }
 
 .confidence-label {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--steel-gray);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1012,7 +1012,7 @@
 .confidence-value {
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.05);
@@ -1041,12 +1041,12 @@
   display: block;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--ice-white);
+  color: #ffffff;
   margin-bottom: 0.25rem;
 }
 
 .city-country {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--steel-gray);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1068,7 +1068,7 @@
 }
 
 .score-label {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--steel-gray);
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -1089,8 +1089,8 @@
 }
 
 .trend-label {
-  font-size: 0.35rem;
-  font-weight: 600;
+  font-size: 0.42rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
 }
 
@@ -1153,7 +1153,7 @@
   padding: 1rem 1.5rem;
   background: transparent;
   border: none;
-  color: var(--ice-white);
+  color: #ffffff;
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -1170,7 +1170,7 @@
   flex: 1;
   text-align: left;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .category-weight {
@@ -1183,7 +1183,7 @@
 }
 
 .expand-icon {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--steel-gray);
   transition: transform 0.3s ease;
 }
@@ -1224,8 +1224,8 @@
 
 .analysis-city .city-label {
   display: block;
-  font-size: 0.35rem;
-  font-weight: 600;
+  font-size: 0.42rem;
+  font-weight: 700;
   color: var(--brushed-gold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1249,7 +1249,7 @@
 .trend-notes .trend-label {
   display: block;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--brushed-gold);
   margin-bottom: 0.5rem;
 }
@@ -1306,7 +1306,7 @@
 
 .verdict-label {
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--steel-gray);
   text-transform: uppercase;
@@ -1324,8 +1324,8 @@
 }
 
 .verdict-confidence {
-  font-size: 0.35rem;
-  font-weight: 600;
+  font-size: 0.42rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
@@ -1358,7 +1358,7 @@
 .factors-header,
 .outlook-header {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--brushed-gold);
   text-transform: uppercase;
@@ -1455,7 +1455,7 @@
 }
 
 .feature-text {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--platinum);
   text-align: center;
 }
@@ -1491,7 +1491,7 @@
 }
 
 .footer-tagline {
-  font-size: 0.35rem;
+  font-size: 0.42rem;
   color: var(--platinum);
 }
 
@@ -1530,7 +1530,7 @@
 
 .status-text {
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--platinum);
   text-transform: uppercase;
@@ -1616,11 +1616,11 @@
   }
 
   .action-btn .btn-icon {
-    font-size: 0.35rem;
+    font-size: 0.42rem;
   }
 
   .action-btn .btn-text {
-    font-size: 0.35rem;
+    font-size: 0.42rem;
     white-space: nowrap;
   }
 
@@ -1666,11 +1666,11 @@
   }
 
   .action-btn .btn-icon {
-    font-size: 0.35rem;
+    font-size: 0.42rem;
   }
 
   .action-btn .btn-text {
-    font-size: 0.35rem;
+    font-size: 0.42rem;
     white-space: nowrap;
   }
 
