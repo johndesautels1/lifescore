@@ -256,10 +256,14 @@ export function useOliviaChat(
         if (!conversationCreatedRef.current && !dbConversationId) {
           conversationCreatedRef.current = true; // Prevent duplicate creation
 
+          // Only pass comparison_id if it's a valid UUID format (DB expects UUID, not string IDs)
+          const compId = comparisonResult?.comparisonId;
+          const isValidUUID = compId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(compId);
+
           createOliviaConversation(
             user.id,
             response.threadId,
-            comparisonResult?.comparisonId,
+            isValidUUID ? compId : undefined, // Don't pass non-UUID comparison IDs
             `Chat: ${comparisonResult?.city1?.city || 'General'} vs ${comparisonResult?.city2?.city || 'Query'}`
           )
             .then(({ data, error: dbError }) => {

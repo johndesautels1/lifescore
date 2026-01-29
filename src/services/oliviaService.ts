@@ -80,7 +80,8 @@ export async function sendMessage(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
-    }
+    },
+    90000 // 90 second timeout - server may retry on active runs
   );
 
   if (!response.ok) {
