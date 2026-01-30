@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
+const TIMEOUT_MS = 45000; // 45 seconds for all operations
 
 export const config = {
   maxDuration: 30,
@@ -23,6 +24,45 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
+
+/**
+ * Fetch with timeout using AbortController
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+/**
+ * Wrap a Supabase query with timeout
+ */
+async function withTimeout<T>(
+  promise: PromiseLike<T>,
+  timeoutMs: number = TIMEOUT_MS
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
 
 export default async function handler(
   req: VercelRequest,
@@ -50,7 +90,7 @@ export default async function handler(
     try {
       console.log('[VIDEO-STATUS] Direct Replicate query for:', predictionId);
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${REPLICATE_API_URL}/predictions/${predictionId}`,
         {
           headers: {
@@ -124,7 +164,7 @@ export default async function handler(
   }
 
   try {
-    // Fetch from database
+    // Fetch from database with timeout
     let query = supabaseAdmin.from('avatar_videos').select('*');
 
     if (videoId) {
@@ -134,7 +174,7 @@ export default async function handler(
     }
 
     // FIX 2026-01-29: Use maybeSingle() instead of single() to avoid throwing on empty results
-    const { data: video, error } = await query.maybeSingle();
+    const { data: video, error } = await withTimeout(query.maybeSingle());
 
     if (error) {
       // Only log actual database errors, not "no rows found"
@@ -162,65 +202,76 @@ export default async function handler(
     if (video.status === 'processing' && video.replicate_prediction_id) {
       const replicateToken = process.env.REPLICATE_API_TOKEN;
       if (replicateToken) {
-        const response = await fetch(
-          `${REPLICATE_API_URL}/predictions/${video.replicate_prediction_id}`,
-          {
-            headers: {
-              'Authorization': `Token ${replicateToken}`,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const prediction = await response.json();
-
-          if (prediction.status === 'succeeded' && prediction.output) {
-            // Update database
-            const videoUrl = Array.isArray(prediction.output)
-              ? prediction.output[0]
-              : prediction.output;
-
-            await supabaseAdmin
-              .from('avatar_videos')
-              .update({
-                status: 'completed',
-                video_url: videoUrl,
-                completed_at: new Date().toISOString(),
-              })
-              .eq('id', video.id);
-
-            // Track usage to quota system
-            // Only track if video was processing (not already completed by webhook)
-            // This prevents double-counting when both webhook and polling fire
-            if (video.status === 'processing') {
-              try {
-                const predictTime = prediction.metrics?.predict_time || 6;
-                const cost = predictTime * 0.0014; // $0.0014/sec for Wav2Lip
-                await supabaseAdmin.rpc('update_provider_usage', {
-                  p_provider_key: 'replicate',
-                  p_usage_delta: cost,
-                });
-                console.log(`[VIDEO-STATUS] Tracked Replicate usage: $${cost.toFixed(4)}`);
-              } catch (usageErr) {
-                console.warn('[VIDEO-STATUS] Failed to track usage:', usageErr);
-              }
+        try {
+          const response = await fetchWithTimeout(
+            `${REPLICATE_API_URL}/predictions/${video.replicate_prediction_id}`,
+            {
+              headers: {
+                'Authorization': `Token ${replicateToken}`,
+              },
             }
+          );
 
-            video.status = 'completed';
-            video.video_url = videoUrl;
-            video.completed_at = new Date().toISOString();
-          } else if (prediction.status === 'failed') {
-            await supabaseAdmin
-              .from('avatar_videos')
-              .update({
-                status: 'failed',
-                error: prediction.error || 'Generation failed',
-              })
-              .eq('id', video.id);
+          if (response.ok) {
+            const prediction = await response.json();
 
-            video.status = 'failed';
-            video.error = prediction.error;
+            if (prediction.status === 'succeeded' && prediction.output) {
+              // Update database with timeout
+              const videoUrl = Array.isArray(prediction.output)
+                ? prediction.output[0]
+                : prediction.output;
+
+              await withTimeout(
+                supabaseAdmin
+                  .from('avatar_videos')
+                  .update({
+                    status: 'completed',
+                    video_url: videoUrl,
+                    completed_at: new Date().toISOString(),
+                  })
+                  .eq('id', video.id)
+              );
+
+              // Track usage to quota system
+              // Only track if video was processing (not already completed by webhook)
+              // This prevents double-counting when both webhook and polling fire
+              if (video.status === 'processing') {
+                try {
+                  const predictTime = prediction.metrics?.predict_time || 6;
+                  const cost = predictTime * 0.0014; // $0.0014/sec for Wav2Lip
+                  await withTimeout(
+                    supabaseAdmin.rpc('update_provider_usage', {
+                      p_provider_key: 'replicate',
+                      p_usage_delta: cost,
+                    })
+                  );
+                  console.log(`[VIDEO-STATUS] Tracked Replicate usage: $${cost.toFixed(4)}`);
+                } catch (usageErr) {
+                  console.warn('[VIDEO-STATUS] Failed to track usage:', usageErr);
+                }
+              }
+
+              video.status = 'completed';
+              video.video_url = videoUrl;
+              video.completed_at = new Date().toISOString();
+            } else if (prediction.status === 'failed') {
+              await withTimeout(
+                supabaseAdmin
+                  .from('avatar_videos')
+                  .update({
+                    status: 'failed',
+                    error: prediction.error || 'Generation failed',
+                  })
+                  .eq('id', video.id)
+              );
+
+              video.status = 'failed';
+              video.error = prediction.error;
+            }
           }
+        } catch (replicateErr) {
+          console.warn('[VIDEO-STATUS] Replicate check failed:', replicateErr);
+          // Continue with existing video data
         }
       }
     }

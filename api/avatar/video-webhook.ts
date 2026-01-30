@@ -13,6 +13,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 
+const TIMEOUT_MS = 45000; // 45 seconds for all operations
+
 export const config = {
   maxDuration: 30,
 };
@@ -21,6 +23,21 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
+
+/**
+ * Wrap a Supabase query with timeout
+ */
+async function withTimeout<T>(
+  promise: PromiseLike<T>,
+  timeoutMs: number = TIMEOUT_MS
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
 
 interface ReplicateWebhook {
   id: string;
@@ -63,13 +80,15 @@ export default async function handler(
   }
 
   try {
-    // Find the video record by replicate prediction ID
+    // Find the video record by replicate prediction ID with timeout
     // FIX 2026-01-29: Use maybeSingle() - video may not exist
-    const { data: video, error: findError } = await supabaseAdmin
-      .from('avatar_videos')
-      .select('*')
-      .eq('replicate_prediction_id', webhook.id)
-      .maybeSingle();
+    const { data: video, error: findError } = await withTimeout(
+      supabaseAdmin
+        .from('avatar_videos')
+        .select('*')
+        .eq('replicate_prediction_id', webhook.id)
+        .maybeSingle()
+    );
 
     if (findError || !video) {
       console.warn('[VIDEO-WEBHOOK] Video not found for prediction:', webhook.id);
@@ -86,30 +105,34 @@ export default async function handler(
 
       console.log('[VIDEO-WEBHOOK] Success! Video URL:', videoUrl);
 
-      // Update database with completed status
-      const { error: updateError } = await supabaseAdmin
-        .from('avatar_videos')
-        .update({
-          status: 'completed',
-          video_url: videoUrl,
-          completed_at: webhook.completed_at || new Date().toISOString(),
-        })
-        .eq('id', video.id);
+      // Update database with completed status (with timeout)
+      const { error: updateError } = await withTimeout(
+        supabaseAdmin
+          .from('avatar_videos')
+          .update({
+            status: 'completed',
+            video_url: videoUrl,
+            completed_at: webhook.completed_at || new Date().toISOString(),
+          })
+          .eq('id', video.id)
+      );
 
       if (updateError) {
         console.error('[VIDEO-WEBHOOK] Update error:', updateError);
       }
 
-      // Track usage to quota system
+      // Track usage to quota system (with timeout)
       try {
         // Calculate cost based on predict_time if available, otherwise use flat rate
         const predictTime = webhook.metrics?.predict_time || 6; // default 6 seconds
         const cost = predictTime * 0.0014; // $0.0014/sec for Wav2Lip on L40S
 
-        await supabaseAdmin.rpc('update_provider_usage', {
-          p_provider_key: 'replicate',
-          p_usage_delta: cost,
-        });
+        await withTimeout(
+          supabaseAdmin.rpc('update_provider_usage', {
+            p_provider_key: 'replicate',
+            p_usage_delta: cost,
+          })
+        );
         console.log(`[VIDEO-WEBHOOK] Tracked Replicate usage: $${cost.toFixed(4)} (${predictTime}s)`);
       } catch (usageErr) {
         console.warn('[VIDEO-WEBHOOK] Failed to track usage:', usageErr);
@@ -125,14 +148,16 @@ export default async function handler(
     } else if (webhook.status === 'failed' || webhook.status === 'canceled') {
       console.error('[VIDEO-WEBHOOK] Generation failed:', webhook.error);
 
-      // Update database with failed status
-      const { error: updateError } = await supabaseAdmin
-        .from('avatar_videos')
-        .update({
-          status: 'failed',
-          error: webhook.error || `Generation ${webhook.status}`,
-        })
-        .eq('id', video.id);
+      // Update database with failed status (with timeout)
+      const { error: updateError } = await withTimeout(
+        supabaseAdmin
+          .from('avatar_videos')
+          .update({
+            status: 'failed',
+            error: webhook.error || `Generation ${webhook.status}`,
+          })
+          .eq('id', video.id)
+      );
 
       if (updateError) {
         console.error('[VIDEO-WEBHOOK] Update error:', updateError);
@@ -161,4 +186,3 @@ export default async function handler(
     });
   }
 }
-// Deploy trigger: Sun, Jan 25, 2026  6:51:07 PM
