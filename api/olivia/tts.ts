@@ -1,11 +1,12 @@
 /**
  * LIFE SCORE - Olivia TTS API (FALLBACK)
  *
- * Text-to-speech endpoint using ElevenLabs.
+ * Text-to-speech endpoint using ElevenLabs with OpenAI fallback.
  * This is a FALLBACK for when D-ID streaming is unavailable.
  *
  * Primary voice: Microsoft Sonia (en-GB-SoniaNeural) via D-ID with lip-sync
- * Fallback voice: ElevenLabs (audio only, no lip-sync)
+ * Fallback 1: ElevenLabs (audio only, no lip-sync)
+ * Fallback 2: OpenAI TTS 'nova' voice (if ElevenLabs fails/quota exceeded)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -68,6 +69,50 @@ function truncateText(text: string, maxChars: number = 5000): string {
   }
 
   return truncated + '...';
+}
+
+/**
+ * OpenAI TTS fallback for Olivia (when ElevenLabs fails/quota exceeded)
+ * Uses 'nova' voice - warm, conversational female
+ */
+async function generateOpenAIAudio(text: string): Promise<{ audioUrl: string; durationMs: number }> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) {
+    throw new Error('OPENAI_API_KEY not configured for TTS fallback');
+  }
+
+  console.log('[OLIVIA/TTS] Using OpenAI fallback (nova voice)');
+
+  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'tts-1',
+      voice: 'nova', // Warm, conversational female voice for Olivia
+      input: text,
+      response_format: 'mp3',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[OLIVIA/TTS] OpenAI TTS error:', response.status, errorText);
+    throw new Error(`OpenAI TTS failed: ${response.status}`);
+  }
+
+  const audioBuffer = await response.arrayBuffer();
+  const base64Audio = Buffer.from(audioBuffer).toString('base64');
+  const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+
+  // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
+  const estimatedDurationMs = (text.length / 5 / 150) * 60 * 1000;
+
+  console.log('[OLIVIA/TTS] OpenAI audio generated, size:', audioBuffer.byteLength);
+
+  return { audioUrl, durationMs: Math.round(estimatedDurationMs) };
 }
 
 // ============================================================================
@@ -137,11 +182,16 @@ export default async function handler(
       const errorText = await response.text();
       console.error('[OLIVIA/TTS] ElevenLabs error:', response.status, errorText);
 
-      if (response.status === 401) {
-        throw new Error('Invalid ElevenLabs API key');
-      }
-      if (response.status === 429) {
-        throw new Error('ElevenLabs rate limit exceeded');
+      // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
+      if (response.status === 401 || response.status === 429) {
+        console.log('[OLIVIA/TTS] ElevenLabs failed, trying OpenAI fallback...');
+        const fallbackResult = await generateOpenAIAudio(processedText);
+        res.status(200).json({
+          audioUrl: fallbackResult.audioUrl,
+          durationMs: fallbackResult.durationMs,
+          fallback: 'openai',
+        });
+        return;
       }
 
       throw new Error(`TTS generation failed: ${response.status}`);
@@ -163,6 +213,24 @@ export default async function handler(
     });
   } catch (error) {
     console.error('[OLIVIA/TTS] Error:', error);
+
+    // Last resort: try OpenAI fallback
+    try {
+      const { text } = req.body as TTSRequest;
+      if (text) {
+        console.log('[OLIVIA/TTS] Primary TTS failed, attempting OpenAI fallback...');
+        const fallbackResult = await generateOpenAIAudio(truncateText(text.trim()));
+        res.status(200).json({
+          audioUrl: fallbackResult.audioUrl,
+          durationMs: fallbackResult.durationMs,
+          fallback: 'openai',
+        });
+        return;
+      }
+    } catch (fallbackError) {
+      console.error('[OLIVIA/TTS] OpenAI fallback also failed:', fallbackError);
+    }
+
     res.status(500).json({
       error: error instanceof Error ? error.message : 'TTS generation failed',
     });

@@ -1,6 +1,9 @@
 /**
  * LIFE SCORE - Emilia Speak API
- * Generate TTS audio using ElevenLabs
+ * Generate TTS audio using ElevenLabs with OpenAI fallback
+ *
+ * Primary: ElevenLabs (Rachel voice)
+ * Fallback: OpenAI TTS 'shimmer' voice (softer, expressive female)
  *
  * POST /api/emilia/speak
  */
@@ -38,6 +41,46 @@ function getElevenLabsKey(): string | null {
 
 function getEmiliaVoiceId(): string {
   return process.env.ELEVENLABS_EMILIA_VOICE_ID || DEFAULT_VOICE_ID;
+}
+
+/**
+ * OpenAI TTS fallback for Emilia (when ElevenLabs fails/quota exceeded)
+ * Uses 'shimmer' voice - softer, expressive female (distinct from Olivia's 'nova')
+ */
+async function generateOpenAIAudio(text: string): Promise<string> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) {
+    throw new Error('OPENAI_API_KEY not configured for TTS fallback');
+  }
+
+  console.log('[EMILIA/speak] Using OpenAI fallback (shimmer voice)');
+
+  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'tts-1',
+      voice: 'shimmer', // Softer, expressive female voice for Emilia
+      input: text,
+      response_format: 'mp3',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[EMILIA/speak] OpenAI TTS error:', response.status, errorText);
+    throw new Error(`OpenAI TTS failed: ${response.status}`);
+  }
+
+  const audioBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(audioBuffer).toString('base64');
+
+  console.log(`[EMILIA/speak] OpenAI audio generated (${Math.round(audioBuffer.byteLength / 1024)}KB)`);
+
+  return `data:audio/mpeg;base64,${base64}`;
 }
 
 // ============================================================================
@@ -109,6 +152,19 @@ export default async function handler(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[EMILIA/speak] ElevenLabs error:', response.status, errorText);
+
+      // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
+      if (response.status === 401 || response.status === 429) {
+        console.log('[EMILIA/speak] ElevenLabs failed, trying OpenAI fallback...');
+        const audioUrl = await generateOpenAIAudio(text);
+        res.status(200).json({
+          success: true,
+          audioUrl,
+          fallback: 'openai',
+        });
+        return;
+      }
+
       throw new Error(`ElevenLabs API error: ${response.status}`);
     }
 
@@ -124,6 +180,23 @@ export default async function handler(
     });
   } catch (error) {
     console.error('[EMILIA/speak] Error:', error);
+
+    // Last resort: try OpenAI fallback
+    try {
+      const { text: bodyText } = req.body as SpeakRequest;
+      if (bodyText) {
+        console.log('[EMILIA/speak] Primary TTS failed, attempting OpenAI fallback...');
+        const audioUrl = await generateOpenAIAudio(bodyText);
+        res.status(200).json({
+          success: true,
+          audioUrl,
+          fallback: 'openai',
+        });
+        return;
+      }
+    } catch (fallbackError) {
+      console.error('[EMILIA/speak] OpenAI fallback also failed:', fallbackError);
+    }
 
     res.status(500).json({
       error: 'Failed to generate speech',

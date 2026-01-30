@@ -1,0 +1,382 @@
+/**
+ * LIFE SCORE - Usage Warning Banner Styles
+ * Created: 2026-01-30
+ */
+
+/* ============================================================================
+   BANNER BASE
+   ============================================================================ */
+
+.usage-warning-banner {
+  font-family: 'Inter', system-ui, sans-serif;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+/* Position variants */
+.usage-warning-banner.top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  border-radius: 0;
+  margin: 0;
+}
+
+.usage-warning-banner.bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  border-radius: 0;
+  margin: 0;
+}
+
+.usage-warning-banner.inline {
+  position: relative;
+}
+
+/* Compact mode */
+.usage-warning-banner.compact {
+  padding: 8px 12px;
+}
+
+.usage-warning-banner.compact .banner-details {
+  display: none;
+}
+
+/* ============================================================================
+   SEVERITY COLORS
+   ============================================================================ */
+
+.usage-warning-banner.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: 1px solid #1d4ed8;
+}
+
+.usage-warning-banner.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: 1px solid #b45309;
+}
+
+.usage-warning-banner.critical {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 1px solid #b91c1c;
+}
+
+.usage-warning-banner.exceeded {
+  background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+  color: white;
+  border: 2px solid #ef4444;
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+/* ============================================================================
+   HEADER
+   ============================================================================ */
+
+.banner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.banner-icon {
+  font-size: 18px;
+}
+
+.warning-count-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.banner-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.banner-actions button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.banner-actions button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.banner-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   SUMMARY
+   ============================================================================ */
+
+.banner-summary {
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.summary-item {
+  display: inline;
+}
+
+.summary-item.exceeded,
+.summary-item.critical {
+  font-weight: 600;
+}
+
+.summary-more {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* ============================================================================
+   EXPANDED DETAILS
+   ============================================================================ */
+
+.banner-details {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.warning-item {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.warning-item:last-of-type {
+  margin-bottom: 16px;
+}
+
+.warning-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.warning-provider {
+  font-weight: 600;
+  min-width: 150px;
+}
+
+.warning-progress {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.warning-item.info .progress-bar {
+  background: #60a5fa;
+}
+
+.warning-item.warning .progress-bar {
+  background: #fbbf24;
+}
+
+.warning-item.critical .progress-bar {
+  background: #f87171;
+}
+
+.warning-item.exceeded .progress-bar {
+  background: #ef4444;
+}
+
+.warning-stats {
+  font-size: 12px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.warning-message {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.warning-fallback {
+  font-size: 12px;
+  color: #86efac;
+  margin-top: 4px;
+}
+
+.warning-estimate {
+  font-size: 11px;
+  opacity: 0.8;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.dismiss-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.dismiss-btn:hover {
+  color: white;
+}
+
+/* ============================================================================
+   VIEW DASHBOARD BUTTON
+   ============================================================================ */
+
+.view-dashboard-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-dashboard-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================================================
+   MINIMIZED STATE
+   ============================================================================ */
+
+.usage-warning-minimized {
+  position: fixed;
+  z-index: 9999;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.usage-warning-minimized:hover {
+  transform: scale(1.1);
+}
+
+.usage-warning-minimized.top {
+  top: 16px;
+  right: 16px;
+}
+
+.usage-warning-minimized.bottom {
+  bottom: 16px;
+  right: 16px;
+}
+
+.usage-warning-minimized .warning-icon {
+  font-size: 18px;
+}
+
+.usage-warning-minimized .warning-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #1f2937;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  .usage-warning-banner.info {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .usage-warning-banner {
+    padding: 10px 12px;
+  }
+
+  .banner-title {
+    font-size: 13px;
+  }
+
+  .warning-provider {
+    min-width: auto;
+  }
+
+  .warning-main {
+    flex-wrap: wrap;
+  }
+
+  .warning-progress {
+    width: 100%;
+    order: 3;
+    margin-top: 8px;
+  }
+}

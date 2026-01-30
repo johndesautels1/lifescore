@@ -2,6 +2,8 @@
  * LIFE SCORE™ Admin Cost Dashboard
  * Displays API cost breakdown for monitoring and profitability analysis
  * Data persists to Supabase database for authenticated users
+ *
+ * Updated 2026-01-30: Added quota status monitoring with color-coded warnings
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -25,6 +27,51 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import type { ApiCostRecord } from '../types/database';
 import './CostDashboard.css';
 
+// ============================================================================
+// QUOTA STATUS TYPES
+// ============================================================================
+
+interface QuotaStatus {
+  provider_key: string;
+  display_name: string;
+  icon: string;
+  quota_type: string;
+  monthly_limit: number;
+  current_usage: number;
+  usage_percentage: number;
+  status: 'green' | 'yellow' | 'orange' | 'red' | 'exceeded';
+  fallback_provider: string | null;
+  alerts_enabled: boolean;
+  last_alert_level: string | null;
+}
+
+interface QuotaResponse {
+  quotas: QuotaStatus[];
+  elevenLabsActual?: {
+    character_count: number;
+    character_limit: number;
+  };
+  timestamp: string;
+}
+
+// Format quota value based on type
+function formatQuotaValue(value: number, quotaType: string): string {
+  switch (quotaType) {
+    case 'dollars':
+      return `$${value.toFixed(2)}`;
+    case 'characters':
+      return value >= 1000 ? `${(value / 1000).toFixed(1)}K` : `${value}`;
+    case 'tokens':
+      return value >= 1000000 ? `${(value / 1000000).toFixed(2)}M` : `${(value / 1000).toFixed(1)}K`;
+    case 'seconds':
+      return value >= 60 ? `${(value / 60).toFixed(1)}m` : `${value}s`;
+    case 'credits':
+      return value.toLocaleString();
+    default:
+      return value.toLocaleString();
+  }
+}
+
 interface CostDashboardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,7 +90,48 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
   const [isSaving, setIsSaving] = useState(false);
   const [dataSource, setDataSource] = useState<'database' | 'local'>('local');
 
+  // Quota monitoring state
+  const [quotaStatuses, setQuotaStatuses] = useState<QuotaStatus[]>([]);
+  const [quotaLoading, setQuotaLoading] = useState(false);
+  const [showQuotaSettings, setShowQuotaSettings] = useState(false);
+
   const dbConfigured = isSupabaseConfigured();
+
+  // Fetch quota statuses
+  const loadQuotaStatuses = useCallback(async () => {
+    setQuotaLoading(true);
+    try {
+      const response = await fetch('/api/usage/check-quotas');
+      if (response.ok) {
+        const data = await response.json() as QuotaResponse;
+        setQuotaStatuses(data.quotas || []);
+
+        // Update ElevenLabs with actual data if available
+        if (data.elevenLabsActual) {
+          setQuotaStatuses(prev => prev.map(q => {
+            if (q.provider_key === 'elevenlabs') {
+              const actual = data.elevenLabsActual!;
+              const percentage = (actual.character_count / actual.character_limit) * 100;
+              return {
+                ...q,
+                current_usage: actual.character_count,
+                monthly_limit: actual.character_limit,
+                usage_percentage: percentage,
+                status: percentage >= 100 ? 'exceeded' :
+                        percentage >= 85 ? 'red' :
+                        percentage >= 70 ? 'orange' :
+                        percentage >= 50 ? 'yellow' : 'green',
+              };
+            }
+            return q;
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn('[CostDashboard] Failed to load quota statuses:', err);
+    }
+    setQuotaLoading(false);
+  }, []);
 
   // Load cost data from database (if authenticated) or localStorage
   const loadCosts = useCallback(async () => {
@@ -83,8 +171,9 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
   useEffect(() => {
     if (isOpen) {
       loadCosts();
+      loadQuotaStatuses();
     }
-  }, [isOpen, loadCosts]);
+  }, [isOpen, loadCosts, loadQuotaStatuses]);
 
   const handleClearData = async () => {
     const deleteSource = user && dbConfigured ? 'database and browser' : 'browser';
@@ -289,6 +378,120 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 <span className="card-icon">📈</span>
                 <span className="card-label">Avg Enhanced Cost</span>
                 <span className="card-value">{formatCost(summary.avgCostPerEnhanced)}</span>
+              </div>
+            </div>
+
+            {/* Quota Status Section - NEW */}
+            <div className="quota-status-section">
+              <div className="quota-header">
+                <h3>🚦 API Quota Status</h3>
+                <div className="quota-actions">
+                  <button
+                    className="action-btn"
+                    onClick={loadQuotaStatuses}
+                    disabled={quotaLoading}
+                  >
+                    {quotaLoading ? '⏳' : '🔄'} Refresh
+                  </button>
+                  <button
+                    className="action-btn"
+                    onClick={() => setShowQuotaSettings(!showQuotaSettings)}
+                  >
+                    ⚙️ {showQuotaSettings ? 'Hide' : 'Settings'}
+                  </button>
+                </div>
+              </div>
+
+              {quotaStatuses.length > 0 ? (
+                <div className="quota-grid">
+                  {quotaStatuses.map((quota) => (
+                    <div
+                      key={quota.provider_key}
+                      className={`quota-card quota-${quota.status}`}
+                    >
+                      <div className="quota-card-header">
+                        <span className="quota-icon">{quota.icon}</span>
+                        <span className="quota-name">{quota.display_name}</span>
+                        <span className={`quota-status-badge ${quota.status}`}>
+                          {quota.status === 'green' ? '✓' :
+                           quota.status === 'yellow' ? '⚡' :
+                           quota.status === 'orange' ? '⚠️' :
+                           quota.status === 'red' ? '🚨' : '🔴'}
+                        </span>
+                      </div>
+
+                      <div className="quota-progress-container">
+                        <div className="quota-progress-bar">
+                          <div
+                            className={`quota-progress-fill ${quota.status}`}
+                            style={{ width: `${Math.min(quota.usage_percentage, 100)}%` }}
+                          />
+                        </div>
+                        <span className="quota-percentage">
+                          {quota.usage_percentage.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="quota-values">
+                        <span className="quota-used">
+                          {formatQuotaValue(quota.current_usage, quota.quota_type)}
+                        </span>
+                        <span className="quota-separator">/</span>
+                        <span className="quota-limit">
+                          {formatQuotaValue(quota.monthly_limit, quota.quota_type)}
+                        </span>
+                      </div>
+
+                      {quota.fallback_provider && quota.status !== 'green' && (
+                        <div className="quota-fallback">
+                          ✓ Fallback: {quota.fallback_provider}
+                        </div>
+                      )}
+
+                      {showQuotaSettings && (
+                        <div className="quota-settings-inline">
+                          <label>
+                            Monthly Limit:
+                            <input
+                              type="number"
+                              defaultValue={quota.monthly_limit}
+                              placeholder="Set limit"
+                              className="quota-limit-input"
+                            />
+                          </label>
+                          <label className="quota-alerts-toggle">
+                            <input
+                              type="checkbox"
+                              defaultChecked={quota.alerts_enabled}
+                            />
+                            Email Alerts
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="quota-loading">
+                  {quotaLoading ? (
+                    <span>Loading quota status...</span>
+                  ) : (
+                    <span>Quota monitoring not configured. Run the database migration.</span>
+                  )}
+                </div>
+              )}
+
+              {/* Legend */}
+              <div className="quota-legend">
+                <span className="legend-item"><span className="legend-dot green"></span> OK (&lt;50%)</span>
+                <span className="legend-item"><span className="legend-dot yellow"></span> Notice (50-70%)</span>
+                <span className="legend-item"><span className="legend-dot orange"></span> Warning (70-85%)</span>
+                <span className="legend-item"><span className="legend-dot red"></span> Critical (85-100%)</span>
+                <span className="legend-item"><span className="legend-dot exceeded"></span> Exceeded (100%+)</span>
+              </div>
+
+              <div className="quota-email-info">
+                📧 Alerts sent to: <strong>brokerpinellas@gmail.com</strong>, <strong>cluesnomads@gmail.com</strong>
               </div>
             </div>
 

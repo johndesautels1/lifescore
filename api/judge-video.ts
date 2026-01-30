@@ -2,12 +2,14 @@
  * LIFE SCORE - Judge Video API (D-ID Fallback)
  * D-ID Talks API for Christiano avatar delivering the Judge's verdict
  *
- * Updated 2026-01-29: Now uses ElevenLabs TTS for voice consistency
- * with the primary Replicate implementation (api/avatar/generate-judge-video.ts)
+ * Updated 2026-01-30: Added OpenAI TTS fallback when ElevenLabs fails
  *
- * Voice: ElevenLabs Christiano (ZpwpoMoU84OhcbA2YBBV)
+ * Voice Priority:
+ * 1. ElevenLabs Christiano (ZpwpoMoU84OhcbA2YBBV)
+ * 2. OpenAI TTS 'onyx' voice (deep, authoritative male)
+ *
  * Primary: Replicate SadTalker + ElevenLabs
- * Fallback: D-ID + ElevenLabs (this file)
+ * Fallback: D-ID + ElevenLabs/OpenAI (this file)
  *
  * Actions:
  * - generate: Create video from JudgeReport
@@ -40,50 +42,104 @@ const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'Zpwpo
 // ============================================================================
 
 /**
- * Generate TTS audio using ElevenLabs with Christiano's voice
+ * Generate TTS audio using OpenAI with 'onyx' voice (fallback)
  * Returns base64 audio for D-ID consumption
  */
-async function generateElevenLabsAudio(script: string): Promise<string> {
-  const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
-
-  if (!elevenLabsKey) {
-    throw new Error('ELEVENLABS_API_KEY not configured for D-ID fallback');
+async function generateOpenAIAudio(script: string): Promise<string> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) {
+    throw new Error('OPENAI_API_KEY not configured for TTS fallback');
   }
 
-  console.log('[JUDGE-VIDEO-DID] Generating ElevenLabs audio, script length:', script.length);
+  console.log('[JUDGE-VIDEO-DID] Using OpenAI fallback (onyx voice)');
 
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
-    {
-      method: 'POST',
-      headers: {
-        'xi-api-key': elevenLabsKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: script,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.6,
-          similarity_boost: 0.75,
-          style: 0.1,
-          use_speaker_boost: true,
-        },
-      }),
-    }
-  );
+  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'tts-1',
+      voice: 'onyx', // Deep, authoritative male voice for Judge Christiano
+      input: script,
+      response_format: 'mp3',
+    }),
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[JUDGE-VIDEO-DID] ElevenLabs error:', response.status, errorText);
-    throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+    console.error('[JUDGE-VIDEO-DID] OpenAI TTS error:', response.status, errorText);
+    throw new Error(`OpenAI TTS failed: ${response.status}`);
   }
 
   const arrayBuffer = await response.arrayBuffer();
   const base64Audio = Buffer.from(arrayBuffer).toString('base64');
 
-  console.log('[JUDGE-VIDEO-DID] ElevenLabs audio generated, base64 length:', base64Audio.length);
+  console.log('[JUDGE-VIDEO-DID] OpenAI audio generated, base64 length:', base64Audio.length);
   return base64Audio;
+}
+
+/**
+ * Generate TTS audio using ElevenLabs with Christiano's voice
+ * Falls back to OpenAI 'onyx' voice if ElevenLabs fails
+ * Returns base64 audio for D-ID consumption
+ */
+async function generateElevenLabsAudio(script: string): Promise<string> {
+  const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+
+  // If no ElevenLabs key, go straight to OpenAI
+  if (!elevenLabsKey) {
+    console.log('[JUDGE-VIDEO-DID] No ElevenLabs key, using OpenAI fallback');
+    return generateOpenAIAudio(script);
+  }
+
+  console.log('[JUDGE-VIDEO-DID] Generating ElevenLabs audio, script length:', script.length);
+
+  try {
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': elevenLabsKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: script,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.6,
+            similarity_boost: 0.75,
+            style: 0.1,
+            use_speaker_boost: true,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[JUDGE-VIDEO-DID] ElevenLabs error:', response.status, errorText);
+
+      // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
+      if (response.status === 401 || response.status === 429) {
+        console.log('[JUDGE-VIDEO-DID] ElevenLabs failed, trying OpenAI fallback...');
+        return generateOpenAIAudio(script);
+      }
+
+      throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+
+    console.log('[JUDGE-VIDEO-DID] ElevenLabs audio generated, base64 length:', base64Audio.length);
+    return base64Audio;
+  } catch (error) {
+    console.error('[JUDGE-VIDEO-DID] ElevenLabs error, trying OpenAI fallback:', error);
+    return generateOpenAIAudio(script);
+  }
 }
 
 // ============================================================================
