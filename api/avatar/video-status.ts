@@ -3,6 +3,7 @@
  *
  * Checks the status of a judge video generation.
  * Can query by: videoId, comparisonId, or predictionId (direct Replicate query)
+ * Tracks usage to api_quota_settings when video completes via polling.
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -187,6 +188,23 @@ export default async function handler(
                 completed_at: new Date().toISOString(),
               })
               .eq('id', video.id);
+
+            // Track usage to quota system
+            // Only track if video was processing (not already completed by webhook)
+            // This prevents double-counting when both webhook and polling fire
+            if (video.status === 'processing') {
+              try {
+                const predictTime = prediction.metrics?.predict_time || 6;
+                const cost = predictTime * 0.0014; // $0.0014/sec for Wav2Lip
+                await supabaseAdmin.rpc('update_provider_usage', {
+                  p_provider_key: 'replicate',
+                  p_usage_delta: cost,
+                });
+                console.log(`[VIDEO-STATUS] Tracked Replicate usage: $${cost.toFixed(4)}`);
+              } catch (usageErr) {
+                console.warn('[VIDEO-STATUS] Failed to track usage:', usageErr);
+              }
+            }
 
             video.status = 'completed';
             video.video_url = videoUrl;

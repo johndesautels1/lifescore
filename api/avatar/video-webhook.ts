@@ -3,6 +3,7 @@
  *
  * Receives webhook callbacks from Replicate when video generation completes.
  * Updates the avatar_videos table with the result.
+ * Tracks usage to api_quota_settings for cost monitoring.
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -28,7 +29,13 @@ interface ReplicateWebhook {
   error?: string;
   created_at: string;
   completed_at?: string;
+  metrics?: {
+    predict_time?: number; // seconds
+  };
 }
+
+// Wav2Lip costs ~$0.0014/sec on L40S GPU, typically ~6 seconds = ~$0.005/run
+const WAV2LIP_COST_PER_RUN = 0.005;
 
 export default async function handler(
   req: VercelRequest,
@@ -91,6 +98,22 @@ export default async function handler(
 
       if (updateError) {
         console.error('[VIDEO-WEBHOOK] Update error:', updateError);
+      }
+
+      // Track usage to quota system
+      try {
+        // Calculate cost based on predict_time if available, otherwise use flat rate
+        const predictTime = webhook.metrics?.predict_time || 6; // default 6 seconds
+        const cost = predictTime * 0.0014; // $0.0014/sec for Wav2Lip on L40S
+
+        await supabaseAdmin.rpc('update_provider_usage', {
+          p_provider_key: 'replicate',
+          p_usage_delta: cost,
+        });
+        console.log(`[VIDEO-WEBHOOK] Tracked Replicate usage: $${cost.toFixed(4)} (${predictTime}s)`);
+      } catch (usageErr) {
+        console.warn('[VIDEO-WEBHOOK] Failed to track usage:', usageErr);
+        // Don't fail the webhook for usage tracking errors
       }
 
       res.status(200).json({
