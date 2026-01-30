@@ -71,6 +71,8 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
   }
 
   console.log('[JUDGE-VIDEO] Generating TTS audio, script length:', script.length);
+  console.log('[JUDGE-VIDEO] ElevenLabs key exists:', !!elevenLabsKey, 'length:', elevenLabsKey?.length || 0);
+  console.log('[JUDGE-VIDEO] Voice ID:', CHRISTIANO_VOICE_ID);
 
   if (elevenLabsKey) {
     // ElevenLabs - returns MP3 by default
@@ -79,6 +81,7 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
       {
         method: 'POST',
         headers: {
+          'Accept': 'audio/mpeg',
           'xi-api-key': elevenLabsKey,
           'Content-Type': 'application/json',
         },
