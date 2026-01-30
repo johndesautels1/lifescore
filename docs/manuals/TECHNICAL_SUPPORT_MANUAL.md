@@ -594,7 +594,7 @@ Comparison completes (App.tsx)
             │
             └─→ POST /api/avatar/generate-judge-video
                     └─→ TTS audio (ElevenLabs)
-                    └─→ Video generation (Replicate/SadTalker)
+                    └─→ Video generation (Replicate Wav2Lip)
                     └─→ Stores in avatar_videos table
 
 User clicks Judge tab (JudgeTab.tsx)

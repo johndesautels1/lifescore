@@ -8,7 +8,7 @@
  * 1. ElevenLabs Christiano (ZpwpoMoU84OhcbA2YBBV)
  * 2. OpenAI TTS 'onyx' voice (deep, authoritative male)
  *
- * Primary: Replicate SadTalker + ElevenLabs
+ * Primary: Replicate Wav2Lip + ElevenLabs (api/avatar/generate-judge-video.ts)
  * Fallback: D-ID + ElevenLabs/OpenAI (this file)
  *
  * Actions:
