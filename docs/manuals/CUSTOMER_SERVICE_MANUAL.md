@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 1.0
-**Last Updated:** January 28, 2026
+**Version:** 2.0
+**Last Updated:** January 30, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -37,9 +37,9 @@ LifeScore helps users make informed decisions about where to live by comparing c
 
 | Channel | Availability | Response Time |
 |---------|--------------|---------------|
-| Email Support | 24/7 | 24 hours |
-| Live Chat | 9 AM - 9 PM EST | Immediate |
-| Help Center | 24/7 (Self-service) | N/A |
+| Email Support (support@clueslifescore.com) | 24/7 | 24 hours |
+| Live Chat | 9 AM - 9 PM EST (if available) | Immediate |
+| Help Center (help.clueslifescore.com) | 24/7 (Self-service) | N/A |
 
 ---
 
@@ -80,12 +80,12 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 | Feature | FREE ($0) | NAVIGATOR ($29/mo) | SOVEREIGN ($99/mo) |
 |---------|-----------|--------------------|--------------------|
-| LLM Providers | 1 | 1 | 5 |
-| Comparisons | 1/month | 1/month | 1/month (all 5 LLMs) |
+| LLM Providers | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
+| Comparisons | 1/month (Standard) | 3/month (Standard) | Unlimited (Standard + Enhanced) |
 | Olivia AI | No | 15 min/month | 60 min/month |
-| Gamma Reports | No | 1/month | 1/month (all 5 LLMs) |
-| Judge Videos | No | 1/month | 1/month |
-| Enhanced Mode | No | No | Yes |
+| Gamma Reports | No | 1/month | 3/month |
+| Judge Videos | No | 1/month | 3/month |
+| Enhanced Mode | No | No | Yes (5-LLM consensus scoring) |
 | Cloud Sync | No | Yes | Yes |
 
 ### 3.2 Comparison Types
@@ -531,6 +531,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
+| 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, support channels, tier limits |
 
 ---
 

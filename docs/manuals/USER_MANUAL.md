@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 1.0
-**Last Updated:** January 28, 2026
+**Version:** 2.0
+**Last Updated:** January 30, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -58,12 +58,12 @@ Each city receives a Freedom Score from 0-100, calculated across:
 
 ### Creating Your Account
 
-1. Visit **lifescore.app**
+1. Visit **clueslifescore.com**
 2. Click the **Sign Up** tab
 3. Enter your information:
    - **Full Name** (optional)
    - **Email Address**
-   - **Password** (minimum 6 characters)
+   - **Password** (8+ characters, 1 uppercase, 1 number)
    - **Confirm Password**
 4. Click **Create Account**
 5. Check your email (including spam folder) for the verification link
@@ -412,12 +412,12 @@ For Enhanced mode with your own keys:
 | Feature | FREE | NAVIGATOR | SOVEREIGN |
 |---------|------|-----------|-----------|
 | **Price** | $0 | $29/mo | $99/mo |
-| **LLM Providers** | 1 | 1 | 5 |
-| **Comparisons** | 1/month | 1/month | 1/month (all 5 LLMs) |
+| **LLM Providers** | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
+| **Comparisons** | 1/month (Standard) | 3/month (Standard) | Unlimited (Standard + Enhanced) |
 | **Olivia AI** | No | 15 min/month | 60 min/month |
-| **Gamma Reports** | No | 1/month | 1/month (all 5 LLMs) |
-| **Judge Videos** | No | 1/month | 1/month |
-| **Enhanced Mode** | No | No | Yes |
+| **Gamma Reports** | No | 1/month | 3/month |
+| **Judge Videos** | No | 1/month | 3/month |
+| **Enhanced Mode** | No | No | Yes (5-LLM consensus) |
 | **Cloud Sync** | No | Yes | Yes |
 
 ### Upgrading Your Plan
@@ -590,8 +590,8 @@ A: Yes, processed by Stripe. We never see your full card number.
 
 **Need assistance?**
 
-- **Help Center:** help.lifescore.app
-- **Email:** support@lifescore.app
+- **Help Center:** help.clueslifescore.com
+- **Email:** support@clueslifescore.com
 - **In-App:** Ask Olivia
 - **Feedback:** Report issues in Settings
 
@@ -606,3 +606,4 @@ A: Yes, processed by Stripe. We never see your full card number.
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
+| 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, password requirements, tier limits |

@@ -239,7 +239,7 @@ D:\lifescore\
 
 ## 4. Database Schema
 
-### 4.1 Current Tables (15 total)
+### 4.1 Current Tables (16 total)
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
@@ -257,6 +257,8 @@ D:\lifescore\
 | api_cost_records | Cost tracking | provider totals |
 | grok_videos | Grok video cache | city_name, video_type |
 | contrast_image_cache | Olivia images | cache_key, urls |
+| api_quota_settings | Admin quota limits | provider_key, monthly_limit, warning thresholds |
+| api_quota_alert_log | Email alert history | provider_key, alert_level, sent_at |
 
 ### 4.2 Missing Schema (Needs Creation)
 
@@ -699,19 +701,35 @@ User clicks Judge tab (JudgeTab.tsx)
 
 ### 11.2 Environment Variables (Vercel)
 
-**Required:**
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `ANTHROPIC_API_KEY`
-- `OPENAI_API_KEY`
-- `TAVILY_API_KEY`
+**Required (Production):**
+- `VITE_SUPABASE_URL` - Supabase project URL (client)
+- `VITE_SUPABASE_ANON_KEY` - Supabase anon key (client)
+- `SUPABASE_URL` - Supabase project URL (server)
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server)
+- `ANTHROPIC_API_KEY` - Claude API access
+- `OPENAI_API_KEY` - GPT-4o and Olivia API access
+- `TAVILY_API_KEY` - Web research API
+- `STRIPE_SECRET_KEY` - Payment processing (server)
+- `VITE_STRIPE_PUBLISHABLE_KEY` - Payment processing (client)
+- `RESEND_API_KEY` - Email alerts and notifications
 
-**Optional (for video):**
-- `KLING_VIDEO_API_KEY`
-- `KLING_VIDEO_SECRET`
-- `REPLICATE_API_TOKEN`
-- `ELEVENLABS_API_KEY`
+**Required (Features):**
+- `ELEVENLABS_API_KEY` - TTS for Olivia/Emilia/Judge
+- `ELEVENLABS_VOICE_ID` - Default voice ID
+- `SIMLI_API_KEY` - Primary avatar video generation
+- `KLING_VIDEO_API_KEY` - Primary video generation
+- `KLING_VIDEO_SECRET` - Kling JWT signing
+- `REPLICATE_API_TOKEN` - Fallback video (SadTalker/Minimax)
+- `GAMMA_API_KEY` - PDF/PPTX report generation
+
+**Optional:**
+- `GEMINI_API_KEY` - Google Gemini evaluator
+- `GROK_API_KEY` - xAI Grok evaluator
+- `PERPLEXITY_API_KEY` - Perplexity evaluator
+- `D_ID_API_KEY` - D-ID avatar fallback
+- `HEYGEN_API_KEY` - HeyGen avatar fallback
+- `RESEND_FROM_EMAIL` - Custom sender email
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
 
 ### 11.3 Build Commands
 
