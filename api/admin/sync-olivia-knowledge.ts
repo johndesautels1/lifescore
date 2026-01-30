@@ -68,7 +68,33 @@ async function getAssistant(apiKey: string): Promise<any> {
   return response.json();
 }
 
-async function updateAssistant(apiKey: string, fileIds: string[]): Promise<any> {
+async function updateAssistantWithFile(apiKey: string, fileId: string): Promise<any> {
+  // OpenAI Assistants v2 uses tool_resources for file attachments
+  // We need to create/update a vector store for file_search
+
+  // First, create a vector store with the file
+  const vectorStoreResponse = await fetch(`${OPENAI_API_BASE}/vector_stores`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'OpenAI-Beta': 'assistants=v2',
+    },
+    body: JSON.stringify({
+      name: 'Olivia Knowledge Base',
+      file_ids: [fileId],
+    }),
+  });
+
+  if (!vectorStoreResponse.ok) {
+    const error = await vectorStoreResponse.text();
+    throw new Error(`Failed to create vector store: ${error}`);
+  }
+
+  const vectorStore = await vectorStoreResponse.json();
+  console.log(`[SYNC] Created vector store: ${vectorStore.id}`);
+
+  // Update assistant to use this vector store
   const response = await fetch(`${OPENAI_API_BASE}/assistants/${ASSISTANT_ID}`, {
     method: 'POST',
     headers: {
@@ -77,7 +103,11 @@ async function updateAssistant(apiKey: string, fileIds: string[]): Promise<any> 
       'OpenAI-Beta': 'assistants=v2',
     },
     body: JSON.stringify({
-      file_ids: fileIds,
+      tool_resources: {
+        file_search: {
+          vector_store_ids: [vectorStore.id],
+        },
+      },
     }),
   });
 
@@ -86,7 +116,8 @@ async function updateAssistant(apiKey: string, fileIds: string[]): Promise<any> 
     throw new Error(`Failed to update assistant: ${error}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  return { ...result, vectorStoreId: vectorStore.id };
 }
 
 export default async function handler(
@@ -138,20 +169,16 @@ export default async function handler(
     const newFile = await uploadFile(apiKey, content, 'OLIVIA_KNOWLEDGE_BASE.md');
     console.log(`[SYNC] Uploaded file: ${newFile.id}`);
 
-    // Get current assistant
-    const assistant = await getAssistant(apiKey);
-    const existingFileIds = assistant.file_ids || [];
-
-    // Add new file (keeping old ones for now - OpenAI will use latest)
-    const updatedAssistant = await updateAssistant(apiKey, [...existingFileIds, newFile.id]);
-    console.log(`[SYNC] Assistant updated with ${updatedAssistant.file_ids?.length} files`);
+    // Update assistant with the new file via vector store (v2 API)
+    const updatedAssistant = await updateAssistantWithFile(apiKey, newFile.id);
+    console.log(`[SYNC] Assistant updated with vector store: ${updatedAssistant.vectorStoreId}`);
 
     res.status(200).json({
       success: true,
       message: 'Olivia knowledge base synced successfully',
       fileId: newFile.id,
+      vectorStoreId: updatedAssistant.vectorStoreId,
       fileSize: `${(fileSize / 1024).toFixed(1)} KB`,
-      totalFiles: updatedAssistant.file_ids?.length || 1,
       timestamp: new Date().toISOString(),
     });
 

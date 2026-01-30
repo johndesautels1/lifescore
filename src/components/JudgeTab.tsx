@@ -129,7 +129,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
     if (savedStd?.result) {
       if (savedStd.result.city1 && savedStd.result.city2) {
-        console.log('[JudgeTab] Loaded standard comparison:', selectedComparisonId);
         comparisonResult = savedStd.result;
       } else {
         console.error('[JudgeTab] Standard comparison missing city data:', selectedComparisonId);
@@ -140,7 +139,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       const savedEnh = savedEnhanced.find(c => c.result?.comparisonId === selectedComparisonId);
       if (savedEnh?.result) {
         if (savedEnh.result.city1 && savedEnh.result.city2) {
-          console.log('[JudgeTab] Loaded enhanced comparison:', selectedComparisonId);
           comparisonResult = savedEnh.result;
         } else {
           console.error('[JudgeTab] Enhanced comparison missing city data:', selectedComparisonId);
