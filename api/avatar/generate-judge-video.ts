@@ -354,11 +354,16 @@ export default async function handler(
       replicateBody.webhook_events_filter = ['start', 'completed'];
     }
 
-    // Use deployment endpoint for hardware control and faster cold starts
+    // Try deployment first, fallback to public model if deployment unavailable
     const deploymentUrl = `${REPLICATE_API_URL}/deployments/${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}/predictions`;
-    console.log('[JUDGE-VIDEO] Using deployment:', `${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}`);
+    const modelUrl = `${REPLICATE_API_URL}/predictions`;
 
-    const response = await fetch(deploymentUrl, {
+    let prediction: any;
+    let response: Response;
+
+    // Try deployment first
+    console.log('[JUDGE-VIDEO] Trying deployment:', `${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}`);
+    response = await fetch(deploymentUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${replicateToken}`,
@@ -368,16 +373,41 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[JUDGE-VIDEO] Replicate error:', response.status, errorText);
-      res.status(response.status).json({
-        error: 'Failed to start video generation',
-        message: errorText,
+      // Deployment failed - try public model as fallback
+      console.warn('[JUDGE-VIDEO] Deployment failed, trying public SadTalker model...');
+
+      const modelBody = {
+        version: SADTALKER_VERSION.split(':')[1], // Extract version hash
+        input: replicateInput,
+        ...(webhookUrl && {
+          webhook: webhookUrl,
+          webhook_events_filter: ['start', 'completed']
+        }),
+      };
+
+      response = await fetch(modelUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${replicateToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(modelBody),
       });
-      return;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[JUDGE-VIDEO] Both deployment and model failed:', response.status, errorText);
+        res.status(response.status).json({
+          error: 'Failed to start video generation',
+          message: errorText,
+        });
+        return;
+      }
+
+      console.log('[JUDGE-VIDEO] Using public model fallback');
     }
 
-    const prediction = await response.json();
+    prediction = await response.json();
     console.log('[JUDGE-VIDEO] Prediction started:', prediction.id, 'status:', prediction.status);
 
     // Store in database (if table exists)
