@@ -187,11 +187,17 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       const response = await fetch(`${API_BASE}/video-status?comparisonId=${encodeURIComponent(comparisonId)}`);
 
       if (!response.ok) {
-        console.log('[useJudgeVideo] No existing video found (status:', response.status, ')');
+        console.log('[useJudgeVideo] Video status check failed (status:', response.status, ')');
         return null;
       }
 
       const data = await response.json();
+
+      // Handle exists:false (no video yet - this is normal, not an error)
+      if (data.exists === false || !data.video) {
+        console.log('[useJudgeVideo] No video exists yet for this comparison');
+        return null;
+      }
 
       if (data.success && data.video) {
         console.log('[useJudgeVideo] Found existing video:', {

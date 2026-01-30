@@ -205,6 +205,11 @@ export async function checkExistingVideo(
 
     const data = await response.json();
 
+    // Handle exists:false response (no video yet)
+    if (data.exists === false || !data.video) {
+      return { exists: false };
+    }
+
     if (data.success && data.video) {
       return {
         exists: true,

@@ -146,11 +146,13 @@ export default async function handler(
     }
 
     if (!video) {
-      // This is normal - video may not exist yet. Don't log as error.
-      res.status(404).json({
-        success: false,
-        error: 'Video not found',
-        message: 'No video record exists for this query.',
+      // This is normal - video may not exist yet. Return 200 with exists:false
+      // to avoid red 404 errors in DevTools (this is expected state, not an error)
+      res.status(200).json({
+        success: true,
+        exists: false,
+        video: null,
+        message: 'No video record exists for this comparison yet.',
       });
       return;
     }
