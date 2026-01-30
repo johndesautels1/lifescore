@@ -4,9 +4,7 @@
  * Generates Christiano judge videos using Replicate Wav2Lip.
  * Flow: Script → TTS Audio → Upload to Storage → Wav2Lip → Video
  *
- * Updated 2026-01-30: Switched from SadTalker to Wav2Lip
- * - SadTalker: 20 minutes, $0.27/video, unreliable
- * - Wav2Lip: ~6 seconds, $0.005/video, reliable
+ * Uses Wav2Lip: ~6 seconds, $0.005/video, reliable
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved

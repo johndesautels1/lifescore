@@ -108,7 +108,7 @@
 | Line | Section | Issue Type | Current Value | Correct Value | Priority |
 |------|---------|------------|---------------|---------------|----------|
 | 103 | §2.1 Frontend | UNVERIFIED | "Tailwind CSS 3.x (if used)" | Verify if Tailwind or custom CSS | Medium |
-| 129 | §2.4 Media | INCOMPLETE | "Replicate - Video generation (Minimax)" | Add: "Also SadTalker for Judge lip-sync" | Medium |
+| 129 | §2.4 Media | INCOMPLETE | "Replicate - Video generation (Minimax)" | Add: "Also Wav2Lip for Judge lip-sync" | Medium |
 | 133-134 | §2.4 Media | OUTDATED | D-ID "legacy", Simli "alternative" | Simli is PRIMARY, D-ID is fallback | High |
 | 220-227 | §3.2 Olivia | MISSING | 4 endpoints listed | Add: /api/olivia/tts endpoint | Medium |
 | 229-236 | §3.3 Video | MISSING | 4 endpoints listed | Add: /api/emilia/speak, /api/avatar/simli-speak | High |

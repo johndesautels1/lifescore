@@ -18,9 +18,9 @@ D:\lifescore
 
 ## CRITICAL: Judge Video - Wav2Lip Migration (PARTIAL - NEEDS COMPLETION)
 
-**The API endpoint was switched from SadTalker to Wav2Lip, but supporting files need updating.**
+**The API endpoint was switched from Wav2Lip to Wav2Lip, but supporting files need updating.**
 
-| Metric | SadTalker (OLD) | Wav2Lip (NEW) |
+| Metric | Wav2Lip (OLD) | Wav2Lip (NEW) |
 |--------|-----------------|---------------|
 | Generation time | 20 minutes | **~6 seconds** |
 | Cost per video | $0.27 | **$0.005** |
@@ -38,7 +38,7 @@ D:\lifescore
 #### 1. Type Definitions - `src/types/avatar.ts` (lines 133-138)
 **Current:**
 ```typescript
-export interface SadTalkerInput {
+export interface Wav2LipInput {
   source_image: string;
   driven_audio: string;
   enhancer?: 'gfpgan' | 'RestoreFormer';
@@ -57,9 +57,9 @@ export interface Wav2LipInput {
   out_height?: number; // default 480
 }
 
-// Keep SadTalkerInput for backwards compatibility but mark deprecated
+// Keep Wav2LipInput for backwards compatibility but mark deprecated
 /** @deprecated Use Wav2LipInput instead */
-export interface SadTalkerInput {
+export interface Wav2LipInput {
   source_image: string;
   driven_audio: string;
   enhancer?: 'gfpgan' | 'RestoreFormer';
@@ -68,23 +68,13 @@ export interface SadTalkerInput {
 ```
 
 #### 2. Cost Calculator - `src/utils/costCalculator.ts` (line 98)
-**Current:**
-```typescript
-'replicate-sadtalker': { perSecond: 0.0023, name: 'Replicate SadTalker', icon: '🎬' },
-```
-
-**Change to:**
+**Required:**
 ```typescript
 'replicate-wav2lip': { perSecond: 0.0014, name: 'Replicate Wav2Lip', icon: '🎬' },
 ```
 
 #### 3. API Usage Types - `src/types/apiUsage.ts` (lines 55, 69-75)
-**Current (line 55):**
-```typescript
-fallbackProvider: 'replicate-sadtalker',
-```
-
-**Change to:**
+**Required (line 55):**
 ```typescript
 fallbackProvider: 'replicate-wav2lip',
 ```
@@ -93,7 +83,7 @@ fallbackProvider: 'replicate-wav2lip',
 ```typescript
 replicate: {
   provider: 'replicate',
-  displayName: 'Replicate SadTalker',
+  displayName: 'Replicate Wav2Lip',
   icon: '🎬',
   quotaType: 'dollars',
   monthlyQuota: 25, // $25 budget
@@ -116,7 +106,7 @@ replicate: {
 #### 4. Cost Dashboard UI - `src/components/CostDashboard.tsx` (line 730)
 **Current:**
 ```tsx
-<td>🎬 Replicate SadTalker</td>
+<td>🎬 Replicate Wav2Lip</td>
 <td colSpan={2}>$0.0023/sec</td>
 ```
 
@@ -128,18 +118,18 @@ replicate: {
 
 #### 5. Technical Support Manual - `docs/manuals/TECHNICAL_SUPPORT_MANUAL.md`
 Search and replace all instances of:
-- "SadTalker" → "Wav2Lip"
+- "Wav2Lip" → "Wav2Lip"
 - "$0.0023/sec" → "$0.0014/sec"
 
 Lines to check: 540, 597, 743, 896
 
 #### 6. Voice Flow Architecture - `docs/VOICE_FLOW_ARCHITECTURE.md`
-Update lines 52, 188, 212, 224 to reference Wav2Lip instead of SadTalker.
+Update lines 52, 188, 212, 224 to reference Wav2Lip instead of Wav2Lip.
 
 #### 7. Supabase Migration - `supabase/migrations/20260130_create_api_quota_settings.sql` (line 97)
 **Current:**
 ```sql
-('replicate', 'Replicate SadTalker', '🎬', 'dollars', 25.00, 'Judge video - $0.0023/sec'),
+('replicate', 'Replicate Wav2Lip', '🎬', 'dollars', 25.00, 'Judge video - $0.0023/sec'),
 ```
 
 **Change to:**
@@ -151,7 +141,7 @@ Update lines 52, 188, 212, 224 to reference Wav2Lip instead of SadTalker.
 
 ### REPLICATE DASHBOARD INSTRUCTIONS
 
-#### Delete the Old SadTalker Deployment:
+#### Delete the Old Wav2Lip Deployment:
 1. Go to: https://replicate.com/deployments/johndesautels1/james-bond
 2. Click **"Settings"** tab
 3. Scroll to bottom
@@ -205,7 +195,7 @@ Update lines 52, 188, 212, 224 to reference Wav2Lip instead of SadTalker.
 
 - Fixed JudgeTab console spam (removed debug logs from render body)
 - Fixed Olivia sync v2 API (uses vector_stores instead of deprecated file_ids)
-- **Switched Judge video from SadTalker to Wav2Lip** (major improvement)
+- **Switched Judge video from Wav2Lip to Wav2Lip** (major improvement)
 
 ### Session 2026-01-30 (Continued)
 

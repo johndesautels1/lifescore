@@ -140,14 +140,6 @@ export interface Wav2LipInput {
   out_height?: number; // default 480
 }
 
-/** @deprecated Use Wav2LipInput instead */
-export interface SadTalkerInput {
-  source_image: string;
-  driven_audio: string;
-  enhancer?: 'gfpgan' | 'RestoreFormer';
-  preprocess?: 'crop' | 'resize' | 'full';
-}
-
 // ============================================================================
 // DATABASE TYPES
 // ============================================================================
