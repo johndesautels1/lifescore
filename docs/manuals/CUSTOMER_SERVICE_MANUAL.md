@@ -1,6 +1,6 @@
 # LifeScore Customer Service Manual
 
-**Version:** 2.1
+**Version:** 2.2
 **Last Updated:** January 30, 2026
 **Document ID:** LS-CSM-001
 
@@ -38,7 +38,7 @@ LifeScore helps users make informed decisions about where to live by comparing c
 | Channel | Availability | Response Time |
 |---------|--------------|---------------|
 | Email Support (support@clueslifescore.com) | 24/7 | 24 hours |
-| Live Chat | 9 AM - 9 PM EST (if available) | Immediate |
+| Live Chat | 9 AM - 9 PM EST | Immediate |
 | Help Center (help.clueslifescore.com) | 24/7 (Self-service) | N/A |
 
 ---
@@ -78,7 +78,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 ### 3.1 Tier Comparison
 
-| Feature | FREE ($0) | NAVIGATOR ($29/mo) | SOVEREIGN ($99/mo) |
+| Feature | FREE ($0) | NAVIGATOR ($29/mo or $249/yr) | SOVEREIGN ($99/mo or $899/yr) |
 |---------|-----------|--------------------|--------------------|
 | LLM Providers | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
 | Comparisons | 1/month (Standard) | 3/month (Standard) | Unlimited (Standard + Enhanced) |
@@ -182,7 +182,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 | Issue | Solution |
 |-------|----------|
-| Video stuck on "Generating" | Allow up to 5 minutes; refresh if longer |
+| Video stuck on "Generating" | Allow up to 90-180 seconds; refresh if longer |
 | Video playback error | Try different browser; check internet speed |
 | "Video generation failed" | Retry; if persistent, contact support |
 
@@ -249,7 +249,7 @@ Under GDPR, users can request:
 ### 7.2 Billing Cycle
 
 - Monthly subscriptions bill on the same day each month
-- Annual subscriptions (if available) bill yearly
+- Annual subscriptions bill yearly (NAVIGATOR $249/yr saves 28%, SOVEREIGN $899/yr saves 24%)
 
 ### 7.3 Common Billing Issues
 
@@ -321,10 +321,11 @@ Professional presentation-style reports including:
 
 ### 8.5 Grok Videos (SOVEREIGN only)
 
-AI-generated lifestyle videos showing:
+AI-generated lifestyle videos powered by **Kling AI** (primary video generation provider):
 - "Freedom" mood video for winning city
 - "Imprisonment" mood video for losing city
 - Contrast visualization
+- Generation takes 90-180 seconds
 
 ### 8.6 Cost Dashboard
 
@@ -539,7 +540,7 @@ A: Law scores reflect written legislation. Lived scores reflect actual enforceme
 A: Claude (Anthropic), GPT-4o (OpenAI), Gemini (Google), Grok (xAI), and Perplexity. Enhanced mode uses multiple providers for consensus.
 
 **Q: How long does a comparison take?**
-A: Standard: 2-3 minutes. Enhanced: 5-8 minutes. Video generation: 2-5 additional minutes.
+A: Standard: 2-3 minutes. Enhanced: 5-8 minutes. Video generation: 90-180 seconds.
 
 ### Billing
 
@@ -587,6 +588,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
 | 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, support channels, tier limits |
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§8.6), Emilia (§8.7), Quota Template (§10.5), glossary terms |
+| 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Kling AI docs, video timing fix, annual pricing, live chat clarification |
 
 ---
 

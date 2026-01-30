@@ -1,6 +1,6 @@
 # LifeScore Technical Support Manual
 
-**Version:** 2.1
+**Version:** 2.2
 **Last Updated:** January 30, 2026
 **Document ID:** LS-TSM-001
 
@@ -984,6 +984,7 @@ tts-1 (standard): $0.015 / 1K characters
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
 | 2.0 | 2026-01-30 | AI Assistant | Added API Quota Monitoring (§16) and TTS Fallback (§17) |
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Fixed Simli=PRIMARY (§2.4), Added Emilia (§3.4), Usage/Quota (§3.5), Avatar (§3.6) endpoints |
+| 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Version sync with User/CS manuals |
 
 ---
 
