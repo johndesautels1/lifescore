@@ -1068,9 +1068,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
                   ref={videoRef}
                   src={judgeReport.videoUrl}
                   className="judge-video"
+                  playsInline
                   onTimeUpdate={() => setCurrentVideoTime(videoRef.current?.currentTime || 0)}
-                  onLoadedMetadata={() => setVideoDuration(videoRef.current?.duration || 0)}
+                  onLoadedMetadata={() => {
+                    setVideoDuration(videoRef.current?.duration || 0);
+                    console.log('[JudgeTab] Video loaded, duration:', videoRef.current?.duration);
+                  }}
                   onEnded={() => setIsPlaying(false)}
+                  onError={(e) => {
+                    console.error('[JudgeTab] Video error:', e.currentTarget.error?.message);
+                    console.error('[JudgeTab] Video URL was:', judgeReport.videoUrl);
+                  }}
+                  onCanPlay={() => console.log('[JudgeTab] Video can play')}
                 />
               ) : (
                 <div className="video-placeholder">
