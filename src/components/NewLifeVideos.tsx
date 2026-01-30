@@ -247,13 +247,42 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
           )}
 
           {isReady && (
-            <button
-              className="play-btn primary-btn"
-              onClick={handlePlayVideos}
-            >
-              <span className="btn-icon">{isPlaying ? '⏸' : '▶'}</span>
-              <span className="btn-text">{isPlaying ? 'PAUSE' : 'PLAY BOTH VIDEOS'}</span>
-            </button>
+            <div className="ready-actions">
+              <button
+                className="play-btn primary-btn"
+                onClick={handlePlayVideos}
+              >
+                <span className="btn-icon">{isPlaying ? '⏸' : '▶'}</span>
+                <span className="btn-text">{isPlaying ? 'PAUSE' : 'PLAY BOTH VIDEOS'}</span>
+              </button>
+
+              <div className="download-actions">
+                {videoPair?.winner?.videoUrl && (
+                  <a
+                    href={videoPair.winner.videoUrl}
+                    download={`${winnerCity}-freedom-video.mp4`}
+                    className="download-btn secondary-btn"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="btn-icon">⬇️</span>
+                    <span className="btn-text">Download {winnerCity}</span>
+                  </a>
+                )}
+                {videoPair?.loser?.videoUrl && (
+                  <a
+                    href={videoPair.loser.videoUrl}
+                    download={`${loserCity}-imprisonment-video.mp4`}
+                    className="download-btn secondary-btn"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="btn-icon">⬇️</span>
+                    <span className="btn-text">Download {loserCity}</span>
+                  </a>
+                )}
+              </div>
+            </div>
           )}
 
           {hasStarted && isGenerating && (

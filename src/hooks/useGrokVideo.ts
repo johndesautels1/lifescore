@@ -157,11 +157,25 @@ export function useGrokVideo(): UseGrokVideoReturn {
       videoPairRef.current = updatedPair;
       setVideoPair(updatedPair);
 
-      // Calculate progress
+      // Calculate progress with gradual simulation
       const winnerDone = updatedPair.winner?.status === 'completed';
       const loserDone = updatedPair.loser?.status === 'completed';
-      const progressPct = ((winnerDone ? 50 : 0) + (loserDone ? 50 : 0));
-      setProgress(`Generating videos... ${progressPct}%`);
+
+      // Base progress: each completed video = 50%
+      let progressPct = (winnerDone ? 50 : 0) + (loserDone ? 50 : 0);
+
+      // Add gradual progress based on poll attempts for videos still processing
+      // Max ~45% per video before completion (so it doesn't reach 50% until actually done)
+      const pollProgress = Math.min(pollAttemptsRef.current * 2, 45);
+      if (!winnerDone) progressPct += pollProgress / 2;
+      if (!loserDone) progressPct += pollProgress / 2;
+
+      // Cap at 95% until actually complete
+      if (!winnerDone || !loserDone) {
+        progressPct = Math.min(progressPct, 95);
+      }
+
+      setProgress(`Generating videos... ${Math.round(progressPct)}%`);
 
       // Check for completion
       if (winnerDone && loserDone) {

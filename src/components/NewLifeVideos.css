@@ -421,6 +421,51 @@
   letter-spacing: 0.05em;
 }
 
+/* Ready Actions Container */
+.ready-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.download-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 1px solid var(--accent-color, #D4AF37);
+  color: var(--accent-color, #D4AF37);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+  background: rgba(212, 175, 55, 0.15);
+  transform: translateY(-1px);
+}
+
+.download-btn .btn-icon {
+  font-size: 1rem;
+}
+
+.download-btn .btn-text {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 /* Generating Indicator */
 .generating-indicator {
   display: flex;
