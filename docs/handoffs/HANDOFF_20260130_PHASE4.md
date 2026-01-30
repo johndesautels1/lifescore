@@ -1,7 +1,7 @@
 # Phase 4 Handoff - LifeScore Manual Refinements
 
 **Date:** 2026-01-30
-**Conversation ID:** LS-20260130-004
+**Conversation ID:** LS-20260130-P3-001 (continued)
 **Previous:** Phase 3 Complete
 
 ---
@@ -16,6 +16,26 @@ D:\lifescore
 
 ---
 
+## CRITICAL: Judge Video - Wav2Lip Migration COMPLETE
+
+**The Judge video generation was switched from SadTalker to Wav2Lip.**
+
+| Metric | SadTalker (OLD) | Wav2Lip (NEW) |
+|--------|-----------------|---------------|
+| Generation time | 20 minutes | **~6 seconds** |
+| Cost per video | $0.27 | **$0.005** |
+| Reliability | Failed often (85% setup time) | Reliable |
+| GPU | T4 (custom deployment) | L40S (public model) |
+
+**File changed:** `api/avatar/generate-judge-video.ts`
+- Model: `skytells-research/wav2lip:22b1ecf6252b8...`
+- No deployment needed (uses public model)
+- Commit: `3378d6c`
+
+**The custom deployment `johndesautels1/james-bond` can be DELETED from Replicate to save costs.**
+
+---
+
 ## What Was Completed in Phase 3
 
 - USER_MANUAL.md → v2.2 (TTS fallback, Kling AI, video timing fix, annual pricing)
@@ -24,6 +44,12 @@ D:\lifescore
 - OLIVIA_KNOWLEDGE_BASE.md → Section 36.6-36.7 added (Voice/TTS, Video Generation)
 - Olivia sync completed successfully
 - Git committed and pushed
+
+## What Was Completed in This Session
+
+- Fixed JudgeTab console spam (removed debug logs from render body)
+- Fixed Olivia sync v2 API (uses vector_stores instead of deprecated file_ids)
+- **Switched Judge video from SadTalker to Wav2Lip** (major improvement)
 
 ---
 
