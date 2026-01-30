@@ -107,7 +107,10 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
       ? report.summaryOfFindings.city2Score
       : report.summaryOfFindings.city1Score;
 
-  const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+  // SHORT SCRIPT - T4 GPU can only handle ~45 seconds of audio (CUDA OOM on longer)
+  // ~150 words/min = 112 words max = ~560 chars for 45 seconds
+  const keyFactor = report.executiveSummary.keyFactors[0] || 'overall quality of life';
+  const script = `I'm Christiano, your LIFE SCORE Judge. After analyzing ${report.city1} versus ${report.city2}, the winner is ${winner} with ${winnerScore} points. The key factor: ${keyFactor}. This concludes my verdict.`;
 
   console.log('[JudgePregen] Starting background video generation for:', {
     reportId: report.reportId,

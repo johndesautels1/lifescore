@@ -318,19 +318,18 @@ export default async function handler(
         ? `https://${process.env.VERCEL_URL}/api/avatar/video-webhook`
         : null;
 
-    // Build input for SadTalker - deployment doesn't need version field
-    // FIX 2026-01-30: Minimal settings for T4 GPU - long audio causes OOM
+    // Build input for SadTalker - VALID parameters only
+    // FIX 2026-01-30: Minimal settings for T4 GPU
     const replicateInput = {
       source_image: CHRISTIANO_IMAGE_URL,
       driven_audio: audioUrl,
-      use_enhancer: false,          // Disabled - causes OOM
-      preprocess: 'crop',           // Crop face only - less memory than 'full'
-      still_mode: true,             // Fewer head motions
-      use_eyeblink: false,          // Disabled to save memory
-      pose_style: 0,                // No pose variation - saves memory
-      size_of_image: 256,           // Minimum resolution
-      expression_scale: 0,          // No expression
-      facerender: 'pirender',       // Uses less memory than facevid2vid
+      preprocess: 'crop',
+      still_mode: true,
+      use_enhancer: false,
+      size_of_image: 256,
+      pose_style: 0,
+      batch_size: 1,
+      expression_scale: 1.0,
     };
 
     const replicateBody: Record<string, unknown> = { input: replicateInput };
