@@ -207,6 +207,37 @@ Update lines 52, 188, 212, 224 to reference Wav2Lip instead of SadTalker.
 - Fixed Olivia sync v2 API (uses vector_stores instead of deprecated file_ids)
 - **Switched Judge video from SadTalker to Wav2Lip** (major improvement)
 
+### Session 2026-01-30 (Continued)
+
+#### Critical Fixes:
+- ✅ **Judge Tab Direct Access** - Removed `disabled: !hasResults` from `TabNavigation.tsx:65` so users can access Judge tab without requiring results first
+- ✅ **Race Condition Prevention** - Added `cancel()` method to `useJudgeVideo.ts` with generation ID tracking to prevent concurrent API calls when switching comparisons
+- ✅ **Unified 45-Second Timeouts** - All avatar API files now have consistent 45s timeouts:
+  - `api/avatar/generate-judge-video.ts` - TTS, upload, and DB operations
+  - `api/avatar/video-status.ts` - Replicate and Supabase queries
+  - `api/avatar/video-webhook.ts` - Supabase updates
+  - `api/avatar/simli-speak.ts` - TTS operations
+
+---
+
+## IMPORTANT: Infrastructure Notes
+
+### Supabase Tier: PAID (NOT FREE)
+
+**The LifeScore project is on a PAID Supabase tier.**
+
+- Do NOT assume free tier limitations
+- Do NOT suggest cold start issues related to free tier
+- Connection retries in console logs are transient network issues, not tier-related
+- Pooler connections are enabled and working correctly
+
+### Environment Configuration
+
+All environment variables are properly configured in Vercel:
+- `SUPABASE_URL` - Production Supabase instance
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role for admin operations
+- `SUPABASE_ANON_KEY` - Anon key for client operations
+
 ---
 
 ## Phase 4 Tasks
