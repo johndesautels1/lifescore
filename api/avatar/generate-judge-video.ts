@@ -64,6 +64,7 @@ function generateComparisonId(city1: string, city2: string, winner: string): str
 async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; duration: number }> {
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
+  const TTS_TIMEOUT_MS = 45000; // 45 seconds for TTS generation
 
   if (!elevenLabsKey && !openaiKey) {
     throw new Error('No TTS API key configured (ELEVENLABS_API_KEY or OPENAI_API_KEY required)');
@@ -75,6 +76,9 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
   // Try ElevenLabs first, fallback to OpenAI if it fails (quota exceeded, etc)
   if (elevenLabsKey) {
+    const elevenLabsController = new AbortController();
+    const elevenLabsTimeoutId = setTimeout(() => elevenLabsController.abort(), TTS_TIMEOUT_MS);
+
     try {
       const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
@@ -95,8 +99,11 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
               use_speaker_boost: true,
             },
           }),
+          signal: elevenLabsController.signal,
         }
       );
+
+      clearTimeout(elevenLabsTimeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -111,6 +118,7 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
       console.log('[JUDGE-VIDEO] ElevenLabs audio generated:', buffer.length, 'bytes');
       return { buffer, duration: estimatedDuration };
     } catch (elevenLabsError) {
+      clearTimeout(elevenLabsTimeoutId);
       console.warn('[JUDGE-VIDEO] ElevenLabs failed, trying OpenAI fallback:', elevenLabsError);
       if (!openaiKey) {
         throw elevenLabsError; // No fallback available
@@ -121,33 +129,43 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
   // OpenAI TTS fallback (or primary if no ElevenLabs key)
   if (openaiKey) {
-    // OpenAI TTS fallback
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1-hd',
-        voice: 'onyx', // Deep authoritative male voice
-        input: script,
-        response_format: 'mp3',
-      }),
-    });
+    const openaiController = new AbortController();
+    const openaiTimeoutId = setTimeout(() => openaiController.abort(), TTS_TIMEOUT_MS);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[JUDGE-VIDEO] OpenAI TTS error:', response.status, errorText);
-      throw new Error(`OpenAI TTS failed: ${response.status}`);
+    try {
+      const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'tts-1-hd',
+          voice: 'onyx', // Deep authoritative male voice
+          input: script,
+          response_format: 'mp3',
+        }),
+        signal: openaiController.signal,
+      });
+
+      clearTimeout(openaiTimeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[JUDGE-VIDEO] OpenAI TTS error:', response.status, errorText);
+        throw new Error(`OpenAI TTS failed: ${response.status}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const estimatedDuration = (script.length / 5) / 150 * 60;
+
+      console.log('[JUDGE-VIDEO] OpenAI audio generated:', buffer.length, 'bytes');
+      return { buffer, duration: estimatedDuration };
+    } catch (openaiError) {
+      clearTimeout(openaiTimeoutId);
+      throw openaiError;
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const estimatedDuration = (script.length / 5) / 150 * 60;
-
-    console.log('[JUDGE-VIDEO] OpenAI audio generated:', buffer.length, 'bytes');
-    return { buffer, duration: estimatedDuration };
   }
 
   throw new Error('No TTS provider available');
