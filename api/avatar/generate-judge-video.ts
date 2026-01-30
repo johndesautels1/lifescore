@@ -319,18 +319,18 @@ export default async function handler(
         : null;
 
     // Build input for SadTalker - deployment doesn't need version field
-    // FIX 2026-01-30: Reduced settings for T4 GPU (15GB VRAM) - 512/enhancer causes OOM
+    // FIX 2026-01-30: Minimal settings for T4 GPU - long audio causes OOM
     const replicateInput = {
       source_image: CHRISTIANO_IMAGE_URL,
       driven_audio: audioUrl,
-      use_enhancer: false,          // Disabled - causes OOM on T4
-      preprocess: 'full',           // Full image, no zoom cropping
-      still_mode: true,             // Fewer head motions, more natural
-      use_eyeblink: true,           // Natural eye blinks
-      pose_style: 25,               // User-tested setting that stops face movements
-      size_of_image: 256,           // Reduced for T4 GPU memory
-      expression_scale: 0,          // Zero expression movement - stops all face motions
-      facerender: 'facevid2vid',
+      use_enhancer: false,          // Disabled - causes OOM
+      preprocess: 'crop',           // Crop face only - less memory than 'full'
+      still_mode: true,             // Fewer head motions
+      use_eyeblink: false,          // Disabled to save memory
+      pose_style: 0,                // No pose variation - saves memory
+      size_of_image: 256,           // Minimum resolution
+      expression_scale: 0,          // No expression
+      facerender: 'pirender',       // Uses less memory than facevid2vid
     };
 
     const replicateBody: Record<string, unknown> = { input: replicateInput };
