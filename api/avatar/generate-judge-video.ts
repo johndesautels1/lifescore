@@ -323,12 +323,12 @@ export default async function handler(
     const replicateInput = {
       source_image: CHRISTIANO_IMAGE_URL,
       driven_audio: audioUrl,
-      use_enhancer: false,          // DISABLED - GFPGAN uses too much VRAM on T4
+      use_enhancer: true,           // GFPGAN face enhancer
       preprocess: 'full',           // Full image, no zoom cropping
       still_mode: true,             // Fewer head motions, more natural
       use_eyeblink: true,           // Natural eye blinks
       pose_style: 25,               // User-tested setting that stops face movements
-      size_of_image: 256,           // REDUCED from 512 - fits T4 GPU memory
+      size_of_image: 512,           // Full resolution
       expression_scale: 0,          // Zero expression movement - stops all face motions
       facerender: 'facevid2vid',
     };
