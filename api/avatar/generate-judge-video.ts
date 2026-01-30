@@ -1,8 +1,12 @@
 /**
  * LIFE SCORE - Judge Video Generation API
  *
- * Generates Christiano judge videos using Replicate SadTalker.
- * Flow: Script → TTS Audio → Upload to Storage → SadTalker → Video
+ * Generates Christiano judge videos using Replicate Wav2Lip.
+ * Flow: Script → TTS Audio → Upload to Storage → Wav2Lip → Video
+ *
+ * Updated 2026-01-30: Switched from SadTalker to Wav2Lip
+ * - SadTalker: 20 minutes, $0.27/video, unreliable
+ * - Wav2Lip: ~6 seconds, $0.005/video, reliable
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -15,16 +19,11 @@ import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 
-// Custom deployment for faster cold starts and hardware control
-// Deployment: johndesautels1/james-bond (SadTalker on GPU)
-const REPLICATE_DEPLOYMENT_OWNER = process.env.REPLICATE_DEPLOYMENT_OWNER || 'johndesautels1';
-const REPLICATE_DEPLOYMENT_NAME = process.env.REPLICATE_DEPLOYMENT_NAME || 'james-bond';
+// Wav2Lip model - fast, cheap, reliable lip-sync
+// ~6 seconds generation time, $0.005 per run on L40S GPU
+const WAV2LIP_VERSION = 'skytells-research/wav2lip:22b1ecf6252b8adcaeadde30bb672b199c125b7d3c98607db70b66eea21d75ae';
 
-// SadTalker model - produces high quality lip-sync videos
-const SADTALKER_VERSION = 'cjwbw/sadtalker:a519cc0cfebaaeade068b23899165a11ec76aaa1d2b313d40d214f204ec957a3';
-
-// Christiano judge avatar image (MUST be PNG/JPG, not video)
-// FIX 2026-01-29: Changed from MP4 to PNG - SadTalker requires static image
+// Christiano judge avatar image (PNG/JPG for Wav2Lip)
 const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
   'https://replicate.delivery/pbxt/OUrlfPYTJP3dttVkSYXUps6yUmzZbLTdVdrut77q48Tx7GfI/enhanced_avatar_max.png';
 
@@ -322,8 +321,8 @@ export default async function handler(
     // Step 2: Upload audio to Supabase Storage to get public URL
     const audioUrl = await uploadAudioToStorage(audioBuffer, comparisonId);
 
-    // Step 3: Submit to Replicate SadTalker
-    console.log('[JUDGE-VIDEO] Submitting to Replicate SadTalker...');
+    // Step 3: Submit to Replicate Wav2Lip
+    console.log('[JUDGE-VIDEO] Submitting to Replicate Wav2Lip...');
 
     // Use stable production URL for webhook (VERCEL_URL changes per deployment)
     const webhookUrl = process.env.WEBHOOK_BASE_URL
@@ -332,21 +331,22 @@ export default async function handler(
         ? `https://${process.env.VERCEL_URL}/api/avatar/video-webhook`
         : null;
 
-    // Build input for SadTalker - VALID parameters only
-    // FIX 2026-01-30: Minimal settings for T4 GPU
+    // Build input for Wav2Lip
+    // Wav2Lip params: face (image), audio, pads, smooth, fps, out_height
     const replicateInput = {
-      source_image: CHRISTIANO_IMAGE_URL,
-      driven_audio: audioUrl,
-      preprocess: 'crop',
-      still_mode: true,
-      use_enhancer: false,
-      size_of_image: 256,
-      pose_style: 0,
-      batch_size: 1,
-      expression_scale: 1.0,
+      face: CHRISTIANO_IMAGE_URL,
+      audio: audioUrl,
+      pads: '0 10 0 0',  // top bottom left right - include chin
+      smooth: true,
+      fps: 25,
+      out_height: 480,
     };
 
-    const replicateBody: Record<string, unknown> = { input: replicateInput };
+    // Build request body with version hash
+    const replicateBody: Record<string, unknown> = {
+      version: WAV2LIP_VERSION.split(':')[1], // Extract version hash
+      input: replicateInput,
+    };
 
     // Only add webhook if we have a URL
     if (webhookUrl) {
@@ -354,16 +354,8 @@ export default async function handler(
       replicateBody.webhook_events_filter = ['start', 'completed'];
     }
 
-    // Try deployment first, fallback to public model if deployment unavailable
-    const deploymentUrl = `${REPLICATE_API_URL}/deployments/${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}/predictions`;
-    const modelUrl = `${REPLICATE_API_URL}/predictions`;
-
-    let prediction: any;
-    let response: Response;
-
-    // Try deployment first
-    console.log('[JUDGE-VIDEO] Trying deployment:', `${REPLICATE_DEPLOYMENT_OWNER}/${REPLICATE_DEPLOYMENT_NAME}`);
-    response = await fetch(deploymentUrl, {
+    // Submit to Replicate predictions API (no deployment needed - Wav2Lip is fast)
+    const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${replicateToken}`,
@@ -373,41 +365,16 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      // Deployment failed - try public model as fallback
-      console.warn('[JUDGE-VIDEO] Deployment failed, trying public SadTalker model...');
-
-      const modelBody = {
-        version: SADTALKER_VERSION.split(':')[1], // Extract version hash
-        input: replicateInput,
-        ...(webhookUrl && {
-          webhook: webhookUrl,
-          webhook_events_filter: ['start', 'completed']
-        }),
-      };
-
-      response = await fetch(modelUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Token ${replicateToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(modelBody),
+      const errorText = await response.text();
+      console.error('[JUDGE-VIDEO] Wav2Lip submission failed:', response.status, errorText);
+      res.status(response.status).json({
+        error: 'Failed to start video generation',
+        message: errorText,
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[JUDGE-VIDEO] Both deployment and model failed:', response.status, errorText);
-        res.status(response.status).json({
-          error: 'Failed to start video generation',
-          message: errorText,
-        });
-        return;
-      }
-
-      console.log('[JUDGE-VIDEO] Using public model fallback');
+      return;
     }
 
-    prediction = await response.json();
+    const prediction = await response.json();
     console.log('[JUDGE-VIDEO] Prediction started:', prediction.id, 'status:', prediction.status);
 
     // Store in database (if table exists)
