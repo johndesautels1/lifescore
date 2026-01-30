@@ -18,6 +18,8 @@ export const config = {
   maxDuration: 60,
 };
 
+const TIMEOUT_MS = 45000; // 45 seconds for TTS operations
+
 interface SpeakRequest {
   sessionId?: string;
   text: string;
@@ -78,69 +80,90 @@ export default async function handler(
     if (elevenLabsKey) {
       // Use ElevenLabs for high-quality TTS
       const emotionSettings = EMOTION_SETTINGS[body.emotion || 'neutral'];
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-      const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${OLIVIA_VOICE_ID}?output_format=pcm_16000`,
-        {
+      try {
+        const response = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${OLIVIA_VOICE_ID}?output_format=pcm_16000`,
+          {
+            method: 'POST',
+            headers: {
+              'xi-api-key': elevenLabsKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              text: body.text,
+              model_id: 'eleven_multilingual_v2',
+              voice_settings: {
+                stability: emotionSettings.stability,
+                similarity_boost: emotionSettings.similarity_boost,
+                style: emotionSettings.style,
+                use_speaker_boost: true,
+                speed: 1.0,
+              },
+            }),
+            signal: controller.signal,
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[SIMLI-SPEAK] ElevenLabs error:', response.status, errorText);
+          throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+        }
+
+        audioBuffer = await response.arrayBuffer();
+        // PCM 16-bit at 16kHz mono = 32000 bytes per second
+        audioDuration = audioBuffer.byteLength / 32000;
+
+        console.log('[SIMLI-SPEAK] ElevenLabs audio generated:', audioBuffer.byteLength, 'bytes,', audioDuration.toFixed(2), 's');
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
+      }
+    } else {
+      // Fallback to OpenAI TTS
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+      try {
+        const response = await fetch('https://api.openai.com/v1/audio/speech', {
           method: 'POST',
           headers: {
-            'xi-api-key': elevenLabsKey,
+            'Authorization': `Bearer ${openaiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            text: body.text,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: emotionSettings.stability,
-              similarity_boost: emotionSettings.similarity_boost,
-              style: emotionSettings.style,
-              use_speaker_boost: true,
-              speed: 1.0,
-            },
+            model: 'tts-1',
+            voice: 'nova', // Professional female voice
+            input: body.text,
+            response_format: 'pcm',
+            speed: body.speed || 1.0,
           }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[SIMLI-SPEAK] OpenAI TTS error:', response.status, errorText);
+          throw new Error(`OpenAI TTS failed: ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[SIMLI-SPEAK] ElevenLabs error:', response.status, errorText);
-        throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+        // OpenAI returns 24kHz PCM, need to resample to 16kHz
+        const originalBuffer = await response.arrayBuffer();
+        audioBuffer = resamplePCM(originalBuffer, 24000, 16000);
+        audioDuration = audioBuffer.byteLength / 32000;
+
+        console.log('[SIMLI-SPEAK] OpenAI audio generated and resampled:', audioBuffer.byteLength, 'bytes');
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
       }
-
-      audioBuffer = await response.arrayBuffer();
-      // PCM 16-bit at 16kHz mono = 32000 bytes per second
-      audioDuration = audioBuffer.byteLength / 32000;
-
-      console.log('[SIMLI-SPEAK] ElevenLabs audio generated:', audioBuffer.byteLength, 'bytes,', audioDuration.toFixed(2), 's');
-    } else {
-      // Fallback to OpenAI TTS
-      const response = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'tts-1',
-          voice: 'nova', // Professional female voice
-          input: body.text,
-          response_format: 'pcm',
-          speed: body.speed || 1.0,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[SIMLI-SPEAK] OpenAI TTS error:', response.status, errorText);
-        throw new Error(`OpenAI TTS failed: ${response.status}`);
-      }
-
-      // OpenAI returns 24kHz PCM, need to resample to 16kHz
-      const originalBuffer = await response.arrayBuffer();
-      audioBuffer = resamplePCM(originalBuffer, 24000, 16000);
-      audioDuration = audioBuffer.byteLength / 32000;
-
-      console.log('[SIMLI-SPEAK] OpenAI audio generated and resampled:', audioBuffer.byteLength, 'bytes');
     }
 
     // Convert ArrayBuffer to base64 for JSON transport
