@@ -74,45 +74,54 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
   console.log('[JUDGE-VIDEO] ElevenLabs key exists:', !!elevenLabsKey, 'length:', elevenLabsKey?.length || 0);
   console.log('[JUDGE-VIDEO] Voice ID:', CHRISTIANO_VOICE_ID);
 
+  // Try ElevenLabs first, fallback to OpenAI if it fails (quota exceeded, etc)
   if (elevenLabsKey) {
-    // ElevenLabs - returns MP3 by default
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'xi-api-key': elevenLabsKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: script,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.6,
-            similarity_boost: 0.75,
-            style: 0.1,
-            use_speaker_boost: true,
+    try {
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
+        {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'xi-api-key': elevenLabsKey,
+            'Content-Type': 'application/json',
           },
-        }),
+          body: JSON.stringify({
+            text: script,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+              stability: 0.6,
+              similarity_boost: 0.75,
+              style: 0.1,
+              use_speaker_boost: true,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[JUDGE-VIDEO] ElevenLabs error:', response.status, errorText);
+        // Fall through to OpenAI fallback
+        throw new Error(`ElevenLabs failed: ${response.status}`);
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[JUDGE-VIDEO] ElevenLabs error:', response.status, errorText);
-      throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const estimatedDuration = (script.length / 5) / 150 * 60;
+      console.log('[JUDGE-VIDEO] ElevenLabs audio generated:', buffer.length, 'bytes');
+      return { buffer, duration: estimatedDuration };
+    } catch (elevenLabsError) {
+      console.warn('[JUDGE-VIDEO] ElevenLabs failed, trying OpenAI fallback:', elevenLabsError);
+      if (!openaiKey) {
+        throw elevenLabsError; // No fallback available
+      }
+      // Fall through to OpenAI
     }
+  }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Estimate duration: ~150 words per minute, ~5 chars per word
-    const estimatedDuration = (script.length / 5) / 150 * 60;
-
-    console.log('[JUDGE-VIDEO] ElevenLabs audio generated:', buffer.length, 'bytes');
-    return { buffer, duration: estimatedDuration };
-  } else {
+  // OpenAI TTS fallback (or primary if no ElevenLabs key)
+  if (openaiKey) {
     // OpenAI TTS fallback
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -141,6 +150,8 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
     console.log('[JUDGE-VIDEO] OpenAI audio generated:', buffer.length, 'bytes');
     return { buffer, duration: estimatedDuration };
   }
+
+  throw new Error('No TTS provider available');
 }
 
 /**
