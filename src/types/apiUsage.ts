@@ -52,7 +52,7 @@ export const API_PROVIDER_QUOTAS: Record<string, ProviderQuota> = {
     monthlyQuota: 20, // 20 credits (videos)
     warningThresholds: { yellow: 0.5, orange: 0.7, red: 0.85 },
     resetDay: 1,
-    fallbackProvider: 'replicate-sadtalker',
+    fallbackProvider: 'replicate-wav2lip',
   },
   simli: {
     provider: 'simli',
@@ -66,10 +66,10 @@ export const API_PROVIDER_QUOTAS: Record<string, ProviderQuota> = {
   },
   replicate: {
     provider: 'replicate',
-    displayName: 'Replicate SadTalker',
+    displayName: 'Replicate Wav2Lip',
     icon: '🎬',
     quotaType: 'dollars',
-    monthlyQuota: 25, // $25 budget
+    monthlyQuota: 10, // $10 budget (Wav2Lip is cheaper)
     warningThresholds: { yellow: 0.5, orange: 0.7, red: 0.85 },
     resetDay: 1,
   },

@@ -16,23 +16,179 @@ D:\lifescore
 
 ---
 
-## CRITICAL: Judge Video - Wav2Lip Migration COMPLETE
+## CRITICAL: Judge Video - Wav2Lip Migration (PARTIAL - NEEDS COMPLETION)
 
-**The Judge video generation was switched from SadTalker to Wav2Lip.**
+**The API endpoint was switched from SadTalker to Wav2Lip, but supporting files need updating.**
 
 | Metric | SadTalker (OLD) | Wav2Lip (NEW) |
 |--------|-----------------|---------------|
 | Generation time | 20 minutes | **~6 seconds** |
 | Cost per video | $0.27 | **$0.005** |
+| Cost per second | $0.0023/sec | **$0.0014/sec** |
 | Reliability | Failed often (85% setup time) | Reliable |
 | GPU | T4 (custom deployment) | L40S (public model) |
 
-**File changed:** `api/avatar/generate-judge-video.ts`
-- Model: `skytells-research/wav2lip:22b1ecf6252b8...`
-- No deployment needed (uses public model)
-- Commit: `3378d6c`
+---
 
-**The custom deployment `johndesautels1/james-bond` can be DELETED from Replicate to save costs.**
+### COMPLETED:
+- ✅ `api/avatar/generate-judge-video.ts` - Switched to Wav2Lip model
+
+### STILL NEEDS UPDATING:
+
+#### 1. Type Definitions - `src/types/avatar.ts` (lines 133-138)
+**Current:**
+```typescript
+export interface SadTalkerInput {
+  source_image: string;
+  driven_audio: string;
+  enhancer?: 'gfpgan' | 'RestoreFormer';
+  preprocess?: 'crop' | 'resize' | 'full';
+}
+```
+
+**Change to:**
+```typescript
+export interface Wav2LipInput {
+  face: string;      // URL to image/video with face
+  audio: string;     // URL to audio file
+  pads?: string;     // "top bottom left right" default "0 10 0 0"
+  smooth?: boolean;  // default true
+  fps?: number;      // default 25
+  out_height?: number; // default 480
+}
+
+// Keep SadTalkerInput for backwards compatibility but mark deprecated
+/** @deprecated Use Wav2LipInput instead */
+export interface SadTalkerInput {
+  source_image: string;
+  driven_audio: string;
+  enhancer?: 'gfpgan' | 'RestoreFormer';
+  preprocess?: 'crop' | 'resize' | 'full';
+}
+```
+
+#### 2. Cost Calculator - `src/utils/costCalculator.ts` (line 98)
+**Current:**
+```typescript
+'replicate-sadtalker': { perSecond: 0.0023, name: 'Replicate SadTalker', icon: '🎬' },
+```
+
+**Change to:**
+```typescript
+'replicate-wav2lip': { perSecond: 0.0014, name: 'Replicate Wav2Lip', icon: '🎬' },
+```
+
+#### 3. API Usage Types - `src/types/apiUsage.ts` (lines 55, 69-75)
+**Current (line 55):**
+```typescript
+fallbackProvider: 'replicate-sadtalker',
+```
+
+**Change to:**
+```typescript
+fallbackProvider: 'replicate-wav2lip',
+```
+
+**Current (lines 67-75):**
+```typescript
+replicate: {
+  provider: 'replicate',
+  displayName: 'Replicate SadTalker',
+  icon: '🎬',
+  quotaType: 'dollars',
+  monthlyQuota: 25, // $25 budget
+  ...
+},
+```
+
+**Change to:**
+```typescript
+replicate: {
+  provider: 'replicate',
+  displayName: 'Replicate Wav2Lip',
+  icon: '🎬',
+  quotaType: 'dollars',
+  monthlyQuota: 10, // $10 budget (Wav2Lip is cheaper)
+  ...
+},
+```
+
+#### 4. Cost Dashboard UI - `src/components/CostDashboard.tsx` (line 730)
+**Current:**
+```tsx
+<td>🎬 Replicate SadTalker</td>
+<td colSpan={2}>$0.0023/sec</td>
+```
+
+**Change to:**
+```tsx
+<td>🎬 Replicate Wav2Lip</td>
+<td colSpan={2}>$0.0014/sec</td>
+```
+
+#### 5. Technical Support Manual - `docs/manuals/TECHNICAL_SUPPORT_MANUAL.md`
+Search and replace all instances of:
+- "SadTalker" → "Wav2Lip"
+- "$0.0023/sec" → "$0.0014/sec"
+
+Lines to check: 540, 597, 743, 896
+
+#### 6. Voice Flow Architecture - `docs/VOICE_FLOW_ARCHITECTURE.md`
+Update lines 52, 188, 212, 224 to reference Wav2Lip instead of SadTalker.
+
+#### 7. Supabase Migration - `supabase/migrations/20260130_create_api_quota_settings.sql` (line 97)
+**Current:**
+```sql
+('replicate', 'Replicate SadTalker', '🎬', 'dollars', 25.00, 'Judge video - $0.0023/sec'),
+```
+
+**Change to:**
+```sql
+('replicate', 'Replicate Wav2Lip', '🎬', 'dollars', 10.00, 'Judge video - $0.0014/sec'),
+```
+
+---
+
+### REPLICATE DASHBOARD INSTRUCTIONS
+
+#### Delete the Old SadTalker Deployment:
+1. Go to: https://replicate.com/deployments/johndesautels1/james-bond
+2. Click **"Settings"** tab
+3. Scroll to bottom
+4. Click **"Delete deployment"**
+5. Confirm deletion
+
+**Why delete?** The deployment costs money even when idle (min instances). Wav2Lip uses the public model directly - no deployment needed.
+
+#### Verify Wav2Lip is Working:
+1. Go to: https://replicate.com/skytells-research/wav2lip
+2. This is the public model - no setup required
+3. Your API token (`REPLICATE_API_TOKEN`) already has access
+
+#### No Environment Variables Need Changing:
+- `REPLICATE_API_TOKEN` - Keep as-is (same token works)
+- `REPLICATE_DEPLOYMENT_OWNER` - No longer used (can remove)
+- `REPLICATE_DEPLOYMENT_NAME` - No longer used (can remove)
+
+---
+
+### Wav2Lip Model Reference
+
+**Model:** `skytells-research/wav2lip`
+**Version:** `22b1ecf6252b8adcaeadde30bb672b199c125b7d3c98607db70b66eea21d75ae`
+**Hardware:** Nvidia L40S GPU
+**Speed:** ~6-9 seconds
+**Cost:** ~$0.005-0.01 per run
+
+**Input Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| face | string (URL) | Yes | - | Image/video with face |
+| audio | string (URL) | Yes | - | Audio file URL |
+| pads | string | No | "0 10 0 0" | Face padding (top bottom left right) |
+| smooth | boolean | No | true | Smooth face detections |
+| fps | number | No | 25 | Output FPS |
+| out_height | number | No | 480 | Output video height |
 
 ---
 

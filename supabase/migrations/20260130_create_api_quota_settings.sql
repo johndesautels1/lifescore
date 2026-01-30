@@ -94,7 +94,7 @@ INSERT INTO public.api_quota_settings (provider_key, display_name, icon, quota_t
   ('simli', 'Simli Avatar', '🎭', 'seconds', 3600, 'Primary avatar - $0.02/sec'),
   ('d_id', 'D-ID Avatar', '👤', 'credits', 20, 'Avatar fallback - ~$0.025/sec'),
   ('heygen', 'HeyGen Avatar', '🎥', 'seconds', 600, 'Avatar fallback - $0.032/sec'),
-  ('replicate', 'Replicate SadTalker', '🎬', 'dollars', 25.00, 'Judge video - $0.0023/sec'),
+  ('replicate', 'Replicate Wav2Lip', '🎬', 'dollars', 10.00, 'Judge video - $0.0014/sec'),
 
   -- Video & Image Providers
   ('kling', 'Kling AI Video', '🖼️', 'credits', 100, 'Video generation - ~$0.05/image'),

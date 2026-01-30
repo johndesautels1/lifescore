@@ -537,7 +537,7 @@ const getTavilyHeaders = (apiKey: string) => ({
 
 ```
 Script Generation (LLM) → TTS Audio (ElevenLabs) →
-→ Upload to Supabase → Video Generation (Replicate/SadTalker) →
+→ Upload to Supabase → Video Generation (Replicate Wav2Lip) →
 → Poll for completion → Return URL
 ```
 
@@ -624,7 +624,7 @@ User clicks Judge tab (JudgeTab.tsx)
 
 | Issue | Cause | Fix |
 |-------|-------|-----|
-| Console polling spam | Video stuck in `processing` | Check Replicate dashboard for failed predictions |
+| Console polling spam | Video stuck in `processing` | Check Replicate Wav2Lip job status |
 | Report not pre-generated | Comparison didn't complete fully | Check `enhancedStatus === 'complete'` before trigger |
 | Video shows "Generate" | Cache miss or different comparisonId | Verify comparisonId matches between report and video |
 
@@ -740,7 +740,7 @@ User clicks Judge tab (JudgeTab.tsx)
 - `SIMLI_API_KEY` - Primary avatar video generation
 - `KLING_VIDEO_API_KEY` - Primary video generation
 - `KLING_VIDEO_SECRET` - Kling JWT signing
-- `REPLICATE_API_TOKEN` - Fallback video (SadTalker/Minimax)
+- `REPLICATE_API_TOKEN` - Video generation (Wav2Lip/Minimax)
 - `GAMMA_API_KEY` - PDF/PPTX report generation
 
 **Optional:**
@@ -893,7 +893,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | `simli` | Simli Avatar | 🎭 | seconds | 3,600 | $0.02/sec |
 | `d_id` | D-ID Avatar | 👤 | credits | 20 | ~$0.025/sec |
 | `heygen` | HeyGen Avatar | 🎥 | seconds | 600 | $0.032/sec |
-| `replicate` | Replicate SadTalker | 🎬 | dollars | $25.00 | $0.0023/sec |
+| `replicate` | Replicate Wav2Lip | 🎬 | dollars | $10.00 | $0.0014/sec |
 | `kling` | Kling AI Video | 🖼️ | credits | 100 | ~$0.05/image |
 | `gamma` | Gamma Reports | 📊 | credits | 50 | ~$0.50/generation |
 

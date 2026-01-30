@@ -130,6 +130,16 @@ export interface MuseTalkInput {
   bbox_shift?: number;   // Face bounding box adjustment
 }
 
+export interface Wav2LipInput {
+  face: string;      // URL to image/video with face
+  audio: string;     // URL to audio file
+  pads?: string;     // "top bottom left right" default "0 10 0 0"
+  smooth?: boolean;  // default true
+  fps?: number;      // default 25
+  out_height?: number; // default 480
+}
+
+/** @deprecated Use Wav2LipInput instead */
 export interface SadTalkerInput {
   source_image: string;
   driven_audio: string;

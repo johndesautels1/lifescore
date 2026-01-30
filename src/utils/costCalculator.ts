@@ -95,7 +95,7 @@ export const API_PRICING = {
   'openai-tts-hd': { perThousandChars: 0.030, name: 'OpenAI TTS HD', icon: '🎙️' },
 
   // AVATAR SERVICES (time-based pricing)
-  'replicate-sadtalker': { perSecond: 0.0023, name: 'Replicate SadTalker', icon: '🎬' },
+  'replicate-wav2lip': { perSecond: 0.0014, name: 'Replicate Wav2Lip', icon: '🎬' },
   'd-id': { perSecond: 0.025, name: 'D-ID Avatar', icon: '👤' },
   'simli': { perSecond: 0.02, name: 'Simli Avatar', icon: '🎭' },
   'heygen': { perSecond: 0.032, name: 'HeyGen Avatar', icon: '🎥' },
@@ -158,9 +158,9 @@ export interface TTSCost {
   context?: string;
 }
 
-// Avatar Cost (Replicate SadTalker, D-ID, Simli, HeyGen)
+// Avatar Cost (Replicate Wav2Lip, D-ID, Simli, HeyGen)
 export interface AvatarCost {
-  provider: 'replicate-sadtalker' | 'd-id' | 'simli' | 'heygen';
+  provider: 'replicate-wav2lip' | 'd-id' | 'simli' | 'heygen';
   durationSeconds: number;
   cost: number;
   timestamp: number;
@@ -333,7 +333,7 @@ export function calculateTTSCost(
  * Calculate Avatar API cost
  */
 export function calculateAvatarCost(
-  provider: 'replicate-sadtalker' | 'd-id' | 'simli' | 'heygen',
+  provider: 'replicate-wav2lip' | 'd-id' | 'simli' | 'heygen',
   durationSeconds: number
 ): number {
   const pricing = API_PRICING[provider];
@@ -669,7 +669,7 @@ export function formatCostBreakdownLog(breakdown: ComparisonCostBreakdown): stri
     `TTS Total: ${formatCost(breakdown.ttsTotal || 0)}`,
     ``,
     `--- AVATAR (Video) ---`,
-    `Replicate: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'replicate-sadtalker').reduce((s, a) => s + a.cost, 0))}`,
+    `Replicate: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'replicate-wav2lip').reduce((s, a) => s + a.cost, 0))}`,
     `D-ID: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'd-id').reduce((s, a) => s + a.cost, 0))}`,
     `Simli: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'simli').reduce((s, a) => s + a.cost, 0))}`,
     `HeyGen: ${formatCost((breakdown.avatar || []).filter(a => a.provider === 'heygen').reduce((s, a) => s + a.cost, 0))}`,

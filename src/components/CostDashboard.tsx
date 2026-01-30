@@ -727,8 +727,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td colSpan={2}>$0.02/sec</td>
                   </tr>
                   <tr>
-                    <td>🎬 Replicate SadTalker</td>
-                    <td colSpan={2}>$0.0023/sec</td>
+                    <td>🎬 Replicate Wav2Lip</td>
+                    <td colSpan={2}>$0.0014/sec</td>
                   </tr>
                   <tr>
                     <td>🖼️ Kling AI</td>

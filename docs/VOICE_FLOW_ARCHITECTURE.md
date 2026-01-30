@@ -49,7 +49,7 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 
 | Endpoint | Purpose | Primary TTS | Primary Voice | Fallback TTS | Fallback Voice | Fallback Triggers |
 |----------|---------|-------------|---------------|--------------|----------------|-------------------|
-| `api/avatar/generate-judge-video.ts` | Replicate SadTalker video | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, any error |
+| `api/avatar/generate-judge-video.ts` | Replicate Wav2Lip video | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, any error |
 | `api/judge-video.ts` | D-ID Talks video (fallback) | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, no key |
 
 **Christiano Voice Consistency:**
@@ -185,7 +185,7 @@ CHRISTIANO_IMAGE_URL=xxx
 │           ▼                       ▼                                         │
 │  ┌──────────────────┐    ┌──────────────────┐                              │
 │  │ Replicate        │    │ D-ID Talks API   │                              │
-│  │ SadTalker        │    │ (lip-sync)       │                              │
+│  │ Wav2Lip          │    │ (lip-sync)       │                              │
 │  │ (lip-sync)       │    │                  │                              │
 │  └──────────────────┘    └──────────────────┘                              │
 │                                                                              │
@@ -209,7 +209,7 @@ CHRISTIANO_IMAGE_URL=xxx
 | **Simli** | $0.02/sec | Olivia real-time avatar (primary) |
 | **D-ID Streams** | $0.025/sec | Olivia real-time avatar (fallback) |
 | **D-ID Talks** | $0.025/sec | Judge video (fallback) |
-| **Replicate SadTalker** | $0.0023/sec | Judge video (primary, 10x cheaper) |
+| **Replicate Wav2Lip** | $0.0014/sec | Judge video (primary, ~18x cheaper than D-ID) |
 | **HeyGen** | $0.032/sec | Deprecated |
 
 ---
@@ -221,7 +221,7 @@ CHRISTIANO_IMAGE_URL=xxx
 2. `api/emilia/speak.ts` - Emilia TTS with OpenAI fallback
 3. `api/avatar/simli-speak.ts` - Simli TTS (already had fallback)
 4. `api/avatar/simli-session.ts` - Simli WebRTC session
-5. `api/avatar/generate-judge-video.ts` - Replicate SadTalker + TTS
+5. `api/avatar/generate-judge-video.ts` - Replicate Wav2Lip + TTS
 6. `api/judge-video.ts` - D-ID Talks + TTS
 7. `api/olivia/avatar/streams.ts` - D-ID Streams WebRTC
 8. `api/olivia/avatar/heygen.ts` - HeyGen (deprecated)
