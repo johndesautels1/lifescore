@@ -178,10 +178,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="banner-icon">👮</span>
             </div>
             <div className="panel-header">
-              <span className="prison-badge">
-                <span className="prison-icon">⛓️</span>
-                <span className="prison-icon">👮</span>
-              </span>
               <span className="city-name">{loserCity}</span>
               <span className="loser-badge">LOSER</span>
               <span className="score-badge">{loserScore.toFixed(1)}</span>
