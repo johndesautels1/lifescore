@@ -38,6 +38,18 @@
     },
     "api/olivia/avatar/heygen.ts": {
       "maxDuration": 120
+    },
+    "api/avatar/generate-judge-video.ts": {
+      "maxDuration": 120,
+      "includeFiles": "api/shared/**"
+    },
+    "api/avatar/video-status.ts": {
+      "maxDuration": 30,
+      "includeFiles": "api/shared/**"
+    },
+    "api/avatar/video-webhook.ts": {
+      "maxDuration": 30,
+      "includeFiles": "api/shared/**"
     }
   },
   "buildCommand": "npm run build",
