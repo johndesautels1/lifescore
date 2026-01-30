@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 1.1
-**Last Updated:** January 29, 2026
+**Version:** 2.0
+**Last Updated:** January 30, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -23,6 +23,8 @@
 13. [Known Issues & Workarounds](#13-known-issues--workarounds)
 14. [Monitoring & Alerts](#14-monitoring--alerts)
 15. [Security Considerations](#15-security-considerations)
+16. [API Quota Monitoring System](#16-api-quota-monitoring-system)
+17. [TTS Fallback System](#17-tts-fallback-system)
 
 ---
 
@@ -827,11 +829,121 @@ const LIMITS = {
 
 ---
 
+---
+
+## 16. API Quota Monitoring System
+
+**Added:** 2026-01-30
+
+Comprehensive quota tracking for all 16 API providers with admin-configurable limits, color-coded warnings, and email alerts.
+
+### 16.1 All 16 Tracked Providers
+
+| Provider Key | Display Name | Icon | Quota Type | Default Limit | Pricing |
+|--------------|--------------|------|------------|---------------|---------|
+| `anthropic_sonnet` | Claude Sonnet 4.5 | 🎵 | dollars | $50.00 | $3/1M input, $15/1M output |
+| `anthropic_opus` | Claude Opus 4.5 | 🧠 | dollars | $100.00 | $15/1M input, $75/1M output |
+| `openai_gpt4o` | GPT-4o | 🤖 | dollars | $50.00 | $2.50/1M input, $10/1M output |
+| `openai_olivia` | GPT-4 Turbo (Olivia) | 💬 | dollars | $30.00 | $10/1M input, $30/1M output |
+| `gemini` | Gemini 3 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
+| `grok` | Grok 4 | 🚀 | dollars | $30.00 | $3/1M input, $15/1M output |
+| `perplexity` | Perplexity Sonar | 🔍 | dollars | $25.00 | $1/1M input, $5/1M output |
+| `tavily` | Tavily Research | 🔎 | credits | 5,000 | ~$0.01/credit |
+| `elevenlabs` | ElevenLabs TTS | 🔊 | characters | 100,000 | $0.18/1K chars |
+| `openai_tts` | OpenAI TTS | 🗣️ | dollars | $10.00 | $0.015/1K chars |
+| `simli` | Simli Avatar | 🎭 | seconds | 3,600 | $0.02/sec |
+| `d_id` | D-ID Avatar | 👤 | credits | 20 | ~$0.025/sec |
+| `heygen` | HeyGen Avatar | 🎥 | seconds | 600 | $0.032/sec |
+| `replicate` | Replicate SadTalker | 🎬 | dollars | $25.00 | $0.0023/sec |
+| `kling` | Kling AI Video | 🖼️ | credits | 100 | ~$0.05/image |
+| `gamma` | Gamma Reports | 📊 | credits | 50 | ~$0.50/generation |
+
+### 16.2 Warning Thresholds
+
+| Level | Percentage | Color | Action |
+|-------|------------|-------|--------|
+| Green | 0-49% | 🟢 | Normal operation |
+| Yellow | 50-69% | 🟡 | Email alert sent |
+| Orange | 70-84% | 🟠 | Email alert sent |
+| Red | 85-99% | 🔴 | Email alert sent |
+| Exceeded | 100%+ | ⚫ | Email alert + fallback activated |
+
+### 16.3 Database Tables
+
+**api_quota_settings** - Admin-configurable limits:
+- provider_key TEXT UNIQUE (e.g., 'elevenlabs')
+- display_name TEXT (e.g., 'ElevenLabs TTS')
+- quota_type TEXT ('dollars', 'tokens', 'characters', 'credits', 'requests', 'seconds')
+- monthly_limit DECIMAL (e.g., 100.00)
+- warning_yellow/orange/red DECIMAL (0.50, 0.70, 0.85)
+- current_usage DECIMAL (updated by API calls)
+- alerts_enabled BOOLEAN
+- fallback_provider_key TEXT
+
+**api_quota_alert_log** - Email history
+
+### 16.4 API Endpoints
+
+- GET /api/usage/check-quotas - Returns all quota statuses
+- POST /api/usage/check-quotas - Updates usage and triggers alerts
+- GET /api/usage/elevenlabs - Real-time ElevenLabs subscription usage
+
+### 16.5 Email Alerts
+
+**Recipients:** brokerpinellas@gmail.com, cluesnomads@gmail.com
+**Provider:** Resend API
+**Domain:** clueslifescore.com (verified)
+
+### 16.6 Fallback Chain
+
+| Primary | Fallback | Trigger |
+|---------|----------|---------|
+| ElevenLabs TTS | OpenAI TTS | 401/429 error |
+| Simli Avatar | D-ID Avatar | Quota exceeded |
+| D-ID Avatar | Replicate | Quota exceeded |
+
+### 16.7 CostDashboard Integration
+
+Access via 💰 icon in app header. Shows color-coded quota cards for all 16 providers.
+
+---
+
+## 17. TTS Fallback System
+
+**Added:** 2026-01-30
+
+Automatic fallback from ElevenLabs to OpenAI TTS when quota exceeded.
+
+### 17.1 Voice Assignments
+
+| Character | OpenAI Voice ID |
+|-----------|-----------------|
+| Olivia | `nova` (warm, conversational female) |
+| Emilia | `shimmer` (softer, expressive female) |
+| Christiano (Judge) | `onyx` (deep, authoritative male) |
+
+**Important:** Olivia and Emilia use DIFFERENT voices.
+
+### 17.2 Implementation Files
+
+| File | Character | Voice |
+|------|-----------|-------|
+| api/olivia/tts.ts | Olivia | nova |
+| api/emilia/speak.ts | Emilia | shimmer |
+| api/judge-video.ts | Christiano | onyx |
+
+### 17.3 OpenAI TTS Pricing
+
+tts-1 (standard): $0.015 / 1K characters
+
+---
+
 ## Document Control
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
+| 2.0 | 2026-01-30 | AI Assistant | Added API Quota Monitoring (§16) and TTS Fallback (§17) |
 
 ---
 
