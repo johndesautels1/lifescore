@@ -5,7 +5,7 @@
  * future trend forecasting, and executive recommendations.
  *
  * Features:
- * - Replicate video report by "Christiano" (photorealistic avatar via MuseTalk)
+ * - Replicate video report by "Christiano" (photorealistic avatar via Wav2Lip)
  * - Summary of findings with trend indicators
  * - Detailed category-by-category analysis
  * - Executive summary with final recommendation

@@ -124,6 +124,7 @@ export interface ReplicatePrediction {
   completed_at?: string;
 }
 
+/** @deprecated Use Wav2LipInput instead */
 export interface MuseTalkInput {
   source_image: string;  // URL to Christiano image
   driven_audio: string;  // URL to TTS audio

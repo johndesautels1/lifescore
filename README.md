@@ -53,7 +53,7 @@ Read D:\lifescore\docs\PRICING_TIER_AUDIT.md
 
 Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
 - **Olivia (Interactive Chat):** Simli AI - Real-time photorealistic streaming avatar
-- **Christiano (Judge Videos):** Replicate MuseTalk - High-quality video generation
+- **Christiano (Judge Videos):** Replicate Wav2Lip - Fast lip-sync video generation (~6 sec)
 
 **Monthly Cost: ~$50-55 (vs $500+ previously) = 90% savings**
 
@@ -74,11 +74,11 @@ Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
 ┌─────────────────────────────────────────────────────────────────────┐
 │                 CHRISTIANO (Judge Video Reports)                    │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  Judge verdict → Replicate MuseTalk → MP4 video              │  │
-│  │  • Batch video generation (30-60s processing)                │  │
+│  │  Judge verdict → Replicate Wav2Lip → MP4 video               │  │
+│  │  • Fast video generation (~6 seconds)                        │  │
 │  │  • Your Christiano photo → professional presenter            │  │
 │  │  • Cached results (same comparison = same video)             │  │
-│  │  • Cost: ~$0.02-0.03 per video                               │  │
+│  │  • Cost: ~$0.005 per video                                   │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
