@@ -62,7 +62,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
       id: 'judges-report',
       label: 'Judges Report',
       icon: '📋',
-      disabled: !hasResults,
+      // Always accessible - JudgeTab handles no-data state with saved report selector
     },
     {
       id: 'about',
