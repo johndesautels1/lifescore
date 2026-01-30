@@ -159,7 +159,7 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
  */
 async function uploadAudioToStorage(buffer: Buffer, comparisonId: string): Promise<string> {
   const fileName = `judge-audio/${comparisonId}-${Date.now()}.mp3`;
-  const UPLOAD_TIMEOUT_MS = 15000; // 15 seconds
+  const UPLOAD_TIMEOUT_MS = 45000; // 45 seconds
 
   console.log('[JUDGE-VIDEO] Uploading audio to Supabase Storage:', fileName, 'size:', buffer.length);
 
