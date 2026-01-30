@@ -275,6 +275,7 @@ export async function runSingleEvaluatorBatched(
   const evaluateCategory = async (category: typeof CATEGORIES[0]) => {
     const categoryId = category.id as CategoryId;
     const metrics = getMetricsByCategory(categoryId);
+    const MAX_RETRIES = 2;
 
     // Update progress to running
     const idx = progressState.findIndex(p => p.categoryId === categoryId);
@@ -283,12 +284,32 @@ export async function runSingleEvaluatorBatched(
       onCategoryProgress?.([...progressState]);
     }
 
-    // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
-    const result = await withTimeout(
-      evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
-      CLIENT_TIMEOUT_MS,
-      { success: false, scores: [], latencyMs: CLIENT_TIMEOUT_MS, error: `Timeout for ${categoryId}` }
-    );
+    let result = { success: false, scores: [] as LLMMetricScore[], latencyMs: 0, error: 'Not attempted' };
+
+    // Retry loop for network failures
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
+      result = await withTimeout(
+        evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
+        CLIENT_TIMEOUT_MS,
+        { success: false, scores: [], latencyMs: CLIENT_TIMEOUT_MS, error: `Timeout for ${categoryId}` }
+      );
+
+      // If successful or non-retryable error, break
+      if (result.success) break;
+
+      // Check if error is retryable (network issues)
+      const isRetryable = result.error?.includes('fetch') ||
+        result.error?.includes('network') ||
+        result.error?.includes('NETWORK') ||
+        result.error?.includes('Failed to fetch') ||
+        result.error?.includes('Timeout');
+
+      if (!isRetryable || attempt === MAX_RETRIES) break;
+
+      console.log(`[BATCH] ${provider}/${categoryId} failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying in 3s...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
 
     console.log(`[BATCH] ${provider}/${categoryId} done: success=${result.success}, scores=${result.scores.length}`);
 

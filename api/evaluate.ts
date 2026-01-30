@@ -1340,17 +1340,30 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
 
     const data = await response.json();
 
-    // Perplexity API uses 'output' array (new format) or 'choices' (legacy)
-    const messages = data.output ?? [];
-    const last = messages[messages.length - 1];
-    const contentArr = last?.content ?? [];
-    // Look for both 'text' and 'output_text' content types
-    const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
-    let rawText = textPart?.text ?? '';
+    // Perplexity API response format detection (handles multiple formats)
+    let rawText = '';
 
-    // Fallback to legacy choices format if output is empty
+    // Format 1: New 'output' array format
+    if (data.output?.length) {
+      const last = data.output[data.output.length - 1];
+      const contentArr = last?.content ?? [];
+      const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
+      rawText = textPart?.text ?? '';
+    }
+
+    // Format 2: Legacy 'choices' format (OpenAI-compatible)
     if (!rawText && data.choices?.[0]?.message?.content) {
       rawText = data.choices[0].message.content;
+    }
+
+    // Format 3: Direct 'content' field
+    if (!rawText && typeof data.content === 'string') {
+      rawText = data.content;
+    }
+
+    // Format 4: Direct 'text' field
+    if (!rawText && typeof data.text === 'string') {
+      rawText = data.text;
     }
 
     if (!rawText) {
@@ -1364,12 +1377,30 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
 
     // Check for JSON in code blocks first
     const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
-    const candidate = codeMatch ? codeMatch[1].trim() : rawText;
+    let candidate = codeMatch ? codeMatch[1].trim() : rawText;
 
-    // Extract JSON object
-    const jsonMatch = candidate.match(/\{[\s\S]*\}/);
+    // Extract JSON object - try multiple patterns
+    let jsonMatch = candidate.match(/\{[\s\S]*\}/);
+
+    // If no match, try to find JSON that starts with {"evaluations"
+    if (!jsonMatch) {
+      const evalMatch = candidate.match(/\{"evaluations"[\s\S]*\}/);
+      if (evalMatch) jsonMatch = evalMatch;
+    }
+
+    // If still no match, try to extract from raw text (ignoring code blocks)
+    if (!jsonMatch && !codeMatch) {
+      // Try finding JSON anywhere in the response
+      const jsonStart = rawText.indexOf('{"evaluations"');
+      if (jsonStart !== -1) {
+        const jsonSubstr = rawText.substring(jsonStart);
+        jsonMatch = jsonSubstr.match(/\{[\s\S]*\}/);
+      }
+    }
+
     if (!jsonMatch) {
       console.error('[PERPLEXITY] No JSON object found. Text preview:', rawText.slice(0, 500));
+      console.error('[PERPLEXITY] Candidate preview:', candidate.slice(0, 500));
       return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output' };
     }
 

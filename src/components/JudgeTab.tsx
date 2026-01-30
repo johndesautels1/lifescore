@@ -27,7 +27,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
-import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Wrap a Supabase query with retry logic and timeout.
@@ -100,6 +101,7 @@ interface JudgeTabProps {
 // ============================================================================
 
 const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonResult, userId = 'guest' }) => {
+  const { supabaseUser, isAuthenticated } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -628,12 +630,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       return false;
     }
 
+    // Use auth context user instead of API call (avoids AbortError issues)
+    if (!isAuthenticated || !supabaseUser) {
+      console.log('[JudgeTab] No authenticated user, skipping Supabase save');
+      return false;
+    }
+
+    const user = supabaseUser;
+
     try {
-      const user = await getCurrentUser();
-      if (!user) {
-        console.log('[JudgeTab] No authenticated user, skipping Supabase save');
-        return false;
-      }
 
       // Check if report already exists (with 45s timeout)
       // FIX 2026-01-29: Use maybeSingle() - report may not exist yet
