@@ -1,6 +1,6 @@
 # LifeScore Customer Service Manual
 
-**Version:** 2.0
+**Version:** 2.1
 **Last Updated:** January 30, 2026
 **Document ID:** LS-CSM-001
 
@@ -326,6 +326,31 @@ AI-generated lifestyle videos showing:
 - "Imprisonment" mood video for losing city
 - Contrast visualization
 
+### 8.6 Cost Dashboard
+
+Admin panel showing real-time API quota usage across all 16 providers. Access via the 💰 icon in the header.
+
+**Key Information:**
+- Color-coded quota indicators (green/yellow/orange/red)
+- Automatic fallback activation when quotas exceeded
+- Email alerts sent at warning thresholds
+
+### 8.7 Emilia Help Assistant
+
+Emilia is the in-app help widget (separate from Olivia):
+- Floating help button in bottom corner
+- Answers questions about app features
+- Uses shimmer voice (OpenAI TTS fallback)
+- Does NOT have access to comparison data
+
+**Common Support Issues:**
+
+| Issue | Solution |
+|-------|----------|
+| Emilia not appearing | Check if widget blocked by ad blocker |
+| Voice not playing | Check browser audio permissions |
+| Wrong answers | Emilia is for app help, redirect to Olivia for comparison questions |
+
 ---
 
 ## 9. Escalation Procedures
@@ -466,6 +491,30 @@ Best,
 LifeScore Support
 ```
 
+### 10.5 Quota Warning Response Template
+
+```
+Subject: Re: API Quota Warning
+
+Hi [Name],
+
+You received an automated alert because your LifeScore usage reached [X]% of the [Provider] monthly quota.
+
+What this means:
+- Your account is still fully functional
+- If the quota is exceeded, automatic fallback providers will be used
+- Service quality may vary slightly during fallback
+
+What you can do:
+- Continue using LifeScore normally (fallbacks handle quota limits)
+- Quotas reset on the 1st of each month
+- Contact us if you have questions about your usage
+
+Best,
+[Your Name]
+LifeScore Support
+```
+
 ---
 
 ## 11. FAQs
@@ -510,8 +559,11 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | Term | Definition |
 |------|------------|
 | **Comparison** | Side-by-side analysis of two cities |
+| **Cost Dashboard** | Admin panel showing API quota usage across all providers |
+| **Emilia** | In-app help widget assistant (separate from Olivia) |
 | **Enhanced Mode** | Multi-LLM evaluation with consensus scoring |
 | **Evidence** | Source citations supporting metric scores |
+| **Fallback** | Backup provider activated when primary exceeds quota |
 | **Freedom Score** | Overall city rating (0-100) |
 | **Gamma Report** | PDF/PPTX presentation of results |
 | **Judge** | AI (Claude Opus) that resolves LLM disagreements |
@@ -520,9 +572,11 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **LLM** | Large Language Model (AI provider) |
 | **Metric** | Individual measurement within a category |
 | **Olivia** | AI assistant for Q&A and guidance |
+| **Quota** | Monthly usage limit for an API provider |
 | **Standard Mode** | Single-LLM (Claude) evaluation |
 | **Tavily** | Web search API for legal research |
 | **Tier** | Subscription level (FREE/NAVIGATOR/SOVEREIGN) |
+| **TTS** | Text-to-Speech - converts text to spoken audio |
 
 ---
 
@@ -532,6 +586,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
 | 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, support channels, tier limits |
+| 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§8.6), Emilia (§8.7), Quota Template (§10.5), glossary terms |
 
 ---
 

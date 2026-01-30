@@ -1,6 +1,6 @@
 # LifeScore Technical Support Manual
 
-**Version:** 2.0
+**Version:** 2.1
 **Last Updated:** January 30, 2026
 **Document ID:** LS-TSM-001
 
@@ -130,8 +130,8 @@ D:\lifescore\
 | Kling AI | Primary video generation |
 | ElevenLabs | Text-to-speech |
 | Gamma | PDF/PPTX report generation |
-| D-ID | Avatar video (legacy) |
-| Simli | Avatar video (alternative) |
+| Simli | Avatar video (PRIMARY) |
+| D-ID | Avatar video (fallback) |
 
 ---
 
@@ -234,6 +234,27 @@ D:\lifescore\
 | /api/video/grok-status | GET | Check video status |
 | /api/avatar/generate-judge-video | POST | Generate judge video |
 | /api/avatar/video-status | GET | Check judge video status |
+
+### 3.4 Emilia Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/emilia/speak | POST | TTS with shimmer voice |
+| /api/emilia/chat | POST | Help chat completion |
+
+### 3.5 Usage/Quota Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/usage/check-quotas | GET | Get all quota statuses |
+| /api/usage/check-quotas | POST | Update usage, trigger alerts |
+| /api/usage/elevenlabs | GET | Real-time ElevenLabs usage |
+
+### 3.6 Avatar Endpoints (Additional)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/avatar/simli-speak | POST | Simli avatar with audio |
 
 ---
 
@@ -962,6 +983,7 @@ tts-1 (standard): $0.015 / 1K characters
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
 | 2.0 | 2026-01-30 | AI Assistant | Added API Quota Monitoring (§16) and TTS Fallback (§17) |
+| 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Fixed Simli=PRIMARY (§2.4), Added Emilia (§3.4), Usage/Quota (§3.5), Avatar (§3.6) endpoints |
 
 ---
 

@@ -1,6 +1,6 @@
 # LifeScore User Manual
 
-**Version:** 2.0
+**Version:** 2.1
 **Last Updated:** January 30, 2026
 **Document ID:** LS-UM-001
 
@@ -22,6 +22,8 @@
 12. [Troubleshooting](#12-troubleshooting)
 13. [Privacy & Data](#13-privacy--data)
 14. [Frequently Asked Questions](#14-frequently-asked-questions)
+15. [Cost Dashboard & Usage Monitoring](#15-cost-dashboard--usage-monitoring)
+16. [Emilia Help Assistant](#16-emilia-help-assistant)
 
 ---
 
@@ -586,6 +588,56 @@ A: Yes, processed by Stripe. We never see your full card number.
 
 ---
 
+## 15. Cost Dashboard & Usage Monitoring
+
+### What is the Cost Dashboard?
+
+The Cost Dashboard shows real-time API usage across all providers. Access it by clicking the 💰 icon in the app header.
+
+### Understanding Quota Colors
+
+| Color | Usage Level | Meaning |
+|-------|-------------|---------|
+| 🟢 Green | 0-49% | Normal - plenty of quota remaining |
+| 🟡 Yellow | 50-69% | Caution - over half used |
+| 🟠 Orange | 70-84% | Warning - approaching limit |
+| 🔴 Red | 85-99% | Critical - near limit |
+| ⚫ Exceeded | 100%+ | Limit reached - fallback active |
+
+### Quota Alerts
+
+When quotas reach warning levels, you'll receive email alerts at:
+- support@clueslifescore.com (your registered email)
+
+### Fallback Behavior
+
+When a provider exceeds its quota:
+- **TTS:** ElevenLabs → OpenAI TTS automatically
+- **Avatar:** Simli → D-ID → Replicate automatically
+- You may notice slight quality or voice differences during fallback
+
+---
+
+## 16. Emilia Help Assistant
+
+### Who is Emilia?
+
+Emilia is a help widget assistant (different from Olivia). She appears as a floating help button and can:
+- Answer quick questions about using LifeScore
+- Guide you through features
+- Provide contextual help
+
+### Emilia vs. Olivia
+
+| Feature | Emilia | Olivia |
+|---------|--------|--------|
+| Purpose | App help & guidance | Comparison analysis |
+| Location | Floating widget | Dedicated tab |
+| Voice | Shimmer (softer) | Nova (warm) |
+| Context | App navigation | Your comparison data |
+
+---
+
 ## Getting Help
 
 **Need assistance?**
@@ -607,3 +659,4 @@ A: Yes, processed by Stripe. We never see your full card number.
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
 | 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, password requirements, tier limits |
+| 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§15), Emilia Help Assistant (§16) |

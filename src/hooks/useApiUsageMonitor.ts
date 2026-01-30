@@ -124,9 +124,7 @@ export function useApiUsageMonitor(): UseApiUsageMonitorReturn {
       const status = getUsageStatus(percentage);
 
       // Calculate estimated days remaining
-      const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
       const currentDay = new Date().getDate();
-      const daysRemaining = daysInMonth - currentDay;
       const dailyRate = currentDay > 0 ? used / currentDay : 0;
       const estimatedDaysRemaining = dailyRate > 0
         ? Math.floor((config.monthlyQuota - used) / dailyRate)
