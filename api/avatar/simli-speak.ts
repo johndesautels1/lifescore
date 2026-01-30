@@ -76,9 +76,10 @@ export default async function handler(
 
     let audioBuffer: ArrayBuffer;
     let audioDuration: number;
+    let usedOpenAIFallback = false;
 
+    // Try ElevenLabs first if key exists
     if (elevenLabsKey) {
-      // Use ElevenLabs for high-quality TTS
       const emotionSettings = EMOTION_SETTINGS[body.emotion || 'neutral'];
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -116,16 +117,22 @@ export default async function handler(
         }
 
         audioBuffer = await response.arrayBuffer();
-        // PCM 16-bit at 16kHz mono = 32000 bytes per second
         audioDuration = audioBuffer.byteLength / 32000;
 
         console.log('[SIMLI-SPEAK] ElevenLabs audio generated:', audioBuffer.byteLength, 'bytes,', audioDuration.toFixed(2), 's');
       } catch (err) {
         clearTimeout(timeoutId);
-        throw err;
+        console.warn('[SIMLI-SPEAK] ElevenLabs failed, trying OpenAI fallback:', err instanceof Error ? err.message : err);
+        usedOpenAIFallback = true;
       }
-    } else {
-      // Fallback to OpenAI TTS
+    }
+
+    // OpenAI TTS fallback (if no ElevenLabs key OR if ElevenLabs failed)
+    if (!elevenLabsKey || usedOpenAIFallback) {
+      console.log('[SIMLI-SPEAK] Using OpenAI TTS fallback');
+      if (!openaiKey) {
+        throw new Error('No TTS provider available - both ElevenLabs and OpenAI keys missing');
+      }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
