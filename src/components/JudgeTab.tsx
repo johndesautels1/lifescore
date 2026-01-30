@@ -177,6 +177,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     isReady: isVideoReady,
     generate: generateReplicateVideo,
     checkExistingVideo,
+    cancel: cancelVideoGeneration,
     error: videoError,
   } = useJudgeVideo();
 
@@ -352,6 +353,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
 
   // Generate video from judge report using Replicate (replaced D-ID)
   const generateJudgeVideo = async (report: JudgeReport) => {
+    // Prevent concurrent video generations
+    if (isGeneratingVideo) {
+      console.log('[JudgeTab] Video generation already in progress, cancelling previous');
+      cancelVideoGeneration();
+    }
+
     console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');
 
@@ -434,6 +441,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
 
   const handleGenerateReport = async () => {
     if (!comparisonResult) return;
+
+    // Generation lock: Prevent concurrent report generations
+    if (isGenerating) {
+      console.log('[JudgeTab] Generation already in progress, ignoring request');
+      return;
+    }
+
+    // Also check if video is still being generated
+    if (isGeneratingVideo) {
+      console.log('[JudgeTab] Video generation in progress, cancelling before new report');
+      cancelVideoGeneration();
+    }
 
     setIsGenerating(true);
     setGenerationProgress(0);
@@ -916,7 +935,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
               <select
                 className="report-dropdown judge-report-dropdown"
                 value={selectedComparisonId || ''}
-                onChange={(e) => setSelectedComparisonId(e.target.value || null)}
+                onChange={(e) => {
+                  // Cancel any pending video generation to prevent race condition
+                  cancelVideoGeneration();
+                  // Reset the checked comparison ref so new comparison can check for videos
+                  checkedComparisonIdRef.current = null;
+                  setSelectedComparisonId(e.target.value || null);
+                }}
               >
                 <option value="">Choose a report...</option>
                 {savedComparisons.length > 0 && (
@@ -995,6 +1020,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
             className="report-dropdown judge-report-dropdown"
             value={selectedComparisonId || ''}
             onChange={(e) => {
+              // Cancel any pending video generation to prevent race condition
+              cancelVideoGeneration();
+              // Reset the checked comparison ref so new comparison can check for videos
+              checkedComparisonIdRef.current = null;
               setSelectedComparisonId(e.target.value || null);
               setJudgeReport(null); // Clear existing report when switching
             }}

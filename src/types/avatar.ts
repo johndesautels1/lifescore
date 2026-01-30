@@ -186,5 +186,7 @@ export interface UseJudgeVideoReturn {
   generate: (request: GenerateJudgeVideoRequest) => Promise<void>;
   checkStatus: () => Promise<void>;
   checkExistingVideo: (comparisonId: string) => Promise<JudgeVideo | null>;
+  /** Cancel any pending video generation and reset state. Call when switching comparisons. */
+  cancel: () => void;
   error: string | null;
 }

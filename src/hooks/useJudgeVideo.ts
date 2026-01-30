@@ -31,6 +31,13 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
   // This ref always has the latest video data for checkStatus to use
   const videoRef = useRef<JudgeVideo | null>(null);
 
+  // Track the active comparison ID to prevent stale updates
+  // When comparison changes, we increment this to invalidate old requests
+  const generationIdRef = useRef<number>(0);
+
+  // Track current comparison to detect changes
+  const currentComparisonIdRef = useRef<string | null>(null);
+
   const isGenerating = status === 'pending' || status === 'processing';
   const isReady = status === 'completed' && !!video?.videoUrl;
 
@@ -42,10 +49,25 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     }
   }, []);
 
+  // Cancel any pending generation and reset state
+  // Call this when switching comparisons to prevent race conditions
+  const cancel = useCallback(() => {
+    console.log('[useJudgeVideo] Cancelling current generation');
+    generationIdRef.current += 1; // Invalidate any in-flight requests
+    stopPolling();
+    videoRef.current = null;
+    currentComparisonIdRef.current = null;
+    setVideo(null);
+    setStatus('idle');
+    setError(null);
+  }, [stopPolling]);
+
   // Check video generation status
   // Uses videoRef to avoid stale closure issues when called from polling interval
   const checkStatus = useCallback(async () => {
     const currentVideo = videoRef.current;
+    const myGenerationId = generationIdRef.current;
+
     if (!currentVideo?.id && !currentVideo?.comparisonId && !currentVideo?.replicatePredictionId) {
       console.log('[useJudgeVideo] checkStatus: No video data to check, skipping');
       return;
@@ -63,11 +85,23 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
       const response = await fetch(`${API_BASE}/video-status?${param}`);
 
+      // Check if generation was cancelled while fetching
+      if (generationIdRef.current !== myGenerationId) {
+        console.log('[useJudgeVideo] Generation cancelled, ignoring stale response');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to check status');
       }
 
       const data = await response.json();
+
+      // Double-check cancellation after parsing response
+      if (generationIdRef.current !== myGenerationId) {
+        console.log('[useJudgeVideo] Generation cancelled, ignoring stale response');
+        return;
+      }
 
       if (data.success && data.video) {
         // Update both ref and state
@@ -102,6 +136,13 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
   // Generate a new judge video
   const generate = useCallback(async (request: GenerateJudgeVideoRequest) => {
+    // Increment generation ID to invalidate any previous requests
+    generationIdRef.current += 1;
+    const myGenerationId = generationIdRef.current;
+
+    // Track current comparison
+    currentComparisonIdRef.current = request.comparisonId || `${request.city1}-${request.city2}`;
+
     setStatus('pending');
     setError(null);
     stopPolling();
@@ -112,7 +153,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
     try {
-      console.log('[useJudgeVideo] Generating video for:', request.city1, 'vs', request.city2);
+      console.log('[useJudgeVideo] Generating video for:', request.city1, 'vs', request.city2, 'genId:', myGenerationId);
 
       const response = await fetch(`${API_BASE}/generate-judge-video`, {
         method: 'POST',
@@ -123,12 +164,24 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
       clearTimeout(timeoutId);
 
+      // Check if generation was cancelled while fetching
+      if (generationIdRef.current !== myGenerationId) {
+        console.log('[useJudgeVideo] Generation cancelled, ignoring response for:', request.city1, 'vs', request.city2);
+        return;
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
         throw new Error(errorData.message || errorData.error || 'Failed to generate video');
       }
 
       const data = await response.json();
+
+      // Double-check cancellation after parsing response
+      if (generationIdRef.current !== myGenerationId) {
+        console.log('[useJudgeVideo] Generation cancelled, ignoring response for:', request.city1, 'vs', request.city2);
+        return;
+      }
 
       if (!data.success) {
         throw new Error(data.error || data.message || 'Generation failed');
@@ -160,6 +213,11 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       }
     } catch (err) {
       clearTimeout(timeoutId);
+      // Only update state if this is still the current generation
+      if (generationIdRef.current !== myGenerationId) {
+        console.log('[useJudgeVideo] Generation cancelled, ignoring error');
+        return;
+      }
       const isTimeout = err instanceof Error && err.name === 'AbortError';
       const message = isTimeout
         ? 'Video generation request timed out. Check your connection.'
@@ -238,6 +296,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     generate,
     checkStatus,
     checkExistingVideo,
+    cancel,
     error,
   };
 }
