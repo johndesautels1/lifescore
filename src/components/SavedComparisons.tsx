@@ -22,6 +22,7 @@ import {
   getSavedGammaReports,
   deleteGammaReport,
   clearAllGammaReports,
+  isValidComparisonResult,
   type SavedComparison,
   type SavedGammaReport
 } from '../services/savedComparisons';
@@ -61,12 +62,16 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   const loadComparisons = () => {
     // FIX 2026-01-26: Load BOTH standard and enhanced comparisons
     const standardComparisons = getLocalComparisons().map(c => ({ ...c, isEnhanced: false }));
-    const enhancedComparisons = getLocalEnhancedComparisons().map(c => ({
-      ...c,
-      // Convert EnhancedComparisonResult to work with ComparisonResult interface
-      result: c.result as unknown as ComparisonResult,
-      isEnhanced: true
-    }));
+
+    // FIX 7.4: Use type guard instead of unsafe cast - filter out invalid entries
+    const enhancedComparisons = getLocalEnhancedComparisons()
+      .filter(c => isValidComparisonResult(c.result))
+      .map(c => ({
+        ...c,
+        // Safe cast after type guard validation
+        result: c.result as unknown as ComparisonResult,
+        isEnhanced: true
+      }));
 
     // Merge and sort by savedAt date (newest first)
     const allComparisons = [...standardComparisons, ...enhancedComparisons]

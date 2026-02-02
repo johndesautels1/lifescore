@@ -94,19 +94,148 @@ const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
 const MAX_SAVED = 100;
 
 // ============================================================================
+// TYPE GUARDS FOR DATA VALIDATION
+// ============================================================================
+
+/**
+ * Type guard to validate a SavedComparison object
+ * FIX 7.4 & 7.6: Proper validation instead of unsafe casts
+ */
+export function isValidSavedComparison(obj: unknown): obj is SavedComparison {
+  if (!obj || typeof obj !== 'object') return false;
+  const c = obj as Record<string, unknown>;
+
+  // Required fields
+  if (!c.id || typeof c.id !== 'string') return false;
+  if (!c.savedAt || typeof c.savedAt !== 'string') return false;
+  if (!c.result || typeof c.result !== 'object') return false;
+
+  // Validate result has required city data
+  const result = c.result as Record<string, unknown>;
+  if (!result.comparisonId) return false;
+  if (!result.city1 || typeof result.city1 !== 'object') return false;
+  if (!result.city2 || typeof result.city2 !== 'object') return false;
+
+  // Validate cities have required fields
+  const city1 = result.city1 as Record<string, unknown>;
+  const city2 = result.city2 as Record<string, unknown>;
+  if (!city1.city || typeof city1.city !== 'string') return false;
+  if (!city2.city || typeof city2.city !== 'string') return false;
+
+  return true;
+}
+
+/**
+ * Type guard to validate a SavedEnhancedComparison object
+ */
+export function isValidSavedEnhancedComparison(obj: unknown): obj is SavedEnhancedComparison {
+  if (!obj || typeof obj !== 'object') return false;
+  const c = obj as Record<string, unknown>;
+
+  // Required fields
+  if (!c.id || typeof c.id !== 'string') return false;
+  if (!c.savedAt || typeof c.savedAt !== 'string') return false;
+  if (!c.result || typeof c.result !== 'object') return false;
+
+  // Validate result has required city data
+  const result = c.result as Record<string, unknown>;
+  if (!result.comparisonId) return false;
+  if (!result.city1 || typeof result.city1 !== 'object') return false;
+  if (!result.city2 || typeof result.city2 !== 'object') return false;
+
+  // Validate cities have required fields
+  const city1 = result.city1 as Record<string, unknown>;
+  const city2 = result.city2 as Record<string, unknown>;
+  if (!city1.city || typeof city1.city !== 'string') return false;
+  if (!city2.city || typeof city2.city !== 'string') return false;
+
+  return true;
+}
+
+/**
+ * Type guard to validate a ComparisonResult object
+ */
+export function isValidComparisonResult(obj: unknown): obj is ComparisonResult {
+  if (!obj || typeof obj !== 'object') return false;
+  const r = obj as Record<string, unknown>;
+
+  if (!r.comparisonId) return false;
+  if (!r.city1 || typeof r.city1 !== 'object') return false;
+  if (!r.city2 || typeof r.city2 !== 'object') return false;
+
+  const city1 = r.city1 as Record<string, unknown>;
+  const city2 = r.city2 as Record<string, unknown>;
+  if (!city1.city || typeof city1.city !== 'string') return false;
+  if (!city2.city || typeof city2.city !== 'string') return false;
+
+  return true;
+}
+
+/**
+ * Type guard to detect if a ComparisonResult is actually an EnhancedComparisonResult
+ * FIX 7.4: Safe detection without unsafe casts
+ */
+export function isEnhancedComparisonResult(result: ComparisonResult): result is ComparisonResult & { llmsUsed: unknown[] } {
+  if (!result || typeof result !== 'object') return false;
+  const r = result as unknown as Record<string, unknown>;
+
+  // Enhanced comparisons have llmsUsed array
+  if ('llmsUsed' in r && Array.isArray(r.llmsUsed) && r.llmsUsed.length > 0) {
+    return true;
+  }
+
+  // Or totalConsensusScore on city objects
+  if (result.city1 && typeof result.city1 === 'object') {
+    const city1 = result.city1 as unknown as Record<string, unknown>;
+    if ('totalConsensusScore' in city1 && typeof city1.totalConsensusScore === 'number') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// ============================================================================
 // LOCAL STORAGE OPERATIONS
 // ============================================================================
 
 /**
  * Get all saved comparisons from localStorage
+ * FIX 7.6: Added corruption detection, validation, and auto-cleanup
  */
 export function getLocalComparisons(): SavedComparison[] {
   try {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!stored) return [];
-    return JSON.parse(stored) as SavedComparison[];
+
+    const parsed = JSON.parse(stored);
+
+    // Validate it's an array
+    if (!Array.isArray(parsed)) {
+      console.error('[savedComparisons] localStorage data is not an array, clearing corrupted data');
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      return [];
+    }
+
+    // Filter out corrupted entries using type guard
+    const valid = parsed.filter((item: unknown) => {
+      const isValid = isValidSavedComparison(item);
+      if (!isValid) {
+        console.warn('[savedComparisons] Filtering corrupted entry:', item);
+      }
+      return isValid;
+    });
+
+    // If we filtered any entries, save the cleaned data back
+    if (valid.length !== parsed.length) {
+      console.warn(`[savedComparisons] Filtered ${parsed.length - valid.length} corrupted entries, saving cleaned data`);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(valid));
+    }
+
+    return valid;
   } catch (error) {
-    console.error('Error loading local comparisons:', error);
+    console.error('[savedComparisons] localStorage corrupted, clearing:', error);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
     return [];
   }
 }
@@ -366,14 +495,41 @@ export function clearAllLocal(): void {
 
 /**
  * Get all saved enhanced comparisons from localStorage
+ * FIX 7.6: Added corruption detection, validation, and auto-cleanup
  */
 export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
   try {
     const stored = localStorage.getItem(ENHANCED_STORAGE_KEY);
     if (!stored) return [];
-    return JSON.parse(stored) as SavedEnhancedComparison[];
+
+    const parsed = JSON.parse(stored);
+
+    // Validate it's an array
+    if (!Array.isArray(parsed)) {
+      console.error('[savedComparisons] Enhanced localStorage data is not an array, clearing corrupted data');
+      localStorage.removeItem(ENHANCED_STORAGE_KEY);
+      return [];
+    }
+
+    // Filter out corrupted entries using type guard
+    const valid = parsed.filter((item: unknown) => {
+      const isValid = isValidSavedEnhancedComparison(item);
+      if (!isValid) {
+        console.warn('[savedComparisons] Filtering corrupted enhanced entry:', item);
+      }
+      return isValid;
+    });
+
+    // If we filtered any entries, save the cleaned data back
+    if (valid.length !== parsed.length) {
+      console.warn(`[savedComparisons] Filtered ${parsed.length - valid.length} corrupted enhanced entries, saving cleaned data`);
+      localStorage.setItem(ENHANCED_STORAGE_KEY, JSON.stringify(valid));
+    }
+
+    return valid;
   } catch (error) {
-    console.error('Error loading enhanced comparisons:', error);
+    console.error('[savedComparisons] Enhanced localStorage corrupted, clearing:', error);
+    localStorage.removeItem(ENHANCED_STORAGE_KEY);
     return [];
   }
 }
@@ -968,13 +1124,29 @@ export function importFromJSON(json: string): { success: boolean; message: strin
 // ============================================================================
 
 /**
+ * FIX 7.5: Mutex lock to prevent race conditions during database sync
+ * Prevents multiple simultaneous sync operations from corrupting data
+ */
+let databaseSyncLock = false;
+
+/**
  * Load comparisons from Supabase database and merge with localStorage
  * Called when user logs in or opens the app while logged in
+ * FIX 7.5: Added mutex lock to prevent race conditions
  */
 export async function pullFromDatabase(): Promise<{ success: boolean; message: string; added: number }> {
+  // FIX 7.5: Check mutex lock
+  if (databaseSyncLock) {
+    console.log('[savedComparisons] Database sync already in progress, skipping pullFromDatabase');
+    return { success: false, message: 'Sync already in progress', added: 0 };
+  }
+
   if (!isSupabaseConfigured()) {
     return { success: false, message: 'Database not configured.', added: 0 };
   }
+
+  // FIX 7.5: Acquire lock
+  databaseSyncLock = true;
 
   try {
     const user = await getCurrentUser();
@@ -1051,17 +1223,30 @@ export async function pullFromDatabase(): Promise<{ success: boolean; message: s
   } catch (error) {
     console.error('[savedComparisons] Database pull error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Pull failed', added: 0 };
+  } finally {
+    // FIX 7.5: Always release lock
+    databaseSyncLock = false;
   }
 }
 
 /**
  * Sync all unsynced local comparisons to Supabase database
  * Called when user logs in or manually triggers sync
+ * FIX 7.5: Added mutex lock to prevent race conditions
  */
 export async function syncToDatabase(): Promise<{ success: boolean; message: string; synced: number }> {
+  // FIX 7.5: Check mutex lock
+  if (databaseSyncLock) {
+    console.log('[savedComparisons] Database sync already in progress, skipping syncToDatabase');
+    return { success: false, message: 'Sync already in progress', synced: 0 };
+  }
+
   if (!isSupabaseConfigured()) {
     return { success: false, message: 'Database not configured.', synced: 0 };
   }
+
+  // FIX 7.5: Acquire lock
+  databaseSyncLock = true;
 
   try {
     const user = await getCurrentUser();
@@ -1116,17 +1301,30 @@ export async function syncToDatabase(): Promise<{ success: boolean; message: str
   } catch (error) {
     console.error('[savedComparisons] Database sync error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Sync failed', synced: 0 };
+  } finally {
+    // FIX 7.5: Always release lock
+    databaseSyncLock = false;
   }
 }
 
 /**
  * Full bidirectional sync: pull from database, then push unsynced local changes
  * Called when user logs in
+ * Note: Does not use mutex lock directly as it calls pullFromDatabase and syncToDatabase which have their own locks
  */
 export async function fullDatabaseSync(): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> {
+  // FIX 7.5: Check mutex lock at start to prevent multiple concurrent full syncs
+  if (databaseSyncLock) {
+    console.log('[savedComparisons] Database sync already in progress, skipping fullDatabaseSync');
+    return { success: false, message: 'Sync already in progress', pulled: 0, pushed: 0 };
+  }
+
   if (!isSupabaseConfigured()) {
     return { success: false, message: 'Database not configured.', pulled: 0, pushed: 0 };
   }
+
+  // FIX 7.5: Acquire lock for full sync duration
+  databaseSyncLock = true;
 
   try {
     const user = await getCurrentUser();
@@ -1134,21 +1332,93 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
       return { success: false, message: 'User not logged in.', pulled: 0, pushed: 0 };
     }
 
-    // First pull from database
-    const pullResult = await pullFromDatabase();
+    // FIX 7.5: Release lock before calling sub-functions (they have their own locking)
+    // Actually, keep lock held for entire operation to prevent interleaving
+    // Sub-functions will see lock is held and skip their own locking check - we need internal versions
 
-    // Then sync any unsynced local changes
-    const syncResult = await syncToDatabase();
+    // Inline the pull logic (without lock check since we hold the lock)
+    const { data: dbComparisons, error: pullError } = await dbGetUserComparisons(user.id, { limit: MAX_SAVED });
 
-    console.log(`[savedComparisons] Full sync complete: pulled ${pullResult.added}, pushed ${syncResult.synced}`);
+    let pullAdded = 0;
+    if (!pullError && dbComparisons) {
+      const localComparisons = getLocalComparisons();
+      const localEnhanced = getLocalEnhancedComparisons();
+      const mergedMap = new Map<string, SavedComparison>();
+      const mergedEnhancedMap = new Map<string, SavedEnhancedComparison>();
+
+      localComparisons.forEach(c => mergedMap.set(c.id, c));
+      localEnhanced.forEach(c => mergedEnhancedMap.set(c.id, c));
+
+      for (const dbComp of dbComparisons) {
+        const compResult = dbComp.comparison_result as Record<string, unknown>;
+        const isEnhanced = 'llmsUsed' in compResult && Array.isArray(compResult.llmsUsed);
+        const comparisonId = dbComp.comparison_id;
+
+        if (isEnhanced) {
+          if (!mergedEnhancedMap.has(comparisonId)) pullAdded++;
+          mergedEnhancedMap.set(comparisonId, {
+            id: comparisonId,
+            result: compResult as unknown as EnhancedComparisonResult,
+            savedAt: dbComp.created_at,
+            nickname: dbComp.nickname || undefined,
+          });
+        } else {
+          if (!mergedMap.has(comparisonId)) pullAdded++;
+          mergedMap.set(comparisonId, {
+            id: comparisonId,
+            result: compResult as unknown as ComparisonResult,
+            savedAt: dbComp.created_at,
+            nickname: dbComp.nickname || undefined,
+            synced: true,
+          });
+        }
+      }
+
+      const mergedStandard = Array.from(mergedMap.values())
+        .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+        .slice(0, MAX_SAVED);
+      const mergedEnhancedArr = Array.from(mergedEnhancedMap.values())
+        .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+        .slice(0, MAX_SAVED);
+
+      saveLocalComparisons(mergedStandard);
+      saveLocalEnhancedComparisons(mergedEnhancedArr);
+    }
+
+    // Inline the sync logic (without lock check since we hold the lock)
+    let syncedCount = 0;
+    const localComparisons = getLocalComparisons();
+    const localEnhanced = getLocalEnhancedComparisons();
+
+    for (const local of localComparisons) {
+      if (!local.synced) {
+        const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
+        if (!error) {
+          local.synced = true;
+          syncedCount++;
+        }
+      }
+    }
+
+    for (const local of localEnhanced) {
+      const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
+      if (!error) syncedCount++;
+    }
+
+    saveLocalComparisons(localComparisons);
+
+    console.log(`[savedComparisons] Full sync complete: pulled ${pullAdded}, pushed ${syncedCount}`);
     return {
       success: true,
-      message: `Sync complete: ${pullResult.added} pulled, ${syncResult.synced} pushed`,
-      pulled: pullResult.added,
-      pushed: syncResult.synced
+      message: `Sync complete: ${pullAdded} pulled, ${syncedCount} pushed`,
+      pulled: pullAdded,
+      pushed: syncedCount
     };
   } catch (error) {
     console.error('[savedComparisons] Full sync error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Sync failed', pulled: 0, pushed: 0 };
+  } finally {
+    // FIX 7.5: Always release lock
+    databaseSyncLock = false;
   }
 }

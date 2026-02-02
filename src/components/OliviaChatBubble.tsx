@@ -8,7 +8,7 @@
  * Design: Subtle luxury - like a concierge service at The Savoy.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { useOliviaChat } from '../hooks/useOliviaChat';
@@ -31,9 +31,24 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load saved comparisons for Olivia's context
-  const savedComparisons = getLocalComparisons();
-  const savedEnhanced = getLocalEnhancedComparisons();
+  // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
+  const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
+  const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
+
+  // Load saved comparisons for Olivia's context (memoized)
+  const savedComparisons = useMemo(() => getLocalComparisons(), [comparisonsRefreshKey]);
+  const savedEnhanced = useMemo(() => getLocalEnhancedComparisons(), [comparisonsRefreshKey]);
+
+  // Listen for storage events to refresh when data changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'lifescore_saved_comparisons' || e.key === 'lifescore_saved_enhanced') {
+        refreshComparisons();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshComparisons]);
 
   const {
     messages,

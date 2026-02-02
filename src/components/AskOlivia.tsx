@@ -16,7 +16,7 @@
  * "The name is Olivia. Just Olivia."
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { OliviaQuickAction } from '../types/olivia';
@@ -63,10 +63,24 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   // Tier access for message limits
   const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
 
-  // Load saved comparisons for Olivia's context
-  // This gives Olivia knowledge of ALL user's previous comparisons
-  const savedComparisons = getLocalComparisons();
-  const savedEnhanced = getLocalEnhancedComparisons();
+  // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
+  const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
+  const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
+
+  // Load saved comparisons for Olivia's context (memoized)
+  const savedComparisons = useMemo(() => getLocalComparisons(), [comparisonsRefreshKey]);
+  const savedEnhanced = useMemo(() => getLocalEnhancedComparisons(), [comparisonsRefreshKey]);
+
+  // Listen for storage events to refresh when data changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'lifescore_saved_comparisons' || e.key === 'lifescore_saved_enhanced') {
+        refreshComparisons();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshComparisons]);
 
   // Determine which comparison to use for context
   // Priority: Selected from dropdown > Prop > None
@@ -634,9 +648,11 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           {/* 1. Report Dropdown */}
           <select
             className="control-item"
-            value={selectedComparisonId || ''}
+            value={selectedComparisonId ?? ''}
             onChange={(e) => {
-              setSelectedComparisonId(e.target.value || null);
+              // FIX 7.2: Proper empty string vs null handling
+              const value = e.target.value;
+              setSelectedComparisonId(value === '' ? null : value);
               clearHistory();
               clearContrastImages();
             }}

@@ -23,7 +23,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
@@ -111,9 +111,25 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
   // Report selection state - allows user to select from saved comparisons
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
 
-  // Load saved comparisons for report selection dropdown
-  const savedComparisons = getLocalComparisons();
-  const savedEnhanced = getLocalEnhancedComparisons();
+  // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
+  // This prevents stale reads while allowing refresh when data changes
+  const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
+  const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
+
+  // Memoized comparisons - only re-read when refreshKey changes
+  const savedComparisons = useMemo(() => getLocalComparisons(), [comparisonsRefreshKey]);
+  const savedEnhanced = useMemo(() => getLocalEnhancedComparisons(), [comparisonsRefreshKey]);
+
+  // Listen for storage events to refresh when data changes in another tab/component
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'lifescore_saved_comparisons' || e.key === 'lifescore_saved_enhanced') {
+        refreshComparisons();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshComparisons]);
 
   // FIX 2026-01-26: Track if report failed to load for user feedback
   const [reportLoadError, setReportLoadError] = useState<string | null>(null);
@@ -939,13 +955,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
               <label className="report-select-label">Select a Saved Report:</label>
               <select
                 className="report-dropdown judge-report-dropdown"
-                value={selectedComparisonId || ''}
+                value={selectedComparisonId ?? ''}
                 onChange={(e) => {
                   // Cancel any pending video generation to prevent race condition
                   cancelVideoGeneration();
                   // Reset the checked comparison ref so new comparison can check for videos
                   checkedComparisonIdRef.current = null;
-                  setSelectedComparisonId(e.target.value || null);
+                  // FIX 7.2: Proper empty string vs null handling
+                  const value = e.target.value;
+                  setSelectedComparisonId(value === '' ? null : value);
                 }}
               >
                 <option value="">Choose a report...</option>
@@ -1023,13 +1041,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           <label className="report-select-label">SELECT REPORT</label>
           <select
             className="report-dropdown judge-report-dropdown"
-            value={selectedComparisonId || ''}
+            value={selectedComparisonId ?? ''}
             onChange={(e) => {
               // Cancel any pending video generation to prevent race condition
               cancelVideoGeneration();
               // Reset the checked comparison ref so new comparison can check for videos
               checkedComparisonIdRef.current = null;
-              setSelectedComparisonId(e.target.value || null);
+              // FIX 7.2: Proper empty string vs null handling
+              const value = e.target.value;
+              setSelectedComparisonId(value === '' ? null : value);
               setJudgeReport(null); // Clear existing report when switching
             }}
           >

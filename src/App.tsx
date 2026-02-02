@@ -45,6 +45,7 @@ import { LLM_CONFIGS } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
+import { isEnhancedComparisonResult } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
@@ -254,12 +255,8 @@ const AppContent: React.FC = () => {
 
     console.log('[App] Loading saved comparison:', result.comparisonId, result.city1.city, 'vs', result.city2.city);
 
-    // FIX 2026-01-27: Detect enhanced comparisons and load them correctly
-    // Enhanced comparisons have llmsUsed array and totalConsensusScore on city objects
-    const isEnhanced = !!(result as unknown as EnhancedComparisonResult).llmsUsed?.length ||
-                       !!(result.city1 as unknown as { totalConsensusScore?: number }).totalConsensusScore;
-
-    if (isEnhanced) {
+    // FIX 7.4: Use type guard instead of unsafe casts for detecting enhanced comparisons
+    if (isEnhancedComparisonResult(result)) {
       console.log('[App] Loading as ENHANCED comparison');
       setEnhancedResult(result as unknown as EnhancedComparisonResult);
       setEnhancedStatus('complete');
