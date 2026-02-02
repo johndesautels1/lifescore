@@ -315,6 +315,7 @@ London W1W 5PF
 | Email | Role | Added |
 |-------|------|-------|
 | cluesnomads@gmail.com | Owner/Admin | 2026-02-02 |
+| brokerpinellas@gmail.com | Developer/Admin | 2026-02-02 |
 
 To add new authorized users:
 1. Insert into `authorized_manual_access` table in Supabase

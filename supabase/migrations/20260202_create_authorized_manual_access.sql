@@ -30,12 +30,9 @@ CREATE INDEX IF NOT EXISTS idx_authorized_manual_access_active
 -- ============================================================================
 
 INSERT INTO authorized_manual_access (email, role, added_by, notes)
-VALUES (
-  'cluesnomads@gmail.com',
-  'owner',
-  'system',
-  'Initial owner account - full manual access'
-)
+VALUES
+  ('cluesnomads@gmail.com', 'owner', 'system', 'Initial owner account - full manual access'),
+  ('brokerpinellas@gmail.com', 'admin', 'system', 'Developer admin account - full manual access')
 ON CONFLICT (email) DO NOTHING;
 
 -- ============================================================================
