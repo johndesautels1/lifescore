@@ -40,13 +40,28 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
     isTyping,
     error: chatError,
     sendMessage,
-    clearHistory: _clearHistory, // Available for future "New Chat" button
+    clearHistory,
   } = useOliviaChat({
     comparisonResult,
     savedComparisons,
     savedEnhanced,
   });
-  void _clearHistory; // Suppress unused warning
+
+  // Track comparison ID to detect changes
+  const lastComparisonIdRef = useRef<string | null>(null);
+
+  // Clear chat history when comparison changes (new comparison run)
+  useEffect(() => {
+    const currentId = comparisonResult?.comparisonId || null;
+
+    // If comparison changed and we had a previous one, clear history
+    if (lastComparisonIdRef.current !== null && currentId !== lastComparisonIdRef.current) {
+      console.log('[OliviaChatBubble] Comparison changed, clearing chat history');
+      clearHistory();
+    }
+
+    lastComparisonIdRef.current = currentId;
+  }, [comparisonResult?.comparisonId, clearHistory]);
 
   // TTS for message playback
   const { isPlaying, play: speakText, stop: stopSpeaking } = useTTS();
