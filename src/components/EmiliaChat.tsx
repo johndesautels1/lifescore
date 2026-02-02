@@ -34,6 +34,9 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
     clearConversation,
     downloadConversation,
     printConversation,
+    shareConversation,
+    emailConversation,
+    canShare,
     playMessage,
     stopPlaying,
     isPlaying,
@@ -329,6 +332,28 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
             <path fill="currentColor" d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z" />
           </svg>
           <span>Print</span>
+        </button>
+        <button
+          className="emilia-action-btn share"
+          onClick={shareConversation}
+          disabled={messages.length === 0}
+          title={canShare ? "Share conversation" : "Copy to clipboard"}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+          </svg>
+          <span>Share</span>
+        </button>
+        <button
+          className="emilia-action-btn email"
+          onClick={emailConversation}
+          disabled={messages.length === 0}
+          title="Email conversation"
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+          </svg>
+          <span>Email</span>
         </button>
         {isPlaying && (
           <button

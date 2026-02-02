@@ -27,6 +27,9 @@ interface UseEmiliaReturn {
   clearConversation: () => void;
   downloadConversation: (format: 'json' | 'txt') => void;
   printConversation: () => void;
+  shareConversation: () => Promise<void>;
+  emailConversation: () => void;
+  canShare: boolean;
   playMessage: (messageId: string, content: string) => Promise<void>;
   stopPlaying: () => void;
   isPlaying: boolean;
@@ -307,6 +310,65 @@ export function useEmilia(): UseEmiliaReturn {
     }
   }, [messages]);
 
+  // Check if Web Share API is supported
+  const canShare = typeof navigator !== 'undefined' && !!navigator.share;
+
+  // Share conversation using Web Share API
+  const shareConversation = useCallback(async () => {
+    if (messages.length === 0) return;
+
+    const conversationText = messages
+      .map((m) => {
+        const sender = m.role === 'assistant' ? 'Emilia' : 'Me';
+        return `${sender}: ${m.content}`;
+      })
+      .join('\n\n');
+
+    const shareData = {
+      title: 'LIFE SCORE - Emilia Help Conversation',
+      text: `My conversation with Emilia (LIFE SCORE Help Assistant):\n\n${conversationText}\n\n---\nPowered by clueslifescore.com`,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(shareData.text);
+        alert('Conversation copied to clipboard!');
+      }
+    } catch (err) {
+      // User cancelled or error - silently fail
+      if ((err as Error).name !== 'AbortError') {
+        console.error('[useEmilia] Share error:', err);
+      }
+    }
+  }, [messages]);
+
+  // Email conversation
+  const emailConversation = useCallback(() => {
+    if (messages.length === 0) return;
+
+    const conversationText = messages
+      .map((m) => {
+        const sender = m.role === 'assistant' ? 'Emilia' : 'Me';
+        const time = m.timestamp.toLocaleTimeString();
+        return `[${time}] ${sender}:\n${m.content}`;
+      })
+      .join('\n\n');
+
+    const subject = encodeURIComponent('LIFE SCORE - Emilia Help Conversation');
+    const body = encodeURIComponent(
+      `My conversation with Emilia (LIFE SCORE Help Assistant)\n` +
+      `Date: ${new Date().toLocaleDateString()}\n\n` +
+      `${conversationText}\n\n` +
+      `---\n` +
+      `Powered by clueslifescore.com`
+    );
+
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }, [messages]);
+
   // Stop playing audio (used in clearConversation)
   const stopPlayingRef = useRef(() => {
     if (audioRef.current) {
@@ -418,6 +480,9 @@ export function useEmilia(): UseEmiliaReturn {
     clearConversation,
     downloadConversation,
     printConversation,
+    shareConversation,
+    emailConversation,
+    canShare,
     playMessage,
     stopPlaying,
     isPlaying,

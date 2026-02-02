@@ -547,6 +547,18 @@
   background: rgba(20, 184, 166, 0.1);
 }
 
+.emilia-action-btn.share:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.emilia-action-btn.email:hover:not(:disabled) {
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
 .emilia-action-btn.clear {
   margin-left: auto;
 }
