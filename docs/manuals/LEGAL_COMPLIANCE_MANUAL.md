@@ -66,6 +66,8 @@ United Kingdom
 | Name | Personalization | Contract performance | Until account deletion |
 | Password (hashed) | Authentication | Contract performance | Until account deletion |
 | City comparisons | Service delivery | Contract performance | Until account deletion |
+| Olivia conversations | AI advisor chat history | Contract performance | Until account deletion |
+| Emilia help chat | Help assistant sessions | Contract performance | Session-based (browser only) |
 | Payment info | Billing (via Stripe) | Contract performance | Per Stripe retention |
 | IP address | Security, rate limiting | Legitimate interest | 90 days |
 | Usage analytics | Service improvement | Legitimate interest | Anonymized after 30 days |
