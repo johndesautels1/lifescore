@@ -416,16 +416,13 @@ Self-hosted avatar solutions to replace D-ID ($0.05-0.10/min):
 | Solution | Open Source | Real-Time | Est. Cost |
 |----------|-------------|-----------|-----------|
 | LivePortrait | Yes | Yes (TensorRT) | ~$0.01/min |
-| Wav2Lip | Yes (Apache 2.0) | Near | ~$0.01/min |
-| Wav2Lip | Yes | Near | ~$0.01/min |
 | PersonaLive | Yes | Yes | ~$0.01/min |
 
-**Recommended:** LivePortrait - Adopted by major platforms (Kuaishou, Douyin, WeChat)
+**IMPLEMENTED:** Replicate Wav2Lip - $0.0014/sec (~$0.005/video, ~18x cheaper than D-ID)
 
 **Resources:**
 - https://github.com/KlingTeam/LivePortrait
-- https://github.com/Winfredy/Wav2Lip
-- https://github.com/Rudrabha/Wav2Lip
+- https://replicate.com/skytells-research/wav2lip
 
 ---
 
