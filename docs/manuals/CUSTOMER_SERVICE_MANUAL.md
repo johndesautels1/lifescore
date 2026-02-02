@@ -485,8 +485,8 @@ Quick Start:
 
 Your [TIER] plan includes:
 - [X] comparisons per month
-- [X] Olivia messages
-- [List other features]
+- [X] Olivia minutes (if applicable)
+- [List other tier-specific features]
 
 Need help? Reply to this email or visit our Help Center.
 
