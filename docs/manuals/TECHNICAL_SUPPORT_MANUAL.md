@@ -239,8 +239,12 @@ D:\lifescore\
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
+| /api/emilia/thread | POST | Create new conversation thread |
+| /api/emilia/message | POST | Send message, get response |
 | /api/emilia/speak | POST | TTS with shimmer voice |
-| /api/emilia/chat | POST | Help chat completion |
+| /api/emilia/manuals | GET | Fetch manual content |
+
+**Knowledge Sync:** Run `npx ts-node scripts/sync-emilia-knowledge.ts` after updating manuals.
 
 ### 3.5 Usage/Quota Endpoints
 
