@@ -6132,9 +6132,7 @@ Users may receive email alerts at warning thresholds.
 ## 36.4 Account & Security
 
 **Password Requirements:**
-- Minimum 8 characters
-- At least 1 uppercase letter
-- At least 1 number
+- Minimum 6 characters
 
 **Account Creation Methods:**
 - Email + password

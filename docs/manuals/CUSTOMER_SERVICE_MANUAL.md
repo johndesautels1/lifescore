@@ -207,7 +207,7 @@ Users can create accounts via:
 
 **Requirements:**
 - Valid email address
-- Password: 8+ characters, 1 uppercase, 1 number
+- Password: minimum 6 characters
 
 ### 6.2 Profile Settings
 

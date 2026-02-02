@@ -75,7 +75,7 @@ Total issues found: **127** across 2,098 lines. Priority items:
 | # | Task | Files | Status |
 |---|------|-------|--------|
 | 3.1 | Standardize all domain names to `clueslifescore.com` | All manuals + code | ✅ DONE |
-| 3.2 | Fix password requirements inconsistency (6 chars vs 8 chars) | USER_MANUAL, CSM | NOT STARTED |
+| 3.2 | Fix password requirements inconsistency (6 chars vs 8 chars) | USER_MANUAL, CSM | ✅ FIXED |
 | 3.3 | Add missing 12 environment variables to Tech Manual | `TECHNICAL_SUPPORT_MANUAL.md` | NOT STARTED |
 | 3.4 | Fix database table count (14 vs 15) | `TECHNICAL_SUPPORT_MANUAL.md` | NOT STARTED |
 | 3.5 | Add missing database tables: api_quota_settings, api_quota_alert_log | Tech Manual §4.1 | NOT STARTED |

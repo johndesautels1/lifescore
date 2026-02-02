@@ -29,7 +29,7 @@
 | 3 | Header | OUTDATED | Version 1.0 | Version 2.0 | Medium |
 | 4 | Header | OUTDATED | January 28, 2026 | January 30, 2026 | Medium |
 | 61 | §2 Getting Started | ✅ FIXED | `clueslifescore.com` | `clueslifescore.com` | Critical |
-| 66 | §2 Account Creation | INCONSISTENT | "minimum 6 characters" | "8+ characters, 1 uppercase, 1 number" | Critical |
+| 66 | §2 Account Creation | ✅ FIXED | "minimum 6 characters" | "minimum 6 characters" | Critical |
 | 100 | §3 Navigation | MISSING | No mention of Cost Dashboard | Add "💰 Cost Dashboard" tab | High |
 | 107 | §3 Navigation | INCOMPLETE | "Ask Olivia" only | Add "Ask Emilia" help assistant | High |
 | 120 | §4 Running Comparison | UNVERIFIED | "200 cities" | Verify actual count in metros.ts | Medium |
@@ -77,7 +77,7 @@
 | 113-150 | §4 Common Inquiries | MISSING | No quota/billing inquiries | Add: "Why did I get a quota warning email?" | High |
 | 152-196 | §5 Troubleshooting | MISSING | No TTS fallback info | Add: ElevenLabs → OpenAI TTS fallback | Medium |
 | 181-188 | §5 Video Issues | INCOMPLETE | Generic solutions | Add: Check avatar_videos table, Replicate dashboard | Medium |
-| 200-239 | §6 Account Management | INCONSISTENT | Password: "8+ characters, 1 uppercase, 1 number" | Conflicts with User Manual "6 characters" - PICK ONE | Critical |
+| 200-239 | §6 Account Management | ✅ FIXED | Password: "minimum 6 characters" | Now matches code and all docs | Critical |
 | 206-207 | §6 Account Creation | MISSING | OAuth options listed | Add which OAuth providers (Google, GitHub) | Low |
 | 217-220 | §6 Profile Settings | INCOMPLETE | 6 settings listed | Add: Olivia voice selection, Avatar preference | Medium |
 | 223-228 | §6 Data Export | MISSING | No mention of data format | Specify: JSON format, includes all comparisons | Low |
@@ -143,7 +143,7 @@
 
 | Issue | User Manual | Customer Service Manual | Technical Manual | Resolution |
 |-------|-------------|------------------------|------------------|------------|
-| Password requirements | "minimum 6 characters" (L66) | "8+ characters, 1 uppercase, 1 number" (L209) | Not specified | Use CSM standard: 8+ chars |
+| Password requirements | ✅ FIXED: "minimum 6 characters" | ✅ FIXED: "minimum 6 characters" | Not specified | All now use: minimum 6 characters |
 | Domain name | ✅ FIXED: `clueslifescore.com` | ✅ FIXED | ✅ FIXED | All now use: `clueslifescore.com` |
 | City count | "200 cities" (L120) | "200 metropolitan areas" (L69) | Not specified | Verify in metros.ts |
 | Comparison limits | "1/month" all tiers (L416) | "1/month" all tiers (L84) | Not specified | Verify actual limits |
@@ -233,7 +233,7 @@ These items were verified as accurate and need NO changes:
 
 ### Phase 1 - Critical (Do First):
 1. ✅ DONE: Fix all domain names → `clueslifescore.com` (fixed 2026-02-02)
-2. Fix password requirements inconsistency
+2. ✅ DONE: Fix password requirements → "minimum 6 characters" (fixed 2026-02-02)
 3. Fix environment variables list (add 12 missing)
 4. Fix database table count (14 vs 15)
 5. Add missing database tables to documentation
@@ -277,7 +277,7 @@ D:\LifeScore\docs\manuals\TECHNICAL_SUPPORT_MANUAL.md
 ## VERIFICATION STEPS AFTER UPDATE
 
 1. ✅ VERIFIED: All domain references now use `clueslifescore.com` (2026-02-02)
-2. Verify password requirements match across all manuals
+2. ✅ VERIFIED: Password requirements now "minimum 6 characters" across all manuals (2026-02-02)
 3. Count database tables in Tech Manual - should match actual
 4. Verify all 22+ environment variables are documented
 5. Check that Emilia is mentioned in all manuals

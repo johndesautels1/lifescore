@@ -80,7 +80,9 @@ D:\lifescore
 - [ ] 2.1-2.10 - All pricing/tier documentation and code fixes
 
 ### Section 3 - Documentation Audit (15 items):
-- [ ] 3.1-3.15 - Domain names, password requirements, env vars, etc.
+- [x] 3.1 - Domain names ✅ FIXED
+- [x] 3.2 - Password requirements ✅ FIXED (now "minimum 6 characters")
+- [ ] 3.3-3.15 - Env vars, database tables, etc.
 
 ### Section 4 - Wav2Lip Migration (7 items):
 - [ ] 4.1-4.7 - Type definitions, cost calculator, manuals

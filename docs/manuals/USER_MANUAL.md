@@ -65,7 +65,7 @@ Each city receives a Freedom Score from 0-100, calculated across:
 3. Enter your information:
    - **Full Name** (optional)
    - **Email Address**
-   - **Password** (8+ characters, 1 uppercase, 1 number)
+   - **Password** (minimum 6 characters)
    - **Confirm Password**
 4. Click **Create Account**
 5. Check your email (including spam folder) for the verification link
