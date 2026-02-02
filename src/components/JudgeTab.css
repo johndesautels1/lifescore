@@ -654,6 +654,39 @@
   letter-spacing: 0.05em;
 }
 
+/* Cancel Video Button */
+.cancel-video-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 8px;
+  color: #ef4444;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-video-btn:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.2) 100%);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+}
+
+.cancel-video-btn .btn-icon {
+  font-size: 1rem;
+}
+
+.cancel-video-btn .btn-text {
+  text-transform: uppercase;
+}
+
 /* Error State */
 .awaiting-state.error-state .avatar-silhouette {
   border-color: rgba(239, 68, 68, 0.5);

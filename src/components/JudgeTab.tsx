@@ -1165,6 +1165,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
                         <span className="status-dot pulsing"></span>
                         <span className="status-text">Replicate Processing</span>
                       </div>
+                      <button
+                        className="cancel-video-btn"
+                        onClick={() => cancelVideoGeneration()}
+                      >
+                        <span className="btn-icon">✕</span>
+                        <span className="btn-text">CANCEL VIDEO</span>
+                      </button>
                     </div>
                   ) : judgeReport?.videoStatus === 'error' ? (
                     <div className="awaiting-state error-state">
