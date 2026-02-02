@@ -731,7 +731,7 @@ User clicks Judge tab (JudgeTab.tsx)
 - `OPENAI_API_KEY` - GPT-4o and Olivia API access
 - `TAVILY_API_KEY` - Web research API
 - `STRIPE_SECRET_KEY` - Payment processing (server)
-- `VITE_STRIPE_PUBLISHABLE_KEY` - Payment processing (client)
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
 - `RESEND_API_KEY` - Email alerts and notifications
 
 **Required (Features):**
@@ -747,10 +747,10 @@ User clicks Judge tab (JudgeTab.tsx)
 - `GEMINI_API_KEY` - Google Gemini evaluator
 - `GROK_API_KEY` - xAI Grok evaluator
 - `PERPLEXITY_API_KEY` - Perplexity evaluator
-- `D_ID_API_KEY` - D-ID avatar fallback
+- `DID_API_KEY` - D-ID avatar fallback
 - `HEYGEN_API_KEY` - HeyGen avatar fallback
 - `RESEND_FROM_EMAIL` - Custom sender email
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
+- `XAI_API_KEY` - Alias for GROK_API_KEY
 
 ### 11.3 Build Commands
 
