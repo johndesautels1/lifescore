@@ -646,25 +646,187 @@ GOOGLE_API_KEY
 *Full schema: docs/manuals/APP_SCHEMA_MANUAL.md*
 `,
 
-  equations: `# Judge Mathematical Equations Manual
+  equations: `# LIFE SCORE - Mathematical Equations & Scoring Manual
 
-## Overview
-
-This manual documents the mathematical reasoning and scoring equations used by the Opus Judge to evaluate city comparisons.
-
-## Coming Soon
-
-This documentation is currently being prepared. It will include:
-
-- Category weighting formulas
-- Consensus scoring algorithms
-- Enhanced mode aggregation
-- Confidence interval calculations
-- Tiebreaker logic
-- Evidence weighting methodology
+**Version:** 1.0.0 | **Updated:** 2026-02-03
 
 ---
-*Full content coming soon - check back for updates*
+
+## 1. Base Score Scale (0-100)
+
+### Legal Score Bands
+| Score | Meaning |
+|-------|---------|
+| 90-100 | Fully Legal/Unrestricted |
+| 70-89 | Generally Permissive |
+| 50-69 | Moderate Restrictions |
+| 30-49 | Significant Restrictions |
+| 0-29 | Prohibited/Illegal |
+
+### Enforcement Score Bands
+| Score | Meaning |
+|-------|---------|
+| 90-100 | Never/Rarely Enforced |
+| 70-89 | Low Priority |
+| 50-69 | Selectively Enforced |
+| 30-49 | Usually Enforced |
+| 0-29 | Strictly Enforced |
+
+---
+
+## 2. Dual-Score System
+
+Each metric produces **4 raw scores**:
+- city1LegalScore (0-100)
+- city1EnforcementScore (0-100)
+- city2LegalScore (0-100)
+- city2EnforcementScore (0-100)
+
+### Normalized Score Calculation
+
+**Standard Mode:**
+\`\`\`
+normalizedScore = (legalScore × lawWeight + enforcementScore × livedWeight) / 100
+Default: lawWeight = 50, livedWeight = 50
+\`\`\`
+
+**Conservative Mode:**
+\`\`\`
+normalizedScore = MIN(legalScore, enforcementScore)
+\`\`\`
+
+---
+
+## 3. Category Weights
+
+| Category | Metrics | Weight |
+|----------|--------:|-------:|
+| Personal Autonomy | 15 | 20% |
+| Housing & Property | 20 | 20% |
+| Business & Work | 25 | 20% |
+| Transportation | 15 | 15% |
+| Legal System | 15 | 15% |
+| Speech & Lifestyle | 10 | 10% |
+| **TOTAL** | **100** | **100%** |
+
+---
+
+## 4. Score Aggregation
+
+### Category Score
+\`\`\`
+categoryScore = Σ(metricScore × metricWeight) / Σ(metricWeight)
+categoryContribution = categoryScore × (categoryWeight / 100)
+\`\`\`
+
+### Total Score
+\`\`\`
+totalScore = Σ(categoryContribution) for all 6 categories
+\`\`\`
+
+---
+
+## 5. Score Differentiation
+
+### Category Win Bonus
+\`\`\`
+CATEGORY_WIN_BONUS = 2 points per category won
+Win threshold: lead by >5 points in category
+\`\`\`
+
+### Max Spread Bonus
+\`\`\`
+MAX_SPREAD_MULTIPLIER = 0.5
+Winner gets: maxCategorySpread × 0.5
+\`\`\`
+
+### Final Score
+\`\`\`
+finalScore = MIN(100, baseScore + winBonus + spreadBonus)
+\`\`\`
+
+---
+
+## 6. Confidence Levels
+
+Based on LLM score standard deviation:
+
+| Level | StdDev | Meaning |
+|-------|--------|---------|
+| unanimous | < 5 | All LLMs agree |
+| strong | 5-11 | High agreement |
+| moderate | 12-19 | Some disagreement |
+| split | >= 20 | Significant disagreement |
+
+### Standard Deviation
+\`\`\`
+σ = √(Σ(score - mean)² / n)
+\`\`\`
+
+### Agreement Percentage
+\`\`\`
+agreementPct = MAX(0, 100 - σ × 2)
+\`\`\`
+
+---
+
+## 7. Enhanced Mode (5 LLMs)
+
+**Providers:**
+1. Claude Sonnet 4.5
+2. GPT-4o
+3. Gemini 3 Pro
+4. Grok 4
+5. Perplexity Sonar
+
+### Consensus Score
+\`\`\`
+consensusScore = MEAN(validScores from all LLMs)
+\`\`\`
+
+---
+
+## 8. Winner Determination
+
+\`\`\`
+scoreDiff = |city1Score - city2Score|
+
+if scoreDiff < 1: winner = 'tie'
+else if city1Score > city2Score: winner = 'city1'
+else: winner = 'city2'
+\`\`\`
+
+### Category Winner
+\`\`\`
+if |cat1 - cat2| < 2: 'tie'
+else: higher score wins
+\`\`\`
+
+---
+
+## 9. THE JUDGE Analysis
+
+Claude Opus 4.5 provides:
+- **Trend Analysis**: rising, stable, declining
+- **Category Analysis**: Per-category breakdown
+- **Executive Summary**: Final recommendation
+- **Override Capability**: Can override scores based on trends
+
+---
+
+## 10. Master Formula
+
+\`\`\`
+TOTAL_SCORE = Σ [
+  (Σ [metricScore × metricWeight] / Σ [metricWeight]) × categoryWeight
+] + winBonus + spreadBonus
+
+Capped at 100
+\`\`\`
+
+---
+
+*Full manual: docs/manuals/JUDGE_EQUATIONS_MANUAL.md*
 `,
 };
 
