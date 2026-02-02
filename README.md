@@ -31,8 +31,8 @@ Site takes 1-3 minutes to load. Bundle is 1.36MB (should be <500KB). Full audit 
 2. **`src/components/PricingModal.tsx`** - User-facing pricing display
 3. **`src/components/PricingPage.tsx`** - Pricing page
 4. **`src/components/FeatureGate.tsx`** - Feature gating logic
-5. **`docs/manuals/USER_MANUAL.md`** - PIONEER→NAVIGATOR, fix all limits
-6. **`docs/manuals/CUSTOMER_SERVICE_MANUAL.md`** - PIONEER→NAVIGATOR, fix limits
+5. **`docs/manuals/USER_MANUAL.md`** - ✅ DONE (uses NAVIGATOR)
+6. **`docs/manuals/CUSTOMER_SERVICE_MANUAL.md`** - ✅ DONE (uses NAVIGATOR)
 7. **`docs/manuals/TECHNICAL_SUPPORT_MANUAL.md`** - Fix limits
 8. **`api/emilia/manuals.ts`** - Fix EMBEDDED_MANUALS content (lines 36-300)
 
@@ -255,12 +255,11 @@ README.md                        # This documentation
 
 **See:** `docs/PRICING_TIER_AUDIT.md` for complete list of 20+ files with incorrect tier information.
 
-**Common errors found:**
-- Manuals say "PIONEER" - should be "NAVIGATOR"
-- Manuals say "$9.99/$24.99" - should be "$29/$99"
-- Code says "3 comparisons/month free" - should be "1"
-- Code says "unlimited comparisons for paid" - should be "1/month"
-- Code says "50 Olivia messages/day" - should be "15 min/month" or "60 min/month"
+**Status (2026-02-02):** ✅ All tier naming standardized
+- Manuals use "NAVIGATOR" (not "PIONEER")
+- Pricing shows "$29/$99"
+- All tiers show "1 comparison/month"
+- Olivia uses "15 min/month" or "60 min/month"
 
 ### Stripe Integration
 

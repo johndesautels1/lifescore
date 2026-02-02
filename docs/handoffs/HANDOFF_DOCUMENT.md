@@ -192,7 +192,7 @@ api/
 
 ## Known Bugs
 
-1. **406 Error on usage_tracking** - Supabase query format issue (non-critical, fails silently)
+1. **406 Error on usage_tracking** - ✅ FIXED (2026-02-02) - Changed `.single()` to `.maybeSingle()` in useTierAccess.ts
 2. **Zustand deprecation warning** - `import { create } from 'zustand'` should be used
 3. **Session timeout logs** - Profile fetch timeout after 15s (network/Supabase issue)
 

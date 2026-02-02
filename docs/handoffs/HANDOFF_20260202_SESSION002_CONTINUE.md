@@ -71,7 +71,7 @@ D:\lifescore
 ## ITEMS REMAINING (from 89-item list)
 
 ### Critical Priority:
-- [ ] 1.2 - Supabase 406 Not Acceptable error
+- [x] 1.2 - Supabase 406 Not Acceptable error ✅ FIXED
 - [ ] 1.3 - Tier/permission issue (loading saved comparisons ignores user tier)
 - [ ] 1.4 - Results page not opening after enhanced comparison
 - [ ] 1.5 - Cost tracking (capture usage field from API responses)

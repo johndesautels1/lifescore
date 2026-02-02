@@ -15,7 +15,7 @@
 | 3 | Runaway console polling messages | MEDIUM | useJudgeVideo | YES |
 | 4 | Save button stuck in depressed state | HIGH | EnhancedResults | NO |
 | 5 | Saved reports not appearing | HIGH | SavedComparisons | NO |
-| 6 | Supabase 406 Not Acceptable error | MEDIUM | Auth/Supabase | NO |
+| 6 | Supabase 406 Not Acceptable error | MEDIUM | Auth/Supabase | YES ✅ |
 | 7 | judge_reports 400 Bad Request | HIGH | JudgeTab | FIXED (3ef88d6) |
 
 ---
@@ -155,7 +155,7 @@ Failed to load resource: the server responded with a status of 406 ()
 - [ ] Supabase client configuration issue
 - [ ] CORS or middleware interference
 
-**Status:** NOT STARTED (may resolve with other fixes)
+**Status:** ✅ FIXED (2026-02-02) - Changed `.single()` to `.maybeSingle()` in useTierAccess.ts (lines 319, 402)
 
 ---
 

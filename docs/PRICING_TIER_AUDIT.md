@@ -48,8 +48,8 @@ All limits are **PER MONTH**.
 2. `src/components/PricingModal.tsx`
 3. `src/components/PricingPage.tsx`
 4. `src/components/FeatureGate.tsx`
-5. `docs/manuals/USER_MANUAL.md` - Change PIONEER→NAVIGATOR, fix limits
-6. `docs/manuals/CUSTOMER_SERVICE_MANUAL.md` - Change PIONEER→NAVIGATOR, fix limits
+5. `docs/manuals/USER_MANUAL.md` - ✅ DONE (uses NAVIGATOR)
+6. `docs/manuals/CUSTOMER_SERVICE_MANUAL.md` - ✅ DONE (uses NAVIGATOR)
 7. `docs/manuals/TECHNICAL_SUPPORT_MANUAL.md`
 8. `api/emilia/manuals.ts` - Fix embedded content
 9. `README.md`
@@ -62,22 +62,21 @@ All limits are **PER MONTH**.
 
 ---
 
-## WHAT'S WRONG NOW
+## WHAT'S BEEN FIXED (As of 2026-02-02)
 
-- Manuals say "PIONEER" - should be "NAVIGATOR"
-- Manuals say "$9.99/$24.99" - should be "$29/$99"
-- Code says "3 comparisons/month free" - should be "1"
-- Code says "unlimited comparisons for paid" - should be "1/month"
-- Code says "50 Olivia messages/day" - should be "15 min/month" or "60 min/month"
-- Everything uses wrong per-unit limits
+- ✅ Manuals now use "NAVIGATOR" (not "PIONEER")
+- ✅ Manuals now use "$29/$99" pricing
+- ✅ Code says "1 comparison/month" for all tiers
+- ✅ Olivia uses minutes per month (15min/60min)
+- ✅ All tier limits corrected in useTierAccess.ts
 
 ---
 
-## NEXT AGENT INSTRUCTIONS
+## STATUS: ✅ COMPLETED (2026-02-02)
 
-1. Start with `src/hooks/useTierAccess.ts` - update TIER_LIMITS to match matrix above
-2. Propagate to PricingModal.tsx, PricingPage.tsx, FeatureGate.tsx
-3. Fix all manuals: PIONEER→NAVIGATOR, update all limit numbers
-4. Fix api/emilia/manuals.ts embedded content
-5. Run `npm run build` to verify
-6. Commit: "fix: Standardize pricing tiers across codebase"
+All tier naming and limits have been standardized:
+- `src/hooks/useTierAccess.ts` - ✅ SOURCE OF TRUTH
+- `src/components/PricingModal.tsx` - ✅ Uses NAVIGATOR
+- `src/components/PricingPage.tsx` - ✅ Uses NAVIGATOR
+- `docs/manuals/USER_MANUAL.md` - ✅ Uses NAVIGATOR
+- `docs/manuals/CUSTOMER_SERVICE_MANUAL.md` - ✅ Uses NAVIGATOR

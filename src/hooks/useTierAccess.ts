@@ -316,7 +316,7 @@ export function useTierAccess(): TierAccessHook {
           .select('*')
           .eq('user_id', profile.id)
           .eq('period_start', periodStart)
-          .single()
+          .maybeSingle()
       );
 
       if (error && error.code !== 'PGRST116') {
@@ -399,7 +399,7 @@ export function useTierAccess(): TierAccessHook {
             .select('*')
             .eq('user_id', profile.id)
             .eq('period_start', periodStart)
-            .single()
+            .maybeSingle()
         );
 
         if (existing) {

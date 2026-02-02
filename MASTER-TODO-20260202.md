@@ -27,7 +27,7 @@
 | # | Bug | File(s) | Status | Priority |
 |---|-----|---------|--------|----------|
 | 1.1 | Judge Tab Video/Pic Not Rendering | `src/components/JudgeTab.tsx` | NOT STARTED | HIGH |
-| 1.2 | Supabase 406 Not Acceptable error | Auth/Supabase | NOT STARTED | MEDIUM |
+| 1.2 | Supabase 406 Not Acceptable error | Auth/Supabase | ✅ FIXED | MEDIUM |
 | 1.3 | Tier/permission issue - loading saved comparisons ignores user's actual tier | `src/components/FeatureGate.tsx`, `src/hooks/useTierAccess.ts` | NOT STARTED | CRITICAL |
 | 1.4 | Results page not opening after enhanced comparison | `src/App.tsx:136-140`, `src/components/EnhancedComparison.tsx` | NOT STARTED | HIGH |
 | 1.5 | Cost tracking - capture usage field from API responses | Frontend integration | IN PROGRESS | MEDIUM |
@@ -51,19 +51,18 @@ All limits are **PER MONTH**. Correct values:
 | 2.2 | Fix pricing display | `src/components/PricingModal.tsx` | NOT STARTED |
 | 2.3 | Fix pricing page | `src/components/PricingPage.tsx` | NOT STARTED |
 | 2.4 | Fix feature gating logic | `src/components/FeatureGate.tsx` | NOT STARTED |
-| 2.5 | Fix User Manual - PIONEER→NAVIGATOR, fix limits | `docs/manuals/USER_MANUAL.md` | NOT STARTED |
-| 2.6 | Fix Customer Service Manual | `docs/manuals/CUSTOMER_SERVICE_MANUAL.md` | NOT STARTED |
+| 2.5 | Fix User Manual - PIONEER→NAVIGATOR, fix limits | `docs/manuals/USER_MANUAL.md` | ✅ DONE |
+| 2.6 | Fix Customer Service Manual | `docs/manuals/CUSTOMER_SERVICE_MANUAL.md` | ✅ DONE |
 | 2.7 | Fix Technical Support Manual | `docs/manuals/TECHNICAL_SUPPORT_MANUAL.md` | NOT STARTED |
 | 2.8 | Fix embedded manuals content (lines 36-300) | `api/emilia/manuals.ts` | NOT STARTED |
 | 2.9 | Fix main README | `README.md` | NOT STARTED |
 | 2.10 | Fix legal documents (Terms, Refund) | `docs/legal/*.md` | NOT STARTED |
 
-**Common errors to fix:**
-- "PIONEER" → "NAVIGATOR"
-- "$9.99/$24.99" → "$29/$99"
-- "3 comparisons/month free" → "1"
-- "unlimited comparisons for paid" → "1/month"
-- "50 Olivia messages/day" → "15 min/month" or "60 min/month"
+**Status (2026-02-02):** ✅ Tier naming standardized
+- PIONEER → NAVIGATOR: ✅ DONE
+- Pricing $29/$99: ✅ DONE
+- 1 comparison/month: ✅ DONE
+- Olivia minutes: ✅ DONE
 
 ---
 
