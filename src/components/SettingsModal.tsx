@@ -7,6 +7,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess, TIER_NAMES } from '../hooks/useTierAccess';
 import { supabase } from '../lib/supabase';
+import type { LLMAPIKeys } from '../types/enhancedComparison';
+import { getStoredAPIKeys, saveAPIKeys } from '../services/enhancedComparison';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -15,7 +17,7 @@ interface SettingsModalProps {
   onUpgradeClick?: () => void;
 }
 
-type SettingsTab = 'profile' | 'security' | 'subscription';
+type SettingsTab = 'profile' | 'security' | 'subscription' | 'api-keys';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgradeClick }) => {
   const { user, profile, updateProfile, isConfigured } = useAuth();
@@ -36,6 +38,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys());
+  const [apiKeysSaved, setApiKeysSaved] = useState(false);
+
   // Initialize form with user data
   useEffect(() => {
     if (user) {
@@ -49,7 +55,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
     setProfileError('');
     setPasswordSuccess('');
     setPasswordError('');
+    setApiKeysSaved(false);
   }, [activeTab]);
+
+  // Handle API keys save
+  const handleSaveApiKeys = useCallback(() => {
+    saveAPIKeys(apiKeys);
+    setApiKeysSaved(true);
+    // Clear saved message after 3 seconds
+    setTimeout(() => setApiKeysSaved(false), 3000);
+  }, [apiKeys]);
 
   // Handle profile update
   const handleProfileUpdate = useCallback(async (e: React.FormEvent) => {
@@ -174,6 +189,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
               <path fill="currentColor" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
             </svg>
             <span>Subscription</span>
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'api-keys' ? 'active' : ''}`}
+            onClick={() => setActiveTab('api-keys')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+            </svg>
+            <span>API Keys</span>
           </button>
         </div>
 
@@ -465,6 +489,134 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
                     </svg>
                     <span>Judge video verdicts</span>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* API Keys Tab */}
+          {activeTab === 'api-keys' && (
+            <div className="settings-form">
+              <div className="settings-section">
+                <h3>LLM API Keys</h3>
+                <p className="section-description">
+                  Configure your API keys to enable enhanced multi-LLM comparison.
+                  Keys are stored locally in your browser.
+                </p>
+
+                <div className="api-key-list">
+                  <div className="api-key-group">
+                    <label>
+                      <span className="key-icon">🎭</span>
+                      Anthropic (Claude)
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeys.anthropic || ''}
+                      onChange={e => setApiKeys({ ...apiKeys, anthropic: e.target.value })}
+                      placeholder="sk-ant-..."
+                    />
+                    <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4.5</span>
+                  </div>
+
+                  <div className="api-key-group">
+                    <label>
+                      <span className="key-icon">🤖</span>
+                      OpenAI
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeys.openai || ''}
+                      onChange={e => setApiKeys({ ...apiKeys, openai: e.target.value })}
+                      placeholder="sk-..."
+                    />
+                    <span className="key-models">GPT-4o</span>
+                  </div>
+
+                  <div className="api-key-group">
+                    <label>
+                      <span className="key-icon">💎</span>
+                      Gemini
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeys.gemini || ''}
+                      onChange={e => setApiKeys({ ...apiKeys, gemini: e.target.value })}
+                      placeholder="AI..."
+                    />
+                    <span className="key-models">Gemini 3 Pro</span>
+                  </div>
+
+                  <div className="api-key-group">
+                    <label>
+                      <span className="key-icon">𝕏</span>
+                      xAI
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeys.xai || ''}
+                      onChange={e => setApiKeys({ ...apiKeys, xai: e.target.value })}
+                      placeholder="xai-..."
+                    />
+                    <span className="key-models">Grok 4</span>
+                  </div>
+
+                  <div className="api-key-group">
+                    <label>
+                      <span className="key-icon">🔮</span>
+                      Perplexity
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeys.perplexity || ''}
+                      onChange={e => setApiKeys({ ...apiKeys, perplexity: e.target.value })}
+                      placeholder="pplx-..."
+                    />
+                    <span className="key-models">Sonar Reasoning Pro</span>
+                  </div>
+
+                  <div className="api-key-group optional">
+                    <label>
+                      <span className="key-icon">🔍</span>
+                      Tavily (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeys.tavily || ''}
+                      onChange={e => setApiKeys({ ...apiKeys, tavily: e.target.value })}
+                      placeholder="tvly-..."
+                    />
+                    <span className="key-models">Web search for Claude (enhances accuracy)</span>
+                  </div>
+                </div>
+
+                {apiKeysSaved && (
+                  <div className="settings-success">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                      <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>API keys saved successfully</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="settings-btn primary"
+                  onClick={handleSaveApiKeys}
+                >
+                  <span>Save API Keys</span>
+                </button>
+              </div>
+
+              <div className="settings-section">
+                <h3>How It Works</h3>
+                <p className="section-description">
+                  Enhanced mode uses 5 different AI providers to evaluate each metric,
+                  then Claude Opus synthesizes a final verdict as the Judge.
+                </p>
+                <div className="api-key-info">
+                  <p><strong>SOVEREIGN tier required</strong> for Enhanced Mode (5 LLMs)</p>
+                  <p>Your keys are stored only in your browser's local storage and never sent to our servers.</p>
                 </div>
               </div>
             </div>
