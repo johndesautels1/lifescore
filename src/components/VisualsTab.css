@@ -9,6 +9,70 @@
 }
 
 /* ============================================================================
+   REPORT SELECTOR DROPDOWN
+   ============================================================================ */
+
+.report-selector-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--card-background, #1a1a2e);
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #2a2a4a);
+}
+
+.report-selector-label {
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  white-space: nowrap;
+}
+
+.report-selector-dropdown {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color, #2a2a4a);
+  border-radius: 8px;
+  color: var(--text-primary, #ffffff);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.report-selector-dropdown:hover {
+  border-color: rgba(201, 162, 39, 0.5);
+}
+
+.report-selector-dropdown:focus {
+  outline: none;
+  border-color: #c9a227;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+}
+
+.report-selector-dropdown option {
+  background: #1a1a2e;
+  color: #ffffff;
+  padding: 0.5rem;
+}
+
+.report-selector-dropdown optgroup {
+  font-weight: 600;
+  color: #c9a227;
+}
+
+@media (max-width: 600px) {
+  .report-selector-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .report-selector-label {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* ============================================================================
    GAMMA SECTION
    ============================================================================ */
 

@@ -4,12 +4,17 @@
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
 import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
-import { saveGammaReport, hasGammaReportForComparison } from '../services/savedComparisons';
+import {
+  saveGammaReport,
+  hasGammaReportForComparison,
+  getLocalComparisons,
+  getLocalEnhancedComparisons,
+} from '../services/savedComparisons';
 import NewLifeVideos from './NewLifeVideos';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
@@ -36,7 +41,7 @@ function isEnhancedResult(result: AnyComparisonResult | null): result is Enhance
 }
 
 const VisualsTab: React.FC<VisualsTabProps> = ({
-  result,
+  result: propResult,
   reportState: propsReportState,
   setReportState: propsSetReportState,
   exportFormat: propsExportFormat,
@@ -45,6 +50,41 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
   const { checkUsage, incrementUsage } = useTierAccess();
+
+  // Selected comparison from dropdown (null = use prop)
+  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
+
+  // Load saved comparisons with refresh mechanism
+  const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
+  const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
+
+  const savedComparisons = useMemo(() => getLocalComparisons(), [comparisonsRefreshKey]);
+  const savedEnhanced = useMemo(() => getLocalEnhancedComparisons(), [comparisonsRefreshKey]);
+
+  // Listen for storage events to refresh when data changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'lifescore_saved_comparisons' || e.key === 'lifescore_saved_enhanced') {
+        refreshComparisons();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshComparisons]);
+
+  // Determine which comparison to use: Selected from dropdown > Prop
+  const getActiveComparison = (): AnyComparisonResult | null => {
+    if (selectedComparisonId) {
+      // Look up in saved comparisons
+      const savedStd = savedComparisons.find(c => c.result.comparisonId === selectedComparisonId);
+      if (savedStd) return savedStd.result;
+      const savedEnh = savedEnhanced.find(c => c.result.comparisonId === selectedComparisonId);
+      if (savedEnh) return savedEnh.result;
+    }
+    return propResult;
+  };
+
+  const result = getActiveComparison();
 
   // Local state fallback for backward compatibility
   const [localReportState, setLocalReportState] = useState<VisualReportState>({
@@ -149,7 +189,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     setReportState({ status: 'idle' });
   }, []);
 
-  if (!result) {
+  const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
+
+  if (!result && !hasSavedComparisons) {
     return (
       <div className="visuals-tab">
         <div className="no-results-message card">
@@ -162,7 +204,61 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   return (
     <div className="visuals-tab">
+      {/* Report Selection Dropdown */}
+      {hasSavedComparisons && (
+        <div className="report-selector-section">
+          <label className="report-selector-label">Select Report:</label>
+          <select
+            className="report-selector-dropdown"
+            value={selectedComparisonId ?? ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedComparisonId(value === '' ? null : value);
+              // Reset report state when switching comparisons
+              if (value !== selectedComparisonId) {
+                setReportState({ status: 'idle' });
+              }
+            }}
+          >
+            <option value="">
+              {propResult
+                ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
+                : 'Select a saved report'}
+            </option>
+            {savedEnhanced.length > 0 && (
+              <optgroup label="Enhanced Comparisons">
+                {savedEnhanced.map((saved) => (
+                  <option key={saved.id} value={saved.result.comparisonId}>
+                    {saved.result.city1.city} vs {saved.result.city2.city}
+                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {savedComparisons.length > 0 && (
+              <optgroup label="Standard Comparisons">
+                {savedComparisons.map((saved) => (
+                  <option key={saved.id} value={saved.result.comparisonId}>
+                    {saved.result.city1.city} vs {saved.result.city2.city}
+                    {saved.nickname ? ` (${saved.nickname})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
+      )}
+
+      {/* No result selected message */}
+      {!result && (
+        <div className="no-results-message card">
+          <h3>Select a Report</h3>
+          <p>Choose a saved comparison from the dropdown above to generate visualizations.</p>
+        </div>
+      )}
+
       {/* Gamma Report Generation Section */}
+      {result && (
       <div className="gamma-section card">
         <h3 className="section-title">
           <span className="section-icon">📊</span>
@@ -324,23 +420,26 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {/* In-App Visualizations - Only for Enhanced mode */}
-      {isEnhancedResult(result) ? (
-        <div className="in-app-visuals">
-          <NewLifeVideos result={result} />
-        </div>
-      ) : (
-        <div className="in-app-visuals">
-          <h3 className="section-title">
-            <span className="section-icon">🎬</span>
-            City Life Videos
-          </h3>
-          <div className="simple-mode-notice">
-            <p>City life videos are available in Enhanced Mode (multi-LLM comparison).</p>
-            <p>Use the "Generate Report" button above to create a visual presentation of your comparison.</p>
+      {result && (
+        isEnhancedResult(result) ? (
+          <div className="in-app-visuals">
+            <NewLifeVideos result={result} />
           </div>
-        </div>
+        ) : (
+          <div className="in-app-visuals">
+            <h3 className="section-title">
+              <span className="section-icon">🎬</span>
+              City Life Videos
+            </h3>
+            <div className="simple-mode-notice">
+              <p>City life videos are available in Enhanced Mode (multi-LLM comparison).</p>
+              <p>Use the "Generate Report" button above to create a visual presentation of your comparison.</p>
+            </div>
+          </div>
+        )
       )}
     </div>
   );
