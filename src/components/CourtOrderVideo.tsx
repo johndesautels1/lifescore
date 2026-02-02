@@ -13,6 +13,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
+import { useTierAccess } from '../hooks/useTierAccess';
 import './CourtOrderVideo.css';
 
 // ============================================================================
@@ -35,6 +36,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   winnerScore,
 }) => {
   const { user } = useAuth();
+  const { checkUsage, incrementUsage } = useTierAccess();
   const {
     video,
     isGenerating,
@@ -60,6 +62,17 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       console.warn('[CourtOrderVideo] No user ID available');
       return;
     }
+
+    // Check usage limits before generating Grok video
+    const usageResult = await checkUsage('grokVideos');
+    if (!usageResult.allowed) {
+      console.log('[CourtOrderVideo] Grok video limit reached:', usageResult);
+      return;
+    }
+
+    // Increment usage counter before starting generation
+    await incrementUsage('grokVideos');
+    console.log('[CourtOrderVideo] Incremented grokVideos usage');
 
     setHasStarted(true);
 

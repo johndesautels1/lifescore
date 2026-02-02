@@ -10,6 +10,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
+import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
 import './JudgeVideo.css';
 
@@ -44,6 +45,7 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
+  const { checkUsage, incrementUsage } = useTierAccess();
   const {
     video,
     status,
@@ -74,7 +76,21 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
     }
   }, [error, onError]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    // Check usage limits before generating Judge video
+    const usageResult = await checkUsage('judgeVideos');
+    if (!usageResult.allowed) {
+      console.log('[JudgeVideo] Judge video limit reached:', usageResult);
+      if (onError) {
+        onError('Monthly Judge video limit reached. Please upgrade to continue.');
+      }
+      return;
+    }
+
+    // Increment usage counter before starting generation
+    await incrementUsage('judgeVideos');
+    console.log('[JudgeVideo] Incremented judgeVideos usage');
+
     const request: GenerateJudgeVideoRequest = {
       script,
       city1,
