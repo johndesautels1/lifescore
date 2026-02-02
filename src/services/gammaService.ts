@@ -438,7 +438,7 @@ LIFE SCORE™ is part of the CLUES (Comprehensive Location & Utility Evaluation
 System) platform by Clues Intelligence LTD. We help individuals make data-driven
 decisions about international relocation based on verified legal data.
 
-**Website:** lifescore.cluesintelligence.com
+**Website:** clueslifescore.com
 **Copyright:** © 2025-2026 Clues Intelligence LTD. All Rights Reserved.
 
 ================================================================================

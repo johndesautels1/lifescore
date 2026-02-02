@@ -12,7 +12,7 @@ interface OGMetaParams {
   delta: number;
 }
 
-const BASE_URL = 'https://lifescore.cluesnomad.com';
+const BASE_URL = 'https://clueslifescore.com';
 
 export function buildOGImageURL(params: OGMetaParams): string {
   const searchParams = new URLSearchParams({

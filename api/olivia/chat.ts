@@ -202,7 +202,7 @@ async function callFieldEvidenceAPI(
     // Use internal API call (same server)
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_BASE_URL || 'https://lifescore.cluesintelligence.com';
+      : process.env.NEXT_PUBLIC_BASE_URL || 'https://clueslifescore.com';
 
     const response = await fetchWithTimeout(
       `${baseUrl}/api/olivia/field-evidence`,

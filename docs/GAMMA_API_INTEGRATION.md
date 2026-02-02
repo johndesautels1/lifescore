@@ -341,7 +341,7 @@ POST https://public-api.gamma.app/v1.0/generations/from-template
       "topRight": {
         "type": "image",
         "source": "custom",
-        "src": "https://lifescore.cluesnomad.com/clues-logo.png",
+        "src": "https://clueslifescore.com/clues-logo.png",
         "size": "sm"
       },
       "bottomRight": {

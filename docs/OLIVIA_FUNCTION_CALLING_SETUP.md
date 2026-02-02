@@ -6,7 +6,7 @@ This document explains how to add the `getFieldEvidence` function to the Olivia 
 
 ## API Endpoint
 
-**URL:** `https://lifescore.cluesintelligence.com/api/olivia/field-evidence`
+**URL:** `https://clueslifescore.com/api/olivia/field-evidence`
 **Method:** POST
 **Content-Type:** application/json
 
@@ -187,7 +187,7 @@ Paste this JSON into the function configuration:
 Under the function, configure the action:
 
 1. **Type:** API Call
-2. **URL:** `https://lifescore.cluesintelligence.com/api/olivia/field-evidence`
+2. **URL:** `https://clueslifescore.com/api/olivia/field-evidence`
 3. **Method:** POST
 4. **Headers:**
    - `Content-Type: application/json`

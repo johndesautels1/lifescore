@@ -1,7 +1,7 @@
 # LIFE SCORE™ MASTER README
 **Conversation ID:** `LIFESCORE-PERF-20260202`
 **Last Updated:** February 2, 2026
-**Domain:** lifescore.cluesintelligence.com
+**Domain:** clueslifescore.com
 
 ---
 

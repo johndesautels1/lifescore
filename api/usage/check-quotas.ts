@@ -20,7 +20,7 @@ const ALERT_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com'];
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'alerts@lifescore.app';
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'alerts@clueslifescore.com';
 
 // ============================================================================
 // TYPES

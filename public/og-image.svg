@@ -28,7 +28,7 @@
   <text x="900" y="400" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#f1f5f9">City B</text>
 
   <!-- Footer -->
-  <text x="600" y="570" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#64748b">100 Metrics | 6 Categories | lifescore.cluesnomad.com</text>
+  <text x="600" y="570" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#64748b">100 Metrics | 6 Categories | clueslifescore.com</text>
 
   <!-- Clues Badge -->
   <text x="600" y="600" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#475569">Clues Intelligence LTD</text>
