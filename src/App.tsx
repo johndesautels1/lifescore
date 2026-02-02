@@ -448,37 +448,78 @@ const AppContent: React.FC = () => {
                     onResultsUpdate={(llmResults, judgeResult) => {
                       console.log('[App] onResultsUpdate called | llmResults:', llmResults.size, '| judgeResult:', !!judgeResult);
 
-                      if (judgeResult && llmResults.size > 0) {
-                        // Validate judge result structure
-                        if (!judgeResult.city1Consensuses || !judgeResult.city2Consensuses) {
-                          console.error('[App] Invalid judge result structure - missing consensuses:', judgeResult);
-                          setEnhancedStatus('complete');
-                          return;
-                        }
-
-                        // Build EnhancedComparisonResult from LLM results and judge output
-                        console.log('[App] Judge result received, building enhanced result...', {
-                          city1Consensuses: judgeResult.city1Consensuses?.length,
-                          city2Consensuses: judgeResult.city2Consensuses?.length,
-                          overallAgreement: judgeResult.overallAgreement
-                        });
-
-                        // Import the builder function and construct result
+                      // Helper function to build and set result
+                      const buildAndSetResult = (
+                        effectiveJudgeResult: JudgeOutput | null,
+                        isPartial: boolean = false
+                      ) => {
                         import('./services/opusJudge').then(({ buildEnhancedResultFromJudge }) => {
                           try {
+                            // If no judge result, create a minimal one from LLM data
+                            let finalJudgeResult = effectiveJudgeResult;
+
+                            if (!finalJudgeResult || !finalJudgeResult.city1Consensuses || !finalJudgeResult.city2Consensuses) {
+                              console.warn('[App] Building fallback judge result from LLM data (partial results)');
+                              // Build minimal judge result from LLM scores
+                              const llmResultsArray = Array.from(llmResults.values());
+                              const city1Consensuses: any[] = [];
+                              const city2Consensuses: any[] = [];
+
+                              // Aggregate scores by metric
+                              llmResultsArray.forEach(evalResult => {
+                                if (!evalResult.success && (!evalResult.scores || evalResult.scores.length === 0)) return;
+
+                                evalResult.scores?.forEach((score: LLMMetricScore) => {
+                                  const consensus = {
+                                    metricId: score.metricId,
+                                    llmScores: [score],
+                                    consensusScore: score.normalizedScore,
+                                    legalScore: score.legalScore || score.normalizedScore,
+                                    enforcementScore: score.normalizedScore,
+                                    confidenceLevel: 'moderate' as const,
+                                    standardDeviation: 0,
+                                    judgeExplanation: `Based on ${evalResult.provider} evaluation (partial - judge unavailable)`
+                                  };
+
+                                  if (score.city === 'city1') {
+                                    const existing = city1Consensuses.find(c => c.metricId === score.metricId);
+                                    if (!existing) city1Consensuses.push(consensus);
+                                  } else if (score.city === 'city2') {
+                                    const existing = city2Consensuses.find(c => c.metricId === score.metricId);
+                                    if (!existing) city2Consensuses.push(consensus);
+                                  }
+                                });
+                              });
+
+                              finalJudgeResult = {
+                                city1Consensuses,
+                                city2Consensuses,
+                                overallAgreement: 50, // Unknown without judge
+                                disagreementAreas: [],
+                                judgeLatencyMs: 0
+                              };
+                            }
+
                             const result = buildEnhancedResultFromJudge(
                               pendingCities.city1,
                               pendingCities.city2,
                               Array.from(llmResults.values()),
-                              judgeResult,
-                              customWeights  // Pass user's custom weights for persona-based scoring
+                              finalJudgeResult,
+                              customWeights
                             );
+
+                            // Add warning if partial results
+                            if (isPartial) {
+                              (result as any).warning = 'Partial results: Some LLMs failed to return complete data. Showing available metrics.';
+                            }
+
                             console.log('[App] Enhanced result built successfully:', {
                               city1: result.city1?.city,
                               city2: result.city2?.city,
                               winner: result.winner,
                               totalScore1: result.city1?.totalConsensusScore,
-                              totalScore2: result.city2?.totalConsensusScore
+                              totalScore2: result.city2?.totalConsensusScore,
+                              isPartial
                             });
 
                             // === COST TRACKING ===
@@ -490,12 +531,9 @@ const AppContent: React.FC = () => {
                                 'enhanced'
                               );
 
-                              // Add evaluator costs from LLM results
                               llmResults.forEach((evalResult, provider) => {
                                 if (evalResult.usage?.tokens) {
                                   const { inputTokens, outputTokens } = evalResult.usage.tokens;
-
-                                  // Map provider to pricing key
                                   const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-4-5' :
                                                      provider === 'gpt-4o' ? 'gpt-4o' :
                                                      provider === 'gemini-3-pro' ? 'gemini-3-pro' :
@@ -516,7 +554,6 @@ const AppContent: React.FC = () => {
                                       context: 'evaluation'
                                     };
 
-                                    // Add to appropriate array based on provider
                                     if (provider === 'claude-sonnet') costBreakdown.claudeSonnet.push(apiCall);
                                     else if (provider === 'gpt-4o') costBreakdown.gpt4o.push(apiCall);
                                     else if (provider === 'gemini-3-pro') costBreakdown.gemini.push(apiCall);
@@ -526,9 +563,8 @@ const AppContent: React.FC = () => {
                                 }
                               });
 
-                              // Add judge costs from judge result
-                              if (judgeResult.usage?.opusTokens) {
-                                const { inputTokens, outputTokens } = judgeResult.usage.opusTokens;
+                              if (effectiveJudgeResult?.usage?.opusTokens) {
+                                const { inputTokens, outputTokens } = effectiveJudgeResult.usage.opusTokens;
                                 const judgeCosts = calculateLLMCost('claude-opus-4-5', inputTokens, outputTokens);
                                 costBreakdown.opusJudge = {
                                   provider: 'claude-opus',
@@ -543,7 +579,6 @@ const AppContent: React.FC = () => {
                                 };
                               }
 
-                              // Finalize and store
                               const finalBreakdown = finalizeCostBreakdown(costBreakdown);
                               storeCostBreakdown(finalBreakdown);
                               console.log('[App] Cost tracking stored:', formatCostBreakdownLog(finalBreakdown));
@@ -557,30 +592,77 @@ const AppContent: React.FC = () => {
                             console.log('[App] State updated - tab should switch now');
 
                             // === JUDGE PRE-GENERATION ===
-                            // Fire-and-forget: Start background Judge report + video generation
-                            // This runs in parallel while user views results
-                            try {
-                              const userId = user?.id || 'guest';
-                              console.log('[App] Starting Judge pre-generation in background...');
-                              startJudgePregeneration(result, userId);
-                            } catch (pregenError) {
-                              // Non-fatal - don't block the UI
-                              console.error('[App] Judge pre-generation error (non-fatal):', pregenError);
+                            if (!isPartial) {
+                              try {
+                                const userId = user?.id || 'guest';
+                                console.log('[App] Starting Judge pre-generation in background...');
+                                startJudgePregeneration(result, userId);
+                              } catch (pregenError) {
+                                console.error('[App] Judge pre-generation error (non-fatal):', pregenError);
+                              }
                             }
                             // === END JUDGE PRE-GENERATION ===
                           } catch (buildError) {
                             console.error('[App] Error building enhanced result:', buildError);
-                            // Still mark as complete to prevent UI from hanging
+                            // FIX: Still set a minimal result so results page shows
+                            setEnhancedResult({
+                              city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
+                              city2: { city: pendingCities.city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
+                              winner: 'tie',
+                              scoreDifference: 0,
+                              categoryWinners: {} as any,
+                              comparisonId: `LIFE-ERR-${Date.now()}`,
+                              generatedAt: new Date().toISOString(),
+                              llmsUsed: Array.from(llmResults.keys()),
+                              judgeModel: 'claude-opus',
+                              overallConsensusConfidence: 'low',
+                              disagreementSummary: 'Error building results - partial data shown',
+                              processingStats: { totalTimeMs: 0, llmTimings: {} as any, metricsEvaluated: 0 },
+                              warning: `Error building results: ${buildError instanceof Error ? buildError.message : 'Unknown error'}`
+                            } as any);
                             setEnhancedStatus('complete');
                           }
                         }).catch(importError => {
                           console.error('Error importing opusJudge module:', importError);
-                          // Still mark as complete to prevent UI from hanging
+                          // FIX: Set minimal result so results page shows
+                          setEnhancedResult({
+                            city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
+                            city2: { city: pendingCities.city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
+                            winner: 'tie',
+                            scoreDifference: 0,
+                            categoryWinners: {} as any,
+                            comparisonId: `LIFE-ERR-${Date.now()}`,
+                            generatedAt: new Date().toISOString(),
+                            llmsUsed: Array.from(llmResults.keys()),
+                            judgeModel: 'claude-opus',
+                            overallConsensusConfidence: 'low',
+                            disagreementSummary: 'Module import error - partial data shown',
+                            processingStats: { totalTimeMs: 0, llmTimings: {} as any, metricsEvaluated: 0 },
+                            warning: 'Error loading result builder module'
+                          } as any);
                           setEnhancedStatus('complete');
                         });
+                      };
+
+                      if (judgeResult && llmResults.size > 0) {
+                        // Normal path: Judge result available
+                        const hasValidStructure = judgeResult.city1Consensuses && judgeResult.city2Consensuses;
+
+                        if (!hasValidStructure) {
+                          console.warn('[App] Judge result has invalid structure - building partial result');
+                        }
+
+                        console.log('[App] Judge result received, building enhanced result...', {
+                          city1Consensuses: judgeResult.city1Consensuses?.length,
+                          city2Consensuses: judgeResult.city2Consensuses?.length,
+                          overallAgreement: judgeResult.overallAgreement
+                        });
+
+                        buildAndSetResult(judgeResult, !hasValidStructure);
                       } else if (llmResults.size > 0 && !judgeResult) {
-                        // Judge failed but we have LLM results - log for debugging
-                        console.log('LLM results available but no judge result yet. LLMs:', llmResults.size);
+                        // FIX: Judge failed but we have LLM results - build partial result
+                        console.warn('[App] Judge failed but LLM results available - building partial result from', llmResults.size, 'LLMs');
+                        buildAndSetResult(null, true);
                       }
                     }}
                     onStatusChange={(status) => {
