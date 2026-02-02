@@ -393,6 +393,10 @@ function getManualTitle(type: ManualTabType): string {
       return 'User Manual';
     case 'legal':
       return 'Legal Compliance';
+    case 'schema':
+      return 'App Schema & Database';
+    case 'equations':
+      return 'Judge Equations';
     default:
       return 'Documentation';
   }

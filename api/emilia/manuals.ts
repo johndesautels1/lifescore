@@ -380,25 +380,270 @@ This manual is restricted to authorized administrators only.
 *For full details, see docs/manuals/LEGAL_COMPLIANCE_MANUAL.md*
 `,
 
-  schema: `# App Schema & Database Manual
+  schema: `# LIFE SCORE - Complete Application Schema Manual
 
-## Overview
-
-This manual documents the complete LIFE SCORE application architecture, database schema, and data flow.
-
-## Coming Soon
-
-This documentation is currently being prepared. It will include:
-
-- Complete database schema (all 17+ tables)
-- Entity relationships
-- Data flow diagrams
-- API architecture
-- State management patterns
-- Caching strategies
+**Version:** 1.0.0 | **Updated:** 2026-02-03
 
 ---
-*Full content coming soon - check back for updates*
+
+## 1. Database Schema
+
+LIFE SCORE uses **Supabase (PostgreSQL)** with 17+ tables.
+
+### 1.1 Core Tables
+
+#### profiles
+User profiles linked to Supabase Auth.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | PK, FK(auth.users) |
+| email | TEXT | User email |
+| full_name | TEXT | Display name |
+| tier | TEXT | 'free', 'pro', 'enterprise' |
+| avatar_url | TEXT | Profile picture |
+| created_at | TIMESTAMPTZ | Account creation |
+
+#### subscriptions
+Stripe subscription records.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | PK |
+| user_id | UUID | FK(profiles) |
+| stripe_customer_id | TEXT | Stripe customer ID |
+| stripe_subscription_id | TEXT | Stripe sub ID |
+| status | TEXT | active, canceled, past_due |
+| current_period_end | TIMESTAMPTZ | Billing period end |
+
+#### saved_comparisons
+Stored city comparison results.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | PK |
+| user_id | UUID | FK(profiles) |
+| comparison_id | TEXT | LIFE-CITY1-CITY2-TIMESTAMP |
+| city1_name | TEXT | First city |
+| city2_name | TEXT | Second city |
+| city1_score | NUMERIC | Total score city 1 |
+| city2_score | NUMERIC | Total score city 2 |
+| winner | TEXT | 'city1', 'city2', 'tie' |
+| full_result | JSONB | Complete data |
+| is_enhanced | BOOLEAN | Multi-LLM mode |
+
+#### judge_reports
+THE JUDGE's comprehensive verdicts.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | PK |
+| user_id | UUID | FK(profiles) |
+| comparison_id | TEXT | Source comparison |
+| report_id | TEXT | LIFE-JDG-DATE-USER-HASH |
+| summary_of_findings | JSONB | Scores and trends |
+| executive_summary | JSONB | Recommendation |
+| video_status | TEXT | pending/generating/ready/error |
+
+---
+
+## 2. API Endpoints
+
+### Comparison Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/evaluate | POST | Generate comparison |
+| /api/judge-report | POST | Generate Judge analysis |
+
+### Olivia Chat Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/olivia/chat | POST | Main chat |
+| /api/olivia/context | POST | Build context |
+| /api/olivia/field-evidence | POST | Get evidence |
+
+### Emilia Help Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/emilia/create-thread | POST | Create thread |
+| /api/emilia/message | POST | Send message |
+| /api/emilia/manuals | GET | Get docs |
+
+### Other Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/gamma | POST/GET | Visual reports |
+| /api/stripe/webhook | POST | Stripe events |
+| /api/stripe/create-checkout | POST | Checkout session |
+
+---
+
+## 3. Component Architecture
+
+### Core Components
+- App.tsx - Main container
+- Header.tsx - Navigation
+- CitySelector.tsx - City input
+- Results.tsx - Comparison display
+
+### AI Assistant Components
+- AskOlivia.tsx - Olivia chat
+- EmiliaChat.tsx - Emilia help
+- OliviaAvatar.tsx - Avatar display
+
+### Judge & Video
+- JudgeTab.tsx - Judge container
+- JudgeVideo.tsx - Video player
+
+### Subscription
+- PricingPage.tsx - Pricing
+- FeatureGate.tsx - Tier locking
+
+---
+
+## 4. State Management
+
+### AuthContext
+Provides authentication state.
+
+\`\`\`typescript
+interface AuthState {
+  user: User | null;
+  profile: Profile | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+\`\`\`
+
+### Custom Hooks
+
+| Hook | Purpose |
+|------|---------|
+| useTierAccess | Tier limits (SOURCE OF TRUTH) |
+| useComparison | Comparison state |
+| useOliviaChat | Olivia conversation |
+| useEmilia | Emilia help |
+
+### localStorage Keys
+
+| Key | Purpose |
+|-----|---------|
+| lifescore_user | Demo mode user |
+| lifescore_saved_comparisons | Offline cache |
+| lifescore_theme | Theme preference |
+| lifescore_olivia_thread | Olivia thread ID |
+
+---
+
+## 5. Type Definitions
+
+### Core Types
+
+\`\`\`typescript
+type UserTier = 'free' | 'pro' | 'enterprise';
+
+type CategoryId =
+  | 'personal_freedom'
+  | 'housing_property'
+  | 'business_work'
+  | 'transportation'
+  | 'policing_legal'
+  | 'speech_lifestyle';
+
+interface ComparisonResult {
+  comparisonId: string;
+  city1: CityScore;
+  city2: CityScore;
+  winner: 'city1' | 'city2' | 'tie';
+  scoreDifference: number;
+  generatedAt: string;
+}
+\`\`\`
+
+---
+
+## 6. External Integrations
+
+### AI/LLM Providers
+- **OpenAI**: Olivia, Emilia, evaluation
+- **Anthropic**: THE JUDGE (Opus 4.5)
+- **Perplexity**: Evidence search
+- **Google**: Gemini for consensus
+- **xAI**: Grok videos
+
+### Video Services
+- **HeyGen**: Talking head videos
+- **D-ID**: Real-time streaming
+- **ElevenLabs**: TTS for Olivia
+
+### Other
+- **Gamma**: PDF/PPTX reports
+- **Stripe**: Payments
+- **Supabase**: Database, Auth
+
+---
+
+## 7. Tier System
+
+**SOURCE OF TRUTH:** src/hooks/useTierAccess.ts
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|------|-----------|-----------|
+| Comparisons/day | 3 | 20 | Unlimited |
+| Enhanced mode | No | Yes | Yes |
+| Judge reports | No | 5/month | Unlimited |
+| Olivia chats/day | 10 | 50 | Unlimited |
+| Gamma reports | No | 3/month | 10/month |
+| HeyGen videos | No | No | 5/month |
+
+---
+
+## 8. Environment Variables
+
+### Required
+\`\`\`
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_KEY
+OPENAI_API_KEY
+ANTHROPIC_API_KEY
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+\`\`\`
+
+### Optional
+\`\`\`
+PERPLEXITY_API_KEY
+HEYGEN_API_KEY
+DID_API_KEY
+ELEVENLABS_API_KEY
+GAMMA_API_KEY
+GROQ_API_KEY
+GOOGLE_API_KEY
+\`\`\`
+
+---
+
+## 9. Metrics Summary
+
+**100 metrics** across **6 categories**:
+
+| Category | Metrics | Weight |
+|----------|--------:|-------:|
+| Personal Autonomy | 15 | 20% |
+| Housing & Property | 20 | 20% |
+| Business & Work | 25 | 20% |
+| Transportation | 15 | 15% |
+| Legal System | 15 | 15% |
+| Speech & Lifestyle | 10 | 10% |
+
+---
+
+*Full schema: docs/manuals/APP_SCHEMA_MANUAL.md*
 `,
 
   equations: `# Judge Mathematical Equations Manual
