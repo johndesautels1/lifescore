@@ -25,6 +25,8 @@ const MANUAL_FILES: Record<string, string> = {
   csm: 'CUSTOMER_SERVICE_MANUAL.md',
   tech: 'TECHNICAL_SUPPORT_MANUAL.md',
   legal: 'LEGAL_COMPLIANCE_MANUAL.md',
+  schema: 'APP_SCHEMA_MANUAL.md',
+  equations: 'JUDGE_EQUATIONS_MANUAL.md',
 };
 
 // Manual titles
@@ -33,10 +35,12 @@ const MANUAL_TITLES: Record<string, string> = {
   csm: 'Customer Service Manual',
   tech: 'Technical Support Manual',
   legal: 'Legal Compliance',
+  schema: 'App Schema & Database',
+  equations: 'Judge Mathematical Equations',
 };
 
 // Manuals that require admin authorization
-const RESTRICTED_MANUALS = ['csm', 'tech', 'legal'];
+const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations'];
 
 // Hardcoded admin emails (fallback if table doesn't exist yet)
 const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
@@ -374,6 +378,48 @@ This manual is restricted to authorized administrators only.
 
 ---
 *For full details, see docs/manuals/LEGAL_COMPLIANCE_MANUAL.md*
+`,
+
+  schema: `# App Schema & Database Manual
+
+## Overview
+
+This manual documents the complete LIFE SCORE application architecture, database schema, and data flow.
+
+## Coming Soon
+
+This documentation is currently being prepared. It will include:
+
+- Complete database schema (all 17+ tables)
+- Entity relationships
+- Data flow diagrams
+- API architecture
+- State management patterns
+- Caching strategies
+
+---
+*Full content coming soon - check back for updates*
+`,
+
+  equations: `# Judge Mathematical Equations Manual
+
+## Overview
+
+This manual documents the mathematical reasoning and scoring equations used by the Opus Judge to evaluate city comparisons.
+
+## Coming Soon
+
+This documentation is currently being prepared. It will include:
+
+- Category weighting formulas
+- Consensus scoring algorithms
+- Enhanced mode aggregation
+- Confidence interval calculations
+- Tiebreaker logic
+- Evidence weighting methodology
+
+---
+*Full content coming soon - check back for updates*
 `,
 };
 

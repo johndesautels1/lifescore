@@ -1,7 +1,7 @@
 /**
  * EMILIA KNOWLEDGE BASE SYNC SCRIPT
  *
- * This script uploads all 4 manuals to the Emilia OpenAI Assistant.
+ * This script uploads all 6 manuals to the Emilia OpenAI Assistant.
  * Run after any manual updates or as part of deployment.
  *
  * Usage: npx ts-node scripts/sync-emilia-knowledge.ts
@@ -15,6 +15,8 @@
  * 2. CUSTOMER_SERVICE_MANUAL.md
  * 3. TECHNICAL_SUPPORT_MANUAL.md
  * 4. LEGAL_COMPLIANCE_MANUAL.md
+ * 5. APP_SCHEMA_MANUAL.md
+ * 6. JUDGE_EQUATIONS_MANUAL.md
  */
 
 import * as fs from 'fs';
@@ -27,12 +29,14 @@ const __dirname = path.dirname(__filename);
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
 const ASSISTANT_ID = process.env.EMILIA_ASSISTANT_ID;
 
-// All 4 manuals that Emilia needs to know
+// All 6 manuals that Emilia needs to know
 const MANUAL_FILES = [
   { name: 'USER_MANUAL.md', path: path.join(__dirname, '..', 'docs', 'manuals', 'USER_MANUAL.md') },
   { name: 'CUSTOMER_SERVICE_MANUAL.md', path: path.join(__dirname, '..', 'docs', 'manuals', 'CUSTOMER_SERVICE_MANUAL.md') },
   { name: 'TECHNICAL_SUPPORT_MANUAL.md', path: path.join(__dirname, '..', 'docs', 'manuals', 'TECHNICAL_SUPPORT_MANUAL.md') },
   { name: 'LEGAL_COMPLIANCE_MANUAL.md', path: path.join(__dirname, '..', 'docs', 'manuals', 'LEGAL_COMPLIANCE_MANUAL.md') },
+  { name: 'APP_SCHEMA_MANUAL.md', path: path.join(__dirname, '..', 'docs', 'manuals', 'APP_SCHEMA_MANUAL.md') },
+  { name: 'JUDGE_EQUATIONS_MANUAL.md', path: path.join(__dirname, '..', 'docs', 'manuals', 'JUDGE_EQUATIONS_MANUAL.md') },
 ];
 
 interface FileObject {
@@ -158,23 +162,29 @@ async function main() {
   console.log(`  Assistant ID: ${ASSISTANT_ID}`);
   console.log('═══════════════════════════════════════════════════════\n');
 
-  // Check all files exist
+  // Check which files exist (skip missing ones)
   console.log('📁 Checking manual files...');
-  for (const file of MANUAL_FILES) {
+  const availableFiles = MANUAL_FILES.filter(file => {
     if (!fs.existsSync(file.path)) {
-      throw new Error(`Manual file not found: ${file.path}`);
+      console.log(`  ⏭️ ${file.name} (not yet created - skipping)`);
+      return false;
     }
     const stats = fs.statSync(file.path);
     console.log(`  ✓ ${file.name} (${(stats.size / 1024).toFixed(1)} KB)`);
+    return true;
+  });
+
+  if (availableFiles.length === 0) {
+    throw new Error('No manual files found to upload');
   }
 
   const apiKey = await getApiKey();
 
-  // Upload all files
-  console.log('\n📤 Uploading manuals to OpenAI...');
+  // Upload available files
+  console.log(`\n📤 Uploading ${availableFiles.length} manuals to OpenAI...`);
   const uploadedFiles: FileObject[] = [];
 
-  for (const file of MANUAL_FILES) {
+  for (const file of availableFiles) {
     const uploaded = await uploadFile(apiKey, file.path, file.name);
     uploadedFiles.push(uploaded);
   }
