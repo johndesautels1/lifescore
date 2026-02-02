@@ -6,7 +6,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import Header from './components/Header';
@@ -18,10 +18,12 @@ import TabNavigation, { type TabId } from './components/TabNavigation';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
-import SavedComparisons from './components/SavedComparisons';
-import VisualsTab from './components/VisualsTab';
-import AskOlivia from './components/AskOlivia';
 import JudgeTab from './components/JudgeTab';
+
+// Phase 2 Performance: Lazy load tab components (2026-02-02)
+const SavedComparisons = React.lazy(() => import('./components/SavedComparisons'));
+const VisualsTab = React.lazy(() => import('./components/VisualsTab'));
+const AskOlivia = React.lazy(() => import('./components/AskOlivia'));
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import CostDashboard from './components/CostDashboard';
@@ -692,26 +694,30 @@ const AppContent: React.FC = () => {
               VISUALS TAB
               ============================================================ */}
           {activeTab === 'visuals' && (
-            <VisualsTab
-              result={enhancedResult || state.result || null}
-              reportState={gammaReportState}
-              setReportState={setGammaReportState}
-              exportFormat={gammaExportFormat}
-              setExportFormat={setGammaExportFormat}
-              showEmbedded={showGammaEmbedded}
-              setShowEmbedded={setShowGammaEmbedded}
-            />
+            <Suspense fallback={<div className="tab-loading">Loading Visuals...</div>}>
+              <VisualsTab
+                result={enhancedResult || state.result || null}
+                reportState={gammaReportState}
+                setReportState={setGammaReportState}
+                exportFormat={gammaExportFormat}
+                setExportFormat={setGammaExportFormat}
+                showEmbedded={showGammaEmbedded}
+                setShowEmbedded={setShowGammaEmbedded}
+              />
+            </Suspense>
           )}
 
           {/* ============================================================
               SAVED TAB
               ============================================================ */}
           {activeTab === 'saved' && (
-            <SavedComparisons
-              key={savedKey}
-              onLoadComparison={handleLoadSavedComparison}
-              currentComparisonId={state.result?.comparisonId}
-            />
+            <Suspense fallback={<div className="tab-loading">Loading Saved...</div>}>
+              <SavedComparisons
+                key={savedKey}
+                onLoadComparison={handleLoadSavedComparison}
+                currentComparisonId={state.result?.comparisonId}
+              />
+            </Suspense>
           )}
 
           {/* ============================================================
@@ -725,9 +731,11 @@ const AppContent: React.FC = () => {
               lockedTitle="Upgrade to Access Olivia"
               lockedMessage="Chat with Olivia AI to get personalized insights about your city comparison. Available for Navigator and Sovereign members."
             >
-              <AskOlivia
-                comparisonResult={enhancedResult || state.result || undefined}
-              />
+              <Suspense fallback={<div className="tab-loading">Loading Olivia...</div>}>
+                <AskOlivia
+                  comparisonResult={enhancedResult || state.result || undefined}
+                />
+              </Suspense>
             </FeatureGate>
           )}
 

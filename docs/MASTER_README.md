@@ -241,7 +241,7 @@ All configured in Vercel. **DO NOT ask user to configure.**
 | Phase | Description | Status | Safe? |
 |-------|-------------|--------|-------|
 | **Phase 1** | Vendor manualChunks (react, supabase) | ✅ DONE | ✅ YES |
-| **Phase 2** | Tab lazy loading (Olivia, Saved, Visuals) | 🔴 Not Started | ✅ YES |
+| **Phase 2** | Tab lazy loading (Olivia, Saved, Visuals) | ✅ DONE | ✅ YES |
 | **Phase 3** | Refactor EnhancedComparison.tsx | 🔴 Not Started | ⚠️ CAREFUL |
 | **Phase 4** | Data file lazy loading | 🔴 Not Started | ⚠️ HIGH RISK |
 
@@ -250,11 +250,12 @@ All configured in Vercel. **DO NOT ask user to configure.**
 - ✅ Added `manualChunks` for `react-vendor` and `supabase`
 - Output: Vendor code now in separate cacheable chunks
 
-### Phase 2 Ready (Safe to implement)
-Components that CAN be lazy loaded (default exports only):
-- `AskOlivia.tsx` (869 lines) - ✅ Clean candidate
-- `SavedComparisons.tsx` (578 lines) - ✅ Clean candidate
-- `VisualsTab.tsx` (334 lines) - ✅ Clean candidate
+### Phase 2 Completed (2026-02-02)
+- ✅ `AskOlivia.tsx` - React.lazy() with Suspense
+- ✅ `SavedComparisons.tsx` - React.lazy() with Suspense
+- ✅ `VisualsTab.tsx` - React.lazy() with Suspense
+- ✅ Added `.tab-loading` CSS for loading states
+- Output: Tab components load on-demand when user switches tabs
 
 ### Phase 3 Blocked (Requires Refactoring)
 **EnhancedComparison.tsx CANNOT be lazy loaded as-is:**

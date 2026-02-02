@@ -237,7 +237,7 @@ rollupOptions: {
 
 | Phase | Task | Status | Risk |
 |-------|------|--------|------|
-| 2 | Lazy load AskOlivia, SavedComparisons, VisualsTab | 🔴 Pending | LOW |
+| 2 | Lazy load AskOlivia, SavedComparisons, VisualsTab | ✅ DONE | LOW |
 | 3 | Refactor EnhancedComparison.tsx (split exports) | 🔴 Pending | MEDIUM |
 | 4 | Dynamic import data files (metrics.ts, etc.) | 🔴 Pending | HIGH |
 
