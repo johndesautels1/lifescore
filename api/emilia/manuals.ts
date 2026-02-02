@@ -2,13 +2,18 @@
  * LIFE SCORE - Emilia Manuals API
  * Serves documentation content for the help center
  *
- * GET /api/emilia/manuals?type=user|csm|tech
+ * GET /api/emilia/manuals?type=user|csm|tech|legal
+ *
+ * Access Control:
+ * - user: Public (all authenticated users)
+ * - csm, tech, legal: Admin only (authorized_manual_access table)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 // ============================================================================
 // CONSTANTS
@@ -19,6 +24,7 @@ const MANUAL_FILES: Record<string, string> = {
   user: 'USER_MANUAL.md',
   csm: 'CUSTOMER_SERVICE_MANUAL.md',
   tech: 'TECHNICAL_SUPPORT_MANUAL.md',
+  legal: 'LEGAL_COMPLIANCE_MANUAL.md',
 };
 
 // Manual titles
@@ -26,7 +32,14 @@ const MANUAL_TITLES: Record<string, string> = {
   user: 'User Manual',
   csm: 'Customer Service Manual',
   tech: 'Technical Support Manual',
+  legal: 'Legal Compliance',
 };
+
+// Manuals that require admin authorization
+const RESTRICTED_MANUALS = ['csm', 'tech', 'legal'];
+
+// Hardcoded admin emails (fallback if table doesn't exist yet)
+const ADMIN_EMAILS = ['cluesnomads@gmail.com'];
 
 // ============================================================================
 // EMBEDDED CONTENT (Fallback)
@@ -297,7 +310,114 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - \`EMILIA_ASSISTANT_ID\`: Emilia assistant
 - \`ELEVENLABS_EMILIA_VOICE_ID\`: Emilia voice
 `,
+
+  legal: `# Legal Compliance Manual
+
+## Company Information
+
+**Company Name:** Clues Intelligence LTD
+**Registered Address:**
+167-169 Great Portland Street
+5th Floor
+London W1W 5PF
+United Kingdom
+
+**Admin Contact:** cluesnomads@gmail.com
+
+## Regulatory Status
+
+### ICO Registration (UK)
+- **Required:** YES (UK company processing personal data)
+- **Status:** Complete before launch
+- **URL:** https://ico.org.uk/for-organisations/register/
+
+### EU Representative
+- **Required:** NO (UK company post-Brexit)
+
+### DUNS Number
+- **Required:** NO (only for US govt contracts)
+
+## GDPR Compliance
+
+### Data We Collect
+- Email, name, password (hashed) - Account
+- City comparisons - Service delivery
+- Payment info - Via Stripe
+- IP address - Security (90 day retention)
+
+### Data Subject Rights
+- Right to Access: /api/user/export
+- Right to Deletion: /api/user/delete
+- Right to Rectification: Settings page
+
+## US State Compliance
+
+Currently DEFERRED - below all thresholds.
+Review at 10K users or $1M ARR.
+
+## Data Protection Officer
+
+Formal DPO NOT required for LIFE SCORE.
+Privacy Contact: cluesnomads@gmail.com
+
+## Annual Compliance Calendar
+
+- January: DPA Review, Privacy Policy Review
+- April: ICO Fee Renewal
+- July: Security Audit
+- October: Cookie Audit
+- December: Data Retention Cleanup
+
+## Authorized Access
+
+This manual is restricted to authorized administrators only.
+
+---
+*For full details, see docs/manuals/LEGAL_COMPLIANCE_MANUAL.md*
+`,
 };
+
+// ============================================================================
+// AUTHORIZATION HELPER
+// ============================================================================
+
+async function isUserAuthorized(userEmail: string | null): Promise<boolean> {
+  if (!userEmail) return false;
+
+  // Check hardcoded admin list first
+  if (ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
+    return true;
+  }
+
+  // Check database for authorized users
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('[manuals] Supabase not configured, using hardcoded admin list only');
+    return false;
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data, error } = await supabase
+      .from('authorized_manual_access')
+      .select('email')
+      .eq('email', userEmail.toLowerCase())
+      .eq('is_active', true)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows found, which is fine
+      console.error('[manuals] Auth check error:', error.message);
+    }
+
+    return !!data;
+  } catch (err) {
+    console.error('[manuals] Auth check failed:', err);
+    return false;
+  }
+}
 
 // ============================================================================
 // HANDLER
@@ -316,14 +436,29 @@ export default async function handler(
     return;
   }
 
-  const { type } = req.query;
+  const { type, email } = req.query;
 
   if (!type || typeof type !== 'string' || !MANUAL_FILES[type]) {
     res.status(400).json({
       error: 'Invalid type',
-      message: 'Valid types: user, csm, tech',
+      message: 'Valid types: user, csm, tech, legal',
     });
     return;
+  }
+
+  // Check authorization for restricted manuals
+  if (RESTRICTED_MANUALS.includes(type)) {
+    const userEmail = typeof email === 'string' ? email : null;
+    const isAuthorized = await isUserAuthorized(userEmail);
+
+    if (!isAuthorized) {
+      res.status(403).json({
+        error: 'Access denied',
+        message: 'This manual is restricted to authorized administrators only.',
+        restricted: true,
+      });
+      return;
+    }
   }
 
   try {

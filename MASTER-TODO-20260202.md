@@ -235,9 +235,9 @@ Phase 1 COMPLETE. Phase 2 & 3 pending:
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 9A.1 | ICO Registration (UK) | NOT STARTED | https://ico.org.uk/for-organisations/register/ |
-| 9A.2 | EU Representative Appointed | NOT STARTED | Sign up with GDPR-Rep.eu (~€100-500/yr) |
-| 9A.3 | DUNS Number | NOT STARTED | |
+| 9A.1 | ICO Registration (UK) | NOT STARTED | https://ico.org.uk/for-organisations/register/ - Required before launch |
+| 9A.2 | EU Representative Appointed | ❌ N/A | UK company post-Brexit - not required for EU Rep |
+| 9A.3 | DUNS Number | ❌ N/A | Only needed for US govt contracts or enterprise B2B |
 
 ### 9B: DPAs Pending (5 items)
 
@@ -251,15 +251,17 @@ Phase 1 COMPLETE. Phase 2 & 3 pending:
 
 Email templates available in `docs/legal/COMPLIANCE_README.md`
 
-### 9C: US State Compliance (5 items)
+### 9C: US State Compliance (5 items) ⏸️ DEFERRED - Below Threshold
+
+**Note:** These laws only apply when you hit $25M+ revenue OR 100K+ consumers. Revisit at 10K users or $1M ARR.
 
 | # | State | Law | Status |
 |---|-------|-----|--------|
-| 9C.1 | California | CCPA/CPRA | NOT STARTED |
-| 9C.2 | Virginia | VCDPA | NOT STARTED |
-| 9C.3 | Colorado | CPA | NOT STARTED |
-| 9C.4 | Connecticut | CTDPA | NOT STARTED |
-| 9C.5 | Utah | UCPA | NOT STARTED |
+| 9C.1 | California | CCPA/CPRA | ⏸️ DEFERRED |
+| 9C.2 | Virginia | VCDPA | ⏸️ DEFERRED |
+| 9C.3 | Colorado | CPA | ⏸️ DEFERRED |
+| 9C.4 | Connecticut | CTDPA | ⏸️ DEFERRED |
+| 9C.5 | Utah | UCPA | ⏸️ DEFERRED |
 
 ### 9D: Company Info (3 items)
 

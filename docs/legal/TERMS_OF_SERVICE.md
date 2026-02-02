@@ -12,9 +12,10 @@ By accessing or using the CLUES Comparison Reports services (the "Service"), inc
 
 **Service Provider:**
 Clues Intelligence LTD ("Clues," "we," "us," or "our")
-[Registered Address - TO BE ADDED]
+167-169 Great Portland Street, 5th Floor
+London W1W 5PF
 United Kingdom
-Company Registration: [TO BE ADDED]
+Company Number: 16966151
 
 ---
 
@@ -331,7 +332,8 @@ Email: support@cluesintelligence.com
 
 **Mailing Address:**
 Clues Intelligence LTD
-[Address - TO BE ADDED]
+167-169 Great Portland Street, 5th Floor
+London W1W 5PF
 United Kingdom
 
 ---

@@ -175,7 +175,8 @@ Email: support@cluesintelligence.com
 
 **Mailing address:**
 Clues Intelligence LTD
-[Address - TO BE ADDED]
+167-169 Great Portland Street, 5th Floor
+London W1W 5PF
 United Kingdom
 
 ---

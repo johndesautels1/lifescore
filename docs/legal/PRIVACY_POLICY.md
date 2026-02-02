@@ -12,9 +12,10 @@ Clues Intelligence LTD ("Clues," "we," "us," or "our") is committed to protectin
 
 **Data Controller:**
 Clues Intelligence LTD
-[Registered Address - TO BE ADDED]
+167-169 Great Portland Street, 5th Floor
+London W1W 5PF
 United Kingdom
-Company Registration: [TO BE ADDED]
+Company Number: 16966151
 
 **Contact:** privacy@cluesintelligence.com
 
@@ -227,12 +228,9 @@ Email: support@cluesintelligence.com
 
 **Mailing Address:**
 Clues Intelligence LTD
-[Address - TO BE ADDED]
+167-169 Great Portland Street, 5th Floor
+London W1W 5PF
 United Kingdom
-
-**EU Representative:**
-[TO BE APPOINTED]
-[Address]
 
 ---
 

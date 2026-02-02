@@ -1,8 +1,12 @@
 /**
  * LIFE SCORE™ Help Modal
  *
- * Modal container with three documentation tabs and Emilia AI chat.
- * Tabs: Customer Service | Tech Support | User Manual
+ * Modal container with documentation tabs and Emilia AI chat.
+ * Tabs: User Manual | Customer Service | Tech Support | Legal
+ *
+ * Access Control:
+ * - User Manual: All authenticated users
+ * - Customer Service, Tech Support, Legal: Admin only
  *
  * Features:
  * - Tab navigation for different manuals
@@ -13,25 +17,39 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ManualViewer from './ManualViewer';
 import EmiliaChat from './EmiliaChat';
+import { useAuth } from '../contexts/AuthContext';
 import './HelpModal.css';
 
-export type ManualTabType = 'csm' | 'tech' | 'user';
+export type ManualTabType = 'csm' | 'tech' | 'user' | 'legal';
 
 interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const TABS: { id: ManualTabType; label: string; icon: string }[] = [
-  { id: 'user', label: 'User Manual', icon: '📖' },
-  { id: 'csm', label: 'Customer Service', icon: '💬' },
-  { id: 'tech', label: 'Tech Support', icon: '🔧' },
+// Tabs configuration with access level
+const ALL_TABS: { id: ManualTabType; label: string; icon: string; adminOnly: boolean }[] = [
+  { id: 'user', label: 'User Manual', icon: '📖', adminOnly: false },
+  { id: 'csm', label: 'Customer Service', icon: '💬', adminOnly: true },
+  { id: 'tech', label: 'Tech Support', icon: '🔧', adminOnly: true },
+  { id: 'legal', label: 'Legal', icon: '⚖️', adminOnly: true },
 ];
+
+// Admin emails that can access restricted manuals
+const ADMIN_EMAILS = ['cluesnomads@gmail.com'];
 
 const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<ManualTabType>('user');
   const [showChat, setShowChat] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+
+  // Get user info for access control
+  const { user } = useAuth();
+  const userEmail = user?.email || null;
+  const isAdmin = userEmail ? ADMIN_EMAILS.includes(userEmail.toLowerCase()) : false;
+
+  // Filter tabs based on admin status
+  const visibleTabs = ALL_TABS.filter(tab => !tab.adminOnly || isAdmin);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -113,7 +131,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         {/* Tab Navigation (hidden when in chat mode) */}
         {!showChat && (
           <div className="help-modal-tabs">
-            {TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 className={`help-tab ${activeTab === tab.id ? 'active' : ''}`}
@@ -132,7 +150,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             <EmiliaChat onBack={handleBackToManuals} />
           ) : (
             <>
-              <ManualViewer type={activeTab} />
+              <ManualViewer type={activeTab} userEmail={userEmail} />
 
               {/* Ask Emilia CTA */}
               <div className="ask-emilia-cta">

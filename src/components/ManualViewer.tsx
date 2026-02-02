@@ -17,6 +17,7 @@ import './ManualViewer.css';
 
 interface ManualViewerProps {
   type: ManualTabType;
+  userEmail?: string | null;
 }
 
 interface ManualSection {
@@ -135,22 +136,37 @@ function parseMarkdownSections(content: string): ManualSection[] {
   return sections;
 }
 
-const ManualViewer: React.FC<ManualViewerProps> = ({ type }) => {
+const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
   const [content, setContent] = useState<ManualContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Fetch manual content
   useEffect(() => {
     const fetchContent = async () => {
       setIsLoading(true);
       setError(null);
+      setAccessDenied(false);
 
       try {
-        const response = await fetch(`/api/emilia/manuals?type=${type}`);
+        // Build URL with email for authorization
+        const url = userEmail
+          ? `/api/emilia/manuals?type=${type}&email=${encodeURIComponent(userEmail)}`
+          : `/api/emilia/manuals?type=${type}`;
+        const response = await fetch(url);
 
         if (!response.ok) {
+          // Check for access denied (403)
+          if (response.status === 403) {
+            const errorData = await response.json();
+            if (errorData.restricted) {
+              setAccessDenied(true);
+              setIsLoading(false);
+              return;
+            }
+          }
           throw new Error(`Failed to load manual: ${response.status}`);
         }
 
@@ -180,7 +196,7 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type }) => {
     };
 
     fetchContent();
-  }, [type]);
+  }, [type, userEmail]);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -258,6 +274,19 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type }) => {
         <div className="manual-loading">
           <div className="manual-loading-spinner"></div>
           <span>Loading documentation...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Access denied state
+  if (accessDenied) {
+    return (
+      <div className="manual-viewer error">
+        <div className="manual-error">
+          <span className="error-icon">🔒</span>
+          <p className="error-text">Access Restricted</p>
+          <p className="error-subtext">This manual is only available to authorized administrators.</p>
         </div>
       </div>
     );
@@ -362,6 +391,8 @@ function getManualTitle(type: ManualTabType): string {
       return 'Technical Support Manual';
     case 'user':
       return 'User Manual';
+    case 'legal':
+      return 'Legal Compliance';
     default:
       return 'Documentation';
   }
