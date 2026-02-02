@@ -18,7 +18,8 @@
 | Saved Reports Fixes | 6 | 0 | 6 |
 | Olivia Enhancements | 2 | 0 | 2 |
 | Compliance/Legal | 14 | 2 | 16 |
-| **TOTAL** | **86** | **3** | **89** |
+| Emilia Knowledge Base | 2 | 0 | 2 |
+| **TOTAL** | **88** | **3** | **91** |
 
 ---
 
@@ -296,6 +297,29 @@ Stuck predictions:
 | 11.4 | Wording Consistency Check (domain, tier names, time formats) | NOT STARTED |
 | 11.5 | Missing Glossary Terms (Kling AI, Annual subscription) | NOT STARTED |
 | 11.6 | Help Center Link Verification (help.clueslifescore.com) | NOT STARTED |
+
+---
+
+## SECTION 12: EMILIA KNOWLEDGE BASE - NEW MANUALS (2 items)
+
+**Source:** Session 2026-02-02 - Emilia manual knowledge audit
+
+Infrastructure is ready. When content is created, run: `npx ts-node scripts/sync-emilia-knowledge.ts`
+
+| # | Task | File | Status |
+|---|------|------|--------|
+| 12.1 | Create App Schema Manual - Complete database schema, API architecture, data flow diagrams, state management | `docs/manuals/APP_SCHEMA_MANUAL.md` | NOT STARTED |
+| 12.2 | Create Judge Equations Manual - Category weighting, consensus algorithms, confidence calculations, tiebreaker logic | `docs/manuals/JUDGE_EQUATIONS_MANUAL.md` | NOT STARTED |
+
+**Infrastructure Ready:**
+- ✅ HelpModal.tsx - New tabs added (schema, equations)
+- ✅ api/emilia/manuals.ts - File mappings and embedded placeholders added
+- ✅ scripts/sync-emilia-knowledge.ts - Updated to include new files (skips if not created)
+- ✅ Emilia OpenAI Assistant - Synced with 4 existing manuals (2026-02-02)
+
+**Files to create with REAL content (no placeholders):**
+1. `docs/manuals/APP_SCHEMA_MANUAL.md` - Full database schema, all 17+ tables, API endpoints, component hierarchy
+2. `docs/manuals/JUDGE_EQUATIONS_MANUAL.md` - All mathematical formulas used by Opus Judge for scoring
 
 ---
 
