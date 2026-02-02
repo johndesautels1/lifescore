@@ -6075,15 +6075,14 @@ Each city profile tells you how that specific city differs from its STATE baseli
 
 **IMPORTANT: Current tier names are FREE, NAVIGATOR, SOVEREIGN (NOT Pioneer)**
 
-| Feature | FREE ($0) | NAVIGATOR ($29/mo or $249/yr) | SOVEREIGN ($99/mo or $899/yr) |
-|---------|-----------|--------------------|--------------------|
-| LLM Providers | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
-| Comparisons | 1/month (Standard) | 1/month (Standard) | 1/month (Standard or Enhanced) |
-| Olivia AI | No | 15 min/month | 60 min/month |
-| Gamma Reports | No | 1/month | 1/month |
-| Judge Videos | No | 1/month | 1/month |
-| Enhanced Mode | No | No | Yes (5-LLM consensus) |
-| Cloud Sync | No | Yes | Yes |
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|------|-----------|-----------|
+| Price | $0 | $29/mo | $99/mo |
+| Comparisons | 1/mo | 1/mo | 1/mo |
+| LLMs | 1 | 1 | 5 |
+| Enhanced Mode | No | No | Yes |
+
+*For detailed feature questions, refer users to Emilia help widget or Settings > Subscription.*
 
 ## 36.2 Cost Dashboard & Usage Monitoring
 

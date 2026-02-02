@@ -76,19 +76,85 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 ## 3. Subscription Tiers
 
-### 3.1 Tier Comparison
+### 3.1 Pricing Overview
 
-| Feature | FREE ($0) | NAVIGATOR ($29/mo or $249/yr) | SOVEREIGN ($99/mo or $899/yr) |
-|---------|-----------|--------------------|--------------------|
-| LLM Providers | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
-| Comparisons | 1/month (Standard) | 1/month (Standard) | 1/month (Standard or Enhanced) |
-| Olivia AI | No | 15 min/month | 60 min/month |
-| Gamma Reports | No | 1/month | 1/month |
-| Judge Videos | No | 1/month | 1/month |
-| Enhanced Mode | No | No | Yes (5-LLM consensus scoring) |
-| Cloud Sync | No | Yes | Yes |
+| Tier | Monthly | Annual | Annual Savings |
+|------|---------|--------|----------------|
+| **FREE** | $0 | $0 | - |
+| **NAVIGATOR** | $29 | $249 | 28% ($99 saved) |
+| **SOVEREIGN** | $99 | $899 | 24% ($289 saved) |
 
-### 3.2 Comparison Types
+### 3.2 Core Comparison Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| Standard Comparisons | 1/month | 1/month | 1/month |
+| Enhanced Comparisons | ❌ | ❌ | 1/month |
+| LLM Providers | 1 (Claude) | 1 (Claude) | 5 (All) |
+| Enhanced Mode | ❌ | ❌ | ✅ |
+
+### 3.3 AI Assistant Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| Olivia AI Access | ❌ | ✅ | ✅ |
+| Olivia Minutes/Month | 0 | 15 min | 60 min |
+| Olivia Voice Mode | ❌ | ✅ | ✅ |
+| Emilia Help Widget | ✅ | ✅ | ✅ |
+
+### 3.4 Video & Visual Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| Judge Verdict Videos | ❌ | 1/month | 1/month |
+| Grok/Kling Mood Videos | ❌ | ❌ | 1/month |
+| AI Contrast Images | ❌ | ✅ | ✅ |
+
+### 3.5 Report & Export Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| Gamma Reports | ❌ | 1/month | 1/month |
+| PDF Export | ❌ | ✅ | ✅ |
+| PPTX Export | ❌ | ✅ | ✅ |
+| Full Evidence Citations | Basic | Full | Full |
+
+### 3.6 Data & Storage Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| Cloud Sync | ❌ | ✅ | ✅ |
+| Local Browser Storage | ✅ | ✅ | ✅ |
+| Comparison History | Local | Cloud | Cloud |
+
+### 3.7 Technical & API Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| API Access | ❌ | ❌ | ✅ |
+| Use Own API Keys | ❌ | ❌ | ✅ |
+| Custom Category Weights | ✅ | ✅ | ✅ |
+
+### 3.8 Support Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| Help Center | ✅ | ✅ | ✅ |
+| Email Support | ❌ | ✅ | ✅ |
+| Chat Support | ❌ | ✅ | ✅ |
+| Phone Support | ❌ | ❌ | ✅ |
+| Video Support | ❌ | ❌ | ✅ |
+| Tech Support Time | 0 | 0 | 60 min/month |
+
+### 3.9 Upgrade Paths
+
+| Current Tier | Available Upgrades |
+|--------------|-------------------|
+| FREE | NAVIGATOR, SOVEREIGN |
+| NAVIGATOR | SOVEREIGN |
+| SOVEREIGN | N/A (highest tier) |
+
+### 3.10 Comparison Types
 
 **Standard Comparison:**
 - Uses Claude Sonnet 4.5 only

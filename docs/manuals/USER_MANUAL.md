@@ -420,18 +420,97 @@ For Enhanced mode with your own keys:
 
 ## 11. Subscription Plans
 
-### Plan Comparison
+### Pricing Overview
+
+| Tier | Monthly | Annual | Annual Savings |
+|------|---------|--------|----------------|
+| **FREE** | $0 | $0 | - |
+| **NAVIGATOR** | $29 | $249 | 28% ($99 saved) |
+| **SOVEREIGN** | $99 | $899 | 24% ($289 saved) |
+
+---
+
+### Core Comparison Features
 
 | Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|------|-----------|-----------|
-| **Price** | $0 | $29/mo or $249/yr | $99/mo or $899/yr |
-| **LLM Providers** | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
-| **Comparisons** | 1/month (Standard) | 1/month (Standard) | 1/month (Standard or Enhanced) |
-| **Olivia AI** | No | 15 min/month | 60 min/month |
-| **Gamma Reports** | No | 1/month | 1/month |
-| **Judge Videos** | No | 1/month | 1/month |
-| **Enhanced Mode** | No | No | Yes (5-LLM consensus) |
-| **Cloud Sync** | No | Yes | Yes |
+|---------|:----:|:---------:|:---------:|
+| **Standard Comparisons** | 1/month | 1/month | 1/month |
+| **Enhanced Comparisons** | ❌ | ❌ | 1/month |
+| **LLM Providers Used** | 1 (Claude) | 1 (Claude) | 5 (All providers) |
+| **Enhanced Mode (5-LLM Consensus)** | ❌ | ❌ | ✅ |
+
+*LLM Providers in Enhanced Mode: Claude, GPT-4o, Gemini, Grok, Perplexity*
+
+---
+
+### AI Assistant Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| **Olivia AI Access** | ❌ | ✅ | ✅ |
+| **Olivia Minutes/Month** | 0 | 15 min | 60 min |
+| **Olivia Voice Responses** | ❌ | ✅ | ✅ |
+| **Emilia Help Widget** | ✅ | ✅ | ✅ |
+
+---
+
+### Video & Visual Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| **Judge Verdict Videos** | ❌ | 1/month | 1/month |
+| **Grok/Kling Mood Videos** | ❌ | ❌ | 1/month |
+| **AI Contrast Images** | ❌ | ✅ | ✅ |
+
+*Mood videos show "Freedom" imagery for winner, "Imprisonment" for comparison*
+
+---
+
+### Report & Export Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| **Gamma Reports** | ❌ | 1/month | 1/month |
+| **PDF Export** | ❌ | ✅ | ✅ |
+| **PPTX Export** | ❌ | ✅ | ✅ |
+| **Full Evidence Citations** | Basic | Full | Full |
+
+---
+
+### Data & Storage Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| **Cloud Sync** | ❌ | ✅ | ✅ |
+| **Local Browser Storage** | ✅ | ✅ | ✅ |
+| **Comparison History** | Local only | Cloud synced | Cloud synced |
+| **Saved Favorites** | Local only | Cloud synced | Cloud synced |
+
+---
+
+### Technical & API Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| **API Access** | ❌ | ❌ | ✅ |
+| **Use Own API Keys** | ❌ | ❌ | ✅ |
+| **Custom Category Weights** | ✅ | ✅ | ✅ |
+| **Law vs Lived Slider** | ✅ | ✅ | ✅ |
+
+---
+
+### Support Features
+
+| Feature | FREE | NAVIGATOR | SOVEREIGN |
+|---------|:----:|:---------:|:---------:|
+| **Help Center (Self-Service)** | ✅ | ✅ | ✅ |
+| **Email Support** | ❌ | ✅ | ✅ |
+| **Chat Support** | ❌ | ✅ | ✅ |
+| **Phone Support** | ❌ | ❌ | ✅ |
+| **Video Support (Screen Share)** | ❌ | ❌ | ✅ |
+| **Dedicated Tech Support** | 0 min | 0 min | 60 min/month |
+
+---
 
 ### Upgrading Your Plan
 
@@ -683,3 +762,4 @@ Emilia is a help widget assistant (different from Olivia). She appears as a floa
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§15), Emilia Help Assistant (§16) |
 | 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: TTS fallback info, Kling AI docs, video timing fix, annual pricing |
 | 2.3 | 2026-02-02 | Claude Opus 4.5 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
+| 2.4 | 2026-02-02 | Claude Opus 4.5 | Added comprehensive feature tables: 8 categories, 30+ features with detailed tier breakdown |
