@@ -54,10 +54,12 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastAssistantMsgRef = useRef<HTMLDivElement>(null); // FIX: Ref for scrolling to Olivia's response
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSpokenMsgRef = useRef<string | null>(null);
   const lastAnalyzedMsgRef = useRef<string | null>(null); // Track last message analyzed for contrast images
+  const lastScrolledMsgRef = useRef<string | null>(null); // FIX: Track last message we scrolled to
   // const hasGreetedRef = useRef(false); // Disabled with auto-greeting
 
   // Tier access for message limits
@@ -206,14 +208,27 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     setVideoEnabled(prev => !prev);
   }, []);
 
-  // Scroll to bottom when messages change OR when chat panel opens
-  // FIXED 2026-01-25: Now properly scrolls when panel opens to show latest messages
+  // FIX 2026-02-02: Scroll to TOP of Olivia's response, not to the end of the page
+  // When Olivia responds, scroll so her response starts at the top of the visible area
   useEffect(() => {
-    if (showTextChat && messagesEndRef.current) {
-      // Use setTimeout to ensure DOM has rendered before scrolling
+    if (!showTextChat || messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+
+    // Only scroll when there's a NEW assistant message we haven't scrolled to yet
+    if (lastMessage.role === 'assistant' && lastMessage.id !== lastScrolledMsgRef.current) {
+      lastScrolledMsgRef.current = lastMessage.id;
+
+      // Use setTimeout to ensure DOM has rendered the new message
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
+        if (lastAssistantMsgRef.current) {
+          // Scroll to TOP of Olivia's response with 'start' alignment
+          lastAssistantMsgRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start', // Align to TOP of viewport, not bottom
+          });
+        }
+      }, 100);
     }
   }, [messages, showTextChat]);
 
@@ -832,38 +847,48 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               </div>
             )}
 
-            {messages.map((msg) => (
-              <div key={msg.id} className={`transcript-message ${msg.role}`}>
-                <div className="message-header">
-                  <span className="message-sender">
-                    {msg.role === 'assistant' ? 'OLIVIA' : 'YOU'}
-                  </span>
-                  <span className="message-time">
-                    {msg.timestamp.toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
+            {messages.map((msg, index) => {
+              // FIX 2026-02-02: Attach ref to the LAST assistant message for proper scroll targeting
+              const isLastAssistantMsg = msg.role === 'assistant' &&
+                index === messages.map(m => m.role).lastIndexOf('assistant');
+
+              return (
+                <div
+                  key={msg.id}
+                  ref={isLastAssistantMsg ? lastAssistantMsgRef : undefined}
+                  className={`transcript-message ${msg.role}`}
+                >
+                  <div className="message-header">
+                    <span className="message-sender">
+                      {msg.role === 'assistant' ? 'OLIVIA' : 'YOU'}
+                    </span>
+                    <span className="message-time">
+                      {msg.timestamp.toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  <div className="message-body">{msg.content}</div>
+                  {msg.role === 'assistant' && (
+                    <button
+                      className="replay-btn"
+                      onClick={() => {
+                        if (isTTSSpeaking) {
+                          stopSpeaking();
+                        } else if (isAvatarConnected) {
+                          makeAvatarSpeak(msg.content);
+                        } else {
+                          speakText(msg.content);
+                        }
+                      }}
+                    >
+                      <span>{isTTSSpeaking || isAvatarSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
+                    </button>
+                  )}
                 </div>
-                <div className="message-body">{msg.content}</div>
-                {msg.role === 'assistant' && (
-                  <button
-                    className="replay-btn"
-                    onClick={() => {
-                      if (isTTSSpeaking) {
-                        stopSpeaking();
-                      } else if (isAvatarConnected) {
-                        makeAvatarSpeak(msg.content);
-                      } else {
-                        speakText(msg.content);
-                      }
-                    }}
-                  >
-                    <span>{isTTSSpeaking || isAvatarSpeaking ? '◼ STOP' : '▶ REPLAY'}</span>
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
 
             {isTyping && (
               <div className="transcript-message assistant">
