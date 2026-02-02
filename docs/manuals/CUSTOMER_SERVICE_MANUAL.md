@@ -578,6 +578,8 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **Tavily** | Web search API for legal research |
 | **Tier** | Subscription level (FREE/NAVIGATOR/SOVEREIGN) |
 | **TTS** | Text-to-Speech - converts text to spoken audio |
+| **Kling AI** | Primary video generation provider for Judge lifestyle videos |
+| **Annual Subscription** | Yearly billing option with discounted rates (NAVIGATOR $249/yr, SOVEREIGN $899/yr) |
 
 ---
 

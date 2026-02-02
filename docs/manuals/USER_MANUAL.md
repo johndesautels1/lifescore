@@ -587,6 +587,15 @@ A: Currently web-only. The site is mobile-responsive.
 **Q: Can I use my own API keys?**
 A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
 
+**Q: What is Enhanced Mode and how does it work?**
+A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude, GPT-4, Gemini, Grok, Perplexity) to evaluate cities. Each provider scores independently, then Claude Opus acts as a "Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
+
+**Q: Why would I use Enhanced Mode over Standard Mode?**
+A: Enhanced Mode provides multi-LLM consensus scoring, which reduces individual AI bias and catches edge cases a single model might miss. The Judge feature highlights where AI providers disagree and explains the reasoning. Best for important relocation decisions.
+
+**Q: How long does Enhanced Mode take?**
+A: Enhanced Mode typically takes 5-8 minutes vs 2-3 minutes for Standard Mode. The extra time allows all 5 AI providers to complete their analysis and for the Judge to evaluate disagreements.
+
 ### Billing
 
 **Q: Can I get a refund?**
