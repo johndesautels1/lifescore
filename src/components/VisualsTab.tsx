@@ -12,6 +12,7 @@ import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } 
 import { saveGammaReport, hasGammaReportForComparison } from '../services/savedComparisons';
 import NewLifeVideos from './NewLifeVideos';
 import FeatureGate from './FeatureGate';
+import { useTierAccess } from '../hooks/useTierAccess';
 import './VisualsTab.css';
 
 interface VisualsTabProps {
@@ -43,6 +44,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   showEmbedded: propsShowEmbedded,
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
+  const { checkUsage, incrementUsage } = useTierAccess();
+
   // Local state fallback for backward compatibility
   const [localReportState, setLocalReportState] = useState<VisualReportState>({
     status: 'idle',
@@ -105,6 +108,18 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const handleGenerateReport = useCallback(async () => {
     if (!result) return;
 
+    // Check usage limits before generating Gamma report
+    const usageResult = await checkUsage('gammaReports');
+    if (!usageResult.allowed) {
+      console.log('[VisualsTab] Gamma report limit reached:', usageResult);
+      setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
+      return;
+    }
+
+    // Increment usage counter before starting generation
+    await incrementUsage('gammaReports');
+    console.log('[VisualsTab] Incremented gammaReports usage');
+
     try {
       setReportState({ status: 'generating', progress: 0 });
 
@@ -128,7 +143,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         error: error instanceof Error ? error.message : 'Failed to generate report',
       });
     }
-  }, [result, exportFormat]);
+  }, [result, exportFormat, checkUsage, incrementUsage]);
 
   const handleReset = useCallback(() => {
     setReportState({ status: 'idle' });

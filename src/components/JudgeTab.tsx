@@ -48,6 +48,7 @@ async function withTimeout<T>(
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
+import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
 import {
   getLocalComparisons,
@@ -102,6 +103,7 @@ interface JudgeTabProps {
 
 const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonResult, userId = 'guest' }) => {
   const { supabaseUser, isAuthenticated } = useAuth();
+  const { checkUsage, incrementUsage } = useTierAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -371,11 +373,23 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
 
   // Generate video from judge report using Replicate (replaced D-ID)
   const generateJudgeVideo = async (report: JudgeReport) => {
+    // Check usage limits before generating video
+    const usageResult = await checkUsage('judgeVideos');
+    if (!usageResult.allowed) {
+      console.log('[JudgeTab] Judge video limit reached:', usageResult);
+      setVideoGenerationProgress('');
+      return;
+    }
+
     // Prevent concurrent video generations
     if (isGeneratingVideo) {
       console.log('[JudgeTab] Video generation already in progress, cancelling previous');
       cancelVideoGeneration();
     }
+
+    // Increment usage counter before starting generation
+    await incrementUsage('judgeVideos');
+    console.log('[JudgeTab] Incremented judgeVideos usage');
 
     console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');

@@ -281,7 +281,22 @@ const AppContent: React.FC = () => {
 
   const handleCompare = async (city1: string, city2: string) => {
     if (enhancedMode) {
-      // Enhanced mode has its own gating via FeatureGate component
+      // Enhanced mode: Check usage limit before running
+      const usageResult = await checkUsage('enhancedComparisons');
+
+      if (!usageResult.allowed) {
+        // User has hit their limit - show pricing modal
+        setPricingHighlight({
+          feature: 'enhancedComparisons',
+          tier: usageResult.requiredTier,
+        });
+        setShowPricingModal(true);
+        return;
+      }
+
+      // Increment usage counter before running enhanced comparison
+      await incrementUsage('enhancedComparisons');
+
       // Run enhanced comparison
       setEnhancedStatus('running');
       setEnhancedResult(null);

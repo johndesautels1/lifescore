@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGrokVideo } from '../hooks/useGrokVideo';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import FeatureGate from './FeatureGate';
+import { useTierAccess } from '../hooks/useTierAccess';
 import './NewLifeVideos.css';
 
 // ============================================================================
@@ -30,6 +31,7 @@ interface NewLifeVideosProps {
 
 const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const { user } = useAuth();
+  const { checkUsage, incrementUsage } = useTierAccess();
   const {
     videoPair,
     isGenerating,
@@ -61,6 +63,17 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
       console.warn('[NewLifeVideos] No user ID available');
       return;
     }
+
+    // Check usage limits before generating Grok videos
+    const usageResult = await checkUsage('grokVideos');
+    if (!usageResult.allowed) {
+      console.log('[NewLifeVideos] Grok video limit reached:', usageResult);
+      return;
+    }
+
+    // Increment usage counter before starting generation
+    await incrementUsage('grokVideos');
+    console.log('[NewLifeVideos] Incremented grokVideos usage');
 
     setHasStarted(true);
 
