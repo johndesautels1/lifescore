@@ -1849,6 +1849,22 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
               </div>
 
               {/* Expanded Metric Details */}
+              {isExpanded && (!city1Cat || !city2Cat) && (
+                <div className="metric-details-missing" style={{
+                  background: '#fef3c7',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  margin: '12px 0',
+                  textAlign: 'center'
+                }}>
+                  <span style={{ fontSize: '1.5em', marginRight: '8px' }}>⚠️</span>
+                  <span style={{ color: '#92400e' }}>
+                    <strong>Partial Data:</strong> {!city1Cat && !city2Cat ? 'Both cities' : !city1Cat ? result.city1.city : result.city2.city}
+                    {' '}missing data for {category.name}. Some LLMs may have failed to return this category.
+                  </span>
+                </div>
+              )}
               {isExpanded && city1Cat && city2Cat && (
                 <div className={`metric-details ${scoreViewMode === 'lawVsReality' ? 'dual-score-mode' : ''}`}>
                   {/* Header changes based on view mode */}
