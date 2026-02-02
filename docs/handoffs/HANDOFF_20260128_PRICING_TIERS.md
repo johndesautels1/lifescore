@@ -47,28 +47,20 @@ Now uses NAVIGATOR, FREE, SOVEREIGN with correct limits.
 
 ### 5. api/emilia/manuals.ts (Lines 36-300)
 
-**Embedded content fixes:**
+**Embedded content - CORRECTED 2026-02-02:**
 
-User manual section (~line 112-114):
+Current tier structure:
 ```
-OLD: - **Explorer (Free)**: 3 standard comparisons/month
-     - **Pioneer**: 10 standard + 3 enhanced/month
-     - **Sovereign**: Unlimited comparisons
-
-NEW: - **FREE**: 1 comparison/month (1 LLM)
-     - **NAVIGATOR ($29/mo)**: 1 comparison/month, 15min Olivia, 1 Judge, 1 Gamma
-     - **SOVEREIGN ($99/mo)**: 1 comparison/month (5 LLMs), 60min Olivia, Enhanced Mode
+- **FREE**: 1 comparison/month (1 LLM)
+- **NAVIGATOR ($29/mo)**: 1 comparison/month, 15min Olivia, 1 Judge, 1 Gamma
+- **SOVEREIGN ($99/mo)**: 1 comparison/month (5 LLMs), 60min Olivia, Enhanced Mode
 ```
 
-CSM section (~lines 141-145):
+CSM tier table:
 ```
-OLD: | Explorer | 3/month | 0 | Free |
-     | Pioneer | 10/month | 3/month | $19/month |
-     | Sovereign | Unlimited | Unlimited | $49/month |
-
-NEW: | FREE | 1 | 0 | $0 |
-     | NAVIGATOR | 1 | 0 | $29/month |
-     | SOVEREIGN | 1 (5 LLMs) | 1 | $99/month |
+| FREE | 1 | 0 | $0 |
+| NAVIGATOR | 1 | 0 | $29/month |
+| SOVEREIGN | 1 (5 LLMs) | 1 | $99/month |
 ```
 
 ### 6. docs/manuals/EMILIA_HELP_WIDGET_PLAN.md
@@ -77,13 +69,13 @@ NEW: | FREE | 1 | 0 | $0 |
 - Line 55: `PIONEER` → `NAVIGATOR`
 - Line 155: `PIONEER` → `NAVIGATOR`
 
-### 7. docs/handoffs/HANDOFF_2026_0124_PRICING.md (Optional - Historical)
+### 7. docs/handoffs/HANDOFF_2026_0124_PRICING.md - ✅ DONE (2026-02-02)
 
-- Line 72-74: Old pricing table (informational only)
+- Line 72-74: Old pricing table ✅ FIXED
 
-### 8. docs/handoffs/HANDOFF_20260127_VIDEO_PHASE3.md (Optional - Historical)
+### 8. docs/handoffs/HANDOFF_20260127_VIDEO_PHASE3.md - ✅ DONE (2026-02-02)
 
-- Line 127: `EXPLORER` → `FREE`
+- Line 127: `EXPLORER` → `FREE` ✅ FIXED
 
 ---
 
@@ -146,4 +138,4 @@ After all fixes:
 - Database column `olivia_messages` in `usage_tracking` table stores MINUTES not messages
 - The column name mismatch is acceptable (would require migration to fix)
 - `olivia_messages` TABLE (not column) is for storing chat history - this is correct
-- Handoff docs are historical - fixing them is optional
+- Handoff docs are historical - ALL FIXED 2026-02-02

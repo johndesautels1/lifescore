@@ -65,13 +65,13 @@ STRIPE_PRICE_SOVEREIGN_ANNUAL=price_...
 
 ---
 
-## Pricing Tiers
+## Pricing Tiers (UPDATED 2026-02-02)
 
 | Tier | Name | Monthly | Annual | Key Features |
 |------|------|---------|--------|--------------|
-| Free | EXPLORER | $0 | $0 | 3 comparisons, 5 Olivia msgs/day |
-| Pro | NAVIGATOR | $29 | $249 | Unlimited std, 10 enhanced, 50 msgs/day |
-| Enterprise | SOVEREIGN | $99 | $899 | Unlimited everything + API |
+| Free | FREE | $0 | $0 | 1 comparison/month (1 LLM) |
+| Pro | NAVIGATOR | $29 | $249 | 1 comparison/month, 15min Olivia, 1 Judge, 1 Gamma |
+| Enterprise | SOVEREIGN | $99 | $899 | 1 comparison/month (5 LLMs), 60min Olivia, Enhanced Mode |
 
 ---
 
@@ -101,7 +101,7 @@ STRIPE_PRICE_SOVEREIGN_ANNUAL=price_...
 
 ## Known Items to Address
 
-1. **Standard Comparison Gating** - Currently NOT gated (free users get 3/month but no enforcement yet)
+1. **Standard Comparison Gating** - Currently NOT gated (free users get 1/month but no enforcement yet)
 2. **Cloud Sync** - Feature flag exists but not implemented
 3. **API Access** - Feature flag exists but no public API yet
 4. **Stripe Price IDs** - User needs to add to Vercel after creating products in Stripe

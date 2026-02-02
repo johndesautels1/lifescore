@@ -120,13 +120,13 @@
 
 ---
 
-## TIER ACCESS MATRIX
+## TIER ACCESS MATRIX (UPDATED 2026-02-02)
 
 | Tier | Access | Limit |
 |------|--------|-------|
-| EXPLORER (free) | ❌ Denied | 0 |
+| FREE (free) | ❌ Denied | 0 |
 | NAVIGATOR (pro) | ❌ Denied | 0 |
-| SOVEREIGN (enterprise) | ✅ Allowed | Unlimited (-1) |
+| SOVEREIGN (enterprise) | ✅ Allowed | 1/month |
 
 ---
 
