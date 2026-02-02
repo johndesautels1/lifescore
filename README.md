@@ -5,6 +5,13 @@
 Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Comprehensive Location & Utility Evaluation System) platform.
 
 ---
+## 🚨 CRITICAL: Performance Audit - February 2, 2026 🚨
+
+**READ:** `docs/PERFORMANCE_AUDIT_20260202.md`
+
+Site takes 1-3 minutes to load. Bundle is 1.36MB (should be <500KB). Full audit with fix recommendations in the linked document.
+
+---
 
 ## 🚨 HANDOFF: PRICING TIER FIX (January 28, 2026) 🚨
 
