@@ -610,10 +610,8 @@ export default async function handler(
 
     // Create or use existing thread
     let threadId = existingThreadId;
-    let isNewThread = false;
     if (!threadId) {
       threadId = await createThread(apiKey);
-      isNewThread = true;
       console.log('[OLIVIA/CHAT] Created new thread:', threadId);
     } else {
       // Existing thread - check for and cancel any active runs before adding message
@@ -629,8 +627,10 @@ export default async function handler(
     }
 
     // Build context instructions for this conversation (with ALL 100 metrics)
+    // IMPORTANT: Always inject context when available, not just for new threads
+    // This allows users to select a report AFTER starting a chat and Olivia will see it
     let additionalInstructions: string | undefined;
-    if (context && isNewThread) {
+    if (context) {
       additionalInstructions = buildContextMessage(context, textSummary);
       console.log('[OLIVIA/CHAT] Added context with', context?.topMetrics?.length || 0, 'metrics, length:', additionalInstructions.length);
     }
