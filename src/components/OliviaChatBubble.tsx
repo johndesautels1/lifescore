@@ -13,6 +13,7 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useTTS } from '../hooks/useTTS';
+import { useTierAccess } from '../hooks/useTierAccess';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
@@ -28,8 +29,12 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
   const [hasNewMessage, setHasNewMessage] = useState(false);
+  const [usageLimitReached, setUsageLimitReached] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // FIX: Add tier access for Olivia usage gating
+  const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
 
   // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
@@ -112,9 +117,26 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   const handleSendMessage = useCallback(async () => {
     const messageText = inputText.trim();
     if (!messageText) return;
+
+    // FIX: Check tier usage limits before sending (same as AskOlivia)
+    if (!isUnlimited('oliviaMinutesPerMonth')) {
+      const usage = await checkUsage('oliviaMinutesPerMonth');
+      if (!usage.allowed) {
+        setUsageLimitReached(true);
+        // Dispatch event to open pricing modal
+        window.dispatchEvent(new CustomEvent('openPricing', {
+          detail: { feature: 'Olivia minutes', requiredTier: usage.requiredTier }
+        }));
+        return;
+      }
+      // Increment usage counter
+      await incrementUsage('oliviaMinutesPerMonth');
+    }
+
     setInputText('');
+    setUsageLimitReached(false);
     await sendMessage(messageText);
-  }, [inputText, sendMessage]);
+  }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation(); // Prevent external handlers from capturing keys
@@ -445,21 +467,32 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Usage Limit Warning */}
+          {usageLimitReached && (
+            <div className="bubble-limit-warning">
+              <span>Olivia minutes exhausted this month.</span>
+              <button onClick={() => window.dispatchEvent(new CustomEvent('openPricing'))}>
+                Upgrade
+              </button>
+            </div>
+          )}
+
           {/* Input */}
           <div className="bubble-input-area">
             <input
               ref={inputRef}
               type="text"
               className="bubble-input"
-              placeholder="Ask Olivia..."
+              placeholder={usageLimitReached ? "Upgrade to continue..." : "Ask Olivia..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
+              disabled={usageLimitReached}
             />
             <button
               className="bubble-send-btn"
               onClick={handleSendMessage}
-              disabled={!inputText.trim()}
+              disabled={!inputText.trim() || usageLimitReached}
             >
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />

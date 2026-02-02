@@ -715,12 +715,20 @@ const AppContent: React.FC = () => {
           )}
 
           {/* ============================================================
-              ASK OLIVIA TAB
+              ASK OLIVIA TAB - Gated for NAVIGATOR+ (FREE users have 0 minutes)
               ============================================================ */}
           {activeTab === 'olivia' && (
-            <AskOlivia
-              comparisonResult={enhancedResult || state.result || undefined}
-            />
+            <FeatureGate
+              feature="oliviaMinutesPerMonth"
+              blurContent={true}
+              showUsage={true}
+              lockedTitle="Upgrade to Access Olivia"
+              lockedMessage="Chat with Olivia AI to get personalized insights about your city comparison. Available for Navigator and Sovereign members."
+            >
+              <AskOlivia
+                comparisonResult={enhancedResult || state.result || undefined}
+              />
+            </FeatureGate>
           )}
 
           {/* ============================================================

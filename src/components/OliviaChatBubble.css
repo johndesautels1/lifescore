@@ -574,6 +574,35 @@
   font-weight: 700;
 }
 
+/* Usage Limit Warning */
+.bubble-limit-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.75rem;
+  color: #92400e;
+}
+
+.bubble-limit-warning button {
+  padding: 0.25rem 0.75rem;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bubble-limit-warning button:hover {
+  background: #d97706;
+}
+
 /* Input Area */
 .bubble-input-area {
   display: flex;
