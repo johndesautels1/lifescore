@@ -240,6 +240,9 @@ export const EUROPEAN_METROS: Metro[] = [
   { city: "Vilnius", country: "Lithuania" },
   { city: "Luxembourg City", country: "Luxembourg" },
   { city: "Monaco", country: "Monaco" },
+  // Additional Mediterranean
+  { city: "Valletta", country: "Malta" },
+  { city: "Nicosia", country: "Cyprus" },
 ];
 
 // ============================================================================
