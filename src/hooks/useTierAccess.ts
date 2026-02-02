@@ -68,10 +68,10 @@ export const TIER_NAMES: Record<UserTier, string> = {
 /**
  * Tier limits configuration - ALL LIMITS ARE PER MONTH
  *
- * CORRECT TIER STRUCTURE (Jan 2026):
+ * CORRECT TIER STRUCTURE (Feb 2026):
  * - FREE: $0, 1 LLM, 1 comparison, NO Olivia, NO Gamma
  * - NAVIGATOR: $29, 1 LLM, 1 comparison, 15min Olivia, 1 Gamma
- * - SOVEREIGN: $99, 5 LLMs, 1 comparison (enhanced), 60min Olivia, 1 Gamma
+ * - SOVEREIGN: $99, 5 LLMs, 1 standard OR 1 enhanced comparison, 60min Olivia, 1 Gamma
  */
 export const TIER_LIMITS: Record<UserTier, TierLimits> = {
   free: {
@@ -95,7 +95,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     apiAccess: false,
   },
   enterprise: {
-    standardComparisons: 0,         // Uses enhanced instead
+    standardComparisons: 1,         // 1 standard comparison OR use enhanced
     enhancedComparisons: 1,         // 1 comparison/month with ALL 5 LLMs
     oliviaMinutesPerMonth: 60,      // 60 minutes/month
     judgeVideos: 1,                 // 1 Judge video/month
