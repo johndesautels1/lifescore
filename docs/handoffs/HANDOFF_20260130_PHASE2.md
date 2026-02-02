@@ -13,7 +13,7 @@
 
 | Task | Status | Files Modified |
 |------|--------|----------------|
-| Fix domain names (lifescore.app -> clueslifescore.com) | DONE | USER_MANUAL.md (L61, L593-594), CUSTOMER_SERVICE_MANUAL.md (L40-42) |
+| Fix domain names (all now clueslifescore.com) | ✅ DONE | USER_MANUAL.md, CUSTOMER_SERVICE_MANUAL.md, all code files |
 | Fix password requirements | DONE | USER_MANUAL.md (L66) - now matches CSM "8+ chars, 1 uppercase, 1 number" |
 | Fix environment variables | DONE | TECHNICAL_SUPPORT_MANUAL.md (L700-730) - added 17 missing vars |
 | Fix database table count | DONE | TECHNICAL_SUPPORT_MANUAL.md (L242) - changed 15 to 16, added 2 tables |

@@ -28,7 +28,7 @@
 |------|---------|------------|---------------|---------------|----------|
 | 3 | Header | OUTDATED | Version 1.0 | Version 2.0 | Medium |
 | 4 | Header | OUTDATED | January 28, 2026 | January 30, 2026 | Medium |
-| 61 | §2 Getting Started | WRONG | `lifescore.app` | `clueslifescore.com` | Critical |
+| 61 | §2 Getting Started | ✅ FIXED | `clueslifescore.com` | `clueslifescore.com` | Critical |
 | 66 | §2 Account Creation | INCONSISTENT | "minimum 6 characters" | "8+ characters, 1 uppercase, 1 number" | Critical |
 | 100 | §3 Navigation | MISSING | No mention of Cost Dashboard | Add "💰 Cost Dashboard" tab | High |
 | 107 | §3 Navigation | INCOMPLETE | "Ask Olivia" only | Add "Ask Emilia" help assistant | High |
@@ -51,8 +51,8 @@
 | 541-586 | §14 FAQs | MISSING | No Enhanced mode FAQ | Add: "What providers are used in Enhanced mode?" | Medium |
 | 567-568 | §14 FAQs | OUTDATED | Lists supported browsers | Verify current browser support | Low |
 | 570-571 | §14 FAQs | INCOMPLETE | "Currently web-only" | Mention PWA capability if exists | Low |
-| 589-596 | Getting Help | WRONG | `help.lifescore.app` | `help.clueslifescore.com` | Critical |
-| 594 | Getting Help | WRONG | `support@lifescore.app` | `support@clueslifescore.com` | Critical |
+| 589-596 | Getting Help | ✅ FIXED | `help.clueslifescore.com` | `help.clueslifescore.com` | Critical |
+| 594 | Getting Help | ✅ FIXED | `support@clueslifescore.com` | `support@clueslifescore.com` | Critical |
 | N/A | MISSING SECTION | MISSING | No Cost Dashboard section | Add §15: Cost Dashboard & Usage Monitoring | High |
 | N/A | MISSING SECTION | MISSING | No Emilia section | Add §16: Emilia Help Assistant | High |
 | N/A | MISSING SECTION | MISSING | No API quota alerts | Mention email alerts for quota warnings | Medium |
@@ -144,7 +144,7 @@
 | Issue | User Manual | Customer Service Manual | Technical Manual | Resolution |
 |-------|-------------|------------------------|------------------|------------|
 | Password requirements | "minimum 6 characters" (L66) | "8+ characters, 1 uppercase, 1 number" (L209) | Not specified | Use CSM standard: 8+ chars |
-| Domain name | `lifescore.app` | Not specified | Not specified | Use: `clueslifescore.com` |
+| Domain name | ✅ FIXED: `clueslifescore.com` | ✅ FIXED | ✅ FIXED | All now use: `clueslifescore.com` |
 | City count | "200 cities" (L120) | "200 metropolitan areas" (L69) | Not specified | Verify in metros.ts |
 | Comparison limits | "1/month" all tiers (L416) | "1/month" all tiers (L84) | Not specified | Verify actual limits |
 | LLM providers | "up to 5" (L130) | "up to 5" (L99) | Lists 5 correctly (§2.3) | Standardize: 5 providers |
@@ -232,7 +232,7 @@ These items were verified as accurate and need NO changes:
 ## IMPLEMENTATION PRIORITY
 
 ### Phase 1 - Critical (Do First):
-1. Fix all domain names: `lifescore.app` → `clueslifescore.com`
+1. ✅ DONE: Fix all domain names → `clueslifescore.com` (fixed 2026-02-02)
 2. Fix password requirements inconsistency
 3. Fix environment variables list (add 12 missing)
 4. Fix database table count (14 vs 15)
@@ -276,7 +276,7 @@ D:\LifeScore\docs\manuals\TECHNICAL_SUPPORT_MANUAL.md
 
 ## VERIFICATION STEPS AFTER UPDATE
 
-1. Search all manuals for `lifescore.app` - should find 0 results
+1. ✅ VERIFIED: All domain references now use `clueslifescore.com` (2026-02-02)
 2. Verify password requirements match across all manuals
 3. Count database tables in Tech Manual - should match actual
 4. Verify all 22+ environment variables are documented

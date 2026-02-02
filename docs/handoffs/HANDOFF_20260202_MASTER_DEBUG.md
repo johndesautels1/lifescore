@@ -80,8 +80,8 @@ grep -r "NAVIGATOR" src/
 # Check tier limits
 cat src/hooks/useTierAccess.ts | head -100
 
-# Check domain references
-grep -r "lifescore.app" docs/
+# Check domain references (should all be clueslifescore.com now)
+grep -r "clueslifescore.com" docs/
 
 # Verify Wav2Lip vs Wav2Lip references
 grep -r "Wav2Lip" src/

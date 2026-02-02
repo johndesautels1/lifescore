@@ -6150,7 +6150,7 @@ Users may receive email alerts at warning thresholds.
 
 - **Email Support:** support@clueslifescore.com
 - **Help Center:** help.clueslifescore.com
-- **Website:** clueslifescore.com (NOT lifescore.app - that's incorrect)
+- **Website:** clueslifescore.com
 
 ## 36.6 Voice & Avatar Technology
 
