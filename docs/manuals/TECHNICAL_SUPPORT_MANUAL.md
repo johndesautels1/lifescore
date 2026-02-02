@@ -260,7 +260,7 @@ D:\lifescore\
 
 ## 4. Database Schema
 
-### 4.1 Current Tables (16 total)
+### 4.1 Current Tables (17 total)
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
@@ -280,6 +280,7 @@ D:\lifescore\
 | contrast_image_cache | Olivia images | cache_key, urls |
 | api_quota_settings | Admin quota limits | provider_key, monthly_limit, warning thresholds |
 | api_quota_alert_log | Email alert history | provider_key, alert_level, sent_at |
+| authorized_manual_access | Manual access control | email, access_level, granted_by |
 
 ### 4.2 Missing Schema (Needs Creation)
 
