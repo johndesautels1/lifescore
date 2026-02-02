@@ -204,3 +204,57 @@ a4a3270 feat(judge): check for pre-generated video on JudgeTab mount
 - [x] Bug #5 fixed - Same fix as #4 (9da92d2)
 - [x] Bug #7 fixed (3ef88d6)
 - [ ] All bugs verified in production
+
+---
+
+## Performance Optimization (Added 2026-02-02)
+
+**Reference:** `docs/PERFORMANCE_AUDIT_20260202.md`
+
+### Issue #8: Bundle Size 1.36MB (CRITICAL)
+
+**Symptoms:**
+- Site takes 1-3 MINUTES to cold load
+- All 177 modules in ONE chunk
+- `chunkSizeWarningLimit: 1000` was hiding warnings
+
+**Phase 1 Fix Applied:**
+```typescript
+// vite.config.ts
+rollupOptions: {
+  output: {
+    manualChunks: {
+      'react-vendor': ['react', 'react-dom'],
+      'supabase': ['@supabase/supabase-js'],
+    }
+  }
+}
+```
+
+**Status:** ✅ Phase 1 COMPLETE
+
+### Remaining Phases
+
+| Phase | Task | Status | Risk |
+|-------|------|--------|------|
+| 2 | Lazy load AskOlivia, SavedComparisons, VisualsTab | 🔴 Pending | LOW |
+| 3 | Refactor EnhancedComparison.tsx (split exports) | 🔴 Pending | MEDIUM |
+| 4 | Dynamic import data files (metrics.ts, etc.) | 🔴 Pending | HIGH |
+
+### Why EnhancedComparison.tsx Can't Be Lazy Loaded Yet
+
+App.tsx uses named exports at initialization:
+```typescript
+// Line 31-38 - runs BEFORE render
+import {
+  EVALUATOR_LLMS,        // ← Used in useState()
+  type LLMButtonState    // ← Type for state
+} from "./components/EnhancedComparison";
+
+// Line 80-82 - BREAKS if lazy loaded
+const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
+  new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
+);
+```
+
+**Required refactor:** Split into `constants.ts` + `components.tsx`

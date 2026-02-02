@@ -1,6 +1,6 @@
 # LIFE SCORE™ MASTER README
-**Conversation ID:** `LIFESCORE-OLIVIA-ENHANCE-20260124`
-**Last Updated:** January 24, 2026
+**Conversation ID:** `LIFESCORE-PERF-20260202`
+**Last Updated:** February 2, 2026
 **Domain:** lifescore.cluesintelligence.com
 
 ---
@@ -228,6 +228,44 @@ All configured in Vercel. **DO NOT ask user to configure.**
 
 ### LOW
 - D2-D3: Gamma Polish
+
+---
+
+## PERFORMANCE OPTIMIZATION (2026-02-02)
+
+**Reference:** `docs/PERFORMANCE_AUDIT_20260202.md`
+**Issue:** Site takes 1-3 MINUTES to load on cold start (1.36MB bundle)
+
+### Phase Status
+
+| Phase | Description | Status | Safe? |
+|-------|-------------|--------|-------|
+| **Phase 1** | Vendor manualChunks (react, supabase) | ✅ DONE | ✅ YES |
+| **Phase 2** | Tab lazy loading (Olivia, Saved, Visuals) | 🔴 Not Started | ✅ YES |
+| **Phase 3** | Refactor EnhancedComparison.tsx | 🔴 Not Started | ⚠️ CAREFUL |
+| **Phase 4** | Data file lazy loading | 🔴 Not Started | ⚠️ HIGH RISK |
+
+### Phase 1 Completed (2026-02-02)
+- ✅ Removed `chunkSizeWarningLimit: 1000` (was hiding warnings)
+- ✅ Added `manualChunks` for `react-vendor` and `supabase`
+- Output: Vendor code now in separate cacheable chunks
+
+### Phase 2 Ready (Safe to implement)
+Components that CAN be lazy loaded (default exports only):
+- `AskOlivia.tsx` (869 lines) - ✅ Clean candidate
+- `SavedComparisons.tsx` (578 lines) - ✅ Clean candidate
+- `VisualsTab.tsx` (334 lines) - ✅ Clean candidate
+
+### Phase 3 Blocked (Requires Refactoring)
+**EnhancedComparison.tsx CANNOT be lazy loaded as-is:**
+- Exports 6 named components/constants used at App.tsx initialization
+- `EVALUATOR_LLMS` used in `useState()` initialization (line 80-82)
+- Must split into `constants.ts` + lazy-loadable `components.tsx`
+
+### Phase 4 High Risk (Data Files)
+- `metrics.ts` (92KB) imported by 16+ files synchronously
+- `fieldKnowledge.ts` (67KB) deeply nested imports
+- Requires full import chain audit before attempting
 
 ---
 
