@@ -284,7 +284,7 @@ export async function runSingleEvaluatorBatched(
       onCategoryProgress?.([...progressState]);
     }
 
-    let result = { success: false, scores: [] as LLMMetricScore[], latencyMs: 0, error: 'Not attempted' };
+    let result: { success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string } = { success: false, scores: [] as LLMMetricScore[], latencyMs: 0, error: 'Not attempted' };
 
     // Retry loop for network failures
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
