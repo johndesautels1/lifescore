@@ -81,10 +81,10 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Feature | FREE ($0) | NAVIGATOR ($29/mo or $249/yr) | SOVEREIGN ($99/mo or $899/yr) |
 |---------|-----------|--------------------|--------------------|
 | LLM Providers | 1 (Claude) | 1 (Claude) | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) |
-| Comparisons | 1/month (Standard) | 3/month (Standard) | Unlimited (Standard + Enhanced) |
+| Comparisons | 1/month (Standard) | 1/month (Standard) | 1/month (Standard or Enhanced) |
 | Olivia AI | No | 15 min/month | 60 min/month |
-| Gamma Reports | No | 1/month | 3/month |
-| Judge Videos | No | 1/month | 3/month |
+| Gamma Reports | No | 1/month | 1/month |
+| Judge Videos | No | 1/month | 1/month |
 | Enhanced Mode | No | No | Yes (5-LLM consensus scoring) |
 | Cloud Sync | No | Yes | Yes |
 
@@ -591,6 +591,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, support channels, tier limits |
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§8.6), Emilia (§8.7), Quota Template (§10.5), glossary terms |
 | 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Kling AI docs, video timing fix, annual pricing, live chat clarification |
+| 2.3 | 2026-02-02 | Claude Opus 4.5 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
 
 ---
 
