@@ -28,7 +28,7 @@
 | 1 | ~~City data caching in Supabase~~ | Load 200 cities into DB, cache results for instant responses | DEFERRED |
 | 2 | ✅ ~~Tavily search restructure~~ | Added Research API caching wrapper (67% reduction in Research calls) | DONE 2/3 |
 | 3 | ✅ ~~Perplexity prompt adjustments~~ | Optimized prompts: batch threshold 20→15, source reuse, evidence limits, confidence fallback | DONE 2/3 |
-| 4 | Gemini prompt adjustments | Several sections fail to return data | HIGH |
+| 4 | ✅ ~~Gemini prompt adjustments~~ | Lowered temperature 0.3→0.2 for stricter factual adherence | DONE 2/3 |
 
 ---
 
