@@ -353,7 +353,7 @@ export default async function handler(
     // - Wider pads for better face capture
     // - Higher fps (30) for smoother motion
     // - Higher resolution (720p)
-    // - resize_factor for zoom-out effect (0.75 = 75% of original, appears further back)
+    // NOTE: resize_factor removed - not supported by this Wav2Lip version
     const replicateInput = {
       face: CHRISTIANO_IMAGE_URL,
       audio: audioUrl,
@@ -361,7 +361,6 @@ export default async function handler(
       smooth: true,
       fps: 30,                // Smoother playback
       out_height: 720,        // Higher resolution
-      resize_factor: 0.75,    // Zoom out - makes face smaller in frame
     };
 
     // Build request body with version hash
