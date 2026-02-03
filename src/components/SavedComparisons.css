@@ -752,17 +752,24 @@
   }
 
   .saved-item-actions {
+    display: flex !important;  /* Force display */
     justify-content: center;
     gap: 0.75rem;
     width: 100%;
     flex-wrap: nowrap;
+    min-height: 44px;  /* Ensure container has height */
   }
 
   .action-btn {
-    width: 40px;
-    height: 40px;  /* Fixed: was 8px which hid the button */
-    font-size: 1rem;
+    display: flex !important;  /* Force display */
+    width: 44px !important;  /* Larger touch target */
+    height: 44px !important;  /* Larger touch target */
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.2rem;
     flex-shrink: 0;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .saved-item-main {
