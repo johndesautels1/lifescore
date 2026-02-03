@@ -36,7 +36,7 @@
 
 | # | Item | Details |
 |---|------|---------|
-| 5 | **Judge Video welcome screen** | Content too large - scale down to fit viewport |
+| 5 | ✅ ~~Judge Video welcome screen~~ | Added mobile CSS scaling (768px/480px breakpoints) | DONE 2/3 |
 | 6 | **Judge Video - Christiano animation** | Face and body too rigid, needs natural movement |
 | 7 | Results Report section scroll | Auto-scroll to section when expanded |
 | 8 | Post-search flow redesign | Show status buttons first, then "View Report" button |
