@@ -274,8 +274,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     }
   };
 
-  // Toggle category expansion
+  // Toggle category expansion with scroll to top
   const toggleCategory = (categoryId: string) => {
+    const isCurrentlyExpanded = expandedCategories.has(categoryId);
+
     setExpandedCategories(prev => {
       const next = new Set(prev);
       if (next.has(categoryId)) {
@@ -285,6 +287,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       }
       return next;
     });
+
+    // Scroll to top of section when expanding
+    if (!isCurrentlyExpanded) {
+      setTimeout(() => {
+        const el = document.getElementById(`judge-category-${categoryId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+    }
   };
 
   // Cleanup video polling on unmount
@@ -1412,6 +1424,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
             return (
               <div
                 key={category.id}
+                id={`judge-category-${category.id}`}
                 className={`category-analysis-card ${isExpanded ? 'expanded' : ''}`}
               >
                 <button

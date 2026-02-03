@@ -106,28 +106,44 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result, cu
     return cityScore.categories.find(c => c.categoryId === categoryId);
   };
 
+  // Handle category click with scroll to top of section
+  const handleCategoryClick = (categoryId: CategoryId, isCurrentlyExpanded: boolean) => {
+    const newExpanded = isCurrentlyExpanded ? null : categoryId;
+    setExpandedCategory(newExpanded);
+
+    // Scroll to top of the clicked section when expanding
+    if (newExpanded) {
+      setTimeout(() => {
+        const el = document.getElementById(`category-section-${categoryId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50); // Small delay to allow DOM to update
+    }
+  };
+
   return (
     <div className="category-breakdown card">
       <h3 className="section-title">Category Breakdown</h3>
       <p className="breakdown-subtitle">Click any category to see detailed metric scores</p>
-      
+
       {CATEGORIES.map((category) => {
         const city1Cat = getCategoryScore(result.city1, category.id);
         const city2Cat = getCategoryScore(result.city2, category.id);
-        
+
         const city1Score = city1Cat?.averageScore ?? 0;
         const city2Score = city2Cat?.averageScore ?? 0;
-        
+
         const city1Wins = city1Score > city2Score;
         const city2Wins = city2Score > city1Score;
-        
+
         const isExpanded = expandedCategory === category.id;
-        
+
         return (
-          <div key={category.id} className="category">
-            <button 
+          <div key={category.id} id={`category-section-${category.id}`} className="category">
+            <button
               className="category-header-btn"
-              onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+              onClick={() => handleCategoryClick(category.id, isExpanded)}
             >
               <div className="category-header">
                 <span className="category-icon">{category.icon}</span>
