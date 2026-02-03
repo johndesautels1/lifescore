@@ -100,7 +100,7 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   allowDismiss = true,
   onDismiss,
 }) => {
-  const { tier, canAccess, checkUsage, getRequiredTier, isUnlimited, isLoading } = useTierAccess();
+  const { tier, canAccess, checkUsage, getRequiredTier, isUnlimited, isLoading, isAdmin } = useTierAccess();
   const [usageInfo, setUsageInfo] = useState<{
     used: number;
     limit: number;
@@ -108,6 +108,12 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   } | null>(null);
   const [isLimited, setIsLimited] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // ADMIN BYPASS: Admin users get unlimited access to EVERYTHING - no gates, no limits
+  // This is the owner/developer override that should NEVER show any popups
+  if (isAdmin) {
+    return <>{children}</>;
+  }
 
   // Determine the required tier
   const actualRequiredTier = requiredTier || getRequiredTier(feature);
@@ -255,9 +261,10 @@ export const SimpleGate: React.FC<{
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }> = ({ feature, children, fallback }) => {
-  const { canAccess } = useTierAccess();
+  const { canAccess, isAdmin } = useTierAccess();
 
-  if (canAccess(feature)) {
+  // Admin bypass - always show content
+  if (isAdmin || canAccess(feature)) {
     return <>{children}</>;
   }
 

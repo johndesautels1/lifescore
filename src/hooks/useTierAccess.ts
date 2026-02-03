@@ -138,6 +138,7 @@ export interface TierAccessHook {
   tierName: string;
   limits: TierLimits;
   isLoading: boolean;
+  isAdmin: boolean;  // Admin bypass - unlimited access to everything
   canAccess: (feature: FeatureKey) => boolean;
   checkUsage: (feature: FeatureKey) => Promise<UsageCheckResult>;
   incrementUsage: (feature: FeatureKey) => Promise<boolean>;
@@ -474,6 +475,7 @@ export function useTierAccess(): TierAccessHook {
     tierName,
     limits,
     isLoading: authLoading,
+    isAdmin: isDeveloper,  // Admin bypass flag - FeatureGate checks this for unlimited access
     canAccess,
     checkUsage,
     incrementUsage,
