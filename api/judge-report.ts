@@ -315,11 +315,11 @@ Provide a comprehensive Judge's Report in the following JSON format:
             "metricIcon": "🌿",
             "winnerScore": 85,
             "loserScore": 40,
-            "realWorldExample": "You can legally purchase cannabis at state-licensed dispensaries without fear of prosecution, while the other city still enforces possession as a misdemeanor."
+            "realWorldExample": "Picture yourself walking into a sleek, legal dispensary on a Saturday afternoon, choosing from artisanal strains like you're browsing a wine shop - while your friends back in the other city are still looking over their shoulders for something that should never have been illegal."
           }
           // Include 2-4 winning metrics per category where winner score > loser score by at least 10 points
         ],
-        "heroStatement": "A joyful 1-2 sentence summary of freedom advantage in this category, e.g., 'In {winnerCity}, personal autonomy flourishes with progressive cannabis laws and fewer restrictions on your lifestyle choices.'"
+        "heroStatement": "A POWERFUL, provocative 2-3 sentence vision of freedom that paints a vivid picture of life in the winning city. Be bold, witty (but not too clever), and emotionally compelling. Make the user FEEL their future freedom. Example: 'Welcome to a city that actually trusts you to make your own choices. Here, your body is YOUR domain - no bureaucrat's permission slip required.'"
       }
       // ... one entry for each of the 6 categories
     ]
@@ -333,9 +333,13 @@ Provide a comprehensive Judge's Report in the following JSON format:
 4. The keyFactors should be the 5 most important considerations, not just a summary of categories
 5. Consider the user's likely priorities: personal autonomy, property rights, business freedom, mobility, legal protection, self-expression
 6. For freedomEducation, include ONLY metrics where the winner beats the loser by 10+ points
-7. Each realWorldExample should be 1-2 sentences describing a TANGIBLE, PRACTICAL freedom benefit the user will experience
-8. heroStatement should be JOYFUL and CELEBRATORY - make the user excited about their freedom gains
-9. Use appropriate emojis for metricIcon (e.g., 🌿 cannabis, 🍺 alcohol, 🏠 housing, 💼 business, 🚗 vehicles, ⚖️ legal)
+
+## FREEDOM EDUCATION WRITING STYLE - CRITICAL
+7. realWorldExample: Paint a VIVID SCENE of the user's life in this city. Don't just state facts - make them FEEL it. Use "you" and "your". Be specific and sensory. Show the CONTRAST with the losing city. Make it punchy and memorable. Example: "Imagine hosting a poker night without worrying about the cops. Your home is YOUR castle here."
+8. heroStatement: This is YOUR moment to inspire. Write like you're the narrator in a movie trailer about freedom. Be BOLD, slightly provocative, a touch witty. Paint a vision of an amazing life. This section should tell a DIFFERENT story than the other parts of the report - focus on the FEELING and VISION of freedom, not just the metrics. Make the user's heart race with possibility.
+9. AVOID: Dry, bureaucratic language. Repeating exact phrases from other sections. Generic statements. Being too clever or preachy.
+10. EMBRACE: Vivid imagery. Emotional impact. Specific scenarios. The joy of liberation. A slight edge of rebellion against overreach.
+11. Use appropriate emojis for metricIcon (e.g., 🌿 cannabis, 🍺 alcohol, 🏠 housing, 💼 business, 🚗 vehicles, ⚖️ legal)
 
 Return ONLY the JSON object, no other text.`;
 }

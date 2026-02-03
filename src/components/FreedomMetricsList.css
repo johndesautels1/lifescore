@@ -75,7 +75,7 @@
 
 .metric-name {
   flex: 1;
-  font-size: 0.9rem;
+  font-size: 1.0rem;  /* +4 points */
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
 }
@@ -84,22 +84,25 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;  /* Slightly smaller overall */
 }
 
 .winner-score {
   color: #d4af37;
   font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .score-separator {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.75);  /* Brighter vs text */
+  font-size: 0.8rem;  /* Larger vs */
+  font-weight: 500;
 }
 
 .loser-score {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);  /* Slightly brighter */
   font-weight: 500;
+  font-size: 0.85rem;
 }
 
 /* ============================================================================
@@ -121,9 +124,9 @@
 }
 
 .example-text {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.4;
+  font-size: 0.9rem;  /* +4 points */
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.45;
   font-style: italic;
 }
 

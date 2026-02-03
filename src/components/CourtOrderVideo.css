@@ -58,9 +58,13 @@
 }
 
 .court-order-subtitle {
-  color: var(--text-secondary, #a0a0c0);
-  font-size: 0.95rem;
+  color: #FF8C00;  /* Crisp orange */
+  font-size: 1.15rem;
+  font-weight: 700;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
 }
 
 /* ============================================================================
@@ -136,15 +140,16 @@
 }
 
 .preview-city {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent-color, #D4AF37);
   text-transform: uppercase;
 }
 
 .preview-score {
-  font-size: 0.9rem;
-  color: rgba(212, 175, 55, 0.7);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
 }
 
 .preview-text {

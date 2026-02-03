@@ -16,6 +16,7 @@
 
 .freedom-tabs {
   display: flex;
+  justify-content: center;  /* CENTER the tabs */
   gap: 0.5rem;
   padding: 0.5rem;
   background: rgba(13, 40, 71, 0.6);
@@ -90,7 +91,7 @@
 }
 
 .tab-name {
-  font-size: 0.7rem;
+  font-size: 0.95rem;  /* +4 points from 0.7rem */
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
@@ -145,7 +146,7 @@
   }
 
   .tab-name {
-    font-size: 0.6rem;
+    font-size: 0.8rem;  /* Scaled for mobile */
   }
 
   .tab-count {
@@ -166,6 +167,6 @@
   }
 
   .tab-name {
-    font-size: 0.55rem;
+    font-size: 0.7rem;  /* Scaled for small mobile */
   }
 }
