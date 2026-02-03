@@ -299,26 +299,17 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
       console.log('[useAvatarProvider] Simli interrupt:', e);
     }
 
-    // Pause and mute video element
+    // Pause video element (don't mute - just pause)
     if (effectiveVideoRef?.current) {
       effectiveVideoRef.current.pause();
-      effectiveVideoRef.current.muted = true;
-      console.log('[useAvatarProvider] Video element paused and muted');
-      // Unmute after brief delay for next speech
-      setTimeout(() => {
-        if (effectiveVideoRef?.current) effectiveVideoRef.current.muted = false;
-      }, 100);
+      console.log('[useAvatarProvider] Video element paused');
     }
 
-    // Pause and mute audio element
+    // Pause and reset audio element
     if (effectiveAudioRef?.current) {
       effectiveAudioRef.current.pause();
       effectiveAudioRef.current.currentTime = 0;
-      effectiveAudioRef.current.muted = true;
-      console.log('[useAvatarProvider] Audio element paused and muted');
-      setTimeout(() => {
-        if (effectiveAudioRef?.current) effectiveAudioRef.current.muted = false;
-      }, 100);
+      console.log('[useAvatarProvider] Audio element paused and reset');
     }
 
     // Cancel ALL browser speech synthesis

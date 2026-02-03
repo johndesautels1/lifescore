@@ -188,17 +188,30 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       disconnectAvatar();
     }
 
-    // Cleanup avatar session on page refresh/close
+    // Cleanup ALL audio sources on page refresh/close
     const handleBeforeUnload = () => {
-      if (videoEnabled) {
-        disconnectAvatar();
+      console.log('[AskOlivia] Page unloading - stopping ALL audio');
+      interruptAvatar();
+      stopSpeaking();
+      disconnectAvatar();
+      // Force cancel any lingering browser speech
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // CRITICAL: Stop ALL audio on cleanup/navigation
+      console.log('[AskOlivia] Cleanup - stopping ALL audio sources');
+      interruptAvatar();
+      stopSpeaking();
       disconnectAvatar();
+      // Force cancel browser speech synthesis
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoEnabled]); // Only re-run when videoEnabled changes
@@ -244,6 +257,11 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
 
+        // CRITICAL: Interrupt any ongoing speech before starting new
+        // This prevents overlapping/repeating audio
+        interruptAvatar();
+        stopSpeaking();
+
         // If video is enabled and avatar is connected, use avatar
         if (videoEnabled && isAvatarConnected) {
           makeAvatarSpeak(lastMessage.content).catch((err: Error) => {
@@ -256,7 +274,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
         }
       }
     }
-  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled]);
+  }, [messages, autoSpeak, isAvatarConnected, makeAvatarSpeak, speakText, activeProvider, videoEnabled, interruptAvatar, stopSpeaking]);
 
   // ═══════════════════════════════════════════════════════════════════
   // AUTO-GREETING: Disabled for testing
