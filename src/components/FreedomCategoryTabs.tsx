@@ -9,12 +9,8 @@
  */
 
 import React from 'react';
-import {
-  CategoryId,
-  FreedomCategoryTabsProps,
-  FREEDOM_CATEGORIES,
-  CategoryFreedomData,
-} from '../types/freedomEducation';
+import type { CategoryId, FreedomCategoryTabsProps } from '../types/freedomEducation';
+import { FREEDOM_CATEGORIES } from '../types/freedomEducation';
 import './FreedomCategoryTabs.css';
 
 // ============================================================================

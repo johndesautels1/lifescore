@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { FreedomMetricsListProps, FreedomExample } from '../types/freedomEducation';
+import type { FreedomMetricsListProps, FreedomExample } from '../types/freedomEducation';
 import './FreedomMetricsList.css';
 
 // ============================================================================
@@ -18,10 +18,9 @@ import './FreedomMetricsList.css';
 
 interface MetricCardProps {
   metric: FreedomExample;
-  winnerCity: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ metric, winnerCity }) => {
+const MetricCard: React.FC<MetricCardProps> = ({ metric }) => {
   const scoreDiff = metric.winnerScore - metric.loserScore;
 
   return (
@@ -54,7 +53,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, winnerCity }) => {
 
 const FreedomMetricsList: React.FC<FreedomMetricsListProps> = ({
   metrics,
-  winnerCity,
+  winnerCity: _winnerCity, // Reserved for future use
 }) => {
   if (!metrics || metrics.length === 0) {
     return (
@@ -76,7 +75,6 @@ const FreedomMetricsList: React.FC<FreedomMetricsListProps> = ({
         <MetricCard
           key={metric.metricId}
           metric={metric}
-          winnerCity={winnerCity}
         />
       ))}
     </div>

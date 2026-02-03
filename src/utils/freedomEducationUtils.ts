@@ -8,13 +8,13 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import {
+import type {
   CategoryId,
   FreedomEducationData,
   CategoryFreedomData,
   FreedomExample,
-  FREEDOM_CATEGORIES,
 } from '../types/freedomEducation';
+import { FREEDOM_CATEGORIES } from '../types/freedomEducation';
 
 // ============================================================================
 // DATA EXTRACTION

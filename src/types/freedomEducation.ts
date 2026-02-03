@@ -9,7 +9,10 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { CategoryId } from './metrics';
+import type { CategoryId } from './metrics';
+
+// Re-export CategoryId for convenience
+export type { CategoryId } from './metrics';
 
 // ============================================================================
 // FREEDOM EXAMPLE TYPES

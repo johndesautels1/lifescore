@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { FreedomHeroFooterProps } from '../types/freedomEducation';
+import type { FreedomHeroFooterProps } from '../types/freedomEducation';
 import './FreedomHeroFooter.css';
 
 // ============================================================================
@@ -19,7 +19,7 @@ import './FreedomHeroFooter.css';
 const FreedomHeroFooter: React.FC<FreedomHeroFooterProps> = ({
   heroStatement,
   winnerCity,
-  categoryName,
+  categoryName: _categoryName, // Reserved for future use
 }) => {
   if (!heroStatement) {
     return null;
