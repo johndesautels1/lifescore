@@ -1,6 +1,6 @@
 # LIFE SCORE - UNIFIED MASTER TODO
 **Created:** February 3, 2026
-**Last Updated:** February 3, 2026 (Session LS-COURT-ORDER-20260203)
+**Last Updated:** February 3, 2026 (Session LS-COURT-ORDER-20260203 - Final)
 **Source:** Merged from MASTER-TODO-20260202.md + FINAL-CODEBASE-FIXES-TABLE.md
 **Duplicates Removed:** 14 items
 
@@ -90,6 +90,14 @@
 |---|-----|---------|--------|
 | 38 | Supabase profile fetch timeout | Profile/preferences fetch times out (45s x 4 retries), causing tier fallback to 'free' | PARTIALLY FIXED (991cabc) - Added fail-open to enterprise for authenticated users |
 | 39 | FeatureGate blocks clicks after dismiss | pointer-events: none persisted after user dismissed upgrade overlay | FIXED (e827fff) |
+| 40 | Admin blocked from FeatureGate features | Admin/owner seeing "Limit Reached" popups | FIXED - Added isAdmin bypass to all 10 usage-checking files |
+| 41 | VisualsTab dropdown dark on dark | "Select Text" was dark blue on blue background | FIXED - Changed to gold/white |
+| 42 | Saved Reports mobile buttons invisible | Eye/pencil/trash buttons not visible on mobile vertical | FIXED (a01484e) - Added 44px touch targets with !important |
+| 43 | Olivia audio not stopping | Audio kept playing on navigation/stop click | FIXED - Added interruptAvatar, stopSpeaking, speechSynthesis.cancel |
+| 44 | Olivia goes bonkers on mobile text | Audio chaos when receiving text messages | FIXED - Added visibilitychange and blur handlers |
+| 45 | Mobile video playback broken | "Play Both Videos" not working on mobile | FIXED - Added muted fallback for autoplay policy |
+| 46 | Ask Olivia gray text | All text was off-white/gray instead of crisp white | FIXED - Changed CSS variables to #ffffff |
+| 47 | Court Order badge spacing | Advantage badge too close to scores | FIXED - Added extra top padding to metric cards |
 
 ---
 
@@ -129,7 +137,7 @@
 
 ---
 
-## COMMITS THIS SESSION (Feb 3, 2026 - Session 2)
+## COMMITS THIS SESSION (Feb 3, 2026 - Sessions 2 & 3)
 
 | Commit | Description |
 |--------|-------------|
@@ -139,6 +147,16 @@
 | e827fff | Fix FeatureGate blocking clicks after dismiss on mobile |
 | 991cabc | Fix tier access when Supabase profile fetch times out |
 | b29d000 | Fix category section scroll - scroll to TOP not bottom |
+| **SESSION 3 COMMITS** | |
+| 0df7b98 | Admin bypass for all FeatureGate-protected features (10 files) |
+| 0df7b98 | Court Order UI redesign: orange subtitle, centered tabs, larger fonts |
+| 0df7b98 | Opus prompt enhancement for powerful freedom visions |
+| 0df7b98 | VisualsTab dropdown contrast fix (gold/white) |
+| 0df7b98 | Olivia audio stop/cleanup fixes with visibility handlers |
+| 0df7b98 | Mobile video playback muted fallback |
+| 0df7b98 | Ask Olivia text colors to crisp white |
+| 0df7b98 | Court Order advantage badge spacing |
+| a01484e | Saved Reports mobile button visibility fix |
 
 ---
 
@@ -164,6 +182,17 @@ These items were marked complete on Feb 3, 2026:
 | Category Scroll Fix | Done (b29d000) |
 | FeatureGate Click Fix | Done (e827fff) |
 | Tier Access Fail-Open Fix | Done (991cabc) |
+| **SESSION 3 FIXES** | |
+| Admin bypass for FeatureGate (#40) | Done (0df7b98) |
+| VisualsTab dropdown contrast (#41) | Done (0df7b98) |
+| Saved Reports mobile buttons (#42) | Done (a01484e) |
+| Olivia audio stopping (#43) | Done (0df7b98) |
+| Olivia mobile text chaos (#44) | Done (0df7b98) |
+| Mobile video playback (#45) | Done (0df7b98) |
+| Ask Olivia gray text (#46) | Done (0df7b98) |
+| Court Order badge spacing (#47) | Done (0df7b98) |
+| Court Order UI redesign (orange/centered/fonts) | Done (0df7b98) |
+| Opus prompt enhancement (powerful freedom visions) | Done (0df7b98) |
 
 ---
 
@@ -191,9 +220,9 @@ These items were marked complete on Feb 3, 2026:
 
 ---
 
-**TOTAL: 39 unique items**
-- 16 Completed this session
-- 15 Active items remaining
+**TOTAL: 47 unique items**
+- 26 Completed (Sessions 2 & 3)
+- 13 Active items remaining
 - 8 Deferred/External items
 
-*Last Updated: February 3, 2026 - Session LS-COURT-ORDER-20260203*
+*Last Updated: February 3, 2026 - Session LS-COURT-ORDER-20260203 (Final)*
