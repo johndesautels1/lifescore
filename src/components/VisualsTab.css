@@ -24,20 +24,29 @@
 
 .report-selector-label {
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: #ffffff;  /* Crisp white label */
   white-space: nowrap;
 }
 
 .report-selector-dropdown {
   flex: 1;
   padding: 0.625rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(10, 22, 40, 0.9);
   border: 1px solid var(--border-color, #2a2a4a);
   border-radius: 8px;
-  color: var(--text-primary, #ffffff);
-  font-size: 0.9rem;
+  color: #D4AF37;  /* Bold gold for selected city vs city */
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
 }
 
 .report-selector-dropdown:hover {
@@ -52,8 +61,9 @@
 
 .report-selector-dropdown option {
   background: #1a1a2e;
-  color: #ffffff;
+  color: #ffffff;  /* White text in dropdown list */
   padding: 0.5rem;
+  font-weight: 400;
 }
 
 .report-selector-dropdown optgroup {
