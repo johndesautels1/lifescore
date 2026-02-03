@@ -89,7 +89,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   };
 
   // Handle play both videos simultaneously
-  const handlePlayVideos = () => {
+  const handlePlayVideos = async () => {
     if (winnerVideoRef.current && loserVideoRef.current) {
       if (isPlaying) {
         winnerVideoRef.current.pause();
@@ -99,14 +99,41 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
         // Sync start both videos
         winnerVideoRef.current.currentTime = 0;
         loserVideoRef.current.currentTime = 0;
-        Promise.all([
-          winnerVideoRef.current.play(),
-          loserVideoRef.current.play(),
-        ]).then(() => {
+
+        try {
+          // MOBILE FIX: Try to play with sound first
+          await Promise.all([
+            winnerVideoRef.current.play(),
+            loserVideoRef.current.play(),
+          ]);
           setIsPlaying(true);
-        }).catch(err => {
-          console.error('[NewLifeVideos] Play error:', err);
-        });
+        } catch (err) {
+          console.warn('[NewLifeVideos] Play with sound failed, trying muted:', err);
+
+          // MOBILE FALLBACK: Play muted first (mobile autoplay requirement)
+          try {
+            winnerVideoRef.current.muted = true;
+            loserVideoRef.current.muted = true;
+
+            await Promise.all([
+              winnerVideoRef.current.play(),
+              loserVideoRef.current.play(),
+            ]);
+
+            // Unmute after successful play start
+            setTimeout(() => {
+              if (winnerVideoRef.current) winnerVideoRef.current.muted = false;
+              if (loserVideoRef.current) loserVideoRef.current.muted = false;
+            }, 100);
+
+            setIsPlaying(true);
+          } catch (mutedErr) {
+            console.error('[NewLifeVideos] Even muted play failed:', mutedErr);
+            // Last resort: try loading videos first
+            winnerVideoRef.current.load();
+            loserVideoRef.current.load();
+          }
+        }
       }
     }
   };
@@ -163,7 +190,8 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                   onEnded={handleVideoEnded}
                   onError={(e) => console.error('[NewLifeVideos] Winner video load error:', e)}
                   playsInline
-                  muted={false}
+                  preload="auto"
+                  controlsList="nodownload"
                 />
               ) : (
                 <div className="video-placeholder winner-placeholder">
@@ -207,7 +235,8 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                   onEnded={handleVideoEnded}
                   onError={(e) => console.error('[NewLifeVideos] Loser video load error:', e)}
                   playsInline
-                  muted={false}
+                  preload="auto"
+                  controlsList="nodownload"
                 />
               ) : (
                 <div className="video-placeholder loser-placeholder">
