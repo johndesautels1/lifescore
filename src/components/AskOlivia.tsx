@@ -201,8 +201,35 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
+    // MOBILE FIX: Handle visibility change (text message, app switch, notification)
+    // When page loses visibility, STOP all audio to prevent chaos when returning
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('[AskOlivia] 📱 Page hidden (text/notification/app switch) - stopping audio');
+        interruptAvatar();
+        stopSpeaking();
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also handle blur (loses focus but still visible)
+    const handleBlur = () => {
+      console.log('[AskOlivia] 📱 Window blur - pausing audio');
+      interruptAvatar();
+      stopSpeaking();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+    window.addEventListener('blur', handleBlur);
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
       // CRITICAL: Stop ALL audio on cleanup/navigation
       console.log('[AskOlivia] Cleanup - stopping ALL audio sources');
       interruptAvatar();
