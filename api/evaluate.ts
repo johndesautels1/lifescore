@@ -1213,7 +1213,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 }
 
 // Perplexity evaluation (with Sonar web search and citations)
-// UPDATED 2026-01-25: Added batching for large categories (>20 metrics) to prevent truncation
+// UPDATED 2026-02-03: Optimized prompts per Perplexity recommendations - reduced evidence, better batching
 async function evaluateWithPerplexity(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
@@ -1222,9 +1222,9 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
   const startTime = Date.now();
 
-  // BATCHING: For large categories (>20 metrics like business_work with 25),
-  // split into smaller batches to prevent output truncation
-  const BATCH_THRESHOLD = 20;
+  // BATCHING: For categories >15 metrics, split into smaller batches to prevent output truncation
+  // UPDATED 2026-02-03: Lowered from 20 to 15 for more reliable responses
+  const BATCH_THRESHOLD = 15;
   if (metrics.length > BATCH_THRESHOLD) {
     console.log(`[PERPLEXITY] Large category detected (${metrics.length} metrics), splitting into batches`);
 
@@ -1319,13 +1319,31 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
   }
 
   // PERPLEXITY-SPECIFIC ADDENDUM (optimized for citation-backed research)
-  // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
+  // UPDATED 2026-02-03: Added source efficiency, reuse, and confidence fallback rules per Perplexity optimization
   const perplexityAddendum = `
 ## PERPLEXITY-SPECIFIC INSTRUCTIONS
-- Use your Sonar web search to find authoritative sources for each metric
+
+### Source Strategy
+- Use your Sonar web search to find 2-3 authoritative sources per metric for reliability
 - Cite specific laws, statutes, or official government sources when possible
 - Your strength is verified, citation-backed research - leverage it
 - For enforcement scores, look for news articles about actual enforcement actions
+
+### Source Reuse Efficiency
+- When evaluating related metrics (e.g., multiple gun laws, multiple tax types), reuse the same authoritative source if it covers multiple topics
+- Prefer comprehensive government portals that cover multiple regulations over searching separately for each metric
+- Example: A state's official code/statutes page can often answer 5-10 related metrics
+
+### Evidence Output Efficiency
+- Include 2-3 source URLs in the "sources" array for verification and reliability
+- Limit "city1Evidence" and "city2Evidence" to AT MOST 1 detailed snippet each per metric
+- The snippet should be the most relevant quote supporting your score
+
+### Confidence Fallback
+- If current data is unavailable or sources conflict, use "medium" confidence and note uncertainty in reasoning
+- If a metric truly cannot be evaluated (e.g., city doesn't have the relevant law category), use scores of 50/50 with "low" confidence
+
+### Required
 - Follow the scoring scale defined above (0-100 with 5 anchor bands)
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
 `;
@@ -1350,15 +1368,26 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
           messages: [
             {
               role: 'system',
-              // UPDATED 2026-01-21: Fixed JSON keys to match buildBasePrompt (city1Legal not city1LegalScore)
+              // UPDATED 2026-02-03: Optimized per Perplexity suggestions - clearer structure, evidence limits, confidence rules
               content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
 
-## IMPORTANT
+## SCORING RULES
 - Follow the scoring scale in the user message (0-100 with 5 anchor bands)
 - Use numeric scores 0-100 (integers only)
+- Higher scores = MORE freedom/permissiveness for that metric
+
+## OUTPUT EFFICIENCY RULES
+- "sources": Include 2-3 URLs for reliability and verification
+- "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
+- Keep reasoning brief (1-2 sentences max)
+
+## CONFIDENCE RULES
+- "high": Clear, current data from official sources
+- "medium": Data exists but may be outdated or sources partially conflict
+- "low": Limited data available; using best available inference
 
 ## OUTPUT FORMAT
-Return ONLY valid JSON with this structure (no markdown, no explanation):
+Return ONLY valid JSON (no markdown, no explanation):
 {
   "evaluations": [
     {
@@ -1368,17 +1397,13 @@ Return ONLY valid JSON with this structure (no markdown, no explanation):
       "city2Legal": 60,
       "city2Enforcement": 55,
       "confidence": "high",
-      "reasoning": "Brief explanation",
-      "sources": ["url1", "url2"],
-      "city1Evidence": [{"title": "Source title", "url": "https://...", "snippet": "Relevant quote from source"}],
-      "city2Evidence": [{"title": "Source title", "url": "https://...", "snippet": "Relevant quote from source"}]
+      "reasoning": "Brief 1-2 sentence explanation",
+      "sources": ["url1", "url2", "url3"],
+      "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
+      "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
     }
   ]
 }
-
-## CRITICAL: INCLUDE EVIDENCE
-For EACH evaluation, you MUST include city1Evidence and city2Evidence arrays.
-Each evidence item needs: title (source name), url (full link), snippet (relevant quote supporting the score).
 
 You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
             },
