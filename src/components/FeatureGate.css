@@ -25,6 +25,12 @@
   opacity: 0.6;
 }
 
+/* Dismissed state - allow interaction */
+.feature-gate.dismissed .gated-content {
+  pointer-events: auto;
+  user-select: auto;
+}
+
 .gated-content.hidden {
   visibility: hidden;
   height: 0;
