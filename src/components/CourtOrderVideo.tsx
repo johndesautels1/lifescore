@@ -40,7 +40,7 @@ interface CourtOrderVideoProps {
 const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   comparisonId,
   winnerCity,
-  loserCity,
+  loserCity: _loserCity, // Reserved for future use
   winnerScore,
   freedomEducation,
 }) => {
