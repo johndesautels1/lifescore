@@ -990,7 +990,7 @@ ${isLargeCategory ? `
         body: JSON.stringify({
           systemInstruction,
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 16384, temperature: 0.3 },
+          generationConfig: { maxOutputTokens: 16384, temperature: 0.2 },  // UPDATED 2026-02-03: Lowered from 0.3 for stricter factual adherence
           // Safety settings - allow freedom-related content
           safetySettings: [
             { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
