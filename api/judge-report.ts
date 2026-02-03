@@ -116,6 +116,32 @@ interface JudgeReport {
     futureOutlook: string;
     confidenceLevel: 'high' | 'medium' | 'low';
   };
+  freedomEducation?: FreedomEducationOutput;
+}
+
+// Freedom Education Types (for Court Order tabs)
+interface FreedomExampleOutput {
+  metricId: string;
+  metricName: string;
+  metricIcon: string;
+  winnerScore: number;
+  loserScore: number;
+  realWorldExample: string;
+}
+
+interface CategoryFreedomOutput {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  winningMetrics: FreedomExampleOutput[];
+  heroStatement: string;
+}
+
+interface FreedomEducationOutput {
+  categories: CategoryFreedomOutput[];
+  winnerCity: string;
+  loserCity: string;
+  generatedAt: string;
 }
 
 interface OpusJudgeResponse {
@@ -136,6 +162,20 @@ interface OpusJudgeResponse {
     keyFactors: string[];
     futureOutlook: string;
     confidenceLevel: 'high' | 'medium' | 'low';
+  };
+  freedomEducation?: {
+    categories: {
+      categoryId: string;
+      winningMetrics: {
+        metricId: string;
+        metricName: string;
+        metricIcon: string;
+        winnerScore: number;
+        loserScore: number;
+        realWorldExample: string;
+      }[];
+      heroStatement: string;
+    }[];
   };
 }
 
@@ -263,6 +303,26 @@ Provide a comprehensive Judge's Report in the following JSON format:
     "keyFactors": ["Factor 1", "Factor 2", "Factor 3", "Factor 4", "Factor 5"],
     "futureOutlook": "1-2 paragraph forecast of how these cities' freedom landscapes may change in the next 3-5 years",
     "confidenceLevel": "high" | "medium" | "low"
+  },
+  "freedomEducation": {
+    "categories": [
+      {
+        "categoryId": "personal_freedom",
+        "winningMetrics": [
+          {
+            "metricId": "cannabis_legality",
+            "metricName": "Cannabis Legality",
+            "metricIcon": "🌿",
+            "winnerScore": 85,
+            "loserScore": 40,
+            "realWorldExample": "You can legally purchase cannabis at state-licensed dispensaries without fear of prosecution, while the other city still enforces possession as a misdemeanor."
+          }
+          // Include 2-4 winning metrics per category where winner score > loser score by at least 10 points
+        ],
+        "heroStatement": "A joyful 1-2 sentence summary of freedom advantage in this category, e.g., 'In {winnerCity}, personal autonomy flourishes with progressive cannabis laws and fewer restrictions on your lifestyle choices.'"
+      }
+      // ... one entry for each of the 6 categories
+    ]
   }
 }
 
@@ -272,6 +332,10 @@ Provide a comprehensive Judge's Report in the following JSON format:
 3. Be specific - cite particular laws, recent changes, or enforcement patterns you know about
 4. The keyFactors should be the 5 most important considerations, not just a summary of categories
 5. Consider the user's likely priorities: personal autonomy, property rights, business freedom, mobility, legal protection, self-expression
+6. For freedomEducation, include ONLY metrics where the winner beats the loser by 10+ points
+7. Each realWorldExample should be 1-2 sentences describing a TANGIBLE, PRACTICAL freedom benefit the user will experience
+8. heroStatement should be JOYFUL and CELEBRATORY - make the user excited about their freedom gains
+9. Use appropriate emojis for metricIcon (e.g., 🌿 cannabis, 🍺 alcohol, 🏠 housing, 💼 business, 🚗 vehicles, ⚖️ legal)
 
 Return ONLY the JSON object, no other text.`;
 }
@@ -437,6 +501,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const city1Score = comparisonResult.city1.totalConsensusScore ?? (comparisonResult.city1 as any).totalScore ?? 0;
     const city2Score = comparisonResult.city2.totalConsensusScore ?? (comparisonResult.city2 as any).totalScore ?? 0;
 
+    // Determine winner and loser cities
+    const winnerCity = opusResult.executiveSummary.recommendation === 'city1' ? city1 : city2;
+    const loserCity = opusResult.executiveSummary.recommendation === 'city1' ? city2 : city1;
+
+    // Build freedomEducation data from Opus response
+    let freedomEducation: FreedomEducationOutput | undefined;
+    if (opusResult.freedomEducation?.categories) {
+      const categoryIcons: Record<string, string> = {
+        'personal_freedom': '🗽',
+        'housing_property': '🏠',
+        'business_work': '💼',
+        'transportation': '🚇',
+        'policing_legal': '⚖️',
+        'speech_lifestyle': '🎭'
+      };
+      const categoryNames: Record<string, string> = {
+        'personal_freedom': 'Personal Freedom',
+        'housing_property': 'Housing & Property',
+        'business_work': 'Business & Work',
+        'transportation': 'Transportation',
+        'policing_legal': 'Policing & Legal',
+        'speech_lifestyle': 'Speech & Lifestyle'
+      };
+
+      freedomEducation = {
+        categories: opusResult.freedomEducation.categories.map(cat => ({
+          categoryId: cat.categoryId,
+          categoryName: categoryNames[cat.categoryId] || cat.categoryId,
+          categoryIcon: categoryIcons[cat.categoryId] || '📊',
+          winningMetrics: (cat.winningMetrics || []).map(m => ({
+            metricId: m.metricId,
+            metricName: m.metricName,
+            metricIcon: m.metricIcon || '📈',
+            winnerScore: m.winnerScore,
+            loserScore: m.loserScore,
+            realWorldExample: m.realWorldExample
+          })),
+          heroStatement: cat.heroStatement || ''
+        })),
+        winnerCity,
+        loserCity,
+        generatedAt: new Date().toISOString()
+      };
+
+      console.log(`[JUDGE-REPORT] Freedom education data: ${freedomEducation.categories.length} categories, ${freedomEducation.categories.reduce((sum, c) => sum + c.winningMetrics.length, 0)} total metrics`);
+    }
+
     const judgeReport: JudgeReport = {
       reportId,
       generatedAt: new Date().toISOString(),
@@ -453,7 +564,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         overallConfidence: opusResult.summaryOfFindings.overallConfidence
       },
       categoryAnalysis: categoryAnalysisWithNames,
-      executiveSummary: opusResult.executiveSummary
+      executiveSummary: opusResult.executiveSummary,
+      freedomEducation
     };
 
     const latencyMs = Date.now() - startTime;

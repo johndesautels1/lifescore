@@ -60,6 +60,9 @@ import './JudgeTab.css';
 // TYPES
 // ============================================================================
 
+// Import FreedomEducation types
+import type { FreedomEducationData } from '../types/freedomEducation';
+
 export interface JudgeReport {
   reportId: string;
   generatedAt: string;
@@ -90,6 +93,7 @@ export interface JudgeReport {
     futureOutlook: string;
     confidenceLevel: 'high' | 'medium' | 'low';
   };
+  freedomEducation?: FreedomEducationData;
 }
 
 interface JudgeTabProps {
@@ -1542,6 +1546,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
                 ? city2Name
                 : city1Name
             }
+            loserCity={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city2Name
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city1Name
+                : city2Name
+            }
             winnerScore={
               judgeReport.executiveSummary.recommendation === 'city1'
                 ? judgeReport.summaryOfFindings.city1Score
@@ -1549,6 +1560,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
                 ? judgeReport.summaryOfFindings.city2Score
                 : judgeReport.summaryOfFindings.city1Score
             }
+            freedomEducation={judgeReport.freedomEducation}
           />
         </section>
       )}

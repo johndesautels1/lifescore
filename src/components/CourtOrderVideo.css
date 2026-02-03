@@ -28,6 +28,18 @@
   margin-bottom: 1.5rem;
 }
 
+/* ============================================================================
+   FREEDOM EDUCATION SECTION
+   ============================================================================ */
+
+.freedom-education-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(10, 22, 40, 0.4);
+  border-radius: 12px;
+  border: 1px solid rgba(201, 162, 39, 0.15);
+}
+
 .court-order-title {
   display: flex;
   align-items: center;

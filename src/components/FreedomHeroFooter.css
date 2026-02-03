@@ -1,0 +1,175 @@
+/**
+ * LIFE SCORE - Freedom Hero Footer Styles
+ * Glowing hero statement styling for category summaries
+ */
+
+/* ============================================================================
+   CONTAINER
+   ============================================================================ */
+
+.freedom-hero-footer {
+  position: relative;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(
+    135deg,
+    rgba(13, 40, 71, 0.7) 0%,
+    rgba(10, 22, 40, 0.8) 100%
+  );
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   GLOW EFFECT
+   ============================================================================ */
+
+.hero-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(212, 175, 55, 0.08) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  animation: hero-pulse 4s ease-in-out infinite;
+}
+
+@keyframes hero-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   CONTENT
+   ============================================================================ */
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.hero-icon {
+  font-size: 1.5rem;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15) rotate(10deg);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   HERO STATEMENT
+   ============================================================================ */
+
+.hero-statement {
+  margin: 0;
+  padding: 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+  font-style: italic;
+  max-width: 90%;
+}
+
+/* ============================================================================
+   BADGE
+   ============================================================================ */
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: linear-gradient(
+    135deg,
+    rgba(212, 175, 55, 0.2) 0%,
+    rgba(201, 162, 39, 0.15) 100%
+  );
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 20px;
+  margin-top: 0.25rem;
+}
+
+.badge-icon {
+  font-size: 0.85rem;
+}
+
+.badge-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #d4af37;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================================
+   RESPONSIVE - MOBILE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .freedom-hero-footer {
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-icon {
+    font-size: 1.25rem;
+  }
+
+  .hero-statement {
+    font-size: 0.85rem;
+  }
+
+  .hero-badge {
+    padding: 0.35rem 0.75rem;
+  }
+
+  .badge-text {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .freedom-hero-footer {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .hero-statement {
+    font-size: 0.8rem;
+  }
+
+  .badge-icon {
+    font-size: 0.75rem;
+  }
+
+  .badge-text {
+    font-size: 0.65rem;
+  }
+}

@@ -1,0 +1,232 @@
+/**
+ * LIFE SCORE - Freedom Metrics List Styles
+ * Glass card styling for winning metrics display
+ */
+
+/* ============================================================================
+   LIST CONTAINER
+   ============================================================================ */
+
+.freedom-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Custom scrollbar */
+.freedom-metrics-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.freedom-metrics-list::-webkit-scrollbar-track {
+  background: rgba(10, 22, 40, 0.4);
+  border-radius: 3px;
+}
+
+.freedom-metrics-list::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 39, 0.4);
+  border-radius: 3px;
+}
+
+.freedom-metrics-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 39, 0.6);
+}
+
+/* ============================================================================
+   METRIC CARD
+   ============================================================================ */
+
+.freedom-metric-card {
+  position: relative;
+  background: rgba(13, 40, 71, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.freedom-metric-card:hover {
+  background: rgba(13, 40, 71, 0.7);
+  border-color: rgba(201, 162, 39, 0.35);
+  transform: translateX(3px);
+}
+
+/* ============================================================================
+   METRIC HEADER
+   ============================================================================ */
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.metric-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.metric-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.metric-scores {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.winner-score {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.score-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+}
+
+.loser-score {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+/* ============================================================================
+   METRIC EXAMPLE
+   ============================================================================ */
+
+.metric-example {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-left: 0.25rem;
+}
+
+.example-icon {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.example-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* ============================================================================
+   ADVANTAGE BADGE
+   ============================================================================ */
+
+.metric-advantage {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #0a1628;
+  background: linear-gradient(135deg, #d4af37, #c9a227);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.freedom-metrics-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.freedom-metrics-empty .empty-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.freedom-metrics-empty p {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ============================================================================
+   RESPONSIVE - MOBILE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .freedom-metrics-list {
+    max-height: 220px;
+    gap: 0.6rem;
+    padding-right: 0.25rem;
+  }
+
+  .freedom-metric-card {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .metric-icon {
+    font-size: 1rem;
+  }
+
+  .metric-name {
+    font-size: 0.8rem;
+  }
+
+  .metric-scores {
+    font-size: 0.75rem;
+  }
+
+  .example-text {
+    font-size: 0.75rem;
+  }
+
+  .metric-advantage {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .freedom-metrics-list {
+    max-height: 180px;
+  }
+
+  .freedom-metric-card {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .metric-header {
+    flex-wrap: wrap;
+  }
+
+  .metric-scores {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+  }
+
+  .example-text {
+    font-size: 0.7rem;
+  }
+}

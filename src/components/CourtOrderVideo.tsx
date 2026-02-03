@@ -14,6 +14,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
+import FreedomCategoryTabs from './FreedomCategoryTabs';
+import FreedomMetricsList from './FreedomMetricsList';
+import FreedomHeroFooter from './FreedomHeroFooter';
+import type { CategoryId, FreedomEducationData, CategoryFreedomData } from '../types/freedomEducation';
+import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '../utils/freedomEducationUtils';
 import './CourtOrderVideo.css';
 
 // ============================================================================
@@ -23,7 +28,9 @@ import './CourtOrderVideo.css';
 interface CourtOrderVideoProps {
   comparisonId: string;
   winnerCity: string;
+  loserCity?: string;
   winnerScore: number;
+  freedomEducation?: FreedomEducationData;
 }
 
 // ============================================================================
@@ -33,7 +40,9 @@ interface CourtOrderVideoProps {
 const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   comparisonId,
   winnerCity,
+  loserCity,
   winnerScore,
+  freedomEducation,
 }) => {
   const { user } = useAuth();
   const { checkUsage, incrementUsage } = useTierAccess();
@@ -55,6 +64,27 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [hasStarted, setHasStarted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // Freedom Education tab state
+  const [activeCategory, setActiveCategory] = useState<CategoryId>('personal_freedom');
+
+  // Initialize active category to first non-empty category when freedomEducation changes
+  useEffect(() => {
+    if (freedomEducation?.categories) {
+      const firstCategory = getFirstNonEmptyCategory(freedomEducation.categories);
+      if (firstCategory) {
+        setActiveCategory(firstCategory);
+      }
+    }
+  }, [freedomEducation]);
+
+  // Get current category data
+  const currentCategoryData: CategoryFreedomData | null = freedomEducation?.categories
+    ? getCategoryData(freedomEducation.categories, activeCategory)
+    : null;
+
+  // Check if freedom education data is valid
+  const hasFreedomData = isValidFreedomData(freedomEducation);
 
   // Handle video generation
   const handleGenerateVideo = async () => {
@@ -251,6 +281,39 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             Your future in {winnerCity}
           </p>
         </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            FREEDOM EDUCATION SECTION - 6-Tab Category Display
+        ════════════════════════════════════════════════════════════════ */}
+        {hasFreedomData && freedomEducation && (
+          <div className="freedom-education-section">
+            {/* Category Tabs */}
+            <FreedomCategoryTabs
+              activeCategory={activeCategory}
+              onCategoryChange={setActiveCategory}
+              categories={freedomEducation.categories}
+            />
+
+            {/* Winning Metrics List */}
+            {currentCategoryData && (
+              <>
+                <FreedomMetricsList
+                  metrics={currentCategoryData.winningMetrics}
+                  winnerCity={winnerCity}
+                />
+
+                {/* Hero Statement Footer */}
+                {currentCategoryData.heroStatement && (
+                  <FreedomHeroFooter
+                    heroStatement={currentCategoryData.heroStatement}
+                    winnerCity={winnerCity}
+                    categoryName={currentCategoryData.categoryName}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         {/* LCD Screen Container */}
         <div className="lcd-screen">
