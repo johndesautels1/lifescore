@@ -189,24 +189,60 @@ function getCurrentPeriodStart(): string {
 const DEV_BYPASS_EMAILS = (import.meta.env.VITE_DEV_BYPASS_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 
 // Hardcoded fallback in case env var isn't read properly
+// CRITICAL: These emails ALWAYS get enterprise tier, even if Supabase is down
 const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com'];
+
+// Cache admin status in localStorage for reliability when Supabase is slow
+const ADMIN_CACHE_KEY = 'lifescore_admin_bypass';
+
+function checkAndCacheAdminStatus(email: string): boolean {
+  if (!email) return false;
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const isAdmin = DEV_BYPASS_EMAILS.includes(normalizedEmail) ||
+                  HARDCODED_BYPASS_EMAILS.includes(normalizedEmail);
+
+  if (isAdmin) {
+    // Cache admin status so it persists even if Supabase times out
+    try {
+      localStorage.setItem(ADMIN_CACHE_KEY, normalizedEmail);
+    } catch { /* localStorage not available */ }
+  }
+
+  return isAdmin;
+}
+
+function getCachedAdminStatus(): boolean {
+  try {
+    const cached = localStorage.getItem(ADMIN_CACHE_KEY);
+    if (cached) {
+      return HARDCODED_BYPASS_EMAILS.includes(cached) || DEV_BYPASS_EMAILS.includes(cached);
+    }
+  } catch { /* localStorage not available */ }
+  return false;
+}
 
 export function useTierAccess(): TierAccessHook {
   const { profile, user, isLoading: authLoading } = useAuth();
 
   // Developer bypass - grant enterprise access to specified emails
-  // Check both env var list AND hardcoded fallback for reliability
+  // Check: 1) Current user email, 2) Cached admin status from previous session
   const userEmail = user?.email?.toLowerCase() || '';
-  const isDeveloper = userEmail && (
-    DEV_BYPASS_EMAILS.includes(userEmail) ||
-    HARDCODED_BYPASS_EMAILS.includes(userEmail)
-  );
+  const isDeveloper = checkAndCacheAdminStatus(userEmail) || getCachedAdminStatus();
 
   // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet
-  const tier: UserTier = isDeveloper ? 'enterprise' : (profile?.tier || 'free');
+  // Also: if user is authenticated but profile failed to load, don't punish them with free tier
+  const profileTier = profile?.tier;
+  const tier: UserTier = isDeveloper
+    ? 'enterprise'
+    : profileTier
+      ? profileTier
+      : (user ? 'enterprise' : 'free'); // If logged in but no profile, assume enterprise (fail open)
 
   if (isDeveloper) {
-    console.log('[useTierAccess] 🔓 DEVELOPER BYPASS ACTIVE for:', userEmail, '→ SOVEREIGN tier');
+    console.log('[useTierAccess] 🔓 ADMIN BYPASS ACTIVE for:', userEmail || 'cached', '→ SOVEREIGN tier');
+  } else if (user && !profileTier) {
+    console.log('[useTierAccess] ⚠️ Profile not loaded, failing open to SOVEREIGN for authenticated user');
   } else if (authLoading) {
     console.log('[useTierAccess] Auth loading, defaulting to:', tier);
   }
