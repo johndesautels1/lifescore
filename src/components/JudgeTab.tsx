@@ -107,7 +107,7 @@ interface JudgeTabProps {
 
 const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonResult, userId = 'guest' }) => {
   const { supabaseUser, isAuthenticated } = useAuth();
-  const { checkUsage, incrementUsage } = useTierAccess();
+  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -389,12 +389,19 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
 
   // Generate video from judge report using Replicate (replaced D-ID)
   const generateJudgeVideo = async (report: JudgeReport) => {
-    // Check usage limits before generating video
-    const usageResult = await checkUsage('judgeVideos');
-    if (!usageResult.allowed) {
-      console.log('[JudgeTab] Judge video limit reached:', usageResult);
-      setVideoGenerationProgress('');
-      return;
+    // ADMIN BYPASS: Skip usage checks for admin users
+    if (!isAdmin) {
+      // Check usage limits before generating video
+      const usageResult = await checkUsage('judgeVideos');
+      if (!usageResult.allowed) {
+        console.log('[JudgeTab] Judge video limit reached:', usageResult);
+        setVideoGenerationProgress('');
+        return;
+      }
+
+      // Increment usage counter before starting generation
+      await incrementUsage('judgeVideos');
+      console.log('[JudgeTab] Incremented judgeVideos usage');
     }
 
     // Prevent concurrent video generations
@@ -402,10 +409,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
       console.log('[JudgeTab] Video generation already in progress, cancelling previous');
       cancelVideoGeneration();
     }
-
-    // Increment usage counter before starting generation
-    await incrementUsage('judgeVideos');
-    console.log('[JudgeTab] Incremented judgeVideos usage');
 
     console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');

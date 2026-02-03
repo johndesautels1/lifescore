@@ -49,7 +49,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   showEmbedded: propsShowEmbedded,
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
-  const { checkUsage, incrementUsage } = useTierAccess();
+  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
 
   // Selected comparison from dropdown (null = use prop)
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
@@ -148,17 +148,20 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const handleGenerateReport = useCallback(async () => {
     if (!result) return;
 
-    // Check usage limits before generating Gamma report
-    const usageResult = await checkUsage('gammaReports');
-    if (!usageResult.allowed) {
-      console.log('[VisualsTab] Gamma report limit reached:', usageResult);
-      setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
-      return;
-    }
+    // ADMIN BYPASS: Skip usage checks for admin users
+    if (!isAdmin) {
+      // Check usage limits before generating Gamma report
+      const usageResult = await checkUsage('gammaReports');
+      if (!usageResult.allowed) {
+        console.log('[VisualsTab] Gamma report limit reached:', usageResult);
+        setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
+        return;
+      }
 
-    // Increment usage counter before starting generation
-    await incrementUsage('gammaReports');
-    console.log('[VisualsTab] Incremented gammaReports usage');
+      // Increment usage counter before starting generation
+      await incrementUsage('gammaReports');
+      console.log('[VisualsTab] Incremented gammaReports usage');
+    }
 
     try {
       setReportState({ status: 'generating', progress: 0 });

@@ -45,7 +45,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   freedomEducation,
 }) => {
   const { user } = useAuth();
-  const { checkUsage, incrementUsage } = useTierAccess();
+  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const {
     video,
     isGenerating,
@@ -93,16 +93,19 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       return;
     }
 
-    // Check usage limits before generating Grok video
-    const usageResult = await checkUsage('grokVideos');
-    if (!usageResult.allowed) {
-      console.log('[CourtOrderVideo] Grok video limit reached:', usageResult);
-      return;
-    }
+    // ADMIN BYPASS: Skip usage checks for admin users
+    if (!isAdmin) {
+      // Check usage limits before generating Grok video
+      const usageResult = await checkUsage('grokVideos');
+      if (!usageResult.allowed) {
+        console.log('[CourtOrderVideo] Grok video limit reached:', usageResult);
+        return;
+      }
 
-    // Increment usage counter before starting generation
-    await incrementUsage('grokVideos');
-    console.log('[CourtOrderVideo] Incremented grokVideos usage');
+      // Increment usage counter before starting generation
+      await incrementUsage('grokVideos');
+      console.log('[CourtOrderVideo] Incremented grokVideos usage');
+    }
 
     setHasStarted(true);
 

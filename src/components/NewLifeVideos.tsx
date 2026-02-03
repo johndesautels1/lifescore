@@ -31,7 +31,7 @@ interface NewLifeVideosProps {
 
 const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const { user } = useAuth();
-  const { checkUsage, incrementUsage } = useTierAccess();
+  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const {
     videoPair,
     isGenerating,
@@ -64,16 +64,19 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
       return;
     }
 
-    // Check usage limits before generating Grok videos
-    const usageResult = await checkUsage('grokVideos');
-    if (!usageResult.allowed) {
-      console.log('[NewLifeVideos] Grok video limit reached:', usageResult);
-      return;
-    }
+    // ADMIN BYPASS: Skip usage checks for admin users
+    if (!isAdmin) {
+      // Check usage limits before generating Grok videos
+      const usageResult = await checkUsage('grokVideos');
+      if (!usageResult.allowed) {
+        console.log('[NewLifeVideos] Grok video limit reached:', usageResult);
+        return;
+      }
 
-    // Increment usage counter before starting generation
-    await incrementUsage('grokVideos');
-    console.log('[NewLifeVideos] Incremented grokVideos usage');
+      // Increment usage counter before starting generation
+      await incrementUsage('grokVideos');
+      console.log('[NewLifeVideos] Incremented grokVideos usage');
+    }
 
     setHasStarted(true);
 

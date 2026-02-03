@@ -67,7 +67,7 @@ import './App.css';
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
-  const { checkUsage, incrementUsage } = useTierAccess();
+  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
 
   // Enhanced mode state
@@ -281,42 +281,48 @@ const AppContent: React.FC = () => {
 
   const handleCompare = async (city1: string, city2: string) => {
     if (enhancedMode) {
-      // Enhanced mode: Check usage limit before running
-      const usageResult = await checkUsage('enhancedComparisons');
+      // ADMIN BYPASS: Skip usage checks for admin users
+      if (!isAdmin) {
+        // Enhanced mode: Check usage limit before running
+        const usageResult = await checkUsage('enhancedComparisons');
 
-      if (!usageResult.allowed) {
-        // User has hit their limit - show pricing modal
-        setPricingHighlight({
-          feature: 'enhancedComparisons',
-          tier: usageResult.requiredTier,
-        });
-        setShowPricingModal(true);
-        return;
+        if (!usageResult.allowed) {
+          // User has hit their limit - show pricing modal
+          setPricingHighlight({
+            feature: 'enhancedComparisons',
+            tier: usageResult.requiredTier,
+          });
+          setShowPricingModal(true);
+          return;
+        }
+
+        // Increment usage counter before running enhanced comparison
+        await incrementUsage('enhancedComparisons');
       }
-
-      // Increment usage counter before running enhanced comparison
-      await incrementUsage('enhancedComparisons');
 
       // Run enhanced comparison
       setEnhancedStatus('running');
       setEnhancedResult(null);
       setPendingCities({ city1, city2 });
     } else {
-      // Standard mode: Check usage limit before running
-      const usageResult = await checkUsage('standardComparisons');
+      // ADMIN BYPASS: Skip usage checks for admin users
+      if (!isAdmin) {
+        // Standard mode: Check usage limit before running
+        const usageResult = await checkUsage('standardComparisons');
 
-      if (!usageResult.allowed) {
-        // User has hit their limit - show pricing modal
-        setPricingHighlight({
-          feature: 'standardComparisons',
-          tier: usageResult.requiredTier,
-        });
-        setShowPricingModal(true);
-        return;
+        if (!usageResult.allowed) {
+          // User has hit their limit - show pricing modal
+          setPricingHighlight({
+            feature: 'standardComparisons',
+            tier: usageResult.requiredTier,
+          });
+          setShowPricingModal(true);
+          return;
+        }
+
+        // Increment usage counter before running comparison
+        await incrementUsage('standardComparisons');
       }
-
-      // Increment usage counter before running comparison
-      await incrementUsage('standardComparisons');
 
       // Run the comparison with user's scoring preferences
       await compare(city1, city2, { lawLivedRatio, conservativeMode, customWeights });

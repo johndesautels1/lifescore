@@ -45,7 +45,7 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
-  const { checkUsage, incrementUsage } = useTierAccess();
+  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const {
     video,
     status,
@@ -77,19 +77,22 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
   }, [error, onError]);
 
   const handleGenerate = async () => {
-    // Check usage limits before generating Judge video
-    const usageResult = await checkUsage('judgeVideos');
-    if (!usageResult.allowed) {
-      console.log('[JudgeVideo] Judge video limit reached:', usageResult);
-      if (onError) {
-        onError('Monthly Judge video limit reached. Please upgrade to continue.');
+    // ADMIN BYPASS: Skip usage checks for admin users
+    if (!isAdmin) {
+      // Check usage limits before generating Judge video
+      const usageResult = await checkUsage('judgeVideos');
+      if (!usageResult.allowed) {
+        console.log('[JudgeVideo] Judge video limit reached:', usageResult);
+        if (onError) {
+          onError('Monthly Judge video limit reached. Please upgrade to continue.');
+        }
+        return;
       }
-      return;
-    }
 
-    // Increment usage counter before starting generation
-    await incrementUsage('judgeVideos');
-    console.log('[JudgeVideo] Incremented judgeVideos usage');
+      // Increment usage counter before starting generation
+      await incrementUsage('judgeVideos');
+      console.log('[JudgeVideo] Incremented judgeVideos usage');
+    }
 
     const request: GenerateJudgeVideoRequest = {
       script,

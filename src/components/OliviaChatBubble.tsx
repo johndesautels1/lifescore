@@ -34,7 +34,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   const inputRef = useRef<HTMLInputElement>(null);
 
   // FIX: Add tier access for Olivia usage gating
-  const { checkUsage, incrementUsage, isUnlimited } = useTierAccess();
+  const { checkUsage, incrementUsage, isUnlimited, isAdmin } = useTierAccess();
 
   // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
@@ -118,8 +118,8 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
     const messageText = inputText.trim();
     if (!messageText) return;
 
-    // FIX: Check tier usage limits before sending (same as AskOlivia)
-    if (!isUnlimited('oliviaMinutesPerMonth')) {
+    // ADMIN BYPASS: Skip usage checks for admin users
+    if (!isAdmin && !isUnlimited('oliviaMinutesPerMonth')) {
       const usage = await checkUsage('oliviaMinutesPerMonth');
       if (!usage.allowed) {
         setUsageLimitReached(true);
@@ -136,7 +136,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
     setInputText('');
     setUsageLimitReached(false);
     await sendMessage(messageText);
-  }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited]);
+  }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited, isAdmin]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation(); // Prevent external handlers from capturing keys
