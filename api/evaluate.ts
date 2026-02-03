@@ -14,6 +14,32 @@ import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 // Timeout constant (in milliseconds) - unified for all API calls
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for all LLM API calls including Tavily
 
+// ============================================================================
+// TAVILY RESEARCH CACHE (In-memory, clears on redeploy)
+// Added 2026-02-03 - Reduces duplicate Research API calls across LLM providers
+// ============================================================================
+interface CachedResearch {
+  data: TavilyResearchResponse;
+  timestamp: number;
+}
+const tavilyResearchCache = new Map<string, CachedResearch>();
+const RESEARCH_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes (within single comparison session)
+
+// Stats tracking for logging
+const tavilyStats = {
+  researchCacheHits: 0,
+  researchCacheMisses: 0,
+  searchCalls: 0,
+  reset() {
+    this.researchCacheHits = 0;
+    this.researchCacheMisses = 0;
+    this.searchCalls = 0;
+  },
+  log(context: string) {
+    console.log(`[TAVILY STATS - ${context}] Research: ${this.researchCacheHits} hits, ${this.researchCacheMisses} misses | Searches: ${this.searchCalls} calls`);
+  }
+};
+
 // Phase 2: Environment variable toggle for gradual rollout
 const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
 
@@ -530,8 +556,42 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
   }
 }
 
+// Cached wrapper for tavilyResearch - checks in-memory cache first
+// Original tavilyResearch() function above remains UNCHANGED
+async function getCachedTavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
+  // Normalize cache key (alphabetical order for consistent hits)
+  const [a, b] = [city1.toLowerCase(), city2.toLowerCase()].sort();
+  const cacheKey = `${a}:${b}`;
+
+  // Check cache
+  const cached = tavilyResearchCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp) < RESEARCH_CACHE_TTL_MS) {
+    tavilyStats.researchCacheHits++;
+    console.log(`[TAVILY RESEARCH CACHE HIT] ${city1} vs ${city2} (key: ${cacheKey})`);
+    return cached.data;
+  }
+
+  // Cache miss - call original function
+  tavilyStats.researchCacheMisses++;
+  console.log(`[TAVILY RESEARCH CACHE MISS] ${city1} vs ${city2} - fetching...`);
+
+  const result = await tavilyResearch(city1, city2);
+
+  // Store in cache if successful
+  if (result) {
+    tavilyResearchCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min)`);
+  }
+
+  return result;
+}
+
 // Tavily Search API - Category-level focused queries
 async function tavilySearch(query: string, maxResults: number = 5): Promise<TavilyResponse> {
+  tavilyStats.searchCalls++; // Track search calls for stats
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) return { results: [] };
 
@@ -622,7 +682,7 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
 
     // Run Research + Search in parallel for speed
     const [researchResult, ...searchResults] = await Promise.all([
-      tavilyResearch(city1, city2).catch(() => null),
+      getCachedTavilyResearch(city1, city2).catch(() => null),
       ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
     ]);
 
@@ -758,7 +818,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
     // Run Research + Search in parallel for speed
     const [researchResult, ...searchResults] = await Promise.all([
-      tavilyResearch(city1, city2).catch(() => null),
+      getCachedTavilyResearch(city1, city2).catch(() => null),
       ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], creditsUsed: 0 })))
     ]);
 
@@ -1228,7 +1288,7 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
     // Run Research + Search in parallel for speed
     const [researchResult, ...searchResults] = await Promise.all([
-      tavilyResearch(city1, city2).catch(() => null),
+      getCachedTavilyResearch(city1, city2).catch(() => null),
       ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
     ]);
 
@@ -1488,6 +1548,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!result.success) {
       console.error(`[EVALUATE] ${provider} failed: ${result.error}`);
     }
+
+    // Log Tavily usage stats for this evaluation
+    tavilyStats.log(`${provider} - ${city1} vs ${city2}`);
 
     return res.status(200).json(result);
   } catch (error) {
