@@ -147,6 +147,97 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setDuration(0);
   }, [comparisonId]);
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // ACTION HANDLERS - Save, Download, Share/Forward for Court Order
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Save Court Order to localStorage
+  const handleSaveCourtOrder = () => {
+    if (!video?.videoUrl) return;
+
+    const savedCourtOrders = JSON.parse(localStorage.getItem('lifescore_court_orders') || '[]');
+    const courtOrderData = {
+      comparisonId,
+      winnerCity,
+      winnerScore,
+      videoUrl: video.videoUrl,
+      savedAt: new Date().toISOString(),
+    };
+
+    // Check if already saved
+    const existingIndex = savedCourtOrders.findIndex((co: { comparisonId: string }) => co.comparisonId === comparisonId);
+    if (existingIndex >= 0) {
+      savedCourtOrders[existingIndex] = courtOrderData;
+    } else {
+      savedCourtOrders.push(courtOrderData);
+    }
+
+    localStorage.setItem('lifescore_court_orders', JSON.stringify(savedCourtOrders));
+    console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
+    alert('Court Order saved successfully!');
+  };
+
+  // Download Court Order video
+  const handleDownloadCourtOrder = async () => {
+    if (!video?.videoUrl) return;
+
+    try {
+      console.log('[CourtOrderVideo] Downloading video:', video.videoUrl);
+
+      // Fetch the video
+      const response = await fetch(video.videoUrl);
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `court-order-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      console.log('[CourtOrderVideo] Download initiated');
+    } catch (err) {
+      console.error('[CourtOrderVideo] Download error:', err);
+      // Fallback: open in new tab
+      window.open(video.videoUrl, '_blank');
+    }
+  };
+
+  // Share/Forward Court Order
+  const handleShareCourtOrder = async () => {
+    if (!video?.videoUrl) return;
+
+    const shareData = {
+      title: `LIFE SCORE Court Order - ${winnerCity}`,
+      text: `Check out my perfect life in ${winnerCity} with a LIFE SCORE of ${winnerScore.toFixed(1)}!`,
+      url: video.videoUrl,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        console.log('[CourtOrderVideo] Shared successfully');
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(video.videoUrl);
+        alert('Video URL copied to clipboard!');
+        console.log('[CourtOrderVideo] URL copied to clipboard');
+      }
+    } catch (err) {
+      console.error('[CourtOrderVideo] Share error:', err);
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(video.videoUrl);
+        alert('Video URL copied to clipboard!');
+      } catch {
+        alert('Unable to share. Video URL: ' + video.videoUrl);
+      }
+    }
+  };
+
   return (
     <FeatureGate feature="grokVideos" blurContent={true}>
       <div className="court-order-wrapper">
@@ -269,6 +360,35 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             </button>
           )}
         </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            COURT ORDER ACTION BUTTONS - Save, Download, Share/Forward
+        ════════════════════════════════════════════════════════════════ */}
+        {isReady && video?.videoUrl && (
+          <div className="court-order-action-buttons">
+            <button
+              className="court-action-btn save-btn"
+              onClick={handleSaveCourtOrder}
+            >
+              <span className="btn-icon">💾</span>
+              <span className="btn-text">SAVE</span>
+            </button>
+            <button
+              className="court-action-btn download-btn"
+              onClick={handleDownloadCourtOrder}
+            >
+              <span className="btn-icon">⬇️</span>
+              <span className="btn-text">DOWNLOAD</span>
+            </button>
+            <button
+              className="court-action-btn share-btn"
+              onClick={handleShareCourtOrder}
+            >
+              <span className="btn-icon">📤</span>
+              <span className="btn-text">SHARE</span>
+            </button>
+          </div>
+        )}
         </div>
       </div>
     </FeatureGate>
