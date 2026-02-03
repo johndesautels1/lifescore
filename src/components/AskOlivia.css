@@ -31,8 +31,8 @@
   --amber-active: #f59e0b;
   --british-racing: #004225;
   --ice-white: #f8fafc;
-  --steel-gray: #64748b;
-  --platinum: #e2e8f0;
+  --steel-gray: #ffffff;  /* Changed from #64748b to crisp white for readability */
+  --platinum: #ffffff;  /* Changed from #e2e8f0 to crisp white */
   --error-red: #ef4444;
   --success-green: #10b981;
 
@@ -789,7 +789,7 @@ button.control-item.recording {
 }
 
 .chat-textarea::placeholder {
-  color: #e2e8f0;
+  color: rgba(255, 255, 255, 0.7);  /* Slightly transparent white for placeholder */
 }
 
 .chat-textarea:focus {
@@ -1199,7 +1199,7 @@ button.control-item.recording {
 
 .empty-hint {
   font-size: 0.75rem;
-  color: #e2e8f0;
+  color: #ffffff;
 }
 
 .transcript-message {
