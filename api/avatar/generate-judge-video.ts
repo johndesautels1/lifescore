@@ -349,13 +349,19 @@ export default async function handler(
 
     // Build input for Wav2Lip
     // Wav2Lip params: face (image), audio, pads, smooth, fps, out_height
+    // UPDATED 2026-02-03: Adjusted settings for more natural appearance
+    // - Wider pads for better face capture
+    // - Higher fps (30) for smoother motion
+    // - Higher resolution (720p)
+    // - resize_factor for zoom-out effect (0.75 = 75% of original, appears further back)
     const replicateInput = {
       face: CHRISTIANO_IMAGE_URL,
       audio: audioUrl,
-      pads: '0 10 0 0',  // top bottom left right - include chin
+      pads: '0 15 5 5',       // Wider capture area (top, bottom, left, right)
       smooth: true,
-      fps: 25,
-      out_height: 480,
+      fps: 30,                // Smoother playback
+      out_height: 720,        // Higher resolution
+      resize_factor: 0.75,    // Zoom out - makes face smaller in frame
     };
 
     // Build request body with version hash
