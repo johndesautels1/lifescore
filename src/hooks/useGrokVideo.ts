@@ -24,6 +24,8 @@ import {
   checkVideoStatus,
   getVideoErrorMessage,
 } from '../services/grokVideoService';
+// FIX #73: Import cost tracking utilities
+import { appendServiceCost, calculateKlingCost } from '../utils/costCalculator';
 
 const POLL_INTERVAL = 3000; // 3 seconds
 const MAX_POLL_ATTEMPTS = 120; // 6 minutes max (120 * 3s)
@@ -223,6 +225,18 @@ export function useGrokVideo(): UseGrokVideoReturn {
         videoPairRef.current = result.videos;
         setVideoPair(result.videos);
 
+        // FIX #73: Record Kling video cost (2 images for pair, skip if cached)
+        if (!result.cached) {
+          const imageCount = 2; // Winner + loser videos
+          const cost = calculateKlingCost(imageCount);
+          appendServiceCost('kling', {
+            imageCount,
+            cost,
+            timestamp: Date.now(),
+            context: 'new-life-videos',
+          });
+        }
+
         // Check if cached/complete
         if (result.cached ||
             (result.videos.winner?.status === 'completed' && result.videos.loser?.status === 'completed')) {
@@ -265,6 +279,18 @@ export function useGrokVideo(): UseGrokVideoReturn {
       if (result.video) {
         videoRef.current = result.video;
         setVideo(result.video);
+
+        // FIX #73: Record Kling video cost (1 image for court order, skip if cached)
+        if (!result.cached) {
+          const imageCount = 1;
+          const cost = calculateKlingCost(imageCount);
+          appendServiceCost('kling', {
+            imageCount,
+            cost,
+            timestamp: Date.now(),
+            context: 'court-order-video',
+          });
+        }
 
         // Check if cached/complete
         if (result.cached || result.video.status === 'completed') {

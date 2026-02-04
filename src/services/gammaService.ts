@@ -17,6 +17,8 @@ import type {
   VisualReportState,
   GammaGenerationStatus
 } from '../types/gamma';
+// FIX #73: Import cost tracking utilities
+import { appendServiceCost, calculateGammaCost } from '../utils/costCalculator';
 
 // ============================================================================
 // CONSTANTS
@@ -528,7 +530,19 @@ export async function generateVisualReport(
     throw new Error(errorData.error || `Failed to generate report: ${response.status}`);
   }
 
-  return response.json();
+  const data: VisualReportResponse = await response.json();
+
+  // FIX #73: Record Gamma generation cost (~$0.50 per generation)
+  if (data.generationId) {
+    const cost = calculateGammaCost();
+    appendServiceCost('gamma', {
+      generationId: data.generationId,
+      cost,
+      timestamp: Date.now(),
+    });
+  }
+
+  return data;
 }
 
 /**

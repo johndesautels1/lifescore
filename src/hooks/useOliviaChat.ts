@@ -30,6 +30,8 @@ import {
   addOliviaMessage,
 } from '../services/databaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
+// FIX #73: Import cost tracking utilities
+import { appendServiceCost, calculateLLMCost } from '../utils/costCalculator';
 
 // ============================================================================
 // SAVED COMPARISONS SUMMARY BUILDER
@@ -246,6 +248,21 @@ export function useOliviaChat(
         sources: response.sources,
       };
       setMessages(prev => [...prev, assistantMsg]);
+
+      // FIX #73: Record Olivia chat cost (GPT-4 Turbo tokens)
+      if (response.usage) {
+        const { inputTokens, outputTokens } = response.usage;
+        const costs = calculateLLMCost('gpt-4-turbo', inputTokens, outputTokens);
+        appendServiceCost('olivia', {
+          threadId: response.threadId,
+          inputTokens,
+          outputTokens,
+          inputCost: costs.inputCost,
+          outputCost: costs.outputCost,
+          totalCost: costs.totalCost,
+          timestamp: Date.now(),
+        });
+      }
 
       // ════════════════════════════════════════════════════════════════
       // SAFE NON-BLOCKING DATABASE PERSISTENCE

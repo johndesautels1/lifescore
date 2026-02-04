@@ -9,6 +9,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+// FIX #73: Import cost tracking utilities
+import { appendServiceCost, calculateTTSCost } from '../utils/costCalculator';
 
 export interface EmiliaMessage {
   id: string;
@@ -407,6 +409,29 @@ export function useEmilia(): UseEmiliaReturn {
 
         if (response.ok) {
           const data = await response.json();
+          // FIX #73: Record Emilia TTS cost
+          if (data.usage) {
+            const provider = data.usage.provider === 'openai' ? 'openai' as const : 'elevenlabs' as const;
+            const chars = data.usage.characterCount;
+            const cost = calculateTTSCost(provider, chars);
+            appendServiceCost('tts', {
+              provider,
+              characters: chars,
+              cost,
+              timestamp: Date.now(),
+              context: 'emilia-tts',
+            });
+          } else if (content.length > 0) {
+            // Fallback: estimate from input text
+            const cost = calculateTTSCost('elevenlabs', Math.min(content.length, 5000));
+            appendServiceCost('tts', {
+              provider: 'elevenlabs',
+              characters: Math.min(content.length, 5000),
+              cost,
+              timestamp: Date.now(),
+              context: 'emilia-tts-estimated',
+            });
+          }
           if (data.success && data.audioUrl) {
             const audio = new Audio(data.audioUrl);
             audioRef.current = audio;

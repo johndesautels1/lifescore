@@ -190,6 +190,11 @@ export default async function handler(
           audioUrl: fallbackResult.audioUrl,
           durationMs: fallbackResult.durationMs,
           fallback: 'openai',
+          // FIX #73: Return usage data for cost tracking
+          usage: {
+            provider: 'openai',
+            characterCount: processedText.length,
+          },
         });
         return;
       }
@@ -210,6 +215,11 @@ export default async function handler(
     res.status(200).json({
       audioUrl,
       durationMs: Math.round(estimatedDurationMs),
+      // FIX #73: Return usage data for cost tracking
+      usage: {
+        provider: 'elevenlabs',
+        characterCount: processedText.length,
+      },
     });
   } catch (error) {
     console.error('[OLIVIA/TTS] Error:', error);
@@ -219,11 +229,17 @@ export default async function handler(
       const { text } = req.body as TTSRequest;
       if (text) {
         console.log('[OLIVIA/TTS] Primary TTS failed, attempting OpenAI fallback...');
-        const fallbackResult = await generateOpenAIAudio(truncateText(text.trim()));
+        const processedFallbackText = truncateText(text.trim());
+        const fallbackResult = await generateOpenAIAudio(processedFallbackText);
         res.status(200).json({
           audioUrl: fallbackResult.audioUrl,
           durationMs: fallbackResult.durationMs,
           fallback: 'openai',
+          // FIX #73: Return usage data for cost tracking
+          usage: {
+            provider: 'openai',
+            characterCount: processedFallbackText.length,
+          },
         });
         return;
       }

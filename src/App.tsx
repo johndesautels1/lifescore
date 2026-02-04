@@ -57,6 +57,7 @@ import {
   finalizeCostBreakdown,
   storeCostBreakdown,
   calculateLLMCost,
+  calculateTavilyCost,
   formatCostBreakdownLog,
   toApiCostRecordInsert,
   type APICallCost
@@ -585,6 +586,34 @@ const AppContent: React.FC = () => {
                                   timestamp: Date.now(),
                                   context: 'judge'
                                 };
+                              }
+
+                              // FIX #73: Estimate Tavily research/search costs
+                              // Each enhanced comparison uses ~1 research call (~30 credits)
+                              // and ~15 search calls across providers (~3 credits each = ~45 credits)
+                              const activeProviders = llmResults.size;
+                              if (activeProviders > 0) {
+                                const researchCredits = 30;
+                                const researchCost = calculateTavilyCost('research', researchCredits);
+                                costBreakdown.tavilyResearch = {
+                                  type: 'research',
+                                  creditsUsed: researchCredits,
+                                  cost: researchCost,
+                                  timestamp: Date.now(),
+                                  query: `${pendingCities.city1} vs ${pendingCities.city2} research`,
+                                };
+
+                                // Each provider does ~3 search queries
+                                const searchCreditsPerProvider = 9; // ~3 searches * 3 credits each
+                                for (let i = 0; i < activeProviders; i++) {
+                                  const searchCost = calculateTavilyCost('search', searchCreditsPerProvider);
+                                  costBreakdown.tavilySearches.push({
+                                    type: 'search',
+                                    creditsUsed: searchCreditsPerProvider,
+                                    cost: searchCost,
+                                    timestamp: Date.now(),
+                                  });
+                                }
                               }
 
                               const finalBreakdown = finalizeCostBreakdown(costBreakdown);

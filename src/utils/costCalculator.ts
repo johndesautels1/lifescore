@@ -397,6 +397,73 @@ export function clearStoredCosts(): void {
 }
 
 /**
+ * FIX #73: Append a service cost to the most recent cost breakdown.
+ * Used for costs that occur outside the main comparison flow
+ * (TTS, Avatar, Gamma, Olivia chat, Kling videos, Tavily, etc.)
+ *
+ * This ensures that ALL API costs are tracked in the Cost Dashboard,
+ * not just the LLM evaluation costs recorded during the comparison flow.
+ */
+export function appendServiceCost(
+  type: 'tts' | 'avatar' | 'kling' | 'olivia' | 'gamma' | 'tavily',
+  cost: TTSCost | AvatarCost | KlingCost | OliviaCost | GammaCost | TavilyCost
+): void {
+  try {
+    const costs = getStoredCosts();
+    if (costs.length === 0) {
+      // No active comparison - create a standalone entry for service cost tracking
+      const standalone = createCostBreakdown('service-costs-' + Date.now(), 'N/A', 'N/A', 'simple');
+      costs.unshift(standalone);
+    }
+
+    const current = costs[0]; // Most recent breakdown
+
+    switch (type) {
+      case 'tts':
+        current.tts = current.tts || [];
+        current.tts.push(cost as TTSCost);
+        break;
+      case 'avatar':
+        current.avatar = current.avatar || [];
+        current.avatar.push(cost as AvatarCost);
+        break;
+      case 'kling':
+        current.kling = current.kling || [];
+        current.kling.push(cost as KlingCost);
+        break;
+      case 'olivia':
+        current.olivia = current.olivia || [];
+        current.olivia.push(cost as OliviaCost);
+        break;
+      case 'gamma':
+        current.gamma = cost as GammaCost;
+        break;
+      case 'tavily':
+        if ((cost as TavilyCost).type === 'research') {
+          current.tavilyResearch = cost as TavilyCost;
+        } else {
+          current.tavilySearches = current.tavilySearches || [];
+          current.tavilySearches.push(cost as TavilyCost);
+        }
+        break;
+    }
+
+    // Recalculate totals
+    const finalized = finalizeCostBreakdown(current);
+    costs[0] = finalized;
+
+    // Save back
+    const trimmed = costs.slice(0, MAX_STORED_COMPARISONS);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+
+    const costValue = 'cost' in cost ? (cost as { cost: number }).cost : 0;
+    console.log(`[CostTracker] FIX #73: Recorded ${type} cost: $${costValue.toFixed(4)}`);
+  } catch (e) {
+    console.error('[CostTracker] Failed to append service cost:', e);
+  }
+}
+
+/**
  * Calculate summary statistics from stored costs
  */
 export function calculateCostSummary(): CostSummary {

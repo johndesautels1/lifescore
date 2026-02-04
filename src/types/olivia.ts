@@ -42,6 +42,11 @@ export interface OliviaChatResponse {
   audioUrl?: string;
   sources?: string[];
   error?: string;
+  // FIX #73: Token usage data from backend for cost tracking
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
 }
 
 // ============================================================================
@@ -268,6 +273,12 @@ export interface TTSResponse {
   audioUrl: string;
   durationMs: number;
   error?: string;
+  fallback?: string;
+  // FIX #73: Usage data for cost tracking
+  usage?: {
+    provider: 'elevenlabs' | 'openai';
+    characterCount: number;
+  };
 }
 
 // ============================================================================

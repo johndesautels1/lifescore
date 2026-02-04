@@ -6,6 +6,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { UseTTSReturn } from '../types/olivia';
 import { generateTTS } from '../services/oliviaService';
+// FIX #73: Import cost tracking utilities
+import { appendServiceCost, calculateTTSCost } from '../utils/costCalculator';
 
 // ============================================================================
 // HOOK
@@ -136,6 +138,31 @@ export function useTTS(
     try {
       // Generate TTS from API
       const response = await generateTTS(text, { voiceId });
+
+      // FIX #73: Record TTS cost from usage data
+      if (response.usage) {
+        const provider = response.usage.provider === 'openai' ? 'openai' as const : 'elevenlabs' as const;
+        const chars = response.usage.characterCount;
+        const cost = calculateTTSCost(provider, chars);
+        appendServiceCost('tts', {
+          provider,
+          characters: chars,
+          cost,
+          timestamp: Date.now(),
+          context: 'olivia-tts',
+        });
+      } else if (text.length > 0) {
+        // Fallback: estimate cost from input text length if usage not returned
+        const estimatedChars = Math.min(text.length, 5000);
+        const cost = calculateTTSCost('elevenlabs', estimatedChars);
+        appendServiceCost('tts', {
+          provider: 'elevenlabs',
+          characters: estimatedChars,
+          cost,
+          timestamp: Date.now(),
+          context: 'olivia-tts-estimated',
+        });
+      }
 
       if (response.audioUrl) {
         await playUrl(response.audioUrl);

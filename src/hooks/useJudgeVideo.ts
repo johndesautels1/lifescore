@@ -15,6 +15,8 @@ import type {
   UseJudgeVideoReturn,
   GenerateJudgeVideoRequest,
 } from '../types/avatar';
+// FIX #73: Import cost tracking utilities
+import { appendServiceCost, calculateAvatarCost, calculateTTSCost } from '../utils/costCalculator';
 
 const API_BASE = '/api/avatar';
 const POLL_INTERVAL = 3000; // 3 seconds
@@ -199,6 +201,32 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
         predictionId: data.video.replicatePredictionId,
         cached: data.cached,
       });
+
+      // FIX #73: Record Judge video costs (TTS + Wav2Lip avatar)
+      // Only if not cached (cached = no new API cost)
+      if (!data.cached) {
+        // Estimate TTS cost: judge script is typically ~2000 chars
+        const estimatedScriptChars = 2000;
+        const ttsCost = calculateTTSCost('elevenlabs', estimatedScriptChars);
+        appendServiceCost('tts', {
+          provider: 'elevenlabs',
+          characters: estimatedScriptChars,
+          cost: ttsCost,
+          timestamp: Date.now(),
+          context: 'judge-video-tts',
+        });
+
+        // Estimate Wav2Lip avatar cost: typical judge video ~30 seconds
+        const estimatedDuration = 30;
+        const avatarCost = calculateAvatarCost('replicate-wav2lip', estimatedDuration);
+        appendServiceCost('avatar', {
+          provider: 'replicate-wav2lip',
+          durationSeconds: estimatedDuration,
+          cost: avatarCost,
+          timestamp: Date.now(),
+          context: 'judge-video-wav2lip',
+        });
+      }
 
       // If cached, we're done
       if (data.cached) {

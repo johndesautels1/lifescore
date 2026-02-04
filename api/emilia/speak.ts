@@ -161,6 +161,11 @@ export default async function handler(
           success: true,
           audioUrl,
           fallback: 'openai',
+          // FIX #73: Return usage data for cost tracking
+          usage: {
+            provider: 'openai',
+            characterCount: text.length,
+          },
         });
         return;
       }
@@ -177,6 +182,11 @@ export default async function handler(
     res.status(200).json({
       success: true,
       audioUrl: `data:audio/mpeg;base64,${base64}`,
+      // FIX #73: Return usage data for cost tracking
+      usage: {
+        provider: 'elevenlabs',
+        characterCount: text.length,
+      },
     });
   } catch (error) {
     console.error('[EMILIA/speak] Error:', error);
@@ -191,6 +201,11 @@ export default async function handler(
           success: true,
           audioUrl,
           fallback: 'openai',
+          // FIX #73: Return usage data for cost tracking
+          usage: {
+            provider: 'openai',
+            characterCount: bodyText.length,
+          },
         });
         return;
       }
