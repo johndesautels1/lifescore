@@ -9,7 +9,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
@@ -64,6 +64,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [hasStarted, setHasStarted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // FIX #48: Error count tracking for expired URL detection
+  const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const MAX_VIDEO_ERRORS = 3;
 
   // Freedom Education tab state
   const [activeCategory, setActiveCategory] = useState<CategoryId>('personal_freedom');
@@ -171,6 +175,27 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // FIX #48: Handle video load errors - track count and reset when threshold reached
+  const handleVideoError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    console.error('[CourtOrderVideo] Video load error:', e);
+    setVideoErrorCount(prev => {
+      const newCount = prev + 1;
+      console.warn(`[CourtOrderVideo] Video error count: ${newCount}/${MAX_VIDEO_ERRORS}`);
+      return newCount;
+    });
+  }, []);
+
+  // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
+  useEffect(() => {
+    if (videoErrorCount >= MAX_VIDEO_ERRORS) {
+      console.log('[CourtOrderVideo] Video error threshold reached - resetting to allow regeneration');
+      reset();
+      setHasStarted(false);
+      setIsPlaying(false);
+      setVideoErrorCount(0);
+    }
+  }, [videoErrorCount, reset]);
+
   // Reset when comparisonId changes
   useEffect(() => {
     reset();
@@ -178,6 +203,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setVideoErrorCount(0);
   }, [comparisonId]);
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -330,6 +356,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                   onEnded={handleVideoEnded}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleLoadedMetadata}
+                  onError={handleVideoError}
                   playsInline
                 />
               ) : (

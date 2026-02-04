@@ -8,7 +8,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
@@ -52,8 +52,13 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
     isGenerating,
     isReady,
     generate,
+    cancel,
     error,
   } = useJudgeVideo();
+
+  // FIX #48: Error count tracking for expired URL detection
+  const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const MAX_VIDEO_ERRORS = 3;
 
   // Auto-generate on mount if requested
   useEffect(() => {
@@ -75,6 +80,25 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
       onError(error);
     }
   }, [error, onError]);
+
+  // FIX #48: Handle video load errors - track count and reset when threshold reached
+  const handleVideoError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    console.error('[JudgeVideo] Video load error:', e);
+    setVideoErrorCount(prev => {
+      const newCount = prev + 1;
+      console.warn(`[JudgeVideo] Video error count: ${newCount}/${MAX_VIDEO_ERRORS}`);
+      return newCount;
+    });
+  }, []);
+
+  // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
+  useEffect(() => {
+    if (videoErrorCount >= MAX_VIDEO_ERRORS) {
+      console.log('[JudgeVideo] Video error threshold reached - resetting to allow regeneration');
+      cancel();
+      setVideoErrorCount(0);
+    }
+  }, [videoErrorCount, cancel]);
 
   const handleGenerate = async () => {
     // ADMIN BYPASS: Skip usage checks for admin users
@@ -174,6 +198,7 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => setIsPlaying(false)}
+            onError={handleVideoError}
             playsInline
           />
 

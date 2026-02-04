@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 2.2
-**Last Updated:** January 30, 2026
+**Version:** 2.3
+**Last Updated:** February 4, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -486,6 +486,73 @@ const profile = await withRetryFallback(
 - `src/hooks/useTierAccess.ts` - Tier checking
 - `src/components/JudgeTab.tsx` - Judge report operations
 
+### 6.6 LLM Evaluator Retry Logic (Added 2026-02-04)
+
+Both Gemini and Grok evaluators now include retry logic with exponential backoff to handle cold start timeouts and transient failures.
+
+**Configuration (`api/evaluate.ts`):**
+```typescript
+MAX_RETRIES = 3           // Up to 3 attempts
+backoffMs = 2^(attempt-1) * 1000  // 1s, 2s, 4s delays
+```
+
+**Retry Behavior:**
+- Attempt 1: Immediate
+- Attempt 2: Wait 1s, then retry
+- Attempt 3: Wait 2s, then retry
+- Final attempt: Wait 4s, then retry
+
+**Retryable Conditions:**
+- 5xx server errors (timeout, overload)
+- Empty/malformed response
+- Invalid JSON or no scores parsed
+
+**Non-Retryable Conditions:**
+- 4xx client errors (invalid API key, bad request)
+
+**Logging:**
+```
+[GEMINI] Attempt 1/3 for Miami, FL vs Austin, TX
+[GEMINI] Success on attempt 1: 45 scores returned
+// or on failure:
+[GEMINI] Attempt 1 failed: API error: 503 - Service unavailable
+[GEMINI] Retrying in 1000ms...
+[GEMINI] All 3 attempts failed. Last error: Service unavailable
+```
+
+**Providers with Retry:**
+- ✅ Gemini 3 Pro (Fix #49 - Added 2026-02-04)
+- ✅ Grok 4 (existing)
+- ❌ Claude Sonnet (uses SDK with built-in retry)
+- ❌ GPT-4o (uses SDK with built-in retry)
+- ❌ Perplexity (single attempt currently)
+
+### 6.7 Cost Tracking Auto-Sync (Added 2026-02-04)
+
+API cost data is now automatically synchronized to Supabase after each comparison completes (Fix #50).
+
+**Flow:**
+```
+Comparison completes → finalizeCostBreakdown() →
+→ storeCostBreakdown() (localStorage) →
+→ toApiCostRecordInsert() → saveApiCostRecord() (Supabase)
+```
+
+**Database Table:** `api_cost_records`
+
+**Files Involved:**
+- `src/App.tsx` - Auto-sync trigger point (line 594-606)
+- `src/utils/costCalculator.ts` - Cost calculation and conversion
+- `src/services/databaseService.ts` - Database insert with upsert
+
+**Logging:**
+```
+[App] Cost tracking stored: <breakdown log>
+[App] Cost data auto-synced to Supabase: LIFE-xxx-xxx
+// or on failure:
+[App] Cost DB sync failed (non-fatal): <error message>
+```
+
 ---
 
 ## 7. Tavily Integration
@@ -580,7 +647,38 @@ function generateKlingJWT(accessKey: string, secretKey: string): string {
 | completed | Video ready |
 | failed | Generation failed |
 
-### 8.5 Judge Pre-generation System
+### 8.5 Video Error Handling (Added 2026-02-04)
+
+NewLifeVideos component now tracks video load errors and auto-resets when URLs expire (Fix #48).
+
+**Configuration (`src/components/NewLifeVideos.tsx`):**
+```typescript
+MAX_VIDEO_ERRORS = 3  // Reset after 3 failed load attempts
+```
+
+**Flow:**
+```
+Video element onError event →
+→ handleVideoError() increments error count →
+→ useEffect detects count >= MAX_VIDEO_ERRORS →
+→ reset() clears hook state →
+→ User sees "SEE YOUR NEW LIFE!" button again
+```
+
+**Logging:**
+```
+[NewLifeVideos] winner video load error: <event>
+[NewLifeVideos] Video error count: 1/3
+[NewLifeVideos] Video error count: 2/3
+[NewLifeVideos] Video error count: 3/3
+[NewLifeVideos] Video error threshold reached - resetting to allow regeneration
+```
+
+**Files Involved:**
+- `src/components/NewLifeVideos.tsx` - Error tracking and reset
+- `src/hooks/useGrokVideo.ts` - `reset()` function clears state
+
+### 8.6 Judge Pre-generation System
 
 **Added:** 2026-01-29
 
@@ -822,6 +920,9 @@ npm run preview
 | Tavily auth errors | Switched to Bearer token | 2026-01-21 |
 | FeatureGate blocking | Fails open during auth load | 2026-01-27 |
 | Olivia audio issues | Added interrupt functions | 2026-01-27 |
+| #48 NewLifeVideos instability | Error count tracking + auto-reset (3 failures) | 2026-02-04 |
+| #49 Gemini cold start timeouts | Retry logic with exponential backoff (3 attempts) | 2026-02-04 |
+| #50 Cost tracking not persisting | Auto-sync to Supabase on comparison complete | 2026-02-04 |
 
 ---
 

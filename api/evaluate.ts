@@ -981,62 +981,115 @@ ${isLargeCategory ? `
     : buildBasePrompt(city1, city2, metrics);
   const prompt = basePrompt + geminiAddendum;
 
-  try {
-    const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction,
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 16384, temperature: 0.2 },  // UPDATED 2026-02-03: Lowered from 0.3 for stricter factual adherence
-          // Safety settings - allow freedom-related content
-          safetySettings: [
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' }
-          ],
-          // Enable Google Search grounding for real-time web data
-          tools: [{
-            google_search: {}
-          }]
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+  // FIX #49: Gemini retry logic with exponential backoff (matches Grok pattern)
+  // Addresses cold start timeouts on enhanced search
+  const MAX_RETRIES = 3;
+  let lastError = '';
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[GEMINI] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
+
+      const response = await fetchWithTimeout(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction,
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 16384, temperature: 0.2 },  // UPDATED 2026-02-03: Lowered from 0.3 for stricter factual adherence
+            // Safety settings - allow freedom-related content
+            safetySettings: [
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' }
+            ],
+            // Enable Google Search grounding for real-time web data
+            tools: [{
+              google_search: {}
+            }]
+          })
+        },
+        LLM_TIMEOUT_MS
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        lastError = `API error: ${response.status} - ${errorText}`;
+        console.error(`[GEMINI] Attempt ${attempt} failed: ${lastError}`);
+        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
+        if (response.status >= 400 && response.status < 500) {
+          return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
+        }
+        // Exponential backoff before retry: 1s, 2s, 4s
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.log(`[GEMINI] Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const data = await response.json();
+      // FIX #8: Defensive parsing - handle missing/malformed response
+      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!content) {
+        lastError = 'Empty or malformed response from Gemini';
+        console.error(`[GEMINI] Attempt ${attempt}: ${lastError}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const scores = parseResponse(content, 'gemini-3-pro');
+
+      if (scores.length === 0) {
+        lastError = 'Invalid JSON or no evaluations parsed from Gemini response';
+        console.error(`[GEMINI] Attempt ${attempt}: ${lastError}. Content preview: ${content.substring(0, 200)}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      // Extract token usage from Gemini response
+      const usage: TokenUsage = {
+        inputTokens: data?.usageMetadata?.promptTokenCount || 0,
+        outputTokens: data?.usageMetadata?.candidatesTokenCount || 0
+      };
+
+      // Success!
+      console.log(`[GEMINI] Success on attempt ${attempt}: ${scores.length} scores returned`);
+      return {
+        provider: 'gemini-3-pro',
+        success: true,
+        scores,
+        latencyMs: Date.now() - startTime,
+        usage: { tokens: usage }
+      };
+
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
+      console.error(`[GEMINI] Attempt ${attempt} exception: ${lastError}`);
+
+      // Exponential backoff before retry
+      if (attempt < MAX_RETRIES) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[GEMINI] Retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
     }
-
-    const data = await response.json();
-    // FIX #8: Defensive parsing - handle missing/malformed response
-    const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!content) {
-      return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Gemini' };
-    }
-    const scores = parseResponse(content, 'gemini-3-pro');
-
-    // Extract token usage from Gemini response
-    const usage: TokenUsage = {
-      inputTokens: data?.usageMetadata?.promptTokenCount || 0,
-      outputTokens: data?.usageMetadata?.candidatesTokenCount || 0
-    };
-
-    return {
-      provider: 'gemini-3-pro',
-      success: scores.length > 0,
-      scores,
-      latencyMs: Date.now() - startTime,
-      usage: { tokens: usage }
-    };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
-    return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
+
+  // All retries exhausted
+  console.error(`[GEMINI] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
+  return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
 // Grok 4 evaluation (with native X/Twitter search)

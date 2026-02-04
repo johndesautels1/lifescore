@@ -58,8 +58,10 @@ import {
   storeCostBreakdown,
   calculateLLMCost,
   formatCostBreakdownLog,
+  toApiCostRecordInsert,
   type APICallCost
 } from './utils/costCalculator';
+import { saveApiCostRecord } from './services/databaseService';
 import './styles/globals.css';
 import './App.css';
 
@@ -588,6 +590,20 @@ const AppContent: React.FC = () => {
                               const finalBreakdown = finalizeCostBreakdown(costBreakdown);
                               storeCostBreakdown(finalBreakdown);
                               console.log('[App] Cost tracking stored:', formatCostBreakdownLog(finalBreakdown));
+
+                              // FIX #50: Auto-sync cost data to Supabase database
+                              if (user?.id) {
+                                const dbRecord = toApiCostRecordInsert(finalBreakdown, user.id);
+                                saveApiCostRecord(dbRecord)
+                                  .then(({ data, error }) => {
+                                    if (error) {
+                                      console.warn('[App] Cost DB sync failed (non-fatal):', error.message);
+                                    } else {
+                                      console.log('[App] Cost data auto-synced to Supabase:', data?.comparison_id);
+                                    }
+                                  })
+                                  .catch(err => console.warn('[App] Cost DB sync error (non-fatal):', err));
+                              }
                             } catch (costError) {
                               console.error('[App] Cost tracking error (non-fatal):', costError);
                             }

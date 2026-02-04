@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 2.2
-**Last Updated:** January 30, 2026
+**Version:** 2.4
+**Last Updated:** February 4, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -230,10 +230,13 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 | Error Message | Cause | Solution |
 |---------------|-------|----------|
-| "Evaluation timed out" | AI provider slow/unavailable | Retry in 5 minutes |
+| "Evaluation timed out" | AI provider slow/unavailable | System auto-retries 3 times; if still failing, try again in 5 minutes |
+| "Failed after 3 attempts" | Persistent provider issues | Wait 5 minutes and retry; the system attempted multiple retries automatically |
 | "Rate limit exceeded" | Too many requests | Wait 1 minute, retry |
 | "API error" | Provider temporarily down | Try different comparison |
 | "No data available" | Metrics couldn't be evaluated | Contact support |
+
+**Note (Updated 2026-02-04):** Enhanced mode now includes automatic retry with exponential backoff for Gemini and Grok providers. The system will retry up to 3 times with increasing delays (1s, 2s, 4s) before reporting a failure.
 
 ### 5.3 Olivia AI Issues
 
@@ -249,8 +252,11 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Issue | Solution |
 |-------|----------|
 | Video stuck on "Generating" | Allow up to 90-180 seconds; refresh if longer |
-| Video playback error | Try different browser; check internet speed |
+| Video playback error | System auto-resets after 3 failed load attempts; click "SEE YOUR NEW LIFE!" to regenerate |
 | "Video generation failed" | Retry; if persistent, contact support |
+| Video shows blank/expired | Wait for auto-reset (after 3 errors) then regenerate |
+
+**Note (Updated 2026-02-04):** "See Your New Life" videos now include automatic error detection. If video URLs have expired (common with cached videos), the system will detect load failures and automatically reset after 3 attempts, allowing users to regenerate fresh videos.
 
 ### 5.5 Gamma Report Issues
 
@@ -658,6 +664,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§8.6), Emilia (§8.7), Quota Template (§10.5), glossary terms |
 | 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Kling AI docs, video timing fix, annual pricing, live chat clarification |
 | 2.3 | 2026-02-02 | Claude Opus 4.5 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
+| 2.4 | 2026-02-04 | Claude Opus 4.5 | Fixed #48 video auto-reset, #49 Gemini retry, #50 cost tracking; updated §5.2 and §5.4 troubleshooting |
 
 ---
 

@@ -9,7 +9,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGrokVideo } from '../hooks/useGrokVideo';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
@@ -49,6 +49,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // FIX #48: Error count tracking for expired URL detection
+  const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const MAX_VIDEO_ERRORS = 3; // Reset state after 3 failed load attempts
 
   // Determine winner/loser from result
   const winner = result.winner;
@@ -143,11 +147,33 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     setIsPlaying(false);
   };
 
+  // FIX #48: Handle video load errors - track count and reset when threshold reached
+  const handleVideoError = useCallback((videoType: 'winner' | 'loser', e: React.SyntheticEvent<HTMLVideoElement>) => {
+    console.error(`[NewLifeVideos] ${videoType} video load error:`, e);
+    setVideoErrorCount(prev => {
+      const newCount = prev + 1;
+      console.warn(`[NewLifeVideos] Video error count: ${newCount}/${MAX_VIDEO_ERRORS}`);
+      return newCount;
+    });
+  }, []);
+
+  // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
+  useEffect(() => {
+    if (videoErrorCount >= MAX_VIDEO_ERRORS) {
+      console.log('[NewLifeVideos] Video error threshold reached - resetting to allow regeneration');
+      reset();
+      setHasStarted(false);
+      setIsPlaying(false);
+      setVideoErrorCount(0);
+    }
+  }, [videoErrorCount, reset]);
+
   // Reset when result changes
   useEffect(() => {
     reset();
     setHasStarted(false);
     setIsPlaying(false);
+    setVideoErrorCount(0);
   }, [result.comparisonId]);
 
   return (
@@ -188,7 +214,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                   src={videoPair.winner.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
-                  onError={(e) => console.error('[NewLifeVideos] Winner video load error:', e)}
+                  onError={(e) => handleVideoError('winner', e)}
                   playsInline
                   preload="auto"
                   controlsList="nodownload"
@@ -233,7 +259,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                   src={videoPair.loser.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
-                  onError={(e) => console.error('[NewLifeVideos] Loser video load error:', e)}
+                  onError={(e) => handleVideoError('loser', e)}
                   playsInline
                   preload="auto"
                   controlsList="nodownload"

@@ -1,28 +1,57 @@
-# LIFE SCORE - UNIFIED MASTER TODO
-**Created:** February 3, 2026
-**Last Updated:** February 4, 2026 (Session LS-COURT-ORDER-20260203-SESSION4)
-**Source:** Complete merged list from all sessions + 23 new Session 4 items
+# LIFE SCORE - Session 4 Handoff Document
+**Session ID:** LS-COURT-ORDER-20260203-SESSION4
+**Date:** February 4, 2026
+**Status:** HANDOFF - Ready for new conversation
 **Conversation ID:** LS-SESSION4-20260203-A7X2
 
 ---
 
-## GRAND SUMMARY
+## START NEW CONVERSATION WITH THIS PROMPT:
 
-| Category | Total | Completed | Active | Deferred |
-|----------|-------|-----------|--------|----------|
-| CRITICAL (Architecture) | 6 | 3 | 2 | 1 |
-| HIGH (UI/UX Critical) | 12 | 4 | 8 | 0 |
-| MEDIUM (UI/UX Polish) | 18 | 0 | 18 | 0 |
-| MEDIUM (Features) | 14 | 2 | 11 | 1 |
-| LOW (Documentation) | 6 | 0 | 6 | 0 |
-| LOW (Code Quality) | 2 | 0 | 2 | 0 |
-| DEFERRED (Legal) | 7 | 0 | 0 | 7 |
-| BUGS | 18 | 16 | 1 | 1 |
-| **TOTAL** | **78** | **42** | **35** | **9** |
+```
+Continue LIFE SCORE project. Session ID: LS-COURT-ORDER-20260204-SESSION5
+
+Read handoff: D:\lifescore\HANDOFF-SESSION-4.md
+Master TODO: D:\lifescore\UNIFIED-MASTER-TODO.md
+
+Previous Session 4 completed:
+- Regenerated complete UNIFIED-MASTER-TODO.md with all 78 items
+- Added 23 new user requirements (#49-73)
+- Documented Bug #48 (NewLifeVideos video instability)
+- Organized items by priority (CRITICAL → HIGH → MEDIUM → LOW → DEFERRED)
+
+CRITICAL priorities to fix first:
+- #49 - Gemini cold start timeouts
+- #50 - API cost tracking database persistence
+- Bug #48 - NewLifeVideos video instability
+
+Then proceed with HIGH priority items #51-56 and text color fixes #57-67.
+```
 
 ---
 
-# COMPLETE ITEM LIST (1-78)
+## SESSION 4 ACCOMPLISHMENTS
+
+1. **Analyzed NewLifeVideos instability** (Bug #48)
+   - Root cause: Cached video URLs expire but `isReady` still returns true
+   - Recommended fix: Track error count, reset state after 2-3 failures
+
+2. **Updated UNIFIED-MASTER-TODO.md**
+   - Added 23 new user requirements from Session 4
+   - Renumbered items #49-73
+   - Complete bug tracking table with all 18 bugs
+   - Full item list 1-78 with details
+
+3. **Organized priorities**
+   - CRITICAL: #49, #50, Bug #48
+   - HIGH: #51-56, #73
+   - MEDIUM: Text colors (#57-67), UI polish (#9-12, #66-69), Features (#13-22, #70-72)
+   - LOW: Documentation (#23-28), Code quality (#29-30)
+   - DEFERRED: Legal (#31-37), Feature #21
+
+---
+
+# COMPLETE TODO LIST (78 ITEMS)
 
 ---
 
@@ -34,8 +63,8 @@
 | 2 | Tavily search restructure | Added Research API caching wrapper (67% reduction in Research calls) | ✅ DONE (2/3) |
 | 3 | Perplexity prompt adjustments | Optimized prompts: batch threshold 20→15, source reuse, evidence limits, confidence fallback | ✅ DONE (2/3) |
 | 4 | Gemini prompt adjustments | Lowered temperature 0.3→0.2 for stricter factual adherence | ✅ DONE (2/3) |
-| 49 | Gemini cold start timeouts | Fix cold start Gemini timeouts on enhanced search - causes failures on first request | 🔴 ACTIVE |
-| 50 | API cost tracking database persistence | Cost data only persists locally (localStorage), not syncing to Supabase. Fix database sync for all providers | 🔴 ACTIVE |
+| 49 | **Gemini cold start timeouts** | Fix cold start Gemini timeouts on enhanced search - causes failures on first request | 🔴 ACTIVE |
+| 50 | **API cost tracking database persistence** | Cost data only persists locally (localStorage), not syncing to Supabase. Fix database sync for all providers | 🔴 ACTIVE |
 
 ---
 
@@ -47,12 +76,12 @@
 | 6 | Judge Video - Christiano animation | Wav2Lip: wider pads, 30fps, 720p (works but slow - revisit later) | ✅ DONE (2/3) |
 | 7 | Results Report section scroll | Fixed: scrollIntoView block:'start' scrolls to TOP of section, not bottom | ✅ DONE (2/3, b29d000) |
 | 8 | Post-search flow redesign | Show success status buttons first, user clicks "View Results" manually - do NOT auto-open LLM data page | ✅ DONE (merged with #55) |
-| 51 | Header bar mobile size reduction | Reduce top-right header bar (tier badge, API monitoring, login) by 15% on mobile (85% of current size) | 🔴 ACTIVE |
-| 52 | Settings modal background scroll bug | On mobile, home screen scrolls in background when user clicks around inside settings modal card | 🔴 ACTIVE |
-| 53 | Freedom vs Imprisonment cards broken | UI looks cheap with colored borders, buttons don't click/respond, comparison sometimes won't load at all | 🔴 ACTIVE |
-| 54 | Select report dropdown inconsistent | Dropdown on Visuals page sometimes opens to reveal comparison list, sometimes doesn't respond | 🔴 ACTIVE |
-| 55 | Results/Visuals tabs always accessible | Make Results and Visuals tabs always clickable/accessible, but keep Sovereign-tier features blocked for Free/Frontier users | 🔴 ACTIVE |
-| 56 | Auto-save when adding LLM to saved report | When a report is already saved and user adds another LLM, auto-save since Save button can't be re-clicked | 🔴 ACTIVE |
+| 51 | **Header bar mobile size reduction** | Reduce top-right header bar (tier badge, API monitoring, login) by 15% on mobile (85% of current size) | 🔴 ACTIVE |
+| 52 | **Settings modal background scroll bug** | On mobile, home screen scrolls in background when user clicks around inside settings modal card | 🔴 ACTIVE |
+| 53 | **Freedom vs Imprisonment cards broken** | UI looks cheap with colored borders, buttons don't click/respond, comparison sometimes won't load at all | 🔴 ACTIVE |
+| 54 | **Select report dropdown inconsistent** | Dropdown on Visuals page sometimes opens to reveal comparison list, sometimes doesn't respond | 🔴 ACTIVE |
+| 55 | **Results/Visuals tabs always accessible** | Make Results and Visuals tabs always clickable/accessible, but keep Sovereign-tier features blocked for Free/Frontier users | 🔴 ACTIVE |
+| 56 | **Auto-save when adding LLM to saved report** | When a report is already saved and user adds another LLM, auto-save since Save button can't be re-clicked | 🔴 ACTIVE |
 
 ---
 
@@ -64,19 +93,19 @@
 | 10 | Judge Tab mobile buttons | Center the Save/Download/Forward buttons on mobile view | 🔴 ACTIVE |
 | 11 | Mobile "One remaining" text | Move the "One remaining" text down approximately 1/4 inch on mobile | 🔴 ACTIVE |
 | 12 | City selection modals | Picture modals for city selection need polish and upscaling | 🔴 ACTIVE |
-| 57 | Settings modal widgets visibility | Brighten the 4 widgets under "Account Settings" in non-hover mode (currently too hard to see). Change "New Password" and "Confirm Password" field labels to bright orange. Change user's actual email address text to crisp orange. Change API key field description text to bright gold/golden yellow | 🔴 ACTIVE |
-| 58 | Cost tracking loading text | Change "Loading data" small text to bright yellow | 🔴 ACTIVE |
-| 59 | Cost tracking card titles | Change "Grand Total", "Total Comparisons Enhanced", "Average Enhanced Cost" card title text to crisp golden yellow (hard to read currently) | 🔴 ACTIVE |
-| 60 | Cost tracking percentage text | Under "Cost by Provider" section, the actual percentage (%) text for each provider should be crisp yellow | 🔴 ACTIVE |
-| 61 | Cost tracking profitability text | In "Profitability Analysis" section, change line item labels (e.g., "Average cost per enhanced comparison") to crisp orange. Keep dollar amounts in white | 🔴 ACTIVE |
-| 62 | Recent comparisons provider text | Provider names showing in faint gray/white - change to crisp golden orange | 🔴 ACTIVE |
-| 63 | Home page Law vs Lived Reality | Change "Written Law" and "Daily Reality" text labels to golden yellow, crisp and bright | 🔴 ACTIVE |
-| 64 | Deal breakers Clear All text | Change the "Clear All" button/link text under Deal Breakers to crisp white | 🔴 ACTIVE |
-| 65 | Freedom vs Imprisonment city text | City name text on Freedom vs Imprisonment cards is faded gray - change to crisp white | 🔴 ACTIVE |
-| 66 | Saved comparisons button sizes | Enlarge Export/Import/Clear All buttons by 30%, keep same spacing between buttons and same font size | 🔴 ACTIVE |
-| 67 | Visuals PowerPoint button text | Change the PowerPoint/PPTX button text on Visuals page to golden orange crisp | 🔴 ACTIVE |
-| 68 | Court orders green dot bug | Strange green dot appearing over "Amsterdam Advantage" text in Court Orders section | 🔴 ACTIVE |
-| 69 | Court orders tabs font | Change the font for Court Orders category tabs (user dislikes current font style) | 🔴 ACTIVE |
+| 57 | **Settings modal widgets visibility** | Brighten the 4 widgets under "Account Settings" in non-hover mode (currently too hard to see). Change "New Password" and "Confirm Password" field labels to bright orange. Change user's actual email address text to crisp orange. Change API key field description text to bright gold/golden yellow | 🔴 ACTIVE |
+| 58 | **Cost tracking loading text** | Change "Loading data" small text to bright yellow | 🔴 ACTIVE |
+| 59 | **Cost tracking card titles** | Change "Grand Total", "Total Comparisons Enhanced", "Average Enhanced Cost" card title text to crisp golden yellow (hard to read currently) | 🔴 ACTIVE |
+| 60 | **Cost tracking percentage text** | Under "Cost by Provider" section, the actual percentage (%) text for each provider should be crisp yellow | 🔴 ACTIVE |
+| 61 | **Cost tracking profitability text** | In "Profitability Analysis" section, change line item labels (e.g., "Average cost per enhanced comparison") to crisp orange. Keep dollar amounts in white | 🔴 ACTIVE |
+| 62 | **Recent comparisons provider text** | Provider names showing in faint gray/white - change to crisp golden orange | 🔴 ACTIVE |
+| 63 | **Home page Law vs Lived Reality** | Change "Written Law" and "Daily Reality" text labels to golden yellow, crisp and bright | 🔴 ACTIVE |
+| 64 | **Deal breakers Clear All text** | Change the "Clear All" button/link text under Deal Breakers to crisp white | 🔴 ACTIVE |
+| 65 | **Freedom vs Imprisonment city text** | City name text on Freedom vs Imprisonment cards is faded gray - change to crisp white | 🔴 ACTIVE |
+| 66 | **Saved comparisons button sizes** | Enlarge Export/Import/Clear All buttons by 30%, keep same spacing between buttons and same font size | 🔴 ACTIVE |
+| 67 | **Visuals PowerPoint button text** | Change the PowerPoint/PPTX button text on Visuals page to golden orange crisp | 🔴 ACTIVE |
+| 68 | **Court orders green dot bug** | Strange green dot appearing over "Amsterdam Advantage" text in Court Orders section | 🔴 ACTIVE |
+| 69 | **Court orders tabs font** | Change the font for Court Orders category tabs (user dislikes current font style) | 🔴 ACTIVE |
 
 ---
 
@@ -94,10 +123,10 @@
 | 20 | Save button - Court Order | Added Save/Download/Share buttons to Court Order section | ✅ DONE (2/3, 58344b7) |
 | 21 | Court Order video upload | Allow user to override auto-generated Court Order video with custom upload | 🔵 DEFERRED |
 | 22 | Gamma prompt update | Extract current Gamma prompt, enhance it, and upload new improved prompt | 🔴 ACTIVE |
-| 70 | Verify Olivia 100 metrics | Verify that Olivia can talk about ALL 100 individual metrics, not just section summaries, highlights, or key metrics per category | 🔴 ACTIVE |
-| 71 | Draggable Emilia/Olivia bubbles | Allow users to click and drag the Ask Emilia and Ask Olivia chat bubbles around the screen to reposition them | 🔴 ACTIVE |
-| 72 | Verify schema for Court Orders | Verify the Supabase database schema is updated with the new expanded Court Orders section fields and tables | 🔴 ACTIVE |
-| 73 | API quota consistency fix | ElevenLabs shows maximum usage (100%) in API Quota section but shows $0.00 in Cost per Provider - this is impossible/inconsistent. Fix data tracking | 🔴 ACTIVE |
+| 70 | **Verify Olivia 100 metrics** | Verify that Olivia can talk about ALL 100 individual metrics, not just section summaries, highlights, or key metrics per category | 🔴 ACTIVE |
+| 71 | **Draggable Emilia/Olivia bubbles** | Allow users to click and drag the Ask Emilia and Ask Olivia chat bubbles around the screen to reposition them | 🔴 ACTIVE |
+| 72 | **Verify schema for Court Orders** | Verify the Supabase database schema is updated with the new expanded Court Orders section fields and tables | 🔴 ACTIVE |
+| 73 | **API quota consistency fix** | ElevenLabs shows maximum usage (100%) in API Quota section but shows $0.00 in Cost per Provider - this is impossible/inconsistent. Fix data tracking | 🔴 ACTIVE |
 
 ---
 
@@ -137,9 +166,7 @@
 
 ---
 
-# COMPLETE BUG TRACKING TABLE (#38-48 + Historical #1-7)
-
----
+# COMPLETE BUG TRACKING TABLE
 
 ## Historical Bugs (January 29, 2026)
 
@@ -169,7 +196,7 @@
 | 45 | Mobile video playback broken | MEDIUM | NewLifeVideos | "Play Both Videos" button not working on mobile due to browser autoplay policy | ✅ FIXED (0df7b98) - Added muted fallback, then unmute after playback starts |
 | 46 | Ask Olivia gray text | MEDIUM | AskOlivia | All text in Olivia chat was off-white/gray (#94a3b8) instead of crisp white | ✅ FIXED (0df7b98) - Changed CSS variables to #ffffff |
 | 47 | Court Order badge spacing | LOW | FreedomMetrics | Advantage badge ("Winner +15") positioned too close to the scores above it | ✅ FIXED (0df7b98) - Added extra top padding to .freedom-metric-card |
-| 48 | NewLifeVideos video instability | MEDIUM | NewLifeVideos/useGrokVideo | Videos render with expired/invalid cached URLs causing repeated "no supported sources" errors. Console spam of 10-15 errors before videos eventually load. | 🔴 ACTIVE |
+| 48 | **NewLifeVideos video instability** | MEDIUM | NewLifeVideos/useGrokVideo | Videos render with expired/invalid cached URLs causing repeated "no supported sources" errors. Console spam of 10-15 errors before videos eventually load. | 🔴 ACTIVE |
 
 ---
 
@@ -216,21 +243,30 @@
 
 ---
 
-# COMPLETED FEATURES (For Reference)
+# KEY FILES REFERENCE
 
-## Court Order Freedom Education (DONE 2/3)
-
-| Commit | Feature | Details |
-|--------|---------|---------|
-| 8770bad | 6-Tab Freedom Education | Tabs: Personal, Housing, Business, Transport, Policing, Speech |
-| 8770bad | Winning Metrics Display | Shows metrics where winner beats loser by 10+ points |
-| 8770bad | Real-World Examples | AI-generated practical examples for each winning metric |
-| 8770bad | Hero Statements | Celebratory summary statement per category tab |
-| 8770bad | API Enhancement | judge-report.ts extended to generate freedomEducation data |
+| Purpose | File Path |
+|---------|-----------|
+| Master TODO | `D:\lifescore\UNIFIED-MASTER-TODO.md` |
+| This Handoff | `D:\lifescore\HANDOFF-SESSION-4.md` |
+| Tier Access | `src/hooks/useTierAccess.ts` |
+| Feature Gating | `src/components/FeatureGate.tsx` |
+| NewLifeVideos | `src/components/NewLifeVideos.tsx` |
+| useGrokVideo Hook | `src/hooks/useGrokVideo.ts` |
+| Court Order | `src/components/CourtOrderVideo.tsx` |
+| Court Order CSS | `src/components/CourtOrderVideo.css` |
+| Freedom Tabs | `src/components/FreedomCategoryTabs.tsx` |
+| Olivia Chat | `src/components/AskOlivia.tsx` |
+| Saved Reports | `src/components/SavedComparisons.tsx` |
+| Visuals Tab | `src/components/VisualsTab.tsx` |
+| Settings Modal | `src/components/SettingsModal.tsx` |
+| Cost Tracking | `src/components/CostTrackingDashboard.tsx` |
+| Judge API | `api/judge-report.ts` |
+| App Entry | `src/App.tsx` |
 
 ---
 
-## Session Commits (Feb 3-4, 2026)
+# COMMITS (Sessions 2-4)
 
 | Commit | Description |
 |--------|-------------|
@@ -245,40 +281,7 @@
 
 ---
 
-## Recently Completed Items
-
-| Item | Commit/Status |
-|------|---------------|
-| Perplexity Data Sources (6A.1) | Done (prior chat) |
-| 5th Thumbnail UI Wiring (6A.2) | Done (prior chat) |
-| Multi-LLM Field Sources (6A.3) | Done (prior chat) |
-| Gamma Embed Error Handling (6C.2) | Done (prior chat) |
-| Re-run Judge Functionality (6D.4) | Done (prior chat) |
-| Login Landing Page (6E.1) | Done (prior chat) |
-| Letter "C" bug (8.2) | Done (prior chat) |
-| Cancel stuck Replicate (10.1) | Done (prior chat) |
-| Verify city count (3.13) | Done (prior chat) |
-| App Schema Manual (12.1) | Done (4596f41) |
-| Judge Equations Manual (12.2) | Done (f640979) |
-| Court Order Save/Download/Share (#20) | Done (58344b7) |
-| Freedom Education 6-Tab Feature | Done (8770bad) |
-| Category Scroll Fix (#7) | Done (b29d000) |
-| FeatureGate Click Fix (#39) | Done (e827fff) |
-| Tier Access Fail-Open Fix (#38) | Done (991cabc) |
-| Admin bypass for FeatureGate (#40) | Done (0df7b98) |
-| VisualsTab dropdown contrast (#41) | Done (0df7b98) |
-| Saved Reports mobile buttons (#42) | Done (a01484e) |
-| Olivia audio stopping (#43) | Done (0df7b98) |
-| Olivia mobile text chaos (#44) | Done (0df7b98) |
-| Mobile video playback (#45) | Done (0df7b98) |
-| Ask Olivia gray text (#46) | Done (0df7b98) |
-| Court Order badge spacing (#47) | Done (0df7b98) |
-| Court Order UI redesign | Done (0df7b98) |
-| Opus prompt enhancement | Done (0df7b98) |
-
----
-
-# PRIORITY ORDER FOR NEXT ACTIONS
+# PRIORITY ORDER FOR SESSION 5
 
 ## CRITICAL (Fix First)
 | # | Item | Why Critical |
@@ -287,7 +290,7 @@
 | 50 | API cost tracking persistence | Data lost on refresh, not saving to DB |
 | 48 | NewLifeVideos instability | Console spam, poor UX |
 
-## HIGH (Session 4 Priority)
+## HIGH (After Critical)
 | # | Item | Category |
 |---|------|----------|
 | 51 | Header bar mobile 15% reduction | Mobile UI |
@@ -341,16 +344,6 @@
 
 ---
 
-# KNOWN ISSUES TO INVESTIGATE
-
-1. **Supabase Slow/Timeout** (#38) - Profile fetch taking 45+ seconds. Supabase project may be paused/cold starting. Partially mitigated with fail-open.
-2. **Christiano Animation Quality** - Wav2Lip works but animation is stiff. Long-term: consider alternative lip-sync models.
-3. **NewLifeVideos Instability** (#48) - Videos render with expired cached URLs, causing console spam before eventually loading.
-4. **API Cost Data Not Persisting** (#50) - Cost tracking data only stored in localStorage, not syncing to Supabase database.
-5. **API Quota Inconsistency** (#73) - ElevenLabs shows 100% quota usage but $0.00 in cost tracking - impossible state.
-
----
-
 # GRAND TOTALS
 
 | Metric | Count |
@@ -368,5 +361,25 @@
 
 ---
 
-*Last Updated: February 4, 2026 - Session LS-COURT-ORDER-20260203-SESSION4*
+# KNOWN ISSUES
+
+1. **Supabase Slow/Timeout** (#38) - Profile fetch taking 45+ seconds. Supabase project may be paused/cold starting. Partially mitigated with fail-open.
+2. **Christiano Animation Quality** - Wav2Lip works but animation is stiff. Long-term: consider alternative lip-sync models.
+3. **NewLifeVideos Instability** (#48) - Videos render with expired cached URLs, causing console spam before eventually loading.
+4. **API Cost Data Not Persisting** (#50) - Cost tracking data only stored in localStorage, not syncing to Supabase database.
+5. **API Quota Inconsistency** (#73) - ElevenLabs shows 100% quota usage but $0.00 in cost tracking - impossible state.
+
+---
+
+# ENVIRONMENT
+
+- **Working Directory:** `D:\lifescore`
+- **Branch:** main
+- **Platform:** Windows
+- **Domain:** clueslifescore.com
+
+---
+
+*Generated: February 4, 2026*
+*Session: LS-COURT-ORDER-20260203-SESSION4*
 *Conversation ID: LS-SESSION4-20260203-A7X2*

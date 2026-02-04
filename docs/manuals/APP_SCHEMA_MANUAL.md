@@ -1,8 +1,8 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 1.0.0
-**Generated:** 2026-02-03
-**Conversation ID:** LS-SCHEMA-20260203
+**Version:** 1.1.0
+**Generated:** 2026-02-04
+**Conversation ID:** LS-SCHEMA-20260204
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 
 ---
@@ -230,6 +230,13 @@ Detailed cost tracking per API provider.
 | request_id | TEXT | | Provider request ID |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
+**Auto-Sync (Added 2026-02-04 - Fix #50):**
+Cost records are now automatically synced to Supabase after each comparison completes:
+- Flow: `storeCostBreakdown()` → `toApiCostRecordInsert()` → `saveApiCostRecord()`
+- Uses UPSERT (on conflict: user_id, comparison_id)
+- Non-blocking: sync failures don't affect comparison results
+- Files: `src/App.tsx`, `src/utils/costCalculator.ts`, `src/services/databaseService.ts`
+
 ---
 
 #### `api_quota_settings`
@@ -312,6 +319,14 @@ Generate city comparison scores.
 ```
 
 **Rate Limit:** 10/min (free), 30/min (pro), 100/min (enterprise)
+
+**Retry Logic (Added 2026-02-04 - Fix #49):**
+Gemini and Grok providers now include automatic retry with exponential backoff:
+- Max attempts: 3
+- Backoff: 1s → 2s → 4s
+- Retries on: 5xx errors, empty responses, JSON parse failures
+- No retry on: 4xx client errors (invalid key, bad request)
+- File: `api/evaluate.ts`
 
 ---
 
@@ -643,7 +658,13 @@ Generate HeyGen talking head video.
 | `JudgeTab` | `src/components/JudgeTab.tsx` | THE JUDGE tab container |
 | `JudgeVideo` | `src/components/JudgeVideo.tsx` | Judge video player |
 | `CourtOrderVideo` | `src/components/CourtOrderVideo.tsx` | Court order video |
-| `NewLifeVideos` | `src/components/NewLifeVideos.tsx` | Lifestyle videos |
+| `NewLifeVideos` | `src/components/NewLifeVideos.tsx` | Lifestyle videos (Fix #48: auto-reset on expired URLs) |
+
+**NewLifeVideos Error Handling (Added 2026-02-04 - Fix #48):**
+Videos now track load errors and auto-reset when URLs expire:
+- Error threshold: 3 failed loads
+- Behavior: After 3 errors, state resets to allow regeneration
+- Files: `src/components/NewLifeVideos.tsx`, `src/hooks/useGrokVideo.ts`
 
 ### 3.5 Subscription Components
 

@@ -110,6 +110,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### Comparison Taking Too Long
 - Enhanced mode uses multiple AI providers and may take up to 10 minutes
+- The system automatically retries failed provider calls up to 3 times (Fix #49)
 - If stuck beyond 10 minutes, refresh and try again
 - Try Standard mode for faster results
 
@@ -122,6 +123,11 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Ensure browser permissions allow audio
 - Check volume settings
 - Try a different browser
+
+### Video Not Playing
+- Videos automatically reset after 3 failed load attempts (Fix #48)
+- Click "SEE YOUR NEW LIFE!" button to regenerate expired videos
+- Try a different browser if issues persist
 
 ## Account Management
 
@@ -170,8 +176,10 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### "My comparison is stuck"
 - Enhanced mode can take up to 10 minutes
+- System auto-retries failed provider calls 3 times with exponential backoff
 - Refresh page and check Saved tab (may have completed)
 - Try Standard mode for faster results
+- Cost data is automatically synced to database (Fix #50)
 
 ### "I was charged incorrectly"
 - Verify transaction in Stripe dashboard
@@ -262,6 +270,28 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - \`POST /api/user/delete\`: Delete account
 - \`GET /api/user/export\`: Export data
 
+## Retry Logic (Fix #49 - 2026-02-04)
+
+Gemini and Grok providers now have automatic retry:
+- Max attempts: 3
+- Backoff: 1s → 2s → 4s (exponential)
+- Retries on: 5xx errors, empty responses, JSON parse failures
+- No retry on: 4xx client errors
+
+## Cost Tracking Auto-Sync (Fix #50 - 2026-02-04)
+
+Cost data now auto-syncs to Supabase:
+- Flow: storeCostBreakdown() → toApiCostRecordInsert() → saveApiCostRecord()
+- Non-blocking (failures don't affect comparison)
+- Uses UPSERT to handle duplicates
+
+## Video Error Handling (Fix #48 - 2026-02-04)
+
+NewLifeVideos now handles expired URLs:
+- Tracks load errors per video element
+- Auto-resets after 3 failed loads
+- Users can regenerate videos cleanly
+
 ## Common Errors
 
 ### "OPENAI_API_KEY not configured"
@@ -272,10 +302,11 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Check Supabase rate limiting
 - May need to increase limits
 
-### "Comparison timeout"
+### "Comparison timeout" / "Failed after 3 attempts"
 - Default timeout is 240 seconds
-- Check if AI provider is slow
-- Monitor Vercel function logs
+- System now auto-retries 3 times with exponential backoff
+- If all retries fail, check AI provider status
+- Monitor Vercel function logs for [GEMINI] or [GROK] retry messages
 
 ### "Database connection error"
 - Check Supabase status page
