@@ -5,9 +5,12 @@
 
 .new-life-videos {
   background: var(--card-background, #1a1a2e);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.5rem;
-  border: 1px solid var(--border-color, #2a2a4a);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 /* ============================================================================
@@ -66,33 +69,59 @@
    VIDEO PANELS
    ============================================================================ */
 
-/* FIX #53: Refined video panel styling - premium look */
+/* Refined video panel styling - premium depth look */
 .video-panel {
   flex: 1;
-  background: rgba(10, 15, 30, 0.6);
-  border-radius: 12px;
+  background: rgba(10, 15, 30, 0.7);
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .winner-panel {
-  border-color: rgba(212, 175, 55, 0.4);
+  border-color: rgba(16, 185, 129, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.06) 0%,
+    rgba(10, 15, 30, 0.7) 30%
+  );
 }
 
 .winner-panel:hover {
-  border-color: rgba(212, 175, 55, 0.7);
-  box-shadow: 0 6px 25px rgba(212, 175, 55, 0.2);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    0 0 40px rgba(16, 185, 129, 0.08),
+    inset 0 1px 0 rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
 }
 
 .loser-panel {
-  border-color: rgba(100, 100, 120, 0.4);
+  border-color: rgba(239, 68, 68, 0.15);
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.04) 0%,
+    rgba(10, 15, 30, 0.7) 30%
+  );
 }
 
 .loser-panel:hover {
-  border-color: rgba(150, 150, 170, 0.5);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    0 16px 48px rgba(0, 0, 0, 0.2),
+    0 0 30px rgba(239, 68, 68, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transform: translateY(-2px);
 }
 
 /* ============================================================================
@@ -111,17 +140,19 @@
   letter-spacing: 0.15em;
 }
 
-/* FIX #53: Premium banner styling */
+/* Premium banner styling with depth */
 .freedom-banner {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(247, 147, 30, 0.15));
-  color: #FFD700;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.5);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.12));
+  color: #34D399;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.25);
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
 .imprisonment-banner {
-  background: linear-gradient(135deg, rgba(80, 80, 100, 0.4), rgba(60, 60, 80, 0.3));
-  color: #b0b0c0;
-  border-bottom: 1px solid rgba(100, 100, 120, 0.5);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.1));
+  color: #F87171;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
 }
 
 .banner-icon {
@@ -136,35 +167,48 @@
    HERO & PRISON BADGES
    ============================================================================ */
 
-/* FIX #53: Premium hero badge */
+/* Winner verified badge - green checkmark circle */
 .hero-badge {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #D4AF37, #F7931E);
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #10B981, #059669);
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+  box-shadow:
+    0 2px 8px rgba(16, 185, 129, 0.35),
+    0 0 16px rgba(16, 185, 129, 0.15);
+  font-size: 0.85rem;
+  color: #fff;
+  font-weight: 700;
 }
 
 .hero-icon {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
-/* FIX #53: Premium prison badge */
-.prison-badge {
+/* Loser alert badge - red warning */
+.alert-badge {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: linear-gradient(135deg, rgba(80, 80, 100, 0.3), rgba(60, 60, 80, 0.3));
-  border-radius: 6px;
-  border: 1px solid rgba(100, 100, 120, 0.5);
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  border-radius: 50%;
+  box-shadow:
+    0 2px 8px rgba(239, 68, 68, 0.3),
+    0 0 12px rgba(239, 68, 68, 0.1);
+  font-size: 0.85rem;
+  color: #fff;
+  font-weight: 700;
 }
 
-.prison-icon {
-  font-size: 0.9rem;
+.alert-icon {
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 /* Panel Header */
@@ -173,7 +217,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
   gap: 0.5rem;
 }
 
@@ -193,23 +238,27 @@
   text-transform: uppercase;
 }
 
-/* FIX #53: Premium badge styling */
+/* Winner badge - green verified style */
 .winner-badge {
-  background: rgba(212, 175, 55, 0.25);
-  color: #FFD700;
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+/* Loser badge - red alert style */
 .loser-badge {
-  background: rgba(100, 100, 120, 0.3);
-  color: #a0a0b0;
-  border: 1px solid rgba(100, 100, 120, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .score-badge {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--accent-color, #D4AF37);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* Video Viewport */
@@ -239,13 +288,13 @@
   padding: 2rem;
 }
 
-/* FIX #53: Premium placeholder styling */
+/* Placeholder with themed tint */
 .winner-placeholder {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.03));
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(5, 150, 105, 0.02));
 }
 
 .loser-placeholder {
-  background: linear-gradient(135deg, rgba(60, 60, 80, 0.2), rgba(40, 40, 60, 0.1));
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(185, 28, 28, 0.02));
 }
 
 .placeholder-icon {
@@ -271,16 +320,16 @@
   letter-spacing: 0.05em;
 }
 
-/* FIX #53: Premium label styling */
+/* Bottom label styling - green/red themed */
 .freedom-label {
-  background: rgba(212, 175, 55, 0.15);
-  color: #FFD700;
+  background: rgba(16, 185, 129, 0.1);
+  color: #34D399;
 }
 
 .regulation-label,
 .imprisonment-label {
-  background: rgba(80, 80, 100, 0.3);
-  color: #a0a0b0;
+  background: rgba(239, 68, 68, 0.08);
+  color: #F87171;
 }
 
 .label-icon {
@@ -301,8 +350,16 @@
 .vs-text {
   font-size: 1.5rem;
   font-weight: 900;
-  color: var(--accent-color, #D4AF37);
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ============================================================================

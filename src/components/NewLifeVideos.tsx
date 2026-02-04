@@ -218,10 +218,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             </div>
             <div className="panel-header">
               <span className="hero-badge">
-                <span className="hero-icon">🦸</span>
+                <span className="hero-icon">✓</span>
               </span>
               <span className="city-name">{winnerCity}</span>
-              <span className="winner-badge">WINNER</span>
+              <span className="winner-badge">✓ WINNER</span>
               <span className="score-badge">{winnerScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
@@ -265,8 +265,11 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="banner-icon">👮</span>
             </div>
             <div className="panel-header">
+              <span className="alert-badge">
+                <span className="alert-icon">!</span>
+              </span>
               <span className="city-name">{loserCity}</span>
-              <span className="loser-badge">LOSER</span>
+              <span className="loser-badge">⚠ LOSER</span>
               <span className="score-badge">{loserScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
