@@ -110,10 +110,11 @@
 .clear-btn {
   background: none;
   border: none;
-  color: var(--gray-500);
+  color: #ffffff;  /* FIX #64: Crisp white Clear All text */
   font-size: 0.8rem;
   cursor: pointer;
   text-decoration: underline;
+  font-weight: 600;
 }
 
 .clear-btn:hover {

@@ -178,9 +178,10 @@
 }
 
 .city-name {
-  font-weight: 600;
+  font-weight: 700;  /* FIX #65: Bolder for better visibility */
   font-size: 1rem;
-  color: var(--text-primary, #ffffff);
+  color: #ffffff !important;  /* FIX #65: Crisp white city text */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);  /* Better contrast */
 }
 
 .winner-badge,

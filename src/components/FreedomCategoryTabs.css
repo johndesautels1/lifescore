@@ -91,12 +91,13 @@
 }
 
 .tab-name {
-  font-size: 0.95rem;  /* +4 points from 0.7rem */
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: 0.85rem;  /* FIX #69: Reduced slightly for better balance */
+  font-weight: 700;  /* FIX #69: Bolder weight */
+  color: rgba(255, 255, 255, 0.9);  /* FIX #69: Brighter text */
+  text-transform: none;  /* FIX #69: Remove uppercase per user preference */
+  letter-spacing: normal;  /* FIX #69: Remove letter spacing */
   white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;  /* FIX #69: Clean system font */
 }
 
 .freedom-tab.active .tab-name {
@@ -146,7 +147,7 @@
   }
 
   .tab-name {
-    font-size: 0.8rem;  /* Scaled for mobile */
+    font-size: 0.75rem;  /* FIX #69: Scaled for mobile */
   }
 
   .tab-count {

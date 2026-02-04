@@ -373,12 +373,13 @@
 
 .download-link {
   background: transparent;
-  border: 1px solid var(--accent-color, #D4AF37);
-  color: var(--accent-color, #D4AF37);
+  border: 1px solid #F7931E;  /* FIX #67: Golden orange border */
+  color: #F7931E;  /* FIX #67: Golden orange crisp text */
+  font-weight: 700;
 }
 
 .download-link:hover {
-  background: var(--accent-color, #D4AF37);
+  background: #F7931E;  /* FIX #67: Golden orange background on hover */
   color: #000000;
 }
 

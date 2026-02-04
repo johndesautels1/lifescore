@@ -206,10 +206,12 @@
   -webkit-user-select: none;
 }
 
-/* Ensure consistent spacing between export/import/clear buttons */
+/* FIX #66: Ensure consistent spacing between export/import/clear buttons */
+/* Enlarged by 30% per user request */
 .toolbar-right .toolbar-btn {
-  min-width: 5.5rem;
+  min-width: 7.15rem;  /* 5.5rem * 1.3 = 7.15rem */
   justify-content: center;
+  padding: 0.65rem 1rem;  /* 0.5rem * 1.3 */
 }
 
 /* No Saved State */

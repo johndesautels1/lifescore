@@ -8,17 +8,17 @@
 
 ## GRAND SUMMARY
 
-| Category | Total | Completed | Active | Deferred |
-|----------|-------|-----------|--------|----------|
+| Category | Total | Completed | Active | Deferred/Needs Investigation |
+|----------|-------|-----------|--------|------------------------------|
 | CRITICAL (Architecture) | 6 | 5 | 0 | 1 |
-| HIGH (UI/UX Critical) | 12 | 4 | 8 | 0 |
-| MEDIUM (UI/UX Polish) | 18 | 0 | 18 | 0 |
+| HIGH (UI/UX Critical) | 12 | 10 | 0 | 0 |
+| MEDIUM (UI/UX Polish) | 18 | 16 | 1 | 1 (#68 needs investigation) |
 | MEDIUM (Features) | 14 | 2 | 11 | 1 |
 | LOW (Documentation) | 6 | 0 | 6 | 0 |
 | LOW (Code Quality) | 2 | 0 | 2 | 0 |
 | DEFERRED (Legal) | 7 | 0 | 0 | 7 |
 | BUGS | 18 | 17 | 0 | 1 |
-| **TOTAL** | **78** | **45** | **32** | **9** |
+| **TOTAL** | **78** | **50** | **20** | **10** |
 
 ---
 
@@ -47,12 +47,12 @@
 | 6 | Judge Video - Christiano animation | Wav2Lip: wider pads, 30fps, 720p (works but slow - revisit later) | ✅ DONE (2/3) |
 | 7 | Results Report section scroll | Fixed: scrollIntoView block:'start' scrolls to TOP of section, not bottom | ✅ DONE (2/3, b29d000) |
 | 8 | Post-search flow redesign | Show success status buttons first, user clicks "View Results" manually - do NOT auto-open LLM data page | ✅ DONE (merged with #55) |
-| 51 | Header bar mobile size reduction | Reduce top-right header bar (tier badge, API monitoring, login) by 15% on mobile (85% of current size) | 🔴 ACTIVE |
-| 52 | Settings modal background scroll bug | On mobile, home screen scrolls in background when user clicks around inside settings modal card | 🔴 ACTIVE |
-| 53 | Freedom vs Imprisonment cards broken | UI looks cheap with colored borders, buttons don't click/respond, comparison sometimes won't load at all | 🔴 ACTIVE |
-| 54 | Select report dropdown inconsistent | Dropdown on Visuals page sometimes opens to reveal comparison list, sometimes doesn't respond | 🔴 ACTIVE |
-| 55 | Results/Visuals tabs always accessible | Make Results and Visuals tabs always clickable/accessible, but keep Sovereign-tier features blocked for Free/Frontier users | 🔴 ACTIVE |
-| 56 | Auto-save when adding LLM to saved report | When a report is already saved and user adds another LLM, auto-save since Save button can't be re-clicked | 🔴 ACTIVE |
+| 51 | Header bar mobile size reduction | Reduce top-right header bar (tier badge, API monitoring, login) by 15% on mobile (85% of current size) | ✅ DONE (80c5eb1) |
+| 52 | Settings modal background scroll bug | On mobile, home screen scrolls in background when user clicks around inside settings modal card | ✅ DONE (80c5eb1) |
+| 53 | Freedom vs Imprisonment cards broken | UI looks cheap with colored borders, buttons don't click/respond, comparison sometimes won't load at all | ✅ DONE (80c5eb1) |
+| 54 | Select report dropdown inconsistent | Dropdown on Visuals page sometimes opens to reveal comparison list, sometimes doesn't respond | ✅ DONE (80c5eb1) |
+| 55 | Results/Visuals tabs always accessible | Make Results and Visuals tabs always clickable/accessible, but keep Sovereign-tier features blocked for Free/Frontier users | ✅ DONE (80c5eb1) |
+| 56 | Auto-save when adding LLM to saved report | When a report is already saved and user adds another LLM, auto-save since Save button can't be re-clicked | ✅ DONE (80c5eb1) |
 
 ---
 
@@ -60,23 +60,23 @@
 
 | # | Item | Details | Status |
 |---|------|---------|--------|
-| 9 | Freedom Cards text size | City name text is too big on Freedom Cards, reduce font size | 🔴 ACTIVE |
-| 10 | Judge Tab mobile buttons | Center the Save/Download/Forward buttons on mobile view | 🔴 ACTIVE |
-| 11 | Mobile "One remaining" text | Move the "One remaining" text down approximately 1/4 inch on mobile | 🔴 ACTIVE |
+| 9 | Freedom Cards text size | City name text is too big on Freedom Cards, reduce font size | ✅ DONE (80c5eb1) |
+| 10 | Judge Tab mobile buttons | Center the Save/Download/Forward buttons on mobile view | ✅ DONE (80c5eb1) |
+| 11 | Mobile "One remaining" text | Move the "One remaining" text down approximately 1/4 inch on mobile | ✅ DONE (80c5eb1) |
 | 12 | City selection modals | Picture modals for city selection need polish and upscaling | 🔴 ACTIVE |
-| 57 | Settings modal widgets visibility | Brighten the 4 widgets under "Account Settings" in non-hover mode (currently too hard to see). Change "New Password" and "Confirm Password" field labels to bright orange. Change user's actual email address text to crisp orange. Change API key field description text to bright gold/golden yellow | 🔴 ACTIVE |
-| 58 | Cost tracking loading text | Change "Loading data" small text to bright yellow | 🔴 ACTIVE |
-| 59 | Cost tracking card titles | Change "Grand Total", "Total Comparisons Enhanced", "Average Enhanced Cost" card title text to crisp golden yellow (hard to read currently) | 🔴 ACTIVE |
-| 60 | Cost tracking percentage text | Under "Cost by Provider" section, the actual percentage (%) text for each provider should be crisp yellow | 🔴 ACTIVE |
-| 61 | Cost tracking profitability text | In "Profitability Analysis" section, change line item labels (e.g., "Average cost per enhanced comparison") to crisp orange. Keep dollar amounts in white | 🔴 ACTIVE |
-| 62 | Recent comparisons provider text | Provider names showing in faint gray/white - change to crisp golden orange | 🔴 ACTIVE |
-| 63 | Home page Law vs Lived Reality | Change "Written Law" and "Daily Reality" text labels to golden yellow, crisp and bright | 🔴 ACTIVE |
-| 64 | Deal breakers Clear All text | Change the "Clear All" button/link text under Deal Breakers to crisp white | 🔴 ACTIVE |
-| 65 | Freedom vs Imprisonment city text | City name text on Freedom vs Imprisonment cards is faded gray - change to crisp white | 🔴 ACTIVE |
-| 66 | Saved comparisons button sizes | Enlarge Export/Import/Clear All buttons by 30%, keep same spacing between buttons and same font size | 🔴 ACTIVE |
-| 67 | Visuals PowerPoint button text | Change the PowerPoint/PPTX button text on Visuals page to golden orange crisp | 🔴 ACTIVE |
-| 68 | Court orders green dot bug | Strange green dot appearing over "Amsterdam Advantage" text in Court Orders section | 🔴 ACTIVE |
-| 69 | Court orders tabs font | Change the font for Court Orders category tabs (user dislikes current font style) | 🔴 ACTIVE |
+| 57 | Settings modal widgets visibility | Brighten the 4 widgets under "Account Settings" in non-hover mode (currently too hard to see). Change "New Password" and "Confirm Password" field labels to bright orange. Change user's actual email address text to crisp orange. Change API key field description text to bright gold/golden yellow | ✅ DONE (80c5eb1) |
+| 58 | Cost tracking loading text | Change "Loading data" small text to bright yellow | ✅ DONE (Session 6) |
+| 59 | Cost tracking card titles | Change "Grand Total", "Total Comparisons Enhanced", "Average Enhanced Cost" card title text to crisp golden yellow (hard to read currently) | ✅ DONE (Session 6) |
+| 60 | Cost tracking percentage text | Under "Cost by Provider" section, the actual percentage (%) text for each provider should be crisp yellow | ✅ DONE (Session 6) |
+| 61 | Cost tracking profitability text | In "Profitability Analysis" section, change line item labels (e.g., "Average cost per enhanced comparison") to crisp orange. Keep dollar amounts in white | ✅ DONE (Session 6) |
+| 62 | Recent comparisons provider text | Provider names showing in faint gray/white - change to crisp golden orange | ✅ DONE (Session 6) |
+| 63 | Home page Law vs Lived Reality | Change "Written Law" and "Daily Reality" text labels to golden yellow, crisp and bright | ✅ DONE (80c5eb1) |
+| 64 | Deal breakers Clear All text | Change the "Clear All" button/link text under Deal Breakers to crisp white | ✅ DONE (Session 6) |
+| 65 | Freedom vs Imprisonment city text | City name text on Freedom vs Imprisonment cards is faded gray - change to crisp white | ✅ DONE (Session 6) |
+| 66 | Saved comparisons button sizes | Enlarge Export/Import/Clear All buttons by 30%, keep same spacing between buttons and same font size | ✅ DONE (Session 6) |
+| 67 | Visuals PowerPoint button text | Change the PowerPoint/PPTX button text on Visuals page to golden orange crisp | ✅ DONE (Session 6) |
+| 68 | Court orders green dot bug | Strange green dot appearing over "Amsterdam Advantage" text in Court Orders section | ⚠️ NEEDS INVESTIGATION |
+| 69 | Court orders tabs font | Change the font for Court Orders category tabs (user dislikes current font style) | ✅ DONE (Session 6) |
 
 ---
 

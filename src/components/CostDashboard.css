@@ -114,8 +114,9 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #6b7280;
+  color: #D4AF37;  /* FIX #59: Golden yellow card titles */
   margin-bottom: 0.25rem;
+  font-weight: 600;
 }
 
 .summary-card.total .card-label {
@@ -168,8 +169,8 @@
 
 .provider-name {
   flex: 1;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #F7931E;  /* FIX #62: Golden orange provider names */
 }
 
 .provider-cost {
@@ -182,8 +183,9 @@
 .provider-pct {
   min-width: 50px;
   text-align: right;
-  color: #6b7280;
+  color: #FFD700;  /* FIX #60: Crisp yellow percentage text */
   font-size: 0.85rem;
+  font-weight: 600;
 }
 
 /* Profitability Section */
@@ -207,7 +209,8 @@
 }
 
 .profit-row span {
-  color: #6b7280;
+  color: #F7931E;  /* FIX #61: Crisp orange profitability labels */
+  font-weight: 500;
 }
 
 .profit-row strong {
@@ -569,7 +572,7 @@
 }
 
 [data-theme="dark"] .card-label {
-  color: #8080a0;
+  color: #FFD700;  /* FIX #59: Golden yellow card titles in dark mode */
 }
 
 [data-theme="dark"] .card-value {
@@ -585,7 +588,7 @@
 }
 
 [data-theme="dark"] .provider-name {
-  color: #e0e0e8;
+  color: #FFD700;  /* FIX #62: Golden orange provider names in dark mode */
 }
 
 [data-theme="dark"] .provider-cost {
@@ -913,7 +916,8 @@
 .quota-loading {
   text-align: center;
   padding: 2rem;
-  color: #8080a0;
+  color: #FFD700;  /* FIX #58: Bright yellow loading text */
+  font-weight: 600;
 }
 
 .quota-legend {
