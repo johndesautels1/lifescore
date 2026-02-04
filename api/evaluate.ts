@@ -11,8 +11,9 @@ import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './sha
 import type { ScoreResult } from './shared/metrics.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
-// Timeout constant (in milliseconds) - unified for all API calls
-const LLM_TIMEOUT_MS = 240000; // 240 seconds for all LLM API calls including Tavily
+// Timeout constants (in milliseconds)
+const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM API calls (OpenAI, Claude, Gemini, etc.)
+const TAVILY_TIMEOUT_MS = 45000; // 45 seconds for Tavily search/research (web APIs should be fast)
 
 // ============================================================================
 // TAVILY RESEARCH CACHE (In-memory, clears on redeploy)
@@ -539,7 +540,7 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
           citation_format: 'numbered'
         })
       },
-      LLM_TIMEOUT_MS
+      TAVILY_TIMEOUT_MS
     );
 
     if (!response.ok) {
@@ -628,7 +629,7 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
           include_usage: true             // Track credit consumption
         })
       },
-      LLM_TIMEOUT_MS
+      TAVILY_TIMEOUT_MS
     );
 
     if (!response.ok) {
