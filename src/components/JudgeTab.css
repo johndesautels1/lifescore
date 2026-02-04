@@ -1632,14 +1632,16 @@
     justify-content: center;
   }
 
+  /* FIX #10: Center buttons on mobile */
   .action-buttons-section {
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.5rem;
     padding: 1rem;
   }
 
   .action-btn {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 70px;
     max-width: none;
     justify-content: center;
@@ -1715,13 +1717,15 @@
     padding-right: 0.75rem;
   }
 
+  /* FIX #10: Center buttons on small mobile */
   .action-buttons-section {
+    justify-content: center;
     gap: 0.4rem;
     padding: 0.75rem;
   }
 
   .action-btn {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 60px;
     max-width: none;
     padding: 0.5rem 0.4rem;

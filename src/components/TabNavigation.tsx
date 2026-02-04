@@ -19,14 +19,14 @@ export interface Tab {
 interface TabNavigationProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
-  hasResults: boolean;
+  hasResults?: boolean; // FIX #55: Now optional, kept for backwards compatibility
   savedCount?: number;
 }
 
 const TabNavigation: React.FC<TabNavigationProps> = ({
   activeTab,
   onTabChange,
-  hasResults,
+  hasResults: _hasResults, // FIX #55: Unused - tabs always accessible
   savedCount = 0
 }) => {
   const tabs: Tab[] = [
@@ -39,13 +39,13 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
       id: 'results',
       label: 'Results',
       icon: '📊',
-      disabled: !hasResults,
+      // FIX #55: Always accessible - ResultsTab handles no-data state with saved report selector
     },
     {
       id: 'visuals',
       label: 'Visuals',
       icon: '📈',
-      disabled: !hasResults,
+      // FIX #55: Always accessible - VisualsTab handles no-data state with saved report selector
     },
     {
       id: 'olivia',

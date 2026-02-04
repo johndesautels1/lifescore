@@ -19,6 +19,9 @@
   z-index: 1000;
   padding: 1rem;
   animation: fadeIn 0.2s ease;
+  /* FIX #52: Prevent background scroll on mobile */
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 @keyframes fadeIn {
@@ -40,6 +43,9 @@
   flex-direction: column;
   overflow: hidden;
   animation: slideUp 0.3s ease;
+  /* FIX #52: Re-enable touch within modal, contain scroll */
+  touch-action: auto;
+  overscroll-behavior: contain;
 }
 
 [data-theme="dark"] .settings-modal {
@@ -122,6 +128,7 @@
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* FIX #57: Brighter tab icons in non-hover state */
 .settings-tab {
   display: flex;
   align-items: center;
@@ -151,12 +158,17 @@
   border-bottom-color: #c9a227;
 }
 
+/* FIX #57: Brighter tab icons */
 .settings-tab svg {
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .settings-tab.active svg {
   opacity: 1;
+}
+
+[data-theme="dark"] .settings-tab {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -260,12 +272,17 @@
   gap: 0.5rem;
 }
 
+/* FIX #57: Bright orange form field labels */
 .form-field label {
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-secondary, #6b7280);
+}
+
+[data-theme="dark"] .form-field label {
+  color: #F7931E;
 }
 
 .form-field input {
@@ -683,9 +700,10 @@
   color: var(--text-tertiary, #9ca3af);
 }
 
+/* FIX #57: Bright gold API key descriptions */
 .api-key-group .key-models {
   font-size: 0.75rem;
-  color: var(--text-secondary, #6b7280);
+  color: #D4AF37;
   font-style: italic;
 }
 

@@ -1,6 +1,6 @@
 # LIFE SCORE - UNIFIED MASTER TODO
 **Created:** February 3, 2026
-**Last Updated:** February 4, 2026 (Session LS-COURT-ORDER-20260203-SESSION4)
+**Last Updated:** February 4, 2026 (Session LS-SESSION5-20260204-B3K9)
 **Source:** Complete merged list from all sessions + 23 new Session 4 items
 **Conversation ID:** LS-SESSION4-20260203-A7X2
 
@@ -10,15 +10,15 @@
 
 | Category | Total | Completed | Active | Deferred |
 |----------|-------|-----------|--------|----------|
-| CRITICAL (Architecture) | 6 | 3 | 2 | 1 |
+| CRITICAL (Architecture) | 6 | 5 | 0 | 1 |
 | HIGH (UI/UX Critical) | 12 | 4 | 8 | 0 |
 | MEDIUM (UI/UX Polish) | 18 | 0 | 18 | 0 |
 | MEDIUM (Features) | 14 | 2 | 11 | 1 |
 | LOW (Documentation) | 6 | 0 | 6 | 0 |
 | LOW (Code Quality) | 2 | 0 | 2 | 0 |
 | DEFERRED (Legal) | 7 | 0 | 0 | 7 |
-| BUGS | 18 | 16 | 1 | 1 |
-| **TOTAL** | **78** | **42** | **35** | **9** |
+| BUGS | 18 | 17 | 0 | 1 |
+| **TOTAL** | **78** | **45** | **32** | **9** |
 
 ---
 
@@ -34,8 +34,8 @@
 | 2 | Tavily search restructure | Added Research API caching wrapper (67% reduction in Research calls) | ✅ DONE (2/3) |
 | 3 | Perplexity prompt adjustments | Optimized prompts: batch threshold 20→15, source reuse, evidence limits, confidence fallback | ✅ DONE (2/3) |
 | 4 | Gemini prompt adjustments | Lowered temperature 0.3→0.2 for stricter factual adherence | ✅ DONE (2/3) |
-| 49 | Gemini cold start timeouts | Fix cold start Gemini timeouts on enhanced search - causes failures on first request | 🔴 ACTIVE |
-| 50 | API cost tracking database persistence | Cost data only persists locally (localStorage), not syncing to Supabase. Fix database sync for all providers | 🔴 ACTIVE |
+| 49 | Gemini cold start timeouts | Fix cold start Gemini timeouts on enhanced search - causes failures on first request | ✅ DONE (c4a9b0b) - Added retry logic with exponential backoff |
+| 50 | API cost tracking database persistence | Cost data only persists locally (localStorage), not syncing to Supabase. Fix database sync for all providers | ✅ DONE (c4a9b0b) - Added auto-sync to Supabase |
 
 ---
 
@@ -169,7 +169,7 @@
 | 45 | Mobile video playback broken | MEDIUM | NewLifeVideos | "Play Both Videos" button not working on mobile due to browser autoplay policy | ✅ FIXED (0df7b98) - Added muted fallback, then unmute after playback starts |
 | 46 | Ask Olivia gray text | MEDIUM | AskOlivia | All text in Olivia chat was off-white/gray (#94a3b8) instead of crisp white | ✅ FIXED (0df7b98) - Changed CSS variables to #ffffff |
 | 47 | Court Order badge spacing | LOW | FreedomMetrics | Advantage badge ("Winner +15") positioned too close to the scores above it | ✅ FIXED (0df7b98) - Added extra top padding to .freedom-metric-card |
-| 48 | NewLifeVideos video instability | MEDIUM | NewLifeVideos/useGrokVideo | Videos render with expired/invalid cached URLs causing repeated "no supported sources" errors. Console spam of 10-15 errors before videos eventually load. | 🔴 ACTIVE |
+| 48 | NewLifeVideos video instability | MEDIUM | NewLifeVideos/useGrokVideo | Videos render with expired/invalid cached URLs causing repeated "no supported sources" errors. Console spam of 10-15 errors before videos eventually load. | ✅ FIXED (c4a9b0b) - Added error count tracking + auto-reset for all 3 video components |
 
 ---
 
@@ -209,9 +209,9 @@
 
 | Status | Count | Bug Numbers |
 |--------|-------|-------------|
-| ✅ FIXED | 16 | B1-B7, #39-47 |
+| ✅ FIXED | 17 | B1-B7, #39-48 |
 | ⚠️ PARTIAL | 1 | #38 (Supabase timeout - fail-open workaround) |
-| 🔴 ACTIVE | 1 | #48 (NewLifeVideos instability) |
+| 🔴 ACTIVE | 0 | - |
 | **TOTAL** | **18** | |
 
 ---

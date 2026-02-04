@@ -314,4 +314,15 @@
     padding: 0.75rem 1.25rem;
     font-size: 0.9rem;
   }
+
+  /* FIX #11: Better positioning for usage badge on mobile */
+  .feature-usage-badge {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-top: 0.5rem;
+    display: inline-block;
+    text-align: center;
+    width: auto;
+  }
 }

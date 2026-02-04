@@ -73,9 +73,10 @@
   line-height: 1;
 }
 
+/* FIX #9: Reduced font size for better readability */
 .metric-name {
   flex: 1;
-  font-size: 1.0rem;  /* +4 points */
+  font-size: 0.9rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
 }
@@ -123,8 +124,9 @@
   margin-top: 0.1rem;
 }
 
+/* FIX #9: Reduced example text size */
 .example-text {
-  font-size: 0.9rem;  /* +4 points */
+  font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.45;
   font-style: italic;
@@ -192,16 +194,17 @@
     font-size: 1rem;
   }
 
+  /* FIX #9: Reduced mobile font sizes */
   .metric-name {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .metric-scores {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .example-text {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .metric-advantage {
@@ -229,7 +232,8 @@
     margin-top: 0.25rem;
   }
 
+  /* FIX #9: Reduced smallest mobile font size */
   .example-text {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
   }
 }

@@ -247,6 +247,20 @@
   margin-bottom: 1.5rem;
 }
 
+/* FIX #55: No results action buttons */
+.no-results-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.no-results-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Dark Mode */
 [data-theme="dark"] .about-section {
   background: var(--gray-800);

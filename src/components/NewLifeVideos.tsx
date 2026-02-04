@@ -42,6 +42,23 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     reset,
   } = useGrokVideo();
 
+  // FIX #53: Early return if result is missing required data
+  if (!result?.city1?.city || !result?.city2?.city || !result?.winner) {
+    return (
+      <div className="new-life-videos">
+        <div className="new-life-header">
+          <h3 className="section-title">
+            <span className="section-icon">🎬</span>
+            City Life Videos
+          </h3>
+          <p className="section-subtitle" style={{ color: '#FFD700' }}>
+            Complete a comparison to see your new life videos
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Video refs for playback control
   const winnerVideoRef = useRef<HTMLVideoElement>(null);
   const loserVideoRef = useRef<HTMLVideoElement>(null);
@@ -306,15 +323,23 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
 
         {/* Action Button */}
         <div className="video-actions">
+          {/* FIX #53: Better button handling for non-logged-in users */}
           {!hasStarted && !isReady && (
-            <button
-              className="generate-btn primary-btn"
-              onClick={handleGenerateVideos}
-              disabled={isGenerating || !user?.id}
-            >
-              <span className="btn-icon">👁️</span>
-              <span className="btn-text">SEE YOUR NEW LIFE!</span>
-            </button>
+            user?.id ? (
+              <button
+                className="generate-btn primary-btn"
+                onClick={handleGenerateVideos}
+                disabled={isGenerating}
+              >
+                <span className="btn-icon">👁️</span>
+                <span className="btn-text">SEE YOUR NEW LIFE!</span>
+              </button>
+            ) : (
+              <div className="login-prompt">
+                <span className="prompt-icon">🔐</span>
+                <span className="prompt-text">Sign in to generate videos</span>
+              </div>
+            )
           )}
 
           {isReady && (

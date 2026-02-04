@@ -47,7 +47,7 @@ import { LLM_CONFIGS } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
-import { isEnhancedComparisonResult } from './services/savedComparisons';
+import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveEnhancedComparisonLocal } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
@@ -624,6 +624,21 @@ const AppContent: React.FC = () => {
                               }
                             }
                             // === END JUDGE PRE-GENERATION ===
+
+                            // === FIX #56: AUTO-SAVE WHEN ADDING LLM TO SAVED REPORT ===
+                            // If this comparison was previously saved, auto-save the updated version
+                            if (result.comparisonId && isEnhancedComparisonSaved(result.comparisonId)) {
+                              console.log('[App] Comparison was previously saved - auto-saving updated results');
+                              saveEnhancedComparisonLocal(result)
+                                .then(() => {
+                                  console.log('[App] Auto-save successful for comparison:', result.comparisonId);
+                                  handleSaved(); // Trigger refresh of saved comparisons list
+                                })
+                                .catch((saveError) => {
+                                  console.warn('[App] Auto-save failed (non-fatal):', saveError);
+                                });
+                            }
+                            // === END AUTO-SAVE ===
                           } catch (buildError) {
                             console.error('[App] Error building enhanced result:', buildError);
                             // FIX: Still set a minimal result so results page shows
@@ -795,15 +810,20 @@ const AppContent: React.FC = () => {
                 </>
               )}
 
-              {/* No results yet */}
+              {/* FIX #55: No results yet - with helpful navigation options */}
               {!hasResults && !(state.status === 'success' && state.result) && (
                 <div className="no-results card">
                   <div className="no-results-icon">📊</div>
                   <h3>No Results Yet</h3>
-                  <p>Run a comparison to see results here</p>
-                  <button className="btn btn-primary" onClick={() => setActiveTab('compare')}>
-                    Go to Compare
-                  </button>
+                  <p>Run a new comparison or load a saved one to see results</p>
+                  <div className="no-results-actions">
+                    <button className="btn btn-primary" onClick={() => setActiveTab('compare')}>
+                      🔍 New Comparison
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setActiveTab('saved')}>
+                      💾 Load Saved
+                    </button>
+                  </div>
                 </div>
               )}
             </>

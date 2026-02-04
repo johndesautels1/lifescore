@@ -405,10 +405,13 @@
     left: 0.5rem;
   }
 
+  /* FIX #51: Reduce header-right by 15% on mobile */
   .header-right {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
+    transform: scale(0.85);
+    transform-origin: top right;
   }
 
   /* Add top padding to container so content doesn't overlap with absolute positioned elements */

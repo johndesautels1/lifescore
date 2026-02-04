@@ -146,6 +146,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // FIX #52: Prevent background scroll when modal is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
