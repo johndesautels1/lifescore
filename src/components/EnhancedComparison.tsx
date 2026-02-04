@@ -16,6 +16,7 @@ import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { DataSourcesModal } from './DataSourcesModal';
 import EvidencePanel from './EvidencePanel';
+import ScoreMethodology from './ScoreMethodology';
 import './EnhancedComparison.css';
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
@@ -1740,6 +1741,9 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           </>
         )}
       </div>
+
+      {/* Score Methodology Explainer - #17 */}
+      <ScoreMethodology result={result} />
 
       {/* LLM Agreement Analysis - Bug B Fix */}
       <LLMAgreementSection
