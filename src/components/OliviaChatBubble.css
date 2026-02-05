@@ -229,6 +229,16 @@
   position: relative;
 }
 
+.bubble-avatar.close-trigger {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bubble-avatar.close-trigger:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.5);
+}
+
 .avatar-letter {
   font-size: 1rem;
   font-weight: 700;

@@ -306,7 +306,13 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
           {/* Header */}
           <div className="bubble-header">
             <div className="bubble-header-left">
-              <div className="bubble-avatar">
+              <div
+                className="bubble-avatar close-trigger"
+                onClick={handleClose}
+                title="Close chat"
+                role="button"
+                tabIndex={0}
+              >
                 <span className="avatar-letter">O</span>
                 <span className="avatar-status"></span>
               </div>
