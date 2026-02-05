@@ -81,12 +81,36 @@ export interface SavedGammaReport {
 }
 
 // ============================================================================
+// JUDGE REPORT TYPES (lightweight — avoids importing JudgeTab's full type)
+// ============================================================================
+
+export interface SavedJudgeReport {
+  reportId: string;
+  generatedAt: string;
+  comparisonId: string;
+  city1: string;
+  city2: string;
+  videoUrl?: string;
+  videoStatus: string;
+  summaryOfFindings: {
+    city1Score: number;
+    city2Score: number;
+    overallConfidence: string;
+  };
+  executiveSummary: {
+    recommendation: string;
+    rationale: string;
+  };
+}
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const LOCAL_STORAGE_KEY = 'lifescore_saved_comparisons';
 const ENHANCED_STORAGE_KEY = 'lifescore_saved_enhanced';
 const GAMMA_REPORTS_KEY = 'lifescore_saved_gamma_reports';
+const JUDGE_REPORTS_KEY = 'lifescore_judge_reports';
 const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
@@ -793,6 +817,69 @@ export function updateGammaReportNickname(id: string, nickname: string): boolean
  */
 export function clearAllGammaReports(): void {
   localStorage.removeItem(GAMMA_REPORTS_KEY);
+}
+
+// ============================================================================
+// JUDGE REPORT STORAGE
+// ============================================================================
+
+/**
+ * Get all saved Judge reports from localStorage
+ */
+export function getSavedJudgeReports(): SavedJudgeReport[] {
+  try {
+    const stored = localStorage.getItem(JUDGE_REPORTS_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as SavedJudgeReport[];
+  } catch (error) {
+    console.error('Error loading Judge reports:', error);
+    return [];
+  }
+}
+
+const MAX_JUDGE_REPORTS = 20;
+
+/**
+ * Save a Judge report to localStorage
+ */
+export function saveJudgeReport(report: SavedJudgeReport): void {
+  try {
+    const reports = getSavedJudgeReports();
+    // Check if report already exists (update it)
+    const existingIndex = reports.findIndex(r => r.reportId === report.reportId);
+    if (existingIndex >= 0) {
+      reports[existingIndex] = report;
+    } else {
+      reports.unshift(report);
+    }
+    // Trim if too many
+    const trimmed = reports.slice(0, MAX_JUDGE_REPORTS);
+    localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
+  } catch (error) {
+    console.error('[savedComparisons] Failed to save judge report:', error);
+  }
+}
+
+/**
+ * Delete a Judge report by reportId
+ */
+export function deleteSavedJudgeReport(reportId: string): boolean {
+  const reports = getSavedJudgeReports();
+  const filtered = reports.filter(r => r.reportId !== reportId);
+
+  if (filtered.length === reports.length) {
+    return false;
+  }
+
+  localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(filtered));
+  return true;
+}
+
+/**
+ * Clear all Judge reports
+ */
+export function clearAllJudgeReports(): void {
+  localStorage.removeItem(JUDGE_REPORTS_KEY);
 }
 
 // ============================================================================

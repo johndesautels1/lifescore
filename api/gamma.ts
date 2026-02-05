@@ -271,7 +271,7 @@ export default async function handler(
       }
 
       res.status(200).json({
-        generationId: status.id,
+        generationId: status.id || generationId,
         status: status.status,
         url: gammaDocUrl,
         pdfUrl: exportUrl?.includes('.pdf') ? exportUrl : status.pdfUrl,

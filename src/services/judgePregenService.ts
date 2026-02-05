@@ -18,6 +18,7 @@
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { JudgeReport } from '../components/JudgeTab';
+import { getSavedJudgeReports } from './savedComparisons';
 
 // ============================================================================
 // TYPES
@@ -162,11 +163,8 @@ export async function checkExistingReport(
   comparisonId: string
 ): Promise<JudgeReport | null> {
   try {
-    // Check localStorage first (faster)
-    const storageKey = 'lifescore_judge_reports';
-    const existingReports: JudgeReport[] = JSON.parse(
-      localStorage.getItem(storageKey) || '[]'
-    );
+    // Check localStorage first (faster) via centralized service
+    const existingReports = getSavedJudgeReports() as JudgeReport[];
 
     const localReport = existingReports.find(
       (r) => r.comparisonId === comparisonId

@@ -22,9 +22,13 @@ import {
   getSavedGammaReports,
   deleteGammaReport,
   clearAllGammaReports,
+  getSavedJudgeReports,
+  deleteSavedJudgeReport,
+  clearAllJudgeReports,
   isValidComparisonResult,
   type SavedComparison,
-  type SavedGammaReport
+  type SavedGammaReport,
+  type SavedJudgeReport
 } from '../services/savedComparisons';
 import './SavedComparisons.css';
 
@@ -44,6 +48,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 }) => {
   const [comparisons, setComparisons] = useState<DisplayComparison[]>([]);
   const [gammaReports, setGammaReports] = useState<SavedGammaReport[]>([]);
+  const [judgeReports, setJudgeReports] = useState<SavedJudgeReport[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showGammaReports, setShowGammaReports] = useState(false);
   const [showGitHubModal, setShowGitHubModal] = useState(false);
@@ -81,6 +86,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
     setComparisons(allComparisons);
     setGammaReports(getSavedGammaReports());
+    setJudgeReports(getSavedJudgeReports());
     setSyncStatus(getSyncStatus());
   };
 
@@ -92,9 +98,18 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     }
   };
 
+  const handleDeleteJudgeReport = (reportId: string) => {
+    if (window.confirm('Delete this saved report?')) {
+      deleteSavedJudgeReport(reportId);
+      loadComparisons();
+      showMessage('success', 'Report deleted');
+    }
+  };
+
   const handleClearAllGammaReports = () => {
     if (window.confirm('Delete ALL saved visual reports? This cannot be undone.')) {
       clearAllGammaReports();
+      clearAllJudgeReports();
       loadComparisons();
       showMessage('success', 'All reports cleared');
     }
@@ -364,7 +379,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
               className={`saved-tab ${showGammaReports ? 'active' : ''}`}
               onClick={() => setShowGammaReports(true)}
             >
-              📑 Visual Reports ({gammaReports.length})
+              📑 Visual Reports ({gammaReports.length + judgeReports.length})
             </button>
           </div>
 
@@ -452,22 +467,23 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
             )
           )}
 
-          {/* Gamma Reports List */}
+          {/* Visual Reports List (Gamma + Judge) */}
           {showGammaReports && (
-            gammaReports.length === 0 ? (
+            gammaReports.length === 0 && judgeReports.length === 0 ? (
               <div className="no-saved">
                 <p>No saved visual reports yet.</p>
-                <p className="no-saved-hint">Generate a Gamma report in the Visuals tab and click "Save Report" to add it here.</p>
+                <p className="no-saved-hint">Generate a Gamma report in the Visuals tab or a Judge verdict in the Judge tab to add it here.</p>
               </div>
             ) : (
               <>
                 <div className="gamma-reports-toolbar">
-                  <span className="gamma-reports-count">{gammaReports.length} saved report{gammaReports.length !== 1 ? 's' : ''}</span>
+                  <span className="gamma-reports-count">{gammaReports.length + judgeReports.length} saved report{(gammaReports.length + judgeReports.length) !== 1 ? 's' : ''}</span>
                   <button className="toolbar-btn clear-btn" onClick={handleClearAllGammaReports}>
                     🗑️ Clear All
                   </button>
                 </div>
                 <div className="saved-list gamma-reports-list">
+                  {/* Gamma Reports */}
                   {gammaReports.map((report) => (
                     <div key={report.id} className="saved-item gamma-report-item">
                       <div className="saved-item-main">
@@ -516,6 +532,51 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                         <button
                           className="action-btn delete-btn"
                           onClick={() => handleDeleteGammaReport(report.id)}
+                          title="Delete"
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Judge Reports */}
+                  {judgeReports.map((report) => (
+                    <div key={report.reportId} className="saved-item gamma-report-item">
+                      <div className="saved-item-main">
+                        <div className="saved-item-cities">
+                          <span className="gamma-report-icon">&#9878;</span>
+                          <span className="saved-cities-text">
+                            {report.city1} vs {report.city2}
+                          </span>
+                          <span className="enhanced-badge" title="Judge Verdict">Judge</span>
+                        </div>
+                        <div className="saved-item-meta">
+                          <span className={`saved-winner ${report.executiveSummary.recommendation}`}>
+                            {report.executiveSummary.recommendation === 'city1' ? `${report.city1} wins` :
+                             report.executiveSummary.recommendation === 'city2' ? `${report.city2} wins` : 'Tie'}
+                          </span>
+                          <span className="saved-scores">
+                            {report.summaryOfFindings.city1Score} - {report.summaryOfFindings.city2Score}
+                          </span>
+                          <span className="saved-date">{formatDate(report.generatedAt)}</span>
+                        </div>
+                      </div>
+                      <div className="saved-item-actions gamma-report-actions">
+                        {report.videoUrl && report.videoStatus === 'ready' && (
+                          <a
+                            href={report.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="action-btn view-btn"
+                            title="Watch Video"
+                          >
+                            🎬
+                          </a>
+                        )}
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDeleteJudgeReport(report.reportId)}
                           title="Delete"
                         >
                           🗑

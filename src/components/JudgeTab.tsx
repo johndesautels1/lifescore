@@ -53,6 +53,8 @@ import type { GenerateJudgeVideoRequest } from '../types/avatar';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
+  getSavedJudgeReports,
+  saveJudgeReport,
 } from '../services/savedComparisons';
 import './JudgeTab.css';
 
@@ -589,23 +591,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
     }
   };
 
-  // Save report to localStorage
+  // Save report to localStorage via centralized service
   const saveReportToLocalStorage = (report: JudgeReport) => {
-    try {
-      const storageKey = 'lifescore_judge_reports';
-      const existingReports = JSON.parse(localStorage.getItem(storageKey) || '[]');
-
-      // Add new report at the beginning
-      existingReports.unshift(report);
-
-      // Keep only last 20 reports
-      const trimmedReports = existingReports.slice(0, 20);
-
-      localStorage.setItem(storageKey, JSON.stringify(trimmedReports));
-      console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
-    } catch (error) {
-      console.error('[JudgeTab] Failed to save report to localStorage:', error);
-    }
+    saveJudgeReport(report);
+    console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
   };
 
   // FIX 2026-01-29: Track which comparisonId we've already checked to prevent runaway loops
@@ -628,8 +617,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
 
     const loadCachedData = async () => {
       try {
-        const storageKey = 'lifescore_judge_reports';
-        const existingReports: JudgeReport[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const existingReports = getSavedJudgeReports() as JudgeReport[];
 
         // Find a report matching this comparison
         const matchingReport = existingReports.find(r =>
