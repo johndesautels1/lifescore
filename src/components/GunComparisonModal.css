@@ -356,6 +356,27 @@
   border-top-color: #6ba3ff;
 }
 
+[data-theme="dark"] .gun-loading-sub {
+  color: #7a7a90 !important;
+}
+
+[data-theme="dark"] .gun-error p {
+  color: #f87171;
+}
+
+[data-theme="dark"] .gun-error-detail {
+  color: #7a7a90 !important;
+}
+
+[data-theme="dark"] .gun-retry-btn {
+  background: #6ba3ff;
+  color: #1a1a2e;
+}
+
+[data-theme="dark"] .gun-retry-btn:hover {
+  background: #93bbff;
+}
+
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 700px) {
   .gun-modal {
@@ -414,6 +435,11 @@
   }
 
   [data-theme="dark"] .gun-cell-label {
+    color: #6ba3ff;
+  }
+
+  [data-theme="dark"] .gun-cell-a::before,
+  [data-theme="dark"] .gun-cell-b::before {
     color: #6ba3ff;
   }
 }
