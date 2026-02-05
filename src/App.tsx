@@ -39,11 +39,10 @@ import {
   type LLMButtonState
 } from "./components/EnhancedComparison";
 import type { EvaluatorResult } from './services/llmEvaluators';
-import type { LLMMetricScore } from './types/enhancedComparison';
+import { LLM_CONFIGS, type LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult, LawLivedRatio } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
-import { LLM_CONFIGS } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
@@ -90,6 +89,9 @@ const AppContent: React.FC = () => {
 
   // Pending LLM to run (for Add More Models feature)
   const [pendingLLMToRun, setPendingLLMToRun] = useState<LLMProvider | null>(null);
+
+  // Category failures tracking - user must acknowledge before seeing results
+  const [failuresAcknowledged, setFailuresAcknowledged] = useState(false);
 
   // Dealbreakers state
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
@@ -139,6 +141,15 @@ const AppContent: React.FC = () => {
   // Combined check for any results
   const hasResults = hasEnhancedResults || hasStandardResults;
 
+  // Check if any LLM has category failures (some metrics didn't return)
+  const hasCategoryFailures = Array.from(llmStates.values()).some(state => {
+    if (!state.categoryProgress) return false;
+    return state.categoryProgress.some(cat =>
+      cat.status === 'failed' ||
+      (cat.successCount !== undefined && cat.successCount < cat.metricsCount)
+    );
+  });
+
   // Update saved count on mount and when savedKey changes
   useEffect(() => {
     const saved = localStorage.getItem('lifescore_comparisons');
@@ -153,11 +164,24 @@ const AppContent: React.FC = () => {
   }, [savedKey]);
 
   // Auto-switch to results tab when comparison completes (BOTH modes)
+  // BUT: If there are category failures, require user to click "SEE RESULTS" first
   useEffect(() => {
     if (hasEnhancedResults || hasStandardResults) {
+      // If there are failures, only switch if user acknowledged them
+      if (hasCategoryFailures && !failuresAcknowledged) {
+        // Don't auto-switch - user must click "SEE RESULTS" button
+        return;
+      }
       setActiveTab('results');
     }
-  }, [hasEnhancedResults, hasStandardResults]);
+  }, [hasEnhancedResults, hasStandardResults, hasCategoryFailures, failuresAcknowledged]);
+
+  // Reset failures acknowledgment when starting a new comparison
+  useEffect(() => {
+    if (enhancedStatus === 'running') {
+      setFailuresAcknowledged(false);
+    }
+  }, [enhancedStatus]);
 
   // SYNC STATE: When toggling to enhanced mode with existing single search result,
   // mark claude-sonnet as completed so user sees the green checkmark
@@ -739,6 +763,44 @@ const AppContent: React.FC = () => {
                       }
                     }}
                   />
+                </div>
+              )}
+
+              {/* Category Failures Warning - Require acknowledgment before showing results */}
+              {enhancedMode && enhancedStatus === 'complete' && hasCategoryFailures && !failuresAcknowledged && (
+                <div className="category-failures-warning">
+                  <div className="warning-icon">⚠️</div>
+                  <h3>Some Data May Be Incomplete</h3>
+                  <p>
+                    One or more metric categories did not return complete data.
+                    The results may be missing some metrics.
+                  </p>
+                  <div className="warning-details">
+                    {Array.from(llmStates.entries()).map(([provider, state]) => {
+                      if (!state.categoryProgress) return null;
+                      const failedCats = state.categoryProgress.filter(cat =>
+                        cat.status === 'failed' ||
+                        (cat.successCount !== undefined && cat.successCount < cat.metricsCount)
+                      );
+                      if (failedCats.length === 0) return null;
+                      return (
+                        <div key={provider} className="llm-failures">
+                          <strong>{LLM_CONFIGS[provider].shortName}:</strong>
+                          {failedCats.map(cat => (
+                            <span key={cat.categoryId} className="failed-category">
+                              {cat.categoryName}: {cat.successCount ?? 0}/{cat.metricsCount} metrics
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button
+                    className="btn btn-primary see-results-btn"
+                    onClick={() => setFailuresAcknowledged(true)}
+                  >
+                    I Understand — SEE RESULTS
+                  </button>
                 </div>
               )}
 

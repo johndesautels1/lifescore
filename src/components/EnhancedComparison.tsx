@@ -433,7 +433,11 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
                   {cat.status === 'completed' && '✓'}
                   {cat.status === 'failed' && '✗'}
                 </span>
-                <span className="cat-metrics">{cat.metricsCount} metrics</span>
+                <span className="cat-metrics">
+                  {(cat.status === 'completed' || cat.status === 'failed') && cat.successCount !== undefined
+                    ? `${cat.successCount}/${cat.metricsCount}`
+                    : `${cat.metricsCount} metrics`}
+                </span>
               </div>
             ))}
           </div>

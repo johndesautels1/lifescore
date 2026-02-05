@@ -71,6 +71,7 @@ export interface CategoryBatchProgress {
   categoryName: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
   metricsCount: number;
+  successCount?: number; // How many metrics actually returned data (for X/Y display)
 }
 
 export interface BatchedEvaluatorResult extends EvaluatorResult {
@@ -313,9 +314,10 @@ export async function runSingleEvaluatorBatched(
 
     console.log(`[BATCH] ${provider}/${categoryId} done: success=${result.success}, scores=${result.scores.length}`);
 
-    // Update progress to completed/failed
+    // Update progress to completed/failed with success count
     if (idx >= 0) {
       progressState[idx].status = result.success ? 'completed' : 'failed';
+      progressState[idx].successCount = result.scores.length;
       onCategoryProgress?.([...progressState]);
     }
 

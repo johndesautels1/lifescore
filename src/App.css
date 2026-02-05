@@ -524,3 +524,131 @@
   background: rgba(30, 30, 46, 0.85);
   border-color: rgba(100, 100, 140, 0.3);
 }
+
+/* ============================================
+   CATEGORY FAILURES WARNING
+   Shown when some metric categories fail to return complete data
+   ============================================ */
+.category-failures-warning {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin: 1.5rem 0;
+  text-align: center;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 20px 5px rgba(245, 158, 11, 0.2); }
+}
+
+.category-failures-warning .warning-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.category-failures-warning h3 {
+  color: #92400e;
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-failures-warning p {
+  color: #78350f;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.category-failures-warning .warning-details {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.category-failures-warning .llm-failures {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(120, 53, 15, 0.2);
+}
+
+.category-failures-warning .llm-failures:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.category-failures-warning .llm-failures strong {
+  color: #92400e;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.category-failures-warning .failed-category {
+  display: inline-block;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #78350f;
+}
+
+.category-failures-warning .see-results-btn {
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  background: #0047AB;
+  border: none;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3);
+  transition: all 0.2s ease;
+}
+
+.category-failures-warning .see-results-btn:hover {
+  background: #003580;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 71, 171, 0.4);
+}
+
+/* Dark Mode for Category Failures Warning */
+[data-theme="dark"] .category-failures-warning {
+  background: linear-gradient(135deg, #422006 0%, #78350f 100%);
+  border-color: #f59e0b;
+}
+
+[data-theme="dark"] .category-failures-warning h3 {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .category-failures-warning p {
+  color: #fde68a;
+}
+
+[data-theme="dark"] .category-failures-warning .warning-details {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .category-failures-warning .llm-failures {
+  border-bottom-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .category-failures-warning .llm-failures strong {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .category-failures-warning .failed-category {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: #f59e0b;
+  color: #fde68a;
+}
