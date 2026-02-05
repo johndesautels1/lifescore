@@ -254,26 +254,38 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
 
   // Save to localStorage when changed
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      weights: customWeights,
-      baseWeights: baseWeights,
-      presetId: selectedPreset,
-      isCustom
-    }));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        weights: customWeights,
+        baseWeights: baseWeights,
+        presetId: selectedPreset,
+        isCustom
+      }));
+    } catch (err) {
+      console.error('[WeightPresets] Failed to save weights:', err);
+    }
   }, [customWeights, baseWeights, selectedPreset, isCustom]);
 
   // Save Law/Lived preferences
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_LAWLIVED, JSON.stringify({
-      ratio: lawLivedRatio,
-      isCustom: isLawLivedCustom,
-      conservativeMode
-    }));
+    try {
+      localStorage.setItem(STORAGE_KEY_LAWLIVED, JSON.stringify({
+        ratio: lawLivedRatio,
+        isCustom: isLawLivedCustom,
+        conservativeMode
+      }));
+    } catch (err) {
+      console.error('[WeightPresets] Failed to save Law/Lived preferences:', err);
+    }
   }, [lawLivedRatio, isLawLivedCustom, conservativeMode]);
 
   // Save excluded categories
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXCLUDED, JSON.stringify(Array.from(excludedCategories)));
+    try {
+      localStorage.setItem(STORAGE_KEY_EXCLUDED, JSON.stringify(Array.from(excludedCategories)));
+    } catch (err) {
+      console.error('[WeightPresets] Failed to save excluded categories:', err);
+    }
   }, [excludedCategories]);
 
   const handlePresetSelect = (preset: WeightPreset) => {

@@ -210,30 +210,35 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   // ACTION HANDLERS - Save, Download, Share/Forward for Court Order
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Save Court Order to localStorage
+  // Save Court Order to localStorage (video already persisted in grok_videos Supabase table by API)
   const handleSaveCourtOrder = () => {
     if (!video?.videoUrl) return;
 
-    const savedCourtOrders = JSON.parse(localStorage.getItem('lifescore_court_orders') || '[]');
-    const courtOrderData = {
-      comparisonId,
-      winnerCity,
-      winnerScore,
-      videoUrl: video.videoUrl,
-      savedAt: new Date().toISOString(),
-    };
+    try {
+      const savedCourtOrders = JSON.parse(localStorage.getItem('lifescore_court_orders') || '[]');
+      const courtOrderData = {
+        comparisonId,
+        winnerCity,
+        winnerScore,
+        videoUrl: video.videoUrl,
+        savedAt: new Date().toISOString(),
+      };
 
-    // Check if already saved
-    const existingIndex = savedCourtOrders.findIndex((co: { comparisonId: string }) => co.comparisonId === comparisonId);
-    if (existingIndex >= 0) {
-      savedCourtOrders[existingIndex] = courtOrderData;
-    } else {
-      savedCourtOrders.push(courtOrderData);
+      // Check if already saved
+      const existingIndex = savedCourtOrders.findIndex((co: { comparisonId: string }) => co.comparisonId === comparisonId);
+      if (existingIndex >= 0) {
+        savedCourtOrders[existingIndex] = courtOrderData;
+      } else {
+        savedCourtOrders.push(courtOrderData);
+      }
+
+      localStorage.setItem('lifescore_court_orders', JSON.stringify(savedCourtOrders));
+      console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
+      alert('Court Order saved successfully!');
+    } catch (error) {
+      console.error('[CourtOrderVideo] Failed to save Court Order:', error);
+      alert('Failed to save Court Order. Please try again.');
     }
-
-    localStorage.setItem('lifescore_court_orders', JSON.stringify(savedCourtOrders));
-    console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
-    alert('Court Order saved successfully!');
   };
 
   // Download Court Order video

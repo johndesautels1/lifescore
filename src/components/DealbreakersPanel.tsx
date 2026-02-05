@@ -71,7 +71,11 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
 
   // Save to localStorage when changed
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedDealbreakers));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedDealbreakers));
+    } catch (err) {
+      console.error('[DealbreakersPanel] Failed to save dealbreakers:', err);
+    }
     onDealbreakersChange(selectedDealbreakers);
   }, [selectedDealbreakers, onDealbreakersChange]);
 
