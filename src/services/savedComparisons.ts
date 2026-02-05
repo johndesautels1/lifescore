@@ -615,20 +615,34 @@ export async function saveEnhancedComparisonLocal(result: EnhancedComparisonResu
   saveLocalEnhancedComparisons(comparisons);
 
   // Also save to Supabase database if user is authenticated
+  // NON-BLOCKING: Don't wait for database sync - return immediately after localStorage save
   if (isSupabaseConfigured()) {
-    try {
-      const user = await getCurrentUser();
-      if (user) {
-        const { error } = await dbSaveComparison(user.id, result as unknown as Record<string, unknown>, nickname);
-        if (error) {
-          console.error('[savedComparisons] Database save enhanced failed:', error);
-        } else {
-          console.log('[savedComparisons] Enhanced comparison saved to database:', result.comparisonId);
-        }
+    // Fire-and-forget with timeout to prevent hanging
+    (async () => {
+      const timeoutMs = 10000; // 10 second timeout for database sync
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database sync timeout')), timeoutMs)
+      );
+
+      try {
+        await Promise.race([
+          (async () => {
+            const user = await getCurrentUser();
+            if (user) {
+              const { error } = await dbSaveComparison(user.id, result as unknown as Record<string, unknown>, nickname);
+              if (error) {
+                console.error('[savedComparisons] Database save enhanced failed:', error);
+              } else {
+                console.log('[savedComparisons] Enhanced comparison saved to database:', result.comparisonId);
+              }
+            }
+          })(),
+          timeoutPromise
+        ]);
+      } catch (err) {
+        console.error('[savedComparisons] Database sync error for enhanced:', err);
       }
-    } catch (err) {
-      console.error('[savedComparisons] Database sync error for enhanced:', err);
-    }
+    })();
   }
 
   return saved;
