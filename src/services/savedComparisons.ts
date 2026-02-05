@@ -105,6 +105,18 @@ export interface SavedJudgeReport {
 }
 
 // ============================================================================
+// COURT ORDER TYPES
+// ============================================================================
+
+export interface SavedCourtOrder {
+  comparisonId: string;
+  winnerCity: string;
+  winnerScore: number;
+  videoUrl: string;
+  savedAt: string;
+}
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
@@ -112,6 +124,7 @@ const LOCAL_STORAGE_KEY = 'lifescore_saved_comparisons';
 const ENHANCED_STORAGE_KEY = 'lifescore_saved_enhanced';
 const GAMMA_REPORTS_KEY = 'lifescore_saved_gamma_reports';
 const JUDGE_REPORTS_KEY = 'lifescore_judge_reports';
+const COURT_ORDERS_KEY = 'lifescore_court_orders';
 const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
@@ -294,7 +307,11 @@ export function getGitHubConfig(): GitHubConfig | null {
  * Save GitHub config to localStorage
  */
 export function saveGitHubConfig(config: GitHubConfig): void {
-  localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(config));
+  try {
+    localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(config));
+  } catch (err) {
+    console.error('[savedComparisons] Failed to save GitHub config:', err);
+  }
 }
 
 /**
@@ -740,7 +757,11 @@ export function getSavedGammaReports(): SavedGammaReport[] {
  * Save Gamma reports to localStorage
  */
 function saveGammaReportsLocal(reports: SavedGammaReport[]): void {
-  localStorage.setItem(GAMMA_REPORTS_KEY, JSON.stringify(reports));
+  try {
+    localStorage.setItem(GAMMA_REPORTS_KEY, JSON.stringify(reports));
+  } catch (err) {
+    console.error('[savedComparisons] Failed to save Gamma reports to localStorage:', err);
+  }
 }
 
 /**
@@ -769,29 +790,33 @@ export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>
   saveGammaReportsLocal(reports);
 
   // Also save to Supabase database if user is authenticated
-  if (isSupabaseConfigured()) {
-    getCurrentUser().then(user => {
-      if (user) {
-        dbSaveGammaReport(
-          user.id,
-          report.comparisonId,
-          report.generationId,
-          report.gammaUrl,
-          report.pdfUrl,
-          report.pptxUrl
-        ).then(({ error }) => {
-          if (error) {
-            console.error('[savedComparisons] Gamma DB save failed:', error);
-          } else {
-            console.log('[savedComparisons] Gamma report saved to database:', id);
-          }
-        }).catch(err => {
-          console.error('[savedComparisons] Gamma DB save error:', err);
-        });
-      }
-    }).catch(err => {
-      console.error('[savedComparisons] getCurrentUser error for Gamma save:', err);
-    });
+  try {
+    if (isSupabaseConfigured()) {
+      getCurrentUser().then(user => {
+        if (user) {
+          dbSaveGammaReport(
+            user.id,
+            report.comparisonId,
+            report.generationId,
+            report.gammaUrl,
+            report.pdfUrl,
+            report.pptxUrl
+          ).then(({ error }) => {
+            if (error) {
+              console.error('[savedComparisons] Gamma DB save failed:', error);
+            } else {
+              console.log('[savedComparisons] Gamma report saved to database:', id);
+            }
+          }).catch(err => {
+            console.error('[savedComparisons] Gamma DB save error:', err);
+          });
+        }
+      }).catch(err => {
+        console.error('[savedComparisons] getCurrentUser error for Gamma save:', err);
+      });
+    }
+  } catch (err) {
+    console.error('[savedComparisons] Gamma DB save outer error:', err);
   }
 
   return saved;
@@ -888,38 +913,42 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
   }
 
   // Also save to Supabase database if user is authenticated
-  if (isSupabaseConfigured()) {
-    getCurrentUser().then(user => {
-      if (user) {
-        supabase
-          .from('judge_reports')
-          .upsert({
-            user_id: user.id,
-            report_id: report.reportId,
-            comparison_id: report.comparisonId,
-            city1_name: report.city1,
-            city2_name: report.city2,
-            city1_score: report.summaryOfFindings.city1Score,
-            city2_score: report.summaryOfFindings.city2Score,
-            overall_confidence: report.summaryOfFindings.overallConfidence,
-            recommendation: report.executiveSummary.recommendation,
-            rationale: report.executiveSummary.rationale,
-            full_report: report,
-            video_url: report.videoUrl || null,
-            video_status: report.videoStatus,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'report_id' })
-          .then(({ error }) => {
-            if (error) {
-              console.error('[savedComparisons] Judge DB save failed:', error);
-            } else {
-              console.log('[savedComparisons] Judge report saved to database:', report.reportId);
-            }
-          });
-      }
-    }).catch(err => {
-      console.error('[savedComparisons] getCurrentUser error for Judge save:', err);
-    });
+  try {
+    if (isSupabaseConfigured()) {
+      getCurrentUser().then(user => {
+        if (user) {
+          supabase
+            .from('judge_reports')
+            .upsert({
+              user_id: user.id,
+              report_id: report.reportId,
+              comparison_id: report.comparisonId,
+              city1_name: report.city1,
+              city2_name: report.city2,
+              city1_score: report.summaryOfFindings.city1Score,
+              city2_score: report.summaryOfFindings.city2Score,
+              overall_confidence: report.summaryOfFindings.overallConfidence,
+              recommendation: report.executiveSummary.recommendation,
+              rationale: report.executiveSummary.rationale,
+              full_report: report,
+              video_url: report.videoUrl || null,
+              video_status: report.videoStatus,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'report_id' })
+            .then(({ error }) => {
+              if (error) {
+                console.error('[savedComparisons] Judge DB save failed:', error);
+              } else {
+                console.log('[savedComparisons] Judge report saved to database:', report.reportId);
+              }
+            });
+        }
+      }).catch(err => {
+        console.error('[savedComparisons] getCurrentUser error for Judge save:', err);
+      });
+    }
+  } catch (err) {
+    console.error('[savedComparisons] Judge DB save outer error:', err);
   }
 }
 
@@ -934,7 +963,11 @@ export function deleteSavedJudgeReport(reportId: string): boolean {
     return false;
   }
 
-  localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(filtered));
+  try {
+    localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(filtered));
+  } catch (err) {
+    console.error('[savedComparisons] Failed to delete Judge report from localStorage:', err);
+  }
   return true;
 }
 
@@ -943,6 +976,144 @@ export function deleteSavedJudgeReport(reportId: string): boolean {
  */
 export function clearAllJudgeReports(): void {
   localStorage.removeItem(JUDGE_REPORTS_KEY);
+}
+
+// ============================================================================
+// COURT ORDER STORAGE
+// ============================================================================
+
+const MAX_COURT_ORDERS = 50;
+
+/**
+ * Get all saved Court Orders from localStorage
+ */
+export function getSavedCourtOrders(): SavedCourtOrder[] {
+  try {
+    const stored = localStorage.getItem(COURT_ORDERS_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as SavedCourtOrder[];
+  } catch (error) {
+    console.error('[savedComparisons] Error loading Court Orders:', error);
+    return [];
+  }
+}
+
+/**
+ * Save a Court Order to localStorage AND Supabase database
+ */
+export function saveCourtOrder(order: SavedCourtOrder): void {
+  // Save to localStorage
+  try {
+    const orders = getSavedCourtOrders();
+    const existingIndex = orders.findIndex(o => o.comparisonId === order.comparisonId);
+    if (existingIndex >= 0) {
+      orders[existingIndex] = order;
+    } else {
+      orders.unshift(order);
+    }
+    const trimmed = orders.slice(0, MAX_COURT_ORDERS);
+    localStorage.setItem(COURT_ORDERS_KEY, JSON.stringify(trimmed));
+    console.log('[savedComparisons] Court Order saved to localStorage:', order.comparisonId);
+  } catch (error) {
+    console.error('[savedComparisons] Failed to save Court Order to localStorage:', error);
+  }
+
+  // Also save to Supabase database if user is authenticated
+  try {
+    if (isSupabaseConfigured()) {
+      getCurrentUser().then(user => {
+        if (user) {
+          supabase
+            .from('court_orders')
+            .upsert({
+              user_id: user.id,
+              comparison_id: order.comparisonId,
+              winner_city: order.winnerCity,
+              winner_score: order.winnerScore,
+              video_url: order.videoUrl,
+              saved_at: order.savedAt,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,comparison_id' })
+            .then(({ error }) => {
+              if (error) {
+                console.error('[savedComparisons] Court Order DB save failed:', error);
+              } else {
+                console.log('[savedComparisons] Court Order saved to database:', order.comparisonId);
+              }
+            });
+        }
+      }).catch(err => {
+        console.error('[savedComparisons] getCurrentUser error for Court Order save:', err);
+      });
+    }
+  } catch (err) {
+    console.error('[savedComparisons] Court Order DB save outer error:', err);
+  }
+}
+
+/**
+ * Delete a Court Order by comparisonId
+ */
+export function deleteSavedCourtOrder(comparisonId: string): boolean {
+  const orders = getSavedCourtOrders();
+  const filtered = orders.filter(o => o.comparisonId !== comparisonId);
+
+  if (filtered.length === orders.length) {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(COURT_ORDERS_KEY, JSON.stringify(filtered));
+  } catch (err) {
+    console.error('[savedComparisons] Failed to delete Court Order from localStorage:', err);
+  }
+  return true;
+}
+
+/**
+ * Clear all Court Orders
+ */
+export function clearAllCourtOrders(): void {
+  localStorage.removeItem(COURT_ORDERS_KEY);
+}
+
+// ============================================================================
+// USER PREFERENCE DB SAVE UTILITY
+// ============================================================================
+
+/**
+ * Save a user preference to Supabase database (fire-and-forget).
+ * Used for weight presets, dealbreakers, and other user settings.
+ * localStorage is the primary store; DB is the cloud backup.
+ */
+export function saveUserPreferenceToDb(key: string, value: unknown): void {
+  try {
+    if (isSupabaseConfigured()) {
+      getCurrentUser().then(user => {
+        if (user) {
+          supabase
+            .from('user_preferences')
+            .upsert({
+              user_id: user.id,
+              preference_key: key,
+              preference_value: value,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,preference_key' })
+            .then(({ error }) => {
+              if (error) {
+                console.error(`[savedComparisons] DB pref save failed for '${key}':`, error);
+              } else {
+                console.log(`[savedComparisons] Preference '${key}' saved to database`);
+              }
+            });
+        }
+      }).catch(err => {
+        console.error(`[savedComparisons] getCurrentUser error for pref '${key}':`, err);
+      });
+    }
+  } catch (err) {
+    console.error(`[savedComparisons] saveUserPreferenceToDb outer error for '${key}':`, err);
+  }
 }
 
 // ============================================================================

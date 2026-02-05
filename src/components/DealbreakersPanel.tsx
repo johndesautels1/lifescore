@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CATEGORIES, ALL_METRICS } from '../shared/metrics';
+import { saveUserPreferenceToDb } from '../services/savedComparisons';
 import './DealbreakersPanel.css';
 
 // Metric icons mapping
@@ -69,13 +70,14 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
     }
   }, []);
 
-  // Save to localStorage when changed
+  // Save to localStorage + database when changed
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedDealbreakers));
     } catch (err) {
       console.error('[DealbreakersPanel] Failed to save dealbreakers:', err);
     }
+    saveUserPreferenceToDb('dealbreakers', selectedDealbreakers);
     onDealbreakersChange(selectedDealbreakers);
   }, [selectedDealbreakers, onDealbreakersChange]);
 

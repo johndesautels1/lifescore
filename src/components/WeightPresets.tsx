@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { CATEGORIES } from '../shared/metrics';
 import type { CategoryId, LawLivedRatio } from '../types/metrics';
+import { saveUserPreferenceToDb } from '../services/savedComparisons';
 import './WeightPresets.css';
 
 // Weight presets for different user personas
@@ -252,40 +253,46 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
     }
   }, []);
 
-  // Save to localStorage when changed
+  // Save to localStorage + database when changed
   useEffect(() => {
+    const data = {
+      weights: customWeights,
+      baseWeights: baseWeights,
+      presetId: selectedPreset,
+      isCustom
+    };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        weights: customWeights,
-        baseWeights: baseWeights,
-        presetId: selectedPreset,
-        isCustom
-      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
       console.error('[WeightPresets] Failed to save weights:', err);
     }
+    saveUserPreferenceToDb('weight_presets', data);
   }, [customWeights, baseWeights, selectedPreset, isCustom]);
 
-  // Save Law/Lived preferences
+  // Save Law/Lived preferences to localStorage + database
   useEffect(() => {
+    const data = {
+      ratio: lawLivedRatio,
+      isCustom: isLawLivedCustom,
+      conservativeMode
+    };
     try {
-      localStorage.setItem(STORAGE_KEY_LAWLIVED, JSON.stringify({
-        ratio: lawLivedRatio,
-        isCustom: isLawLivedCustom,
-        conservativeMode
-      }));
+      localStorage.setItem(STORAGE_KEY_LAWLIVED, JSON.stringify(data));
     } catch (err) {
       console.error('[WeightPresets] Failed to save Law/Lived preferences:', err);
     }
+    saveUserPreferenceToDb('law_lived_preferences', data);
   }, [lawLivedRatio, isLawLivedCustom, conservativeMode]);
 
-  // Save excluded categories
+  // Save excluded categories to localStorage + database
   useEffect(() => {
+    const data = Array.from(excludedCategories);
     try {
-      localStorage.setItem(STORAGE_KEY_EXCLUDED, JSON.stringify(Array.from(excludedCategories)));
+      localStorage.setItem(STORAGE_KEY_EXCLUDED, JSON.stringify(data));
     } catch (err) {
       console.error('[WeightPresets] Failed to save excluded categories:', err);
     }
+    saveUserPreferenceToDb('excluded_categories', data);
   }, [excludedCategories]);
 
   const handlePresetSelect = (preset: WeightPreset) => {
