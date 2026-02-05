@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 2.2
-**Last Updated:** January 30, 2026
+**Version:** 2.5
+**Last Updated:** February 5, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -203,6 +203,16 @@ For each metric, click **View Evidence** to see:
 - Date of information
 - Confidence level
 
+### Score Methodology (Added 2026-02-05)
+
+Click **"How is this scored?"** to see a glass-morphic explainer card showing the 5-stage scoring pipeline:
+
+1. **Tavily Research** — Web search gathers current legal data for both cities
+2. **LLM Evaluation** — AI providers independently score each metric (0-100)
+3. **Law vs Lived Split** — Scores separated into written law and actual enforcement
+4. **Category Weighting** — Your custom category weights are applied
+5. **Consensus (Enhanced only)** — The Judge resolves disagreements between providers
+
 ---
 
 ## 6. Olivia AI Assistant
@@ -295,6 +305,13 @@ SOVEREIGN tier users can generate a video of the Judge explaining the verdict:
 2. Wait 90-180 seconds for generation
 3. Watch the animated verdict
 
+### Saving Judge Reports (Added 2026-02-05)
+
+Judge reports are automatically saved to both your browser (localStorage) and the cloud (Supabase). This means:
+- Reports are available instantly on the same device (offline-capable)
+- Reports sync to the cloud for access on other devices
+- View all saved Judge reports in the **Visual Reports / Saved** tab
+
 ---
 
 ## 8. Visuals & Videos
@@ -366,6 +383,8 @@ Generate professional presentation-style reports:
 1. Click the **Star** icon to favorite a comparison
 2. Add a nickname for easy reference
 3. Access favorites from your dashboard
+
+**Cloud Sync (Added 2026-02-05):** All saved data — comparisons, Gamma reports, Judge reports, Court Order videos, weight presets, law/lived preferences, excluded categories, and dealbreakers — is now automatically saved to both your browser and the cloud. If you sign in on a different device, your data will be available. If cloud sync fails, your data is still safely stored locally.
 
 ### Export Options
 
@@ -481,10 +500,13 @@ For Enhanced mode with your own keys:
 
 | Feature | FREE | NAVIGATOR | SOVEREIGN |
 |---------|:----:|:---------:|:---------:|
-| **Cloud Sync** | ❌ | ✅ | ✅ |
+| **Cloud Sync (Supabase)** | ❌ | ✅ | ✅ |
 | **Local Browser Storage** | ✅ | ✅ | ✅ |
+| **Dual-Storage (local + cloud)** | ❌ | ✅ | ✅ |
 | **Comparison History** | Local only | Cloud synced | Cloud synced |
 | **Saved Favorites** | Local only | Cloud synced | Cloud synced |
+
+*Dual-Storage saves all data to both your browser and the cloud simultaneously. If one fails, the other still works.*
 
 ---
 
@@ -550,6 +572,8 @@ For Enhanced mode with your own keys:
 4. Check your internet connection
 5. Contact support if persistent
 
+**Note:** The system now includes automatic retry for Gemini and Grok providers (up to 3 attempts with increasing delays). Tavily web search timeout has been reduced to 45 seconds for faster failure recovery.
+
 ### Scores Seem Wrong
 
 **Symptoms:** Results don't match expectations
@@ -582,6 +606,8 @@ For Enhanced mode with your own keys:
 3. Try different browser
 4. Ensure stable internet
 5. Disable ad blockers
+
+**Note:** Videos now include automatic error detection. If a video URL has expired (common with cached videos), the system detects load failures and automatically resets after 3 attempts, allowing you to regenerate a fresh video by clicking "SEE YOUR NEW LIFE!"
 
 ### Can't Log In
 
@@ -667,7 +693,7 @@ A: Currently web-only. The site is mobile-responsive.
 A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
 
 **Q: What is Enhanced Mode and how does it work?**
-A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude, GPT-4, Gemini, Grok, Perplexity) to evaluate cities. Each provider scores independently, then Claude Opus acts as a "Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
+A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.5, GPT-5.2, Gemini 3 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.5 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
 
 **Q: Why would I use Enhanced Mode over Standard Mode?**
 A: Enhanced Mode provides multi-LLM consensus scoring, which reduces individual AI bias and catches edge cases a single model might miss. The Judge feature highlights where AI providers disagree and explains the reasoning. Best for important relocation decisions.
@@ -763,3 +789,4 @@ Emilia is a help widget assistant (different from Olivia). She appears as a floa
 | 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: TTS fallback info, Kling AI docs, video timing fix, annual pricing |
 | 2.3 | 2026-02-02 | Claude Opus 4.5 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
 | 2.4 | 2026-02-02 | Claude Opus 4.5 | Added comprehensive feature tables: 8 categories, 30+ features with detailed tier breakdown |
+| 2.5 | 2026-02-05 | Claude Opus 4.5 | Session 9: Score Methodology explainer (§5), Judge report cloud save (§7), dual-storage data sync (§9, §11), video auto-reset troubleshooting (§12), updated AI model names (§14), retry/timeout notes |

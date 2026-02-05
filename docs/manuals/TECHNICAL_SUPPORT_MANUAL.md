@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 2.3
-**Last Updated:** February 4, 2026
+**Version:** 2.4
+**Last Updated:** February 5, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -25,6 +25,7 @@
 15. [Security Considerations](#15-security-considerations)
 16. [API Quota Monitoring System](#16-api-quota-monitoring-system)
 17. [TTS Fallback System](#17-tts-fallback-system)
+18. [Dual-Storage Save Architecture](#18-dual-storage-save-architecture)
 
 ---
 
@@ -112,15 +113,15 @@ D:\lifescore\
 
 ### 2.3 AI Providers
 
-| Provider | Model | Use Case |
-|----------|-------|----------|
-| Anthropic | Claude Sonnet 4.5 | Primary evaluator |
-| Anthropic | Claude Opus 4.5 | Judge/consensus |
-| OpenAI | GPT-4o | Secondary evaluator |
-| Google | Gemini 3 Pro | Evaluator with Google Search |
-| xAI | Grok 4 | Evaluator with X search |
-| Perplexity | Sonar Reasoning Pro | Research evaluator |
-| Tavily | Search + Research | Web research |
+| Provider | Type ID | Model | Use Case |
+|----------|---------|-------|----------|
+| Anthropic | `claude-sonnet` | claude-sonnet-4-5-20250929 | Primary evaluator |
+| Anthropic | `claude-opus` | claude-opus-4-5-20251101 | Judge/consensus |
+| OpenAI | `gpt-5.2` | gpt-5.2 | Secondary evaluator |
+| Google | `gemini-3-pro` | gemini-3-pro-preview | Evaluator with Google Search |
+| xAI | `grok-4` | grok-4 | Evaluator with X search |
+| Perplexity | `perplexity` | sonar-reasoning-pro | Research evaluator |
+| Tavily | N/A | Search + Research | Web research |
 
 ### 2.4 Media Services
 
@@ -264,20 +265,20 @@ D:\lifescore\
 
 ## 4. Database Schema
 
-### 4.1 Current Tables (17 total)
+### 4.1 Current Tables (18 total)
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | profiles | User accounts | id, email, tier |
-| comparisons | Saved comparisons | city1, city2, scores |
+| comparisons | Saved comparisons (NOTE: code references this, not `saved_comparisons`) | city1, city2, scores |
 | olivia_conversations | Chat threads | openai_thread_id |
 | olivia_messages | Chat messages | role, content |
-| gamma_reports | Report URLs | gamma_url, pdf_url |
-| user_preferences | Settings | theme, defaults |
+| gamma_reports | Report URLs | gamma_url, pdf_url, generation_id |
+| user_preferences | Single-row-per-user settings (upsert on `user_id`) | weight_presets, dealbreakers, law_lived_preferences, excluded_categories |
 | subscriptions | Stripe billing | stripe_subscription_id |
 | usage_tracking | Monthly limits | comparisons, messages |
 | consent_logs | GDPR compliance | consent_type, action |
-| judge_reports | Judge verdicts | recommendation, factors |
+| judge_reports | Judge verdicts (unique on `user_id, report_id`) | winner, margin, verdict, full_report |
 | avatar_videos | Judge video cache | video_url, status |
 | api_cost_records | Cost tracking | provider totals |
 | grok_videos | Grok video cache | city_name, video_type |
@@ -285,6 +286,13 @@ D:\lifescore\
 | api_quota_settings | Admin quota limits | provider_key, monthly_limit, warning thresholds |
 | api_quota_alert_log | Email alert history | provider_key, alert_level, sent_at |
 | authorized_manual_access | Manual access control | email, access_level, granted_by |
+| court_orders | Court Order video saves *(Added Session 8)* | user_id, comparison_id, winner_city, video_url |
+
+**Schema Notes (Updated 2026-02-05):**
+- `user_preferences`: Single-row-per-user design. New JSONB columns: `weight_presets`, `law_lived_preferences`, `excluded_categories`, `dealbreakers`. Upsert on `user_id`.
+- `judge_reports`: Column names are `winner`, `margin`, `verdict`, `full_report`. Unique constraint on `(user_id, report_id)`.
+- `court_orders`: New table for saved Court Order videos. Unique constraint on `(user_id, comparison_id)`. RLS: users can only CRUD their own.
+- `comparisons`: Actual table name is `comparisons`, not `saved_comparisons` as some older docs reference.
 
 ### 4.2 Missing Schema (Needs Creation)
 
@@ -378,6 +386,9 @@ User-provided API keys are:
 ```typescript
 // api/evaluate.ts
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM evaluations
+
+// api/evaluate.ts (Tavily — updated 2026-02-05)
+const TAVILY_TIMEOUT_MS = 45000; // 45 seconds (reduced from 240s for faster failure recovery)
 
 // api/olivia/chat.ts
 const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
@@ -718,10 +729,11 @@ User clicks Judge tab (JudgeTab.tsx)
 | `src/components/JudgeTab.tsx` | Cache check on mount |
 | `src/App.tsx` | Trigger after comparison |
 
-#### Caching
+#### Caching (Updated 2026-02-05 — Dual-Storage)
 
-- **Reports:** Stored in `localStorage` key `lifescore_judge_reports`
+- **Reports:** Stored in BOTH `localStorage` key `lifescore_judge_reports` AND Supabase `judge_reports` table
 - **Videos:** Stored in Supabase `avatar_videos` table with `comparison_id`
+- **Court Orders:** Stored in BOTH `localStorage` key `lifescore_court_orders` AND Supabase `court_orders` table
 
 #### Troubleshooting
 
@@ -923,6 +935,13 @@ npm run preview
 | #48 NewLifeVideos instability | Error count tracking + auto-reset (3 failures) | 2026-02-04 |
 | #49 Gemini cold start timeouts | Retry logic with exponential backoff (3 attempts) | 2026-02-04 |
 | #50 Cost tracking not persisting | Auto-sync to Supabase on comparison complete | 2026-02-04 |
+| Gamma "Generation ID missing" | api/gamma.ts fallback: `status.id \|\| generationId` | 2026-02-05 |
+| Judge reports not in Saved tab | SavedComparisons.tsx now reads judge_reports | 2026-02-05 |
+| Incomplete save coverage | All 9 save points now write to BOTH localStorage AND Supabase | 2026-02-05 |
+| user_preferences schema mismatch | Code upsert now matches actual single-row-per-user table | 2026-02-05 |
+| judge_reports schema mismatch | Column names corrected: winner, margin, verdict, full_report | 2026-02-05 |
+| judge_reports onConflict wrong | Changed from report_id to (user_id, report_id) constraint | 2026-02-05 |
+| Tavily timeout too long | Reduced from 240s to 45s | 2026-02-05 |
 
 ---
 
@@ -1083,6 +1102,71 @@ tts-1 (standard): $0.015 / 1K characters
 
 ---
 
+## 18. Dual-Storage Save Architecture
+
+**Added:** 2026-02-05 (Session 8/9)
+
+All user data now saves to BOTH localStorage (offline-first, instant) AND Supabase (cloud backup, cross-device sync). Every `localStorage.setItem` and every Supabase call is wrapped in try/catch so one failing doesn't block the other.
+
+### 18.1 Save Map
+
+| Data | localStorage Key | Supabase Table | Service Function |
+|------|-----------------|---------------|-----------------|
+| Standard Comparisons | `lifescore_saved_comparisons` | `comparisons` | `saveComparisonLocal()` |
+| Enhanced Comparisons | `lifescore_saved_enhanced` | `comparisons` | `saveEnhancedComparisonLocal()` |
+| Gamma Reports | `lifescore_saved_gamma_reports` | `gamma_reports` | `saveGammaReport()` |
+| Judge Reports | `lifescore_judge_reports` | `judge_reports` | `saveJudgeReport()` |
+| Court Orders | `lifescore_court_orders` | `court_orders` | `saveCourtOrder()` |
+| Weight Presets | `lifescore_weights` | `user_preferences.weight_presets` | `saveUserPreferenceToDb()` |
+| Law/Lived Prefs | `lifescore_lawlived` | `user_preferences.law_lived_preferences` | `saveUserPreferenceToDb()` |
+| Excluded Categories | `lifescore_excluded_categories` | `user_preferences.excluded_categories` | `saveUserPreferenceToDb()` |
+| Dealbreakers | `lifescore_dealbreakers` | `user_preferences.dealbreakers` | `saveUserPreferenceToDb()` |
+
+### 18.2 Central Service File
+
+**`src/services/savedComparisons.ts`** — All save/load/delete functions live here.
+
+### 18.3 Error Handling Pattern
+
+```typescript
+// Every save follows this pattern:
+try {
+  localStorage.setItem(key, JSON.stringify(data));
+} catch (e) {
+  console.warn(`[Save] localStorage failed for ${key}:`, e);
+}
+
+try {
+  const user = await getCurrentUser();
+  if (user) {
+    await supabase.from(table).upsert({ user_id: user.id, ...data });
+  }
+} catch (e) {
+  console.warn(`[Save] Supabase failed for ${table}:`, e);
+}
+```
+
+### 18.4 Debugging Save Issues
+
+| Symptom | Check |
+|---------|-------|
+| Data not persisting | Check browser devtools > Application > localStorage |
+| Data not syncing to cloud | Check console for `[Save] Supabase failed` warnings |
+| Data missing on new device | Verify user is logged in (Supabase auth) |
+| Duplicate entries | Check upsert onConflict constraints in databaseService.ts |
+
+### 18.5 Key Files
+
+| File | Role |
+|------|------|
+| `src/services/savedComparisons.ts` | Central save service (all 9 save points) |
+| `src/services/databaseService.ts` | Supabase CRUD operations |
+| `src/components/JudgeTab.tsx` | Judge report saves |
+| `src/services/judgePregenService.ts` | Judge pre-generation saves |
+| `src/components/SavedComparisons.tsx` | Reads all saved data for display |
+
+---
+
 ## Document Control
 
 | Version | Date | Author | Changes |
@@ -1091,6 +1175,8 @@ tts-1 (standard): $0.015 / 1K characters
 | 2.0 | 2026-01-30 | AI Assistant | Added API Quota Monitoring (§16) and TTS Fallback (§17) |
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Fixed Simli=PRIMARY (§2.4), Added Emilia (§3.4), Usage/Quota (§3.5), Avatar (§3.6) endpoints |
 | 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Version sync with User/CS manuals |
+| 2.3 | 2026-02-04 | Claude Opus 4.5 | LLM retry logic (§6.6), cost tracking auto-sync (§6.7), video error handling (§8.5), resolved issues |
+| 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections (user_preferences, judge_reports), AI model names updated (§2.3), Tavily timeout fix (§6.2), 8 resolved issues added (§13.2) |
 
 ---
 
