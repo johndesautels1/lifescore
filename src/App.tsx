@@ -141,12 +141,16 @@ const AppContent: React.FC = () => {
   // Combined check for any results
   const hasResults = hasEnhancedResults || hasStandardResults;
 
-  // Check if any LLM has category failures (some metrics didn't return)
+  // Check if any LLM has REAL category failures (not just partial success)
+  // Only flag if: status is explicitly 'failed' OR less than 50% of metrics returned
   const hasCategoryFailures = Array.from(llmStates.values()).some(state => {
     if (!state.categoryProgress) return false;
+    // Only check LLMs that have actually completed (not idle/running)
+    if (state.status !== 'completed' && state.status !== 'failed') return false;
     return state.categoryProgress.some(cat =>
       cat.status === 'failed' ||
-      (cat.successCount !== undefined && cat.successCount < cat.metricsCount)
+      // Only flag as failure if LESS THAN HALF of metrics returned (real failure, not minor variance)
+      (cat.successCount !== undefined && cat.successCount < cat.metricsCount * 0.5)
     );
   });
 
@@ -778,9 +782,12 @@ const AppContent: React.FC = () => {
                   <div className="warning-details">
                     {Array.from(llmStates.entries()).map(([provider, state]) => {
                       if (!state.categoryProgress) return null;
+                      // Only show LLMs that completed/failed, not idle/running
+                      if (state.status !== 'completed' && state.status !== 'failed') return null;
                       const failedCats = state.categoryProgress.filter(cat =>
                         cat.status === 'failed' ||
-                        (cat.successCount !== undefined && cat.successCount < cat.metricsCount)
+                        // Match the hasCategoryFailures logic: less than 50% = real failure
+                        (cat.successCount !== undefined && cat.successCount < cat.metricsCount * 0.5)
                       );
                       if (failedCats.length === 0) return null;
                       return (
