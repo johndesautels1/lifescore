@@ -1085,6 +1085,10 @@ export function clearAllCourtOrders(): void {
  * Save a user preference to Supabase database (fire-and-forget).
  * Used for weight presets, dealbreakers, and other user settings.
  * localStorage is the primary store; DB is the cloud backup.
+ *
+ * The user_preferences table is a single-row-per-user design.
+ * Valid keys map directly to JSONB columns: weight_presets,
+ * law_lived_preferences, excluded_categories, dealbreakers.
  */
 export function saveUserPreferenceToDb(key: string, value: unknown): void {
   try {
@@ -1095,10 +1099,9 @@ export function saveUserPreferenceToDb(key: string, value: unknown): void {
             .from('user_preferences')
             .upsert({
               user_id: user.id,
-              preference_key: key,
-              preference_value: value,
+              [key]: value,
               updated_at: new Date().toISOString(),
-            }, { onConflict: 'user_id,preference_key' })
+            }, { onConflict: 'user_id' })
             .then(({ error }) => {
               if (error) {
                 console.error(`[savedComparisons] DB pref save failed for '${key}':`, error);
