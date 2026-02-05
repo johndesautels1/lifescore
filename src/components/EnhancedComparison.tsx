@@ -1701,25 +1701,52 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                           </div>
                         )}
 
-                        {/* Bug D fix: Sources section */}
+                        {/* Bug D fix + B3 fix: Sources section with LLM attribution */}
                         {diff.sources.length > 0 && (
                           <div className="diff-sources-section">
                             <h4 className="sources-header">📚 Sources</h4>
-                            <ul className="diff-sources-list">
-                              {diff.sources.slice(0, 4).map((source, idx) => (
-                                <li key={idx}>
-                                  <a href={source.url} target="_blank" rel="noopener noreferrer">
-                                    {source.title || (() => { try { return new URL(source.url).hostname; } catch { return source.url; } })()}
-                                  </a>
-                                  {source.snippet && (
-                                    <span className="source-snippet">— {source.snippet.length > 80 ? source.snippet.substring(0, 80) + '...' : source.snippet}</span>
+                            {(() => {
+                              // Build URL → provider mapping from LLM scores
+                              const urlToProviders = new Map<string, Set<string>>();
+                              diff.city1LlmScores?.forEach(score => {
+                                const pName = LLM_CONFIGS[score.llmProvider]?.shortName || 'AI';
+                                score.evidence?.forEach(ev => {
+                                  if (!urlToProviders.has(ev.url)) urlToProviders.set(ev.url, new Set());
+                                  urlToProviders.get(ev.url)!.add(pName);
+                                });
+                              });
+                              diff.city2LlmScores?.forEach(score => {
+                                const pName = LLM_CONFIGS[score.llmProvider]?.shortName || 'AI';
+                                score.evidence?.forEach(ev => {
+                                  if (!urlToProviders.has(ev.url)) urlToProviders.set(ev.url, new Set());
+                                  urlToProviders.get(ev.url)!.add(pName);
+                                });
+                              });
+                              return (
+                                <ul className="diff-sources-list">
+                                  {diff.sources.slice(0, 4).map((source, idx) => (
+                                    <li key={idx}>
+                                      {urlToProviders.get(source.url) && (
+                                        <span className="source-llm-badges">
+                                          {Array.from(urlToProviders.get(source.url)!).map(p => (
+                                            <span key={p} className="source-llm-badge">{p}</span>
+                                          ))}
+                                        </span>
+                                      )}
+                                      <a href={source.url} target="_blank" rel="noopener noreferrer">
+                                        {source.title || (() => { try { return new URL(source.url).hostname; } catch { return source.url; } })()}
+                                      </a>
+                                      {source.snippet && (
+                                        <span className="source-snippet">— {source.snippet.length > 80 ? source.snippet.substring(0, 80) + '...' : source.snippet}</span>
+                                      )}
+                                    </li>
+                                  ))}
+                                  {diff.sources.length > 4 && (
+                                    <li className="more-sources">+{diff.sources.length - 4} more sources</li>
                                   )}
-                                </li>
-                              ))}
-                              {diff.sources.length > 4 && (
-                                <li className="more-sources">+{diff.sources.length - 4} more sources</li>
-                              )}
-                            </ul>
+                                </ul>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
@@ -2141,39 +2168,55 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               </div>
                             )}
 
-                            {/* Sources Section */}
+                            {/* Sources Section — with LLM attribution */}
                             <div className="breakdown-sources">
                               <span className="sources-header">📚 Sources:</span>
                               {(() => {
-                                const allEvidence: EvidenceItem[] = [];
+                                // Collect evidence WITH provider attribution
+                                const urlMap = new Map<string, { ev: EvidenceItem; providers: Set<string> }>();
                                 city1Metric?.llmScores?.forEach(score => {
-                                  if (score.evidence) allEvidence.push(...score.evidence);
+                                  const providerName = LLM_CONFIGS[score.llmProvider]?.shortName || 'AI';
+                                  score.evidence?.forEach(ev => {
+                                    const existing = urlMap.get(ev.url);
+                                    if (existing) { existing.providers.add(providerName); }
+                                    else { urlMap.set(ev.url, { ev, providers: new Set([providerName]) }); }
+                                  });
                                 });
                                 city2Metric?.llmScores?.forEach(score => {
-                                  if (score.evidence) allEvidence.push(...score.evidence);
+                                  const providerName = LLM_CONFIGS[score.llmProvider]?.shortName || 'AI';
+                                  score.evidence?.forEach(ev => {
+                                    const existing = urlMap.get(ev.url);
+                                    if (existing) { existing.providers.add(providerName); }
+                                    else { urlMap.set(ev.url, { ev, providers: new Set([providerName]) }); }
+                                  });
                                 });
-                                const uniqueByUrl = Array.from(new Map(allEvidence.map(e => [e.url, e])).values());
+                                const uniqueSources = Array.from(urlMap.values());
 
-                                if (uniqueByUrl.length === 0) {
+                                if (uniqueSources.length === 0) {
                                   return <p className="no-sources">No specific sources cited for this metric.</p>;
                                 }
 
                                 return (
                                   <ul className="source-list">
-                                    {uniqueByUrl.slice(0, 5).map((ev, idx) => (
+                                    {uniqueSources.slice(0, 5).map((item, idx) => (
                                       <li key={idx}>
-                                        <a href={ev.url} target="_blank" rel="noopener noreferrer">
-                                          {ev.title || (() => { try { return new URL(ev.url).hostname; } catch { return ev.url; } })()}
+                                        <span className="source-llm-badges">
+                                          {Array.from(item.providers).map(p => (
+                                            <span key={p} className="source-llm-badge">{p}</span>
+                                          ))}
+                                        </span>
+                                        <a href={item.ev.url} target="_blank" rel="noopener noreferrer">
+                                          {item.ev.title || (() => { try { return new URL(item.ev.url).hostname; } catch { return item.ev.url; } })()}
                                         </a>
-                                        {ev.snippet && (
-                                          <span className="source-snippet" title={ev.snippet}>
-                                            — {ev.snippet.length > 60 ? ev.snippet.substring(0, 60) + '...' : ev.snippet}
+                                        {item.ev.snippet && (
+                                          <span className="source-snippet" title={item.ev.snippet}>
+                                            — {item.ev.snippet.length > 60 ? item.ev.snippet.substring(0, 60) + '...' : item.ev.snippet}
                                           </span>
                                         )}
                                       </li>
                                     ))}
-                                    {uniqueByUrl.length > 5 && (
-                                      <li className="more-sources">+{uniqueByUrl.length - 5} more sources</li>
+                                    {uniqueSources.length > 5 && (
+                                      <li className="more-sources">+{uniqueSources.length - 5} more sources</li>
                                     )}
                                   </ul>
                                 );

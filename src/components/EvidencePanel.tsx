@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import type { EnhancedComparisonResult, EvidenceItem } from '../types/enhancedComparison';
+import { LLM_CONFIGS } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import './EvidencePanel.css';
 
@@ -20,6 +21,7 @@ interface CollectedEvidence {
   metricId: string;
   metricName: string;
   city: string;
+  provider?: string;  // Which LLM found this evidence (B3 fix)
   evidence: EvidenceItem[];
 }
 
@@ -41,7 +43,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
     const collected: CollectedEvidence[] = [];
 
     if (isEnhancedResult(result)) {
-      // ENHANCED MODE: Collect from llmScores[].evidence[]
+      // ENHANCED MODE: Collect from llmScores[].evidence[] with LLM attribution (B3 fix)
       result.city1.categories.forEach(category => {
         category.metrics.forEach(metric => {
           metric.llmScores?.forEach(score => {
@@ -50,6 +52,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
                 metricId: metric.metricId,
                 metricName: metric.metricId,
                 city: result.city1.city,
+                provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
                 evidence: score.evidence
               });
             }
@@ -65,6 +68,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
                 metricId: metric.metricId,
                 metricName: metric.metricId,
                 city: result.city2.city,
+                provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
                 evidence: score.evidence
               });
             }
@@ -196,6 +200,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
                   <div className="evidence-group-header">
                     <span className="evidence-metric">{item.metricName}</span>
                     <span className="evidence-city">{item.city}</span>
+                    {item.provider && <span className="source-llm-badge">{item.provider}</span>}
                   </div>
                   <ul className="evidence-urls">
                     {item.evidence.map((ev, evIndex) => (
