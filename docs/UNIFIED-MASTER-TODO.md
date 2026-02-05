@@ -661,8 +661,153 @@ All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced agai
 
 ### OPEN QUESTIONS (Session 10)
 
-1. **Gun Rights metric missing** — No firearm / 2nd Amendment metric exists in the 100. Candidates to swap: `pf_13_jaywalking`, `pf_14_curfew_laws`, `pf_11_helmet_laws`
+1. **~~Gun Rights metric missing~~** — RESOLVED. See standalone Gun Comparison Modal below.
 2. **Contrast Images 28/100** — Only 28 metrics have image prompt templates. Should more be added?
+
+---
+
+## GUN COMPARISON MODAL — Standalone Unscored Feature
+
+> **COMPRESSION SAFETY NOTE**: If context is compressed, RE-READ this entire section
+> AND `docs/UNIFIED-MASTER-TODO.md` before implementing or modifying this feature.
+> Also re-read `src/data/metrics.ts` (source of truth) to avoid ID mismatches.
+
+### The Problem
+
+Gun rights is the ONE metric that fundamentally breaks the "more freedom = higher score"
+assumption underpinning the entire 100-metric system. Every other metric has a defensible direction:
+
+- More cannabis freedom → unambiguously "more free"
+- Lower property taxes → unambiguously "more free"
+- Less surveillance → unambiguously "more free"
+
+But guns? **Constitutional carry in a Florida Publix is maximum freedom to one person and
+maximum danger to another.** You cannot score this on a freedom scale without taking a
+political position, which would destroy the credibility of the entire tool.
+
+Consider: A MAGA supporter living in England would feel UNFREE because they can't own firearms.
+A progressive living in rural Florida would feel UNSAFE — surrounded by AR-15s in grocery stores.
+Neither perspective is wrong. Both are valid lived experiences of freedom (or lack thereof).
+
+### The Design Decision (Session 10, Feb 5 2026)
+
+**We do NOT add gun rights to the 100-metric scored system.**
+
+Instead, we build a **standalone, unscored Gun Comparison Modal** that:
+- Presents factual gun law data for City A vs City B side by side
+- Does NOT assign a winner or hero banner
+- Does NOT contribute to the overall freedom score
+- Acknowledges the polarization explicitly in a user-facing disclaimer
+- Simply returns structured data: which city has more gun freedoms vs restrictions
+
+### Why Not Swap Jaywalking?
+
+We audited the full impact of swapping `pf_13_jaywalking` → `pf_13_firearm_rights`:
+
+**18 files, 35+ individual references** would need changing:
+- `src/data/metrics.ts` (source of truth — full metric definition)
+- `api/shared/metrics-data.ts` (mirror)
+- `api/olivia/context.ts` (METRIC_DISPLAY_NAMES + METRIC_KNOWLEDGE)
+- `src/data/fieldKnowledge.ts` (FIELD_KNOWLEDGE)
+- `api/olivia/field-evidence.ts` (METRIC_DISPLAY_NAMES)
+- `src/services/gammaService.ts` (METRIC_DISPLAY_NAMES)
+- `src/data/metricTooltips.ts` (tooltip data)
+- `src/data/freedom-index-scoring-anchors (1).json` (scoring anchors)
+- `src/components/EnhancedComparison.tsx` (emoji map)
+- `src/components/DealbreakersWarning.tsx` (emoji map)
+- `src/components/DealbreakersPanel.tsx` (emoji map)
+- `docs/OLIVIA_KNOWLEDGE_BASE.md` (7+ references, full section rewrite)
+- `docs/OLIVIA_GPT_INSTRUCTIONS.md` (example text)
+- `docs/OLIVIA_FUNCTION_CALLING_SETUP.md` (enum list)
+- `docs/LIFE-SCORE-100-METRICS.md` (table row)
+- `docs/handoffs/HANDOFF_GPT_INSTRUCTIONS_REWRITE.md` (example)
+- `docs/handoffs/HANDOFF_FOR_AI_CONSULTANTS.md` (category list)
+- `docs/UNIFIED-MASTER-TODO.md` (master table)
+
+This is exactly the kind of change that caused the 30-metric-ID mismatch disaster.
+The standalone modal approach is safer (isolated, no ripple effects), faster, and
+better product design.
+
+### User-Facing Disclaimer Text (Top of Modal)
+
+> **Why Gun Rights Are Separated**
+>
+> We have separated the gun metric into its own standalone comparison because of the
+> enormous polarizing opinions on whether guns mean more freedom or less freedom.
+>
+> To someone in a constitutional carry state, unrestricted firearm access IS freedom —
+> the foundation of personal safety and self-determination. To someone from a country
+> with strict gun control, being surrounded by armed civilians in a grocery store is
+> NOT freedom — it's danger.
+>
+> We believe we cannot create an accurate derived freedom score for such a deeply
+> divisive subject. Instead, we enable you to compare any two cities purely on their
+> gun laws — which city has more gun freedoms vs. more restrictions — and let you
+> decide what that means for YOUR definition of freedom.
+
+### Architecture
+
+**This feature is completely isolated from the 100-metric scoring system.**
+
+#### New Files
+
+| File | Purpose |
+|------|---------|
+| `api/olivia/gun-comparison.ts` | Vercel API endpoint — sends both cities to LLM, returns structured gun law facts |
+| `src/components/GunComparisonModal.tsx` | Full-screen expand/collapse modal UI |
+| `src/components/GunComparisonModal.css` | Styling |
+| `src/hooks/useGunComparison.ts` | State management hook (fetch, loading, error, cache) |
+
+#### What It Does NOT Touch
+
+- `src/data/metrics.ts` — UNTOUCHED
+- All 5 downstream metric systems — UNTOUCHED
+- Judge, Court Orders, Gamma — UNTOUCHED
+- Olivia's 100-metric brain — UNTOUCHED
+- Scoring engine — UNTOUCHED
+- The 18 jaywalking files — UNTOUCHED
+
+#### API Response Shape
+
+```typescript
+interface GunComparisonResponse {
+  cityA: {
+    name: string;
+    laws: {
+      openCarry: string;
+      concealedCarry: string;
+      assaultWeaponBan: string;
+      magazineLimits: string;
+      waitingPeriod: string;
+      backgroundChecks: string;
+      redFlagLaws: string;
+      standYourGround: string;
+      castleDoctrine: string;
+      gunFreeZones: string;
+    };
+  };
+  cityB: { /* same shape */ };
+  summary: string;  // Brief factual summary, no opinion
+}
+```
+
+#### UI Trigger Location
+
+Button on comparison results page (near category tabs or as a "Special Comparisons" link).
+Opens a full-screen modal with:
+1. Disclaimer text at top
+2. Side-by-side factual comparison (no hero banner, no winner, no scores)
+3. ~10 gun law categories compared factually
+4. Collapse/close button
+
+### Implementation Status
+
+- [ ] API endpoint (`api/olivia/gun-comparison.ts`)
+- [ ] Modal component (`src/components/GunComparisonModal.tsx` + CSS)
+- [ ] Hook (`src/hooks/useGunComparison.ts`)
+- [ ] Wire trigger button into results page
+- [ ] Test with real city pairs
+- [ ] Commit and push
 
 ---
 
