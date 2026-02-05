@@ -946,7 +946,7 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
               full_report: report,
               video_url: report.videoUrl || null,
               updated_at: new Date().toISOString(),
-            }, { onConflict: 'report_id' })
+            }, { onConflict: 'user_id,report_id' })
             .then(({ error }) => {
               if (error) {
                 console.error('[savedComparisons] Judge DB save failed:', error);
