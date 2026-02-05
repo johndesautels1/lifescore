@@ -1,5 +1,5 @@
-/**
- * LIFE SCORE™ Gamma Service
+﻿/**
+ * LIFE SCOREâ„¢ Gamma Service
  * Client-side service for generating visual reports via Gamma API
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  *
@@ -40,7 +40,7 @@ function isEnhancedResult(result: AnyComparisonResult): result is EnhancedCompar
 // ============================================================================
 
 const METRIC_DISPLAY_NAMES: Record<string, string> = {
-  // Personal Freedom (15 metrics)
+  // Personal Freedom (15) - keys match src/data/metrics.ts
   'pf_01_cannabis_legal': 'Cannabis Legality',
   'pf_02_alcohol_restrictions': 'Alcohol Purchase Restrictions',
   'pf_03_gambling_legal': 'Gambling Legality',
@@ -48,22 +48,21 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'pf_05_drug_possession': 'Drug Possession Penalties',
   'pf_06_abortion_access': 'Abortion Access',
   'pf_07_lgbtq_rights': 'LGBTQ+ Rights',
-  'pf_08_assisted_dying': 'Assisted Dying Laws',
-  'pf_09_smoking_restrictions': 'Smoking Restrictions',
+  'pf_08_euthanasia_status': 'Assisted Dying Laws',
+  'pf_09_smoking_regulations': 'Smoking Restrictions',
   'pf_10_public_drinking': 'Public Drinking Laws',
   'pf_11_helmet_laws': 'Helmet Laws',
-  'pf_12_seatbelt_laws': 'Seatbelt Laws',
+  'pf_12_seatbelt_enforcement': 'Seatbelt Laws',
   'pf_13_jaywalking': 'Jaywalking Enforcement',
   'pf_14_curfew_laws': 'Curfew Laws',
   'pf_15_noise_ordinances': 'Noise Ordinances',
-
-  // Housing & Property (20 metrics)
+  // Housing & Property (20)
   'hp_01_hoa_prevalence': 'HOA Prevalence',
   'hp_02_hoa_power': 'HOA Power & Restrictions',
   'hp_03_property_tax_rate': 'Property Tax Rate',
   'hp_04_rent_control': 'Rent Control Laws',
   'hp_05_eviction_protection': 'Tenant Eviction Protections',
-  'hp_06_zoning_restrictions': 'Zoning Restrictions',
+  'hp_06_zoning_strictness': 'Zoning Restrictions',
   'hp_07_building_permits': 'Building Permit Requirements',
   'hp_08_short_term_rental': 'Short-Term Rental (Airbnb) Laws',
   'hp_09_adu_laws': 'ADU (Accessory Dwelling) Laws',
@@ -72,100 +71,96 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'hp_12_squatter_rights': 'Squatter/Adverse Possession Rights',
   'hp_13_historic_preservation': 'Historic Preservation Rules',
   'hp_14_foreign_ownership': 'Foreign Property Ownership',
-  'hp_15_transfer_tax': 'Property Transfer Tax',
-  'hp_16_lawn_maintenance': 'Lawn Maintenance Requirements',
-  'hp_17_exterior_modifications': 'Exterior Modification Rules',
-  'hp_18_fence_regulations': 'Fence Regulations',
-  'hp_19_parking_requirements': 'Residential Parking Rules',
+  'hp_15_transfer_taxes': 'Property Transfer Tax',
+  'hp_16_lawn_regulations': 'Lawn Maintenance Requirements',
+  'hp_17_exterior_colors': 'Exterior Modification Rules',
+  'hp_18_fence_rules': 'Fence Regulations',
+  'hp_19_vehicle_parking': 'Residential Parking Rules',
   'hp_20_pet_restrictions': 'Pet Ownership Restrictions',
-
-  // Business & Work (25 metrics)
+  // Business & Work (25)
   'bw_01_business_license': 'Business License Requirements',
-  'bw_02_occupational_license': 'Occupational Licensing',
+  'bw_02_occupational_licensing': 'Occupational Licensing',
   'bw_03_minimum_wage': 'Minimum Wage Level',
   'bw_04_right_to_work': 'Right to Work Laws',
-  'bw_05_employment_protections': 'Employment Protections',
-  'bw_06_paid_leave': 'Mandatory Paid Leave',
+  'bw_05_at_will_employment': 'Employment Protections',
+  'bw_06_paid_leave_mandate': 'Mandatory Paid Leave',
   'bw_07_parental_leave': 'Parental Leave Requirements',
   'bw_08_non_compete': 'Non-Compete Enforceability',
   'bw_09_corporate_tax': 'Corporate Tax Rate',
   'bw_10_income_tax': 'State/Local Income Tax',
   'bw_11_sales_tax': 'Sales Tax Rate',
-  'bw_12_gig_economy': 'Gig Worker Regulations',
+  'bw_12_freelance_regs': 'Gig Worker Regulations',
   'bw_13_work_visa': 'Work Visa Friendliness',
   'bw_14_remote_work': 'Remote Work Laws',
   'bw_15_overtime_rules': 'Overtime Requirements',
-  'bw_16_union_laws': 'Union Rights & Laws',
+  'bw_16_union_rights': 'Union Rights & Laws',
   'bw_17_workplace_safety': 'Workplace Safety Standards',
-  'bw_18_anti_discrimination': 'Anti-Discrimination Laws',
-  'bw_19_startup_friendliness': 'Startup Friendliness',
-  'bw_20_food_truck_regs': 'Food Truck Regulations',
+  'bw_18_discrimination_law': 'Anti-Discrimination Laws',
+  'bw_19_startup_ease': 'Startup Friendliness',
+  'bw_20_food_truck': 'Food Truck Regulations',
   'bw_21_contractor_license': 'Contractor Licensing',
-  'bw_22_health_insurance_mandate': 'Health Insurance Mandate',
+  'bw_22_health_insurance': 'Health Insurance Mandate',
   'bw_23_tip_credit': 'Tip Credit Laws',
   'bw_24_banking_access': 'Banking Access',
-  'bw_25_crypto_regulations': 'Cryptocurrency Regulations',
-
-  // Transportation (15 metrics)
-  'tr_01_public_transit': 'Public Transit Quality',
+  'bw_25_crypto_regulation': 'Cryptocurrency Regulations',
+  // Transportation (15)
+  'tr_01_public_transit_quality': 'Public Transit Quality',
   'tr_02_walkability': 'Walkability Score',
   'tr_03_bike_infrastructure': 'Bike Infrastructure',
   'tr_04_car_dependency': 'Car Dependency Level',
-  'tr_05_rideshare_regs': 'Rideshare Regulations',
+  'tr_05_rideshare_legal': 'Rideshare Regulations',
   'tr_06_speed_limits': 'Speed Limit Enforcement',
-  'tr_07_traffic_cameras': 'Traffic Camera Usage',
-  'tr_08_parking_regulations': 'Parking Regulations',
+  'tr_07_speed_camera': 'Traffic Camera Usage',
+  'tr_08_parking_regs': 'Parking Regulations',
   'tr_09_toll_roads': 'Toll Road Prevalence',
   'tr_10_vehicle_inspection': 'Vehicle Inspection Requirements',
-  'tr_11_license_requirements': 'Driver License Requirements',
+  'tr_11_drivers_license': 'Driver License Requirements',
   'tr_12_dui_laws': 'DUI Law Severity',
-  'tr_13_electric_vehicles': 'E-Vehicle/E-Bike Laws',
+  'tr_13_scooter_ebike': 'E-Vehicle/E-Bike Laws',
   'tr_14_airport_access': 'Airport Accessibility',
   'tr_15_traffic_congestion': 'Traffic Congestion Level',
-
-  // Policing & Legal (15 metrics)
+  // Policing & Legal (15)
   'pl_01_incarceration_rate': 'Incarceration Rate',
   'pl_02_police_per_capita': 'Police Per Capita',
   'pl_03_civil_forfeiture': 'Civil Asset Forfeiture',
-  'pl_04_mandatory_minimums': 'Mandatory Minimum Sentences',
+  'pl_04_mandatory_minimum': 'Mandatory Minimum Sentences',
   'pl_05_bail_system': 'Cash Bail System',
-  'pl_06_police_oversight': 'Police Oversight',
+  'pl_06_police_accountability': 'Police Oversight',
   'pl_07_qualified_immunity': 'Qualified Immunity Status',
   'pl_08_legal_costs': 'Legal System Costs',
   'pl_09_court_efficiency': 'Court System Efficiency',
-  'pl_10_jury_rights': 'Jury Nullification Rights',
+  'pl_10_jury_trial': 'Jury Nullification Rights',
   'pl_11_surveillance': 'Government Surveillance',
   'pl_12_search_seizure': 'Search & Seizure Protections',
   'pl_13_death_penalty': 'Death Penalty Status',
   'pl_14_prison_conditions': 'Prison Conditions',
-  'pl_15_expungement': 'Criminal Record Expungement',
-
-  // Speech & Lifestyle (10 metrics)
+  'pl_15_record_expungement': 'Criminal Record Expungement',
+  // Speech & Lifestyle (10)
   'sl_01_free_speech': 'Free Speech Protections',
   'sl_02_press_freedom': 'Press Freedom',
   'sl_03_internet_freedom': 'Internet Freedom',
   'sl_04_hate_speech_laws': 'Hate Speech Laws',
   'sl_05_protest_rights': 'Protest Rights',
   'sl_06_religious_freedom': 'Religious Freedom',
-  'sl_07_privacy_laws': 'Data Privacy Laws',
-  'sl_08_dress_codes': 'Dress Code Freedom',
+  'sl_07_data_privacy': 'Data Privacy Laws',
+  'sl_08_dress_code': 'Dress Code Freedom',
   'sl_09_cultural_tolerance': 'Cultural Tolerance',
   'sl_10_defamation_laws': 'Defamation Laws'
 };
 
 // Category display configuration
 const CATEGORY_CONFIG: Record<string, { name: string; icon: string; metricCount: number; weight: string }> = {
-  'personal_freedom': { name: 'Personal Autonomy', icon: '🗽', metricCount: 15, weight: '20%' },
-  'personal-freedom': { name: 'Personal Autonomy', icon: '🗽', metricCount: 15, weight: '20%' },
-  'housing_property': { name: 'Housing & Property', icon: '🏠', metricCount: 20, weight: '20%' },
-  'housing-property': { name: 'Housing & Property', icon: '🏠', metricCount: 20, weight: '20%' },
-  'business_work': { name: 'Business & Work', icon: '💼', metricCount: 25, weight: '20%' },
-  'business-work': { name: 'Business & Work', icon: '💼', metricCount: 25, weight: '20%' },
-  'transportation': { name: 'Transportation', icon: '🚇', metricCount: 15, weight: '15%' },
-  'policing_legal': { name: 'Policing & Courts', icon: '⚖️', metricCount: 15, weight: '15%' },
-  'policing-courts': { name: 'Policing & Courts', icon: '⚖️', metricCount: 15, weight: '15%' },
-  'speech_lifestyle': { name: 'Speech & Lifestyle', icon: '🎭', metricCount: 10, weight: '10%' },
-  'speech-lifestyle': { name: 'Speech & Lifestyle', icon: '🎭', metricCount: 10, weight: '10%' }
+  'personal_freedom': { name: 'Personal Autonomy', icon: 'ðŸ—½', metricCount: 15, weight: '20%' },
+  'personal-freedom': { name: 'Personal Autonomy', icon: 'ðŸ—½', metricCount: 15, weight: '20%' },
+  'housing_property': { name: 'Housing & Property', icon: 'ðŸ ', metricCount: 20, weight: '20%' },
+  'housing-property': { name: 'Housing & Property', icon: 'ðŸ ', metricCount: 20, weight: '20%' },
+  'business_work': { name: 'Business & Work', icon: 'ðŸ’¼', metricCount: 25, weight: '20%' },
+  'business-work': { name: 'Business & Work', icon: 'ðŸ’¼', metricCount: 25, weight: '20%' },
+  'transportation': { name: 'Transportation', icon: 'ðŸš‡', metricCount: 15, weight: '15%' },
+  'policing_legal': { name: 'Policing & Courts', icon: 'âš–ï¸', metricCount: 15, weight: '15%' },
+  'policing-courts': { name: 'Policing & Courts', icon: 'âš–ï¸', metricCount: 15, weight: '15%' },
+  'speech_lifestyle': { name: 'Speech & Lifestyle', icon: 'ðŸŽ­', metricCount: 10, weight: '10%' },
+  'speech-lifestyle': { name: 'Speech & Lifestyle', icon: 'ðŸŽ­', metricCount: 10, weight: '10%' }
 };
 
 // ============================================================================
@@ -189,7 +184,7 @@ function formatEnhancedCategoryWithAllMetrics(
   city1Consensus: CategoryConsensus,
   city2Consensus: CategoryConsensus
 ): string {
-  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: '📊', metricCount: 0, weight: '0%' };
+  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: 'ðŸ“Š', metricCount: 0, weight: '0%' };
   const city1Score = Math.round(city1Consensus.averageConsensusScore ?? 0);
   const city2Score = Math.round(city2Consensus.averageConsensusScore ?? 0);
   const catWinner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'TIE';
@@ -225,7 +220,7 @@ function formatSimpleCategoryWithAllMetrics(
   city1Category: CategoryScore,
   city2Category: CategoryScore
 ): string {
-  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: '📊', metricCount: 0, weight: '0%' };
+  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: 'ðŸ“Š', metricCount: 0, weight: '0%' };
   const city1Score = Math.round(city1Category.averageScore ?? 0);
   const city2Score = Math.round(city2Category.averageScore ?? 0);
   const catWinner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'TIE';
@@ -364,7 +359,7 @@ ${result.disagreementSummary ? `**LLM Disagreement Notes:** ${result.disagreemen
 CRITICAL INSTRUCTIONS FOR GAMMA AI - READ CAREFULLY
 ================================================================================
 
-This is a LIFE SCORE™ Freedom Comparison Report. This report EXCLUSIVELY
+This is a LIFE SCOREâ„¢ Freedom Comparison Report. This report EXCLUSIVELY
 compares LEGAL FREEDOM (written law) AND LIVED FREEDOM (enforcement reality) metrics between two cities.
 
 **DO NOT ADD:**
@@ -383,15 +378,15 @@ compares LEGAL FREEDOM (written law) AND LIVED FREEDOM (enforcement reality) met
 This is a legal & lived freedom analysis tool, NOT a general city comparison tool.
 
 ================================================================================
-LIFE SCORE™ LEGAL & LIVED FREEDOM COMPARISON REPORT
+LIFE SCOREâ„¢ LEGAL & LIVED FREEDOM COMPARISON REPORT
 ================================================================================
 
 # ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
-## LIFE SCORE™ Legal Independence & Freedom Evaluation
+## LIFE SCOREâ„¢ Legal Independence & Freedom Evaluation
 
 ---
 
-## 🏆 OVERALL WINNER: ${winner}
+## ðŸ† OVERALL WINNER: ${winner}
 
 | City | Total LIFE SCORE | Categories Won |
 |------|------------------|----------------|
@@ -403,7 +398,7 @@ ${result.winner !== 'tie' ? `**${winner} offers ${scoreDiff} more freedom points
 
 ---
 
-## WHAT IS LIFE SCORE™?
+## WHAT IS LIFE SCOREâ„¢?
 
 LIFE SCORE (Legal Independence & Freedom Evaluation) measures **100 specific freedom
 metrics** across 6 categories, capturing TWO types of freedom:
@@ -415,12 +410,12 @@ Unlike subjective "livability" indexes, LIFE SCORE evaluates concrete laws,
 regulations, AND their real-world enforcement.
 
 **The 6 Categories (100 Total Metrics):**
-1. 🗽 Personal Autonomy (15 metrics, 20% weight) - Vice laws, bodily autonomy
-2. 🏠 Housing & Property (20 metrics, 20% weight) - Property rights, HOA rules
-3. 💼 Business & Work (25 metrics, 20% weight) - Licensing, employment laws
-4. 🚇 Transportation (15 metrics, 15% weight) - Mobility freedom
-5. ⚖️ Policing & Courts (15 metrics, 15% weight) - Legal system fairness
-6. 🎭 Speech & Lifestyle (10 metrics, 10% weight) - Expression, privacy
+1. ðŸ—½ Personal Autonomy (15 metrics, 20% weight) - Vice laws, bodily autonomy
+2. ðŸ  Housing & Property (20 metrics, 20% weight) - Property rights, HOA rules
+3. ðŸ’¼ Business & Work (25 metrics, 20% weight) - Licensing, employment laws
+4. ðŸš‡ Transportation (15 metrics, 15% weight) - Mobility freedom
+5. âš–ï¸ Policing & Courts (15 metrics, 15% weight) - Legal system fairness
+6. ðŸŽ­ Speech & Lifestyle (10 metrics, 10% weight) - Expression, privacy
 
 ---
 
@@ -436,12 +431,12 @@ ${methodologySection}
 
 ## ABOUT CLUES INTELLIGENCE LTD
 
-LIFE SCORE™ is part of the CLUES (Comprehensive Location & Utility Evaluation
+LIFE SCOREâ„¢ is part of the CLUES (Comprehensive Location & Utility Evaluation
 System) platform by Clues Intelligence LTD. We help individuals make data-driven
 decisions about international relocation based on verified legal data.
 
 **Website:** clueslifescore.com
-**Copyright:** © 2025-2026 Clues Intelligence LTD. All Rights Reserved.
+**Copyright:** Â© 2025-2026 Clues Intelligence LTD. All Rights Reserved.
 
 ================================================================================
 END OF DATA - USE ONLY THE INFORMATION ABOVE

@@ -112,11 +112,11 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'pf_05_drug_possession': 'Drug Possession Penalties',
   'pf_06_abortion_access': 'Abortion Access',
   'pf_07_lgbtq_rights': 'LGBTQ+ Rights',
-  'pf_08_assisted_dying': 'Assisted Dying Laws',
-  'pf_09_smoking_restrictions': 'Smoking Restrictions',
+  'pf_08_euthanasia_status': 'Assisted Dying Laws',
+  'pf_09_smoking_regulations': 'Smoking Restrictions',
   'pf_10_public_drinking': 'Public Drinking Laws',
   'pf_11_helmet_laws': 'Helmet Laws',
-  'pf_12_seatbelt_laws': 'Seatbelt Laws',
+  'pf_12_seatbelt_enforcement': 'Seatbelt Laws',
   'pf_13_jaywalking': 'Jaywalking Enforcement',
   'pf_14_curfew_laws': 'Curfew Laws',
   'pf_15_noise_ordinances': 'Noise Ordinances',
@@ -127,7 +127,7 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'hp_03_property_tax_rate': 'Property Tax Rate',
   'hp_04_rent_control': 'Rent Control Laws',
   'hp_05_eviction_protection': 'Tenant Eviction Protections',
-  'hp_06_zoning_restrictions': 'Zoning Restrictions',
+  'hp_06_zoning_strictness': 'Zoning Restrictions',
   'hp_07_building_permits': 'Building Permit Requirements',
   'hp_08_short_term_rental': 'Short-Term Rental (Airbnb) Laws',
   'hp_09_adu_laws': 'ADU (Accessory Dwelling) Laws',
@@ -136,54 +136,54 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'hp_12_squatter_rights': 'Squatter/Adverse Possession Rights',
   'hp_13_historic_preservation': 'Historic Preservation Rules',
   'hp_14_foreign_ownership': 'Foreign Property Ownership',
-  'hp_15_transfer_tax': 'Property Transfer Tax',
-  'hp_16_lawn_maintenance': 'Lawn Maintenance Requirements',
-  'hp_17_exterior_modifications': 'Exterior Modification Rules',
-  'hp_18_fence_regulations': 'Fence Regulations',
-  'hp_19_parking_requirements': 'Residential Parking Rules',
+  'hp_15_transfer_taxes': 'Property Transfer Tax',
+  'hp_16_lawn_regulations': 'Lawn Maintenance Requirements',
+  'hp_17_exterior_colors': 'Exterior Modification Rules',
+  'hp_18_fence_rules': 'Fence Regulations',
+  'hp_19_vehicle_parking': 'Residential Parking Rules',
   'hp_20_pet_restrictions': 'Pet Ownership Restrictions',
 
   // Business & Work (25 metrics)
   'bw_01_business_license': 'Business License Requirements',
-  'bw_02_occupational_license': 'Occupational Licensing',
+  'bw_02_occupational_licensing': 'Occupational Licensing',
   'bw_03_minimum_wage': 'Minimum Wage Level',
   'bw_04_right_to_work': 'Right to Work Laws',
-  'bw_05_employment_protections': 'Employment Protections',
-  'bw_06_paid_leave': 'Mandatory Paid Leave',
+  'bw_05_at_will_employment': 'Employment Protections',
+  'bw_06_paid_leave_mandate': 'Mandatory Paid Leave',
   'bw_07_parental_leave': 'Parental Leave Requirements',
   'bw_08_non_compete': 'Non-Compete Enforceability',
   'bw_09_corporate_tax': 'Corporate Tax Rate',
   'bw_10_income_tax': 'State/Local Income Tax',
   'bw_11_sales_tax': 'Sales Tax Rate',
-  'bw_12_gig_economy': 'Gig Worker Regulations',
+  'bw_12_freelance_regs': 'Gig Worker Regulations',
   'bw_13_work_visa': 'Work Visa Friendliness',
   'bw_14_remote_work': 'Remote Work Laws',
   'bw_15_overtime_rules': 'Overtime Requirements',
-  'bw_16_union_laws': 'Union Rights & Laws',
+  'bw_16_union_rights': 'Union Rights & Laws',
   'bw_17_workplace_safety': 'Workplace Safety Standards',
-  'bw_18_anti_discrimination': 'Anti-Discrimination Laws',
-  'bw_19_startup_friendliness': 'Startup Friendliness',
+  'bw_18_discrimination_law': 'Anti-Discrimination Laws',
+  'bw_19_startup_ease': 'Startup Friendliness',
   'bw_20_food_truck_regs': 'Food Truck Regulations',
   'bw_21_contractor_license': 'Contractor Licensing',
-  'bw_22_health_insurance_mandate': 'Health Insurance Mandate',
+  'bw_22_health_insurance': 'Health Insurance Mandate',
   'bw_23_tip_credit': 'Tip Credit Laws',
   'bw_24_banking_access': 'Banking Access',
-  'bw_25_crypto_regulations': 'Cryptocurrency Regulations',
+  'bw_25_crypto_regulation': 'Cryptocurrency Regulations',
 
   // Transportation (15 metrics)
-  'tr_01_public_transit': 'Public Transit Quality',
+  'tr_01_public_transit_quality': 'Public Transit Quality',
   'tr_02_walkability': 'Walkability Score',
   'tr_03_bike_infrastructure': 'Bike Infrastructure',
   'tr_04_car_dependency': 'Car Dependency Level',
-  'tr_05_rideshare_regs': 'Rideshare Regulations',
+  'tr_05_rideshare_legal': 'Rideshare Regulations',
   'tr_06_speed_limits': 'Speed Limit Enforcement',
-  'tr_07_traffic_cameras': 'Traffic Camera Usage',
-  'tr_08_parking_regulations': 'Parking Regulations',
+  'tr_07_speed_camera': 'Traffic Camera Usage',
+  'tr_08_parking_regs': 'Parking Regulations',
   'tr_09_toll_roads': 'Toll Road Prevalence',
   'tr_10_vehicle_inspection': 'Vehicle Inspection Requirements',
-  'tr_11_license_requirements': 'Driver License Requirements',
+  'tr_11_drivers_license': 'Driver License Requirements',
   'tr_12_dui_laws': 'DUI Law Severity',
-  'tr_13_electric_vehicles': 'E-Vehicle/E-Bike Laws',
+  'tr_13_scooter_ebike': 'E-Vehicle/E-Bike Laws',
   'tr_14_airport_access': 'Airport Accessibility',
   'tr_15_traffic_congestion': 'Traffic Congestion Level',
 
@@ -191,18 +191,18 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'pl_01_incarceration_rate': 'Incarceration Rate',
   'pl_02_police_per_capita': 'Police Per Capita',
   'pl_03_civil_forfeiture': 'Civil Asset Forfeiture',
-  'pl_04_mandatory_minimums': 'Mandatory Minimum Sentences',
+  'pl_04_mandatory_minimum': 'Mandatory Minimum Sentences',
   'pl_05_bail_system': 'Cash Bail System',
-  'pl_06_police_oversight': 'Police Oversight',
+  'pl_06_police_accountability': 'Police Oversight',
   'pl_07_qualified_immunity': 'Qualified Immunity Status',
   'pl_08_legal_costs': 'Legal System Costs',
   'pl_09_court_efficiency': 'Court System Efficiency',
-  'pl_10_jury_rights': 'Jury Nullification Rights',
+  'pl_10_jury_trial': 'Jury Nullification Rights',
   'pl_11_surveillance': 'Government Surveillance',
   'pl_12_search_seizure': 'Search & Seizure Protections',
   'pl_13_death_penalty': 'Death Penalty Status',
   'pl_14_prison_conditions': 'Prison Conditions',
-  'pl_15_expungement': 'Criminal Record Expungement',
+  'pl_15_record_expungement': 'Criminal Record Expungement',
 
   // Speech & Lifestyle (10 metrics)
   'sl_01_free_speech': 'Free Speech Protections',
@@ -211,8 +211,8 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'sl_04_hate_speech_laws': 'Hate Speech Laws',
   'sl_05_protest_rights': 'Protest Rights',
   'sl_06_religious_freedom': 'Religious Freedom',
-  'sl_07_privacy_laws': 'Data Privacy Laws',
-  'sl_08_dress_codes': 'Dress Code Freedom',
+  'sl_07_data_privacy': 'Data Privacy Laws',
+  'sl_08_dress_code': 'Dress Code Freedom',
   'sl_09_cultural_tolerance': 'Cultural Tolerance',
   'sl_10_defamation_laws': 'Defamation Laws'
 };
@@ -282,13 +282,13 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Are LGBTQ+ people protected from discrimination?', 'Is conversion therapy banned?', 'What are the adoption rights?', 'Are there transgender-specific protections?'],
     dailyLifeImpact: 'Affects safety, employment, housing, and family rights for LGBTQ+ individuals.',
   },
-  'pf_08_assisted_dying': {
+  'pf_08_euthanasia_status': {
     talkingPoints: ['Medical aid in dying legal in 10+ states plus DC', 'Requires terminal diagnosis with 6-month prognosis', 'Multiple physician approvals and waiting periods required', 'Some states require state residency', 'Religious and ethical debates continue'],
     keySourceTypes: ['Death with Dignity', 'State health department', 'Medical board'],
     commonQuestions: ['Is medical aid in dying legal?', 'What are the requirements?', 'Do I need to be a resident?'],
     dailyLifeImpact: 'Affects end-of-life autonomy and options for terminally ill individuals.',
   },
-  'pf_09_smoking_restrictions': {
+  'pf_09_smoking_regulations': {
     talkingPoints: ['Indoor smoking bans are nearly universal now', 'Outdoor restrictions vary widely - parks, beaches, patios', 'Smoking age raised to 21 federally in 2019', 'Vaping regulations often mirror or exceed tobacco', 'Apartment and condo smoking bans affect housing'],
     keySourceTypes: ['American Lung Association', 'State health department', 'Local ordinances'],
     commonQuestions: ['Where can I smoke?', 'Are vapes treated the same as cigarettes?', 'Can my landlord ban smoking?'],
@@ -306,7 +306,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Do I have to wear a motorcycle helmet?', 'What about bicycle helmets?', 'Are e-bike riders required to wear helmets?'],
     dailyLifeImpact: 'Affects personal choice in motorcycle and bicycle safety equipment.',
   },
-  'pf_12_seatbelt_laws': {
+  'pf_12_seatbelt_enforcement': {
     talkingPoints: ['Primary enforcement allows stops solely for seatbelt violations', 'Secondary enforcement only tickets seatbelts during other stops', 'New Hampshire has no adult seatbelt law', 'Rear seat requirements vary significantly', 'Exemptions exist for certain vehicles and medical conditions'],
     keySourceTypes: ['NHTSA', 'State DOT', 'Governors Highway Safety Association'],
     commonQuestions: ['Can I be pulled over just for not wearing a seatbelt?', 'Do back seat passengers need seatbelts?', 'Are there any exemptions?'],
@@ -363,7 +363,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['How much notice is required to evict?', 'What are valid reasons for eviction?', 'Do I have a right to a lawyer?'],
     dailyLifeImpact: 'Critical for housing stability and protection against displacement.',
   },
-  'hp_06_zoning_restrictions': {
+  'hp_06_zoning_strictness': {
     talkingPoints: ['Single-family zoning limits housing density', 'Mixed-use zoning allows residential and commercial', 'Minneapolis eliminated single-family zoning citywide', 'Zoning affects what businesses can operate nearby', 'Variances and special permits allow exceptions'],
     keySourceTypes: ['City planning department', 'Zoning maps', 'Urban planning reports'],
     commonQuestions: ['What can be built in my neighborhood?', 'Can I have a home business?', 'Will apartments be built nearby?'],
@@ -417,31 +417,31 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Can foreigners buy property here?', 'Are there any restrictions?', 'What about agricultural land?'],
     dailyLifeImpact: 'Relevant for international buyers or sellers to foreign nationals.',
   },
-  'hp_15_transfer_tax': {
+  'hp_15_transfer_taxes': {
     talkingPoints: ['Transfer taxes range from 0% to 4%+ of sale price', 'Some states have no transfer tax', 'Often split between buyer and seller', 'Additional city taxes in some areas', 'Mansion taxes apply to high-value properties'],
     keySourceTypes: ['State revenue department', 'County recorder', 'Title company'],
     commonQuestions: ['What is the transfer tax rate?', 'Who pays the transfer tax?', 'Are there exemptions?'],
     dailyLifeImpact: 'Significant one-time cost when buying or selling property.',
   },
-  'hp_16_lawn_maintenance': {
+  'hp_16_lawn_regulations': {
     talkingPoints: ['Many cities require lawn maintenance', 'Weed and grass height limits common', 'Xeriscaping increasingly allowed despite old rules', 'HOAs often have stricter requirements', 'Fines can escalate and lead to liens'],
     keySourceTypes: ['City code enforcement', 'HOA CC&Rs', 'Property maintenance code'],
     commonQuestions: ['Do I have to maintain my lawn?', 'Can I have a natural yard?', 'What about xeriscaping or native plants?'],
     dailyLifeImpact: 'Affects property maintenance obligations and landscaping choices.',
   },
-  'hp_17_exterior_modifications': {
+  'hp_17_exterior_colors': {
     talkingPoints: ['Paint colors may require approval', 'Solar panels increasingly protected by state law', 'Satellite dish rights protected federally (OTARD)', 'Fencing, sheds, decks often need permits', 'Historic districts have strictest rules'],
     keySourceTypes: ['HOA architectural review', 'City building department', 'State solar rights laws'],
     commonQuestions: ['Do I need approval to paint my house?', 'Can I install solar panels?', 'What about a fence or shed?'],
     dailyLifeImpact: 'Affects ability to customize your property appearance.',
   },
-  'hp_18_fence_regulations': {
+  'hp_18_fence_rules': {
     talkingPoints: ['Height limits typically 4ft front, 6ft back', 'Materials may be regulated (no chain link in front)', 'Setbacks required from property line in some areas', 'Pool fencing has safety requirements', 'Good neighbor fence laws share costs'],
     keySourceTypes: ['City zoning code', 'HOA CC&Rs', 'State fence laws'],
     commonQuestions: ['How tall can my fence be?', 'What materials are allowed?', 'Do I need a permit for a fence?'],
     dailyLifeImpact: 'Affects privacy options and property boundary control.',
   },
-  'hp_19_parking_requirements': {
+  'hp_19_vehicle_parking': {
     talkingPoints: ['Minimum parking requirements being eliminated in many cities', 'On-street parking permits common in dense areas', 'RV and boat parking often restricted', 'Garage conversion rules affect parking counts', 'HOAs may limit vehicle types (no commercial)'],
     keySourceTypes: ['City zoning code', 'Parking authority', 'HOA CC&Rs'],
     commonQuestions: ['How many cars can I park?', 'Can I park my RV at home?', 'Are there street parking permits?'],
@@ -462,7 +462,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Do I need a business license?', 'How much does it cost?', 'What about online businesses?'],
     dailyLifeImpact: 'Startup cost and annual overhead for business owners.',
   },
-  'bw_02_occupational_license': {
+  'bw_02_occupational_licensing': {
     talkingPoints: ['Over 1,000 occupations require licenses in some states', 'Cosmetologists, contractors, real estate agents need licenses', 'License reciprocity between states varies', 'Military spouse licensing reforms expanding', 'Institute for Justice ranks state licensing burden'],
     keySourceTypes: ['State licensing board', 'Institute for Justice', 'Professional associations'],
     commonQuestions: ['Does my profession need a license?', 'Will my out-of-state license transfer?', 'How long does licensing take?'],
@@ -480,13 +480,13 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Is this a right-to-work state?', 'Do I have to join a union?', 'Do I have to pay union dues?'],
     dailyLifeImpact: 'Affects union membership requirements and workplace dynamics.',
   },
-  'bw_05_employment_protections': {
+  'bw_05_at_will_employment': {
     talkingPoints: ['At-will employment is the default in most states', 'Some states have stronger wrongful termination protections', 'Protected classes vary beyond federal minimums', 'Montana is the only state without at-will employment', 'Whistleblower protections vary significantly'],
     keySourceTypes: ['State employment law', 'EEOC', 'Labor rights organizations'],
     commonQuestions: ['Can I be fired for any reason?', 'What protections do I have?', 'Are there whistleblower protections?'],
     dailyLifeImpact: 'Affects job security and protection against unfair termination.',
   },
-  'bw_06_paid_leave': {
+  'bw_06_paid_leave_mandate': {
     talkingPoints: ['No federal paid sick leave requirement', 'Many states and cities require paid sick leave', 'Accrual rates typically 1 hour per 30-40 worked', 'Caps range from 3-7 days annually', 'COVID expanded temporary leave requirements'],
     keySourceTypes: ['State labor department', 'A Better Balance', 'National Partnership'],
     commonQuestions: ['Am I entitled to paid sick leave?', 'How much do I accrue?', 'Can I use it for family members?'],
@@ -522,7 +522,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['What is the sales tax rate?', 'Are groceries taxed?', 'Are there sales tax holidays?'],
     dailyLifeImpact: 'Affects cost of everyday purchases.',
   },
-  'bw_12_gig_economy': {
+  'bw_12_freelance_regs': {
     talkingPoints: ['California AB5 reclassified many gig workers as employees', 'Prop 22 exempted rideshare and delivery drivers', 'Other states considering similar legislation', 'Independent contractor tests vary by state', 'Benefits and protections tied to classification'],
     keySourceTypes: ['State labor department', 'Department of Labor', 'National Employment Law Project'],
     commonQuestions: ['Am I an employee or contractor?', 'What rights do gig workers have?', 'Are rideshare drivers employees?'],
@@ -546,7 +546,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['When do I get overtime pay?', 'Is there daily overtime?', 'Am I exempt from overtime?'],
     dailyLifeImpact: 'Affects compensation for hours worked beyond standard schedule.',
   },
-  'bw_16_union_laws': {
+  'bw_16_union_rights': {
     talkingPoints: ['NLRA governs most private sector unionization', 'Public sector union rights vary by state', 'Card check vs secret ballot elections', 'Union density highest in Northeast and Midwest', 'Recent organizing surge at Amazon, Starbucks'],
     keySourceTypes: ['NLRB', 'State labor relations board', 'Bureau of Labor Statistics'],
     commonQuestions: ['What are my rights to organize?', 'Can public employees unionize?', 'How do union elections work?'],
@@ -558,13 +558,13 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['What safety standards apply?', 'How often are workplaces inspected?', 'Can I report unsafe conditions anonymously?'],
     dailyLifeImpact: 'Affects physical safety and working conditions.',
   },
-  'bw_18_anti_discrimination': {
+  'bw_18_discrimination_law': {
     talkingPoints: ['Federal law covers race, sex, religion, national origin, etc.', 'Many states add sexual orientation, gender identity', 'Some states protect political affiliation, marital status', 'State agencies may be more responsive than EEOC', 'Statute of limitations varies'],
     keySourceTypes: ['EEOC', 'State civil rights agency', 'Legal aid organizations'],
     commonQuestions: ['What discrimination protections exist?', 'How do I file a complaint?', 'Are LGBTQ workers protected?'],
     dailyLifeImpact: 'Affects workplace fairness and protection from discrimination.',
   },
-  'bw_19_startup_friendliness': {
+  'bw_19_startup_ease': {
     talkingPoints: ['Delaware incorporation remains popular for startups', 'State startup incentives vary widely', 'Accelerator and incubator ecosystems differ', 'Venture capital concentration in select metros', 'Regulatory sandbox programs for fintech'],
     keySourceTypes: ['State economic development', 'Kauffman Foundation', 'Startup Genome'],
     commonQuestions: ['Is this a good place to start a company?', 'Where should I incorporate?', 'Are there startup incentives?'],
@@ -582,7 +582,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Do contractors need licenses?', 'Can I do my own work without a license?', 'How do I verify a contractor is licensed?'],
     dailyLifeImpact: 'Affects home improvement costs and DIY options.',
   },
-  'bw_22_health_insurance_mandate': {
+  'bw_22_health_insurance': {
     talkingPoints: ['Federal mandate penalty eliminated in 2019', 'Some states have individual mandates', 'Massachusetts, New Jersey, California, DC, Rhode Island', 'Penalties collected through state taxes', 'Exemptions for affordability and hardship'],
     keySourceTypes: ['State health exchange', 'State insurance department', 'Healthcare.gov'],
     commonQuestions: ['Am I required to have health insurance?', 'Is there a penalty for being uninsured?', 'What are the exemptions?'],
@@ -600,7 +600,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Can I get a bank account with past issues?', 'Are there good credit union options?', 'What about banking for cannabis businesses?'],
     dailyLifeImpact: 'Affects access to basic financial services.',
   },
-  'bw_25_crypto_regulations': {
+  'bw_25_crypto_regulation': {
     talkingPoints: ['Money transmitter licenses required in most states', 'Wyoming leads in crypto-friendly legislation', 'New York BitLicense is most restrictive', 'SEC vs CFTC jurisdiction still evolving', 'State taxation of crypto gains varies'],
     keySourceTypes: ['State financial regulator', 'SEC', 'State attorney general'],
     commonQuestions: ['How is crypto regulated here?', 'Do I need special licenses?', 'How are crypto gains taxed?'],
@@ -609,7 +609,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
   // ============================================================================
   // TRANSPORTATION (15 metrics)
   // ============================================================================
-  'tr_01_public_transit': {
+  'tr_01_public_transit_quality': {
     talkingPoints: ['Quality varies from world-class to nonexistent', 'Heavy rail, light rail, bus rapid transit options', 'Coverage area and frequency matter most', 'Last-mile connectivity affects usability', 'Funding mechanisms affect service stability'],
     keySourceTypes: ['Transit agency', 'American Public Transportation Association', 'Transit scores'],
     commonQuestions: ['How good is public transit?', 'Can I get around without a car?', 'How often do buses/trains run?'],
@@ -633,7 +633,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Do I need a car to live here?', 'Can I get by with one car for a family?', 'How do most people commute?'],
     dailyLifeImpact: 'Major cost and lifestyle factor.',
   },
-  'tr_05_rideshare_regs': {
+  'tr_05_rideshare_legal': {
     talkingPoints: ['Uber/Lyft operate in most metros now', 'Airport and downtown pickup rules vary', 'Surge pricing regulations in some cities', 'Driver requirements and background checks', 'Competition affects pricing and availability'],
     keySourceTypes: ['City transportation department', 'State public utilities commission', 'Rideshare companies'],
     commonQuestions: ['Is Uber/Lyft available?', 'Can I get picked up at the airport?', 'How reliable is rideshare here?'],
@@ -645,13 +645,13 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['What are typical speed limits?', 'How strictly enforced are they?', 'Are there speed cameras?'],
     dailyLifeImpact: 'Affects commute times and ticket risk.',
   },
-  'tr_07_traffic_cameras': {
+  'tr_07_speed_camera': {
     talkingPoints: ['Red light cameras in many cities, banned in some states', 'Speed cameras less common, controversial', 'Privacy concerns vs safety arguments', 'Camera revenue motivations debated', 'Ticket processing and appeals vary'],
     keySourceTypes: ['City traffic department', 'IIHS', 'State camera laws'],
     commonQuestions: ['Are there red light cameras?', 'Are there speed cameras?', 'How do I contest a camera ticket?'],
     dailyLifeImpact: 'Affects driving behavior and ticket exposure.',
   },
-  'tr_08_parking_regulations': {
+  'tr_08_parking_regs': {
     talkingPoints: ['Street parking rules vary by zone', 'Parking meter rates range widely', 'Residential permit parking protects neighborhoods', 'Garage parking expensive in dense areas', 'Parking apps help find and pay for parking'],
     keySourceTypes: ['City parking authority', 'Parking apps', 'Local parking regulations'],
     commonQuestions: ['How hard is it to find parking?', 'How much does parking cost?', 'Are there resident parking permits?'],
@@ -669,7 +669,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Do I need an inspection?', 'How often?', 'What does it cost?'],
     dailyLifeImpact: 'Recurring vehicle ownership requirement.',
   },
-  'tr_11_license_requirements': {
+  'tr_11_drivers_license': {
     talkingPoints: ['Standard vs Real ID requirements', 'Undocumented immigrant license access varies', 'Teen licensing graduated programs differ', 'Senior license renewal requirements', 'Out-of-state license transfer processes'],
     keySourceTypes: ['State DMV', 'AAA', 'AAMVA'],
     commonQuestions: ['What do I need to get a license?', 'How do I transfer my license?', 'Are there special requirements for new drivers?'],
@@ -681,7 +681,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['What is the BAC limit?', 'What are the penalties for DUI?', 'Are there DUI checkpoints?'],
     dailyLifeImpact: 'Critical for anyone who drinks and drives.',
   },
-  'tr_13_electric_vehicles': {
+  'tr_13_scooter_ebike': {
     talkingPoints: ['EV incentives vary by state', 'Charging infrastructure improving rapidly', 'E-bike regulations differ from regular bikes', 'Electric scooter rules vary widely', 'HOV lane access for EVs in some states'],
     keySourceTypes: ['State energy office', 'PlugShare', 'DOE Alternative Fuels Data Center'],
     commonQuestions: ['Are there EV incentives?', 'How is the charging infrastructure?', 'Where can I ride an e-bike?'],
@@ -720,7 +720,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Can police seize my property without charges?', 'How do I get seized property back?', 'What protections exist?'],
     dailyLifeImpact: 'Risk of property loss without due process.',
   },
-  'pl_04_mandatory_minimums': {
+  'pl_04_mandatory_minimum': {
     talkingPoints: ['Mandatory minimums remove judicial discretion', 'Drug offenses often have harsh minimums', 'Three strikes laws in some states', 'Reform efforts reducing some minimums', 'Federal vs state minimum differences'],
     keySourceTypes: ['Families Against Mandatory Minimums', 'State sentencing commission', 'Sentencing Project'],
     commonQuestions: ['Are there mandatory minimum sentences?', 'What crimes have mandatories?', 'Is there judicial discretion?'],
@@ -732,7 +732,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['How does bail work here?', 'Can I be held without bail?', 'Are there bail reform efforts?'],
     dailyLifeImpact: 'Affects pre-trial freedom and economic burden.',
   },
-  'pl_06_police_oversight': {
+  'pl_06_police_accountability': {
     talkingPoints: ['Civilian oversight boards vary in power', 'Subpoena power for investigations important', 'Police union contracts limit oversight', 'Body camera policies and access vary', 'Transparency in misconduct records differs'],
     keySourceTypes: ['NACOLE', 'State POST commission', 'ACLU'],
     commonQuestions: ['Is there civilian oversight of police?', 'Can I access misconduct records?', 'Are body cameras required?'],
@@ -756,7 +756,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['How long do cases take?', 'Are there big backlogs?', 'Can I handle matters online?'],
     dailyLifeImpact: 'Affects time to resolve legal matters.',
   },
-  'pl_10_jury_rights': {
+  'pl_10_jury_trial': {
     talkingPoints: ['Jury nullification is legal but judges dont inform', 'Fully informed jury movements advocate awareness', 'Jury selection processes vary', 'Jury compensation typically minimal', 'Juror privacy protections differ'],
     keySourceTypes: ['FIJA', 'State court rules', 'Bar association'],
     commonQuestions: ['Can juries nullify bad laws?', 'How are jurors selected?', 'What is jury compensation?'],
@@ -786,7 +786,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['What are prison conditions like?', 'Are there private prisons?', 'What is healthcare like in prison?'],
     dailyLifeImpact: 'Relevant for those with incarcerated loved ones.',
   },
-  'pl_15_expungement': {
+  'pl_15_record_expungement': {
     talkingPoints: ['Expungement and sealing eligibility varies widely', 'Automatic expungement emerging in some states', 'Clean slate laws gaining momentum', 'Waiting periods differ significantly', 'Costs and complexity of process vary'],
     keySourceTypes: ['State criminal law', 'Clean Slate Initiative', 'Legal aid'],
     commonQuestions: ['Can I get my record expunged?', 'Is it automatic or do I have to apply?', 'How long do I have to wait?'],
@@ -831,13 +831,13 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['What religious freedom protections exist?', 'Are there religious exemptions from laws?', 'What about workplace accommodation?'],
     dailyLifeImpact: 'Affects religious practice and exemptions.',
   },
-  'sl_07_privacy_laws': {
+  'sl_07_data_privacy': {
     talkingPoints: ['California CCPA/CPRA leads nation', 'Growing number of states with privacy laws', 'No comprehensive federal privacy law yet', 'Data broker regulations emerging', 'Biometric privacy laws in some states'],
     keySourceTypes: ['State privacy law', 'IAPP', 'EFF'],
     commonQuestions: ['What data privacy rights do I have?', 'Can I opt out of data collection?', 'Are there biometric protections?'],
     dailyLifeImpact: 'Affects control over personal data.',
   },
-  'sl_08_dress_codes': {
+  'sl_08_dress_code': {
     talkingPoints: ['Public nudity laws vary by locality', 'Beach and pool dress standards differ', 'Religious dress protections', 'School dress codes vary', 'Workplace dress code limitations'],
     keySourceTypes: ['Local ordinances', 'State civil rights law', 'ACLU'],
     commonQuestions: ['What are public dress requirements?', 'Are there nude beaches?', 'What about religious dress protections?'],

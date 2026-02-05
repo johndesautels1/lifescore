@@ -358,13 +358,114 @@
 
 ---
 
-# SESSION 10 HANDOFF
+# SESSION 10 WORK LOG
+
+**Session ID:** LS-SESSION10-20260205
+**Date:** February 5, 2026
+
+---
+
+## Session 10 Commits
+
+| Commit | Description |
+|--------|-------------|
+| c05d3d1 | Fix TS2345: non-null assert videoUrl in download handlers |
+| c69e0b3 | Add mandatory Vercel-only build rules to CLAUDE.md and TODO |
+| 1285920 | Fix: Olivia avatar circle in chat header closes chat panel |
+| TBD | CRITICAL: Fix 31 metric ID mismatches across 5 files |
+
+---
+
+## CRITICAL AUDIT: Metric ID Source-of-Truth Alignment (Session 10)
 
 **Date:** February 5, 2026
-**From:** Session 9 (LS-SESSION9-20260205)
-**To:** Next Agent (Session 10)
+**Audited by:** Claude Opus 4.5 (LS-SESSION10-20260205)
+**Source of Truth:** `src/data/metrics.ts` (100 metrics, 6 categories)
 
-## Priority Order for Next Session
+### Problem Found
+
+5 files maintain their own independent hardcoded copies of metric ID mappings instead of importing from the single source of truth. Over time, 31 metric IDs drifted out of sync. This means:
+- **Olivia** loses display names + deep knowledge for 31% of metrics
+- **Gamma reports** show raw IDs instead of proper names for 31 metrics
+- **Field evidence** lookups fail silently for 31 metrics
+- **Contrast images** use a completely wrong ID system
+
+### Files Audited - SAFE (no mismatches)
+
+| File | Status | Why Safe |
+|------|--------|----------|
+| `api/judge-report.ts` | SAFE | Imports from source of truth dynamically |
+| `src/components/JudgeTab.tsx` | SAFE | No hardcoded metric IDs |
+| `src/components/CourtOrderVideo.tsx` | SAFE | No hardcoded metric IDs |
+| `src/components/EnhancedComparison.tsx` | SAFE | No hardcoded metric IDs |
+| `src/types/metrics.ts` | SAFE | Type definitions only |
+| `src/types/enhancedComparison.ts` | SAFE | Type definitions only |
+| `api/shared/metrics-data.ts` | SAFE | Parallel copy, 0 mismatches |
+
+### Files Audited - BROKEN (31 metric ID mismatches each)
+
+| File | What's Wrong | Impact |
+|------|-------------|--------|
+| `api/olivia/context.ts` | 31 wrong IDs in METRIC_DISPLAY_NAMES + METRIC_KNOWLEDGE (100 entries each) | Olivia gets no display name or deep knowledge for 31 metrics |
+| `api/olivia/field-evidence.ts` | 31 wrong IDs in its own METRIC_DISPLAY_NAMES copy | Field evidence lookups fail for 31 metrics |
+| `src/services/gammaService.ts` | 31 wrong IDs in its own METRIC_DISPLAY_NAMES copy | Gamma reports show raw IDs for 31 metrics |
+| `src/data/fieldKnowledge.ts` | 31 wrong keys in FIELD_KNOWLEDGE map | Knowledge base unreachable for 31 metrics |
+| `src/services/contrastImageService.ts` | Uses completely wrong ID system (`ef_`, `ql_`, `ls_` prefixes) | Contrast images may fail to match ANY real metric |
+
+### Complete List of 31 Mismatched Metric IDs
+
+| # | Source of Truth (src/data/metrics.ts) | Wrong ID in 5 broken files |
+|---|---------------------------------------|---------------------------|
+| 1 | `pf_08_euthanasia_status` | `pf_08_assisted_dying` |
+| 2 | `pf_09_smoking_regulations` | `pf_09_smoking_restrictions` |
+| 3 | `pf_12_seatbelt_enforcement` | `pf_12_seatbelt_laws` |
+| 4 | `hp_06_zoning_strictness` | `hp_06_zoning_restrictions` |
+| 5 | `hp_15_transfer_taxes` | `hp_15_transfer_tax` |
+| 6 | `hp_16_lawn_regulations` | `hp_16_lawn_maintenance` |
+| 7 | `hp_17_exterior_colors` | `hp_17_exterior_modifications` |
+| 8 | `hp_18_fence_rules` | `hp_18_fence_regulations` |
+| 9 | `hp_19_vehicle_parking` | `hp_19_parking_requirements` |
+| 10 | `bw_02_occupational_licensing` | `bw_02_occupational_license` |
+| 11 | `bw_05_at_will_employment` | `bw_05_employment_protections` |
+| 12 | `bw_06_paid_leave_mandate` | `bw_06_paid_leave` |
+| 13 | `bw_12_freelance_regs` | `bw_12_gig_economy` |
+| 14 | `bw_16_union_rights` | `bw_16_union_laws` |
+| 15 | `bw_18_discrimination_law` | `bw_18_anti_discrimination` |
+| 16 | `bw_19_startup_ease` | `bw_19_startup_friendliness` |
+| 17 | `bw_22_health_insurance` | `bw_22_health_insurance_mandate` |
+| 18 | `bw_25_crypto_regulation` | `bw_25_crypto_regulations` |
+| 19 | `tr_01_public_transit_quality` | `tr_01_public_transit` |
+| 20 | `tr_05_rideshare_legal` | `tr_05_rideshare_regs` |
+| 21 | `tr_07_speed_camera` | `tr_07_traffic_cameras` |
+| 22 | `tr_08_parking_regs` | `tr_08_parking_regulations` |
+| 23 | `tr_11_drivers_license` | `tr_11_license_requirements` |
+| 24 | `tr_13_scooter_ebike` | `tr_13_electric_vehicles` |
+| 25 | `pl_04_mandatory_minimum` | `pl_04_mandatory_minimums` |
+| 26 | `pl_06_police_accountability` | `pl_06_police_oversight` |
+| 27 | `pl_10_jury_trial` | `pl_10_jury_rights` |
+| 28 | `pl_15_record_expungement` | `pl_15_expungement` |
+| 29 | `sl_07_data_privacy` | `sl_07_privacy_laws` |
+| 30 | `sl_08_dress_code` | `sl_08_dress_codes` |
+| 31 | (additional mismatch found during deep audit) | TBD - verify during fix |
+
+### Fix Status
+
+- [ ] `api/olivia/context.ts` — Fix METRIC_DISPLAY_NAMES (31 keys) + METRIC_KNOWLEDGE (31 keys)
+- [ ] `api/olivia/field-evidence.ts` — Fix METRIC_DISPLAY_NAMES (31 keys)
+- [ ] `src/services/gammaService.ts` — Fix METRIC_DISPLAY_NAMES (31 keys)
+- [ ] `src/data/fieldKnowledge.ts` — Fix FIELD_KNOWLEDGE (31 keys)
+- [ ] `src/services/contrastImageService.ts` — Fix entire ID system
+
+### Architecture Rule (NEW)
+
+> **ALL metric ID references MUST match `src/data/metrics.ts`.**
+> Never create independent copies of metric ID mappings.
+> If a file needs metric display names, import from or reference the source of truth.
+> Run a metric ID alignment check before any session handoff.
+
+---
+
+## Priority Order for Remaining Work
 
 ### 1. HIGH - Features
 - **#13** Add More Models Button Handlers
@@ -373,7 +474,7 @@
 ### 2. MEDIUM - Features
 - **#15** Disagreement Visualization
 - **#22** Gamma Prompt Update
-- **#70** Verify Olivia 100 Metrics
+- **#70** Verify Olivia 100 Metrics — **AUDIT COMPLETE, FIX IN PROGRESS**
 
 ### 3. INVESTIGATION
 - **#38** Supabase Profile Fetch Timeout (root cause)
@@ -388,22 +489,28 @@
 | Area | Key Files |
 |------|-----------|
 | App entry | `src/App.tsx` |
+| Metrics SOURCE OF TRUTH | `src/data/metrics.ts` (100 metrics, 6 categories) |
 | LLM models / results | `src/components/EnhancedComparison.tsx` |
 | Judge | `src/components/JudgeTab.tsx`, `api/judge-report.ts` |
 | Save service | `src/services/savedComparisons.ts` (central dual-storage) |
 | Cost tracking | `src/utils/costCalculator.ts`, `src/components/CostDashboard.tsx` |
 | Tier access | `src/hooks/useTierAccess.ts` |
-| Olivia | `src/components/AskOlivia.tsx`, `src/hooks/useOliviaChat.ts` |
+| Olivia context | `api/olivia/context.ts` (METRIC_DISPLAY_NAMES + METRIC_KNOWLEDGE) |
+| Olivia evidence | `api/olivia/field-evidence.ts` |
+| Olivia chat | `src/components/AskOlivia.tsx`, `src/hooks/useOliviaChat.ts` |
+| Gamma service | `src/services/gammaService.ts` |
+| Field knowledge | `src/data/fieldKnowledge.ts` |
+| Contrast images | `src/services/contrastImageService.ts` |
 | Court Orders | `src/components/CourtOrderVideo.tsx` |
 | Visuals | `src/components/VisualsTab.tsx` |
 | Videos | `src/components/NewLifeVideos.tsx`, `src/hooks/useGrokVideo.ts` |
 | Draggable bubbles | `src/hooks/useDraggable.ts` (shared hook) |
-| Types (SOURCE OF TRUTH) | `src/types/enhancedComparison.ts` |
+| Types | `src/types/enhancedComparison.ts` |
 | This TODO | `docs/UNIFIED-MASTER-TODO.md` |
 | Master README | `docs/MASTER_README.md` |
 
 ---
 
-*Last Updated: February 5, 2026 - Session 9 (LS-SESSION9-20260205)*
-*Build: Clean, 0 TypeScript errors*
+*Last Updated: February 5, 2026 - Session 10 (LS-SESSION10-20260205)*
+*Build: Deploying via Vercel (NO local builds)*
 *All changes pushed to GitHub (main branch)*

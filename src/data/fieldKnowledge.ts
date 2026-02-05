@@ -140,7 +140,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects safety, employment, housing, and family rights for LGBTQ+ individuals.',
   },
 
-  'pf_08_assisted_dying': {
+  'pf_08_euthanasia_status': {
     talkingPoints: [
       'Medical aid in dying legal in 10+ states plus DC',
       'Requires terminal diagnosis with 6-month prognosis',
@@ -157,7 +157,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects end-of-life autonomy and options for terminally ill individuals.',
   },
 
-  'pf_09_smoking_restrictions': {
+  'pf_09_smoking_regulations': {
     talkingPoints: [
       'Indoor smoking bans are nearly universal now',
       'Outdoor restrictions vary widely - parks, beaches, patios',
@@ -208,7 +208,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects personal choice in motorcycle and bicycle safety equipment.',
   },
 
-  'pf_12_seatbelt_laws': {
+  'pf_12_seatbelt_enforcement': {
     talkingPoints: [
       'Primary enforcement allows stops solely for seatbelt violations',
       'Secondary enforcement only tickets seatbelts during other stops',
@@ -367,7 +367,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Critical for housing stability and protection against displacement.',
   },
 
-  'hp_06_zoning_restrictions': {
+  'hp_06_zoning_strictness': {
     talkingPoints: [
       'Single-family zoning limits housing density',
       'Mixed-use zoning allows residential and commercial',
@@ -520,7 +520,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Relevant for international buyers or sellers to foreign nationals.',
   },
 
-  'hp_15_transfer_tax': {
+  'hp_15_transfer_taxes': {
     talkingPoints: [
       'Transfer taxes range from 0% to 4%+ of sale price',
       'Some states have no transfer tax',
@@ -537,7 +537,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Significant one-time cost when buying or selling property.',
   },
 
-  'hp_16_lawn_maintenance': {
+  'hp_16_lawn_regulations': {
     talkingPoints: [
       'Many cities require lawn maintenance',
       'Weed and grass height limits common',
@@ -554,7 +554,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects property maintenance obligations and landscaping choices.',
   },
 
-  'hp_17_exterior_modifications': {
+  'hp_17_exterior_colors': {
     talkingPoints: [
       'Paint colors may require approval',
       'Solar panels increasingly protected by state law',
@@ -571,7 +571,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects ability to customize your property appearance.',
   },
 
-  'hp_18_fence_regulations': {
+  'hp_18_fence_rules': {
     talkingPoints: [
       'Height limits typically 4ft front, 6ft back',
       'Materials may be regulated (no chain link in front)',
@@ -588,7 +588,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects privacy options and property boundary control.',
   },
 
-  'hp_19_parking_requirements': {
+  'hp_19_vehicle_parking': {
     talkingPoints: [
       'Minimum parking requirements being eliminated in many cities',
       'On-street parking permits common in dense areas',
@@ -644,7 +644,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Startup cost and annual overhead for business owners.',
   },
 
-  'bw_02_occupational_license': {
+  'bw_02_occupational_licensing': {
     talkingPoints: [
       'Over 1,000 occupations require licenses in some states',
       'Cosmetologists, contractors, real estate agents need licenses',
@@ -695,7 +695,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects union membership requirements and workplace dynamics.',
   },
 
-  'bw_05_employment_protections': {
+  'bw_05_at_will_employment': {
     talkingPoints: [
       'At-will employment is the default in most states',
       'Some states have stronger wrongful termination protections',
@@ -712,7 +712,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects job security and protection against unfair termination.',
   },
 
-  'bw_06_paid_leave': {
+  'bw_06_paid_leave_mandate': {
     talkingPoints: [
       'No federal paid sick leave requirement',
       'Many states and cities require paid sick leave',
@@ -814,7 +814,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects cost of everyday purchases.',
   },
 
-  'bw_12_gig_economy': {
+  'bw_12_freelance_regs': {
     talkingPoints: [
       'California AB5 reclassified many gig workers as employees',
       'Prop 22 exempted rideshare and delivery drivers',
@@ -882,7 +882,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects compensation for hours worked beyond standard schedule.',
   },
 
-  'bw_16_union_laws': {
+  'bw_16_union_rights': {
     talkingPoints: [
       'NLRA governs most private sector unionization',
       'Public sector union rights vary by state',
@@ -916,7 +916,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects physical safety and working conditions.',
   },
 
-  'bw_18_anti_discrimination': {
+  'bw_18_discrimination_law': {
     talkingPoints: [
       'Federal law covers race, sex, religion, national origin, etc.',
       'Many states add sexual orientation, gender identity',
@@ -933,7 +933,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects workplace fairness and protection from discrimination.',
   },
 
-  'bw_19_startup_friendliness': {
+  'bw_19_startup_ease': {
     talkingPoints: [
       'Delaware incorporation remains popular for startups',
       'State startup incentives vary widely',
@@ -984,7 +984,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects home improvement costs and DIY options.',
   },
 
-  'bw_22_health_insurance_mandate': {
+  'bw_22_health_insurance': {
     talkingPoints: [
       'Federal mandate penalty eliminated in 2019',
       'Some states have individual mandates',
@@ -1035,7 +1035,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects access to basic financial services.',
   },
 
-  'bw_25_crypto_regulations': {
+  'bw_25_crypto_regulation': {
     talkingPoints: [
       'Money transmitter licenses required in most states',
       'Wyoming leads in crypto-friendly legislation',
@@ -1056,7 +1056,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
   // TRANSPORTATION (15 metrics)
   // ============================================================================
 
-  'tr_01_public_transit': {
+  'tr_01_public_transit_quality': {
     talkingPoints: [
       'Quality varies from world-class to nonexistent',
       'Heavy rail, light rail, bus rapid transit options',
@@ -1124,7 +1124,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Major cost and lifestyle factor.',
   },
 
-  'tr_05_rideshare_regs': {
+  'tr_05_rideshare_legal': {
     talkingPoints: [
       'Uber/Lyft operate in most metros now',
       'Airport and downtown pickup rules vary',
@@ -1158,7 +1158,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects commute times and ticket risk.',
   },
 
-  'tr_07_traffic_cameras': {
+  'tr_07_speed_camera': {
     talkingPoints: [
       'Red light cameras in many cities, banned in some states',
       'Speed cameras less common, controversial',
@@ -1175,7 +1175,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects driving behavior and ticket exposure.',
   },
 
-  'tr_08_parking_regulations': {
+  'tr_08_parking_regs': {
     talkingPoints: [
       'Street parking rules vary by zone',
       'Parking meter rates range widely',
@@ -1226,7 +1226,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Recurring vehicle ownership requirement.',
   },
 
-  'tr_11_license_requirements': {
+  'tr_11_drivers_license': {
     talkingPoints: [
       'Standard vs Real ID requirements',
       'Undocumented immigrant license access varies',
@@ -1260,7 +1260,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Critical for anyone who drinks and drives.',
   },
 
-  'tr_13_electric_vehicles': {
+  'tr_13_scooter_ebike': {
     talkingPoints: [
       'EV incentives vary by state',
       'Charging infrastructure improving rapidly',
@@ -1366,7 +1366,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Risk of property loss without due process.',
   },
 
-  'pl_04_mandatory_minimums': {
+  'pl_04_mandatory_minimum': {
     talkingPoints: [
       'Mandatory minimums remove judicial discretion',
       'Drug offenses often have harsh minimums',
@@ -1400,7 +1400,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects pre-trial freedom and economic burden.',
   },
 
-  'pl_06_police_oversight': {
+  'pl_06_police_accountability': {
     talkingPoints: [
       'Civilian oversight boards vary in power',
       'Subpoena power for investigations important',
@@ -1468,7 +1468,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects time to resolve legal matters.',
   },
 
-  'pl_10_jury_rights': {
+  'pl_10_jury_trial': {
     talkingPoints: [
       'Jury nullification is legal but judges dont inform',
       'Fully informed jury movements advocate awareness',
@@ -1553,7 +1553,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Relevant for those with incarcerated loved ones.',
   },
 
-  'pl_15_expungement': {
+  'pl_15_record_expungement': {
     talkingPoints: [
       'Expungement and sealing eligibility varies widely',
       'Automatic expungement emerging in some states',
@@ -1676,7 +1676,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects religious practice and exemptions.',
   },
 
-  'sl_07_privacy_laws': {
+  'sl_07_data_privacy': {
     talkingPoints: [
       'California CCPA/CPRA leads nation',
       'Growing number of states with privacy laws',
@@ -1693,7 +1693,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects control over personal data.',
   },
 
-  'sl_08_dress_codes': {
+  'sl_08_dress_code': {
     talkingPoints: [
       'Public nudity laws vary by locality',
       'Beach and pool dress standards differ',
