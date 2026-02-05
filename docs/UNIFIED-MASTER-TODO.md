@@ -372,7 +372,17 @@
 | c05d3d1 | Fix TS2345: non-null assert videoUrl in download handlers |
 | c69e0b3 | Add mandatory Vercel-only build rules to CLAUDE.md and TODO |
 | 1285920 | Fix: Olivia avatar circle in chat header closes chat panel |
-| TBD | CRITICAL: Fix 31 metric ID mismatches across 5 files |
+| 5bfa125 | CRITICAL #70: Fix 30 metric ID mismatches across 4 files |
+| 923dbba | Fix contrastImageService: replace 23 wrong metric IDs |
+| 0f62a93 | Fix bw_20_food_truck_regs mismatch + master alignment table |
+| 808e41c | Add Gun Comparison Modal design spec to master TODO |
+| 6b7574f | Add standalone Gun Rights Comparison modal (unscored) |
+
+## Session 11 Commits
+
+| Commit | Description |
+|--------|-------------|
+| 40bd10c | Fix 3 dark mode CSS bugs in Gun Comparison Modal |
 
 ---
 
@@ -802,12 +812,12 @@ Opens a full-screen modal with:
 
 ### Implementation Status
 
-- [ ] API endpoint (`api/olivia/gun-comparison.ts`)
-- [ ] Modal component (`src/components/GunComparisonModal.tsx` + CSS)
-- [ ] Hook (`src/hooks/useGunComparison.ts`)
-- [ ] Wire trigger button into results page
-- [ ] Test with real city pairs
-- [ ] Commit and push
+- [x] API endpoint (`api/olivia/gun-comparison.ts`) — DONE (6b7574f)
+- [x] Modal component (`src/components/GunComparisonModal.tsx` + CSS) — DONE (6b7574f)
+- [x] Hook (`src/hooks/useGunComparison.ts`) — DONE (6b7574f)
+- [x] Wire trigger button into results page — DONE (6b7574f)
+- [x] Dark mode CSS audit — DONE (40bd10c) — Fixed 3 bugs: error state, loading sub-text, mobile ::before
+- [ ] Test with real city pairs (awaiting live deploy verification)
 
 ---
 
