@@ -15,6 +15,7 @@ import { getMetricTooltip } from '../data/metricTooltips';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { DataSourcesModal } from './DataSourcesModal';
+import { GunComparisonModal } from './GunComparisonModal';
 import EvidencePanel from './EvidencePanel';
 import ScoreMethodology from './ScoreMethodology';
 import './EnhancedComparison.css';
@@ -1299,6 +1300,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const [showScoringExplanation, setShowScoringExplanation] = useState(false);
   const [expandedDifference, setExpandedDifference] = useState<string | null>(null);
+  const [showGunComparison, setShowGunComparison] = useState(false);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -1830,6 +1832,46 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           )}
         </div>
 
+        {/* Gun Rights Comparison — standalone, unscored */}
+        <div className="gun-comparison-trigger" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          margin: '0.75rem 0 1.25rem',
+        }}>
+          <button
+            className="gun-comparison-btn"
+            onClick={() => setShowGunComparison(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.25rem',
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)',
+              color: '#e5e5f0',
+              border: '1px solid #3d3d55',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,71,171,0.3)';
+              e.currentTarget.style.borderColor = '#0047AB';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+              e.currentTarget.style.borderColor = '#3d3d55';
+            }}
+          >
+            <span style={{ fontSize: '1rem' }}>&#x1F52B;</span>
+            Gun Rights Comparison: {result.city1.city} vs {result.city2.city}
+          </button>
+        </div>
+
         {CATEGORIES.map(category => {
           const city1Cat = result.city1.categories.find(c => c.categoryId === category.id);
           const city2Cat = result.city2.categories.find(c => c.categoryId === category.id);
@@ -2325,6 +2367,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
       {/* Data Sources Modal */}
       <DataSourcesModal isOpen={showDataSources} onClose={() => setShowDataSources(false)} />
+
+      {/* Gun Rights Comparison Modal — standalone, unscored */}
+      <GunComparisonModal
+        isOpen={showGunComparison}
+        onClose={() => setShowGunComparison(false)}
+        cityA={result.city1.city}
+        cityB={result.city2.city}
+      />
     </div>
   );
 };

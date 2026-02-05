@@ -1,0 +1,419 @@
+/**
+ * Gun Comparison Modal Styles
+ * Full-screen expandable modal — isolated from scoring UI
+ */
+
+/* ── Overlay ────────────────────────────────────────────────────── */
+.gun-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+/* ── Modal Container ────────────────────────────────────────────── */
+.gun-modal {
+  background: white;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 960px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.gun-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  border-radius: 16px 16px 0 0;
+}
+
+.gun-modal-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+.gun-close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #9ca3af;
+  line-height: 1;
+  padding: 0 0.25rem;
+  transition: color 0.2s;
+}
+
+.gun-close-btn:hover {
+  color: #374151;
+}
+
+/* ── Disclaimer ─────────────────────────────────────────────────── */
+.gun-disclaimer {
+  padding: 1.5rem 2rem;
+  background: #fefce8;
+  border-bottom: 1px solid #fde68a;
+}
+
+.gun-disclaimer h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.gun-disclaimer p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+.gun-disclaimer p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Body ───────────────────────────────────────────────────────── */
+.gun-modal-body {
+  padding: 1.5rem 2rem;
+  flex: 1;
+}
+
+/* ── Loading ────────────────────────────────────────────────────── */
+.gun-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.gun-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #0047AB;
+  border-radius: 50%;
+  animation: gun-spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes gun-spin {
+  to { transform: rotate(360deg); }
+}
+
+.gun-loading p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.gun-loading-sub {
+  font-size: 0.8rem !important;
+  color: #9ca3af;
+  margin-top: 0.25rem !important;
+}
+
+/* ── Error ──────────────────────────────────────────────────────── */
+.gun-error {
+  text-align: center;
+  padding: 2rem;
+}
+
+.gun-error p {
+  margin: 0 0 0.5rem 0;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.gun-error-detail {
+  font-weight: 400 !important;
+  font-size: 0.85rem;
+  color: #9ca3af !important;
+}
+
+.gun-retry-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background: #0047AB;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.gun-retry-btn:hover {
+  background: #003580;
+}
+
+/* ── Comparison Table ───────────────────────────────────────────── */
+.gun-city-headers {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.gun-city-label {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #0047AB;
+  text-align: center;
+}
+
+.gun-category-spacer {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  min-width: 140px;
+}
+
+.gun-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.gun-category-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: start;
+}
+
+.gun-category-row:last-child {
+  border-bottom: none;
+}
+
+.gun-cell {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.gun-cell-a {
+  text-align: left;
+  padding-right: 0.5rem;
+}
+
+.gun-cell-b {
+  text-align: left;
+  padding-left: 0.5rem;
+}
+
+.gun-cell-label {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: center;
+  min-width: 140px;
+  padding-top: 0.1rem;
+}
+
+/* ── Summary ────────────────────────────────────────────────────── */
+.gun-summary {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f0f4ff;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #1e3a5f;
+  border-left: 4px solid #0047AB;
+}
+
+.gun-summary strong {
+  color: #0047AB;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+.gun-modal-footer {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 16px 16px;
+}
+
+.gun-modal-footer p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── Dark Mode ──────────────────────────────────────────────────── */
+[data-theme="dark"] .gun-modal {
+  background: #1a1a2e;
+}
+
+[data-theme="dark"] .gun-modal-header {
+  background: #1a1a2e;
+  border-bottom-color: #3d3d55;
+}
+
+[data-theme="dark"] .gun-modal-header h3 {
+  color: #e5e5f0;
+}
+
+[data-theme="dark"] .gun-close-btn {
+  color: #7a7a90;
+}
+
+[data-theme="dark"] .gun-close-btn:hover {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .gun-disclaimer {
+  background: #2a2518;
+  border-bottom-color: #4a3f20;
+}
+
+[data-theme="dark"] .gun-disclaimer h4 {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .gun-disclaimer p {
+  color: #d4a520;
+}
+
+[data-theme="dark"] .gun-city-headers {
+  border-bottom-color: #3d3d55;
+}
+
+[data-theme="dark"] .gun-city-label {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .gun-category-spacer {
+  color: #7a7a90;
+}
+
+[data-theme="dark"] .gun-category-row {
+  border-bottom-color: #2a2a3e;
+}
+
+[data-theme="dark"] .gun-cell {
+  color: #c0c0d0;
+}
+
+[data-theme="dark"] .gun-cell-label {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .gun-summary {
+  background: #1e2a3e;
+  border-left-color: #6ba3ff;
+  color: #b0c4e0;
+}
+
+[data-theme="dark"] .gun-summary strong {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .gun-modal-footer {
+  background: #151525;
+  border-top-color: #3d3d55;
+}
+
+[data-theme="dark"] .gun-modal-footer p {
+  color: #7a7a90;
+}
+
+[data-theme="dark"] .gun-loading {
+  color: #9090a0;
+}
+
+[data-theme="dark"] .gun-loading-spinner {
+  border-color: #3d3d55;
+  border-top-color: #6ba3ff;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .gun-modal {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .gun-modal-header,
+  .gun-modal-body,
+  .gun-disclaimer {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .gun-modal-footer {
+    padding: 0.75rem 1.25rem;
+  }
+
+  /* Stack on mobile */
+  .gun-city-headers {
+    display: none;
+  }
+
+  .gun-category-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 1rem 0;
+  }
+
+  .gun-cell-label {
+    text-align: left;
+    font-size: 0.85rem;
+    color: #0047AB;
+    font-weight: 700;
+    min-width: unset;
+    order: -1;
+  }
+
+  .gun-cell-a::before {
+    content: attr(data-city) ': ';
+    font-weight: 700;
+    color: #0047AB;
+  }
+
+  .gun-cell-b::before {
+    content: attr(data-city) ': ';
+    font-weight: 700;
+    color: #0047AB;
+  }
+
+  .gun-cell-a,
+  .gun-cell-b {
+    text-align: left;
+    padding: 0;
+  }
+
+  [data-theme="dark"] .gun-cell-label {
+    color: #6ba3ff;
+  }
+}
