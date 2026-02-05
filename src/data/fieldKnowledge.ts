@@ -950,7 +950,7 @@ export const FIELD_KNOWLEDGE: Record<string, FieldKnowledge> = {
     dailyLifeImpact: 'Affects entrepreneurs launching new businesses.',
   },
 
-  'bw_20_food_truck_regs': {
+  'bw_20_food_truck': {
     talkingPoints: [
       'Permit requirements and costs vary dramatically',
       'Proximity restrictions near restaurants common',

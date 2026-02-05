@@ -163,7 +163,7 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'bw_17_workplace_safety': 'Workplace Safety Standards',
   'bw_18_discrimination_law': 'Anti-Discrimination Laws',
   'bw_19_startup_ease': 'Startup Friendliness',
-  'bw_20_food_truck_regs': 'Food Truck Regulations',
+  'bw_20_food_truck': 'Food Truck Regulations',
   'bw_21_contractor_license': 'Contractor Licensing',
   'bw_22_health_insurance': 'Health Insurance Mandate',
   'bw_23_tip_credit': 'Tip Credit Laws',
@@ -570,7 +570,7 @@ const METRIC_KNOWLEDGE: Record<string, MetricKnowledge> = {
     commonQuestions: ['Is this a good place to start a company?', 'Where should I incorporate?', 'Are there startup incentives?'],
     dailyLifeImpact: 'Affects entrepreneurs launching new businesses.',
   },
-  'bw_20_food_truck_regs': {
+  'bw_20_food_truck': {
     talkingPoints: ['Permit requirements and costs vary dramatically', 'Proximity restrictions near restaurants common', 'Time limits and location restrictions', 'Health inspection requirements', 'Some cities very food truck friendly, others not'],
     keySourceTypes: ['City licensing department', 'Health department', 'Food truck associations'],
     commonQuestions: ['How easy is it to operate a food truck?', 'What permits are needed?', 'Are there location restrictions?'],
