@@ -129,7 +129,42 @@ const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
 const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
-const MAX_SAVED = 100;
+const MAX_SAVED = 100; // Standard comparisons
+const MAX_SAVED_ENHANCED = 20; // Enhanced comparisons are much larger (~200KB each)
+
+/**
+ * Safely save to localStorage with quota handling
+ * If quota exceeded, removes oldest items until it fits
+ */
+function safeLocalStorageSet(key: string, value: string, maxItems?: number): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      console.warn(`[savedComparisons] localStorage quota exceeded for ${key}, attempting cleanup...`);
+
+      // Try to make room by removing oldest items
+      try {
+        const data = JSON.parse(value);
+        if (Array.isArray(data) && data.length > 1) {
+          // Remove oldest 20% of items
+          const removeCount = Math.max(1, Math.floor(data.length * 0.2));
+          const trimmed = data.slice(0, data.length - removeCount);
+          localStorage.setItem(key, JSON.stringify(trimmed));
+          console.log(`[savedComparisons] Removed ${removeCount} oldest items to free space`);
+          return true;
+        }
+      } catch {
+        // If cleanup fails, clear the key entirely
+        console.error(`[savedComparisons] Cleanup failed, clearing ${key}`);
+        localStorage.removeItem(key);
+      }
+    }
+    console.error(`[savedComparisons] Failed to save to localStorage:`, error);
+    return false;
+  }
+}
 
 // ============================================================================
 // TYPE GUARDS FOR DATA VALIDATION
@@ -282,11 +317,10 @@ export function getLocalComparisons(): SavedComparison[] {
  * Save comparisons to localStorage
  */
 function saveLocalComparisons(comparisons: SavedComparison[]): void {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(comparisons));
-    console.log('[savedComparisons] Saved', comparisons.length, 'comparisons to localStorage');
-  } catch (error) {
-    console.error('[savedComparisons] Failed to save to localStorage:', error);
+  const trimmed = comparisons.slice(0, MAX_SAVED);
+  const success = safeLocalStorageSet(LOCAL_STORAGE_KEY, JSON.stringify(trimmed));
+  if (success) {
+    console.log('[savedComparisons] Saved', trimmed.length, 'comparisons to localStorage');
   }
 }
 
@@ -580,11 +614,15 @@ export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
  * Save enhanced comparisons to localStorage
  */
 function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): void {
-  try {
-    localStorage.setItem(ENHANCED_STORAGE_KEY, JSON.stringify(comparisons));
-    console.log('[savedComparisons] Saved', comparisons.length, 'enhanced comparisons to localStorage');
-  } catch (error) {
-    console.error('[savedComparisons] Failed to save enhanced to localStorage:', error);
+  // Enforce lower limit for enhanced comparisons (they're ~200KB each)
+  const trimmed = comparisons.slice(0, MAX_SAVED_ENHANCED);
+  if (comparisons.length > MAX_SAVED_ENHANCED) {
+    console.log(`[savedComparisons] Trimmed enhanced comparisons from ${comparisons.length} to ${MAX_SAVED_ENHANCED}`);
+  }
+
+  const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(trimmed));
+  if (success) {
+    console.log('[savedComparisons] Saved', trimmed.length, 'enhanced comparisons to localStorage');
   }
 }
 
