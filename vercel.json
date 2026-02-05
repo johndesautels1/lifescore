@@ -50,6 +50,10 @@
     "api/avatar/video-webhook.ts": {
       "maxDuration": 30,
       "includeFiles": "api/shared/**"
+    },
+    "api/olivia/gun-comparison.ts": {
+      "maxDuration": 60,
+      "includeFiles": "api/shared/**"
     }
   },
   "buildCommand": "npm run build",
