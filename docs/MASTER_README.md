@@ -21,16 +21,16 @@
 
 ---
 
-## RECENT COMMITS (Session LS-SESSION8-20260205)
+## RECENT COMMITS (Session LS-SESSION9-20260205)
 
 | Commit | Description |
 |--------|-------------|
-| `e5d5a8f` | Fix judge_reports onConflict to match unique constraint (user_id,report_id) |
-| `7419e11` | Fix judge_reports upsert to match actual Supabase table schema |
-| `3dc9217` | Fix user_preferences upsert to match actual Supabase table schema |
-| `9405a07` | Complete save audit: dual-storage for ALL save points, outer try/catch on all DB saves |
-| `393f8bd` | Add dual-storage (localStorage + Supabase) for Gamma/Judge reports, error handling |
-| `9003271` | Fix visual reports: Gamma generationId + Judge reports in saved tab |
+| `3c94a3a` | Features #18, #19, #71: Save buttons + draggable chat bubbles |
+| `a7a1ada` | Reorganize docs, regenerate UNIFIED-MASTER-TODO |
+| `f34c4ef` | B3 fix: LLM attribution badges on all source citations |
+| `11ea65b` | Update all 3 manuals (CSM v2.5, TSM v2.4, UM v2.5) |
+| `e5d5a8f` | Fix judge_reports onConflict to match unique constraint |
+| `eac2a1b` | Session 8 docs: Update MASTER_README + fix APP_SCHEMA_MANUAL |
 
 ---
 
@@ -87,8 +87,8 @@
 |---|------|----------|--------|
 | B1 | Perplexity Data Sources | HIGH | 🔴 Not Started |
 | B2 | 5th Thumbnail UI Wiring | HIGH | 🔴 Not Started |
-| B3 | Multi-LLM Field Sources Missing | CRITICAL | 🔴 Not Started |
-| B4 | Field-by-Field Comparison References | CRITICAL | 🔴 Not Started |
+| B3 | Multi-LLM Field Sources Missing | CRITICAL | ✅ Done (f34c4ef) - LLM attribution badges |
+| B4 | Field-by-Field Comparison References | CRITICAL | ✅ Done (f34c4ef) - Source citations with provider |
 
 ---
 

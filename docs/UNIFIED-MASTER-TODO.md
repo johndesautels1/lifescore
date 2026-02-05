@@ -13,15 +13,15 @@
 | CRITICAL (Architecture) | 6 | 5 | 0 | 0 | 1 |
 | HIGH (UI/UX Critical) | 12 | 12 | 0 | 0 | 0 |
 | MEDIUM (UI/UX Polish) | 18 | 17 | 0 | 1 | 0 |
-| MEDIUM (Features) | 14 | 7 | 6 | 1 | 1 |
+| MEDIUM (Features) | 14 | 10 | 3 | 1 | 1 |
 | LOW (Documentation) | 6 | 0 | 6 | 0 | 0 |
 | LOW (Code Quality) | 2 | 0 | 2 | 0 | 0 |
 | DEFERRED (Legal) | 7 | 0 | 0 | 0 | 7 |
 | BUGS | 18 | 17 | 0 | 1 | 0 |
 | NEW (Sessions 8-9) | 8 | 8 | 0 | 0 | 0 |
-| **TOTAL** | **91** | **66** | **14** | **3** | **9** |
+| **TOTAL** | **91** | **69** | **11** | **3** | **9** |
 
-**Completion: 72.5%** (66 of 91)
+**Completion: 75.8%** (69 of 91)
 
 ---
 
@@ -92,13 +92,13 @@
 | 15 | Disagreement Visualization | Show visual indicator where different LLMs disagree on scores | ACTIVE |
 | 16 | Session Management | Improve session handling, persistence, state management. **Note:** Dual-storage (Session 8) addressed persistence significantly | ACTIVE |
 | 17 | Score Calculation UI | Explainer UI showing how LIFE SCORE math works | **DONE (Session 8)** - Glass-morphic 5-stage pipeline card |
-| 18 | Save button - Olivia images | Add save functionality for Olivia's comparison city images | ACTIVE |
-| 19 | Save button - Visuals video | Add save functionality for comparison city videos on Visuals tab | ACTIVE |
+| 18 | Save button - Olivia images | Add save functionality for Olivia's comparison city images | **DONE (Session 9, 3c94a3a)** - SAVE IMAGES button on ContrastDisplays, fetch→blob download |
+| 19 | Save button - Visuals video | Add save functionality for comparison city videos on Visuals tab | **DONE (Session 9, 3c94a3a)** - Fixed cross-origin download with fetch→blob pattern |
 | 20 | Save button - Court Order | Added Save/Download/Share buttons to Court Order section | DONE (2/3, 58344b7) |
 | 21 | Court Order video upload | Allow user to override auto-generated Court Order video with custom upload | DEFERRED |
 | 22 | Gamma prompt update | Extract current Gamma prompt, enhance it, upload improved prompt | ACTIVE |
 | 70 | Verify Olivia 100 metrics | Verify Olivia can talk about ALL 100 individual metrics | ACTIVE |
-| 71 | Draggable Emilia/Olivia bubbles | Allow click-drag repositioning of chat bubble UI elements | ACTIVE |
+| 71 | Draggable Emilia/Olivia bubbles | Allow click-drag repositioning of chat bubble UI elements | **DONE (Session 9, 3c94a3a)** - useDraggable hook, pointer events, localStorage persistence |
 | 72 | Verify schema for Court Orders | Verify Supabase DB schema updated for expanded Court Orders | **DONE (Session 8)** - court_orders table + RLS created & verified |
 | 73 | API cost tracking - full provider audit | Wired ALL 14 providers to record costs. 8 were showing $0.00 | DONE (b785a5c) |
 
@@ -212,7 +212,7 @@
 
 ---
 
-## ACTIVE - Features (8 items)
+## ACTIVE - Features (5 items)
 
 | # | Item | Priority | Description |
 |---|------|----------|-------------|
@@ -220,10 +220,7 @@
 | 14 | Judge Re-runs with Combined Results | HIGH | Allow re-running Opus Judge with updated/combined multi-LLM data |
 | 15 | Disagreement Visualization | MEDIUM | Show visual indicators where different LLMs disagree on metric scores |
 | 16 | Session Management | MEDIUM | Improve session handling and state. Dual-storage (Session 8) addressed persistence |
-| 18 | Save Button - Olivia Images | LOW | Add save/download for Olivia's AI-generated comparison city images |
-| 19 | Save Button - Visuals Video | LOW | Add save/download for comparison city videos on Visuals tab |
 | 22 | Gamma Prompt Update | MEDIUM | Extract current Gamma prompt, enhance quality, upload improved version |
-| 71 | Draggable Emilia/Olivia Bubbles | LOW | Allow click-drag repositioning of chat bubbles |
 
 ## ACTIVE - Verification (1 item)
 
@@ -324,6 +321,8 @@
 |--------|-------------|
 | 11ea65b | Update all 3 manuals (CSM v2.5, TSM v2.4, UM v2.5) |
 | f34c4ef | B3 fix: LLM attribution badges on all source citations |
+| a7a1ada | Reorganize docs, regenerate UNIFIED-MASTER-TODO |
+| 3c94a3a | Features #18, #19, #71: Save buttons + draggable chat bubbles |
 
 ---
 
@@ -337,8 +336,8 @@
 
 | Status | Count | % |
 |--------|-------|---|
-| Completed | 63 | 73% |
-| Active | 14 | 16% |
+| Completed | 69 | 76% |
+| Active | 11 | 12% |
 | Needs Investigation | 2 | 2% |
 | Deferred | 9 | 10% |
 
@@ -366,8 +365,6 @@
 - **#68** Court Orders Green Dot Bug (needs screenshot)
 
 ### 4. LOW - Polish
-- **#18, #19** Save buttons for Olivia images / Visuals video
-- **#71** Draggable chat bubbles
 - **#23-28** Documentation polish
 - **#29-30** Code quality
 
@@ -385,6 +382,7 @@
 | Court Orders | `src/components/CourtOrderVideo.tsx` |
 | Visuals | `src/components/VisualsTab.tsx` |
 | Videos | `src/components/NewLifeVideos.tsx`, `src/hooks/useGrokVideo.ts` |
+| Draggable bubbles | `src/hooks/useDraggable.ts` (shared hook) |
 | Types (SOURCE OF TRUTH) | `src/types/enhancedComparison.ts` |
 | This TODO | `docs/UNIFIED-MASTER-TODO.md` |
 | Master README | `docs/MASTER_README.md` |

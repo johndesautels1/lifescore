@@ -6,19 +6,36 @@
  */
 
 /* ============================================
+   Container - handles drag positioning
+   ============================================ */
+
+.help-bubble-container {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 9998;
+}
+
+.help-bubble-container.dragging {
+  cursor: grabbing;
+}
+
+.help-bubble-container.dragging .help-bubble {
+  cursor: grabbing;
+  transition: none;
+}
+
+/* ============================================
    Floating Help Button
    ============================================ */
 
 .help-bubble {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
   width: 60px;
   height: 60px;
   border-radius: 50%;
   background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
   border: none;
-  cursor: pointer;
+  cursor: grab;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,7 +44,6 @@
     0 4px 12px rgba(20, 184, 166, 0.4),
     0 0 0 0 rgba(20, 184, 166, 0);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  z-index: 9998;
   padding: 0;
   outline: none;
 }
@@ -41,16 +57,6 @@
 
 .help-bubble:active {
   transform: scale(1.05);
-}
-
-/* Dragging state */
-.help-bubble.dragging {
-  cursor: grabbing;
-  transition: none;
-}
-
-.help-bubble:not(.dragging) {
-  cursor: grab;
 }
 
 .help-bubble:focus-visible {
@@ -213,11 +219,14 @@
    ============================================ */
 
 @media (max-width: 768px) {
+  .help-bubble-container {
+    bottom: 20px;
+    left: 20px;
+  }
+
   .help-bubble {
     width: 52px;
     height: 52px;
-    bottom: 20px;
-    left: 20px;
   }
 
   .help-bubble-icon {
@@ -244,11 +253,14 @@
 }
 
 @media (max-width: 480px) {
+  .help-bubble-container {
+    bottom: 16px;
+    left: 16px;
+  }
+
   .help-bubble {
     width: 48px;
     height: 48px;
-    bottom: 16px;
-    left: 16px;
   }
 
   .help-bubble-icon {

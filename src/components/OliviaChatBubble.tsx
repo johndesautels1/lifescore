@@ -298,7 +298,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   return (
     <div
       className={`olivia-bubble-container ${isOpen ? 'open' : ''} ${isMinimized ? 'minimized' : ''} ${isDragging ? 'dragging' : ''}`}
-      style={{ transform: `translate(${-position.x}px, ${-position.y}px)` }}
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
       {/* Expanded Chat Panel */}
       {isOpen && !isMinimized && (

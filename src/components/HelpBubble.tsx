@@ -34,29 +34,31 @@ const HelpBubble: React.FC = () => {
 
   return (
     <>
-      {/* Floating Help Button */}
-      <button
-        className={`help-bubble ${hasUnreadTip ? 'has-notification' : ''} ${isDragging ? 'dragging' : ''}`}
-        onClick={handleOpen}
-        onPointerDown={handlePointerDown}
-        aria-label="Get help from Emilia"
-        title="Need help? Ask Emilia"
-        style={{
-          transform: `translate(${position.x}px, ${-position.y}px)`,
-          touchAction: 'none',
-        }}
+      {/* Floating Help Button - wrapper for drag positioning */}
+      <div
+        className={`help-bubble-container ${isDragging ? 'dragging' : ''}`}
+        style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
       >
-        <div className="help-bubble-inner">
-          <span className="help-bubble-icon">?</span>
-          <div className="help-bubble-rings">
-            <span className="ring ring-1"></span>
-            <span className="ring ring-2"></span>
+        <button
+          className={`help-bubble ${hasUnreadTip ? 'has-notification' : ''}`}
+          onClick={handleOpen}
+          onPointerDown={handlePointerDown}
+          aria-label="Get help from Emilia"
+          title="Need help? Ask Emilia"
+          style={{ touchAction: 'none' }}
+        >
+          <div className="help-bubble-inner">
+            <span className="help-bubble-icon">?</span>
+            <div className="help-bubble-rings">
+              <span className="ring ring-1"></span>
+              <span className="ring ring-2"></span>
+            </div>
           </div>
-        </div>
-        <span className="help-bubble-label">Help</span>
-        {hasUnreadTip && <span className="help-bubble-badge">1</span>}
-        <span className="help-bubble-tooltip">Ask Emilia for Help</span>
-      </button>
+          <span className="help-bubble-label">Help</span>
+          {hasUnreadTip && <span className="help-bubble-badge">1</span>}
+          <span className="help-bubble-tooltip">Ask Emilia for Help</span>
+        </button>
+      </div>
 
       {/* Help Modal */}
       <HelpModal isOpen={isModalOpen} onClose={handleClose} />
