@@ -2,7 +2,21 @@
 **Created:** February 3, 2026
 **Last Updated:** February 5, 2026 (Session 9 - LS-SESSION9-20260205)
 **Source:** Complete merged list from all sessions (1-9)
-**Conversation ID:** LS-SESSION9-20260205
+**Conversation ID:** LS-SESSION10-20260205
+
+---
+
+## MANDATORY BUILD & DEPLOY RULES (ALL SESSIONS)
+
+> **NEVER run `npm run build` locally. Vercel handles all builds.**
+>
+> After ANY code change:
+> 1. `git add` the changed files
+> 2. `git commit` with a clear message
+> 3. `git push origin main` — Vercel auto-deploys from main
+>
+> **There is NO local build step. Do NOT run `npm run build`, `tsc -b`, or any local compile command.**
+> **ALWAYS commit and push to GitHub. Vercel IS the build system. No exceptions.**
 
 ---
 

@@ -64,8 +64,23 @@ Always use conversation IDs for sessions:
 
 ---
 
+## MANDATORY: Build & Deploy via Vercel ONLY
+
+**NEVER run `npm run build`, `tsc -b`, or any local build/compile command.**
+Vercel is the ONLY build system. It auto-deploys from the `main` branch.
+
+After ANY code change, you MUST:
+1. `git add` the changed files
+2. `git commit` with a clear message
+3. `git push origin main`
+
+**No exceptions. No local builds. Push to GitHub and let Vercel handle it.**
+
+---
+
 ## Git Commit Rules
 
 - Commit messages should be descriptive
 - Include `Co-Authored-By: Claude` footer
 - Don't commit .env files or temp files
+- **ALWAYS push to GitHub after committing. Every commit gets pushed.**
