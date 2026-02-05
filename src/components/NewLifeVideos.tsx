@@ -387,7 +387,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 {videoPair?.winner?.videoUrl && (
                   <button
                     className="download-btn secondary-btn"
-                    onClick={() => handleDownloadVideo(videoPair.winner!.videoUrl, winnerCity, 'winner')}
+                    onClick={() => handleDownloadVideo(videoPair.winner!.videoUrl!, winnerCity, 'winner')}
                     disabled={isDownloading === 'winner'}
                   >
                     <span className="btn-icon">{isDownloading === 'winner' ? '...' : '⬇️'}</span>
@@ -399,7 +399,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 {videoPair?.loser?.videoUrl && (
                   <button
                     className="download-btn secondary-btn"
-                    onClick={() => handleDownloadVideo(videoPair.loser!.videoUrl, loserCity, 'loser')}
+                    onClick={() => handleDownloadVideo(videoPair.loser!.videoUrl!, loserCity, 'loser')}
                     disabled={isDownloading === 'loser'}
                   >
                     <span className="btn-icon">{isDownloading === 'loser' ? '...' : '⬇️'}</span>
