@@ -917,22 +917,34 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
     if (isSupabaseConfigured()) {
       getCurrentUser().then(user => {
         if (user) {
+          // Column mapping matches actual judge_reports table schema
+          const winnerCity = report.executiveSummary.recommendation === 'city1'
+            ? report.city1
+            : report.executiveSummary.recommendation === 'city2'
+              ? report.city2
+              : 'TIE';
+          const winnerScore = report.executiveSummary.recommendation === 'city1'
+            ? report.summaryOfFindings.city1Score
+            : report.summaryOfFindings.city2Score;
+          const margin = Math.abs(
+            report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score
+          );
+
           supabase
             .from('judge_reports')
             .upsert({
               user_id: user.id,
               report_id: report.reportId,
-              comparison_id: report.comparisonId,
-              city1_name: report.city1,
-              city2_name: report.city2,
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
               city2_score: report.summaryOfFindings.city2Score,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
+              winner: winnerCity,
+              winner_score: winnerScore,
+              margin,
+              verdict: report.executiveSummary.rationale,
               full_report: report,
               video_url: report.videoUrl || null,
-              video_status: report.videoStatus,
               updated_at: new Date().toISOString(),
             }, { onConflict: 'report_id' })
             .then(({ error }) => {
