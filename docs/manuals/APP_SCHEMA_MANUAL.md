@@ -1,8 +1,8 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 1.1.0
-**Generated:** 2026-02-04
-**Conversation ID:** LS-SCHEMA-20260204
+**Version:** 1.2.0
+**Generated:** 2026-02-05
+**Conversation ID:** LS-SESSION8-20260205
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 
 ---
@@ -68,27 +68,39 @@ Stripe subscription records.
 ---
 
 #### `user_preferences`
-User customization settings.
+User customization settings. Single-row-per-user design (upsert on `user_id`).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | UUID | PK | Preference record ID |
+| id | BIGINT | PK, auto-increment | Row ID |
 | user_id | UUID | FK(profiles), UNIQUE | User ID |
+| favorite_cities | TEXT[] | | Saved favorite cities |
+| olivia_auto_speak | BOOLEAN | DEFAULT FALSE | Auto-play Olivia TTS |
 | theme | TEXT | DEFAULT 'system' | 'light', 'dark', 'system' |
-| language | TEXT | DEFAULT 'en' | UI language |
-| weight_preset | TEXT | DEFAULT 'balanced' | Metric weighting preset |
-| custom_weights | JSONB | | Custom category weights |
-| dealbreakers | JSONB | | User's dealbreaker metrics |
-| notifications_enabled | BOOLEAN | DEFAULT TRUE | Email notifications |
+| weight_presets | JSONB | | Category weight presets (added Session 8) |
+| law_lived_preferences | JSONB | | Law vs Lived weighting (added Session 8) |
+| excluded_categories | JSONB | | Categories excluded from scoring (added Session 8) |
+| dealbreakers | JSONB | | User's dealbreaker metric IDs (added Session 8) |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | updated_at | TIMESTAMPTZ | | |
+
+**Code Upsert Pattern (Session 8):**
+```typescript
+supabase.from('user_preferences').upsert({
+  user_id: user.id,
+  [key]: value,  // Dynamic column name: weight_presets, dealbreakers, etc.
+  updated_at: new Date().toISOString(),
+}, { onConflict: 'user_id' })
+```
 
 ---
 
 ### 1.2 Comparison Tables
 
-#### `saved_comparisons`
+#### `comparisons`
 Stored city comparison results.
+
+> **Note:** Documentation previously referred to this table as `saved_comparisons`. The actual Supabase table name is `comparisons`.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -107,8 +119,8 @@ Stored city comparison results.
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 **Indexes:**
-- `idx_saved_comparisons_user_id` on user_id
-- `idx_saved_comparisons_comparison_id` on comparison_id
+- `idx_comparisons_user_id` on user_id
+- `idx_comparisons_comparison_id` on comparison_id
 
 ---
 
@@ -136,18 +148,39 @@ THE JUDGE's comprehensive verdicts.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | UUID | PK | Report ID |
+| id | BIGINT | PK, auto-increment | Row ID |
 | user_id | UUID | FK(profiles) | Report owner |
-| comparison_id | TEXT | FK(saved_comparisons) | Source comparison |
-| report_id | TEXT | UNIQUE | Format: LIFE-JDG-DATE-USERID-HASH |
-| city1 | TEXT | NOT NULL | First city |
-| city2 | TEXT | NOT NULL | Second city |
-| summary_of_findings | JSONB | | Scores and trends |
-| category_analysis | JSONB | | Per-category analysis |
-| executive_summary | JSONB | | Recommendation and rationale |
-| video_status | TEXT | DEFAULT 'pending' | 'pending', 'generating', 'ready', 'error' |
-| video_url | TEXT | | HeyGen video URL |
+| report_id | TEXT | NOT NULL | Format: LIFE-JDG-DATE-USERID-HASH |
+| city1 | TEXT | | First city name |
+| city2 | TEXT | | Second city name |
+| city1_score | NUMERIC | | City 1 total score |
+| city2_score | NUMERIC | | City 2 total score |
+| winner | TEXT | | Winning city name (derived) |
+| winner_score | NUMERIC | | Winner's score (derived) |
+| margin | NUMERIC | | Score difference (abs) |
+| verdict | TEXT | | Executive summary rationale |
+| full_report | JSONB | | Complete JudgeReport object |
+| video_url | TEXT | | Court order video URL |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
+
+**Unique Constraint:** `unique_user_report` on `(user_id, report_id)`
+
+**Code Upsert Pattern (Session 8):**
+```typescript
+// Winner and margin are DERIVED from the report data, not stored directly
+const winnerCity = report.executiveSummary.recommendation === 'city1'
+  ? report.city1
+  : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'TIE';
+const margin = Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score);
+
+supabase.from('judge_reports').upsert({
+  user_id, report_id, city1, city2, city1_score, city2_score,
+  winner: winnerCity, winner_score: winnerScore, margin,
+  verdict: report.executiveSummary.rationale,
+  full_report: report, video_url: report.videoUrl || null,
+}, { onConflict: 'user_id,report_id' })
+```
 
 ---
 
@@ -189,6 +222,45 @@ HeyGen/D-ID generated talking head videos.
 | cost_credits | NUMERIC | | Credits consumed |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | completed_at | TIMESTAMPTZ | | |
+
+---
+
+#### `court_orders` *(Added Session 8)*
+Saved Court Order videos (Grok-generated lifestyle videos for winning cities).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | Row ID |
+| user_id | UUID | FK(profiles), NOT NULL | Owner |
+| comparison_id | TEXT | NOT NULL | Source comparison ID |
+| winner_city | TEXT | NOT NULL | Winning city name |
+| winner_score | NUMERIC | | Winning city score |
+| video_url | TEXT | | Grok video URL |
+| saved_at | TIMESTAMPTZ | | When user saved it |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
+
+**Unique Constraint:** `(user_id, comparison_id)`
+**RLS:** Users can only CRUD their own court orders.
+
+---
+
+#### `gamma_reports`
+Gamma-generated 30-page visual PDF/PPTX reports.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | Row ID |
+| user_id | UUID | FK(profiles) | Owner |
+| comparison_id | TEXT | | Source comparison ID |
+| generation_id | TEXT | | Gamma generation ID |
+| gamma_url | TEXT | | Gamma document URL |
+| pdf_url | TEXT | | PDF download URL |
+| pptx_url | TEXT | | PPTX download URL |
+| city1 | TEXT | | First city |
+| city2 | TEXT | | Second city |
+| saved_at | TIMESTAMPTZ | | When user saved it |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ---
 
@@ -756,17 +828,22 @@ interface AuthState {
 
 ### 4.3 localStorage Keys
 
-| Key | Type | Purpose |
-|-----|------|---------|
-| `lifescore_user` | User | Demo mode user data |
-| `lifescore_saved_comparisons` | SavedComparison[] | Offline comparison cache |
-| `lifescore_theme` | 'light' \| 'dark' \| 'system' | Theme preference |
-| `lifescore_weight_preset` | string | Category weight preset |
-| `lifescore_custom_weights` | Record<CategoryId, number> | Custom weights |
-| `lifescore_dealbreakers` | string[] | Dealbreaker metric IDs |
-| `lifescore_olivia_thread` | string | Current Olivia thread ID |
-| `lifescore_cookie_consent` | boolean | GDPR consent |
-| `lifescore_last_cities` | {city1, city2} | Recently compared cities |
+| Key | Type | Purpose | DB Sync |
+|-----|------|---------|---------|
+| `lifescore_user` | User | Demo mode user data | No |
+| `lifescore_saved_comparisons` | SavedComparison[] | Standard comparison cache | `comparisons` |
+| `lifescore_saved_enhanced` | SavedComparison[] | Enhanced comparison cache | `comparisons` |
+| `lifescore_saved_gamma_reports` | SavedGammaReport[] | Gamma report cache | `gamma_reports` |
+| `lifescore_judge_reports` | SavedJudgeReport[] | Judge report cache | `judge_reports` |
+| `lifescore_court_orders` | SavedCourtOrder[] | Court order video cache | `court_orders` |
+| `lifescore_weights` | WeightPresetData | Category weight presets | `user_preferences` |
+| `lifescore_lawlived` | LawLivedData | Law vs Lived weighting | `user_preferences` |
+| `lifescore_excluded_categories` | string[] | Excluded categories | `user_preferences` |
+| `lifescore_dealbreakers` | string[] | Dealbreaker metric IDs | `user_preferences` |
+| `lifescore_theme` | 'light' \| 'dark' \| 'system' | Theme preference | No |
+| `lifescore_olivia_thread` | string | Current Olivia thread ID | No |
+| `lifescore_cookie_consent` | boolean | GDPR consent | No |
+| `lifescore_last_cities` | {city1, city2} | Recently compared cities | No |
 
 ---
 
@@ -1015,23 +1092,54 @@ export interface UsageSummary {
 | `fetchWithTimeout` | `api/shared/fetchWithTimeout.ts` | Timeout wrapper |
 | `metrics` | `src/shared/metrics.ts` | Metric definitions |
 
-### 6.2 savedComparisons Service
+### 6.2 savedComparisons Service (CENTRAL Save Service)
 
 **File:** `src/services/savedComparisons.ts`
 
+All save operations write to BOTH localStorage (offline-first) AND Supabase (cloud backup).
+Every localStorage.setItem and Supabase call is wrapped in try/catch.
+
 ```typescript
-// Save comparison to localStorage and optionally Supabase
+// ── Comparisons ──
 export async function saveComparison(result: ComparisonResult): Promise<void>
-
-// Get all saved comparisons
 export function getSavedComparisons(): SavedComparison[]
-
-// Delete comparison
 export async function deleteComparison(comparisonId: string): Promise<void>
-
-// Sync local comparisons with database
 export async function fullDatabaseSync(): Promise<SyncResult>
+
+// ── Gamma Reports ──
+export function saveGammaReport(report: SavedGammaReport): void
+export function getSavedGammaReports(): SavedGammaReport[]
+export function deleteSavedGammaReport(reportId: string): void
+
+// ── Judge Reports ──
+export function saveJudgeReport(report: SavedJudgeReport): void
+export function getSavedJudgeReports(): SavedJudgeReport[]
+export function deleteSavedJudgeReport(reportId: string): void
+
+// ── Court Orders (Added Session 8) ──
+export function saveCourtOrder(order: SavedCourtOrder): void
+export function getSavedCourtOrders(): SavedCourtOrder[]
+export function deleteSavedCourtOrder(comparisonId: string): void
+export function clearAllCourtOrders(): void
+
+// ── User Preferences DB Sync (Added Session 8) ──
+export function saveUserPreferenceToDb(key: string, value: unknown): void
+// Keys: 'weight_presets', 'law_lived_preferences', 'excluded_categories', 'dealbreakers'
 ```
+
+**Dual-Storage Architecture (Session 8):**
+
+| Data | localStorage Key | Supabase Table |
+|------|-----------------|---------------|
+| Standard Comparisons | `lifescore_saved_comparisons` | `comparisons` |
+| Enhanced Comparisons | `lifescore_saved_enhanced` | `comparisons` |
+| Gamma Reports | `lifescore_saved_gamma_reports` | `gamma_reports` |
+| Judge Reports | `lifescore_judge_reports` | `judge_reports` |
+| Court Orders | `lifescore_court_orders` | `court_orders` |
+| Weight Presets | `lifescore_weights` | `user_preferences.weight_presets` |
+| Law/Lived Prefs | `lifescore_lawlived` | `user_preferences.law_lived_preferences` |
+| Excluded Categories | `lifescore_excluded_categories` | `user_preferences.excluded_categories` |
+| Dealbreakers | `lifescore_dealbreakers` | `user_preferences.dealbreakers` |
 
 ### 6.3 Supabase Client
 
@@ -1420,5 +1528,6 @@ LIFE SCORE evaluates cities across **100 metrics** in **6 categories**:
 
 - **Generated by:** Claude Opus 4.5
 - **For:** LIFE SCORE TODO 12.1 - Emilia Help System
-- **Conversation ID:** LS-SCHEMA-20260203
-- **Last Updated:** 2026-02-03
+- **Conversation ID:** LS-SESSION8-20260205
+- **Last Updated:** 2026-02-05
+- **Session 8 Updates:** Corrected `user_preferences`, `judge_reports` schemas; added `court_orders`, `gamma_reports` tables; updated savedComparisons service docs; added dual-storage architecture table; updated localStorage keys with DB sync mapping

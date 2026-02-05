@@ -1,6 +1,6 @@
 # LIFE SCORE™ MASTER README
-**Conversation ID:** `LIFESCORE-PERF-20260202`
-**Last Updated:** February 2, 2026
+**Conversation ID:** `LS-SESSION8-20260205`
+**Last Updated:** February 5, 2026
 **Domain:** clueslifescore.com
 
 ---
@@ -12,7 +12,8 @@
 - Uses 5 LLMs with web search to evaluate 100 metrics across 6 categories
 - Claude Opus 4.5 serves as final judge ("The Judge") for consensus
 - Gamma AI generates 30-page visual reports
-- Ask Olivia AI assistant (coming soon - D-ID/HeyGen integration)
+- Ask Olivia AI assistant with D-ID/HeyGen avatar integration
+- Ask Emilia help system with 6-tab documentation modal + AI chat
 
 **Repository:** https://github.com/johndesautels1/lifescore
 **Deployed:** Vercel (auto-deploy from main branch)
@@ -20,40 +21,55 @@
 
 ---
 
-## RECENT COMMITS (Session OLIVIA-ENHANCE-20260124)
+## RECENT COMMITS (Session LS-SESSION8-20260205)
 
 | Commit | Description |
 |--------|-------------|
-| `0ccd904` | feat(olivia): add automatic function calling for field evidence lookup |
-| `f7db9c7` | feat(olivia): add field evidence API for dynamic source lookup |
-| `358de3b` | feat(olivia): enhance context injection with evidence, field knowledge, executive summary |
+| `e5d5a8f` | Fix judge_reports onConflict to match unique constraint (user_id,report_id) |
+| `7419e11` | Fix judge_reports upsert to match actual Supabase table schema |
+| `3dc9217` | Fix user_preferences upsert to match actual Supabase table schema |
+| `9405a07` | Complete save audit: dual-storage for ALL save points, outer try/catch on all DB saves |
+| `393f8bd` | Add dual-storage (localStorage + Supabase) for Gamma/Judge reports, error handling |
+| `9003271` | Fix visual reports: Gamma generationId + Judge reports in saved tab |
 
 ---
 
-## COMPLETED THIS SESSION (OLIVIA-ENHANCE-20260124)
+## COMPLETED THIS SESSION (LS-SESSION8-20260205)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Phase 1: Expanded evidence injection | ✅ Done | Evidence with quotes/snippets in text summary |
-| Phase 2: Field knowledge database | ✅ Done | 100 metrics with talking points, common questions |
-| Phase 3: Gamma report content injection | ✅ Done | Executive summary narrative in context |
-| Phase 4: OpenAI Assistant personality update | ✅ Done | Warmer, conversational instructions |
-| Field Evidence API | ✅ Done | /api/olivia/field-evidence endpoint |
-| Function calling integration | ✅ Done | Chat handler auto-handles tool calls |
-| OpenAI function definition | ✅ Done | getFieldEvidence function added to assistant |
+| Fix Gamma "Error: Generation ID missing" | ✅ Done | api/gamma.ts fallback: `status.id \|\| generationId` |
+| Judge reports visible in Visual Reports tab | ✅ Done | SavedComparisons.tsx now reads judge_reports |
+| Centralize all Judge report localStorage access | ✅ Done | JudgeTab.tsx + judgePregenService.ts use service functions |
+| Gamma reports persist to Supabase | ✅ Done | saveGammaReport() → databaseService.saveGammaReport() |
+| Judge reports persist to Supabase | ✅ Done | saveJudgeReport() → judge_reports table upsert |
+| Court Order video saves persist to Supabase | ✅ Done | New court_orders table + centralized saveCourtOrder() |
+| Weight presets persist to Supabase | ✅ Done | user_preferences.weight_presets JSONB column |
+| Law/Lived preferences persist to Supabase | ✅ Done | user_preferences.law_lived_preferences JSONB column |
+| Excluded categories persist to Supabase | ✅ Done | user_preferences.excluded_categories JSONB column |
+| Dealbreakers persist to Supabase | ✅ Done | user_preferences.dealbreakers JSONB column |
+| All localStorage.setItem wrapped in try/catch | ✅ Done | 15+ save points protected |
+| All Supabase DB saves wrapped in outer try/catch | ✅ Done | No unprotected fire-and-forget calls |
+| Verify all Supabase schemas match code | ✅ Done | judge_reports, user_preferences, court_orders verified |
+| Tavily timeout hotfix | ✅ Done | Reduced from 240s to 45s |
+| Fix #17: Score Methodology explainer UI | ✅ Done | Glass-morphic 5-stage pipeline card |
+| Fix #12: Freedom vs Imprisonment cards | ✅ Done | Polish comparison cards |
+| Fix #73: API cost tracking audit | ✅ Done | Wire all providers to record costs |
+
+---
+
+## COMPLETED IN PRIOR SESSIONS (Summary)
+
+| Session | Key Work |
+|---------|----------|
+| Session 5 (2026-02-04) | Fix #48 video stability, #49 Gemini retry, #50 cost auto-sync |
+| Session 5/6 (2026-02-04) | Fix HIGH UI/UX bugs #51-56, MEDIUM #9-11, #57, #63 |
+| Session 6 (2026-02-04) | Fix MEDIUM UI/UX bugs #58-69 (text colors, buttons, tabs) |
+| Session 7 (2026-02-04) | Mark 50 items complete, Session 7 handoff |
 
 ---
 
 ## REMAINING WORK
-
-### URGENT TASKS COMPLETED
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| U4 | Top 5 Deciding Factors Widget | HIGH | ✅ Done |
-| U5 | Save Report Button | MEDIUM | ✅ Done |
-
----
 
 ### PHASE A: Infrastructure & Deployment
 
@@ -81,11 +97,9 @@
 | # | Task | Priority | Status |
 |---|------|----------|--------|
 | C1 | Section Auto-Scroll | MEDIUM | 🔴 Not Started |
-| C2 | About Card Explanation | MEDIUM | ✅ Done (via U2) |
 | C3 | Add More Models Button Handlers | MEDIUM | 🔴 Not Started |
 | C4 | Incremental LLM Addition Flow | MEDIUM | 🔴 Not Started |
 | C5 | Judge Re-runs with Combined Results | MEDIUM | 🔴 Not Started |
-| C6 | Save Report Button | MEDIUM | ✅ Done (= U5) |
 
 ---
 
@@ -93,33 +107,17 @@
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| D1 | Gamma 30-Page Setting | HIGH | ✅ Done |
 | D2 | Gamma Embed Loading Spinner | LOW | 🔴 Not Started |
 | D3 | Gamma Embed Error Handling | LOW | 🔴 Not Started |
 
 ---
 
-### PHASE E: Ask Olivia AI Assistant
+### PHASE H: Judge Toolbar Tab
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| E1 | Olivia Toolbar Tab | HIGH | ✅ Done |
-| E2 | Olivia Iframe/Placeholder Page | HIGH | ✅ Done |
-| E3 | Olivia Data Integration | HIGH | ✅ Done |
-| E4 | D-ID/HeyGen Avatar Integration | HIGH | ✅ Done |
-| E5 | Enhanced Context Injection | HIGH | ✅ Done |
-| E6 | Field Knowledge Database (100 metrics) | HIGH | ✅ Done |
-| E7 | Function Calling (getFieldEvidence) | HIGH | ✅ Done |
-| E8 | OpenAI Assistant Personality Update | MEDIUM | ✅ Done |
-
----
-
-### PHASE H: Judge Toolbar Tab (NEXT)
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| H1 | Judge Tab in Toolbar | HIGH | 🔴 Not Started |
-| H2 | Judge Results Display | HIGH | 🔴 Not Started |
+| H1 | Judge Tab in Toolbar | HIGH | ✅ Done |
+| H2 | Judge Results Display | HIGH | ✅ Done |
 | H3 | Disagreement Visualization | MEDIUM | 🔴 Not Started |
 | H4 | Re-run Judge Functionality | MEDIUM | 🔴 Not Started |
 
@@ -129,10 +127,10 @@
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| F1 | Login Landing Page (Glassmorphic) | HIGH | 🔴 Not Started |
-| F2 | User ID System | HIGH | 🔴 Not Started |
-| F3 | Toolbar User Tab | MEDIUM | 🔴 Not Started |
-| F4 | Session Management | MEDIUM | 🔴 Not Started |
+| F1 | Login Landing Page (Glassmorphic) | HIGH | ✅ Done |
+| F2 | User ID System | HIGH | ✅ Done |
+| F3 | Toolbar User Tab | MEDIUM | ✅ Done |
+| F4 | Session Management | MEDIUM | ✅ Done |
 
 ---
 
@@ -140,10 +138,46 @@
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| G1 | Stripe Integration | HIGH | 🔴 Not Started |
-| G2 | Price Options Page | HIGH | 🔴 Not Started |
-| G3 | Payment Flow | HIGH | 🔴 Not Started |
-| G4 | Subscription Gating | MEDIUM | 🔴 Not Started |
+| G1 | Stripe Integration | HIGH | ✅ Done |
+| G2 | Price Options Page | HIGH | ✅ Done |
+| G3 | Payment Flow | HIGH | ✅ Done |
+| G4 | Subscription Gating | MEDIUM | ✅ Done |
+
+---
+
+### PHASE I: Documentation Maintenance (NEW)
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| I1 | Update APP_SCHEMA_MANUAL.md - court_orders table | HIGH | ✅ Done |
+| I2 | Update APP_SCHEMA_MANUAL.md - user_preferences actual columns | HIGH | ✅ Done |
+| I3 | Update APP_SCHEMA_MANUAL.md - judge_reports actual columns | HIGH | ✅ Done |
+| I4 | Update CUSTOMER_SERVICE_MANUAL.md - dual save system | MEDIUM | 🔴 Not Started |
+| I5 | Update TECHNICAL_SUPPORT_MANUAL.md - save architecture | MEDIUM | 🔴 Not Started |
+| I6 | Update USER_MANUAL.md - save/export features | LOW | 🔴 Not Started |
+| I7 | Add Database Schema subtab to Ask Emilia modal | MEDIUM | 🔴 See Notes |
+
+**I7 Notes:** App Schema tab already contains database schema. Decide if a separate "Database Schema" subtab is needed or if current coverage is sufficient.
+
+---
+
+## SAVE ARCHITECTURE (Added 2026-02-05)
+
+All user data saves to BOTH localStorage (offline-first) AND Supabase (cloud backup).
+
+| Data | localStorage Key | Supabase Table | Service Function |
+|------|-----------------|---------------|-----------------|
+| Standard Comparisons | `lifescore_saved_comparisons` | `comparisons` | `saveComparisonLocal()` |
+| Enhanced Comparisons | `lifescore_saved_enhanced` | `comparisons` | `saveEnhancedComparisonLocal()` |
+| Gamma Reports | `lifescore_saved_gamma_reports` | `gamma_reports` | `saveGammaReport()` |
+| Judge Reports | `lifescore_judge_reports` | `judge_reports` | `saveJudgeReport()` |
+| Court Orders | `lifescore_court_orders` | `court_orders` | `saveCourtOrder()` |
+| Weight Presets | `lifescore_weights` | `user_preferences.weight_presets` | `saveUserPreferenceToDb()` |
+| Law/Lived Prefs | `lifescore_lawlived` | `user_preferences.law_lived_preferences` | `saveUserPreferenceToDb()` |
+| Excluded Categories | `lifescore_excluded_categories` | `user_preferences.excluded_categories` | `saveUserPreferenceToDb()` |
+| Dealbreakers | `lifescore_dealbreakers` | `user_preferences.dealbreakers` | `saveUserPreferenceToDb()` |
+
+**Central service file:** `src/services/savedComparisons.ts`
 
 ---
 
@@ -155,37 +189,48 @@ D:\LifeScore\
 │   ├── App.tsx                    # Main app, tab routing
 │   ├── components/
 │   │   ├── EnhancedComparison.tsx # Results display, LLMSelector
-│   │   ├── EnhancedComparison.css # Results styling
-│   │   ├── TabNavigation.tsx      # Toolbar tabs (Olivia, Judge, etc.)
+│   │   ├── JudgeTab.tsx           # Judge verdict display
+│   │   ├── CourtOrderVideo.tsx    # Court order video player
+│   │   ├── SavedComparisons.tsx   # Saved reports browser
+│   │   ├── WeightPresets.tsx      # Category weight customization
+│   │   ├── DealbreakersPanel.tsx  # Must-have metrics selection
+│   │   ├── HelpModal.tsx          # Ask Emilia 6-tab help modal
 │   │   ├── AskOlivia.tsx          # Olivia chat component
-│   │   ├── AskOlivia.css          # Olivia styling
 │   │   ├── VisualsTab.tsx         # Gamma embed iframe
 │   │   └── ...
 │   ├── services/
+│   │   ├── savedComparisons.ts    # CENTRAL save service (localStorage + Supabase)
+│   │   ├── databaseService.ts     # Supabase CRUD operations
+│   │   ├── judgePregenService.ts  # Background judge pre-generation
 │   │   ├── gammaService.ts        # Gamma 30-page prompt
 │   │   ├── oliviaService.ts       # Olivia chat API wrapper
-│   │   ├── opusJudge.ts           # Judge client helpers
-│   │   └── ...
-│   ├── data/
-│   │   └── fieldKnowledge.ts      # 100 metrics knowledge base
+│   │   └── opusJudge.ts           # Judge client helpers
+│   ├── hooks/
+│   │   ├── useTierAccess.ts       # Tier limits + usage tracking
+│   │   └── useApiUsageMonitor.ts  # Client-side API usage
+│   ├── lib/
+│   │   └── supabase.ts            # Supabase client init
 │   └── types/
 │       ├── enhancedComparison.ts  # SOURCE OF TRUTH for types
+│       ├── database.ts            # Supabase type definitions
 │       └── olivia.ts              # Olivia types
-├── api/
+├── api/                           # Vercel serverless functions
 │   ├── gamma.ts                   # Gamma API endpoint
 │   ├── judge.ts                   # Opus Judge endpoint
 │   ├── evaluate.ts                # LLM evaluation endpoint
-│   └── olivia/
-│       ├── chat.ts                # Olivia chat + function calling
-│       ├── context.ts             # Context builder with evidence
-│       ├── field-evidence.ts      # Dynamic source lookup API
-│       └── tts.ts                 # Text-to-speech
+│   ├── emilia/manuals.ts          # Manual content API
+│   └── olivia/                    # Olivia API endpoints
 ├── docs/
 │   ├── MASTER_README.md           # This file
-│   ├── OLIVIA_GPT_INSTRUCTIONS.md # OpenAI Assistant instructions
-│   ├── OLIVIA_KNOWLEDGE_BASE.md   # 200 cities knowledge (283KB)
+│   ├── manuals/                   # Emilia help system content
+│   │   ├── APP_SCHEMA_MANUAL.md
+│   │   ├── JUDGE_EQUATIONS_MANUAL.md
+│   │   ├── USER_MANUAL.md
+│   │   ├── CUSTOMER_SERVICE_MANUAL.md
+│   │   ├── TECHNICAL_SUPPORT_MANUAL.md
+│   │   └── LEGAL_COMPLIANCE_MANUAL.md
 │   └── handoffs/                  # Session handoff documents
-└── olivia-function.json           # OpenAI function definition
+└── package.json
 ```
 
 ---
@@ -208,77 +253,32 @@ All configured in Vercel. **DO NOT ask user to configure.**
 
 ---
 
-## PRIORITY MATRIX
-
-### CRITICAL
-- B3: Multi-LLM Field Sources Missing
-- B4: Field-by-Field Comparison References
-
-### HIGH
-- U4: Top 5 Deciding Factors Widget
-- A1-A3: Domain & Deployment
-- E3-E4: Olivia Integration
-- F1-F2: Login System
-- G1-G2: Stripe
-
-### MEDIUM
-- U5: Save Report Button
-- C1, C3-C5: UI Improvements
-- F3-F4: Session Management
-
-### LOW
-- D2-D3: Gamma Polish
-
----
-
-## PERFORMANCE OPTIMIZATION (2026-02-02)
-
-**Reference:** `docs/PERFORMANCE_AUDIT_20260202.md`
-**Issue:** Site takes 1-3 MINUTES to load on cold start (1.36MB bundle)
-
-### Phase Status
-
-| Phase | Description | Status | Safe? |
-|-------|-------------|--------|-------|
-| **Phase 1** | Vendor manualChunks (react, supabase) | ✅ DONE | ✅ YES |
-| **Phase 2** | Tab lazy loading (Olivia, Saved, Visuals) | ✅ DONE | ✅ YES |
-| **Phase 3** | Refactor EnhancedComparison.tsx | 🔴 Not Started | ⚠️ CAREFUL |
-| **Phase 4** | Data file lazy loading | 🔴 Not Started | ⚠️ HIGH RISK |
-
-### Phase 1 Completed (2026-02-02)
-- ✅ Removed `chunkSizeWarningLimit: 1000` (was hiding warnings)
-- ✅ Added `manualChunks` for `react-vendor` and `supabase`
-- Output: Vendor code now in separate cacheable chunks
-
-### Phase 2 Completed (2026-02-02)
-- ✅ `AskOlivia.tsx` - React.lazy() with Suspense
-- ✅ `SavedComparisons.tsx` - React.lazy() with Suspense
-- ✅ `VisualsTab.tsx` - React.lazy() with Suspense
-- ✅ Added `.tab-loading` CSS for loading states
-- Output: Tab components load on-demand when user switches tabs
-
-### Phase 3 Blocked (Requires Refactoring)
-**EnhancedComparison.tsx CANNOT be lazy loaded as-is:**
-- Exports 6 named components/constants used at App.tsx initialization
-- `EVALUATOR_LLMS` used in `useState()` initialization (line 80-82)
-- Must split into `constants.ts` + lazy-loadable `components.tsx`
-
-### Phase 4 High Risk (Data Files)
-- `metrics.ts` (92KB) imported by 16+ files synchronously
-- `fieldKnowledge.ts` (67KB) deeply nested imports
-- Requires full import chain audit before attempting
-
----
-
 ## NEW SESSION CHECKLIST
 
 ```
-1. Read D:\LifeScore\HANDOFF_2026_0121_SESSION_THETA.md
-2. git log --oneline -5
+1. Read D:\lifescore\docs\MASTER_README.md (this file)
+2. git log --oneline -10
 3. git status
-4. Confirm current phase and priority
-5. Begin work
+4. Read the Session 9 handoff section below
+5. Confirm current phase and priority
+6. Begin work
 ```
+
+---
+
+## SESSION 9 HANDOFF
+
+**Next agent should:**
+1. Review Phase I documentation tasks (I4, I5, I6) — update manuals affected by save audit
+2. Review Phase B (CRITICAL bugs B3, B4 — field sources)
+3. Review Phase A (domain/deployment)
+4. Check if APP_SCHEMA_MANUAL.md database section needs further updates for `court_orders` and `user_preferences` actual vs documented schema
+
+**Known Supabase schema discrepancies in APP_SCHEMA_MANUAL.md:**
+- `user_preferences` documented columns don't match actual table (see Session 8 notes)
+- `judge_reports` documented columns don't match actual table (see Session 8 notes)
+- `court_orders` table is NEW and needs to be added to documentation
+- `saved_comparisons` in docs but actual table name is `comparisons` in code
 
 ---
 
