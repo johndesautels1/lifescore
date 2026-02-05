@@ -323,6 +323,7 @@
 | f34c4ef | B3 fix: LLM attribution badges on all source citations |
 | a7a1ada | Reorganize docs, regenerate UNIFIED-MASTER-TODO |
 | 3c94a3a | Features #18, #19, #71: Save buttons + draggable chat bubbles |
+| e01b21f | Fix audit: transform direction, HelpBubble wrapper, update docs |
 
 ---
 
