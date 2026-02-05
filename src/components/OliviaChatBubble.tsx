@@ -18,6 +18,7 @@ import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
 } from '../services/savedComparisons';
+import { useDraggable } from '../hooks/useDraggable';
 import './OliviaChatBubble.css';
 
 interface OliviaChatBubbleProps {
@@ -25,6 +26,10 @@ interface OliviaChatBubbleProps {
 }
 
 const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult }) => {
+  const { position, isDragging, wasDragged, handlePointerDown } = useDraggable({
+    storageKey: 'lifescore_olivia_bubble_pos',
+  });
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -271,6 +276,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   }, [messages, hasComparisonData, city1, city2]);
 
   const toggleOpen = () => {
+    if (wasDragged) return;
     if (!isOpen) {
       setIsOpen(true);
       setIsMinimized(false);
@@ -290,7 +296,10 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   };
 
   return (
-    <div className={`olivia-bubble-container ${isOpen ? 'open' : ''} ${isMinimized ? 'minimized' : ''}`}>
+    <div
+      className={`olivia-bubble-container ${isOpen ? 'open' : ''} ${isMinimized ? 'minimized' : ''} ${isDragging ? 'dragging' : ''}`}
+      style={{ transform: `translate(${-position.x}px, ${-position.y}px)` }}
+    >
       {/* Expanded Chat Panel */}
       {isOpen && !isMinimized && (
         <div className="bubble-chat-panel">
@@ -504,7 +513,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
 
       {/* Minimized Bar */}
       {isOpen && isMinimized && (
-        <div className="bubble-minimized-bar" onClick={() => setIsMinimized(false)}>
+        <div className="bubble-minimized-bar" onClick={() => { if (!wasDragged) setIsMinimized(false); }} onPointerDown={handlePointerDown} style={{ touchAction: 'none' }}>
           <div className="minimized-avatar">O</div>
           <span className="minimized-name">OLIVIA</span>
           {hasNewMessage && <span className="minimized-badge">1</span>}
@@ -516,7 +525,9 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
       <button
         className={`olivia-fab ${isOpen ? 'hidden' : ''} ${hasNewMessage ? 'has-notification' : ''}`}
         onClick={toggleOpen}
+        onPointerDown={handlePointerDown}
         aria-label="Chat with Olivia"
+        style={{ touchAction: 'none' }}
       >
         <div className="fab-inner">
           <span className="fab-letter">O</span>

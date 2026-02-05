@@ -403,6 +403,44 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     autoDetect: true,
   });
 
+  // Save contrast images handler (fetch → blob → download)
+  const handleSaveContrastImages = useCallback(async () => {
+    if (!contrastImages) return;
+
+    const downloadImage = async (url: string, filename: string) => {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.error('[AskOlivia] Image download failed:', err);
+        window.open(url, '_blank');
+      }
+    };
+
+    if (contrastImages.cityAImage?.url) {
+      await downloadImage(
+        contrastImages.cityAImage.url,
+        `${city1.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-contrast.png`
+      );
+    }
+    if (contrastImages.cityBImage?.url) {
+      setTimeout(async () => {
+        await downloadImage(
+          contrastImages.cityBImage.url,
+          `${city2.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-contrast.png`
+        );
+      }, 500);
+    }
+  }, [contrastImages, city1, city2]);
+
   // ═══════════════════════════════════════════════════════════════════
   // AUTO-VISUALIZE: Generate contrast images when Olivia discusses metrics
   // Only triggers once per unique message to prevent flickering/re-renders
@@ -696,6 +734,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               generateContrastImages(metricId);
             }
           }}
+          onSaveImages={handleSaveContrastImages}
         />
       )}
 

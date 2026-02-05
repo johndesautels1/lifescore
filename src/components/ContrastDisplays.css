@@ -350,6 +350,42 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   SAVE IMAGES ACTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contrast-save-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.contrast-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 4px;
+  color: #c9a227;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.contrast-save-btn:hover {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: #c9a227;
+}
+
+.contrast-save-btn .save-icon {
+  display: flex;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    RESPONSIVE - MOBILE
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {

@@ -30,13 +30,24 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    FLOATING ACTION BUTTON (FAB)
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Dragging state */
+.olivia-bubble-container.dragging {
+  cursor: grabbing;
+}
+
+.olivia-bubble-container.dragging .olivia-fab,
+.olivia-bubble-container.dragging .bubble-minimized-bar {
+  cursor: grabbing;
+  transition: none;
+}
+
 .olivia-fab {
   width: 60px;
   height: 60px;
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, var(--bubble-midnight) 0%, var(--bubble-navy) 100%);
-  cursor: pointer;
+  cursor: grab;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow:

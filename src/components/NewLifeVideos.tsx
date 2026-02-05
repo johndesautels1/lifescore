@@ -174,6 +174,34 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     });
   }, []);
 
+  // FIX #19: Proper cross-origin video download using fetch → blob
+  const [isDownloading, setIsDownloading] = useState<'winner' | 'loser' | null>(null);
+
+  const handleDownloadVideo = useCallback(async (
+    videoUrl: string,
+    cityName: string,
+    type: 'winner' | 'loser'
+  ) => {
+    setIsDownloading(type);
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${cityName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${type === 'winner' ? 'freedom' : 'imprisonment'}-video.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(`[NewLifeVideos] ${type} download error:`, err);
+      window.open(videoUrl, '_blank');
+    } finally {
+      setIsDownloading(null);
+    }
+  }, []);
+
   // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
@@ -357,28 +385,28 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
 
               <div className="download-actions">
                 {videoPair?.winner?.videoUrl && (
-                  <a
-                    href={videoPair.winner.videoUrl}
-                    download={`${winnerCity}-freedom-video.mp4`}
+                  <button
                     className="download-btn secondary-btn"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={() => handleDownloadVideo(videoPair.winner!.videoUrl, winnerCity, 'winner')}
+                    disabled={isDownloading === 'winner'}
                   >
-                    <span className="btn-icon">⬇️</span>
-                    <span className="btn-text">Download {winnerCity}</span>
-                  </a>
+                    <span className="btn-icon">{isDownloading === 'winner' ? '...' : '⬇️'}</span>
+                    <span className="btn-text">
+                      {isDownloading === 'winner' ? 'Downloading...' : `Download ${winnerCity}`}
+                    </span>
+                  </button>
                 )}
                 {videoPair?.loser?.videoUrl && (
-                  <a
-                    href={videoPair.loser.videoUrl}
-                    download={`${loserCity}-imprisonment-video.mp4`}
+                  <button
                     className="download-btn secondary-btn"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={() => handleDownloadVideo(videoPair.loser!.videoUrl, loserCity, 'loser')}
+                    disabled={isDownloading === 'loser'}
                   >
-                    <span className="btn-icon">⬇️</span>
-                    <span className="btn-text">Download {loserCity}</span>
-                  </a>
+                    <span className="btn-icon">{isDownloading === 'loser' ? '...' : '⬇️'}</span>
+                    <span className="btn-text">
+                      {isDownloading === 'loser' ? 'Downloading...' : `Download ${loserCity}`}
+                    </span>
+                  </button>
                 )}
               </div>
             </div>

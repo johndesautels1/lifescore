@@ -522,9 +522,15 @@
   transition: all 0.2s ease;
 }
 
-.download-btn:hover {
+.download-btn:hover:not(:disabled) {
   background: rgba(212, 175, 55, 0.15);
   transform: translateY(-1px);
+}
+
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .download-btn .btn-icon {

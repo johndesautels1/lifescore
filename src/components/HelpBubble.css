@@ -43,6 +43,16 @@
   transform: scale(1.05);
 }
 
+/* Dragging state */
+.help-bubble.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.help-bubble:not(.dragging) {
+  cursor: grab;
+}
+
 .help-bubble:focus-visible {
   box-shadow:
     0 4px 12px rgba(20, 184, 166, 0.4),

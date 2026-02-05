@@ -11,13 +11,19 @@
 
 import React, { useState } from 'react';
 import HelpModal from './HelpModal';
+import { useDraggable } from '../hooks/useDraggable';
 import './HelpBubble.css';
 
 const HelpBubble: React.FC = () => {
+  const { position, isDragging, wasDragged, handlePointerDown } = useDraggable({
+    storageKey: 'lifescore_help_bubble_pos',
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasUnreadTip, setHasUnreadTip] = useState(false);
 
   const handleOpen = () => {
+    if (wasDragged) return;
     setIsModalOpen(true);
     setHasUnreadTip(false);
   };
@@ -30,10 +36,15 @@ const HelpBubble: React.FC = () => {
     <>
       {/* Floating Help Button */}
       <button
-        className={`help-bubble ${hasUnreadTip ? 'has-notification' : ''}`}
+        className={`help-bubble ${hasUnreadTip ? 'has-notification' : ''} ${isDragging ? 'dragging' : ''}`}
         onClick={handleOpen}
+        onPointerDown={handlePointerDown}
         aria-label="Get help from Emilia"
         title="Need help? Ask Emilia"
+        style={{
+          transform: `translate(${position.x}px, ${-position.y}px)`,
+          touchAction: 'none',
+        }}
       >
         <div className="help-bubble-inner">
           <span className="help-bubble-icon">?</span>

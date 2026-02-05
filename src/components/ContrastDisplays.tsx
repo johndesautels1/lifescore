@@ -26,6 +26,7 @@ interface ContrastDisplaysProps {
   topic: string | null;
   error: string | null;
   onRetry?: () => void;
+  onSaveImages?: () => void;
 }
 
 export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
@@ -36,6 +37,7 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
   topic,
   error,
   onRetry,
+  onSaveImages,
 }) => {
   // Don't render anything if idle and no images
   if (status === 'idle' && !images) {
@@ -185,6 +187,20 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
           )}
         </div>
       </div>
+
+      {/* Save Images */}
+      {status === 'ready' && images && onSaveImages && (
+        <div className="contrast-save-actions">
+          <button className="contrast-save-btn" onClick={onSaveImages}>
+            <span className="save-icon">
+              <svg viewBox="0 0 24 24" width="14" height="14">
+                <path fill="currentColor" d="M5 20h14v-2H5v2zm7-18L5.33 9h3.17v4h5v-4h3.17L12 2z"/>
+              </svg>
+            </span>
+            <span className="save-text">SAVE IMAGES</span>
+          </button>
+        </div>
+      )}
 
       {/* Error Retry */}
       {status === 'error' && onRetry && (
