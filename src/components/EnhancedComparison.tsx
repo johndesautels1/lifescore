@@ -1302,7 +1302,6 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [scoreViewMode, setScoreViewMode] = useState<'lived' | 'lawVsReality'>('lived');
   const [showDataSources, setShowDataSources] = useState(false);
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
-  const [showScoringExplanation, setShowScoringExplanation] = useState(false);
   const [expandedDifference, setExpandedDifference] = useState<string | null>(null);
   const [showGunComparison, setShowGunComparison] = useState(false);
 
@@ -1774,9 +1773,6 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           </>
         )}
       </div>
-
-      {/* Score Methodology Explainer - #17 */}
-      <ScoreMethodology result={result} />
 
       {/* LLM Agreement Analysis - Bug B Fix */}
       <LLMAgreementSection
@@ -2319,7 +2315,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       {/* Evidence & Citations Panel - Collapsible */}
       <EvidencePanel result={result} />
 
-      {/* Footer */}
+      {/* Footer - About Enhanced Comparison with Embedded Methodology */}
       <div className="enhanced-footer card">
         <h4>About Enhanced Comparison</h4>
         <p>
@@ -2327,37 +2323,11 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           independently evaluate {result.processingStats.metricsEvaluated} freedom metrics.
           A specialized judge model reviewed all evaluations to build consensus scores.
         </p>
-        
-        <div className={`scoring-explanation ${showScoringExplanation ? 'expanded' : 'collapsed'}`}>
-          <button
-            className="scoring-toggle-btn"
-            onClick={() => setShowScoringExplanation(!showScoringExplanation)}
-          >
-            <h5>How Our Scoring Works</h5>
-            <span className={`toggle-arrow ${showScoringExplanation ? 'expanded' : ''}`}>▼</span>
-          </button>
-          {showScoringExplanation && (
-            <div className="scoring-content">
-              <p>
-                <strong>1. Independent Research:</strong> Multiple AI models with real-time web access independently
-                analyze each metric using authoritative sources—laws, statutes, government data, and enforcement records.
-              </p>
-              <p>
-                <strong>2. Evidence-Based Scoring:</strong> Scores are derived from verifiable legal data, not opinions.
-                Each metric measures specific regulations and their real-world enforcement.
-              </p>
-              <p>
-                <strong>3. Consensus Building:</strong> A final judge model reviews all independent evaluations,
-                weighs the evidence, identifies areas of agreement and disagreement, and produces balanced consensus scores.
-              </p>
-              <p>
-                <strong>4. Full Transparency:</strong> Every score links to the specific sources used, allowing you
-                to verify findings. Click the 📄 icon on any metric to see the data behind the numbers.
-              </p>
-            </div>
-          )}
-        </div>
-        <p>
+
+        {/* Unified Score Methodology - moved from top, combined with old "How Our Scoring Works" */}
+        <ScoreMethodology result={result} />
+
+        <p style={{ marginTop: '1.5rem' }}>
           <strong>Generated:</strong> {new Date(result.generatedAt).toLocaleString()}
           <br />
           <strong>Comparison ID:</strong> {result.comparisonId}

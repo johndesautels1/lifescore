@@ -279,6 +279,53 @@ const ScoreMethodology: React.FC<ScoreMethodologyProps> = ({ result }) => {
             </div>
           </div>
 
+          <div className="stage-divider" />
+
+          {/* ── STAGE 6: TRANSPARENCY ── */}
+          <div className="methodology-stage">
+            <div className="stage-header">
+              <span className="stage-number">6</span>
+              <div>
+                <h4 className="stage-title">Full Transparency</h4>
+                <p className="stage-label">Verifiable Evidence &amp; Source Attribution</p>
+              </div>
+            </div>
+            <div className="stage-content">
+              <p>
+                Every score in LIFE SCORE is derived from <strong>verifiable legal data, not opinions</strong>.
+                Each metric measures specific regulations, statutes, government data, and their real-world
+                enforcement patterns.
+              </p>
+              <div className="transparency-features">
+                <div className="transparency-feature">
+                  <span className="transparency-icon">📄</span>
+                  <div>
+                    <strong>Click any metric</strong> to see the specific sources, citations, and evidence
+                    used to derive that score.
+                  </div>
+                </div>
+                <div className="transparency-feature">
+                  <span className="transparency-icon">📚</span>
+                  <div>
+                    <strong>View Data Sources</strong> button below provides a complete list of all
+                    references used across the entire comparison.
+                  </div>
+                </div>
+                <div className="transparency-feature">
+                  <span className="transparency-icon">🔍</span>
+                  <div>
+                    <strong>Evidence Panel</strong> shows all web citations with direct links so you
+                    can verify findings yourself.
+                  </div>
+                </div>
+              </div>
+              <p>
+                This commitment to transparency means you never have to &quot;just trust&quot; a score &mdash;
+                you can trace every number back to its source.
+              </p>
+            </div>
+          </div>
+
         </div>
       )}
     </div>
