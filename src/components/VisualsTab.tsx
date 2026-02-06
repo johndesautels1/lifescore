@@ -440,6 +440,11 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
         {(reportState.status === 'generating' || reportState.status === 'polling') && (
           <div className="generating-state">
+            {/* Spinner + Percentage */}
+            <div className="progress-header">
+              <div className="spinner"></div>
+              <span className="progress-percentage">{reportState.progress || 0}%</span>
+            </div>
             <div className="progress-bar">
               <div
                 className="progress-fill"

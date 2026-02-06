@@ -217,26 +217,61 @@
 /* Progress State */
 .generating-state {
   text-align: center;
+  padding: 1.5rem;
+}
+
+/* Progress Header with Spinner + Percentage */
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(212, 175, 55, 0.3);
+  border-top-color: #D4AF37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress-percentage {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #D4AF37;
 }
 
 .progress-bar {
-  height: 8px;
-  background: var(--border-color, #2a2a4a);
-  border-radius: 4px;
+  height: 10px;
+  background: rgba(42, 42, 74, 0.8);
+  border-radius: 5px;
   overflow: hidden;
   margin-bottom: 1rem;
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-color, #D4AF37), var(--accent-hover, #E5C04B));
-  border-radius: 4px;
+  background: linear-gradient(90deg, #D4AF37, #E5C04B);
+  border-radius: 5px;
   transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .status-message {
-  color: var(--text-secondary, #a0a0c0);
-  font-size: 0.9rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 /* Completed State */
@@ -661,8 +696,8 @@
 
 .type-hint {
   margin: 0.25rem 0 0 0;
-  font-size: 0.8rem;
-  color: var(--text-secondary, #a0a0c0);
+  font-size: 0.85rem;
+  color: #d0d0e0;
   font-style: italic;
 }
 
@@ -700,9 +735,10 @@
 
 .gun-hint {
   margin: 0.5rem 0 0 1.75rem;
-  font-size: 0.8rem;
-  color: #F97316;
+  font-size: 0.85rem;
+  color: #FBBF24;
   font-style: italic;
+  font-weight: 500;
 }
 
 /* ============================================================================
@@ -711,9 +747,10 @@
 
 .enhanced-hint {
   margin: 0.5rem 0 0 0;
-  font-size: 0.8rem;
-  color: var(--text-secondary, #a0a0c0);
+  font-size: 0.85rem;
+  color: #E5C04B;
   font-style: italic;
+  font-weight: 500;
 }
 
 /* ============================================================================
