@@ -49,16 +49,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
 
   // Calculate localStorage usage
   const calculateStorageUsage = useCallback(() => {
-    let total = 0;
+    let totalChars = 0;
     for (const key in localStorage) {
       if (localStorage.hasOwnProperty(key)) {
-        total += localStorage.getItem(key)?.length || 0;
+        // Include key length + value length
+        totalChars += key.length + (localStorage.getItem(key)?.length || 0);
       }
     }
-    // localStorage limit is ~5MB (5,242,880 bytes)
+    // localStorage stores UTF-16 strings: each character = 2 bytes
+    const totalBytes = totalChars * 2;
+    // localStorage limit is ~5MB (5,242,880 bytes) in most browsers
     const maxStorage = 5 * 1024 * 1024;
-    const percentage = Math.round((total / maxStorage) * 100);
-    setStorageUsage({ used: total, percentage: Math.min(percentage, 100) });
+    const percentage = Math.round((totalBytes / maxStorage) * 100);
+    setStorageUsage({ used: totalBytes, percentage: Math.min(percentage, 100) });
   }, []);
 
   // Clear all LIFE SCORE local data
