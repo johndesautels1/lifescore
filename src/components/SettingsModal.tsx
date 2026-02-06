@@ -17,7 +17,7 @@ interface SettingsModalProps {
   onUpgradeClick?: () => void;
 }
 
-type SettingsTab = 'profile' | 'security' | 'subscription' | 'api-keys';
+type SettingsTab = 'profile' | 'security' | 'subscription' | 'api-keys' | 'data';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgradeClick }) => {
   const { user, profile, updateProfile, isConfigured } = useAuth();
@@ -41,6 +41,48 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
   // API Keys state
   const [apiKeys, setApiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys());
   const [apiKeysSaved, setApiKeysSaved] = useState(false);
+
+  // Data management state
+  const [storageUsage, setStorageUsage] = useState<{ used: number; percentage: number }>({ used: 0, percentage: 0 });
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearSuccess, setClearSuccess] = useState(false);
+
+  // Calculate localStorage usage
+  const calculateStorageUsage = useCallback(() => {
+    let total = 0;
+    for (const key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) {
+        total += localStorage.getItem(key)?.length || 0;
+      }
+    }
+    // localStorage limit is ~5MB (5,242,880 bytes)
+    const maxStorage = 5 * 1024 * 1024;
+    const percentage = Math.round((total / maxStorage) * 100);
+    setStorageUsage({ used: total, percentage: Math.min(percentage, 100) });
+  }, []);
+
+  // Clear all LIFE SCORE local data
+  const handleClearLocalData = useCallback(() => {
+    const keysToRemove = [
+      'lifescore_saved_enhanced',
+      'lifescore_saved_comparisons',
+      'lifescore_saved_gamma_reports',
+      'lifescore_judge_reports',
+      'lifescore_court_orders',
+    ];
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    setShowClearConfirm(false);
+    setClearSuccess(true);
+    calculateStorageUsage();
+    setTimeout(() => setClearSuccess(false), 3000);
+  }, [calculateStorageUsage]);
+
+  // Calculate storage on mount and tab switch
+  useEffect(() => {
+    if (activeTab === 'data') {
+      calculateStorageUsage();
+    }
+  }, [activeTab, calculateStorageUsage]);
 
   // Initialize form with user data
   useEffect(() => {
@@ -212,6 +254,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
               <path fill="currentColor" d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
             </svg>
             <span>API Keys</span>
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'data' ? 'active' : ''}`}
+            onClick={() => setActiveTab('data')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/>
+            </svg>
+            <span>Data</span>
           </button>
         </div>
 
@@ -632,6 +683,87 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
                   <p><strong>SOVEREIGN tier required</strong> for Enhanced Mode (5 LLMs)</p>
                   <p>Your keys are stored only in your browser's local storage and never sent to our servers.</p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Data Tab */}
+          {activeTab === 'data' && (
+            <div className="settings-panel">
+              <div className="settings-section">
+                <h3>Local Storage Usage</h3>
+                <p className="section-description">
+                  LIFE SCORE stores your saved comparisons and reports in your browser's local storage.
+                </p>
+
+                <div className="storage-meter">
+                  <div className="storage-bar">
+                    <div
+                      className={`storage-fill ${storageUsage.percentage > 80 ? 'warning' : ''} ${storageUsage.percentage > 95 ? 'critical' : ''}`}
+                      style={{ width: `${storageUsage.percentage}%` }}
+                    />
+                  </div>
+                  <div className="storage-text">
+                    <span>{(storageUsage.used / 1024 / 1024).toFixed(2)} MB used</span>
+                    <span>{storageUsage.percentage}% of 5 MB</span>
+                  </div>
+                </div>
+
+                {storageUsage.percentage > 80 && (
+                  <div className="storage-warning">
+                    ⚠️ Storage is almost full. Consider clearing old data to prevent issues.
+                  </div>
+                )}
+              </div>
+
+              <div className="settings-section">
+                <h3>Clear Local Data</h3>
+                <p className="section-description">
+                  Delete all locally stored comparisons, reports, and cached data.
+                  Data synced to your account will remain in the cloud.
+                </p>
+
+                {!showClearConfirm ? (
+                  <button
+                    type="button"
+                    className="settings-btn danger"
+                    onClick={() => setShowClearConfirm(true)}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                      <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                    <span>Clear All Local Data</span>
+                  </button>
+                ) : (
+                  <div className="clear-confirm">
+                    <p className="confirm-text">Are you sure? This will delete all locally saved comparisons and reports.</p>
+                    <div className="confirm-buttons">
+                      <button
+                        type="button"
+                        className="settings-btn secondary"
+                        onClick={() => setShowClearConfirm(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-btn danger"
+                        onClick={handleClearLocalData}
+                      >
+                        Yes, Clear Everything
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {clearSuccess && (
+                  <div className="settings-success">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                      <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>Local data cleared successfully</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
