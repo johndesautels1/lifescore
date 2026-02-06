@@ -799,6 +799,26 @@
   background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
 }
 
+.storage-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-top: 0.375rem;
+}
+
+.storage-text span:first-child {
+  color: var(--text-primary, #1f2937);
+  font-weight: 500;
+}
+
+[data-theme="dark"] .storage-text span:first-child {
+  color: #ffffff;
+}
+
+.storage-text span:last-child {
+  color: var(--text-secondary, #6b7280);
+}
+
 .storage-fill.danger {
   background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
 }
