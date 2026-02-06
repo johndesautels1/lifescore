@@ -1837,42 +1837,48 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         </div>
 
         {/* Gun Rights Comparison — standalone, unscored */}
-        <div className="gun-comparison-trigger" style={{
-          display: 'flex',
-          justifyContent: 'center',
-          margin: '0.75rem 0 1.25rem',
-        }}>
+        <div className="enhanced-category" style={{ padding: '1rem 0' }}>
           <button
-            className="gun-comparison-btn"
+            className="category-header-btn gun-comparison-btn"
             onClick={() => setShowGunComparison(true)}
             style={{
-              display: 'inline-flex',
+              width: '100%',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.6rem 1.25rem',
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)',
+              justifyContent: 'space-between',
+              padding: '1rem 1.25rem',
+              background: 'linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(45, 45, 68, 0.9) 100%)',
               color: '#e5e5f0',
-              border: '1px solid #3d3d55',
-              borderRadius: '10px',
+              border: '1px solid rgba(61, 61, 85, 0.5)',
+              borderRadius: '14px',
               cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              fontSize: '1.05rem',
+              fontWeight: 700,
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1)',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,71,171,0.3)';
-              e.currentTarget.style.borderColor = '#0047AB';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,71,171,0.3), 0 4px 8px rgba(0,0,0,0.15)';
+              e.currentTarget.style.borderColor = 'rgba(0,71,171,0.5)';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-              e.currentTarget.style.borderColor = '#3d3d55';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1)';
+              e.currentTarget.style.borderColor = 'rgba(61, 61, 85, 0.5)';
             }}
           >
-            <span style={{ fontSize: '1rem' }}>&#x1F52B;</span>
-            Gun Rights Comparison: {result.city1.city} vs {result.city2.city}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>🔫</span>
+              <span>Gun Rights Comparison: {result.city1.city} vs {result.city2.city}</span>
+            </div>
+            <span style={{
+              fontSize: '0.8rem',
+              padding: '0.35rem 0.75rem',
+              background: 'rgba(0,71,171,0.3)',
+              borderRadius: '8px',
+              color: '#6ba3ff'
+            }}>Click to Compare</span>
           </button>
         </div>
 
