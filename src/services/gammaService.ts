@@ -1120,7 +1120,6 @@ function formatSection3CategoryDeepDives(
     const score1 = Math.round(cat1.averageConsensusScore || 0);
     const score2 = Math.round(cat2.averageConsensusScore || 0);
     const catWinner = score1 > score2 ? city1Name : score2 > score1 ? city2Name : 'TIE';
-    const catLoser = score1 > score2 ? city2Name : city1Name;
 
     // Calculate legal vs lived averages
     const city1Legal = Math.round(cat1.metrics.reduce((sum, m) => sum + (m.legalScore ?? m.consensusScore ?? 0), 0) / cat1.metrics.length);
@@ -1269,7 +1268,6 @@ function formatSection4DeeperInsights(
   const city1Name = result.city1.city;
   const city2Name = result.city2.city;
   const winner = result.winner === 'city1' ? city1Name : city2Name;
-  const loser = result.winner === 'city1' ? city2Name : city1Name;
 
   // Collect all metrics with scores
   const allMetrics: Array<{
@@ -1409,7 +1407,6 @@ function formatSection5LLMConsensus(
   result: EnhancedComparisonResult
 ): string {
   const confidence = result.overallConsensusConfidence;
-  const llmsUsed = result.llmsUsed || ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
 
   // Calculate overall agreement
   let totalMetrics = 0;
@@ -1579,9 +1576,6 @@ function formatSection6GunRights(
   result: EnhancedComparisonResult,
   gunData?: GunComparisonData
 ): string {
-  const city1Name = result.city1.city;
-  const city2Name = result.city2.city;
-
   if (!gunData) {
     return `
 ## SECTION 6: GUN RIGHTS COMPARISON
@@ -2075,7 +2069,6 @@ export async function generateEnhancedVisualReport(
       generationId: data.generationId,
       cost,
       timestamp: Date.now(),
-      enhanced: true,
     });
   }
 
