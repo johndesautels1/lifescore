@@ -8,7 +8,13 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
-import { generateAndWaitForReport, getStatusMessage, type AnyComparisonResult } from '../services/gammaService';
+import {
+  generateAndWaitForReport,
+  generateEnhancedAndWaitForReport,
+  getStatusMessage,
+  type AnyComparisonResult
+} from '../services/gammaService';
+import { useGunComparison, type GunComparisonData } from '../hooks/useGunComparison';
 import {
   saveGammaReport,
   hasGammaReportForComparison,
@@ -20,11 +26,55 @@ import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
 import './VisualsTab.css';
 
+// Type for judge report data (matches gammaService)
+interface JudgeReportData {
+  executiveSummary?: {
+    recommendation: 'city1' | 'city2' | 'tie';
+    rationale: string;
+    keyFactors: string[];
+    futureOutlook: string;
+    confidenceLevel: 'high' | 'medium' | 'low';
+  };
+  categoryAnalysis?: Array<{
+    categoryId: string;
+    categoryName: string;
+    city1Analysis: string;
+    city2Analysis: string;
+    trendNotes: string;
+  }>;
+  freedomEducation?: {
+    categories: Array<{
+      categoryId: string;
+      categoryName: string;
+      categoryIcon: string;
+      winningMetrics: Array<{
+        metricId: string;
+        metricName: string;
+        winnerScore: number;
+        loserScore: number;
+        realWorldExample: string;
+      }>;
+      heroStatement: string;
+    }>;
+    winnerCity: string;
+    loserCity: string;
+  };
+  summaryOfFindings?: {
+    city1Score: number;
+    city1Trend: 'rising' | 'stable' | 'declining';
+    city2Score: number;
+    city2Trend: 'rising' | 'stable' | 'declining';
+    overallConfidence: 'high' | 'medium' | 'low';
+  };
+}
+
 interface VisualsTabProps {
   result: AnyComparisonResult | null;
   // Optional: for backward compatibility, accept enhanced result separately
   enhancedResult?: EnhancedComparisonResult | null;
   simpleResult?: ComparisonResult | null;
+  // Optional: Judge report data for enhanced reports
+  judgeReport?: JudgeReportData | null;
   // LIFTED STATE: Gamma report state (persists across tab switches)
   reportState?: VisualReportState;
   setReportState?: React.Dispatch<React.SetStateAction<VisualReportState>>;
@@ -42,6 +92,7 @@ function isEnhancedResult(result: AnyComparisonResult | null): result is Enhance
 
 const VisualsTab: React.FC<VisualsTabProps> = ({
   result: propResult,
+  judgeReport: propsJudgeReport,
   reportState: propsReportState,
   setReportState: propsSetReportState,
   exportFormat: propsExportFormat,
@@ -50,6 +101,13 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+
+  // Enhanced report options
+  const [reportType, setReportType] = useState<'standard' | 'enhanced'>('standard');
+  const [includeGunRights, setIncludeGunRights] = useState(false);
+
+  // Gun comparison hook for enhanced reports
+  const { data: gunData, fetchComparison: fetchGunComparison, status: gunStatus } = useGunComparison();
 
   // Selected comparison from dropdown (null = use prop)
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
@@ -166,27 +224,67 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     try {
       setReportState({ status: 'generating', progress: 0 });
 
-      const finalState = await generateAndWaitForReport(
-        result,
-        exportFormat,
-        (state) => setReportState(state)
-      );
+      // Determine which generation function to use
+      const isEnhanced = reportType === 'enhanced' && isEnhancedResult(result);
 
-      setReportState({
-        status: 'completed',
-        generationId: finalState.generationId,
-        gammaUrl: finalState.url,
-        pdfUrl: finalState.pdfUrl,
-        pptxUrl: finalState.pptxUrl,
-        progress: 100,
-      });
+      if (isEnhanced) {
+        // Enhanced 64-page report
+        console.log('[VisualsTab] Generating enhanced 64-page report');
+
+        // Fetch gun data if requested and not already cached
+        let gunDataToUse: GunComparisonData | undefined = undefined;
+        if (includeGunRights) {
+          if (gunData) {
+            gunDataToUse = gunData;
+          } else if (gunStatus !== 'loading') {
+            // Fetch gun comparison data
+            await fetchGunComparison(result.city1.city, result.city2.city);
+            gunDataToUse = gunData || undefined;
+          }
+        }
+
+        const finalState = await generateEnhancedAndWaitForReport(
+          result as EnhancedComparisonResult,
+          exportFormat,
+          propsJudgeReport || undefined,
+          gunDataToUse,
+          (state) => setReportState(state)
+        );
+
+        setReportState({
+          status: 'completed',
+          generationId: finalState.generationId,
+          gammaUrl: finalState.url,
+          pdfUrl: finalState.pdfUrl,
+          pptxUrl: finalState.pptxUrl,
+          progress: 100,
+        });
+      } else {
+        // Standard 35-page report (existing behavior)
+        console.log('[VisualsTab] Generating standard report');
+
+        const finalState = await generateAndWaitForReport(
+          result,
+          exportFormat,
+          (state) => setReportState(state)
+        );
+
+        setReportState({
+          status: 'completed',
+          generationId: finalState.generationId,
+          gammaUrl: finalState.url,
+          pdfUrl: finalState.pdfUrl,
+          pptxUrl: finalState.pptxUrl,
+          progress: 100,
+        });
+      }
     } catch (error) {
       setReportState({
         status: 'error',
         error: error instanceof Error ? error.message : 'Failed to generate report',
       });
     }
-  }, [result, exportFormat, checkUsage, incrementUsage]);
+  }, [result, exportFormat, reportType, includeGunRights, gunData, gunStatus, fetchGunComparison, propsJudgeReport, checkUsage, incrementUsage, isAdmin, setReportState]);
 
   const handleReset = useCallback(() => {
     setReportState({ status: 'idle' });
@@ -274,6 +372,45 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         {reportState.status === 'idle' && (
           <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
             <div className="generate-controls">
+              {/* Report Type Toggle */}
+              <div className="report-type-selector">
+                <label>Report Type:</label>
+                <div className="report-type-options">
+                  <button
+                    className={`type-btn ${reportType === 'standard' ? 'active' : ''}`}
+                    onClick={() => setReportType('standard')}
+                  >
+                    Standard (35 pages)
+                  </button>
+                  <button
+                    className={`type-btn ${reportType === 'enhanced' ? 'active' : ''}`}
+                    onClick={() => setReportType('enhanced')}
+                    disabled={!isEnhancedResult(result)}
+                    title={!isEnhancedResult(result) ? 'Requires Enhanced Comparison (multi-LLM)' : 'Generate comprehensive 64-page report'}
+                  >
+                    Enhanced (64 pages)
+                  </button>
+                </div>
+                {!isEnhancedResult(result) && (
+                  <p className="type-hint">Enhanced report requires multi-LLM comparison</p>
+                )}
+              </div>
+
+              {/* Gun Rights Checkbox (only for enhanced) */}
+              {reportType === 'enhanced' && isEnhancedResult(result) && (
+                <div className="gun-rights-option">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={includeGunRights}
+                      onChange={(e) => setIncludeGunRights(e.target.checked)}
+                    />
+                    <span>Include Gun Rights Comparison (adds 4 pages)</span>
+                  </label>
+                  <p className="gun-hint">Gun rights are unscored - facts only, no winner declared</p>
+                </div>
+              )}
+
               <div className="format-selector">
                 <label>Export Format:</label>
                 <div className="format-options">
@@ -295,7 +432,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 className="generate-btn primary-btn"
                 onClick={handleGenerateReport}
               >
-                Generate Report
+                {reportType === 'enhanced' ? 'Generate Enhanced Report' : 'Generate Report'}
               </button>
             </div>
           </FeatureGate>
@@ -309,7 +446,12 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 style={{ width: `${reportState.progress || 0}%` }}
               />
             </div>
-            <p className="status-message">{getStatusMessage(reportState)}</p>
+            <p className="status-message">
+              {reportState.statusMessage || getStatusMessage(reportState)}
+            </p>
+            {reportType === 'enhanced' && (
+              <p className="enhanced-hint">Enhanced reports take longer due to 64 pages of content</p>
+            )}
           </div>
         )}
 

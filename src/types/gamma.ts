@@ -197,4 +197,5 @@ export interface VisualReportState {
   pptxUrl?: string;
   error?: string;
   progress?: number;  // 0-100 for progress bar
+  statusMessage?: string;  // Progressive status message for enhanced reports
 }

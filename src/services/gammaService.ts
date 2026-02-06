@@ -663,3 +663,1513 @@ export function getStatusMessage(state: VisualReportState): string {
       return 'Unknown status';
   }
 }
+
+// ============================================================================
+// ENHANCED 64-PAGE REPORT (v3.0) - NEW FUNCTIONS
+// ============================================================================
+// IMPORTANT: These are NEW functions that do NOT modify existing code above.
+// The existing formatComparisonForGamma() remains untouched.
+// ============================================================================
+
+// Extended polling for enhanced reports (7.5 minutes vs 5 minutes)
+const MAX_POLL_ATTEMPTS_ENHANCED = 90;
+const PROMPT_LENGTH_WARNING = 95000;
+const PROMPT_LENGTH_MAX = 100000;
+
+// Types for Judge Report integration
+interface JudgeReportData {
+  executiveSummary?: {
+    recommendation: 'city1' | 'city2' | 'tie';
+    rationale: string;
+    keyFactors: string[];
+    futureOutlook: string;
+    confidenceLevel: 'high' | 'medium' | 'low';
+  };
+  categoryAnalysis?: Array<{
+    categoryId: string;
+    categoryName: string;
+    city1Analysis: string;
+    city2Analysis: string;
+    trendNotes: string;
+  }>;
+  freedomEducation?: {
+    categories: Array<{
+      categoryId: string;
+      categoryName: string;
+      categoryIcon: string;
+      winningMetrics: Array<{
+        metricId: string;
+        metricName: string;
+        winnerScore: number;
+        loserScore: number;
+        realWorldExample: string;
+      }>;
+      heroStatement: string;
+    }>;
+    winnerCity: string;
+    loserCity: string;
+  };
+  summaryOfFindings?: {
+    city1Score: number;
+    city1Trend: 'rising' | 'stable' | 'declining';
+    city2Score: number;
+    city2Trend: 'rising' | 'stable' | 'declining';
+    overallConfidence: 'high' | 'medium' | 'low';
+  };
+}
+
+// Types for Gun Comparison integration
+interface GunComparisonData {
+  cityA: string;
+  cityB: string;
+  categories: Array<{
+    label: string;
+    cityA: string;
+    cityB: string;
+  }>;
+  summary: string;
+  disclaimer: string;
+}
+
+// ============================================================================
+// HELPER: Get trend arrow emoji
+// ============================================================================
+function getTrendArrow(trend: 'rising' | 'stable' | 'declining' | undefined): string {
+  switch (trend) {
+    case 'rising': return '📈';
+    case 'declining': return '📉';
+    case 'stable':
+    default: return '➡️';
+  }
+}
+
+// ============================================================================
+// HELPER: Get confidence color
+// ============================================================================
+function getConfidenceColor(level: string): string {
+  switch (level) {
+    case 'high':
+    case 'unanimous':
+    case 'strong':
+      return '#1C5D1F'; // Dark Green
+    case 'medium':
+    case 'moderate':
+      return '#FBBF24'; // Yellow
+    case 'low':
+    case 'split':
+    default:
+      return '#F97316'; // Orange
+  }
+}
+
+// ============================================================================
+// SECTION 1: EXECUTIVE SUMMARY (Pages 1-8)
+// ============================================================================
+function formatSection1ExecutiveSummary(
+  result: EnhancedComparisonResult,
+  judgeReport?: JudgeReportData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const city1Country = result.city1.country;
+  const city2Country = result.city2.country;
+  const winner = result.winner === 'city1' ? city1Name : result.winner === 'city2' ? city2Name : 'TIE';
+  const loser = result.winner === 'city1' ? city2Name : result.winner === 'city2' ? city1Name : '';
+  const city1Score = Math.round(result.city1.totalConsensusScore);
+  const city2Score = Math.round(result.city2.totalConsensusScore);
+  const scoreDiff = Math.abs(result.scoreDifference);
+
+  // Get trend data from judge report
+  const city1Trend = judgeReport?.summaryOfFindings?.city1Trend || 'stable';
+  const city2Trend = judgeReport?.summaryOfFindings?.city2Trend || 'stable';
+  const confidence = judgeReport?.executiveSummary?.confidenceLevel || result.overallConsensusConfidence;
+
+  // Count category winners
+  let city1CatWins = 0;
+  let city2CatWins = 0;
+  Object.values(result.categoryWinners).forEach(w => {
+    if (w === 'city1') city1CatWins++;
+    else if (w === 'city2') city2CatWins++;
+  });
+
+  // Build category radar data
+  const radarData = result.city1.categories.map((cat, idx) => {
+    const cat2 = result.city2.categories[idx];
+    const config = CATEGORY_CONFIG[cat.categoryId] || { name: cat.categoryId, icon: '📊' };
+    return `${config.icon} ${config.name}: ${city1Name} ${Math.round(cat.averageConsensusScore || 0)} | ${city2Name} ${Math.round(cat2?.averageConsensusScore || 0)}`;
+  }).join('\n');
+
+  // Key factors from judge
+  const keyFactors = judgeReport?.executiveSummary?.keyFactors?.slice(0, 5).map((f, i) =>
+    `${i + 1}. ${f}`
+  ).join('\n') || '1. Overall freedom metric analysis\n2. Legal framework comparison\n3. Enforcement reality assessment';
+
+  return `
+## SECTION 1: EXECUTIVE SUMMARY
+
+---
+
+### PAGE 1: TITLE
+
+image-layout="right"
+prompt="dramatic split cityscape view of ${city1Name} and ${city2Name}, cinematic lighting, freedom theme"
+
+# LIFE SCORE™ Enhanced Freedom Comparison Report
+
+## ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
+
+<labels>
+<label variant="solid" color="#FFD700">🏆 WINNER: ${winner}</label>
+<label variant="outline">Report ID: ${result.comparisonId}</label>
+<label variant="outline">Generated: ${new Date(result.generatedAt).toLocaleDateString()}</label>
+</labels>
+
+**64-Page Enhanced Analysis** | **100 Freedom Metrics** | **6 AI Models** | **Dual Scoring (Law + Reality)**
+
+---
+
+### PAGE 2: THE JUDGE'S VERDICT
+
+<labels><label variant="solid" color="#7C3AED">🎭 The Judge's Verdict</label></labels>
+
+## Overall Winner: ${winner}
+
+<display size="lg" color="${result.winner === 'city1' ? '#FFD700' : '#1E90FF'}">${winner}</display>
+
+**Claude Opus 4.5 Recommendation:**
+
+<blockquote>
+${judgeReport?.executiveSummary?.rationale || `Based on comprehensive analysis of 100 freedom metrics across 6 categories, ${winner} demonstrates superior overall freedom scores. The ${scoreDiff}-point margin reflects meaningful differences in how laws are written AND enforced in daily life.`}
+</blockquote>
+
+**Confidence Level:** ${confidence?.toUpperCase() || 'HIGH'}
+
+**Key Rationale:**
+${judgeReport?.executiveSummary?.keyFactors?.slice(0, 4).map(f => `- ${f}`).join('\n') || `- Higher scores in ${city1CatWins > city2CatWins ? city1CatWins : city2CatWins} of 6 categories\n- Stronger legal framework protections\n- More favorable enforcement reality`}
+
+---
+
+### PAGE 3: SCORE OVERVIEW
+
+<smart-layout variant="semiCircle">
+<item label="${city1Name}" value="${city1Score}" max="100" color="${result.winner === 'city1' ? '#FFD700' : '#1E90FF'}">
+${getTrendArrow(city1Trend)} Trend: ${city1Trend}
+</item>
+<item label="${city2Name}" value="${city2Score}" max="100" color="${result.winner === 'city2' ? '#FFD700' : '#1E90FF'}">
+${getTrendArrow(city2Trend)} Trend: ${city2Trend}
+</item>
+</smart-layout>
+
+**Score Difference:** <display size="md" color="#10B981">${scoreDiff} points</display>
+
+| Metric | ${city1Name} | ${city2Name} |
+|--------|-------------|-------------|
+| **Total LIFE SCORE** | **${city1Score}/100** | **${city2Score}/100** |
+| Categories Won | ${city1CatWins} of 6 | ${city2CatWins} of 6 |
+| Trend | ${getTrendArrow(city1Trend)} ${city1Trend} | ${getTrendArrow(city2Trend)} ${city2Trend} |
+
+---
+
+### PAGE 4: CATEGORY COMPARISON
+
+<diagram type="rings">
+${radarData}
+</diagram>
+
+**Category Breakdown:**
+
+| Category | ${city1Name} | ${city2Name} | Winner |
+|----------|-------------|-------------|--------|
+${result.city1.categories.map((cat, idx) => {
+  const cat2 = result.city2.categories[idx];
+  const config = CATEGORY_CONFIG[cat.categoryId] || { name: cat.categoryId, icon: '📊' };
+  const score1 = Math.round(cat.averageConsensusScore || 0);
+  const score2 = Math.round(cat2?.averageConsensusScore || 0);
+  const catWinner = score1 > score2 ? city1Name : score2 > score1 ? city2Name : 'TIE';
+  return `| ${config.icon} ${config.name} | ${score1} | ${score2} | **${catWinner}** |`;
+}).join('\n')}
+
+---
+
+### PAGE 5: SCORE BREAKDOWN BY WEIGHT
+
+<smart-layout variant="barStats">
+<item label="🗽 Personal Autonomy (20%)" value1="${Math.round((result.city1.categories.find(c => c.categoryId === 'personal_freedom')?.averageConsensusScore || 0) * 0.2)}" value2="${Math.round((result.city2.categories.find(c => c.categoryId === 'personal_freedom')?.averageConsensusScore || 0) * 0.2)}" color1="${result.winner === 'city1' ? '#FFD700' : '#1E90FF'}" color2="${result.winner === 'city2' ? '#FFD700' : '#1E90FF'}">
+${city1Name} vs ${city2Name}
+</item>
+<item label="🏠 Housing & Property (20%)" value1="${Math.round((result.city1.categories.find(c => c.categoryId === 'housing_property')?.averageConsensusScore || 0) * 0.2)}" value2="${Math.round((result.city2.categories.find(c => c.categoryId === 'housing_property')?.averageConsensusScore || 0) * 0.2)}">
+</item>
+<item label="💼 Business & Work (20%)" value1="${Math.round((result.city1.categories.find(c => c.categoryId === 'business_work')?.averageConsensusScore || 0) * 0.2)}" value2="${Math.round((result.city2.categories.find(c => c.categoryId === 'business_work')?.averageConsensusScore || 0) * 0.2)}">
+</item>
+<item label="🚇 Transportation (15%)" value1="${Math.round((result.city1.categories.find(c => c.categoryId === 'transportation')?.averageConsensusScore || 0) * 0.15)}" value2="${Math.round((result.city2.categories.find(c => c.categoryId === 'transportation')?.averageConsensusScore || 0) * 0.15)}">
+</item>
+<item label="⚖️ Policing & Courts (15%)" value1="${Math.round((result.city1.categories.find(c => c.categoryId === 'policing_legal')?.averageConsensusScore || 0) * 0.15)}" value2="${Math.round((result.city2.categories.find(c => c.categoryId === 'policing_legal')?.averageConsensusScore || 0) * 0.15)}">
+</item>
+<item label="🎭 Speech & Lifestyle (10%)" value1="${Math.round((result.city1.categories.find(c => c.categoryId === 'speech_lifestyle')?.averageConsensusScore || 0) * 0.1)}" value2="${Math.round((result.city2.categories.find(c => c.categoryId === 'speech_lifestyle')?.averageConsensusScore || 0) * 0.1)}">
+</item>
+</smart-layout>
+
+---
+
+### PAGE 6: KEY DECISION DRIVERS
+
+<smart-layout variant="processSteps" numbered="true">
+${keyFactors}
+</smart-layout>
+
+**Top 5 Factors Determining the Winner:**
+
+These metrics contributed most to ${winner}'s victory, accounting for the majority of the ${scoreDiff}-point margin.
+
+---
+
+### PAGE 7: FUTURE OUTLOOK
+
+| ${city1Name} | ${city2Name} |
+|-------------|-------------|
+| ${getTrendArrow(city1Trend)} **Trend: ${city1Trend?.toUpperCase()}** | ${getTrendArrow(city2Trend)} **Trend: ${city2Trend?.toUpperCase()}** |
+| ${judgeReport?.executiveSummary?.futureOutlook?.split('.').slice(0, 2).join('.') || 'Stable regulatory environment expected. Monitor upcoming legislative sessions for potential changes.'} | ${judgeReport?.categoryAnalysis?.[0]?.trendNotes || 'Current trajectory suggests maintaining relative position. Watch for policy reforms that could shift the balance.'} |
+
+**3-5 Year Forecast:**
+- ${city1Name}: ${city1Trend === 'rising' ? 'Likely to improve further' : city1Trend === 'declining' ? 'May face regulatory challenges' : 'Expected to maintain current levels'}
+- ${city2Name}: ${city2Trend === 'rising' ? 'Likely to improve further' : city2Trend === 'declining' ? 'May face regulatory challenges' : 'Expected to maintain current levels'}
+
+---
+
+### PAGE 8: WHAT COULD CHANGE THE OUTCOME?
+
+<smart-layout variant="outlineBoxesWithSideLine">
+<item label="Scenario 1: Equal Weights">
+If all 6 categories weighted equally at 16.67%, ${winner} ${scoreDiff > 10 ? 'still wins' : 'margin narrows significantly'}
+</item>
+<item label="Scenario 2: Business Focus">
+Weighting Business & Work at 40%, ${result.categoryWinners['business_work'] === 'city1' ? city1Name : city2Name} gains advantage
+</item>
+<item label="Scenario 3: Personal Freedom Priority">
+Weighting Personal Autonomy at 40%, ${result.categoryWinners['personal_freedom'] === 'city1' ? city1Name : city2Name} leads
+</item>
+<item label="Scenario 4: Safety Focus">
+Weighting Policing & Courts at 35%, ${result.categoryWinners['policing_legal'] === 'city1' ? city1Name : city2Name} benefits
+</item>
+<item label="⚠️ The Only Scenario Where ${loser || 'the other city'} Wins">
+${loser ? `${loser} would need significant reforms in ${city1CatWins > city2CatWins ? 'multiple categories simultaneously' : 'their weakest areas'}, combined with ${winner} experiencing regulatory setbacks.` : 'In a tie scenario, both cities offer comparable freedom levels.'}
+</item>
+</smart-layout>
+
+`;
+}
+
+// ============================================================================
+// SECTION 2: LAW VS REALITY (Pages 9-12)
+// ============================================================================
+function formatSection2LawVsReality(
+  result: EnhancedComparisonResult
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+
+  // Find biggest gaps between legal and enforcement scores
+  const allMetrics: Array<{
+    metricId: string;
+    city: string;
+    legalScore: number;
+    enforcementScore: number;
+    gap: number;
+    type: 'paper_tiger' | 'surprise_restriction';
+  }> = [];
+
+  [result.city1, result.city2].forEach(city => {
+    city.categories.forEach(cat => {
+      cat.metrics.forEach(metric => {
+        const legal = metric.legalScore ?? metric.consensusScore ?? 0;
+        const enforcement = metric.enforcementScore ?? metric.consensusScore ?? 0;
+        const gap = legal - enforcement;
+        if (Math.abs(gap) > 10) {
+          allMetrics.push({
+            metricId: metric.metricId,
+            city: city.city,
+            legalScore: legal,
+            enforcementScore: enforcement,
+            gap,
+            type: gap > 0 ? 'paper_tiger' : 'surprise_restriction'
+          });
+        }
+      });
+    });
+  });
+
+  // Sort by absolute gap
+  const sortedGaps = allMetrics.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)).slice(0, 7);
+  const paperTigers = sortedGaps.filter(m => m.type === 'paper_tiger').slice(0, 3);
+  const surpriseRestrictions = sortedGaps.filter(m => m.type === 'surprise_restriction').slice(0, 3);
+
+  return `
+## SECTION 2: LAW VS REALITY (Dual Scoring)
+
+---
+
+### PAGE 9: UNDERSTANDING DUAL SCORES
+
+<smart-layout variant="solidBoxes">
+<item label="📜 Legal Score (Law on Paper)" color="#6B46C1">
+What the written law officially states. Includes statutes, regulations, and official policies.
+</item>
+<item label="🏙️ Lived Score (Reality on Street)" color="#14B8A6">
+How laws are actually enforced in daily life. Reflects real-world experience and enforcement patterns.
+</item>
+</smart-layout>
+
+**Why Both Matter:**
+
+| Scenario | Legal Score | Lived Score | Result |
+|----------|-------------|-------------|--------|
+| **Paper Tiger** | High (80+) | Low (40-) | Law exists but rarely enforced |
+| **Surprise Restriction** | Low (40-) | High (80+) | Strict enforcement despite weak law |
+| **True Freedom** | High | High | Protected by law AND practice |
+| **True Restriction** | Low | Low | Restricted by law AND enforced |
+
+---
+
+### PAGE 10: DUAL SCORE SUMMARY BY CATEGORY
+
+<smart-layout variant="barStats">
+${result.city1.categories.map((cat, idx) => {
+  const cat2 = result.city2.categories[idx];
+  const config = CATEGORY_CONFIG[cat.categoryId] || { name: cat.categoryId, icon: '📊' };
+
+  // Calculate average legal and lived scores for category
+  const city1Legal = Math.round(cat.metrics.reduce((sum, m) => sum + (m.legalScore ?? m.consensusScore ?? 0), 0) / cat.metrics.length);
+  const city1Lived = Math.round(cat.metrics.reduce((sum, m) => sum + (m.enforcementScore ?? m.consensusScore ?? 0), 0) / cat.metrics.length);
+  const city2Legal = Math.round(cat2.metrics.reduce((sum, m) => sum + (m.legalScore ?? m.consensusScore ?? 0), 0) / cat2.metrics.length);
+  const city2Lived = Math.round(cat2.metrics.reduce((sum, m) => sum + (m.enforcementScore ?? m.consensusScore ?? 0), 0) / cat2.metrics.length);
+
+  return `<item label="${config.icon} ${config.name}">
+${city1Name}: 📜 ${city1Legal} | 🏙️ ${city1Lived}
+${city2Name}: 📜 ${city2Legal} | 🏙️ ${city2Lived}
+</item>`;
+}).join('\n')}
+</smart-layout>
+
+**Legend:** 📜 = Legal Score (purple) | 🏙️ = Lived Score (teal)
+
+---
+
+### PAGE 11: BIGGEST LAW VS REALITY GAPS
+
+**Top Discrepancies Between Written Law and Enforcement:**
+
+| Rank | City | Metric | Legal | Lived | Gap | Type |
+|------|------|--------|-------|-------|-----|------|
+${sortedGaps.map((m, i) => {
+  const name = getMetricDisplayName(m.metricId);
+  const gapColor = m.gap > 0 ? '🟢' : '🔴';
+  return `| ${i + 1} | ${m.city} | ${name} | ${Math.round(m.legalScore)} | ${Math.round(m.enforcementScore)} | ${gapColor} ${Math.abs(Math.round(m.gap))} | ${m.type === 'paper_tiger' ? 'Paper Tiger' : 'Surprise'} |`;
+}).join('\n')}
+
+**Interpretation:**
+- 🟢 **Paper Tigers**: Laws look good on paper but aren't enforced
+- 🔴 **Surprise Restrictions**: Enforcement stricter than law suggests
+
+---
+
+### PAGE 12: REAL-WORLD EXAMPLES
+
+| 📜 Paper Tiger Laws | 🔒 Surprise Restrictions |
+|---------------------|-------------------------|
+${paperTigers.map(m => `| **${m.city}**: ${getMetricDisplayName(m.metricId)} - Law suggests freedom (${Math.round(m.legalScore)}) but enforcement is limited (${Math.round(m.enforcementScore)}) |`).join('\n') || '| No significant paper tigers found |'}
+${surpriseRestrictions.map(m => `| | **${m.city}**: ${getMetricDisplayName(m.metricId)} - Law is permissive but enforcement is strict |`).join('\n') || '| No significant surprise restrictions found |'}
+
+<blockquote>
+Understanding the gap between law and reality is crucial for anyone considering relocation. A city with strong laws on paper may disappoint if enforcement is lax, while a city with weaker laws may surprise with strict practical enforcement.
+</blockquote>
+
+`;
+}
+
+// ============================================================================
+// SECTION 3: CATEGORY DEEP DIVES (Pages 13-42) - 5 pages each x 6 categories
+// ============================================================================
+function formatSection3CategoryDeepDives(
+  result: EnhancedComparisonResult,
+  judgeReport?: JudgeReportData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+
+  const categoryOrder = [
+    'personal_freedom',
+    'housing_property',
+    'business_work',
+    'transportation',
+    'policing_legal',
+    'speech_lifestyle'
+  ];
+
+  let output = `
+## SECTION 3: CATEGORY DEEP DIVES
+
+`;
+
+  categoryOrder.forEach((catId, catIndex) => {
+    const cat1 = result.city1.categories.find(c => c.categoryId === catId);
+    const cat2 = result.city2.categories.find(c => c.categoryId === catId);
+
+    if (!cat1 || !cat2) return;
+
+    const config = CATEGORY_CONFIG[catId] || { name: catId, icon: '📊', metricCount: 0, weight: '0%' };
+    const score1 = Math.round(cat1.averageConsensusScore || 0);
+    const score2 = Math.round(cat2.averageConsensusScore || 0);
+    const catWinner = score1 > score2 ? city1Name : score2 > score1 ? city2Name : 'TIE';
+    const catLoser = score1 > score2 ? city2Name : city1Name;
+
+    // Calculate legal vs lived averages
+    const city1Legal = Math.round(cat1.metrics.reduce((sum, m) => sum + (m.legalScore ?? m.consensusScore ?? 0), 0) / cat1.metrics.length);
+    const city1Lived = Math.round(cat1.metrics.reduce((sum, m) => sum + (m.enforcementScore ?? m.consensusScore ?? 0), 0) / cat1.metrics.length);
+    const city2Legal = Math.round(cat2.metrics.reduce((sum, m) => sum + (m.legalScore ?? m.consensusScore ?? 0), 0) / cat2.metrics.length);
+    const city2Lived = Math.round(cat2.metrics.reduce((sum, m) => sum + (m.enforcementScore ?? m.consensusScore ?? 0), 0) / cat2.metrics.length);
+
+    // Get judge analysis for this category
+    const judgeAnalysis = judgeReport?.categoryAnalysis?.find(a => a.categoryId === catId);
+    const freedomEd = judgeReport?.freedomEducation?.categories.find(c => c.categoryId === catId);
+
+    // Find top winning metrics
+    const metricDiffs = cat1.metrics.map((m1, i) => {
+      const m2 = cat2.metrics[i];
+      return {
+        metricId: m1.metricId,
+        score1: m1.consensusScore ?? 0,
+        score2: m2?.consensusScore ?? 0,
+        diff: (m1.consensusScore ?? 0) - (m2?.consensusScore ?? 0),
+        winner: (m1.consensusScore ?? 0) > (m2?.consensusScore ?? 0) ? city1Name : city2Name
+      };
+    }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    const topWinners = metricDiffs.slice(0, 5);
+
+    // Calculate agreement level
+    const agreementLevels = cat1.metrics.map(m => m.confidenceLevel);
+    const highAgreement = agreementLevels.filter(l => l === 'unanimous' || l === 'strong').length;
+    const agreementPct = Math.round((highAgreement / agreementLevels.length) * 100);
+
+    const pageBase = 13 + (catIndex * 5);
+
+    output += `
+---
+
+### PAGE ${pageBase}: ${config.icon} ${config.name.toUpperCase()}
+
+image-layout="right"
+prompt="${config.name.toLowerCase()} themed cityscape, ${catWinner} highlighted, professional infographic style"
+
+# ${config.icon} ${config.name}
+
+<labels>
+<label variant="solid" color="${catWinner === city1Name ? '#FFD700' : '#1E90FF'}">🏆 Category Winner: ${catWinner}</label>
+<label variant="outline">${config.metricCount} Metrics | ${config.weight} Weight</label>
+</labels>
+
+| City | Overall | Legal (📜) | Lived (🏙️) |
+|------|---------|------------|------------|
+| **${city1Name}** | **${score1}/100** | ${city1Legal} | ${city1Lived} |
+| **${city2Name}** | **${score2}/100** | ${city2Legal} | ${city2Lived} |
+
+**Hero Statement:**
+${freedomEd?.heroStatement || `${catWinner} demonstrates stronger ${config.name.toLowerCase()} protections, with a ${Math.abs(score1 - score2)}-point advantage in this category.`}
+
+---
+
+### PAGE ${pageBase + 1}: ALL ${config.name.toUpperCase()} METRICS
+
+<table colwidths="[5,30,12,12,12,12,10,7]" data-font-size="sm">
+
+| # | Metric | ${city1Name} (L) | ${city1Name} (E) | ${city2Name} (L) | ${city2Name} (E) | Winner | Conf |
+|---|--------|-----------------|-----------------|-----------------|-----------------|--------|------|
+${cat1.metrics.map((m1, i) => {
+  const m2 = cat2.metrics.find(m => m.metricId === m1.metricId);
+  const name = getMetricDisplayName(m1.metricId);
+  const l1 = Math.round(m1.legalScore ?? m1.consensusScore ?? 0);
+  const e1 = Math.round(m1.enforcementScore ?? m1.consensusScore ?? 0);
+  const l2 = Math.round(m2?.legalScore ?? m2?.consensusScore ?? 0);
+  const e2 = Math.round(m2?.enforcementScore ?? m2?.consensusScore ?? 0);
+  const s1 = m1.consensusScore ?? 0;
+  const s2 = m2?.consensusScore ?? 0;
+  const mWinner = s1 > s2 ? city1Name.slice(0, 8) : s2 > s1 ? city2Name.slice(0, 8) : 'TIE';
+  const conf = m1.confidenceLevel?.slice(0, 4).toUpperCase() || 'MOD';
+  return `| ${i + 1} | ${name} | ${l1} | ${e1} | ${l2} | ${e2} | ${mWinner} | ${conf} |`;
+}).join('\n')}
+
+</table>
+
+**Legend:** L = Legal Score | E = Enforcement Score | Conf = Confidence (UNAN/STRO/MOD/SPLT)
+
+---
+
+### PAGE ${pageBase + 2}: TOP WINNING METRICS
+
+<smart-layout variant="outlineBoxes">
+${topWinners.slice(0, 4).map(m => {
+  const name = getMetricDisplayName(m.metricId);
+  const freedomExample = freedomEd?.winningMetrics.find(wm => wm.metricId === m.metricId);
+  return `<item label="${name}">
+**${m.winner}** wins by ${Math.abs(Math.round(m.diff))} points
+Score: ${Math.round(m.score1)} vs ${Math.round(m.score2)}
+${freedomExample?.realWorldExample || `This metric significantly impacts daily life in ${config.name.toLowerCase()}.`}
+</item>`;
+}).join('\n')}
+</smart-layout>
+
+---
+
+### PAGE ${pageBase + 3}: CATEGORY ANALYSIS
+
+| ${city1Name} | ${city2Name} |
+|-------------|-------------|
+| **Strengths:** | **Strengths:** |
+| ${judgeAnalysis?.city1Analysis?.split('.').slice(0, 2).join('.') || `Strong performance across ${config.name.toLowerCase()} metrics with above-average scores.`} | ${judgeAnalysis?.city2Analysis?.split('.').slice(0, 2).join('.') || `Competitive scores with room for improvement in key areas.`} |
+| **Weaknesses:** | **Weaknesses:** |
+| ${metricDiffs.filter(m => m.winner === city2Name).slice(0, 2).map(m => getMetricDisplayName(m.metricId)).join(', ') || 'Limited weaknesses in this category'} | ${metricDiffs.filter(m => m.winner === city1Name).slice(0, 2).map(m => getMetricDisplayName(m.metricId)).join(', ') || 'Limited weaknesses in this category'} |
+
+**Trend Notes:**
+${judgeAnalysis?.trendNotes || `Both cities show stable trajectories in ${config.name.toLowerCase()}. Monitor legislative changes for potential shifts.`}
+
+---
+
+### PAGE ${pageBase + 4}: LLM AGREEMENT HEAT MAP
+
+**Overall Agreement: ${agreementPct}% - ${agreementPct >= 85 ? 'High Consensus' : agreementPct >= 70 ? 'Moderate Consensus' : 'Mixed Opinions'}**
+
+<smart-layout variant="dotGridStats">
+${cat1.metrics.slice(0, 12).map(m => {
+  const name = getMetricDisplayName(m.metricId).slice(0, 20);
+  const conf = m.confidenceLevel || 'moderate';
+  const color = getConfidenceColor(conf);
+  return `<item label="${name}" color="${color}">${conf}</item>`;
+}).join('\n')}
+</smart-layout>
+
+**Interpretation:**
+- 🟢 Dark Green = High Agreement (>85% of LLMs aligned)
+- 🟡 Yellow = Moderate Agreement (70-85%)
+- 🟠 Orange = Mixed Opinions (<70%)
+
+**Models with divergent views:** ${result.disagreementSummary?.split('.')[0] || 'Generally aligned across all 5 LLMs'}
+
+`;
+  });
+
+  return output;
+}
+
+// ============================================================================
+// SECTION 4: DEEPER INSIGHTS (Pages 43-47)
+// ============================================================================
+function formatSection4DeeperInsights(
+  result: EnhancedComparisonResult
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const winner = result.winner === 'city1' ? city1Name : city2Name;
+  const loser = result.winner === 'city1' ? city2Name : city1Name;
+
+  // Collect all metrics with scores
+  const allMetrics: Array<{
+    metricId: string;
+    catId: string;
+    score1: number;
+    score2: number;
+    diff: number;
+    winner: string;
+  }> = [];
+
+  result.city1.categories.forEach((cat1, catIdx) => {
+    const cat2 = result.city2.categories[catIdx];
+    cat1.metrics.forEach((m1, mIdx) => {
+      const m2 = cat2?.metrics[mIdx];
+      allMetrics.push({
+        metricId: m1.metricId,
+        catId: cat1.categoryId,
+        score1: m1.consensusScore ?? 0,
+        score2: m2?.consensusScore ?? 0,
+        diff: (m1.consensusScore ?? 0) - (m2?.consensusScore ?? 0),
+        winner: (m1.consensusScore ?? 0) > (m2?.consensusScore ?? 0) ? city1Name : city2Name
+      });
+    });
+  });
+
+  // Sort by impact (absolute difference)
+  const topImpact = allMetrics.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)).slice(0, 10);
+
+  // Count wins by city
+  const city1Wins = allMetrics.filter(m => m.winner === city1Name).length;
+  const city2Wins = allMetrics.filter(m => m.winner === city2Name).length;
+
+  return `
+## SECTION 4: DEEPER INSIGHTS
+
+---
+
+### PAGE 43: 100 METRICS AT A GLANCE
+
+<smart-layout variant="dotGridStats">
+${Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([catId, config]) => {
+  const catMetrics = allMetrics.filter(m => m.catId === catId || m.catId === catId.replace('_', '-'));
+  const catCity1Wins = catMetrics.filter(m => m.winner === city1Name).length;
+  const catCity2Wins = catMetrics.filter(m => m.winner === city2Name).length;
+  return `<item label="${config.icon} ${config.name}" color="${catCity1Wins > catCity2Wins ? '#FFD700' : '#1E90FF'}">
+${city1Name}: ${catCity1Wins} wins | ${city2Name}: ${catCity2Wins} wins
+</item>`;
+}).join('\n')}
+</smart-layout>
+
+**Summary:**
+- 🥇 ${city1Name}: **${city1Wins}** metric wins
+- 🥈 ${city2Name}: **${city2Wins}** metric wins
+- ➖ Ties: **${allMetrics.length - city1Wins - city2Wins}**
+
+---
+
+### PAGE 44: TOP 10 MOST IMPACTFUL METRICS
+
+<smart-layout variant="outlineBoxesWithLabel" numbered="true">
+${topImpact.map((m, i) => {
+  const name = getMetricDisplayName(m.metricId);
+  const config = CATEGORY_CONFIG[m.catId] || CATEGORY_CONFIG[m.catId.replace('-', '_')] || { icon: '📊', weight: '?' };
+  return `<item label="${i + 1}. ${name}">
+**Winner: ${m.winner}** | Gap: ${Math.abs(Math.round(m.diff))} points
+${city1Name}: ${Math.round(m.score1)} | ${city2Name}: ${Math.round(m.score2)}
+Category: ${config.icon} (${config.weight} weight)
+</item>`;
+}).join('\n')}
+</smart-layout>
+
+**Insight:** These 10 metrics account for approximately ${Math.round((topImpact.reduce((s, m) => s + Math.abs(m.diff), 0) / result.scoreDifference) * 100)}% of ${winner}'s victory margin.
+
+---
+
+### PAGE 45: A DAY IN THE LIFE
+
+**Same Person, Two Different Freedom Experiences:**
+
+| Time | In ${city1Name} | In ${city2Name} |
+|------|----------------|----------------|
+| 6:00 AM | Wake up in ${result.city1.categories.find(c => c.categoryId === 'housing_property')?.averageConsensusScore ?? 0 > 70 ? 'a flexible housing situation' : 'strictly regulated housing'} | Wake up in ${result.city2.categories.find(c => c.categoryId === 'housing_property')?.averageConsensusScore ?? 0 > 70 ? 'a flexible housing situation' : 'strictly regulated housing'} |
+| 8:00 AM | Commute via ${result.city1.categories.find(c => c.categoryId === 'transportation')?.averageConsensusScore ?? 0 > 70 ? 'excellent transit options' : 'limited transit'} | Commute via ${result.city2.categories.find(c => c.categoryId === 'transportation')?.averageConsensusScore ?? 0 > 70 ? 'excellent transit options' : 'limited transit'} |
+| 9:00 AM | Start business with ${result.city1.categories.find(c => c.categoryId === 'business_work')?.averageConsensusScore ?? 0 > 70 ? 'minimal red tape' : 'significant licensing requirements'} | Start business with ${result.city2.categories.find(c => c.categoryId === 'business_work')?.averageConsensusScore ?? 0 > 70 ? 'minimal red tape' : 'significant licensing requirements'} |
+| 6:00 PM | Enjoy evening with ${result.city1.categories.find(c => c.categoryId === 'personal_freedom')?.averageConsensusScore ?? 0 > 70 ? 'broad personal freedoms' : 'various lifestyle restrictions'} | Enjoy evening with ${result.city2.categories.find(c => c.categoryId === 'personal_freedom')?.averageConsensusScore ?? 0 > 70 ? 'broad personal freedoms' : 'various lifestyle restrictions'} |
+
+<aside variant="note">
+Same entrepreneur, different daily realities. Freedom affects every hour of your day.
+</aside>
+
+---
+
+### PAGE 46: NEIGHBORHOOD-LEVEL VARIATIONS
+
+<smart-layout variant="solidBoxes">
+<item label="⚠️ Important Note">
+LIFE SCORE measures city/region-level laws and enforcement. Within each city, neighborhoods may vary significantly in how regulations are applied.
+</item>
+</smart-layout>
+
+**${city1Name} Neighborhood Considerations:**
+- Downtown/Business districts may have stricter enforcement
+- Suburban areas may offer more flexibility
+- Research specific neighborhoods before relocating
+
+**${city2Name} Neighborhood Considerations:**
+- Urban cores vs residential areas differ in enforcement
+- Tourist areas may have special regulations
+- Local knowledge is essential for accurate expectations
+
+**Recommendation:** Visit prospective neighborhoods and speak with locals before making final decisions.
+
+---
+
+### PAGE 47: COST OF FREEDOM ANALYSIS
+
+**Freedom Has a Price Tag:**
+
+| Category | ${city1Name} Impact | ${city2Name} Impact |
+|----------|---------------------|---------------------|
+| **Taxes** (Income, Sales, Property) | ${result.city1.categories.find(c => c.categoryId === 'business_work')?.metrics.find(m => m.metricId.includes('tax'))?.consensusScore ?? 0 > 60 ? 'Lower burden' : 'Higher burden'} | ${result.city2.categories.find(c => c.categoryId === 'business_work')?.metrics.find(m => m.metricId.includes('tax'))?.consensusScore ?? 0 > 60 ? 'Lower burden' : 'Higher burden'} |
+| **Business Costs** (Licenses, Compliance) | ${result.city1.categories.find(c => c.categoryId === 'business_work')?.averageConsensusScore ?? 0 > 65 ? 'Lower costs' : 'Higher costs'} | ${result.city2.categories.find(c => c.categoryId === 'business_work')?.averageConsensusScore ?? 0 > 65 ? 'Lower costs' : 'Higher costs'} |
+| **Housing Flexibility** | ${result.city1.categories.find(c => c.categoryId === 'housing_property')?.averageConsensusScore ?? 0 > 65 ? 'More options' : 'Limited options'} | ${result.city2.categories.find(c => c.categoryId === 'housing_property')?.averageConsensusScore ?? 0 > 65 ? 'More options' : 'Limited options'} |
+| **Transportation** | ${result.city1.categories.find(c => c.categoryId === 'transportation')?.averageConsensusScore ?? 0 > 65 ? 'Efficient & affordable' : 'Car-dependent'} | ${result.city2.categories.find(c => c.categoryId === 'transportation')?.averageConsensusScore ?? 0 > 65 ? 'Efficient & affordable' : 'Car-dependent'} |
+| **Fines & Penalties Risk** | ${result.city1.categories.find(c => c.categoryId === 'policing_legal')?.averageConsensusScore ?? 0 > 65 ? 'Lower risk' : 'Higher risk'} | ${result.city2.categories.find(c => c.categoryId === 'policing_legal')?.averageConsensusScore ?? 0 > 65 ? 'Lower risk' : 'Higher risk'} |
+
+**"Cost of Living" vs "Cost of Freedom"** - Traditional indexes miss the hidden costs of regulation, compliance, and restricted opportunity.
+
+`;
+}
+
+// ============================================================================
+// SECTION 5: LLM CONSENSUS (Pages 48-52)
+// ============================================================================
+function formatSection5LLMConsensus(
+  result: EnhancedComparisonResult
+): string {
+  const confidence = result.overallConsensusConfidence;
+  const llmsUsed = result.llmsUsed || ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
+
+  // Calculate overall agreement
+  let totalMetrics = 0;
+  let highAgreementMetrics = 0;
+  result.city1.categories.forEach(cat => {
+    cat.metrics.forEach(m => {
+      totalMetrics++;
+      if (m.confidenceLevel === 'unanimous' || m.confidenceLevel === 'strong') {
+        highAgreementMetrics++;
+      }
+    });
+  });
+  const agreementPct = Math.round((highAgreementMetrics / totalMetrics) * 100);
+
+  // Category agreement
+  const categoryAgreement = result.city1.categories.map(cat => {
+    const high = cat.metrics.filter(m => m.confidenceLevel === 'unanimous' || m.confidenceLevel === 'strong').length;
+    return {
+      name: CATEGORY_CONFIG[cat.categoryId]?.name || cat.categoryId,
+      agreement: Math.round((high / cat.metrics.length) * 100)
+    };
+  });
+
+  // Find disagreement points
+  const disagreements = result.city1.categories.flatMap(cat =>
+    cat.metrics.filter(m => m.confidenceLevel === 'split' || m.confidenceLevel === 'moderate')
+      .map(m => ({
+        metric: getMetricDisplayName(m.metricId),
+        confidence: m.confidenceLevel,
+        stdDev: m.standardDeviation ?? 0
+      }))
+  ).sort((a, b) => b.stdDev - a.stdDev).slice(0, 7);
+
+  return `
+## SECTION 5: LLM CONSENSUS
+
+---
+
+### PAGE 48: AI MODELS USED
+
+<smart-layout variant="imagesText" imagePosition="left">
+<item label="📝 Claude Sonnet 4.5" subtitle="Anthropic">
+**Role:** Primary Evaluator with web search
+**Strength:** Comprehensive legal framework analysis
+</item>
+<item label="🤖 GPT-4o" subtitle="OpenAI">
+**Role:** Cross-validation with Tavily search
+**Strength:** Independent verification and fact-checking
+</item>
+<item label="💎 Gemini 3 Pro" subtitle="Google">
+**Role:** Real-time data validation
+**Strength:** Native Google Search grounding
+</item>
+<item label="𝕏 Grok 4" subtitle="xAI">
+**Role:** Social sentiment analysis
+**Strength:** Real-time X/Twitter data integration
+</item>
+<item label="🔮 Sonar Reasoning Pro" subtitle="Perplexity">
+**Role:** Deep web research
+**Strength:** Citation quality and source credibility
+</item>
+</smart-layout>
+
+**Final Judge:**
+<labels><label variant="solid" color="#7C3AED">🎭 Claude Opus 4.5 (Anthropic)</label></labels>
+
+Synthesizes all 5 evaluations into final scores and recommendation.
+
+---
+
+### PAGE 49: OVERALL CONSENSUS CONFIDENCE
+
+<display size="lg" color="${getConfidenceColor(confidence)}">${agreementPct}%</display>
+
+**Interpretation: ${confidence?.toUpperCase()} CONFIDENCE**
+
+<smart-layout variant="circleStats">
+<item label="Data Points" value="1,200+">Dual scores across 100 metrics × 2 cities × 6 models</item>
+<item label="Sources Cited" value="500+">Unique references gathered by AI models</item>
+<item label="Agreement Rate" value="${agreementPct}%">Metrics with strong LLM consensus</item>
+</smart-layout>
+
+${confidence === 'high' ? 'All 5 LLMs showed strong alignment on the vast majority of metrics, indicating reliable conclusions.' :
+  confidence === 'medium' ? 'Most metrics showed good agreement, with some expected divergence on subjective measures.' :
+  'Some metrics showed significant disagreement between models, suggesting data limitations or genuinely contested assessments.'}
+
+---
+
+### PAGE 50: AGREEMENT BY CATEGORY
+
+<smart-layout variant="barStats">
+${categoryAgreement.map(ca => `<item label="${ca.name}" value="${ca.agreement}" max="100" color="${getConfidenceColor(ca.agreement >= 85 ? 'high' : ca.agreement >= 70 ? 'medium' : 'low')}">
+${ca.agreement}% agreement
+</item>`).join('\n')}
+</smart-layout>
+
+| Category | Agreement | Interpretation |
+|----------|-----------|----------------|
+${categoryAgreement.map(ca => `| ${ca.name} | ${ca.agreement}% | ${ca.agreement >= 85 ? 'High Consensus' : ca.agreement >= 70 ? 'Moderate' : 'Mixed'} |`).join('\n')}
+
+**Highest Consensus:** ${categoryAgreement.sort((a, b) => b.agreement - a.agreement)[0]?.name || 'N/A'}
+**Lowest Consensus:** ${categoryAgreement.sort((a, b) => a.agreement - b.agreement)[0]?.name || 'N/A'}
+
+---
+
+### PAGE 51: TOP DISAGREEMENT POINTS
+
+<smart-layout variant="outlineBoxesWithTopCircle" numbered="true">
+${disagreements.map((d, i) => `<item label="${i + 1}. ${d.metric}">
+**Confidence:** ${d.confidence}
+**Std Deviation:** ${d.stdDev.toFixed(1)}
+Different models weighed available evidence differently, leading to score variance.
+</item>`).join('\n')}
+</smart-layout>
+
+**Why Disagreements Occur:**
+- Different search results across AI providers
+- Varying interpretation of enforcement data
+- Recent legislative changes not uniformly indexed
+- Subjective metrics (e.g., "cultural tolerance") naturally diverge
+
+**Impact on Confidence:** ${disagreements.length > 5 ? 'Multiple disagreements suggest reviewing specific metrics carefully before decisions.' : 'Limited disagreements indicate robust overall conclusions.'}
+
+---
+
+### PAGE 52: HOW WE GENERATE REPORTS
+
+<smart-layout variant="processSteps" numbered="true">
+<item label="1. User Input">
+Two cities entered for comparison
+</item>
+<item label="2. Parallel AI Research">
+5 LLMs simultaneously research 100 metrics:
+• Claude Sonnet 4.5 • GPT-4o • Gemini 3 Pro • Grok 4 • Sonar Reasoning Pro
+</item>
+<item label="3. Dual Scoring">
+Each LLM provides Legal + Enforcement scores per metric
+= 1,200+ individual data points
+</item>
+<item label="4. Consensus Calculation">
+Statistical analysis to identify agreement, outliers, confidence
+</item>
+<item label="5. Final Judgment">
+Claude Opus 4.5 synthesizes all data into verdicts and recommendations
+</item>
+<item label="6. Report Generation">
+Gamma AI transforms data into this visual presentation
+</item>
+</smart-layout>
+
+**Processing Stats:**
+- ⏱️ Total Time: ${Math.round(result.processingStats.totalTimeMs / 60000)} minutes
+- 📊 Metrics Evaluated: ${result.processingStats.metricsEvaluated}
+- 🔗 Sources: 500+ citations
+
+<aside variant="note">
+Multi-AI consensus eliminates single-model bias and provides more reliable freedom assessments.
+</aside>
+
+`;
+}
+
+// ============================================================================
+// SECTION 6: GUN RIGHTS (Pages 53-56) - OPTIONAL, UNSCORED
+// ============================================================================
+function formatSection6GunRights(
+  result: EnhancedComparisonResult,
+  gunData?: GunComparisonData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+
+  if (!gunData) {
+    return `
+## SECTION 6: GUN RIGHTS COMPARISON
+
+---
+
+### PAGE 53: GUN RIGHTS DATA NOT INCLUDED
+
+<labels><label variant="solid" color="#F97316">⚠️ GUN RIGHTS SECTION SKIPPED</label></labels>
+
+The gun rights comparison was not included in this report.
+
+To include gun rights data:
+1. Run a Gun Comparison from the results page
+2. Check "Include Gun Rights" when generating the Enhanced Report
+
+**Why Gun Rights Are Separated:**
+Gun rights are intentionally excluded from the 100-metric scoring system due to the deeply polarizing nature of this topic. We provide factual comparisons without declaring a "winner."
+
+`;
+  }
+
+  return `
+## SECTION 6: GUN RIGHTS COMPARISON
+
+---
+
+### PAGE 53: GUN RIGHTS DISCLAIMER
+
+<labels><label variant="solid" color="#F97316">⚠️ UNSCORED - FACTS ONLY</label></labels>
+
+# Why Gun Rights Are Separated
+
+We have separated gun rights into a standalone comparison because of the enormous polarizing opinions on whether guns mean more freedom or less freedom.
+
+<blockquote>
+To someone in a constitutional carry state, unrestricted firearm access IS freedom — the foundation of personal safety and self-determination. To someone from a country with strict gun control, being surrounded by armed civilians is NOT freedom — it's danger.
+</blockquote>
+
+**We do NOT assign a winner for gun rights.**
+
+This section presents factual gun law data only. You decide what it means for YOUR definition of freedom.
+
+<aside variant="note">
+Gun rights are NOT included in the LIFE SCORE calculation. This is purely informational.
+</aside>
+
+---
+
+### PAGE 54: GUN LAW COMPARISON (Part 1)
+
+<table colwidths="[30,35,35]">
+
+| Category | ${gunData.cityA} | ${gunData.cityB} |
+|----------|-----------------|-----------------|
+${gunData.categories.slice(0, 6).map(cat => `| **${cat.label}** | ${cat.cityA} | ${cat.cityB} |`).join('\n')}
+
+</table>
+
+---
+
+### PAGE 55: GUN LAW COMPARISON (Part 2)
+
+<table colwidths="[30,35,35]">
+
+| Category | ${gunData.cityA} | ${gunData.cityB} |
+|----------|-----------------|-----------------|
+${gunData.categories.slice(6).map(cat => `| **${cat.label}** | ${cat.cityA} | ${cat.cityB} |`).join('\n')}
+
+</table>
+
+---
+
+### PAGE 56: GUN LAW SUMMARY
+
+| ${gunData.cityA} | ${gunData.cityB} |
+|-----------------|-----------------|
+| ${gunData.summary.split('.').slice(0, 3).join('. ')}. | ${gunData.summary.split('.').slice(3, 6).join('. ')}. |
+
+**Key Differences:**
+${gunData.categories.slice(0, 4).map(cat => `- **${cat.label}:** ${cat.cityA} vs ${cat.cityB}`).join('\n')}
+
+<aside variant="warning">
+${gunData.disclaimer}
+
+This information is provided for comparison purposes only. Laws change frequently. Verify current regulations with official sources before any decisions.
+</aside>
+
+`;
+}
+
+// ============================================================================
+// SECTION 7: METHODOLOGY (Pages 57-60)
+// ============================================================================
+function formatSection7Methodology(
+  result: EnhancedComparisonResult
+): string {
+  return `
+## SECTION 7: METHODOLOGY
+
+---
+
+### PAGE 57: WHAT IS LIFE SCORE™?
+
+# LIFE SCORE™
+## Legal Independence & Freedom Evaluation
+
+**Definition:** A comprehensive 100-metric system measuring legal and lived freedom across cities worldwide.
+
+<smart-layout variant="solidBoxes">
+<item label="📜 Concrete Laws" color="#6B46C1">
+We measure actual statutes, regulations, and official policies — not vague "freedom indexes"
+</item>
+<item label="🏙️ Real Enforcement" color="#14B8A6">
+We capture how laws are actually applied in daily life, not just what's written
+</item>
+<item label="🤖 Multi-AI Consensus" color="#10A37F">
+5 independent AI models research each metric, reducing single-source bias
+</item>
+<item label="🎭 Expert Judgment" color="#7C3AED">
+Claude Opus 4.5 synthesizes all data into actionable recommendations
+</item>
+</smart-layout>
+
+**Unlike Traditional Indexes:**
+- We don't rely on surveys or self-reported data
+- We measure 100 specific, actionable metrics
+- We capture the gap between law and reality
+- We use multi-AI verification for reliability
+
+---
+
+### PAGE 58: THE 6 CATEGORIES
+
+| Category | Metrics | Weight | What It Measures |
+|----------|---------|--------|------------------|
+| 🗽 Personal Autonomy | 15 | 20% | Vice laws, bodily autonomy, lifestyle choices |
+| 🏠 Housing & Property | 20 | 20% | Property rights, HOA rules, housing flexibility |
+| 💼 Business & Work | 25 | 20% | Licensing, employment laws, economic freedom |
+| 🚇 Transportation | 15 | 15% | Mobility freedom, transit options, car dependency |
+| ⚖️ Policing & Courts | 15 | 15% | Legal system fairness, police accountability |
+| 🎭 Speech & Lifestyle | 10 | 10% | Expression, privacy, cultural tolerance |
+
+**Total: 100 Metrics = 100% Coverage**
+
+<diagram type="rings">
+Personal Autonomy: 20%
+Housing & Property: 20%
+Business & Work: 20%
+Transportation: 15%
+Policing & Courts: 15%
+Speech & Lifestyle: 10%
+</diagram>
+
+---
+
+### PAGE 59: PERSONALIZATION PRESETS
+
+<smart-layout variant="solidBoxes">
+<item label="⚖️ Balanced">
+Default weights as shown. Best for general comparison.
+</item>
+<item label="💻 Digital Nomad">
+Emphasizes Business (30%), Speech (20%), Transportation (20%)
+</item>
+<item label="🚀 Entrepreneur">
+Emphasizes Business (40%), Housing (25%), Personal (15%)
+</item>
+<item label="👨‍👩‍👧‍👦 Family">
+Emphasizes Housing (30%), Policing (25%), Transportation (20%)
+</item>
+<item label="🗽 Libertarian">
+Emphasizes Personal (35%), Business (30%), Speech (20%)
+</item>
+<item label="💰 Investor">
+Emphasizes Business (35%), Housing (30%), Policing (20%)
+</item>
+</smart-layout>
+
+**Note:** Different presets may change which city wins! The winner in this report uses default balanced weights.
+
+---
+
+### PAGE 60: EVIDENCE QUALITY BY CATEGORY
+
+<smart-layout variant="circleStatsWithBoldLine">
+${Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([catId, config]) => {
+  const cat = result.city1.categories.find(c => c.categoryId === catId);
+  const agreement = cat?.agreementLevel ?? 75;
+  return `<item label="${config.icon} ${config.name}" value="${agreement}%" color="${getConfidenceColor(agreement >= 85 ? 'high' : agreement >= 70 ? 'medium' : 'low')}">
+Evidence: Government sources, legal databases, enforcement reports
+</item>`;
+}).join('\n')}
+</smart-layout>
+
+**Overall Report Confidence: ${result.overallConsensusConfidence?.toUpperCase()}**
+
+**What Confidence Means:**
+- **High:** Strong agreement across AI models, abundant evidence
+- **Medium:** Good agreement with some data gaps
+- **Low:** Significant divergence, recommend additional research
+
+`;
+}
+
+// ============================================================================
+// SECTION 8: EVIDENCE & CLOSING (Pages 61-64)
+// ============================================================================
+function formatSection8EvidenceClosing(
+  result: EnhancedComparisonResult
+): string {
+  // Collect sample evidence citations
+  const sampleEvidence: string[] = [];
+  result.city1.categories.slice(0, 3).forEach(cat => {
+    cat.metrics.slice(0, 3).forEach(m => {
+      if (m.llmScores) {
+        m.llmScores.forEach(score => {
+          if (score.evidence) {
+            score.evidence.slice(0, 1).forEach(e => {
+              sampleEvidence.push(`[${e.city}] "${e.title}" - ${e.snippet?.slice(0, 100)}... (${e.url})`);
+            });
+          } else if (score.sources) {
+            score.sources.slice(0, 1).forEach(s => {
+              sampleEvidence.push(`[Source] ${s}`);
+            });
+          }
+        });
+      }
+    });
+  });
+
+  return `
+## SECTION 8: EVIDENCE & CLOSING
+
+---
+
+### PAGE 61: TOP EVIDENCE CITATIONS
+
+<smart-layout variant="outlineBoxesWithSideLine">
+${sampleEvidence.slice(0, 10).map((e, i) => `<item label="Citation ${i + 1}">
+${e}
+</item>`).join('\n') || `<item label="Evidence Summary">
+500+ sources gathered from government websites, legal databases, news sources, and enforcement records across both cities.
+</item>`}
+</smart-layout>
+
+**Sources Include:**
+- Government legislation databases
+- Municipal code repositories
+- Legal news and analysis
+- Enforcement statistics
+- Court records and decisions
+
+---
+
+### PAGE 62: DATA LIMITATIONS
+
+<smart-layout variant="outlineBoxes">
+<item label="⏱️ Temporal">
+Laws change. This report reflects data as of ${new Date(result.generatedAt).toLocaleDateString()}. Verify current status before decisions.
+</item>
+<item label="🌍 Geographic">
+City-level analysis. Neighborhoods, suburbs, and rural areas may differ significantly.
+</item>
+<item label="📊 Data Quality">
+Some metrics rely on enforcement patterns that are difficult to quantify precisely.
+</item>
+<item label="🤖 AI Limitations">
+AI models may have knowledge cutoffs or incomplete indexing of recent changes.
+</item>
+<item label="⚖️ Legal">
+This is not legal advice. Consult qualified attorneys for specific situations.
+</item>
+<item label="👤 Personalization">
+Your experience may vary based on nationality, profession, and personal circumstances.
+</item>
+<item label="🔮 Predictive">
+Trend forecasts are estimates, not guarantees. Political changes can shift trajectories.
+</item>
+</smart-layout>
+
+<aside variant="note">
+LIFE SCORE provides data-driven insights to inform decisions, not replace professional advice or personal research.
+</aside>
+
+---
+
+### PAGE 63: ABOUT CLUES INTELLIGENCE LTD
+
+| Our Mission | Our Approach |
+|-------------|--------------|
+| Making freedom measurable, one city at a time. We help individuals make data-driven decisions about international relocation based on verified legal data. | **Evidence-Based:** 100 concrete, measurable metrics |
+| | **Multi-AI:** 5 independent models reduce bias |
+| | **Transparent:** Full methodology disclosure |
+| | **Updated:** Continuous data refresh |
+| | **Privacy-First:** Your data stays yours |
+
+<smart-layout variant="iconsText">
+<item icon="🌍" label="Relocators">Planning international moves</item>
+<item icon="💼" label="Entrepreneurs">Seeking business-friendly environments</item>
+<item icon="💻" label="Remote Workers">Digital nomads choosing bases</item>
+<item icon="👨‍👩‍👧" label="Families">Finding freedom-respecting communities</item>
+<item icon="🏛️" label="Researchers">Studying global freedom patterns</item>
+</smart-layout>
+
+**Contact:**
+- 🌐 Website: clueslifescore.com
+- 📧 Email: info@clueslifescore.com
+- 🐦 Twitter: @CluesLifeScore
+- 💼 LinkedIn: Clues Intelligence LTD
+
+---
+
+### PAGE 64: LEGAL NOTICES & COPYRIGHT
+
+**Copyright © 2025-2026 Clues Intelligence LTD. All Rights Reserved.**
+
+**LIFE SCORE™** is a trademark of Clues Intelligence LTD.
+
+<smart-layout variant="iconsText">
+<item icon="✅" label="Permitted">Personal use, academic citation, fair use excerpts</item>
+<item icon="✅" label="Permitted">Sharing report links, social media discussion</item>
+<item icon="❌" label="Prohibited">Commercial redistribution without license</item>
+<item icon="❌" label="Prohibited">Modification of data or methodology claims</item>
+<item icon="❌" label="Prohibited">Removal of branding or attribution</item>
+</smart-layout>
+
+**Disclaimer of Warranties:**
+This report is provided "as is" without warranties of any kind. Clues Intelligence LTD does not guarantee accuracy, completeness, or fitness for any particular purpose.
+
+**Limitation of Liability:**
+In no event shall Clues Intelligence LTD be liable for any damages arising from the use of this report.
+
+**Governing Law:**
+This report is governed by the laws of England and Wales.
+
+**For Licensing Inquiries:**
+Contact legal@clueslifescore.com
+
+---
+
+*"Making freedom measurable, one city at a time."*
+
+**LIFE SCORE™ by Clues Intelligence LTD**
+
+`;
+}
+
+// ============================================================================
+// MAIN ENHANCED REPORT FORMATTER
+// ============================================================================
+
+/**
+ * Format comparison for 64-page Enhanced Gamma Report (v3.0)
+ *
+ * IMPORTANT: This is a NEW function. The existing formatComparisonForGamma()
+ * remains completely untouched for standard 35-page reports.
+ *
+ * @param result - EnhancedComparisonResult from multi-LLM evaluation
+ * @param judgeReport - Optional JudgeReport with executive summary and analysis
+ * @param gunData - Optional GunComparisonData for gun rights section
+ * @returns Formatted prompt string for Gamma API (50,000-80,000 chars)
+ */
+export function formatEnhancedReportForGamma(
+  result: EnhancedComparisonResult,
+  judgeReport?: JudgeReportData,
+  gunData?: GunComparisonData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const city1Country = result.city1.country;
+  const city2Country = result.city2.country;
+
+  // Build all 8 sections
+  const section1 = formatSection1ExecutiveSummary(result, judgeReport);
+  const section2 = formatSection2LawVsReality(result);
+  const section3 = formatSection3CategoryDeepDives(result, judgeReport);
+  const section4 = formatSection4DeeperInsights(result);
+  const section5 = formatSection5LLMConsensus(result);
+  const section6 = formatSection6GunRights(result, gunData);
+  const section7 = formatSection7Methodology(result);
+  const section8 = formatSection8EvidenceClosing(result);
+
+  const fullPrompt = `
+================================================================================
+LIFE SCORE™ ENHANCED FREEDOM COMPARISON REPORT v3.0
+================================================================================
+
+CRITICAL INSTRUCTIONS FOR GAMMA AI:
+
+1. This is a 64-PAGE comprehensive report. Generate ALL pages.
+2. Use ONLY the data provided below. Do NOT add tourism, weather, or cost-of-living info.
+3. Generate ALL specified charts and visual elements using GML syntax.
+4. This compares LEGAL FREEDOM and LIVED FREEDOM metrics ONLY.
+5. Gun Rights section is UNSCORED - present facts without declaring a winner.
+6. Use the exact LLM names: Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Sonar Reasoning Pro
+7. Judge is Claude Opus 4.5
+
+REPORT: ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
+GENERATED: ${new Date(result.generatedAt).toLocaleDateString()}
+REPORT ID: ${result.comparisonId}
+
+================================================================================
+
+${section1}
+
+${section2}
+
+${section3}
+
+${section4}
+
+${section5}
+
+${section6}
+
+${section7}
+
+${section8}
+
+================================================================================
+END OF LIFE SCORE™ ENHANCED REPORT DATA
+================================================================================
+
+GENERATE A COMPLETE 64-PAGE VISUAL REPORT FROM THE ABOVE DATA.
+USE ALL GML VISUAL ELEMENTS SPECIFIED (<smart-layout>, <diagram>, <table>, etc.)
+DO NOT TRUNCATE OR SUMMARIZE. INCLUDE ALL 100 METRICS.
+`.trim();
+
+  return fullPrompt;
+}
+
+// ============================================================================
+// ENHANCED REPORT GENERATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate an enhanced 64-page visual report via Gamma API
+ *
+ * IMPORTANT: This is a NEW function. The existing generateVisualReport()
+ * remains completely untouched for standard reports.
+ */
+export async function generateEnhancedVisualReport(
+  result: EnhancedComparisonResult,
+  exportFormat: 'pdf' | 'pptx' = 'pdf',
+  judgeReport?: JudgeReportData,
+  gunData?: GunComparisonData
+): Promise<VisualReportResponse> {
+  // Generate the enhanced prompt
+  const prompt = formatEnhancedReportForGamma(result, judgeReport, gunData);
+
+  // Validate prompt length
+  if (prompt.length > PROMPT_LENGTH_MAX) {
+    throw new Error(
+      `Report data exceeds maximum size (${prompt.length} chars). ` +
+      `Try unchecking "Include Gun Rights" to reduce size.`
+    );
+  }
+
+  if (prompt.length > PROMPT_LENGTH_WARNING) {
+    console.warn(
+      `[GammaService] Enhanced prompt is ${prompt.length} chars - approaching ${PROMPT_LENGTH_MAX} limit`
+    );
+  }
+
+  console.log(`[GammaService] Generating enhanced report: ${prompt.length} chars`);
+
+  const response = await fetch('/api/gamma', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      exportAs: exportFormat,
+      comparisonId: result.comparisonId,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to generate enhanced report: ${response.status}`);
+  }
+
+  const data: VisualReportResponse = await response.json();
+
+  // Record cost (enhanced reports may cost more due to size)
+  if (data.generationId) {
+    const cost = calculateGammaCost();
+    appendServiceCost('gamma', {
+      generationId: data.generationId,
+      cost,
+      timestamp: Date.now(),
+      enhanced: true,
+    });
+  }
+
+  return data;
+}
+
+/**
+ * Poll for enhanced report completion with extended timeout and progressive messages
+ */
+export async function pollEnhancedUntilComplete(
+  generationId: string,
+  onProgress?: (state: VisualReportState) => void
+): Promise<VisualReportResponse> {
+  let attempts = 0;
+
+  while (attempts < MAX_POLL_ATTEMPTS_ENHANCED) {
+    const status = await checkGenerationStatus(generationId);
+
+    // Calculate progress with enhanced messaging
+    const estimatedProgress = Math.min(95, Math.round((attempts / 18) * 100)); // ~90s typical for enhanced
+
+    // Progressive status messages
+    let statusMessage = 'Generating your 64-page Enhanced Report...';
+    if (attempts > 24) statusMessage = 'Still working... Large reports take longer';
+    if (attempts > 48) statusMessage = 'Almost there... Complex analysis in progress';
+    if (attempts > 72) statusMessage = 'Taking longer than expected. You can wait or try again.';
+
+    if (onProgress) {
+      onProgress({
+        status: status.status === 'completed' ? 'completed' :
+                status.status === 'failed' ? 'error' : 'polling',
+        generationId,
+        gammaUrl: status.url,
+        pdfUrl: status.pdfUrl,
+        pptxUrl: status.pptxUrl,
+        error: status.error,
+        progress: status.status === 'completed' ? 100 : estimatedProgress,
+        statusMessage,
+      });
+    }
+
+    if (status.status === 'completed') {
+      return status;
+    }
+
+    if (status.status === 'failed') {
+      throw new Error(status.error || 'Enhanced report generation failed');
+    }
+
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+    attempts++;
+  }
+
+  // Timeout with recovery suggestion
+  throw new Error(
+    'Enhanced report generation timed out (7.5 min). ' +
+    'Try: (1) Uncheck "Include Gun Rights" to reduce size, or (2) Use Standard Report instead.'
+  );
+}
+
+/**
+ * Full enhanced generation flow: generate + poll until complete
+ *
+ * IMPORTANT: This is a NEW function. The existing generateAndWaitForReport()
+ * remains completely untouched for standard reports.
+ */
+export async function generateEnhancedAndWaitForReport(
+  result: EnhancedComparisonResult,
+  exportFormat: 'pdf' | 'pptx' = 'pdf',
+  judgeReport?: JudgeReportData,
+  gunData?: GunComparisonData,
+  onProgress?: (state: VisualReportState) => void
+): Promise<VisualReportResponse> {
+  // Start generation
+  if (onProgress) {
+    onProgress({
+      status: 'generating',
+      progress: 0,
+      statusMessage: 'Starting 64-page Enhanced Report generation...',
+    });
+  }
+
+  const initial = await generateEnhancedVisualReport(result, exportFormat, judgeReport, gunData);
+
+  if (onProgress) {
+    onProgress({
+      status: 'polling',
+      generationId: initial.generationId,
+      progress: 5,
+      statusMessage: 'Generating your 64-page Enhanced Report...',
+    });
+  }
+
+  // Poll with extended timeout
+  return pollEnhancedUntilComplete(initial.generationId, onProgress);
+}
