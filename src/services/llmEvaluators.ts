@@ -315,9 +315,10 @@ export async function runSingleEvaluatorBatched(
     console.log(`[BATCH] ${provider}/${categoryId} done: success=${result.success}, scores=${result.scores.length}`);
 
     // Update progress to completed/failed with success count
+    // Note: result.scores contains entries for BOTH cities, so divide by 2 for metric count
     if (idx >= 0) {
       progressState[idx].status = result.success ? 'completed' : 'failed';
-      progressState[idx].successCount = result.scores.length;
+      progressState[idx].successCount = Math.floor(result.scores.length / 2);
       onCategoryProgress?.([...progressState]);
     }
 

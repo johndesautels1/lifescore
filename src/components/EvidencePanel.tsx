@@ -4,7 +4,7 @@
  * Works with both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, startTransition } from 'react';
 import type { EnhancedComparisonResult, EvidenceItem } from '../types/enhancedComparison';
 import { LLM_CONFIGS } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
@@ -135,19 +135,33 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
     }
   }
 
-  const allEvidence = collectEvidence();
+  // Memoize evidence collection to avoid recalculating on every render
+  const allEvidence = useMemo(() => collectEvidence(), [result]);
 
   // Filter by city if selected
-  const filteredEvidence = filterCity === 'all'
-    ? allEvidence
-    : allEvidence.filter(e =>
-        (filterCity === 'city1' && e.city === result.city1.city) ||
-        (filterCity === 'city2' && e.city === result.city2.city)
-      );
+  const filteredEvidence = useMemo(() =>
+    filterCity === 'all'
+      ? allEvidence
+      : allEvidence.filter(e =>
+          (filterCity === 'city1' && e.city === result.city1.city) ||
+          (filterCity === 'city2' && e.city === result.city2.city)
+        ),
+    [allEvidence, filterCity, result.city1.city, result.city2.city]
+  );
 
-  // Get unique URLs for the summary
-  const uniqueUrls = new Set<string>();
-  allEvidence.forEach(e => e.evidence.forEach(ev => uniqueUrls.add(ev.url)));
+  // Memoize unique URLs for the summary
+  const uniqueUrls = useMemo(() => {
+    const urls = new Set<string>();
+    allEvidence.forEach(e => e.evidence.forEach(ev => urls.add(ev.url)));
+    return urls;
+  }, [allEvidence]);
+
+  // Use startTransition for non-blocking collapse toggle (fixes INP issue)
+  const handleToggle = useCallback(() => {
+    startTransition(() => {
+      setIsCollapsed(prev => !prev);
+    });
+  }, []);
 
   return (
     <div className={`evidence-panel-container ${isCollapsed ? 'collapsed' : ''}`}>
@@ -155,7 +169,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
       <div className="evidence-panel-header">
         <button
           className="evidence-toggle-btn"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={handleToggle}
         >
           <span className="evidence-icon">📚</span>
           <span className="evidence-title">
