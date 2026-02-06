@@ -255,7 +255,7 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #F7931E;
+  color: #FF7A00;
 }
 
 .avatar-joined {
@@ -477,7 +477,8 @@
 
 .account-value {
   font-size: 0.8rem;
-  color: var(--text-secondary, #6b7280);
+  color: #FF7A00;
+  font-weight: 500;
 }
 
 .account-status {
