@@ -1929,7 +1929,7 @@ Contact legal@clueslifescore.com
 // ============================================================================
 
 /**
- * Format comparison for 64-page Enhanced Gamma Report (v3.0)
+ * Format comparison for 64-page Enhanced Gamma Report (v3.0 FINAL)
  *
  * IMPORTANT: This is a NEW function. The existing formatComparisonForGamma()
  * remains completely untouched for standard 35-page reports.
@@ -1948,6 +1948,11 @@ export function formatEnhancedReportForGamma(
   const city2Name = result.city2.city;
   const city1Country = result.city1.country;
   const city2Country = result.city2.country;
+  const winner = result.winner === 'city1' ? city1Name : result.winner === 'city2' ? city2Name : 'TIE';
+  const loser = result.winner === 'city1' ? city2Name : result.winner === 'city2' ? city1Name : '';
+  const city1TotalScore = Math.round(result.city1.totalConsensusScore);
+  const city2TotalScore = Math.round(result.city2.totalConsensusScore);
+  const generatedAt = new Date(result.generatedAt).toLocaleDateString();
 
   // Build all 8 sections
   const section1 = formatSection1ExecutiveSummary(result, judgeReport);
@@ -1960,24 +1965,61 @@ export function formatEnhancedReportForGamma(
   const section8 = formatSection8EvidenceClosing(result);
 
   const fullPrompt = `
+LIFE SCORE™ ENHANCED FREEDOM COMPARISON REPORT - GAMMA AI GENERATION INSTRUCTIONS v3.0 FINAL
+
+CRITICAL: Generate ALL 60+ pages. Do NOT truncate or summarize any section.
+
 ================================================================================
-LIFE SCORE™ ENHANCED FREEDOM COMPARISON REPORT v3.0
+REPORT METADATA:
 ================================================================================
 
-CRITICAL INSTRUCTIONS FOR GAMMA AI:
+Report Type: LIFE SCORE™ Enhanced Legal & Lived Freedom Comparison
+Cities: ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
+Winner: ${winner} (Score: ${result.winner === 'city1' ? city1TotalScore : city2TotalScore}/100)
+Loser: ${loser} (Score: ${result.winner === 'city1' ? city2TotalScore : city1TotalScore}/100)
+Score Difference: ${Math.abs(result.scoreDifference)} points
+Generated: ${generatedAt}
+Report ID: ${result.comparisonId}
 
-1. This is a 64-PAGE comprehensive report. Generate ALL pages.
-2. Use ONLY the data provided below. Do NOT add tourism, weather, or cost-of-living info.
-3. Generate ALL specified charts and visual elements using GML syntax.
-4. This compares LEGAL FREEDOM and LIVED FREEDOM metrics ONLY.
-5. Gun Rights section is UNSCORED - present facts without declaring a winner.
-6. Use the exact LLM names: Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Sonar Reasoning Pro
-7. Judge is Claude Opus 4.5
+================================================================================
+CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
+================================================================================
 
-REPORT: ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
-GENERATED: ${new Date(result.generatedAt).toLocaleDateString()}
-REPORT ID: ${result.comparisonId}
+5 LLMs Used for Evaluation:
+📝 Claude Sonnet 4.5 (Anthropic) - Primary evaluator with web search
+🤖 GPT-4o (OpenAI) - Cross-validation with Tavily search
+💎 Gemini 3 Pro (Google) - Native Google Search grounding
+𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
+🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
 
+Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
+
+================================================================================
+VISUAL SPECIFICATIONS:
+================================================================================
+
+Heat Maps: Use <smart-layout variant="dotGridStats">
+Gauges: Use <smart-layout variant="semiCircle"> or variant="circleStats">
+Bars: Use <smart-layout variant="barStats">
+Process: Use <smart-layout variant="processSteps">
+Tables: Use <table colwidths="[...]">
+Diagrams: Use <diagram type="rings"> or type="venn">
+
+================================================================================
+COLOR CODING:
+================================================================================
+
+Winner: Gold #FFD700 / Green #10B981
+Loser: Blue #1E90FF
+Legal Scores: Purple #6B46C1
+Lived Scores: Teal #14B8A6
+Agreement >90%: Dark Green #1C5D1F
+Agreement 85-90%: Green #10B981
+Agreement 70-85%: Yellow #FBBF24
+Agreement <70%: Orange #F97316
+
+================================================================================
+SECTION DATA:
 ================================================================================
 
 ${section1}
@@ -2000,9 +2042,13 @@ ${section8}
 END OF LIFE SCORE™ ENHANCED REPORT DATA
 ================================================================================
 
-GENERATE A COMPLETE 64-PAGE VISUAL REPORT FROM THE ABOVE DATA.
-USE ALL GML VISUAL ELEMENTS SPECIFIED (<smart-layout>, <diagram>, <table>, etc.)
-DO NOT TRUNCATE OR SUMMARIZE. INCLUDE ALL 100 METRICS.
+CRITICAL FINAL INSTRUCTIONS:
+1. Generate a COMPLETE 60-64 PAGE visual report from the above data
+2. Use ALL GML visual elements specified (<smart-layout>, <diagram>, <table>, etc.)
+3. DO NOT TRUNCATE OR SUMMARIZE - include ALL 100 metrics
+4. Use EXACT AI model names as specified above
+5. Apply COLOR CODING consistently throughout
+6. Gun Rights section (Pages 53-56) is UNSCORED - facts only, no winner
 `.trim();
 
   return fullPrompt;
