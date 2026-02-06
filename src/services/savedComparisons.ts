@@ -136,7 +136,7 @@ const MAX_SAVED_ENHANCED = 20; // Enhanced comparisons are much larger (~200KB e
  * Safely save to localStorage with quota handling
  * If quota exceeded, removes oldest items until it fits
  */
-function safeLocalStorageSet(key: string, value: string, maxItems?: number): boolean {
+function safeLocalStorageSet(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
     return true;
