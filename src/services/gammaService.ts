@@ -1573,7 +1573,7 @@ Multi-AI consensus eliminates single-model bias and provides more reliable freed
 // SECTION 6: GUN RIGHTS (Pages 53-56) - OPTIONAL, UNSCORED
 // ============================================================================
 function formatSection6GunRights(
-  result: EnhancedComparisonResult,
+  _result: EnhancedComparisonResult,
   gunData?: GunComparisonData
 ): string {
   if (!gunData) {
