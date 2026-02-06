@@ -816,7 +816,8 @@
 }
 
 .storage-text span:last-child {
-  color: var(--text-secondary, #6b7280);
+  color: #f97316;
+  font-weight: 500;
 }
 
 .storage-fill.danger {
