@@ -3,7 +3,7 @@
  * Multi-LLM consensus UI
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
@@ -2035,7 +2035,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                         {/* Main metric row - clickable to expand */}
                         <button
                           className={`metric-row-expandable ${scoreViewMode === 'lawVsReality' ? 'dual-row' : ''}`}
-                          onClick={() => setExpandedEvidence(isRowExpanded ? null : metric.id)}
+                          onClick={() => startTransition(() => setExpandedEvidence(isRowExpanded ? null : metric.id))}
                           aria-expanded={isRowExpanded}
                         >
                           <div className="metric-info">
