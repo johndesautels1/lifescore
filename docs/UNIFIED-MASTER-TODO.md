@@ -1,8 +1,8 @@
 # LIFE SCORE - UNIFIED MASTER TODO
 **Created:** February 3, 2026
-**Last Updated:** February 5, 2026 (Session 9 - LS-SESSION9-20260205)
-**Source:** Complete merged list from all sessions (1-9)
-**Conversation ID:** LS-SESSION10-20260205
+**Last Updated:** February 6, 2026 (Session 12 - LS-SESSION12-20260206)
+**Source:** Complete merged list from all sessions (1-12)
+**Conversation ID:** LS-SESSION12-20260206
 
 ---
 
@@ -378,11 +378,36 @@
 | 808e41c | Add Gun Comparison Modal design spec to master TODO |
 | 6b7574f | Add standalone Gun Rights Comparison modal (unscored) |
 
-## Session 11 Commits
+## Session 11 Commits (Feb 5, 2026)
 
 | Commit | Description |
 |--------|-------------|
 | 40bd10c | Fix 3 dark mode CSS bugs in Gun Comparison Modal |
+| 77dbd3f | Update master TODO: mark gun modal done, add Session 11 commits |
+| c8c726d | Add X/Y metric count display and failure acknowledgment UX |
+| 56ca2a7 | Fix save hanging: make Supabase sync non-blocking with timeout |
+| 91478f1 | Add gun-comparison endpoint to vercel.json |
+| 612c356 | Fix localStorage quota exceeded errors |
+| a1d3669 | Fix hasCategoryFailures being too aggressive |
+| e888f1a | Fix TS6133: remove unused maxItems parameter |
+| 24ba185 | Add Data tab to Settings with storage management UI |
+| 5518226 | Fix X/Y metric display and INP collapse-arrow issue |
+| 492c262 | Fix storage meter showing half the actual usage (UTF-16) |
+| 89ae545 | Fix Settings modal tabs centering with 5 tabs |
+| aea1e23 | Add missing CSS for storage-text display |
+| 9238aec | Change storage percentage text to orange-red color |
+| 4cb33a7 | Remove non-functional API Keys tab from Settings |
+| 77e4f7a | Remove orphaned API Keys CSS (cleanup) |
+| c768dca | Change email address text to crisp orange (#FF7A00) |
+| 3af716b | Update Gun Comparison modal: wider, taller, yellow labels |
+| 2acdf3f | Make Gun Rights trigger button full width like category sections |
+
+## Session 12 Commits (Feb 6, 2026)
+
+| Commit | Description |
+|--------|-------------|
+| d37fc38 | Consolidate scoring methodology into unified footer component |
+| 301e310 | Fix Judge header mobile overlap - stack and center elements |
 
 ---
 
@@ -821,6 +846,85 @@ Opens a full-screen modal with:
 
 ---
 
-*Last Updated: February 5, 2026 - Session 10 (LS-SESSION10-20260205)*
+---
+
+## SESSION 11-12 NEW ITEMS COMPLETED
+
+| # | Item | Details | Status |
+|---|------|---------|--------|
+| 82 | X/Y Metric Display Fix | Result.scores contains both cities - divide by 2 | DONE (5518226) |
+| 83 | INP Collapse-Arrow Fix | 208ms block fixed with startTransition + useMemo | DONE (5518226) |
+| 84 | Storage Meter UTF-16 Fix | localStorage uses 2 bytes/char, was showing 50% | DONE (492c262) |
+| 85 | Settings 5-Tab Centering | Tabs not centered with new Data tab | DONE (89ae545) |
+| 86 | Remove API Keys Tab | Tab was non-functional (keys never sent to backend) | DONE (4cb33a7, 77e4f7a) |
+| 87 | Email Address Orange | Change email text to crisp orange (#FF7A00) | DONE (c768dca) |
+| 88 | Gun Modal Resize | 1.5x wider (1440px), 2x taller (70vh), yellow labels | DONE (3af716b) |
+| 89 | Gun Trigger Full Width | Make Gun Rights button full width like categories | DONE (2acdf3f) |
+| 90 | Scoring Methodology Consolidation | Merge two explanations into unified footer component | DONE (d37fc38) |
+| 91 | Judge Header Mobile Fix | "Verdict Ready" overlapping "local time" on mobile | DONE (301e310) |
+
+---
+
+## UPDATED GRAND TOTALS
+
+| Metric | Count |
+|--------|-------|
+| Original Items (Sessions 1-7) | 78 |
+| New Items (Sessions 8-9) | 8 |
+| New Items (Sessions 10-12) | 10 |
+| **GRAND TOTAL** | **96** |
+
+| Status | Count | % |
+|--------|-------|---|
+| Completed | 79 | 82% |
+| Active | 8 | 8% |
+| Needs Investigation | 2 | 2% |
+| Deferred | 9 | 9% |
+
+---
+
+## HANDOFF TO NEXT AGENT
+
+**Session ID for Next Agent:** LS-SESSION13-20260206
+**Handoff Prepared By:** Claude Opus 4.5 (LS-SESSION12-20260206)
+**Date:** February 6, 2026
+
+### Critical Context Files to Read First
+
+1. `docs/UNIFIED-MASTER-TODO.md` — THIS FILE (master state of all work)
+2. `src/data/metrics.ts` — Source of truth for 100 metrics (NEVER create copies)
+3. `CLAUDE.md` — User instructions and token management rules
+
+### What Was Just Completed (Session 12)
+
+1. **Scoring Methodology Consolidation** — Two redundant explanations merged into one unified 6-stage component in the "About Enhanced Comparison" footer
+2. **Judge Header Mobile Fix** — "Verdict Ready" and "LOCAL time" no longer overlap on mobile
+
+### What's Still Active (Priority Order)
+
+| Priority | Item | Description |
+|----------|------|-------------|
+| HIGH | #13 | Add More Models Button Handlers |
+| HIGH | #14 | Judge Re-runs with Combined Results |
+| MEDIUM | #15 | Disagreement Visualization |
+| MEDIUM | #22 | Gamma Prompt Update |
+| MEDIUM | #70 | Verify Olivia 100 Metrics |
+| LOW | #23-28 | Documentation polish |
+| LOW | #29-30 | Code quality |
+
+### Architecture Rules (MUST FOLLOW)
+
+1. **NO LOCAL BUILDS** — Vercel handles all builds. Just commit and push.
+2. **Metric IDs** — ALL must match `src/data/metrics.ts`. Never create independent copies.
+3. **Gun Rights** — Standalone modal, NOT in 100-metric system. See Gun Comparison Modal section above.
+4. **Dual Storage** — All saves go to BOTH localStorage AND Supabase.
+
+### User Instruction
+
+**The user requires written permission before each code change.** Present your plan, wait for approval, then implement.
+
+---
+
+*Last Updated: February 6, 2026 - Session 12 (LS-SESSION12-20260206)*
 *Build: Deploying via Vercel (NO local builds)*
 *All changes pushed to GitHub (main branch)*
