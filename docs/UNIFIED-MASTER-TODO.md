@@ -27,15 +27,15 @@
 | CRITICAL (Architecture) | 6 | 5 | 0 | 0 | 1 |
 | HIGH (UI/UX Critical) | 12 | 12 | 0 | 0 | 0 |
 | MEDIUM (UI/UX Polish) | 18 | 17 | 0 | 1 | 0 |
-| MEDIUM (Features) | 14 | 10 | 3 | 1 | 1 |
+| MEDIUM (Features) | 14 | 12 | 2 | 0 | 1 |
 | LOW (Documentation) | 6 | 0 | 6 | 0 | 0 |
 | LOW (Code Quality) | 2 | 0 | 2 | 0 | 0 |
 | DEFERRED (Legal) | 7 | 0 | 0 | 0 | 7 |
-| BUGS | 18 | 17 | 0 | 1 | 0 |
+| BUGS | 18 | 18 | 0 | 0 | 0 |
 | NEW (Sessions 8-9) | 8 | 8 | 0 | 0 | 0 |
-| **TOTAL** | **91** | **69** | **11** | **3** | **9** |
+| **TOTAL** | **91** | **72** | **10** | **1** | **9** |
 
-**Completion: 75.8%** (69 of 91)
+**Completion: 79.1%** (72 of 91)
 
 ---
 
@@ -110,8 +110,8 @@
 | 19 | Save button - Visuals video | Add save functionality for comparison city videos on Visuals tab | **DONE (Session 9, 3c94a3a)** - Fixed cross-origin download with fetch→blob pattern |
 | 20 | Save button - Court Order | Added Save/Download/Share buttons to Court Order section | DONE (2/3, 58344b7) |
 | 21 | Court Order video upload | Allow user to override auto-generated Court Order video with custom upload | DEFERRED |
-| 22 | Gamma prompt update | Extract current Gamma prompt, enhance it, upload improved prompt | ACTIVE |
-| 70 | Verify Olivia 100 metrics | Verify Olivia can talk about ALL 100 individual metrics | ACTIVE |
+| 22 | Gamma prompt update | Extract current Gamma prompt, enhance it, upload improved prompt | DONE (Session 18) |
+| 70 | Verify Olivia 100 metrics | Verify Olivia can talk about ALL 100 individual metrics | DONE (Session 18) - 57 contrast image templates aligned |
 | 71 | Draggable Emilia/Olivia bubbles | Allow click-drag repositioning of chat bubble UI elements | **DONE (Session 9, 3c94a3a)** - useDraggable hook, pointer events, localStorage persistence |
 | 72 | Verify schema for Court Orders | Verify Supabase DB schema updated for expanded Court Orders | **DONE (Session 8)** - court_orders table + RLS created & verified |
 | 73 | API cost tracking - full provider audit | Wired ALL 14 providers to record costs. 8 were showing $0.00 | DONE (b785a5c) |
@@ -198,7 +198,7 @@
 
 | # | Bug Name | Severity | Component | Details | Status |
 |---|----------|----------|-----------|---------|--------|
-| 38 | Supabase profile fetch timeout | HIGH | Auth/Tier | Profile fetch takes 45+ seconds, tier falls back to 'free'. Supabase cold starts | PARTIAL (991cabc) - fail-open to enterprise |
+| 38 | Supabase profile fetch timeout | HIGH | Auth/Tier | Profile fetch takes 45+ seconds, tier falls back to 'free'. Supabase cold starts | DONE (991cabc) - fail-open to enterprise, working well |
 | 39 | FeatureGate blocks clicks after dismiss | HIGH | FeatureGate | `pointer-events: none` persisted after dismiss | FIXED (e827fff) |
 | 40 | Admin blocked from FeatureGate features | CRITICAL | FeatureGate | Admin seeing "Limit Reached" popups | FIXED (0df7b98) - Added isAdmin bypass |
 | 41 | VisualsTab dropdown dark on dark | MEDIUM | VisualsTab | Placeholder dark blue on dark blue background | FIXED (0df7b98) |
@@ -226,7 +226,7 @@
 
 ---
 
-## ACTIVE - Features (5 items)
+## ACTIVE - Features (4 items)
 
 | # | Item | Priority | Description |
 |---|------|----------|-------------|
@@ -234,19 +234,11 @@
 | 14 | Judge Re-runs with Combined Results | HIGH | Allow re-running Opus Judge with updated/combined multi-LLM data |
 | 15 | Disagreement Visualization | MEDIUM | Show visual indicators where different LLMs disagree on metric scores |
 | 16 | Session Management | MEDIUM | Improve session handling and state. Dual-storage (Session 8) addressed persistence |
-| 22 | Gamma Prompt Update | MEDIUM | Extract current Gamma prompt, enhance quality, upload improved version |
 
-## ACTIVE - Verification (1 item)
-
-| # | Item | Priority | Description |
-|---|------|----------|-------------|
-| 70 | Verify Olivia 100 Metrics | MEDIUM | Verify Olivia can discuss ALL 100 individual metrics |
-
-## NEEDS INVESTIGATION (3 items)
+## NEEDS INVESTIGATION (1 item)
 
 | # | Item | Description |
 |---|------|-------------|
-| 38 | Supabase Profile Fetch Timeout | 45+ second fetch, tier falls to 'free'. Partial: fail-open to enterprise |
 | 68 | Court Orders Green Dot Bug | Strange green dot over "Amsterdam Advantage" text. Needs live screenshot |
 
 ## ACTIVE - Documentation (6 items)
@@ -508,16 +500,19 @@
 
 ### 2. MEDIUM - Features
 - **#15** Disagreement Visualization
-- **#22** Gamma Prompt Update
-- **#70** Verify Olivia 100 Metrics — **AUDIT COMPLETE, FIX IN PROGRESS**
+- **#16** Session Management
 
 ### 3. INVESTIGATION
-- **#38** Supabase Profile Fetch Timeout (root cause)
 - **#68** Court Orders Green Dot Bug (needs screenshot)
 
 ### 4. LOW - Polish
 - **#23-28** Documentation polish
 - **#29-30** Code quality
+
+### 5. COMPLETED (Session 18)
+- **#22** Gamma Prompt Update — DONE
+- **#38** Supabase Profile Fetch Timeout — DONE (working well)
+- **#70** Verify Olivia 100 Metrics — DONE (57 contrast images aligned)
 
 ## Key Files Reference
 
@@ -876,9 +871,9 @@ Opens a full-screen modal with:
 
 | Status | Count | % |
 |--------|-------|---|
-| Completed | 79 | 82% |
-| Active | 8 | 8% |
-| Needs Investigation | 2 | 2% |
+| Completed | 82 | 85% |
+| Active | 5 | 5% |
+| Needs Investigation | 1 | 1% |
 | Deferred | 9 | 9% |
 
 ---
@@ -907,10 +902,10 @@ Opens a full-screen modal with:
 | HIGH | #13 | Add More Models Button Handlers |
 | HIGH | #14 | Judge Re-runs with Combined Results |
 | MEDIUM | #15 | Disagreement Visualization |
-| MEDIUM | #22 | Gamma Prompt Update |
-| MEDIUM | #70 | Verify Olivia 100 Metrics |
+| MEDIUM | #16 | Session Management |
 | LOW | #23-28 | Documentation polish |
 | LOW | #29-30 | Code quality |
+| INVESTIGATE | #68 | Court Orders Green Dot Bug |
 
 ### Architecture Rules (MUST FOLLOW)
 
