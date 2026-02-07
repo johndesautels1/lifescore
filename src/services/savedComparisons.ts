@@ -842,10 +842,17 @@ export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>
   saveGammaReportsLocal(reports);
 
   // Also save to Supabase database if user is authenticated
+  // FIX: Improved error handling and logging for Supabase save
   try {
     if (isSupabaseConfigured()) {
+      console.log('[savedComparisons] Supabase configured, attempting DB save...');
       getCurrentUser().then(user => {
         if (user) {
+          console.log('[savedComparisons] User authenticated, saving to Supabase:', {
+            userId: user.id,
+            comparisonId: report.comparisonId,
+            generationId: report.generationId,
+          });
           dbSaveGammaReport(
             user.id,
             report.comparisonId,
@@ -853,19 +860,24 @@ export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>
             report.gammaUrl,
             report.pdfUrl,
             report.pptxUrl
-          ).then(({ error }) => {
+          ).then(({ data, error }) => {
             if (error) {
               console.error('[savedComparisons] Gamma DB save failed:', error);
+              console.error('[savedComparisons] Save params:', { userId: user.id, comparisonId: report.comparisonId });
             } else {
-              console.log('[savedComparisons] Gamma report saved to database:', id);
+              console.log('[savedComparisons] ✓ Gamma report saved to Supabase database:', id, data);
             }
           }).catch(err => {
             console.error('[savedComparisons] Gamma DB save error:', err);
           });
+        } else {
+          console.log('[savedComparisons] No authenticated user, skipping Supabase save (local only)');
         }
       }).catch(err => {
         console.error('[savedComparisons] getCurrentUser error for Gamma save:', err);
       });
+    } else {
+      console.log('[savedComparisons] Supabase not configured, saved to localStorage only');
     }
   } catch (err) {
     console.error('[savedComparisons] Gamma DB save outer error:', err);

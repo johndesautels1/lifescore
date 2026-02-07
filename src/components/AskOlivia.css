@@ -1665,9 +1665,10 @@ button.control-item.recording {
     font-size: 0.7rem;
   }
 
+  /* FIX: Match chat-box width to speak/transcript buttons on mobile vertical */
   .chat-box {
     width: 100%;
-    max-width: min(280px, 90%);
+    max-width: none;  /* Same as control-item buttons */
     height: 160px;
   }
 

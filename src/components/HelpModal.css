@@ -411,6 +411,110 @@
   }
 }
 
+/* FIX Bug #7: Mobile Landscape (widescreen phone orientation) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .help-modal-overlay {
+    padding: 5px;
+    align-items: flex-start;
+  }
+
+  .help-modal {
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+
+  .help-modal-header {
+    padding: 8px 16px;
+  }
+
+  .help-modal-emilia-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .help-modal-emilia-icon span {
+    font-size: 14px;
+  }
+
+  .help-modal-title {
+    font-size: 14px;
+  }
+
+  .help-modal-subtitle {
+    display: none;
+  }
+
+  /* CRITICAL: Make tabs visible and scrollable horizontally on landscape */
+  .help-modal-tabs {
+    display: flex !important;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 6px 10px;
+    gap: 4px;
+    min-height: 44px;  /* Ensure visibility */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;  /* Hide scrollbar for cleaner look */
+  }
+
+  .help-modal-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .help-tab {
+    flex: 0 0 auto;  /* Don't shrink, allow scroll */
+    padding: 6px 10px;
+    min-width: fit-content;
+  }
+
+  .help-tab-icon {
+    font-size: 12px;
+  }
+
+  .help-tab-label {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  /* Reduce content padding for more room */
+  .help-modal-content {
+    padding: 0;
+  }
+
+  /* Compact the CTA for landscape */
+  .ask-emilia-cta {
+    flex-direction: row;
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .ask-emilia-cta-content {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .ask-emilia-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .ask-emilia-avatar span {
+    font-size: 14px;
+  }
+
+  .ask-emilia-heading {
+    font-size: 12px;
+  }
+
+  .ask-emilia-description {
+    display: none;  /* Hide on landscape to save space */
+  }
+
+  .ask-emilia-button {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
+
 /* ============================================
    Reduced Motion
    ============================================ */

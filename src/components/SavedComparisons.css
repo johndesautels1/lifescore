@@ -762,6 +762,7 @@
     min-height: 44px;  /* Ensure container has height */
   }
 
+  /* FIX Bug #6 & #8: Ensure action buttons visible and clickable on mobile */
   .action-btn {
     display: flex !important;  /* Force display */
     width: 44px !important;  /* Larger touch target */
@@ -772,6 +773,28 @@
     flex-shrink: 0;
     visibility: visible !important;
     opacity: 1 !important;
+    /* Mobile touch handling */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    user-select: none;
+    -webkit-user-select: none;
+    /* Ensure emoji renders properly */
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    line-height: 1;
+  }
+
+  /* Make sure buttons are on top and receive clicks */
+  .action-btn.view-btn {
+    position: relative;
+    z-index: 10;
+    background: white;
+    border: 2px solid var(--sapphire);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .action-btn.view-btn:active {
+    transform: scale(0.95);
+    background: var(--sapphire-50);
   }
 
   .saved-item-main {

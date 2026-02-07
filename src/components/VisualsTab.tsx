@@ -188,8 +188,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       return;
     }
 
-    saveGammaReport({
-      comparisonId: result.comparisonId,
+    // FIX: Generate fallback comparisonId if missing
+    const effectiveComparisonId = result.comparisonId || `LIFE-${Date.now()}-${result.city1.city.slice(0,3).toUpperCase()}`;
+
+    console.log('[VisualsTab] Saving report:', {
+      comparisonId: effectiveComparisonId,
+      city1: result.city1.city,
+      city2: result.city2.city,
+      gammaUrl: reportState.gammaUrl,
+      generationId: reportState.generationId,
+    });
+
+    const savedReport = saveGammaReport({
+      comparisonId: effectiveComparisonId,
       city1: result.city1.city,
       city2: result.city2.city,
       gammaUrl: reportState.gammaUrl,
@@ -197,6 +208,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       pptxUrl: reportState.pptxUrl,
       generationId: reportState.generationId,
     });
+
+    console.log('[VisualsTab] Report saved successfully:', savedReport);
 
     setIsReportSaved(true);
     setSaveMessage('Report saved to your library!');

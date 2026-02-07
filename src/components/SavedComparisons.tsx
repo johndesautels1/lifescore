@@ -441,8 +441,19 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                     <div className="saved-item-actions">
                       <button
                         className="action-btn view-btn"
-                        onClick={() => handleLoad(comparison)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('[SavedComparisons] View button clicked for:', comparison.id);
+                          handleLoad(comparison);
+                        }}
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          console.log('[SavedComparisons] View button touched for:', comparison.id);
+                          handleLoad(comparison);
+                        }}
                         title="View comparison"
+                        aria-label={`View ${comparison.result?.city1?.city || 'City 1'} vs ${comparison.result?.city2?.city || 'City 2'}`}
                       >
                         👁
                       </button>
@@ -504,6 +515,8 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           rel="noopener noreferrer"
                           className="action-btn view-btn"
                           title="View Report"
+                          aria-label={`View ${report.city1} vs ${report.city2} report`}
+                          onClick={() => console.log('[SavedComparisons] Opening Gamma report:', report.gammaUrl)}
                         >
                           👁
                         </a>

@@ -1253,10 +1253,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
           {/* Video Controls */}
           <div className="video-controls">
             <div className="controls-left">
-              <button className="control-btn" onClick={() => handleSkip(-10)} title="Rewind 10s">
+              <button
+                className="control-btn"
+                onClick={() => handleSkip(-10)}
+                title="Rewind 10s"
+                disabled={!judgeReport?.videoUrl || videoDuration === 0}
+              >
                 <span>⏮️</span>
               </button>
-              <button className="control-btn" onClick={() => handleSkip(-5)} title="Back 5s">
+              <button
+                className="control-btn"
+                onClick={() => handleSkip(-5)}
+                title="Back 5s"
+                disabled={!judgeReport?.videoUrl || videoDuration === 0}
+              >
                 <span>◀️</span>
               </button>
               <button
@@ -1266,10 +1276,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({ comparisonResult: propComparisonRes
               >
                 <span>{isPlaying ? '⏸️' : '▶️'}</span>
               </button>
-              <button className="control-btn" onClick={() => handleSkip(5)} title="Forward 5s">
+              <button
+                className="control-btn"
+                onClick={() => handleSkip(5)}
+                title="Forward 5s"
+                disabled={!judgeReport?.videoUrl || videoDuration === 0}
+              >
                 <span>▶️</span>
               </button>
-              <button className="control-btn" onClick={() => handleSkip(10)} title="Forward 10s">
+              <button
+                className="control-btn"
+                onClick={() => handleSkip(10)}
+                title="Forward 10s"
+                disabled={!judgeReport?.videoUrl || videoDuration === 0}
+              >
                 <span>⏭️</span>
               </button>
             </div>
