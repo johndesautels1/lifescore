@@ -451,7 +451,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
           <span className="judge-text">
             {isJudging && !judgeResult && 'Claude Opus 4.5 is building initial consensus...'}
             {isJudging && judgeResult && `Claude Opus 4.5 is updating consensus with ${completedCount} LLMs...`}
-            {judgeResult && !isJudging && `Consensus from ${lastJudgedCount} LLMs • Agreement: ${judgeResult.overallAgreement}%`}
+            {judgeResult && !isJudging && (lastJudgedCount > 1
+              ? `Consensus from ${lastJudgedCount} LLMs • Agreement: ${judgeResult.overallAgreement}%`
+              : `Evaluated by 1 LLM • Confidence: ${judgeResult.overallAgreement}%`)}
             {!isJudging && !judgeResult && 'Opus Judge will auto-run when ready'}
           </span>
           {judgeResult && !isJudging && completedCount > lastJudgedCount && (
@@ -1151,7 +1153,7 @@ const LLMAgreementSection: React.FC<LLMAgreementSectionProps> = ({ result, city1
                         </span>
                       </div>
                       <div className="agreed-deviation">
-                        σ = {metric.standardDeviation.toFixed(1)} • {metric.llmCount} LLMs agree
+                        σ = {metric.standardDeviation.toFixed(1)} • {metric.llmCount > 1 ? `${metric.llmCount} LLMs agree` : '1 LLM evaluated'}
                       </div>
                     </div>
 
@@ -1525,7 +1527,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           <h3>{result.city1.city}, {result.city1.country}</h3>
           <div className="consensus-score">{result.city1.totalConsensusScore}</div>
           <div className="agreement-meter">
-            <span className="agreement-label">LLM Agreement:</span>
+            <span className="agreement-label">{result.llmsUsed.length > 1 ? 'LLM Agreement:' : 'Confidence:'}</span>
             <div className="agreement-bar">
               <div
                 className="agreement-fill"
@@ -1540,7 +1542,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           <h3>{result.city2.city}, {result.city2.country}</h3>
           <div className="consensus-score">{result.city2.totalConsensusScore}</div>
           <div className="agreement-meter">
-            <span className="agreement-label">LLM Agreement:</span>
+            <span className="agreement-label">{result.llmsUsed.length > 1 ? 'LLM Agreement:' : 'Confidence:'}</span>
             <div className="agreement-bar">
               <div
                 className="agreement-fill"

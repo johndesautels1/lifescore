@@ -56,7 +56,7 @@ const ScoreMethodology: React.FC<ScoreMethodologyProps> = ({ result }) => {
           <div>
             <h3 className="methodology-title">How Your LIFE SCORE Is Calculated</h3>
             <p className="methodology-subtitle">
-              {llmCount} AI model{llmCount > 1 ? 's' : ''} &middot; {metricsEvaluated} metrics &middot; {overallAgreement}% agreement
+              {llmCount} AI model{llmCount > 1 ? 's' : ''} &middot; {metricsEvaluated} metrics &middot; {overallAgreement}% {llmCount > 1 ? 'agreement' : 'confidence'}
             </p>
           </div>
         </div>
@@ -153,11 +153,17 @@ const ScoreMethodology: React.FC<ScoreMethodologyProps> = ({ result }) => {
                 <code>Consensus = &Sigma;(score &times; confidence_weight) / &Sigma;(confidence_weights)</code>
               </div>
               <p>
-                The system also calculates the <strong>standard deviation</strong> (&sigma;) across all AI scores
-                for each metric to measure how much the models agree or disagree.
-                Your comparison achieved <strong>{overallAgreement}% overall agreement</strong> across
-                all evaluated metrics &mdash; classified
-                as <strong className={`confidence-inline ${confidenceLevel}`}>{confidenceLevel.toUpperCase()}</strong> confidence.
+                {llmCount > 1 ? (
+                  <>The system also calculates the <strong>standard deviation</strong> (&sigma;) across all AI scores
+                  for each metric to measure how much the models agree or disagree.
+                  Your comparison achieved <strong>{overallAgreement}% overall agreement</strong> across
+                  all evaluated metrics &mdash; classified
+                  as <strong className={`confidence-inline ${confidenceLevel}`}>{confidenceLevel.toUpperCase()}</strong> confidence.</>
+                ) : (
+                  <>Your comparison was evaluated with <strong>{overallAgreement}% confidence</strong> across
+                  all metrics &mdash; classified
+                  as <strong className={`confidence-inline ${confidenceLevel}`}>{confidenceLevel.toUpperCase()}</strong>.</>
+                )}
               </p>
             </div>
           </div>
