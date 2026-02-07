@@ -86,6 +86,8 @@ export interface GammaReport {
   pdf_url: string | null;
   pptx_url: string | null;
   nickname: string | null;
+  city1: string | null;
+  city2: string | null;
   created_at: string;
 }
 
