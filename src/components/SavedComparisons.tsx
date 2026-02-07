@@ -28,6 +28,7 @@ import {
   deleteSavedJudgeReport,
   clearAllJudgeReports,
   isValidComparisonResult,
+  fullDatabaseSync,
   type SavedComparison,
   type SavedGammaReport,
   type SavedJudgeReport
@@ -68,13 +69,18 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     syncAndLoadComparisons();
   }, []);
 
-  // FIX: Sync reports from Supabase before loading to ensure cross-device consistency
+  // FIX: Sync reports AND comparisons from Supabase to ensure cross-device consistency
   const syncAndLoadComparisons = async () => {
     setIsSyncing(true);
-    console.log('[SavedComparisons] Starting sync from Supabase...');
+    console.log('[SavedComparisons] Starting full sync from Supabase...');
 
     try {
-      // Sync both Gamma and Judge reports from Supabase in parallel
+      // FIX Session-19: FIRST sync actual comparisons (including Enhanced) from Supabase
+      // This was missing before - Enhanced comparisons from other devices weren't being pulled!
+      const dbSyncResult = await fullDatabaseSync();
+      console.log('[SavedComparisons] Database sync result:', dbSyncResult);
+
+      // Then sync Gamma and Judge reports in parallel
       const [gammaFromDb, judgeFromDb] = await Promise.all([
         syncGammaReportsFromSupabase(),
         syncJudgeReportsFromSupabase()
@@ -88,12 +94,17 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
       setJudgeReports(judgeFromDb);
 
       const totalReports = gammaFromDb.length + judgeFromDb.length;
-      console.log('[SavedComparisons] ✓ Sync complete:', gammaFromDb.length, 'gamma,', judgeFromDb.length, 'judge reports');
+      const totalComparisons = dbSyncResult.pulled + dbSyncResult.pushed;
+      console.log('[SavedComparisons] ✓ Full sync complete:',
+        dbSyncResult.pulled, 'comparisons pulled,',
+        dbSyncResult.pushed, 'pushed,',
+        gammaFromDb.length, 'gamma,',
+        judgeFromDb.length, 'judge reports');
 
-      if (totalReports > 0) {
-        showMessage('success', `Synced ${totalReports} reports from cloud`);
+      if (totalComparisons > 0 || totalReports > 0) {
+        showMessage('success', `Synced ${dbSyncResult.pulled} comparisons + ${totalReports} reports`);
       } else {
-        showMessage('error', 'No reports found - are you logged in?');
+        showMessage('error', 'No data found - are you logged in?');
       }
     } catch (err) {
       console.error('[SavedComparisons] Sync error:', err);
