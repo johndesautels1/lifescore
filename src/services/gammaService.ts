@@ -19,6 +19,10 @@ import type {
 } from '../types/gamma';
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateGammaCost } from '../utils/costCalculator';
+// Session 16: Report storage imports
+import { saveReport, type SaveReportData } from './reportStorageService';
+import { supabase } from '../lib/supabase';
+import type { Report } from '../types/database';
 
 // ============================================================================
 // CONSTANTS
@@ -3206,4 +3210,181 @@ export async function generateEnhancedAndWaitForReport(
 
   // Poll with extended timeout
   return pollEnhancedUntilComplete(initial.generationId, onProgress);
+}
+
+// ============================================================================
+// SESSION 16: REPORT STORAGE INTEGRATION
+// ============================================================================
+
+/**
+ * Extended response including saved report reference
+ */
+export interface VisualReportResponseWithStorage extends VisualReportResponse {
+  savedReport?: Report;
+  storageError?: string;
+}
+
+/**
+ * Generate enhanced report and save to Supabase storage.
+ *
+ * This wraps generateEnhancedAndWaitForReport to also:
+ * 1. Fetch the HTML from Gamma after generation
+ * 2. Save it to Supabase Storage
+ * 3. Store metadata in the reports table
+ *
+ * @param result - The enhanced comparison result
+ * @param exportFormat - PDF or PPTX export format
+ * @param judgeReport - Optional judge report data
+ * @param gunData - Optional gun comparison data
+ * @param onProgress - Progress callback
+ * @returns Report response with optional saved report reference
+ */
+export async function generateAndSaveEnhancedReport(
+  result: EnhancedComparisonResult,
+  exportFormat: 'pdf' | 'pptx' = 'pdf',
+  judgeReport?: JudgeReportData,
+  gunData?: GunComparisonData,
+  onProgress?: (state: VisualReportState) => void
+): Promise<VisualReportResponseWithStorage> {
+  const startTime = Date.now();
+
+  // Generate report using existing flow
+  const response = await generateEnhancedAndWaitForReport(
+    result,
+    exportFormat,
+    judgeReport,
+    gunData,
+    onProgress
+  );
+
+  // If generation failed, return as-is
+  if (response.status !== 'completed' || !response.url) {
+    return response;
+  }
+
+  // Try to save to our storage
+  try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.warn('[GammaService] No authenticated user, skipping storage save');
+      return {
+        ...response,
+        storageError: 'Not authenticated - report not saved to storage'
+      };
+    }
+
+    // Notify progress
+    if (onProgress) {
+      onProgress({
+        status: 'completed',
+        generationId: response.generationId,
+        gammaUrl: response.url,
+        pdfUrl: response.pdfUrl,
+        progress: 98,
+        statusMessage: 'Saving report to your library...',
+      });
+    }
+
+    // Fetch HTML from Gamma URL
+    // Note: Gamma URLs are public but may have CORS restrictions
+    // If this fails, we'll still return the Gamma URL
+    let htmlContent = '';
+    try {
+      const htmlResponse = await fetch(response.url);
+      if (htmlResponse.ok) {
+        htmlContent = await htmlResponse.text();
+      } else {
+        console.warn('[GammaService] Could not fetch Gamma HTML:', htmlResponse.status);
+      }
+    } catch (fetchError) {
+      console.warn('[GammaService] CORS or fetch error getting Gamma HTML:', fetchError);
+      // Try via our proxy if direct fetch fails
+      try {
+        const proxyResponse = await fetch(`/api/proxy-gamma?url=${encodeURIComponent(response.url)}`);
+        if (proxyResponse.ok) {
+          htmlContent = await proxyResponse.text();
+        }
+      } catch {
+        // Silently fail - we'll still have the Gamma URL
+      }
+    }
+
+    // Calculate duration
+    const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+
+    // Determine winner info
+    const city1Score = Math.round(result.city1.totalConsensusScore);
+    const city2Score = Math.round(result.city2.totalConsensusScore);
+    const isCity1Winner = result.winner === 'city1';
+
+    // Prepare report data
+    const reportData: SaveReportData = {
+      reportType: 'enhanced',
+      city1Name: result.city1.city,
+      city1Country: result.city1.country,
+      city2Name: result.city2.city,
+      city2Country: result.city2.country,
+      winner: isCity1Winner ? result.city1.city : result.city2.city,
+      winnerScore: isCity1Winner ? city1Score : city2Score,
+      loserScore: isCity1Winner ? city2Score : city1Score,
+      scoreDifference: Math.abs(result.scoreDifference || city1Score - city2Score),
+      gammaDocId: response.generationId,
+      gammaUrl: response.url,
+      durationSeconds,
+      pageCount: 82, // v4.0 enhanced reports are 82 pages
+      confidence: result.llmConfidence || undefined,
+    };
+
+    // Save to storage (only if we got HTML)
+    if (htmlContent) {
+      const { data: savedReport, error: saveError } = await saveReport(
+        user.id,
+        reportData,
+        htmlContent
+      );
+
+      if (saveError) {
+        console.error('[GammaService] Failed to save report:', saveError);
+        return {
+          ...response,
+          storageError: saveError.message
+        };
+      }
+
+      console.log('[GammaService] Report saved to storage:', savedReport?.id);
+
+      // Final progress update
+      if (onProgress) {
+        onProgress({
+          status: 'completed',
+          generationId: response.generationId,
+          gammaUrl: response.url,
+          pdfUrl: response.pdfUrl,
+          progress: 100,
+          statusMessage: 'Report saved to your library!',
+        });
+      }
+
+      return {
+        ...response,
+        savedReport: savedReport || undefined
+      };
+    } else {
+      // No HTML content - still save metadata without HTML
+      console.warn('[GammaService] No HTML content to save, report metadata only');
+      return {
+        ...response,
+        storageError: 'Could not fetch HTML content - report available via Gamma URL only'
+      };
+    }
+
+  } catch (error) {
+    console.error('[GammaService] Storage save failed:', error);
+    return {
+      ...response,
+      storageError: error instanceof Error ? error.message : 'Unknown storage error'
+    };
+  }
 }

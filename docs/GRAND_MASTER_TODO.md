@@ -170,33 +170,38 @@ CREATE POLICY "Users can view own reports" ON storage.objects
 
 ## IMPLEMENTATION TASKS
 
-### Phase 1: Database Schema
-- [ ] Create new `reports` table in Supabase
-- [ ] Create `report_access_logs` table
-- [ ] Create `report_shares` table
-- [ ] Set up RLS policies
-- [ ] Create Supabase Storage bucket `reports`
+### Phase 1: Database Schema - COMPLETED (Session 16)
+- [x] Create new `reports` table in Supabase
+- [x] Create `report_access_logs` table
+- [x] Create `report_shares` table
+- [x] Set up RLS policies
+- [ ] Create Supabase Storage bucket `reports` (manual step in dashboard)
+- [ ] Run migration: `supabase/migrations/20260207_create_reports_storage.sql`
 
-### Phase 2: TypeScript Types
-- [ ] Update `src/types/database.ts` with new interfaces
-- [ ] Add `Report`, `ReportInsert`, `ReportUpdate` types
-- [ ] Add `ReportShare`, `ReportAccessLog` types
+### Phase 2: TypeScript Types - COMPLETED (Session 16)
+- [x] Update `src/types/database.ts` with new interfaces
+- [x] Add `Report`, `ReportInsert`, `ReportUpdate` types
+- [x] Add `ReportShare`, `ReportAccessLog` types
+- [x] Add `ReportWithHtml`, `ReportSummary` types
 
-### Phase 3: Service Layer
-- [ ] Create `src/services/reportStorageService.ts`
-- [ ] Implement `saveReportToStorage()` - uploads HTML to Supabase Storage
-- [ ] Implement `saveReportMetadata()` - saves to reports table
-- [ ] Implement `getReport()` - fetches metadata + HTML
-- [ ] Implement `shareReport()` - generates share tokens
-- [ ] Implement `logReportAccess()` - analytics logging
+### Phase 3: Service Layer - COMPLETED (Session 16)
+- [x] Create `src/services/reportStorageService.ts`
+- [x] Implement `saveReport()` - uploads HTML to Supabase Storage
+- [x] Implement `getReport()` - fetches metadata
+- [x] Implement `getReportWithHtml()` - fetches metadata + HTML
+- [x] Implement `shareReport()` - generates share tokens
+- [x] Implement `getSharedReport()` - access via token
+- [x] Implement `logReportAccess()` - analytics logging
+- [x] Implement `getReportAnalytics()` - access stats
 
-### Phase 4: Integration
-- [ ] Update `gammaService.ts` to use new storage
-- [ ] After Gamma generates report, fetch HTML and save to storage
-- [ ] Update VisualsTab.tsx to use new report retrieval
+### Phase 4: Integration - PARTIALLY COMPLETED (Session 16)
+- [x] Update `gammaService.ts` to use new storage
+- [x] Created `generateAndSaveEnhancedReport()` wrapper function
+- [ ] Update VisualsTab.tsx to use `generateAndSaveEnhancedReport`
 - [ ] Add report dashboard showing user's saved reports
+- [ ] Create `/api/proxy-gamma` endpoint for CORS issues
 
-### Phase 5: Migration
+### Phase 5: Migration - PENDING
 - [ ] Migrate existing `gamma_reports` data to new `reports` table
 - [ ] Deprecate old `gamma_reports` table
 - [ ] Update usage tracking to use new table
@@ -401,7 +406,8 @@ const shareReport = async (reportId: string, expiresInDays = 30) => {
 | Session | Date | Key Changes |
 |---------|------|-------------|
 | LS-SESSION15 | 2026-02-06/07 | Enhanced Report v4.0, 82 pages, 6 new sections, Gamma syntax fixes, 15-min timeout |
+| LS-SESSION16 | 2026-02-07 | Database architecture upgrade: reports table, storage service, sharing system |
 
 ---
 
-*Last commit: 6b0d035 - Update timeout to 15 minutes for 82-page Premium Report*
+*Last commit: TBD - Session 16 changes not yet committed*
