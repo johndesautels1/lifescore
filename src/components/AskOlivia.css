@@ -1609,24 +1609,23 @@ button.control-item.recording {
     width: 100%;
   }
 
-  /* Fix #6: Scale Olivia display to 70% on mobile */
+  /* FIX: Full-width viewport on mobile vertical */
   .viewport-container {
     padding: 0.5rem;
-    min-height: 30vh;  /* Reduced from 35vh */
+    min-height: auto;
   }
 
   .viewport-frame {
-    transform: scale(0.7);
-    transform-origin: top center;
-    margin-bottom: -15%;  /* Compensate for scale */
+    width: 100%;
+    max-width: none;  /* Full width - no scaling */
   }
 
   .viewport-bezel {
-    padding: 6px;  /* Reduced from 8px */
+    padding: 6px;
   }
 
   .viewport-screen {
-    aspect-ratio: 16 / 10;  /* Slightly more compact */
+    aspect-ratio: 16 / 9;  /* Standard video ratio */
   }
 
   .viewport-info-bar {
