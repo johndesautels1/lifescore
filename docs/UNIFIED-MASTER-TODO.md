@@ -104,7 +104,7 @@
 | 13 | Add More Models Button Handlers | Wire up the "Add More Models" button to actually add LLMs | DONE (already implemented) |
 | 14 | Judge Re-runs with Combined Results | Allow re-running the Judge with updated/combined data from multiple LLMs | DONE (auto-reruns when LLMs complete) |
 | 15 | Disagreement Visualization | Show visual indicator where different LLMs disagree on scores | DONE (DisagreementSection with σ display, confidence badges, disputed metrics list) |
-| 16 | Session Management | Improve session handling, persistence, state management. **Note:** Dual-storage (Session 8) addressed persistence significantly | ACTIVE |
+| 16 | Session Management | Improve session handling, persistence, state management. **Note:** Dual-storage (Session 8) addressed persistence significantly | DONE (Session 18) - Added cross-device sync from Supabase |
 | 17 | Score Calculation UI | Explainer UI showing how LIFE SCORE math works | **DONE (Session 8)** - Glass-morphic 5-stage pipeline card |
 | 18 | Save button - Olivia images | Add save functionality for Olivia's comparison city images | **DONE (Session 9, 3c94a3a)** - SAVE IMAGES button on ContrastDisplays, fetch→blob download |
 | 19 | Save button - Visuals video | Add save functionality for comparison city videos on Visuals tab | **DONE (Session 9, 3c94a3a)** - Fixed cross-origin download with fetch→blob pattern |
@@ -225,12 +225,6 @@
 # WHAT'S LEFT TO FIX
 
 ---
-
-## ACTIVE - Features (1 item)
-
-| # | Item | Priority | Description |
-|---|------|----------|-------------|
-| 16 | Session Management | MEDIUM | Improve session handling and state. Dual-storage (Session 8) addressed persistence |
 
 ## NEEDS INVESTIGATION (1 item)
 
@@ -491,20 +485,18 @@
 
 ## Priority Order for Remaining Work
 
-### 1. MEDIUM - Features
-- **#16** Session Management
-
-### 2. INVESTIGATION
+### 1. INVESTIGATION
 - **#68** Court Orders Green Dot Bug (needs screenshot)
 
-### 3. LOW - Polish
+### 2. LOW - Polish
 - **#23-28** Documentation polish
 - **#29-30** Code quality
 
-### 4. COMPLETED (Session 18)
+### 3. COMPLETED (Session 18)
 - **#13** Add More Models Button Handlers — DONE (already implemented)
 - **#14** Judge Re-runs with Combined Results — DONE (auto-reruns)
 - **#15** Disagreement Visualization — DONE (DisagreementSection component)
+- **#16** Session Management — DONE (cross-device Supabase sync)
 - **#22** Gamma Prompt Update — DONE
 - **#38** Supabase Profile Fetch Timeout — DONE (working well)
 - **#70** Verify Olivia 100 Metrics — DONE (57 contrast images aligned)
@@ -866,8 +858,8 @@ Opens a full-screen modal with:
 
 | Status | Count | % |
 |--------|-------|---|
-| Completed | 85 | 89% |
-| Active | 2 | 2% |
+| Completed | 86 | 90% |
+| Active | 0 | 0% |
 | Needs Investigation | 1 | 1% |
 | Deferred | 9 | 9% |
 
@@ -894,7 +886,6 @@ Opens a full-screen modal with:
 
 | Priority | Item | Description |
 |----------|------|-------------|
-| MEDIUM | #16 | Session Management |
 | LOW | #23-28 | Documentation polish |
 | LOW | #29-30 | Code quality |
 | INVESTIGATE | #68 | Court Orders Green Dot Bug |
