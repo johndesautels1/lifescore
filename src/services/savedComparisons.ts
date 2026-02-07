@@ -1116,18 +1116,20 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
       const newReport: SavedJudgeReport = {
         reportId: record.report_id,
         comparisonId: record.comparison_id,
-        city1: record.city1 || 'Unknown',
-        city2: record.city2 || 'Unknown',
-        winner: record.winner || 'tie',
-        margin: record.margin || 0,
-        verdict: record.verdict || '',
-        executiveSummary: fullReport?.executiveSummary || { recommendation: 'tie', confidenceLevel: 'medium', keyInsight: '' },
-        summaryOfFindings: fullReport?.summaryOfFindings || { city1Score: 0, city2Score: 0, marginOfVictory: 0, closestCategories: [], biggestDifferences: [] },
-        categoryBreakdown: fullReport?.categoryBreakdown || [],
-        finalVerdict: fullReport?.finalVerdict || { recommendation: '', reasoning: '' },
+        city1: record.city1_name || 'Unknown',
+        city2: record.city2_name || 'Unknown',
         videoUrl: record.video_url || undefined,
         videoStatus: record.video_status || 'none',
         generatedAt: record.created_at,
+        summaryOfFindings: {
+          city1Score: record.city1_score || fullReport?.summaryOfFindings?.city1Score || 0,
+          city2Score: record.city2_score || fullReport?.summaryOfFindings?.city2Score || 0,
+          overallConfidence: record.overall_confidence || fullReport?.summaryOfFindings?.overallConfidence || 'medium',
+        },
+        executiveSummary: {
+          recommendation: record.recommendation || fullReport?.executiveSummary?.recommendation || 'tie',
+          rationale: record.rationale || fullReport?.executiveSummary?.rationale || '',
+        },
       };
 
       localReports.push(newReport);
