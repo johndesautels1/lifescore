@@ -103,7 +103,7 @@
 |---|------|---------|--------|
 | 13 | Add More Models Button Handlers | Wire up the "Add More Models" button to actually add LLMs | DONE (already implemented) |
 | 14 | Judge Re-runs with Combined Results | Allow re-running the Judge with updated/combined data from multiple LLMs | DONE (auto-reruns when LLMs complete) |
-| 15 | Disagreement Visualization | Show visual indicator where different LLMs disagree on scores | ACTIVE |
+| 15 | Disagreement Visualization | Show visual indicator where different LLMs disagree on scores | DONE (DisagreementSection with σ display, confidence badges, disputed metrics list) |
 | 16 | Session Management | Improve session handling, persistence, state management. **Note:** Dual-storage (Session 8) addressed persistence significantly | ACTIVE |
 | 17 | Score Calculation UI | Explainer UI showing how LIFE SCORE math works | **DONE (Session 8)** - Glass-morphic 5-stage pipeline card |
 | 18 | Save button - Olivia images | Add save functionality for Olivia's comparison city images | **DONE (Session 9, 3c94a3a)** - SAVE IMAGES button on ContrastDisplays, fetch→blob download |
@@ -226,11 +226,10 @@
 
 ---
 
-## ACTIVE - Features (2 items)
+## ACTIVE - Features (1 item)
 
 | # | Item | Priority | Description |
 |---|------|----------|-------------|
-| 15 | Disagreement Visualization | MEDIUM | Show visual indicators where different LLMs disagree on metric scores |
 | 16 | Session Management | MEDIUM | Improve session handling and state. Dual-storage (Session 8) addressed persistence |
 
 ## NEEDS INVESTIGATION (1 item)
@@ -493,7 +492,6 @@
 ## Priority Order for Remaining Work
 
 ### 1. MEDIUM - Features
-- **#15** Disagreement Visualization
 - **#16** Session Management
 
 ### 2. INVESTIGATION
@@ -506,6 +504,7 @@
 ### 4. COMPLETED (Session 18)
 - **#13** Add More Models Button Handlers — DONE (already implemented)
 - **#14** Judge Re-runs with Combined Results — DONE (auto-reruns)
+- **#15** Disagreement Visualization — DONE (DisagreementSection component)
 - **#22** Gamma Prompt Update — DONE
 - **#38** Supabase Profile Fetch Timeout — DONE (working well)
 - **#70** Verify Olivia 100 Metrics — DONE (57 contrast images aligned)
@@ -867,8 +866,8 @@ Opens a full-screen modal with:
 
 | Status | Count | % |
 |--------|-------|---|
-| Completed | 84 | 88% |
-| Active | 3 | 3% |
+| Completed | 85 | 89% |
+| Active | 2 | 2% |
 | Needs Investigation | 1 | 1% |
 | Deferred | 9 | 9% |
 
@@ -895,7 +894,6 @@ Opens a full-screen modal with:
 
 | Priority | Item | Description |
 |----------|------|-------------|
-| MEDIUM | #15 | Disagreement Visualization |
 | MEDIUM | #16 | Session Management |
 | LOW | #23-28 | Documentation polish |
 | LOW | #29-30 | Code quality |
