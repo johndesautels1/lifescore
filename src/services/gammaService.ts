@@ -1927,11 +1927,957 @@ Contact legal@clueslifescore.com
 }
 
 // ============================================================================
+// SECTION 8 FIXED: EVIDENCE FROM BOTH CITIES
+// ============================================================================
+function formatSection8EvidenceClosingBothCities(
+  result: EnhancedComparisonResult
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+
+  // Collect evidence from BOTH cities - alternating to ensure balance
+  const city1Evidence: string[] = [];
+  const city2Evidence: string[] = [];
+
+  // Get evidence from city1
+  result.city1.categories.forEach(cat => {
+    cat.metrics.forEach(m => {
+      if (m.llmScores) {
+        m.llmScores.forEach(score => {
+          if (score.evidence && score.evidence.length > 0) {
+            score.evidence.forEach(e => {
+              if (city1Evidence.length < 15) {
+                city1Evidence.push(`"${e.title}" - ${e.snippet?.slice(0, 80) || 'Source cited'}... (${e.url?.slice(0, 50)}...)`);
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  // Get evidence from city2
+  result.city2.categories.forEach(cat => {
+    cat.metrics.forEach(m => {
+      if (m.llmScores) {
+        m.llmScores.forEach(score => {
+          if (score.evidence && score.evidence.length > 0) {
+            score.evidence.forEach(e => {
+              if (city2Evidence.length < 15) {
+                city2Evidence.push(`"${e.title}" - ${e.snippet?.slice(0, 80) || 'Source cited'}... (${e.url?.slice(0, 50)}...)`);
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  return `
+## SECTION: EVIDENCE & CLOSING
+
+---
+
+### PAGE: ${city1Name.toUpperCase()} - KEY CITATIONS
+
+image-layout="right"
+prompt="research documents, legal books, government documents, ${city1Name} official papers"
+
+# 📚 Evidence Sources: ${city1Name}
+
+<smart-layout variant="outlineBoxesWithSideLine">
+${city1Evidence.slice(0, 8).map((e, i) => `<item label="Source ${i + 1}">
+${e}
+</item>`).join('\n') || `<item label="Evidence Summary">
+Sources gathered from ${city1Name} government websites, legal databases, and official records.
+</item>`}
+</smart-layout>
+
+**Source Categories:**
+- Government legislation and municipal codes
+- Official enforcement statistics
+- Legal news and court records
+- Local regulatory agencies
+
+---
+
+### PAGE: ${city2Name.toUpperCase()} - KEY CITATIONS
+
+image-layout="right"
+prompt="research documents, legal books, government documents, ${city2Name} official papers"
+
+# 📚 Evidence Sources: ${city2Name}
+
+<smart-layout variant="outlineBoxesWithSideLine">
+${city2Evidence.slice(0, 8).map((e, i) => `<item label="Source ${i + 1}">
+${e}
+</item>`).join('\n') || `<item label="Evidence Summary">
+Sources gathered from ${city2Name} government websites, legal databases, and official records.
+</item>`}
+</smart-layout>
+
+**Source Categories:**
+- Government legislation and municipal codes
+- Official enforcement statistics
+- Legal news and court records
+- Local regulatory agencies
+
+---
+
+### PAGE: DATA QUALITY & LIMITATIONS
+
+<smart-layout variant="outlineBoxes">
+<item label="⏱️ Temporal">
+Laws change. This report reflects data as of ${new Date(result.generatedAt).toLocaleDateString()}. Verify current status before decisions.
+</item>
+<item label="🌍 Geographic">
+City-level analysis. Neighborhoods, suburbs, and rural areas may differ significantly.
+</item>
+<item label="📊 Data Quality">
+Some metrics rely on enforcement patterns that are difficult to quantify precisely.
+</item>
+<item label="🤖 AI Limitations">
+AI models may have knowledge cutoffs or incomplete indexing of recent changes.
+</item>
+<item label="⚖️ Legal">
+This is not legal advice. Consult qualified attorneys for specific situations.
+</item>
+<item label="👤 Personalization">
+Your experience may vary based on nationality, profession, and personal circumstances.
+</item>
+</smart-layout>
+
+---
+
+### PAGE: ABOUT CLUES INTELLIGENCE LTD
+
+image-layout="right"
+prompt="modern tech company office, data analytics, professional team, global freedom research"
+
+# About LIFE SCORE™
+
+| Our Mission | Our Approach |
+|-------------|--------------|
+| Making freedom measurable, one city at a time. We help individuals make data-driven decisions about international relocation based on verified legal data. | **Evidence-Based:** 100 concrete, measurable metrics |
+| | **Multi-AI:** 5 independent models reduce bias |
+| | **Transparent:** Full methodology disclosure |
+| | **Updated:** Continuous data refresh |
+| | **Privacy-First:** Your data stays yours |
+
+<smart-layout variant="imagesText" imagePosition="left">
+<item label="🌍 Relocators" subtitle="International Moves">Planning your freedom journey</item>
+<item label="💼 Entrepreneurs" subtitle="Business Freedom">Seeking low-regulation environments</item>
+<item label="💻 Digital Nomads" subtitle="Remote Work">Choosing your base of operations</item>
+<item label="👨‍👩‍👧 Families" subtitle="Quality of Life">Finding freedom-respecting communities</item>
+</smart-layout>
+
+**Contact:**
+- 🌐 Website: clueslifescore.com
+- 📧 Email: info@clueslifescore.com
+- 🐦 Twitter: @CluesLifeScore
+
+---
+
+### PAGE: LEGAL NOTICES & COPYRIGHT
+
+**Copyright © 2025-2026 Clues Intelligence LTD. All Rights Reserved.**
+
+**LIFE SCORE™** is a trademark of Clues Intelligence LTD.
+
+<smart-layout variant="solidBoxes">
+<item label="✅ Permitted" color="#10B981">
+Personal use, academic citation, fair use excerpts, sharing report links
+</item>
+<item label="❌ Prohibited" color="#DC2626">
+Commercial redistribution, data modification, branding removal
+</item>
+</smart-layout>
+
+**Disclaimer:** This report is provided "as is" without warranties. Not legal advice. Consult qualified professionals for your specific situation.
+
+**Governing Law:** England and Wales
+
+---
+
+### PAGE: THANK YOU
+
+image-layout="background"
+prompt="beautiful sunset over global cityscape, freedom and opportunity, hopeful future, cinematic"
+
+# Thank You for Using LIFE SCORE™
+
+<display size="lg" color="#FFD700">Your Freedom Journey Starts Here</display>
+
+**What's Next?**
+
+<smart-layout variant="processSteps" numbered="true">
+<item label="1. Review">
+Digest this report and identify your priorities
+</item>
+<item label="2. Research">
+Visit your top choice city if possible
+</item>
+<item label="3. Plan">
+Use our Next Steps checklists to prepare
+</item>
+<item label="4. Move">
+Execute your relocation with confidence
+</item>
+</smart-layout>
+
+<blockquote>
+"The freedom you seek is waiting. This data is your compass—now chart your course."
+
+— The LIFE SCORE Team
+</blockquote>
+
+*Making freedom measurable, one city at a time.*
+
+**LIFE SCORE™ by Clues Intelligence LTD**
+
+`;
+}
+
+// ============================================================================
+// NEW SECTION: YOUR LIFE IN EACH CITY (Narrative Storytelling)
+// ============================================================================
+function formatSectionLifeInEachCity(
+  result: EnhancedComparisonResult,
+  judgeReport?: JudgeReportData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const city1Country = result.city1.country;
+  const city2Country = result.city2.country;
+
+  // Get category scores for narrative building
+  const getScore = (city: 'city1' | 'city2', catId: string): number => {
+    const cityData = city === 'city1' ? result.city1 : result.city2;
+    return Math.round(cityData.categories.find(c => c.categoryId === catId)?.averageConsensusScore ?? 50);
+  };
+
+  // Generate lifestyle descriptors based on scores
+  const housingDesc1 = getScore('city1', 'housing_property') > 65 ? 'flexible housing options with minimal restrictions' : 'heavily regulated housing with strict zoning';
+  const housingDesc2 = getScore('city2', 'housing_property') > 65 ? 'flexible housing options with minimal restrictions' : 'heavily regulated housing with strict zoning';
+  const transitDesc1 = getScore('city1', 'transportation') > 65 ? 'excellent public transit and mobility options' : 'car-dependent infrastructure';
+  const transitDesc2 = getScore('city2', 'transportation') > 65 ? 'excellent public transit and mobility options' : 'car-dependent infrastructure';
+  const businessDesc1 = getScore('city1', 'business_work') > 65 ? 'streamlined permits and low bureaucracy' : 'complex licensing and regulatory hurdles';
+  const businessDesc2 = getScore('city2', 'business_work') > 65 ? 'streamlined permits and low bureaucracy' : 'complex licensing and regulatory hurdles';
+  const personalDesc1 = getScore('city1', 'personal_freedom') > 65 ? 'broad personal freedoms and lifestyle tolerance' : 'various lifestyle restrictions and vice laws';
+  const personalDesc2 = getScore('city2', 'personal_freedom') > 65 ? 'broad personal freedoms and lifestyle tolerance' : 'various lifestyle restrictions and vice laws';
+  const policingDesc1 = getScore('city1', 'policing_legal') > 65 ? 'fair legal system with police accountability' : 'aggressive enforcement and legal complexities';
+  const policingDesc2 = getScore('city2', 'policing_legal') > 65 ? 'fair legal system with police accountability' : 'aggressive enforcement and legal complexities';
+
+  return `
+## SECTION: YOUR LIFE IN EACH CITY
+
+---
+
+### PAGE: A WEEK IN ${city1Name.toUpperCase()}
+
+image-layout="background"
+prompt="beautiful morning cityscape of ${city1Name} ${city1Country}, lifestyle photography, warm golden hour light, people enjoying city life"
+
+# 🌅 A Week Living in ${city1Name}
+
+<labels>
+<label variant="solid" color="${result.winner === 'city1' ? '#FFD700' : '#1E90FF'}">${city1Country}</label>
+<label variant="outline">LIFE SCORE: ${Math.round(result.city1.totalConsensusScore)}/100</label>
+</labels>
+
+**Experience the daily reality of freedom in ${city1Name}:**
+
+<smart-layout variant="processSteps" numbered="true">
+<item label="🌅 MONDAY MORNING">
+Wake up in your ${housingDesc1}. ${getScore('city1', 'housing_property') > 70 ? 'Airbnb and short-term rentals are readily available.' : 'Finding flexible housing may require navigating strict regulations.'}
+</item>
+<item label="🚇 COMMUTE">
+Head to work via ${transitDesc1}. ${getScore('city1', 'transportation') > 70 ? 'Multiple transit options keep you mobile without a car.' : 'Plan for car ownership and associated costs.'}
+</item>
+<item label="💼 WORK DAY">
+Run your business with ${businessDesc1}. ${getScore('city1', 'business_work') > 70 ? 'Starting a company is straightforward with minimal red tape.' : 'Expect licensing requirements and compliance costs.'}
+</item>
+<item label="🌆 EVENING">
+Enjoy ${personalDesc1}. ${getScore('city1', 'personal_freedom') > 70 ? 'Nightlife, dining, and personal choices face few restrictions.' : 'Some activities may be restricted or regulated.'}
+</item>
+<item label="⚖️ PEACE OF MIND">
+Live under ${policingDesc1}. ${getScore('city1', 'policing_legal') > 70 ? 'Interactions with authorities are generally straightforward.' : 'Be aware of enforcement patterns and legal considerations.'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: A WEEK IN ${city2Name.toUpperCase()}
+
+image-layout="background"
+prompt="beautiful morning cityscape of ${city2Name} ${city2Country}, lifestyle photography, warm golden hour light, people enjoying city life"
+
+# 🌅 A Week Living in ${city2Name}
+
+<labels>
+<label variant="solid" color="${result.winner === 'city2' ? '#FFD700' : '#1E90FF'}">${city2Country}</label>
+<label variant="outline">LIFE SCORE: ${Math.round(result.city2.totalConsensusScore)}/100</label>
+</labels>
+
+**Experience the daily reality of freedom in ${city2Name}:**
+
+<smart-layout variant="processSteps" numbered="true">
+<item label="🌅 MONDAY MORNING">
+Wake up in your ${housingDesc2}. ${getScore('city2', 'housing_property') > 70 ? 'Airbnb and short-term rentals are readily available.' : 'Finding flexible housing may require navigating strict regulations.'}
+</item>
+<item label="🚇 COMMUTE">
+Head to work via ${transitDesc2}. ${getScore('city2', 'transportation') > 70 ? 'Multiple transit options keep you mobile without a car.' : 'Plan for car ownership and associated costs.'}
+</item>
+<item label="💼 WORK DAY">
+Run your business with ${businessDesc2}. ${getScore('city2', 'business_work') > 70 ? 'Starting a company is straightforward with minimal red tape.' : 'Expect licensing requirements and compliance costs.'}
+</item>
+<item label="🌆 EVENING">
+Enjoy ${personalDesc2}. ${getScore('city2', 'personal_freedom') > 70 ? 'Nightlife, dining, and personal choices face few restrictions.' : 'Some activities may be restricted or regulated.'}
+</item>
+<item label="⚖️ PEACE OF MIND">
+Live under ${policingDesc2}. ${getScore('city2', 'policing_legal') > 70 ? 'Interactions with authorities are generally straightforward.' : 'Be aware of enforcement patterns and legal considerations.'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: SIDE-BY-SIDE LIFESTYLE COMPARISON
+
+image-layout="split"
+prompt="split screen lifestyle comparison, left side ${city1Name} street scene, right side ${city2Name} street scene, both showing daily life"
+
+# 📊 Daily Life Comparison
+
+| Moment | ${city1Name} | ${city2Name} |
+|--------|-------------|-------------|
+| **🏠 Morning** | ${getScore('city1', 'housing_property') > 65 ? '✅ Flexible housing' : '⚠️ Regulated housing'} | ${getScore('city2', 'housing_property') > 65 ? '✅ Flexible housing' : '⚠️ Regulated housing'} |
+| **🚇 Commute** | ${getScore('city1', 'transportation') > 65 ? '✅ Great transit' : '⚠️ Car needed'} | ${getScore('city2', 'transportation') > 65 ? '✅ Great transit' : '⚠️ Car needed'} |
+| **💼 Work** | ${getScore('city1', 'business_work') > 65 ? '✅ Low bureaucracy' : '⚠️ Complex permits'} | ${getScore('city2', 'business_work') > 65 ? '✅ Low bureaucracy' : '⚠️ Complex permits'} |
+| **🍷 Lunch** | ${getScore('city1', 'personal_freedom') > 70 ? '✅ Wine with lunch OK' : '⚠️ Alcohol restrictions'} | ${getScore('city2', 'personal_freedom') > 70 ? '✅ Wine with lunch OK' : '⚠️ Alcohol restrictions'} |
+| **🌙 Evening** | ${getScore('city1', 'personal_freedom') > 65 ? '✅ Nightlife freedom' : '⚠️ Some restrictions'} | ${getScore('city2', 'personal_freedom') > 65 ? '✅ Nightlife freedom' : '⚠️ Some restrictions'} |
+| **🛡️ Safety** | ${getScore('city1', 'policing_legal') > 65 ? '✅ Fair system' : '⚠️ Enforcement concerns'} | ${getScore('city2', 'policing_legal') > 65 ? '✅ Fair system' : '⚠️ Enforcement concerns'} |
+
+<aside variant="note">
+Same person, same day, two completely different freedom experiences. Your daily reality depends heavily on which city you call home.
+</aside>
+
+---
+
+### PAGE: FREEDOM MOMENTS THAT MATTER
+
+image-layout="right"
+prompt="person enjoying freedom, outdoor cafe, working on laptop, ${result.winner === 'city1' ? city1Name : city2Name} atmosphere"
+
+# 💡 The Little Things That Add Up
+
+**Freedom isn't just big laws—it's daily moments:**
+
+<smart-layout variant="solidBoxes">
+<item label="☕ Morning Coffee" color="#8B4513">
+Can you sit outside without permits? Open container rules? Street vendor access?
+${city1Name}: ${getScore('city1', 'personal_freedom') > 70 ? 'Very relaxed' : 'Some restrictions'} | ${city2Name}: ${getScore('city2', 'personal_freedom') > 70 ? 'Very relaxed' : 'Some restrictions'}
+</item>
+<item label="🏃 Exercise" color="#228B22">
+Park access, gym regulations, outdoor activity permits?
+${city1Name}: ${getScore('city1', 'speech_lifestyle') > 70 ? 'Unrestricted' : 'Some rules'} | ${city2Name}: ${getScore('city2', 'speech_lifestyle') > 70 ? 'Unrestricted' : 'Some rules'}
+</item>
+<item label="🛒 Shopping" color="#4169E1">
+Store hours, Sunday trading, market regulations?
+${city1Name}: ${getScore('city1', 'business_work') > 65 ? 'Flexible hours' : 'Restricted hours'} | ${city2Name}: ${getScore('city2', 'business_work') > 65 ? 'Flexible hours' : 'Restricted hours'}
+</item>
+<item label="🎉 Socializing" color="#9932CC">
+Noise ordinances, gathering limits, venue regulations?
+${city1Name}: ${getScore('city1', 'personal_freedom') > 65 ? 'Relaxed' : 'Strict'} | ${city2Name}: ${getScore('city2', 'personal_freedom') > 65 ? 'Relaxed' : 'Strict'}
+</item>
+</smart-layout>
+
+`;
+}
+
+// ============================================================================
+// NEW SECTION: WHO SHOULD CHOOSE WHICH? (Persona Recommendations)
+// ============================================================================
+function formatSectionPersonaRecommendations(
+  result: EnhancedComparisonResult
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+
+  // Calculate category scores for recommendations
+  const getScore = (city: 'city1' | 'city2', catId: string): number => {
+    const cityData = city === 'city1' ? result.city1 : result.city2;
+    return Math.round(cityData.categories.find(c => c.categoryId === catId)?.averageConsensusScore ?? 50);
+  };
+
+  // Determine best city for each persona
+  const entrepreneurBest = getScore('city1', 'business_work') > getScore('city2', 'business_work') ? city1Name : city2Name;
+  const nomadBest = (getScore('city1', 'business_work') + getScore('city1', 'personal_freedom')) > (getScore('city2', 'business_work') + getScore('city2', 'personal_freedom')) ? city1Name : city2Name;
+  const familyBest = (getScore('city1', 'housing_property') + getScore('city1', 'policing_legal')) > (getScore('city2', 'housing_property') + getScore('city2', 'policing_legal')) ? city1Name : city2Name;
+  const investorBest = (getScore('city1', 'housing_property') + getScore('city1', 'business_work')) > (getScore('city2', 'housing_property') + getScore('city2', 'business_work')) ? city1Name : city2Name;
+  const libertarianBest = (getScore('city1', 'personal_freedom') + getScore('city1', 'speech_lifestyle')) > (getScore('city2', 'personal_freedom') + getScore('city2', 'speech_lifestyle')) ? city1Name : city2Name;
+  const retireesBest = (getScore('city1', 'housing_property') + getScore('city1', 'policing_legal') + getScore('city1', 'transportation')) > (getScore('city2', 'housing_property') + getScore('city2', 'policing_legal') + getScore('city2', 'transportation')) ? city1Name : city2Name;
+
+  return `
+## SECTION: WHO SHOULD CHOOSE WHICH CITY?
+
+---
+
+### PAGE: PERSONA RECOMMENDATIONS
+
+image-layout="right"
+prompt="diverse group of professionals, entrepreneurs, families, digital nomads, lifestyle choice concept, modern photography"
+
+# 🎯 Find YOUR Best Fit
+
+**The "winner" depends on YOUR priorities:**
+
+<smart-layout variant="imagesText" imagePosition="left">
+<item label="🚀 Startup Founder" subtitle="Best: ${entrepreneurBest}">
+**Why:** ${entrepreneurBest === city1Name ?
+  `Lower business taxes, faster permits, less red tape (Business Score: ${getScore('city1', 'business_work')})` :
+  `Lower business taxes, faster permits, less red tape (Business Score: ${getScore('city2', 'business_work')})`}
+</item>
+<item label="💻 Digital Nomad" subtitle="Best: ${nomadBest}">
+**Why:** ${nomadBest === city1Name ?
+  `Visa flexibility, coworking culture, lifestyle freedom (Combined: ${getScore('city1', 'business_work') + getScore('city1', 'personal_freedom')})` :
+  `Visa flexibility, coworking culture, lifestyle freedom (Combined: ${getScore('city2', 'business_work') + getScore('city2', 'personal_freedom')})`}
+</item>
+<item label="👨‍👩‍👧 Family with Kids" subtitle="Best: ${familyBest}">
+**Why:** ${familyBest === city1Name ?
+  `Housing options, safety, school freedom (Combined: ${getScore('city1', 'housing_property') + getScore('city1', 'policing_legal')})` :
+  `Housing options, safety, school freedom (Combined: ${getScore('city2', 'housing_property') + getScore('city2', 'policing_legal')})`}
+</item>
+<item label="🏠 Real Estate Investor" subtitle="Best: ${investorBest}">
+**Why:** ${investorBest === city1Name ?
+  `Property rights, rental freedom, lower taxes (Combined: ${getScore('city1', 'housing_property') + getScore('city1', 'business_work')})` :
+  `Property rights, rental freedom, lower taxes (Combined: ${getScore('city2', 'housing_property') + getScore('city2', 'business_work')})`}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: MORE PERSONAS
+
+<smart-layout variant="imagesText" imagePosition="left">
+<item label="🗽 Libertarian" subtitle="Best: ${libertarianBest}">
+**Why:** ${libertarianBest === city1Name ?
+  `Maximum personal freedom, minimal government interference (Freedom: ${getScore('city1', 'personal_freedom') + getScore('city1', 'speech_lifestyle')})` :
+  `Maximum personal freedom, minimal government interference (Freedom: ${getScore('city2', 'personal_freedom') + getScore('city2', 'speech_lifestyle')})`}
+</item>
+<item label="🏖️ Retiree" subtitle="Best: ${retireesBest}">
+**Why:** ${retireesBest === city1Name ?
+  `Healthcare access, safety, transit options (Combined: ${getScore('city1', 'housing_property') + getScore('city1', 'transportation')})` :
+  `Healthcare access, safety, transit options (Combined: ${getScore('city2', 'housing_property') + getScore('city2', 'transportation')})`}
+</item>
+<item label="🎨 Creative/Artist" subtitle="Best: ${libertarianBest}">
+**Why:** ${libertarianBest === city1Name ?
+  `Expression freedom, cultural tolerance, lifestyle flexibility (Speech: ${getScore('city1', 'speech_lifestyle')})` :
+  `Expression freedom, cultural tolerance, lifestyle flexibility (Speech: ${getScore('city2', 'speech_lifestyle')})`}
+</item>
+<item label="⚖️ Attorney/Professional" subtitle="Best: ${entrepreneurBest}">
+**Why:** ${entrepreneurBest === city1Name ?
+  `Professional licensing, business environment, legal system (Business: ${getScore('city1', 'business_work')})` :
+  `Professional licensing, business environment, legal system (Business: ${getScore('city2', 'business_work')})`}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: DECISION MATRIX
+
+# 🎚️ What If You Weighted Differently?
+
+<smart-layout variant="barStats">
+<item label="Scenario: BUSINESS FOCUS (40%)" value1="${Math.round(getScore('city1', 'business_work') * 0.4 + (result.city1.totalConsensusScore * 0.6))}" value2="${Math.round(getScore('city2', 'business_work') * 0.4 + (result.city2.totalConsensusScore * 0.6))}" color1="#FFD700" color2="#1E90FF">
+${city1Name} vs ${city2Name}
+</item>
+<item label="Scenario: PERSONAL FREEDOM (40%)" value1="${Math.round(getScore('city1', 'personal_freedom') * 0.4 + (result.city1.totalConsensusScore * 0.6))}" value2="${Math.round(getScore('city2', 'personal_freedom') * 0.4 + (result.city2.totalConsensusScore * 0.6))}" color1="#FFD700" color2="#1E90FF">
+${city1Name} vs ${city2Name}
+</item>
+<item label="Scenario: FAMILY SAFETY (40%)" value1="${Math.round((getScore('city1', 'policing_legal') + getScore('city1', 'housing_property')) * 0.2 + (result.city1.totalConsensusScore * 0.6))}" value2="${Math.round((getScore('city2', 'policing_legal') + getScore('city2', 'housing_property')) * 0.2 + (result.city2.totalConsensusScore * 0.6))}" color1="#FFD700" color2="#1E90FF">
+${city1Name} vs ${city2Name}
+</item>
+<item label="Scenario: BALANCED (Default)" value1="${Math.round(result.city1.totalConsensusScore)}" value2="${Math.round(result.city2.totalConsensusScore)}" color1="#FFD700" color2="#1E90FF">
+${city1Name} vs ${city2Name}
+</item>
+</smart-layout>
+
+<aside variant="note">
+Your "winner" may differ from our default ranking depending on what matters most to YOU. Use these scenarios to find your personal best fit.
+</aside>
+
+`;
+}
+
+// ============================================================================
+// NEW SECTION: SURPRISING FINDINGS (Counterintuitive Insights)
+// ============================================================================
+function formatSectionSurprisingFindings(
+  result: EnhancedComparisonResult,
+  judgeReport?: JudgeReportData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const winner = result.winner === 'city1' ? city1Name : city2Name;
+  const loser = result.winner === 'city1' ? city2Name : city1Name;
+
+  const getScore = (city: 'city1' | 'city2', catId: string): number => {
+    const cityData = city === 'city1' ? result.city1 : result.city2;
+    return Math.round(cityData.categories.find(c => c.categoryId === catId)?.averageConsensusScore ?? 50);
+  };
+
+  // Find surprising reversals (where loser beats winner in a category)
+  const loserCity = result.winner === 'city1' ? 'city2' : 'city1';
+  const winnerCity = result.winner === 'city1' ? 'city1' : 'city2';
+
+  const surprises: string[] = [];
+  Object.entries(CATEGORY_CONFIG).forEach(([catId, config]) => {
+    const winnerScore = getScore(winnerCity, catId);
+    const loserScore = getScore(loserCity, catId);
+    if (loserScore > winnerScore + 5) {
+      surprises.push(`Despite losing overall, **${loser}** actually beats ${winner} in ${config.name} (${loserScore} vs ${winnerScore})`);
+    }
+  });
+
+  // Find big gaps between legal and enforcement
+  const gapInsights: string[] = [];
+  [result.city1, result.city2].forEach(city => {
+    city.categories.forEach(cat => {
+      cat.metrics.forEach(m => {
+        const legal = m.legalScore ?? m.consensusScore ?? 0;
+        const enforcement = m.enforcementScore ?? m.consensusScore ?? 0;
+        if (Math.abs(legal - enforcement) > 25) {
+          const name = getMetricDisplayName(m.metricId);
+          if (legal > enforcement) {
+            gapInsights.push(`**${city.city}**: ${name} looks free on paper (${Math.round(legal)}) but is heavily enforced (${Math.round(enforcement)})`);
+          } else {
+            gapInsights.push(`**${city.city}**: ${name} has strict laws (${Math.round(legal)}) but they're rarely enforced (${Math.round(enforcement)})`);
+          }
+        }
+      });
+    });
+  });
+
+  return `
+## SECTION: SURPRISING FINDINGS
+
+---
+
+### PAGE: WHAT MIGHT SURPRISE YOU
+
+image-layout="right"
+prompt="surprised person looking at data, revelation moment, light bulb concept, modern professional photography"
+
+# 🤯 Counterintuitive Insights
+
+**Things that don't match common assumptions:**
+
+<smart-layout variant="outlineBoxesWithTopCircle" numbered="true">
+${surprises.slice(0, 4).map((s, i) => `<item label="Surprise ${i + 1}">
+${s}
+</item>`).join('\n') || `<item label="Surprise 1">
+The margin between these cities is closer than reputation suggests—only ${Math.abs(result.scoreDifference)} points separate them.
+</item>
+<item label="Surprise 2">
+${winner}'s advantage comes primarily from enforcement reality, not written laws.
+</item>`}
+</smart-layout>
+
+---
+
+### PAGE: MYTH VS REALITY
+
+# 🎭 Reputation vs Data
+
+<smart-layout variant="solidBoxes">
+<item label="❌ MYTH" color="#DC2626">
+"${result.city1.country === 'United States' ? city1Name : city2Name} is always more free because America"
+</item>
+<item label="✅ REALITY" color="#10B981">
+${result.city1.country === 'United States' ?
+  (result.winner === 'city1' ? `${city1Name} does score higher, but by only ${Math.abs(result.scoreDifference)} points—not the landslide you'd expect.` : `${city2Name} actually beats ${city1Name} by ${Math.abs(result.scoreDifference)} points despite the American freedom narrative.`) :
+  (result.winner === 'city2' ? `${city2Name} does score higher, but by only ${Math.abs(result.scoreDifference)} points—not the landslide you'd expect.` : `${city1Name} actually beats ${city2Name} by ${Math.abs(result.scoreDifference)} points.`)}
+</item>
+</smart-layout>
+
+<smart-layout variant="solidBoxes">
+<item label="❌ MYTH" color="#DC2626">
+"Low taxes = more freedom"
+</item>
+<item label="✅ REALITY" color="#10B981">
+${getScore('city1', 'business_work') > getScore('city2', 'business_work') ? city1Name : city2Name} has better business freedom, but ${getScore('city1', 'personal_freedom') > getScore('city2', 'personal_freedom') ? city1Name : city2Name} has better personal freedom. Tax policy is just one factor.
+</item>
+</smart-layout>
+
+---
+
+### PAGE: LAW VS ENFORCEMENT SURPRISES
+
+# 📜 Paper Tigers & Hidden Restrictions
+
+${gapInsights.length > 0 ? `
+**Laws That Aren't What They Seem:**
+
+<smart-layout variant="outlineBoxesWithSideLine">
+${gapInsights.slice(0, 6).map((g, i) => `<item label="Finding ${i + 1}">
+${g}
+</item>`).join('\n')}
+</smart-layout>
+` : `
+<aside variant="note">
+Both cities show reasonable alignment between written laws and enforcement. What you read is generally what you get.
+</aside>
+`}
+
+<blockquote>
+The gap between law and reality is where freedom actually lives. A permissive law means nothing if aggressively enforced, and a restrictive law matters less if rarely applied.
+</blockquote>
+
+`;
+}
+
+// ============================================================================
+// NEW SECTION: THE HIDDEN COSTS (Restriction Cost Analysis)
+// ============================================================================
+function formatSectionHiddenCosts(
+  result: EnhancedComparisonResult
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const winner = result.winner === 'city1' ? city1Name : city2Name;
+  const loser = result.winner === 'city1' ? city2Name : city1Name;
+
+  const getScore = (city: 'city1' | 'city2', catId: string): number => {
+    const cityData = city === 'city1' ? result.city1 : result.city2;
+    return Math.round(cityData.categories.find(c => c.categoryId === catId)?.averageConsensusScore ?? 50);
+  };
+
+  // Estimate costs based on low scores (lower score = higher hidden cost)
+  const loserData = result.winner === 'city1' ? result.city2 : result.city1;
+  const loserCity = result.winner === 'city1' ? 'city2' : 'city1';
+
+  const transitCost = getScore(loserCity, 'transportation') < 60 ? '$6,000-10,000/year (car dependency)' : '$1,000-3,000/year';
+  const businessCost = getScore(loserCity, 'business_work') < 60 ? '$3,000-8,000/year (licensing, compliance)' : '$500-2,000/year';
+  const housingCost = getScore(loserCity, 'housing_property') < 60 ? '$2,000-5,000/year (restrictions, HOA)' : '$500-1,500/year';
+  const policingCost = getScore(loserCity, 'policing_legal') < 60 ? '$1,000-4,000/year (fines, legal fees risk)' : '$200-500/year';
+
+  return `
+## SECTION: THE HIDDEN COSTS OF RESTRICTIONS
+
+---
+
+### PAGE: FREEDOM HAS A PRICE TAG
+
+image-layout="right"
+prompt="person looking at bills and expenses, calculator, financial planning, professional photography"
+
+# 💸 What Low Scores Actually Cost You
+
+**The "Freedom Tax" of choosing ${loser}:**
+
+<smart-layout variant="barStats">
+<item label="🚗 Transportation Costs" value="${getScore(loserCity, 'transportation') < 60 ? 85 : 25}" max="100" color="#F97316">
+${transitCost}
+</item>
+<item label="💼 Business Compliance" value="${getScore(loserCity, 'business_work') < 60 ? 75 : 20}" max="100" color="#F97316">
+${businessCost}
+</item>
+<item label="🏠 Housing Restrictions" value="${getScore(loserCity, 'housing_property') < 60 ? 65 : 15}" max="100" color="#F97316">
+${housingCost}
+</item>
+<item label="⚖️ Legal/Fine Risk" value="${getScore(loserCity, 'policing_legal') < 60 ? 55 : 10}" max="100" color="#F97316">
+${policingCost}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: ANNUAL FREEDOM TAX COMPARISON
+
+# 📊 Estimated Annual "Restriction Costs"
+
+| Category | ${city1Name} | ${city2Name} |
+|----------|-------------|-------------|
+| **Transportation** | ${getScore('city1', 'transportation') > 65 ? '✅ $1,500' : '⚠️ $8,000'} | ${getScore('city2', 'transportation') > 65 ? '✅ $1,500' : '⚠️ $8,000'} |
+| **Business Compliance** | ${getScore('city1', 'business_work') > 65 ? '✅ $1,000' : '⚠️ $5,000'} | ${getScore('city2', 'business_work') > 65 ? '✅ $1,000' : '⚠️ $5,000'} |
+| **Housing Extras** | ${getScore('city1', 'housing_property') > 65 ? '✅ $500' : '⚠️ $3,000'} | ${getScore('city2', 'housing_property') > 65 ? '✅ $500' : '⚠️ $3,000'} |
+| **Legal Risk Buffer** | ${getScore('city1', 'policing_legal') > 65 ? '✅ $300' : '⚠️ $2,000'} | ${getScore('city2', 'policing_legal') > 65 ? '✅ $300' : '⚠️ $2,000'} |
+| **TOTAL FREEDOM TAX** | **${getScore('city1', 'transportation') + getScore('city1', 'business_work') + getScore('city1', 'housing_property') + getScore('city1', 'policing_legal') > 260 ? '$3,300' : '$18,000'}** | **${getScore('city2', 'transportation') + getScore('city2', 'business_work') + getScore('city2', 'housing_property') + getScore('city2', 'policing_legal') > 260 ? '$3,300' : '$18,000'}** |
+
+<aside variant="warning">
+These are estimates based on LIFE SCORE data. Actual costs vary by individual circumstances. The point: freedom differences have REAL financial impact beyond just taxes.
+</aside>
+
+---
+
+### PAGE: OPPORTUNITY COSTS
+
+# 🚫 What Restrictions Prevent
+
+<smart-layout variant="outlineBoxes">
+<item label="🏠 Housing Restrictions (Score: ${Math.min(getScore('city1', 'housing_property'), getScore('city2', 'housing_property'))})">
+**In the lower-scoring city:** Can't Airbnb your spare room, HOA fines, renovation permits, rental restrictions
+**Annual opportunity cost:** $5,000-15,000 in lost potential income
+</item>
+<item label="💼 Business Restrictions (Score: ${Math.min(getScore('city1', 'business_work'), getScore('city2', 'business_work'))})">
+**In the lower-scoring city:** Delayed business launch, licensing fees, compliance staff, legal consultations
+**Annual opportunity cost:** $10,000-50,000 in delayed revenue and overhead
+</item>
+<item label="🚇 Transit Restrictions (Score: ${Math.min(getScore('city1', 'transportation'), getScore('city2', 'transportation'))})">
+**In the lower-scoring city:** Forced car ownership, parking costs, insurance, maintenance, time in traffic
+**Annual opportunity cost:** $8,000-15,000 in car costs + 200 hours in traffic
+</item>
+</smart-layout>
+
+`;
+}
+
+// ============================================================================
+// NEW SECTION: FUTURE OUTLOOK (5-Year Forecast)
+// ============================================================================
+function formatSectionFutureOutlook(
+  result: EnhancedComparisonResult,
+  judgeReport?: JudgeReportData
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const city1Country = result.city1.country;
+  const city2Country = result.city2.country;
+
+  const city1Trend = judgeReport?.summaryOfFindings?.city1Trend || 'stable';
+  const city2Trend = judgeReport?.summaryOfFindings?.city2Trend || 'stable';
+
+  const getTrendIcon = (trend: string) => trend === 'rising' ? '📈' : trend === 'declining' ? '📉' : '➡️';
+  const getTrendColor = (trend: string) => trend === 'rising' ? '#10B981' : trend === 'declining' ? '#EF4444' : '#F59E0B';
+
+  return `
+## SECTION: FUTURE OUTLOOK
+
+---
+
+### PAGE: 5-YEAR TRAJECTORY FORECAST
+
+image-layout="right"
+prompt="futuristic city skyline, timeline concept, progress and growth, modern architecture, optimistic lighting"
+
+# 🔮 Where Are These Cities Heading?
+
+<smart-layout variant="circleStats">
+<item label="${city1Name}" value="${city1Trend.toUpperCase()}" color="${getTrendColor(city1Trend)}">
+${getTrendIcon(city1Trend)} ${city1Trend === 'rising' ? 'Improving freedom trajectory' : city1Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
+</item>
+<item label="${city2Name}" value="${city2Trend.toUpperCase()}" color="${getTrendColor(city2Trend)}">
+${getTrendIcon(city2Trend)} ${city2Trend === 'rising' ? 'Improving freedom trajectory' : city2Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: ${city1Name.toUpperCase()} - NEXT 5 YEARS
+
+image-layout="background"
+prompt="${city1Name} ${city1Country} future cityscape, modern development, optimistic urban planning"
+
+# ${getTrendIcon(city1Trend)} ${city1Name} Forecast
+
+<labels>
+<label variant="solid" color="${getTrendColor(city1Trend)}">TREND: ${city1Trend.toUpperCase()}</label>
+</labels>
+
+**What to Watch:**
+
+<smart-layout variant="processSteps">
+<item label="📜 Legislative Pipeline">
+${city1Trend === 'rising' ? 'Pro-freedom reforms in progress. Deregulation likely.' : city1Trend === 'declining' ? 'New restrictions being debated. Increased regulation probable.' : 'No major changes expected. Status quo likely to continue.'}
+</item>
+<item label="🏛️ Political Climate">
+${city1Trend === 'rising' ? 'Leadership favoring individual freedom and economic openness.' : city1Trend === 'declining' ? 'Trend toward more government intervention and control.' : 'Balanced political environment with incremental changes.'}
+</item>
+<item label="💰 Economic Factors">
+${city1Trend === 'rising' ? 'Growing economy attracting talent and reducing regulatory burden.' : city1Trend === 'declining' ? 'Economic pressures may lead to increased taxation and regulation.' : 'Stable economy with predictable business environment.'}
+</item>
+<item label="🌍 Global Position">
+${city1Country === 'Portugal' || city1Country === 'Spain' || city1Country === 'Netherlands' ? 'EU regulations may override local freedoms in some areas.' : city1Country === 'United States' ? 'State/federal tensions may create uncertainty.' : 'Sovereign policy likely to remain consistent.'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: ${city2Name.toUpperCase()} - NEXT 5 YEARS
+
+image-layout="background"
+prompt="${city2Name} ${city2Country} future cityscape, modern development, urban planning"
+
+# ${getTrendIcon(city2Trend)} ${city2Name} Forecast
+
+<labels>
+<label variant="solid" color="${getTrendColor(city2Trend)}">TREND: ${city2Trend.toUpperCase()}</label>
+</labels>
+
+**What to Watch:**
+
+<smart-layout variant="processSteps">
+<item label="📜 Legislative Pipeline">
+${city2Trend === 'rising' ? 'Pro-freedom reforms in progress. Deregulation likely.' : city2Trend === 'declining' ? 'New restrictions being debated. Increased regulation probable.' : 'No major changes expected. Status quo likely to continue.'}
+</item>
+<item label="🏛️ Political Climate">
+${city2Trend === 'rising' ? 'Leadership favoring individual freedom and economic openness.' : city2Trend === 'declining' ? 'Trend toward more government intervention and control.' : 'Balanced political environment with incremental changes.'}
+</item>
+<item label="💰 Economic Factors">
+${city2Trend === 'rising' ? 'Growing economy attracting talent and reducing regulatory burden.' : city2Trend === 'declining' ? 'Economic pressures may lead to increased taxation and regulation.' : 'Stable economy with predictable business environment.'}
+</item>
+<item label="🌍 Global Position">
+${city2Country === 'Portugal' || city2Country === 'Spain' || city2Country === 'Netherlands' ? 'EU regulations may override local freedoms in some areas.' : city2Country === 'United States' ? 'State/federal tensions may create uncertainty.' : 'Sovereign policy likely to remain consistent.'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: SCENARIO PLANNING
+
+# ⚡ What Could Change the Outcome?
+
+<smart-layout variant="outlineBoxesWithTopCircle">
+<item label="🟢 Best Case for ${result.winner === 'city1' ? city2Name : city1Name}">
+Major reform package passes, dramatically improving their weakest categories. Could close the ${Math.abs(result.scoreDifference)}-point gap within 3 years.
+</item>
+<item label="🔴 Worst Case for ${result.winner === 'city1' ? city1Name : city2Name}">
+Political shift leads to new restrictions. Current winner could lose advantage if trend reverses.
+</item>
+<item label="🔵 Most Likely Scenario">
+Both cities maintain current trajectories. ${result.winner === 'city1' ? city1Name : city2Name} remains ahead by 2030, but margin may narrow or widen by 5-10 points.
+</item>
+<item label="⚠️ Wild Card Events">
+Economic crisis, pandemic, major court rulings, or regime change could rapidly shift freedom scores in either direction.
+</item>
+</smart-layout>
+
+`;
+}
+
+// ============================================================================
+// NEW SECTION: YOUR NEXT STEPS (Relocation Checklists)
+// ============================================================================
+function formatSectionNextSteps(
+  result: EnhancedComparisonResult
+): string {
+  const city1Name = result.city1.city;
+  const city2Name = result.city2.city;
+  const city1Country = result.city1.country;
+  const city2Country = result.city2.country;
+
+  // Generate country-specific guidance
+  const isEU1 = ['Portugal', 'Spain', 'Germany', 'France', 'Netherlands', 'Italy', 'Ireland', 'Greece', 'Malta', 'Cyprus', 'Estonia', 'Czech Republic'].includes(city1Country);
+  const isEU2 = ['Portugal', 'Spain', 'Germany', 'France', 'Netherlands', 'Italy', 'Ireland', 'Greece', 'Malta', 'Cyprus', 'Estonia', 'Czech Republic'].includes(city2Country);
+  const isUS1 = city1Country === 'United States';
+  const isUS2 = city2Country === 'United States';
+
+  return `
+## SECTION: YOUR NEXT STEPS
+
+---
+
+### PAGE: IF YOU CHOOSE ${city1Name.toUpperCase()}
+
+image-layout="right"
+prompt="person packing suitcase, moving abroad, exciting new chapter, ${city1Name} travel"
+
+# ✅ Relocation Checklist: ${city1Name}
+
+<smart-layout variant="processSteps" numbered="true">
+<item label="Step 1: Visa/Residency">
+${isUS1 ? 'US citizens: Domestic move, no visa needed. Check state residency requirements.' :
+  isEU1 ? `EU citizens: Freedom of movement. Non-EU: Research D7 (passive income), Digital Nomad, or Golden Visa options for ${city1Country}.` :
+  `Research visa requirements for ${city1Country}. Consider work visa, investor visa, or residency programs.`}
+</item>
+<item label="Step 2: Banking & Taxes">
+${isUS1 ? 'Update address with bank. Research state income tax implications. Texas/Florida: No state income tax.' :
+  isEU1 ? `Open ${city1Country} bank account. Apply for NIF/tax number. Research NHR or special tax regimes.` :
+  `Open local bank account. Understand tax treaty implications with home country.`}
+</item>
+<item label="Step 3: Housing">
+${isUS1 ? 'Research neighborhoods carefully—regulations vary by district. Check HOA rules before signing.' :
+  isEU1 ? 'Rental market can be competitive. Consider temporary housing first. Register address with local authorities.' :
+  'Research local rental market and property laws. Consider short-term rental initially.'}
+</item>
+<item label="Step 4: Healthcare">
+${isUS1 ? 'Private insurance required. Budget $500-1,500/month depending on coverage.' :
+  isEU1 ? `Register with public health system (SNS/NHS equivalent) or arrange private insurance. Many expats use both.` :
+  'Research healthcare options—public system, private insurance, or international coverage.'}
+</item>
+<item label="Step 5: Timeline">
+${isUS1 ? 'Domestic: 1-2 months typical. Interstate: Consider tax year timing.' :
+  isEU1 ? 'EU citizen: 1-2 months. Non-EU: 4-8 months (visa processing).' :
+  '3-6 months typical for international relocation.'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: IF YOU CHOOSE ${city2Name.toUpperCase()}
+
+image-layout="right"
+prompt="person packing suitcase, moving abroad, exciting new chapter, ${city2Name} travel"
+
+# ✅ Relocation Checklist: ${city2Name}
+
+<smart-layout variant="processSteps" numbered="true">
+<item label="Step 1: Visa/Residency">
+${isUS2 ? 'US citizens: Domestic move, no visa needed. Check state residency requirements.' :
+  isEU2 ? `EU citizens: Freedom of movement. Non-EU: Research D7 (passive income), Digital Nomad, or Golden Visa options for ${city2Country}.` :
+  `Research visa requirements for ${city2Country}. Consider work visa, investor visa, or residency programs.`}
+</item>
+<item label="Step 2: Banking & Taxes">
+${isUS2 ? 'Update address with bank. Research state income tax implications. Texas/Florida: No state income tax.' :
+  isEU2 ? `Open ${city2Country} bank account. Apply for NIF/tax number. Research NHR or special tax regimes.` :
+  `Open local bank account. Understand tax treaty implications with home country.`}
+</item>
+<item label="Step 3: Housing">
+${isUS2 ? 'Research neighborhoods carefully—regulations vary by district. Check HOA rules before signing.' :
+  isEU2 ? 'Rental market can be competitive. Consider temporary housing first. Register address with local authorities.' :
+  'Research local rental market and property laws. Consider short-term rental initially.'}
+</item>
+<item label="Step 4: Healthcare">
+${isUS2 ? 'Private insurance required. Budget $500-1,500/month depending on coverage.' :
+  isEU2 ? `Register with public health system (SNS/NHS equivalent) or arrange private insurance. Many expats use both.` :
+  'Research healthcare options—public system, private insurance, or international coverage.'}
+</item>
+<item label="Step 5: Timeline">
+${isUS2 ? 'Domestic: 1-2 months typical. Interstate: Consider tax year timing.' :
+  isEU2 ? 'EU citizen: 1-2 months. Non-EU: 4-8 months (visa processing).' :
+  '3-6 months typical for international relocation.'}
+</item>
+</smart-layout>
+
+---
+
+### PAGE: KEY CONTACTS & RESOURCES
+
+# 📞 Where to Go for Help
+
+| Need | ${city1Name} | ${city2Name} |
+|------|-------------|-------------|
+| **Immigration** | ${isUS1 ? 'USCIS.gov' : isEU1 ? `${city1Country} Immigration Office` : `${city1Country} Embassy`} | ${isUS2 ? 'USCIS.gov' : isEU2 ? `${city2Country} Immigration Office` : `${city2Country} Embassy`} |
+| **Taxes** | ${isUS1 ? 'IRS.gov + State Revenue' : isEU1 ? `${city1Country} Tax Authority` : `${city1Country} Tax Office`} | ${isUS2 ? 'IRS.gov + State Revenue' : isEU2 ? `${city2Country} Tax Authority` : `${city2Country} Tax Office`} |
+| **Healthcare** | ${isUS1 ? 'Healthcare.gov' : isEU1 ? 'National Health Service' : 'Local Health Ministry'} | ${isUS2 ? 'Healthcare.gov' : isEU2 ? 'National Health Service' : 'Local Health Ministry'} |
+| **Expat Groups** | InterNations, Facebook Groups, Reddit r/${city1Name.toLowerCase().replace(' ', '')} | InterNations, Facebook Groups, Reddit r/${city2Name.toLowerCase().replace(' ', '')} |
+| **Legal Help** | International lawyer referral, ${city1Country} bar association | International lawyer referral, ${city2Country} bar association |
+
+<aside variant="note">
+This is general guidance only. Consult qualified professionals (immigration attorneys, tax advisors) for your specific situation.
+</aside>
+
+`;
+}
+
+// ============================================================================
 // MAIN ENHANCED REPORT FORMATTER
 // ============================================================================
 
 /**
- * Format comparison for 64-page Enhanced Gamma Report (v3.0 FINAL)
+ * Format comparison for Enhanced Gamma Report v4.0
+ * NOW WITH: Unique narrative sections, persona recommendations, surprising findings,
+ * hidden costs analysis, future outlook, and relocation checklists.
  *
  * IMPORTANT: This is a NEW function. The existing formatComparisonForGamma()
  * remains completely untouched for standard 35-page reports.
@@ -1939,7 +2885,7 @@ Contact legal@clueslifescore.com
  * @param result - EnhancedComparisonResult from multi-LLM evaluation
  * @param judgeReport - Optional JudgeReport with executive summary and analysis
  * @param gunData - Optional GunComparisonData for gun rights section
- * @returns Formatted prompt string for Gamma API (50,000-80,000 chars)
+ * @returns Formatted prompt string for Gamma API (60,000-90,000 chars)
  */
 export function formatEnhancedReportForGamma(
   result: EnhancedComparisonResult,
@@ -1956,26 +2902,32 @@ export function formatEnhancedReportForGamma(
   const city2TotalScore = Math.round(result.city2.totalConsensusScore);
   const generatedAt = new Date(result.generatedAt).toLocaleDateString();
 
-  // Build all 8 sections
-  const section1 = formatSection1ExecutiveSummary(result, judgeReport);
-  const section2 = formatSection2LawVsReality(result);
-  const section3 = formatSection3CategoryDeepDives(result, judgeReport);
-  const section4 = formatSection4DeeperInsights(result);
-  const section5 = formatSection5LLMConsensus(result);
-  const section6 = formatSection6GunRights(result, gunData);
-  const section7 = formatSection7Methodology(result);
-  const section8 = formatSection8EvidenceClosing(result);
+  // Build all sections - NEW STRUCTURE with unique content
+  const sectionExecutive = formatSection1ExecutiveSummary(result, judgeReport);
+  const sectionLifeInCity = formatSectionLifeInEachCity(result, judgeReport);  // NEW
+  const sectionPersonas = formatSectionPersonaRecommendations(result);          // NEW
+  const sectionSurprises = formatSectionSurprisingFindings(result, judgeReport); // NEW
+  const sectionLawVsReality = formatSection2LawVsReality(result);
+  const sectionCategoryDeepDives = formatSection3CategoryDeepDives(result, judgeReport);
+  const sectionHiddenCosts = formatSectionHiddenCosts(result);                  // NEW
+  const sectionFutureOutlook = formatSectionFutureOutlook(result, judgeReport); // NEW
+  const sectionNextSteps = formatSectionNextSteps(result);                      // NEW
+  const sectionLLMConsensus = formatSection5LLMConsensus(result);
+  const sectionGunRights = formatSection6GunRights(result, gunData);
+  const sectionMethodology = formatSection7Methodology(result);
+  const sectionEvidence = formatSection8EvidenceClosingBothCities(result);      // FIXED for both cities
 
   const fullPrompt = `
-LIFE SCORE™ ENHANCED FREEDOM COMPARISON REPORT - GAMMA AI GENERATION INSTRUCTIONS v3.0 FINAL
+LIFE SCORE™ ENHANCED FREEDOM RELOCATION GUIDE - GAMMA AI GENERATION INSTRUCTIONS v4.0
 
-CRITICAL: Generate ALL 60+ pages. Do NOT truncate or summarize any section.
+CRITICAL: Generate ALL 72+ pages. Do NOT truncate or summarize any section.
+This is a PREMIUM report with unique insights NOT available in the web UI.
 
 ================================================================================
 REPORT METADATA:
 ================================================================================
 
-Report Type: LIFE SCORE™ Enhanced Legal & Lived Freedom Comparison
+Report Type: LIFE SCORE™ Enhanced Freedom Relocation Guide
 Cities: ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
 Winner: ${winner} (Score: ${result.winner === 'city1' ? city1TotalScore : city2TotalScore}/100)
 Loser: ${loser} (Score: ${result.winner === 'city1' ? city2TotalScore : city1TotalScore}/100)
@@ -1997,15 +2949,26 @@ CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
 
 ================================================================================
-VISUAL SPECIFICATIONS:
+VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
 ================================================================================
 
-Heat Maps: Use <smart-layout variant="dotGridStats">
-Gauges: Use <smart-layout variant="semiCircle"> or variant="circleStats">
-Bars: Use <smart-layout variant="barStats">
-Process: Use <smart-layout variant="processSteps">
-Tables: Use <table colwidths="[...]">
-Diagrams: Use <diagram type="rings"> or type="venn">
+Heat Maps: <smart-layout variant="dotGridStats">
+Gauges: <smart-layout variant="semiCircle"> or variant="circleStats">
+Bars: <smart-layout variant="barStats">
+Process Steps: <smart-layout variant="processSteps">
+Solid Boxes: <smart-layout variant="solidBoxes">
+Outline Boxes: <smart-layout variant="outlineBoxes"> or variant="outlineBoxesWithTopCircle">
+Images with Text: <smart-layout variant="imagesText">
+Tables: <table colwidths="[...]">
+Diagrams: <diagram type="rings"> or type="venn"> or type="radar">
+Labels: <labels><label variant="solid" color="#HEX">Text</label></labels>
+Blockquotes: <blockquote>Quote text</blockquote>
+Asides: <aside variant="note"> or variant="warning">
+
+IMAGE PROMPTS (Generate beautiful images for each page):
+Use image-layout="background" for full-page backgrounds
+Use image-layout="right" or "left" for side images
+Use image-layout="split" for comparison views
 
 ================================================================================
 COLOR CODING:
@@ -2019,38 +2982,54 @@ Agreement >90%: Dark Green #1C5D1F
 Agreement 85-90%: Green #10B981
 Agreement 70-85%: Yellow #FBBF24
 Agreement <70%: Orange #F97316
+Warning/Caution: Red #DC2626 / Orange #F97316
+Success: Green #10B981
+Info: Blue #3B82F6
 
 ================================================================================
-SECTION DATA:
+REPORT SECTIONS (Generate in this order):
 ================================================================================
 
-${section1}
+${sectionExecutive}
 
-${section2}
+${sectionLifeInCity}
 
-${section3}
+${sectionPersonas}
 
-${section4}
+${sectionSurprises}
 
-${section5}
+${sectionLawVsReality}
 
-${section6}
+${sectionCategoryDeepDives}
 
-${section7}
+${sectionHiddenCosts}
 
-${section8}
+${sectionFutureOutlook}
+
+${sectionNextSteps}
+
+${sectionLLMConsensus}
+
+${sectionGunRights}
+
+${sectionMethodology}
+
+${sectionEvidence}
 
 ================================================================================
-END OF LIFE SCORE™ ENHANCED REPORT DATA
+END OF LIFE SCORE™ ENHANCED RELOCATION GUIDE DATA
 ================================================================================
 
 CRITICAL FINAL INSTRUCTIONS:
-1. Generate a COMPLETE 60-64 PAGE visual report from the above data
-2. Use ALL GML visual elements specified (<smart-layout>, <diagram>, <table>, etc.)
-3. DO NOT TRUNCATE OR SUMMARIZE - include ALL 100 metrics
-4. Use EXACT AI model names as specified above
-5. Apply COLOR CODING consistently throughout
-6. Gun Rights section (Pages 53-56) is UNSCORED - facts only, no winner
+1. Generate a COMPLETE 72-80 PAGE visual report from the above data
+2. Use DIVERSE visual elements - vary between gauges, bars, boxes, diagrams
+3. Generate BEAUTIFUL AI images for lifestyle sections using image-layout prompts
+4. DO NOT TRUNCATE - include ALL sections, ALL metrics, ALL insights
+5. Use EXACT AI model names as specified above
+6. Apply COLOR CODING consistently throughout
+7. Gun Rights section is UNSCORED - facts only, no winner
+8. Make this feel like a PREMIUM deliverable, not just a data dump
+9. Include citations from BOTH cities in the evidence section
 `.trim();
 
   return fullPrompt;
