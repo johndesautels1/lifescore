@@ -2767,7 +2767,7 @@ CRITICAL FINAL INSTRUCTIONS:
 // ============================================================================
 
 /**
- * Generate an enhanced 64-page visual report via Gamma API
+ * Generate an enhanced 82-page visual report via Gamma API
  *
  * IMPORTANT: This is a NEW function. The existing generateVisualReport()
  * remains completely untouched for standard reports.
@@ -2907,7 +2907,7 @@ export async function generateEnhancedAndWaitForReport(
     onProgress({
       status: 'generating',
       progress: 0,
-      statusMessage: 'Starting 64-page Enhanced Report generation...',
+      statusMessage: 'Starting 82-page Enhanced Report generation...',
     });
   }
 
@@ -2918,7 +2918,7 @@ export async function generateEnhancedAndWaitForReport(
       status: 'polling',
       generationId: initial.generationId,
       progress: 5,
-      statusMessage: 'Generating your 64-page Enhanced Report...',
+      statusMessage: 'Generating your 82-page Enhanced Report...',
     });
   }
 

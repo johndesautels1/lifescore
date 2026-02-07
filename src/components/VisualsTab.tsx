@@ -228,8 +228,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       const isEnhanced = reportType === 'enhanced' && isEnhancedResult(result);
 
       if (isEnhanced) {
-        // Enhanced 64-page report
-        console.log('[VisualsTab] Generating enhanced 64-page report');
+        // Enhanced 82-page report
+        console.log('[VisualsTab] Generating enhanced 82-page report');
 
         // Fetch gun data if requested and not already cached
         let gunDataToUse: GunComparisonData | undefined = undefined;
@@ -386,9 +386,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     className={`type-btn ${reportType === 'enhanced' ? 'active' : ''}`}
                     onClick={() => setReportType('enhanced')}
                     disabled={!isEnhancedResult(result)}
-                    title={!isEnhancedResult(result) ? 'Requires Enhanced Comparison (multi-LLM)' : 'Generate comprehensive 64-page report'}
+                    title={!isEnhancedResult(result) ? 'Requires Enhanced Comparison (multi-LLM)' : 'Generate comprehensive 82-page report'}
                   >
-                    Enhanced (64 pages)
+                    Enhanced (82 pages)
                   </button>
                 </div>
                 {!isEnhancedResult(result) && (
@@ -455,7 +455,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               {reportState.statusMessage || getStatusMessage(reportState)}
             </p>
             {reportType === 'enhanced' && (
-              <p className="enhanced-hint">Enhanced reports take longer due to 64 pages of content</p>
+              <p className="enhanced-hint">Enhanced reports take longer due to 82 pages of content</p>
             )}
           </div>
         )}
