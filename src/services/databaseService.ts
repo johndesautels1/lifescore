@@ -515,7 +515,9 @@ export async function saveGammaReport(
   gammaUrl: string,
   pdfUrl?: string,
   pptxUrl?: string,
-  nickname?: string
+  nickname?: string,
+  city1?: string,  // FIX: Add city names for cross-device sync
+  city2?: string   // FIX: Add city names for cross-device sync
 ): Promise<{ data: GammaReport | null; error: Error | null }> {
   requireDatabase();
 
@@ -527,6 +529,8 @@ export async function saveGammaReport(
     pdf_url: pdfUrl || null,
     pptx_url: pptxUrl || null,
     nickname: nickname || null,
+    city1: city1 || null,
+    city2: city2 || null,
   };
 
   const { data, error } = await withTimeout(

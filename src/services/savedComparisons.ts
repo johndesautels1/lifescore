@@ -952,7 +952,10 @@ export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>
             report.generationId,
             report.gammaUrl,
             report.pdfUrl,
-            report.pptxUrl
+            report.pptxUrl,
+            undefined,      // nickname
+            report.city1,   // FIX: Include city names for cross-device sync
+            report.city2    // FIX: Include city names for cross-device sync
           ).then(({ data, error }) => {
             if (error) {
               console.error('[savedComparisons] Gamma DB save failed:', error);
@@ -1187,34 +1190,22 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
     if (isSupabaseConfigured()) {
       getCurrentUser().then(user => {
         if (user) {
-          // Column mapping matches actual judge_reports table schema
-          const winnerCity = report.executiveSummary.recommendation === 'city1'
-            ? report.city1
-            : report.executiveSummary.recommendation === 'city2'
-              ? report.city2
-              : 'TIE';
-          const winnerScore = report.executiveSummary.recommendation === 'city1'
-            ? report.summaryOfFindings.city1Score
-            : report.summaryOfFindings.city2Score;
-          const margin = Math.abs(
-            report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score
-          );
-
           supabase
             .from('judge_reports')
             .upsert({
               user_id: user.id,
               report_id: report.reportId,
-              city1: report.city1,
-              city2: report.city2,
+              comparison_id: report.comparisonId,
+              city1_name: report.city1,  // FIX: Match JudgeTab column names
+              city2_name: report.city2,  // FIX: Match JudgeTab column names
               city1_score: report.summaryOfFindings.city1Score,
               city2_score: report.summaryOfFindings.city2Score,
-              winner: winnerCity,
-              winner_score: winnerScore,
-              margin,
-              verdict: report.executiveSummary.rationale,
+              overall_confidence: report.summaryOfFindings.overallConfidence,
+              recommendation: report.executiveSummary.recommendation,
+              rationale: report.executiveSummary.rationale,
               full_report: report,
               video_url: report.videoUrl || null,
+              video_status: report.videoStatus || 'none',
               updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id,report_id' })
             .then(({ error }) => {

@@ -200,6 +200,8 @@ export interface GammaReportInsert {
   pdf_url?: string | null;
   pptx_url?: string | null;
   nickname?: string | null;
+  city1?: string | null;  // FIX: Add city names for cross-device sync
+  city2?: string | null;  // FIX: Add city names for cross-device sync
 }
 
 export interface UserPreferencesInsert {
