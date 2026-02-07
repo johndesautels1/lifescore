@@ -1269,7 +1269,7 @@ ${cat1.metrics.slice(0, 12).map(m => {
 // ============================================================================
 // SECTION 4: DEEPER INSIGHTS (Pages 43-47)
 // ============================================================================
-function formatSection4DeeperInsights(
+function _formatSection4DeeperInsights(
   result: EnhancedComparisonResult
 ): string {
   const city1Name = result.city1.city;
@@ -1791,7 +1791,7 @@ Evidence: Government sources, legal databases, enforcement reports
 // ============================================================================
 // SECTION 8: EVIDENCE & CLOSING (Pages 61-64)
 // ============================================================================
-function formatSection8EvidenceClosing(
+function _formatSection8EvidenceClosing(
   result: EnhancedComparisonResult
 ): string {
   // Collect sample evidence citations
@@ -2148,7 +2148,7 @@ Execute your relocation with confidence
 // ============================================================================
 function formatSectionLifeInEachCity(
   result: EnhancedComparisonResult,
-  judgeReport?: JudgeReportData
+  _judgeReport?: JudgeReportData
 ): string {
   const city1Name = result.city1.city;
   const city2Name = result.city2.city;
@@ -2427,7 +2427,7 @@ Your "winner" may differ from our default ranking depending on what matters most
 // ============================================================================
 function formatSectionSurprisingFindings(
   result: EnhancedComparisonResult,
-  judgeReport?: JudgeReportData
+  _judgeReport?: JudgeReportData
 ): string {
   const city1Name = result.city1.city;
   const city2Name = result.city2.city;
@@ -2557,7 +2557,7 @@ function formatSectionHiddenCosts(
 ): string {
   const city1Name = result.city1.city;
   const city2Name = result.city2.city;
-  const winner = result.winner === 'city1' ? city1Name : city2Name;
+  const _winner = result.winner === 'city1' ? city1Name : city2Name;
   const loser = result.winner === 'city1' ? city2Name : city1Name;
 
   const getScore = (city: 'city1' | 'city2', catId: string): number => {
@@ -2566,7 +2566,7 @@ function formatSectionHiddenCosts(
   };
 
   // Estimate costs based on low scores (lower score = higher hidden cost)
-  const loserData = result.winner === 'city1' ? result.city2 : result.city1;
+  const _loserData = result.winner === 'city1' ? result.city2 : result.city1;
   const loserCity = result.winner === 'city1' ? 'city2' : 'city1';
 
   const transitCost = getScore(loserCity, 'transportation') < 60 ? '$6,000-10,000/year (car dependency)' : '$1,000-3,000/year';
@@ -3334,7 +3334,10 @@ export async function generateAndSaveEnhancedReport(
       gammaUrl: response.url,
       durationSeconds,
       pageCount: 82, // v4.0 enhanced reports are 82 pages
-      confidence: result.llmConfidence || undefined,
+      // Convert confidence string to number (high=90, medium=70, low=50)
+      confidence: result.overallConsensusConfidence === 'high' ? 90 :
+                  result.overallConsensusConfidence === 'medium' ? 70 :
+                  result.overallConsensusConfidence === 'low' ? 50 : undefined,
     };
 
     // Save to storage (only if we got HTML)
