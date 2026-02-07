@@ -245,7 +245,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="banner-icon">🏆</span>
             </div>
             <div className="panel-header">
-              <span className="hero-badge">
+              <span className="video-hero-badge">
                 <span className="hero-icon">✓</span>
               </span>
               <span className="city-name">{winnerCity}</span>
