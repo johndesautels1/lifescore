@@ -806,6 +806,99 @@ export function getSavedGammaReports(): SavedGammaReport[] {
 }
 
 /**
+ * FIX: Sync Gamma reports FROM Supabase to localStorage
+ * This ensures reports saved on other devices appear on this device
+ */
+export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]> {
+  console.log('[savedComparisons] Syncing Gamma reports from Supabase...');
+
+  // Get current localStorage reports
+  const localReports = getSavedGammaReports();
+  const localIds = new Set(localReports.map(r => r.generationId));
+
+  try {
+    if (!isSupabaseConfigured()) {
+      console.log('[savedComparisons] Supabase not configured, using localStorage only');
+      return localReports;
+    }
+
+    const user = await getCurrentUser();
+    if (!user) {
+      console.log('[savedComparisons] No authenticated user, using localStorage only');
+      return localReports;
+    }
+
+    // Fetch from Supabase with timeout
+    const { data, error } = await withTimeout(
+      supabase
+        .from('gamma_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      10000,
+      'Gamma reports sync'
+    );
+
+    if (error) {
+      console.error('[savedComparisons] Failed to fetch Gamma reports from Supabase:', error);
+      return localReports;
+    }
+
+    if (!data || data.length === 0) {
+      console.log('[savedComparisons] No Gamma reports in Supabase');
+      return localReports;
+    }
+
+    console.log('[savedComparisons] Found', data.length, 'Gamma reports in Supabase');
+
+    // Convert Supabase records to SavedGammaReport format and merge
+    let newReportsAdded = 0;
+    for (const record of data) {
+      // Skip if we already have this report locally (by generationId)
+      if (localIds.has(record.gamma_generation_id)) {
+        continue;
+      }
+
+      // Add to local reports
+      const newReport: SavedGammaReport = {
+        id: `gamma_${record.id}`,
+        comparisonId: record.comparison_id,
+        city1: record.city1 || 'Unknown',
+        city2: record.city2 || 'Unknown',
+        gammaUrl: record.gamma_url,
+        pdfUrl: record.pdf_url || undefined,
+        pptxUrl: record.pptx_url || undefined,
+        generationId: record.gamma_generation_id,
+        savedAt: record.created_at,
+      };
+
+      localReports.push(newReport);
+      localIds.add(record.gamma_generation_id);
+      newReportsAdded++;
+    }
+
+    if (newReportsAdded > 0) {
+      // Sort by savedAt descending
+      localReports.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+
+      // Trim and save back to localStorage
+      const trimmed = localReports.slice(0, MAX_GAMMA_REPORTS);
+      saveGammaReportsLocal(trimmed);
+
+      console.log('[savedComparisons] ✓ Synced', newReportsAdded, 'new Gamma reports from Supabase');
+      return trimmed;
+    }
+
+    console.log('[savedComparisons] All Supabase reports already in localStorage');
+    return localReports;
+
+  } catch (err) {
+    console.error('[savedComparisons] Gamma sync error:', err);
+    return localReports;
+  }
+}
+
+/**
  * Save Gamma reports to localStorage
  */
 function saveGammaReportsLocal(reports: SavedGammaReport[]): void {
@@ -955,6 +1048,117 @@ export function getSavedJudgeReports(): SavedJudgeReport[] {
 }
 
 const MAX_JUDGE_REPORTS = 20;
+
+/**
+ * FIX: Sync Judge reports FROM Supabase to localStorage
+ * This ensures reports saved on other devices appear on this device
+ */
+export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]> {
+  console.log('[savedComparisons] Syncing Judge reports from Supabase...');
+
+  const localReports = getSavedJudgeReports();
+  const localIds = new Set(localReports.map(r => r.reportId));
+
+  try {
+    if (!isSupabaseConfigured()) {
+      console.log('[savedComparisons] Supabase not configured, using localStorage only');
+      return localReports;
+    }
+
+    const user = await getCurrentUser();
+    if (!user) {
+      console.log('[savedComparisons] No authenticated user, using localStorage only');
+      return localReports;
+    }
+
+    // Fetch from Supabase with timeout
+    const { data, error } = await withTimeout(
+      supabase
+        .from('judge_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      10000,
+      'Judge reports sync'
+    );
+
+    if (error) {
+      console.error('[savedComparisons] Failed to fetch Judge reports from Supabase:', error);
+      return localReports;
+    }
+
+    if (!data || data.length === 0) {
+      console.log('[savedComparisons] No Judge reports in Supabase');
+      return localReports;
+    }
+
+    console.log('[savedComparisons] Found', data.length, 'Judge reports in Supabase');
+
+    // Convert Supabase records to SavedJudgeReport format and merge
+    let newReportsAdded = 0;
+    for (const record of data) {
+      // Skip if we already have this report locally
+      if (localIds.has(record.report_id)) {
+        continue;
+      }
+
+      // Parse the full_report JSON if it exists
+      let fullReport = record.full_report;
+      if (typeof fullReport === 'string') {
+        try {
+          fullReport = JSON.parse(fullReport);
+        } catch {
+          fullReport = null;
+        }
+      }
+
+      // Build SavedJudgeReport from Supabase record
+      const newReport: SavedJudgeReport = {
+        reportId: record.report_id,
+        comparisonId: record.comparison_id,
+        city1: record.city1 || 'Unknown',
+        city2: record.city2 || 'Unknown',
+        winner: record.winner || 'tie',
+        margin: record.margin || 0,
+        verdict: record.verdict || '',
+        executiveSummary: fullReport?.executiveSummary || { recommendation: 'tie', confidenceLevel: 'medium', keyInsight: '' },
+        summaryOfFindings: fullReport?.summaryOfFindings || { city1Score: 0, city2Score: 0, marginOfVictory: 0, closestCategories: [], biggestDifferences: [] },
+        categoryBreakdown: fullReport?.categoryBreakdown || [],
+        finalVerdict: fullReport?.finalVerdict || { recommendation: '', reasoning: '' },
+        videoUrl: record.video_url || undefined,
+        videoStatus: record.video_status || 'none',
+        generatedAt: record.created_at,
+      };
+
+      localReports.push(newReport);
+      localIds.add(record.report_id);
+      newReportsAdded++;
+    }
+
+    if (newReportsAdded > 0) {
+      // Sort by generatedAt descending
+      localReports.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+
+      // Trim and save back to localStorage
+      const trimmed = localReports.slice(0, MAX_JUDGE_REPORTS);
+      try {
+        localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
+      } catch (err) {
+        console.error('[savedComparisons] Failed to save synced Judge reports:', err);
+      }
+
+      console.log('[savedComparisons] ✓ Synced', newReportsAdded, 'new Judge reports from Supabase');
+      return trimmed;
+    }
+
+    console.log('[savedComparisons] All Supabase Judge reports already in localStorage');
+    return localReports;
+
+  } catch (err) {
+    console.error('[savedComparisons] Judge sync error:', err);
+    return localReports;
+  }
+}
 
 /**
  * Save a Judge report to localStorage AND Supabase database

@@ -20,9 +20,11 @@ import {
   importFromJSON,
   clearAllLocal,
   getSavedGammaReports,
+  syncGammaReportsFromSupabase,
   deleteGammaReport,
   clearAllGammaReports,
   getSavedJudgeReports,
+  syncJudgeReportsFromSupabase,
   deleteSavedJudgeReport,
   clearAllJudgeReports,
   isValidComparisonResult,
@@ -59,10 +61,41 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   const [editingNickname, setEditingNickname] = useState<string | null>(null);
   const [nicknameValue, setNicknameValue] = useState('');
 
-  // Load comparisons on mount
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Load comparisons on mount - sync from Supabase first
   useEffect(() => {
-    loadComparisons();
+    syncAndLoadComparisons();
   }, []);
+
+  // FIX: Sync reports from Supabase before loading to ensure cross-device consistency
+  const syncAndLoadComparisons = async () => {
+    setIsSyncing(true);
+    console.log('[SavedComparisons] Starting sync from Supabase...');
+
+    try {
+      // Sync both Gamma and Judge reports from Supabase in parallel
+      const [gammaFromDb, judgeFromDb] = await Promise.all([
+        syncGammaReportsFromSupabase(),
+        syncJudgeReportsFromSupabase()
+      ]);
+
+      // Now load everything (localStorage is now updated with Supabase data)
+      loadComparisons();
+
+      // Use the synced data directly
+      setGammaReports(gammaFromDb);
+      setJudgeReports(judgeFromDb);
+
+      console.log('[SavedComparisons] ✓ Sync complete:', gammaFromDb.length, 'gamma,', judgeFromDb.length, 'judge reports');
+    } catch (err) {
+      console.error('[SavedComparisons] Sync error:', err);
+      // Fall back to localStorage only
+      loadComparisons();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const loadComparisons = () => {
     // FIX 2026-01-26: Load BOTH standard and enhanced comparisons
@@ -309,6 +342,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
           <span className="saved-icon">📁</span>
           <span className="saved-title">My Saved Comparisons</span>
           <span className="saved-count">{comparisons.length}</span>
+          {isSyncing && <span className="sync-indicator" title="Syncing from cloud...">⟳</span>}
         </div>
         <div className="saved-header-right">
           {syncStatus.connected && (
