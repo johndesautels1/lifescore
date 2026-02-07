@@ -666,32 +666,75 @@
 
 .type-btn {
   flex: 1;
-  padding: 0.75rem 1rem;
-  background: rgba(10, 22, 40, 0.6);
-  border: 1px solid var(--border-color, #2a2a4a);
-  border-radius: 8px;
-  color: var(--text-secondary, #a0a0c0);
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(145deg, #1e2a3a 0%, #0f1824 100%);
+  border: 2px solid #3a4a5a;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.type-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 .type-btn:hover:not(:disabled) {
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: #D4AF37;
   color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(212, 175, 55, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.type-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .type-btn.active {
-  background: rgba(212, 175, 55, 0.15);
+  background: linear-gradient(145deg, #2a3a4a 0%, #1a2530 100%);
   border-color: #D4AF37;
   color: #D4AF37;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow:
+    0 4px 16px rgba(212, 175, 55, 0.3),
+    0 0 30px rgba(212, 175, 55, 0.15),
+    inset 0 1px 0 rgba(212, 175, 55, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .type-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  background: linear-gradient(145deg, #1a2230 0%, #0d1218 100%);
+  border-color: #2a3a4a;
+  color: #6a7a8a;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .type-hint {
