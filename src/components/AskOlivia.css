@@ -258,7 +258,7 @@
 
 .viewport-frame {
   width: 100%;
-  max-width: 900px;
+  max-width: none;  /* Match width of elements below */
 }
 
 /* Premium Bezel - Like a Luxury Monitor */
