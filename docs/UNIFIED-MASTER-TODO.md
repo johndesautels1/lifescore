@@ -92,7 +92,7 @@
 | 65 | Freedom vs Imprisonment city text | City name text faded gray - change to crisp white | DONE (947ae97) |
 | 66 | Saved comparisons button sizes | Enlarge Export/Import/Clear All buttons by 30% | DONE (947ae97) |
 | 67 | Visuals PowerPoint button text | Change PPTX button text to golden orange crisp | DONE (947ae97) |
-| 68 | Court orders green dot bug | Strange green dot appearing over "Amsterdam Advantage" text | NEEDS INVESTIGATION |
+| 68 | Court orders green dot bug | Strange green dot appearing over "Amsterdam Advantage" text | FIXED (264727b) - CSS class conflict .hero-badge renamed to .video-hero-badge |
 | 69 | Court orders tabs font | Change font for Court Orders category tabs | DONE (947ae97) |
 
 ---
@@ -225,12 +225,6 @@
 # WHAT'S LEFT TO FIX
 
 ---
-
-## NEEDS INVESTIGATION (1 item)
-
-| # | Item | Description |
-|---|------|-------------|
-| 68 | Court Orders Green Dot Bug | Strange green dot over "Amsterdam Advantage" text. Needs live screenshot |
 
 ## ACTIVE - Documentation (6 items)
 
@@ -485,20 +479,18 @@
 
 ## Priority Order for Remaining Work
 
-### 1. INVESTIGATION
-- **#68** Court Orders Green Dot Bug (needs screenshot)
-
-### 2. LOW - Polish
+### 1. LOW - Polish
 - **#23-28** Documentation polish
 - **#29-30** Code quality
 
-### 3. COMPLETED (Session 18)
+### 2. COMPLETED (Session 18)
 - **#13** Add More Models Button Handlers — DONE (already implemented)
 - **#14** Judge Re-runs with Combined Results — DONE (auto-reruns)
 - **#15** Disagreement Visualization — DONE (DisagreementSection component)
 - **#16** Session Management — DONE (cross-device Supabase sync)
 - **#22** Gamma Prompt Update — DONE
 - **#38** Supabase Profile Fetch Timeout — DONE (working well)
+- **#68** Court Orders Green Dot Bug — FIXED (CSS class conflict)
 - **#70** Verify Olivia 100 Metrics — DONE (57 contrast images aligned)
 
 ## Key Files Reference
@@ -858,9 +850,9 @@ Opens a full-screen modal with:
 
 | Status | Count | % |
 |--------|-------|---|
-| Completed | 86 | 90% |
+| Completed | 87 | 91% |
 | Active | 0 | 0% |
-| Needs Investigation | 1 | 1% |
+| Needs Investigation | 0 | 0% |
 | Deferred | 9 | 9% |
 
 ---
@@ -888,7 +880,6 @@ Opens a full-screen modal with:
 |----------|------|-------------|
 | LOW | #23-28 | Documentation polish |
 | LOW | #29-30 | Code quality |
-| INVESTIGATE | #68 | Court Orders Green Dot Bug |
 
 ### Architecture Rules (MUST FOLLOW)
 
