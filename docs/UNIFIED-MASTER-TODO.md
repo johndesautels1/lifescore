@@ -552,7 +552,7 @@
 
 All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced against every downstream system.
 
-**Legend**: Y = present & matching | `--` = no template (contrast images only cover 28 by design)
+**Legend**: Y = present & matching | `--` = no template (contrast images cover 57 of 100 metrics)
 
 ### Personal Autonomy (15 metrics)
 
@@ -566,55 +566,55 @@ All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced agai
 | 6 | `pf_06_abortion_access` | Abortion Access | Y | Y | Y | Y | Y |
 | 7 | `pf_07_lgbtq_rights` | LGBTQ+ Rights | Y | Y | Y | Y | Y |
 | 8 | `pf_08_euthanasia_status` | Assisted Dying Laws | Y | Y | Y | Y | Y |
-| 9 | `pf_09_smoking_regulations` | Smoking Regulations | Y | Y | Y | Y | -- |
+| 9 | `pf_09_smoking_regulations` | Smoking Regulations | Y | Y | Y | Y | Y |
 | 10 | `pf_10_public_drinking` | Public Drinking Laws | Y | Y | Y | Y | Y |
-| 11 | `pf_11_helmet_laws` | Helmet Laws | Y | Y | Y | Y | -- |
+| 11 | `pf_11_helmet_laws` | Helmet Laws | Y | Y | Y | Y | Y |
 | 12 | `pf_12_seatbelt_enforcement` | Seatbelt Laws | Y | Y | Y | Y | -- |
-| 13 | `pf_13_jaywalking` | Jaywalking Enforcement | Y | Y | Y | Y | -- |
+| 13 | `pf_13_jaywalking` | Jaywalking Enforcement | Y | Y | Y | Y | Y |
 | 14 | `pf_14_curfew_laws` | Curfew Laws | Y | Y | Y | Y | -- |
-| 15 | `pf_15_noise_ordinances` | Noise Ordinances | Y | Y | Y | Y | -- |
+| 15 | `pf_15_noise_ordinances` | Noise Ordinances | Y | Y | Y | Y | Y |
 
 ### Housing & Property (20 metrics)
 
 | # | Metric ID | Display Name | Olivia | Evidence | Gamma | Knowledge | Images |
 |---|-----------|-------------|--------|----------|-------|-----------|--------|
 | 16 | `hp_01_hoa_prevalence` | HOA Prevalence | Y | Y | Y | Y | Y |
-| 17 | `hp_02_hoa_power` | HOA Power & Restrictions | Y | Y | Y | Y | -- |
+| 17 | `hp_02_hoa_power` | HOA Power & Restrictions | Y | Y | Y | Y | Y |
 | 18 | `hp_03_property_tax_rate` | Property Tax Rate | Y | Y | Y | Y | Y |
-| 19 | `hp_04_rent_control` | Rent Control Laws | Y | Y | Y | Y | -- |
+| 19 | `hp_04_rent_control` | Rent Control Laws | Y | Y | Y | Y | Y |
 | 20 | `hp_05_eviction_protection` | Tenant Eviction Protections | Y | Y | Y | Y | -- |
 | 21 | `hp_06_zoning_strictness` | Zoning Restrictions | Y | Y | Y | Y | Y |
-| 22 | `hp_07_building_permits` | Building Permit Requirements | Y | Y | Y | Y | -- |
+| 22 | `hp_07_building_permits` | Building Permit Requirements | Y | Y | Y | Y | Y |
 | 23 | `hp_08_short_term_rental` | Short-Term Rental Laws | Y | Y | Y | Y | Y |
-| 24 | `hp_09_adu_laws` | ADU Laws | Y | Y | Y | Y | -- |
-| 25 | `hp_10_home_business` | Home Business Restrictions | Y | Y | Y | Y | -- |
+| 24 | `hp_09_adu_laws` | ADU Laws | Y | Y | Y | Y | Y |
+| 25 | `hp_10_home_business` | Home Business Restrictions | Y | Y | Y | Y | Y |
 | 26 | `hp_11_eminent_domain` | Eminent Domain Protections | Y | Y | Y | Y | -- |
 | 27 | `hp_12_squatter_rights` | Squatter Rights | Y | Y | Y | Y | -- |
 | 28 | `hp_13_historic_preservation` | Historic Preservation Rules | Y | Y | Y | Y | -- |
 | 29 | `hp_14_foreign_ownership` | Foreign Property Ownership | Y | Y | Y | Y | -- |
 | 30 | `hp_15_transfer_taxes` | Property Transfer Tax | Y | Y | Y | Y | -- |
-| 31 | `hp_16_lawn_regulations` | Lawn Maintenance Requirements | Y | Y | Y | Y | -- |
+| 31 | `hp_16_lawn_regulations` | Lawn Maintenance Requirements | Y | Y | Y | Y | Y |
 | 32 | `hp_17_exterior_colors` | Exterior Modification Rules | Y | Y | Y | Y | -- |
 | 33 | `hp_18_fence_rules` | Fence Regulations | Y | Y | Y | Y | -- |
-| 34 | `hp_19_vehicle_parking` | Residential Parking Rules | Y | Y | Y | Y | -- |
+| 34 | `hp_19_vehicle_parking` | Residential Parking Rules | Y | Y | Y | Y | Y |
 | 35 | `hp_20_pet_restrictions` | Pet Ownership Restrictions | Y | Y | Y | Y | -- |
 
 ### Business & Work (25 metrics)
 
 | # | Metric ID | Display Name | Olivia | Evidence | Gamma | Knowledge | Images |
 |---|-----------|-------------|--------|----------|-------|-----------|--------|
-| 36 | `bw_01_business_license` | Business License Requirements | Y | Y | Y | Y | -- |
-| 37 | `bw_02_occupational_licensing` | Occupational Licensing | Y | Y | Y | Y | -- |
+| 36 | `bw_01_business_license` | Business License Requirements | Y | Y | Y | Y | Y |
+| 37 | `bw_02_occupational_licensing` | Occupational Licensing | Y | Y | Y | Y | Y |
 | 38 | `bw_03_minimum_wage` | Minimum Wage Level | Y | Y | Y | Y | Y |
-| 39 | `bw_04_right_to_work` | Right to Work Laws | Y | Y | Y | Y | -- |
+| 39 | `bw_04_right_to_work` | Right to Work Laws | Y | Y | Y | Y | Y |
 | 40 | `bw_05_at_will_employment` | Employment Protections | Y | Y | Y | Y | -- |
 | 41 | `bw_06_paid_leave_mandate` | Mandatory Paid Leave | Y | Y | Y | Y | -- |
 | 42 | `bw_07_parental_leave` | Parental Leave Requirements | Y | Y | Y | Y | -- |
-| 43 | `bw_08_non_compete` | Non-Compete Enforceability | Y | Y | Y | Y | -- |
+| 43 | `bw_08_non_compete` | Non-Compete Enforceability | Y | Y | Y | Y | Y |
 | 44 | `bw_09_corporate_tax` | Corporate Tax Rate | Y | Y | Y | Y | -- |
 | 45 | `bw_10_income_tax` | State/Local Income Tax | Y | Y | Y | Y | Y |
 | 46 | `bw_11_sales_tax` | Sales Tax Rate | Y | Y | Y | Y | Y |
-| 47 | `bw_12_freelance_regs` | Gig Worker Regulations | Y | Y | Y | Y | -- |
+| 47 | `bw_12_freelance_regs` | Gig Worker Regulations | Y | Y | Y | Y | Y |
 | 48 | `bw_13_work_visa` | Work Visa Friendliness | Y | Y | Y | Y | -- |
 | 49 | `bw_14_remote_work` | Remote Work Laws | Y | Y | Y | Y | -- |
 | 50 | `bw_15_overtime_rules` | Overtime Requirements | Y | Y | Y | Y | -- |
@@ -626,7 +626,7 @@ All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced agai
 | 56 | `bw_21_contractor_license` | Contractor Licensing | Y | Y | Y | Y | -- |
 | 57 | `bw_22_health_insurance` | Health Insurance Mandate | Y | Y | Y | Y | Y |
 | 58 | `bw_23_tip_credit` | Tip Credit Laws | Y | Y | Y | Y | -- |
-| 59 | `bw_24_banking_access` | Banking Access | Y | Y | Y | Y | -- |
+| 59 | `bw_24_banking_access` | Banking Access | Y | Y | Y | Y | Y |
 | 60 | `bw_25_crypto_regulation` | Cryptocurrency Regulations | Y | Y | Y | Y | Y |
 
 ### Transportation (15 metrics)
@@ -636,16 +636,16 @@ All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced agai
 | 61 | `tr_01_public_transit_quality` | Public Transit Quality | Y | Y | Y | Y | Y |
 | 62 | `tr_02_walkability` | Walkability Score | Y | Y | Y | Y | Y |
 | 63 | `tr_03_bike_infrastructure` | Bike Infrastructure | Y | Y | Y | Y | Y |
-| 64 | `tr_04_car_dependency` | Car Dependency Level | Y | Y | Y | Y | -- |
-| 65 | `tr_05_rideshare_legal` | Rideshare Regulations | Y | Y | Y | Y | -- |
+| 64 | `tr_04_car_dependency` | Car Dependency Level | Y | Y | Y | Y | Y |
+| 65 | `tr_05_rideshare_legal` | Rideshare Regulations | Y | Y | Y | Y | Y |
 | 66 | `tr_06_speed_limits` | Speed Limit Enforcement | Y | Y | Y | Y | -- |
 | 67 | `tr_07_speed_camera` | Traffic Camera Usage | Y | Y | Y | Y | -- |
 | 68 | `tr_08_parking_regs` | Parking Regulations | Y | Y | Y | Y | -- |
 | 69 | `tr_09_toll_roads` | Toll Road Prevalence | Y | Y | Y | Y | -- |
 | 70 | `tr_10_vehicle_inspection` | Vehicle Inspection Requirements | Y | Y | Y | Y | -- |
 | 71 | `tr_11_drivers_license` | Driver License Requirements | Y | Y | Y | Y | -- |
-| 72 | `tr_12_dui_laws` | DUI Law Severity | Y | Y | Y | Y | -- |
-| 73 | `tr_13_scooter_ebike` | E-Vehicle/E-Bike Laws | Y | Y | Y | Y | -- |
+| 72 | `tr_12_dui_laws` | DUI Law Severity | Y | Y | Y | Y | Y |
+| 73 | `tr_13_scooter_ebike` | E-Vehicle/E-Bike Laws | Y | Y | Y | Y | Y |
 | 74 | `tr_14_airport_access` | Airport Accessibility | Y | Y | Y | Y | -- |
 | 75 | `tr_15_traffic_congestion` | Traffic Congestion Level | Y | Y | Y | Y | -- |
 
@@ -655,31 +655,31 @@ All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced agai
 |---|-----------|-------------|--------|----------|-------|-----------|--------|
 | 76 | `pl_01_incarceration_rate` | Incarceration Rate | Y | Y | Y | Y | Y |
 | 77 | `pl_02_police_per_capita` | Police Per Capita | Y | Y | Y | Y | -- |
-| 78 | `pl_03_civil_forfeiture` | Civil Asset Forfeiture | Y | Y | Y | Y | -- |
+| 78 | `pl_03_civil_forfeiture` | Civil Asset Forfeiture | Y | Y | Y | Y | Y |
 | 79 | `pl_04_mandatory_minimum` | Mandatory Minimum Sentences | Y | Y | Y | Y | -- |
-| 80 | `pl_05_bail_system` | Cash Bail System | Y | Y | Y | Y | -- |
+| 80 | `pl_05_bail_system` | Cash Bail System | Y | Y | Y | Y | Y |
 | 81 | `pl_06_police_accountability` | Police Oversight | Y | Y | Y | Y | Y |
 | 82 | `pl_07_qualified_immunity` | Qualified Immunity Status | Y | Y | Y | Y | -- |
 | 83 | `pl_08_legal_costs` | Legal System Costs | Y | Y | Y | Y | -- |
 | 84 | `pl_09_court_efficiency` | Court System Efficiency | Y | Y | Y | Y | -- |
 | 85 | `pl_10_jury_trial` | Jury Nullification Rights | Y | Y | Y | Y | -- |
-| 86 | `pl_11_surveillance` | Government Surveillance | Y | Y | Y | Y | -- |
+| 86 | `pl_11_surveillance` | Government Surveillance | Y | Y | Y | Y | Y |
 | 87 | `pl_12_search_seizure` | Search & Seizure Protections | Y | Y | Y | Y | -- |
 | 88 | `pl_13_death_penalty` | Death Penalty Status | Y | Y | Y | Y | -- |
 | 89 | `pl_14_prison_conditions` | Prison Conditions | Y | Y | Y | Y | -- |
-| 90 | `pl_15_record_expungement` | Criminal Record Expungement | Y | Y | Y | Y | -- |
+| 90 | `pl_15_record_expungement` | Criminal Record Expungement | Y | Y | Y | Y | Y |
 
 ### Speech & Lifestyle (10 metrics)
 
 | # | Metric ID | Display Name | Olivia | Evidence | Gamma | Knowledge | Images |
 |---|-----------|-------------|--------|----------|-------|-----------|--------|
 | 91 | `sl_01_free_speech` | Free Speech Protections | Y | Y | Y | Y | Y |
-| 92 | `sl_02_press_freedom` | Press Freedom | Y | Y | Y | Y | -- |
-| 93 | `sl_03_internet_freedom` | Internet Freedom | Y | Y | Y | Y | -- |
+| 92 | `sl_02_press_freedom` | Press Freedom | Y | Y | Y | Y | Y |
+| 93 | `sl_03_internet_freedom` | Internet Freedom | Y | Y | Y | Y | Y |
 | 94 | `sl_04_hate_speech_laws` | Hate Speech Laws | Y | Y | Y | Y | -- |
-| 95 | `sl_05_protest_rights` | Protest Rights | Y | Y | Y | Y | -- |
+| 95 | `sl_05_protest_rights` | Protest Rights | Y | Y | Y | Y | Y |
 | 96 | `sl_06_religious_freedom` | Religious Freedom | Y | Y | Y | Y | Y |
-| 97 | `sl_07_data_privacy` | Data Privacy Laws | Y | Y | Y | Y | -- |
+| 97 | `sl_07_data_privacy` | Data Privacy Laws | Y | Y | Y | Y | Y |
 | 98 | `sl_08_dress_code` | Dress Code Freedom | Y | Y | Y | Y | -- |
 | 99 | `sl_09_cultural_tolerance` | Cultural Tolerance | Y | Y | Y | Y | Y |
 | 100 | `sl_10_defamation_laws` | Defamation Laws | Y | Y | Y | Y | -- |
@@ -692,12 +692,12 @@ All 100 source-of-truth metrics from `src/data/metrics.ts` cross-referenced agai
 | Field Evidence (`api/olivia/field-evidence.ts`) | 100 | 100 | PERFECT |
 | Gamma Reports (`src/services/gammaService.ts`) | 100 | 100 | PERFECT |
 | Field Knowledge (`src/data/fieldKnowledge.ts`) | 100 | 100 | PERFECT |
-| Contrast Images (`src/services/contrastImageService.ts`) | 28 | 28 | PERFECT (subset) |
+| Contrast Images (`src/services/contrastImageService.ts`) | 57 | 57 | PERFECT (expanded) |
 
 ### OPEN QUESTIONS (Session 10)
 
 1. **~~Gun Rights metric missing~~** — RESOLVED. See standalone Gun Comparison Modal below.
-2. **Contrast Images 28/100** — Only 28 metrics have image prompt templates. Should more be added?
+2. **~~Contrast Images 28/100~~** — RESOLVED. Expanded from 28 to 57 templates (Session 18).
 
 ---
 
