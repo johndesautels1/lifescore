@@ -1313,28 +1313,17 @@ function formatSection5LLMConsensus(
 
 ### PAGE 63: AI MODELS USED
 
-<smart-layout variant="imagesText" imagePosition="left">
-<item label="📝 Claude Sonnet 4.5" subtitle="Anthropic">
-**Role:** Primary Evaluator with web search
-**Strength:** Comprehensive legal framework analysis
-</item>
-<item label="🤖 GPT-4o" subtitle="OpenAI">
-**Role:** Cross-validation with Tavily search
-**Strength:** Independent verification and fact-checking
-</item>
-<item label="💎 Gemini 3 Pro" subtitle="Google">
-**Role:** Real-time data validation
-**Strength:** Native Google Search grounding
-</item>
-<item label="𝕏 Grok 4" subtitle="xAI">
-**Role:** Social sentiment analysis
-**Strength:** Real-time X/Twitter data integration
-</item>
-<item label="🔮 Sonar Reasoning Pro" subtitle="Perplexity">
-**Role:** Deep web research
-**Strength:** Citation quality and source credibility
-</item>
-</smart-layout>
+<table colwidths="[20,20,30,30]">
+
+| Model | Provider | Role | Strength |
+|-------|----------|------|----------|
+| 📝 Claude Sonnet 4.5 | Anthropic | Primary Evaluator | Legal framework analysis |
+| 🤖 GPT-4o | OpenAI | Cross-validation | Fact-checking |
+| 💎 Gemini 3 Pro | Google | Data validation | Google Search grounding |
+| 𝕏 Grok 4 | xAI | Sentiment analysis | X/Twitter integration |
+| 🔮 Sonar Pro | Perplexity | Deep research | Source credibility |
+
+</table>
 
 **Final Judge:**
 <labels><label variant="solid" color="#7C3AED">🎭 Claude Opus 4.5 (Anthropic)</label></labels>
@@ -2107,28 +2096,16 @@ prompt="diverse group of professionals, entrepreneurs, families, digital nomads,
 
 ### PAGE 48: MORE PERSONAS
 
-<smart-layout variant="imagesText" imagePosition="left">
-<item label="🗽 Libertarian" subtitle="Best: ${libertarianBest}">
-**Why:** ${libertarianBest === city1Name ?
-  `Maximum personal freedom, minimal government interference (Freedom: ${getScore('city1', 'personal_freedom') + getScore('city1', 'speech_lifestyle')})` :
-  `Maximum personal freedom, minimal government interference (Freedom: ${getScore('city2', 'personal_freedom') + getScore('city2', 'speech_lifestyle')})`}
-</item>
-<item label="🏖️ Retiree" subtitle="Best: ${retireesBest}">
-**Why:** ${retireesBest === city1Name ?
-  `Healthcare access, safety, transit options (Combined: ${getScore('city1', 'housing_property') + getScore('city1', 'transportation')})` :
-  `Healthcare access, safety, transit options (Combined: ${getScore('city2', 'housing_property') + getScore('city2', 'transportation')})`}
-</item>
-<item label="🎨 Creative/Artist" subtitle="Best: ${libertarianBest}">
-**Why:** ${libertarianBest === city1Name ?
-  `Expression freedom, cultural tolerance, lifestyle flexibility (Speech: ${getScore('city1', 'speech_lifestyle')})` :
-  `Expression freedom, cultural tolerance, lifestyle flexibility (Speech: ${getScore('city2', 'speech_lifestyle')})`}
-</item>
-<item label="⚖️ Attorney/Professional" subtitle="Best: ${entrepreneurBest}">
-**Why:** ${entrepreneurBest === city1Name ?
-  `Professional licensing, business environment, legal system (Business: ${getScore('city1', 'business_work')})` :
-  `Professional licensing, business environment, legal system (Business: ${getScore('city2', 'business_work')})`}
-</item>
-</smart-layout>
+<table colwidths="[20,20,60]">
+
+| Persona | Best City | Why |
+|---------|-----------|-----|
+| 🗽 Libertarian | ${libertarianBest} | ${libertarianBest === city1Name ? `Max freedom, minimal govt (Score: ${getScore('city1', 'personal_freedom') + getScore('city1', 'speech_lifestyle')})` : `Max freedom, minimal govt (Score: ${getScore('city2', 'personal_freedom') + getScore('city2', 'speech_lifestyle')})`} |
+| 🏖️ Retiree | ${retireesBest} | ${retireesBest === city1Name ? `Healthcare, safety, transit (Score: ${getScore('city1', 'housing_property') + getScore('city1', 'transportation')})` : `Healthcare, safety, transit (Score: ${getScore('city2', 'housing_property') + getScore('city2', 'transportation')})`} |
+| 🎨 Creative | ${libertarianBest} | ${libertarianBest === city1Name ? `Expression, tolerance, lifestyle (Speech: ${getScore('city1', 'speech_lifestyle')})` : `Expression, tolerance, lifestyle (Speech: ${getScore('city2', 'speech_lifestyle')})`} |
+| ⚖️ Professional | ${entrepreneurBest} | ${entrepreneurBest === city1Name ? `Licensing, legal system (Business: ${getScore('city1', 'business_work')})` : `Licensing, legal system (Business: ${getScore('city2', 'business_work')})`} |
+
+</table>
 
 ---
 
