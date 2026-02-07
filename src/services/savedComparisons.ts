@@ -828,14 +828,14 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
       return localReports;
     }
 
-    // Fetch from Supabase with timeout
+    // Fetch from Supabase with timeout (30s for slow mobile connections)
     const { data, error } = await withTimeout(
       supabase
         .from('gamma_reports')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
-      10000,
+      30000,
       'Gamma reports sync'
     );
 
@@ -1071,14 +1071,14 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
       return localReports;
     }
 
-    // Fetch from Supabase with timeout
+    // Fetch from Supabase with timeout (30s for slow mobile connections)
     const { data, error } = await withTimeout(
       supabase
         .from('judge_reports')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
-      10000,
+      30000,
       'Judge reports sync'
     );
 

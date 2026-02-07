@@ -87,9 +87,17 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
       setGammaReports(gammaFromDb);
       setJudgeReports(judgeFromDb);
 
+      const totalReports = gammaFromDb.length + judgeFromDb.length;
       console.log('[SavedComparisons] ✓ Sync complete:', gammaFromDb.length, 'gamma,', judgeFromDb.length, 'judge reports');
+
+      if (totalReports > 0) {
+        showMessage('success', `Synced ${totalReports} reports from cloud`);
+      } else {
+        showMessage('error', 'No reports found - are you logged in?');
+      }
     } catch (err) {
       console.error('[SavedComparisons] Sync error:', err);
+      showMessage('error', 'Sync failed - check connection');
       // Fall back to localStorage only
       loadComparisons();
     } finally {
@@ -367,6 +375,15 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
           {/* Toolbar */}
           <div className="saved-toolbar">
             <div className="toolbar-left">
+              {/* Cloud Sync Button - Always visible */}
+              <button
+                className="toolbar-btn cloud-sync-btn"
+                onClick={syncAndLoadComparisons}
+                disabled={isSyncing}
+                title="Sync reports from cloud"
+              >
+                {isSyncing ? '⟳ Syncing...' : '☁️ Sync Cloud'}
+              </button>
               {syncStatus.connected ? (
                 <>
                   <button className="toolbar-btn sync-btn" onClick={handleSync} title="Sync to GitHub">
