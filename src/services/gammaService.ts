@@ -671,8 +671,9 @@ export function getStatusMessage(state: VisualReportState): string {
 // The existing formatComparisonForGamma() remains untouched.
 // ============================================================================
 
-// Extended polling for enhanced reports (7.5 minutes vs 5 minutes)
-const MAX_POLL_ATTEMPTS_ENHANCED = 90;
+// Extended polling for enhanced 82-page reports (15 minutes max)
+// 82 pages with AI images typically takes 8-12 minutes
+const MAX_POLL_ATTEMPTS_ENHANCED = 180;  // 180 attempts * 5 sec = 15 minutes
 const PROMPT_LENGTH_WARNING = 95000;
 const PROMPT_LENGTH_MAX = 100000;
 
@@ -3122,14 +3123,18 @@ export async function pollEnhancedUntilComplete(
   while (attempts < MAX_POLL_ATTEMPTS_ENHANCED) {
     const status = await checkGenerationStatus(generationId);
 
-    // Calculate progress with enhanced messaging
-    const estimatedProgress = Math.min(95, Math.round((attempts / 18) * 100)); // ~90s typical for enhanced
+    // Calculate progress - 82 pages takes ~8-12 minutes (96-144 attempts)
+    const estimatedProgress = Math.min(95, Math.round((attempts / 144) * 100));
 
-    // Progressive status messages
-    let statusMessage = 'Generating your 64-page Enhanced Report...';
-    if (attempts > 24) statusMessage = 'Still working... Large reports take longer';
-    if (attempts > 48) statusMessage = 'Almost there... Complex analysis in progress';
-    if (attempts > 72) statusMessage = 'Taking longer than expected. You can wait or try again.';
+    // Progressive status messages for 82-page report
+    let statusMessage = 'Generating your 82-page Premium Report...';
+    if (attempts > 24) statusMessage = 'Creating lifestyle narratives and AI images...';  // 2 min
+    if (attempts > 48) statusMessage = 'Analyzing 100 metrics across 6 categories...';   // 4 min
+    if (attempts > 72) statusMessage = 'Building category deep dives and heat maps...';  // 6 min
+    if (attempts > 96) statusMessage = 'Generating insights, forecasts, and checklists...'; // 8 min
+    if (attempts > 120) statusMessage = 'Finalizing evidence and closing pages...';      // 10 min
+    if (attempts > 144) statusMessage = 'Almost done... Complex report nearly complete'; // 12 min
+    if (attempts > 168) statusMessage = 'Taking longer than usual. Please wait...';
 
     if (onProgress) {
       onProgress({
@@ -3160,8 +3165,9 @@ export async function pollEnhancedUntilComplete(
 
   // Timeout with recovery suggestion
   throw new Error(
-    'Enhanced report generation timed out (7.5 min). ' +
-    'Try: (1) Uncheck "Include Gun Rights" to reduce size, or (2) Use Standard Report instead.'
+    'Premium report generation timed out (15 min). ' +
+    'The 82-page report is still being processed. Try: (1) Wait a few more minutes and refresh, ' +
+    '(2) Uncheck "Include Gun Rights" to reduce size, or (3) Use Standard Report instead.'
   );
 }
 
