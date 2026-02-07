@@ -1237,7 +1237,7 @@ ${judgeAnalysis?.trendNotes || `Both cities show stable trajectories in ${config
 
 **Overall Agreement: ${agreementPct}% - ${agreementPct >= 85 ? 'High Consensus' : agreementPct >= 70 ? 'Moderate Consensus' : 'Mixed Opinions'}**
 
-<smart-layout variant="dotGridStats">
+<smart-layout variant="circleStats">
 ${cat1.metrics.slice(0, 12).map(m => {
   const name = getMetricDisplayName(m.metricId).slice(0, 20);
   const conf = m.confidenceLevel || 'moderate';
@@ -1310,7 +1310,7 @@ function formatSection4DeeperInsights(
 
 ### PAGE 43: 100 METRICS AT A GLANCE
 
-<smart-layout variant="dotGridStats">
+<smart-layout variant="circleStats">
 ${Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([catId, config]) => {
   const catMetrics = allMetrics.filter(m => m.catId === catId || m.catId === catId.replace('_', '-'));
   const catCity1Wins = catMetrics.filter(m => m.winner === city1Name).length;
@@ -2101,7 +2101,7 @@ Commercial redistribution, data modification, branding removal
 
 ### PAGE: THANK YOU
 
-image-layout="background"
+image-layout="behind"
 prompt="beautiful sunset over global cityscape, freedom and opportunity, hopeful future, cinematic"
 
 # Thank You for Using LIFE SCORE™
@@ -2175,7 +2175,7 @@ function formatSectionLifeInEachCity(
 
 ### PAGE: A WEEK IN ${city1Name.toUpperCase()}
 
-image-layout="background"
+image-layout="behind"
 prompt="beautiful morning cityscape of ${city1Name} ${city1Country}, lifestyle photography, warm golden hour light, people enjoying city life"
 
 # 🌅 A Week Living in ${city1Name}
@@ -2209,7 +2209,7 @@ Live under ${policingDesc1}. ${getScore('city1', 'policing_legal') > 70 ? 'Inter
 
 ### PAGE: A WEEK IN ${city2Name.toUpperCase()}
 
-image-layout="background"
+image-layout="behind"
 prompt="beautiful morning cityscape of ${city2Name} ${city2Country}, lifestyle photography, warm golden hour light, people enjoying city life"
 
 # 🌅 A Week Living in ${city2Name}
@@ -2243,8 +2243,16 @@ Live under ${policingDesc2}. ${getScore('city2', 'policing_legal') > 70 ? 'Inter
 
 ### PAGE: SIDE-BY-SIDE LIFESTYLE COMPARISON
 
-image-layout="split"
-prompt="split screen lifestyle comparison, left side ${city1Name} street scene, right side ${city2Name} street scene, both showing daily life"
+<columns>
+<column>
+image-layout="left"
+prompt="street scene daily life ${city1Name}, people walking, cafes, local atmosphere"
+</column>
+<column>
+image-layout="right"
+prompt="street scene daily life ${city2Name}, people walking, cafes, local atmosphere"
+</column>
+</columns>
 
 # 📊 Daily Life Comparison
 
@@ -2675,7 +2683,7 @@ ${getTrendIcon(city2Trend)} ${city2Trend === 'rising' ? 'Improving freedom traje
 
 ### PAGE: ${city1Name.toUpperCase()} - NEXT 5 YEARS
 
-image-layout="background"
+image-layout="behind"
 prompt="${city1Name} ${city1Country} future cityscape, modern development, optimistic urban planning"
 
 # ${getTrendIcon(city1Trend)} ${city1Name} Forecast
@@ -2705,7 +2713,7 @@ ${city1Country === 'Portugal' || city1Country === 'Spain' || city1Country === 'N
 
 ### PAGE: ${city2Name.toUpperCase()} - NEXT 5 YEARS
 
-image-layout="background"
+image-layout="behind"
 prompt="${city2Name} ${city2Country} future cityscape, modern development, urban planning"
 
 # ${getTrendIcon(city2Trend)} ${city2Name} Forecast
@@ -2920,7 +2928,7 @@ export function formatEnhancedReportForGamma(
   const fullPrompt = `
 LIFE SCORE™ ENHANCED FREEDOM RELOCATION GUIDE - GAMMA AI GENERATION INSTRUCTIONS v4.0
 
-CRITICAL: Generate ALL 72+ pages. Do NOT truncate or summarize any section.
+CRITICAL: Generate ALL 82 pages. Do NOT truncate or summarize any section.
 This is a PREMIUM report with unique insights NOT available in the web UI.
 
 ================================================================================
@@ -2952,23 +2960,23 @@ Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
 ================================================================================
 
-Heat Maps: <smart-layout variant="dotGridStats">
+Heat Maps: <smart-layout variant="circleStats"> with label and color attributes
 Gauges: <smart-layout variant="semiCircle"> or variant="circleStats">
 Bars: <smart-layout variant="barStats">
-Process Steps: <smart-layout variant="processSteps">
+Process Steps: <smart-layout variant="processSteps" numbered="true">
 Solid Boxes: <smart-layout variant="solidBoxes">
 Outline Boxes: <smart-layout variant="outlineBoxes"> or variant="outlineBoxesWithTopCircle">
-Images with Text: <smart-layout variant="imagesText">
-Tables: <table colwidths="[...]">
-Diagrams: <diagram type="rings"> or type="venn"> or type="radar">
+Images with Text: <smart-layout variant="imagesText" imagePosition="left">
+Tables: <table colwidths="[30,35,35]">
+Diagrams: <diagram type="rings"> or type="venn"> or type="target">
 Labels: <labels><label variant="solid" color="#HEX">Text</label></labels>
 Blockquotes: <blockquote>Quote text</blockquote>
 Asides: <aside variant="note"> or variant="warning">
 
-IMAGE PROMPTS (Generate beautiful images for each page):
-Use image-layout="background" for full-page backgrounds
-Use image-layout="right" or "left" for side images
-Use image-layout="split" for comparison views
+IMAGE LAYOUTS:
+- image-layout="behind" for full-page backgrounds
+- image-layout="right" or "left" for side images
+- Use <columns> with two images for side-by-side comparisons
 
 ================================================================================
 COLOR CODING:
@@ -3021,7 +3029,7 @@ END OF LIFE SCORE™ ENHANCED RELOCATION GUIDE DATA
 ================================================================================
 
 CRITICAL FINAL INSTRUCTIONS:
-1. Generate a COMPLETE 72-80 PAGE visual report from the above data
+1. Generate a COMPLETE 82 PAGE visual report from the above data
 2. Use DIVERSE visual elements - vary between gauges, bars, boxes, diagrams
 3. Generate BEAUTIFUL AI images for lifestyle sections using image-layout prompts
 4. DO NOT TRUNCATE - include ALL sections, ALL metrics, ALL insights
