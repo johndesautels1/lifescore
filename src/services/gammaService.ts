@@ -1242,7 +1242,9 @@ ${cat1.metrics.slice(0, 12).map(m => {
   const name = getMetricDisplayName(m.metricId).slice(0, 20);
   const conf = m.confidenceLevel || 'moderate';
   const color = getConfidenceColor(conf);
-  return `<item label="${name}" color="${color}">${conf}</item>`;
+  // Convert confidence level to numeric percentage for heat map
+  const confValue = conf === 'unanimous' ? 95 : conf === 'strong' ? 85 : conf === 'moderate' ? 70 : 50;
+  return `<item label="${name}" value="${confValue}" color="${color}">${confValue}%</item>`;
 }).join('\n')}
 </smart-layout>
 
@@ -1313,9 +1315,9 @@ ${Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([catId, config]) => {
   const catMetrics = allMetrics.filter(m => m.catId === catId || m.catId === catId.replace('_', '-'));
   const catCity1Wins = catMetrics.filter(m => m.winner === city1Name).length;
   const catCity2Wins = catMetrics.filter(m => m.winner === city2Name).length;
-  return `<item label="${config.icon} ${config.name}" color="${catCity1Wins > catCity2Wins ? '#FFD700' : '#1E90FF'}">
-${city1Name}: ${catCity1Wins} wins | ${city2Name}: ${catCity2Wins} wins
-</item>`;
+  const totalCatMetrics = catMetrics.length || 1;
+  const winPct = Math.round((Math.max(catCity1Wins, catCity2Wins) / totalCatMetrics) * 100);
+  return `<item label="${config.icon} ${config.name}" value="${winPct}" color="${catCity1Wins > catCity2Wins ? '#FFD700' : '#1E90FF'}">${catCity1Wins > catCity2Wins ? city1Name : city2Name}: ${winPct}%</item>`;
 }).join('\n')}
 </smart-layout>
 
