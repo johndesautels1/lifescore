@@ -380,7 +380,63 @@ const shareReport = async (reportId: string, expiresInDays = 30) => {
 
 ---
 
-# PRIORITY 3: FUTURE ENHANCEMENTS
+# PRIORITY 3: MOBILE APP - CAPACITOR WRAPPER
+
+## Phase 2: Capacitor Native App (After Bug Fixes)
+
+### Why Capacitor:
+- Wraps existing React web app with minimal changes
+- Enables publishing to iOS App Store & Google Play
+- Provides access to native APIs (widgets, notifications, etc.)
+- Single codebase for web + mobile
+
+### Implementation Tasks:
+- [ ] Install Capacitor core and CLI
+- [ ] Initialize Capacitor config
+- [ ] Add iOS platform
+- [ ] Add Android platform
+- [ ] Configure app icons and splash screens
+- [ ] Set up deep linking
+- [ ] Test on iOS simulator
+- [ ] Test on Android emulator
+- [ ] Prepare for App Store submission
+- [ ] Prepare for Play Store submission
+
+### Estimated Effort: 1-2 days for basic setup, 1 week for full store submission
+
+---
+
+# PRIORITY 4: NATIVE HOME SCREEN WIDGETS
+
+## Phase 3: True Native Widgets (After Capacitor)
+
+### iOS Widget (WidgetKit - Swift):
+- [ ] Create widget extension project
+- [ ] Design widget UI (small, medium, large sizes)
+- [ ] Implement data fetching from app
+- [ ] Add "Last Comparison" widget
+- [ ] Add "Quick Compare" launcher widget
+- [ ] Submit widget with app update
+
+### Android Widget (AppWidgetProvider - Kotlin):
+- [ ] Create widget project
+- [ ] Design widget layouts
+- [ ] Implement widget provider class
+- [ ] Add data sync with main app
+- [ ] Add widget configuration activity
+- [ ] Submit with app update
+
+### Widget Features:
+- Display last comparison winner/scores
+- Quick launch to compare screen
+- Show saved reports count
+- Refresh button for latest data
+
+### Estimated Effort: 2-3 days per platform
+
+---
+
+# PRIORITY 5: FUTURE ENHANCEMENTS
 
 ## Report Improvements
 - [ ] Add PDF download directly to Supabase Storage
@@ -407,7 +463,8 @@ const shareReport = async (reportId: string, expiresInDays = 30) => {
 |---------|------|-------------|
 | LS-SESSION15 | 2026-02-06/07 | Enhanced Report v4.0, 82 pages, 6 new sections, Gamma syntax fixes, 15-min timeout |
 | LS-SESSION16 | 2026-02-07 | Database architecture upgrade: reports table, storage service, sharing system |
+| LS-SESSION17 | 2026-02-07 | Page numbering fixes (82 pages), UI/UX fixes, PWA setup for iOS/Android |
 
 ---
 
-*Last commit: TBD - Session 16 changes not yet committed*
+*Last commit: 2468c48 - PWA support for iOS and Android installation*
