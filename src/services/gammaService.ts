@@ -1267,7 +1267,7 @@ ${cat1.metrics.slice(0, 12).map(m => {
 }
 
 // ============================================================================
-// SECTION 5: LLM CONSENSUS (Pages 48-52)
+// SECTION 10: LLM CONSENSUS (Pages 63-67)
 // ============================================================================
 function formatSection5LLMConsensus(
   result: EnhancedComparisonResult
@@ -1307,11 +1307,11 @@ function formatSection5LLMConsensus(
   ).sort((a, b) => b.stdDev - a.stdDev).slice(0, 7);
 
   return `
-## SECTION 5: LLM CONSENSUS
+## SECTION 10: LLM CONSENSUS (Pages 63-67)
 
 ---
 
-### PAGE 48: AI MODELS USED
+### PAGE 63: AI MODELS USED
 
 <smart-layout variant="imagesText" imagePosition="left">
 <item label="📝 Claude Sonnet 4.5" subtitle="Anthropic">
@@ -1343,7 +1343,7 @@ Synthesizes all 5 evaluations into final scores and recommendation.
 
 ---
 
-### PAGE 49: OVERALL CONSENSUS CONFIDENCE
+### PAGE 64: OVERALL CONSENSUS CONFIDENCE
 
 <display size="lg" color="${getConfidenceColor(confidence)}">${agreementPct}%</display>
 
@@ -1361,7 +1361,7 @@ ${confidence === 'high' ? 'All 5 LLMs showed strong alignment on the vast majori
 
 ---
 
-### PAGE 50: AGREEMENT BY CATEGORY
+### PAGE 65: AGREEMENT BY CATEGORY
 
 <smart-layout variant="barStats">
 ${categoryAgreement.map(ca => `<item label="${ca.name}" value="${ca.agreement}" max="100" color="${getConfidenceColor(ca.agreement >= 85 ? 'high' : ca.agreement >= 70 ? 'medium' : 'low')}">
@@ -1378,7 +1378,7 @@ ${categoryAgreement.map(ca => `| ${ca.name} | ${ca.agreement}% | ${ca.agreement 
 
 ---
 
-### PAGE 51: TOP DISAGREEMENT POINTS
+### PAGE 66: TOP DISAGREEMENT POINTS
 
 <smart-layout variant="outlineBoxesWithTopCircle" numbered="true">
 ${disagreements.map((d, i) => `<item label="${i + 1}. ${d.metric}">
@@ -1398,7 +1398,7 @@ Different models weighed available evidence differently, leading to score varian
 
 ---
 
-### PAGE 52: HOW WE GENERATE REPORTS
+### PAGE 67: HOW WE GENERATE REPORTS
 
 <smart-layout variant="processSteps" numbered="true">
 <item label="1. User Input">
@@ -1448,7 +1448,7 @@ function formatSection6GunRights(
 
 ---
 
-### PAGE 53: GUN RIGHTS DATA NOT INCLUDED
+### PAGE 68: GUN RIGHTS DATA NOT INCLUDED
 
 <labels><label variant="solid" color="#F97316">⚠️ GUN RIGHTS SECTION SKIPPED</label></labels>
 
@@ -1469,7 +1469,7 @@ Gun rights are intentionally excluded from the 100-metric scoring system due to 
 
 ---
 
-### PAGE 53: GUN RIGHTS DISCLAIMER
+### PAGE 68: GUN RIGHTS DISCLAIMER
 
 <labels><label variant="solid" color="#F97316">⚠️ UNSCORED - FACTS ONLY</label></labels>
 
@@ -1491,7 +1491,7 @@ Gun rights are NOT included in the LIFE SCORE calculation. This is purely inform
 
 ---
 
-### PAGE 54: GUN LAW COMPARISON (Part 1)
+### PAGE 69: GUN LAW COMPARISON (Part 1)
 
 <table colwidths="[30,35,35]">
 
@@ -1503,7 +1503,7 @@ ${gunData.categories.slice(0, 6).map(cat => `| **${cat.label}** | ${cat.cityA} |
 
 ---
 
-### PAGE 55: GUN LAW COMPARISON (Part 2)
+### PAGE 70: GUN LAW COMPARISON (Part 2)
 
 <table colwidths="[30,35,35]">
 
@@ -1515,7 +1515,7 @@ ${gunData.categories.slice(6).map(cat => `| **${cat.label}** | ${cat.cityA} | ${
 
 ---
 
-### PAGE 56: GUN LAW SUMMARY
+### PAGE 71: GUN LAW SUMMARY
 
 | ${gunData.cityA} | ${gunData.cityB} |
 |-----------------|-----------------|
@@ -1534,7 +1534,7 @@ This information is provided for comparison purposes only. Laws change frequentl
 }
 
 // ============================================================================
-// SECTION 7: METHODOLOGY (Pages 57-60)
+// SECTION 7: METHODOLOGY (Pages 72-75)
 // ============================================================================
 function formatSection7Methodology(
   result: EnhancedComparisonResult
@@ -1544,7 +1544,7 @@ function formatSection7Methodology(
 
 ---
 
-### PAGE 57: WHAT IS LIFE SCORE™?
+### PAGE 72: WHAT IS LIFE SCORE™?
 
 # LIFE SCORE™
 ## Legal Independence & Freedom Evaluation
@@ -1574,7 +1574,7 @@ Claude Opus 4.5 synthesizes all data into actionable recommendations
 
 ---
 
-### PAGE 58: THE 6 CATEGORIES
+### PAGE 73: THE 6 CATEGORIES
 
 | Category | Metrics | Weight | What It Measures |
 |----------|---------|--------|------------------|
@@ -1598,7 +1598,7 @@ Speech & Lifestyle: 10%
 
 ---
 
-### PAGE 59: PERSONALIZATION PRESETS
+### PAGE 74: PERSONALIZATION PRESETS
 
 <smart-layout variant="solidBoxes">
 <item label="⚖️ Balanced">
@@ -1625,7 +1625,7 @@ Emphasizes Business (35%), Housing (30%), Policing (20%)
 
 ---
 
-### PAGE 60: EVIDENCE QUALITY BY CATEGORY
+### PAGE 75: EVIDENCE QUALITY BY CATEGORY
 
 <smart-layout variant="circleStatsWithBoldLine">
 ${Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([catId, config]) => {
@@ -1699,7 +1699,7 @@ function formatSection8EvidenceClosingBothCities(
 
 ---
 
-### PAGE: ${city1Name.toUpperCase()} - KEY CITATIONS
+### PAGE 76: ${city1Name.toUpperCase()} - KEY CITATIONS
 
 image-layout="right"
 prompt="research documents, legal books, government documents, ${city1Name} official papers"
@@ -1722,7 +1722,7 @@ Sources gathered from ${city1Name} government websites, legal databases, and off
 
 ---
 
-### PAGE: ${city2Name.toUpperCase()} - KEY CITATIONS
+### PAGE 77: ${city2Name.toUpperCase()} - KEY CITATIONS
 
 image-layout="right"
 prompt="research documents, legal books, government documents, ${city2Name} official papers"
@@ -1745,7 +1745,7 @@ Sources gathered from ${city2Name} government websites, legal databases, and off
 
 ---
 
-### PAGE: DATA QUALITY & LIMITATIONS
+### PAGE 78: DATA QUALITY & LIMITATIONS
 
 <smart-layout variant="outlineBoxes">
 <item label="⏱️ Temporal">
@@ -1770,7 +1770,7 @@ Your experience may vary based on nationality, profession, and personal circumst
 
 ---
 
-### PAGE: ABOUT CLUES INTELLIGENCE LTD
+### PAGE 79: ABOUT CLUES INTELLIGENCE LTD
 
 image-layout="right"
 prompt="modern tech company office, data analytics, professional team, global freedom research"
@@ -1799,7 +1799,7 @@ prompt="modern tech company office, data analytics, professional team, global fr
 
 ---
 
-### PAGE: LEGAL NOTICES & COPYRIGHT
+### PAGE 80: LEGAL NOTICES & COPYRIGHT
 
 **Copyright © 2025-2026 Clues Intelligence LTD. All Rights Reserved.**
 
@@ -1820,7 +1820,7 @@ Commercial redistribution, data modification, branding removal
 
 ---
 
-### PAGE: THANK YOU
+### PAGE 81: THANK YOU
 
 image-layout="behind"
 prompt="beautiful sunset over global cityscape, freedom and opportunity, hopeful future, cinematic"
@@ -1856,6 +1856,26 @@ Execute your relocation with confidence
 
 **LIFE SCORE™ by Clues Intelligence LTD**
 
+---
+
+### PAGE 82: BACK COVER
+
+image-layout="behind"
+prompt="elegant minimalist design, world map silhouette, compass, premium quality back cover, sophisticated dark background"
+
+<display size="xl" color="#FFD700">LIFE SCORE™</display>
+
+<display size="lg" color="#FFFFFF">Legal Independence & Freedom Evaluation</display>
+
+**Making freedom measurable, one city at a time.**
+
+---
+
+**Clues Intelligence LTD**
+🌐 clueslifescore.com | 📧 info@clueslifescore.com
+
+*© 2025-2026 All Rights Reserved*
+
 `;
 }
 
@@ -1890,11 +1910,11 @@ function formatSectionLifeInEachCity(
   const policingDesc2 = getScore('city2', 'policing_legal') > 65 ? 'fair legal system with police accountability' : 'aggressive enforcement and legal complexities';
 
   return `
-## SECTION: YOUR LIFE IN EACH CITY
+## SECTION 4: YOUR LIFE IN EACH CITY (Pages 43-46)
 
 ---
 
-### PAGE: A WEEK IN ${city1Name.toUpperCase()}
+### PAGE 43: A WEEK IN ${city1Name.toUpperCase()}
 
 image-layout="behind"
 prompt="beautiful morning cityscape of ${city1Name} ${city1Country}, lifestyle photography, warm golden hour light, people enjoying city life"
@@ -1928,7 +1948,7 @@ Live under ${policingDesc1}. ${getScore('city1', 'policing_legal') > 70 ? 'Inter
 
 ---
 
-### PAGE: A WEEK IN ${city2Name.toUpperCase()}
+### PAGE 44: A WEEK IN ${city2Name.toUpperCase()}
 
 image-layout="behind"
 prompt="beautiful morning cityscape of ${city2Name} ${city2Country}, lifestyle photography, warm golden hour light, people enjoying city life"
@@ -1962,7 +1982,7 @@ Live under ${policingDesc2}. ${getScore('city2', 'policing_legal') > 70 ? 'Inter
 
 ---
 
-### PAGE: SIDE-BY-SIDE LIFESTYLE COMPARISON
+### PAGE 45: SIDE-BY-SIDE LIFESTYLE COMPARISON
 
 <columns>
 <column>
@@ -1992,7 +2012,7 @@ Same person, same day, two completely different freedom experiences. Your daily 
 
 ---
 
-### PAGE: FREEDOM MOMENTS THAT MATTER
+### PAGE 46: FREEDOM MOMENTS THAT MATTER
 
 image-layout="right"
 prompt="person enjoying freedom, outdoor cafe, working on laptop, ${result.winner === 'city1' ? city1Name : city2Name} atmosphere"
@@ -2047,11 +2067,11 @@ function formatSectionPersonaRecommendations(
   const retireesBest = (getScore('city1', 'housing_property') + getScore('city1', 'policing_legal') + getScore('city1', 'transportation')) > (getScore('city2', 'housing_property') + getScore('city2', 'policing_legal') + getScore('city2', 'transportation')) ? city1Name : city2Name;
 
   return `
-## SECTION: WHO SHOULD CHOOSE WHICH CITY?
+## SECTION 5: WHO SHOULD CHOOSE WHICH CITY? (Pages 47-49)
 
 ---
 
-### PAGE: PERSONA RECOMMENDATIONS
+### PAGE 47: PERSONA RECOMMENDATIONS
 
 image-layout="right"
 prompt="diverse group of professionals, entrepreneurs, families, digital nomads, lifestyle choice concept, modern photography"
@@ -2085,7 +2105,7 @@ prompt="diverse group of professionals, entrepreneurs, families, digital nomads,
 
 ---
 
-### PAGE: MORE PERSONAS
+### PAGE 48: MORE PERSONAS
 
 <smart-layout variant="imagesText" imagePosition="left">
 <item label="🗽 Libertarian" subtitle="Best: ${libertarianBest}">
@@ -2112,7 +2132,7 @@ prompt="diverse group of professionals, entrepreneurs, families, digital nomads,
 
 ---
 
-### PAGE: DECISION MATRIX
+### PAGE 49: DECISION MATRIX
 
 # 🎚️ What If You Weighted Differently?
 
@@ -2188,11 +2208,11 @@ function formatSectionSurprisingFindings(
   });
 
   return `
-## SECTION: SURPRISING FINDINGS
+## SECTION 6: SURPRISING FINDINGS (Pages 50-52)
 
 ---
 
-### PAGE: WHAT MIGHT SURPRISE YOU
+### PAGE 50: WHAT MIGHT SURPRISE YOU
 
 image-layout="right"
 prompt="surprised person looking at data, revelation moment, light bulb concept, modern professional photography"
@@ -2214,7 +2234,7 @@ ${winner}'s advantage comes primarily from enforcement reality, not written laws
 
 ---
 
-### PAGE: MYTH VS REALITY
+### PAGE 51: MYTH VS REALITY
 
 # 🎭 Reputation vs Data
 
@@ -2240,7 +2260,7 @@ ${getScore('city1', 'business_work') > getScore('city2', 'business_work') ? city
 
 ---
 
-### PAGE: LAW VS ENFORCEMENT SURPRISES
+### PAGE 52: LAW VS ENFORCEMENT SURPRISES
 
 # 📜 Paper Tigers & Hidden Restrictions
 
@@ -2289,11 +2309,11 @@ function formatSectionHiddenCosts(
   const policingCost = getScore(loserCity, 'policing_legal') < 60 ? '$1,000-4,000/year (fines, legal fees risk)' : '$200-500/year';
 
   return `
-## SECTION: THE HIDDEN COSTS OF RESTRICTIONS
+## SECTION 7: THE HIDDEN COSTS OF RESTRICTIONS (Pages 53-55)
 
 ---
 
-### PAGE: FREEDOM HAS A PRICE TAG
+### PAGE 53: FREEDOM HAS A PRICE TAG
 
 image-layout="right"
 prompt="person looking at bills and expenses, calculator, financial planning, professional photography"
@@ -2319,7 +2339,7 @@ ${policingCost}
 
 ---
 
-### PAGE: ANNUAL FREEDOM TAX COMPARISON
+### PAGE 54: ANNUAL FREEDOM TAX COMPARISON
 
 # 📊 Estimated Annual "Restriction Costs"
 
@@ -2337,7 +2357,7 @@ These are estimates based on LIFE SCORE data. Actual costs vary by individual ci
 
 ---
 
-### PAGE: OPPORTUNITY COSTS
+### PAGE 55: OPPORTUNITY COSTS
 
 # 🚫 What Restrictions Prevent
 
@@ -2378,11 +2398,11 @@ function formatSectionFutureOutlook(
   const getTrendColor = (trend: string) => trend === 'rising' ? '#10B981' : trend === 'declining' ? '#EF4444' : '#F59E0B';
 
   return `
-## SECTION: FUTURE OUTLOOK
+## SECTION 8: FUTURE OUTLOOK (Pages 56-59)
 
 ---
 
-### PAGE: 5-YEAR TRAJECTORY FORECAST
+### PAGE 56: 5-YEAR TRAJECTORY FORECAST
 
 image-layout="right"
 prompt="futuristic city skyline, timeline concept, progress and growth, modern architecture, optimistic lighting"
@@ -2400,7 +2420,7 @@ ${getTrendIcon(city2Trend)} ${city2Trend === 'rising' ? 'Improving freedom traje
 
 ---
 
-### PAGE: ${city1Name.toUpperCase()} - NEXT 5 YEARS
+### PAGE 57: ${city1Name.toUpperCase()} - NEXT 5 YEARS
 
 image-layout="behind"
 prompt="${city1Name} ${city1Country} future cityscape, modern development, optimistic urban planning"
@@ -2430,7 +2450,7 @@ ${city1Country === 'Portugal' || city1Country === 'Spain' || city1Country === 'N
 
 ---
 
-### PAGE: ${city2Name.toUpperCase()} - NEXT 5 YEARS
+### PAGE 58: ${city2Name.toUpperCase()} - NEXT 5 YEARS
 
 image-layout="behind"
 prompt="${city2Name} ${city2Country} future cityscape, modern development, urban planning"
@@ -2460,7 +2480,7 @@ ${city2Country === 'Portugal' || city2Country === 'Spain' || city2Country === 'N
 
 ---
 
-### PAGE: SCENARIO PLANNING
+### PAGE 59: SCENARIO PLANNING
 
 # ⚡ What Could Change the Outcome?
 
@@ -2500,11 +2520,11 @@ function formatSectionNextSteps(
   const isUS2 = city2Country === 'United States';
 
   return `
-## SECTION: YOUR NEXT STEPS
+## SECTION 9: YOUR NEXT STEPS (Pages 60-62)
 
 ---
 
-### PAGE: IF YOU CHOOSE ${city1Name.toUpperCase()}
+### PAGE 60: IF YOU CHOOSE ${city1Name.toUpperCase()}
 
 image-layout="right"
 prompt="person packing suitcase, moving abroad, exciting new chapter, ${city1Name} travel"
@@ -2541,7 +2561,7 @@ ${isUS1 ? 'Domestic: 1-2 months typical. Interstate: Consider tax year timing.' 
 
 ---
 
-### PAGE: IF YOU CHOOSE ${city2Name.toUpperCase()}
+### PAGE 61: IF YOU CHOOSE ${city2Name.toUpperCase()}
 
 image-layout="right"
 prompt="person packing suitcase, moving abroad, exciting new chapter, ${city2Name} travel"
@@ -2578,7 +2598,7 @@ ${isUS2 ? 'Domestic: 1-2 months typical. Interstate: Consider tax year timing.' 
 
 ---
 
-### PAGE: KEY CONTACTS & RESOURCES
+### PAGE 62: KEY CONTACTS & RESOURCES
 
 # 📞 Where to Go for Help
 
