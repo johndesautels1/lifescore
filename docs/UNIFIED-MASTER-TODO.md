@@ -35,7 +35,7 @@
 | NEW (Sessions 8-9) | 8 | 8 | 0 | 0 | 0 |
 | **TOTAL** | **91** | **72** | **10** | **1** | **9** |
 
-**Completion: 79.1%** (72 of 91)
+**Completion: 87.5%** (84 of 96 items - includes Sessions 10-18)
 
 ---
 
@@ -101,8 +101,8 @@
 
 | # | Item | Details | Status |
 |---|------|---------|--------|
-| 13 | Add More Models Button Handlers | Wire up the "Add More Models" button to actually add LLMs | ACTIVE |
-| 14 | Judge Re-runs with Combined Results | Allow re-running the Judge with updated/combined data from multiple LLMs | ACTIVE |
+| 13 | Add More Models Button Handlers | Wire up the "Add More Models" button to actually add LLMs | DONE (already implemented) |
+| 14 | Judge Re-runs with Combined Results | Allow re-running the Judge with updated/combined data from multiple LLMs | DONE (auto-reruns when LLMs complete) |
 | 15 | Disagreement Visualization | Show visual indicator where different LLMs disagree on scores | ACTIVE |
 | 16 | Session Management | Improve session handling, persistence, state management. **Note:** Dual-storage (Session 8) addressed persistence significantly | ACTIVE |
 | 17 | Score Calculation UI | Explainer UI showing how LIFE SCORE math works | **DONE (Session 8)** - Glass-morphic 5-stage pipeline card |
@@ -226,12 +226,10 @@
 
 ---
 
-## ACTIVE - Features (4 items)
+## ACTIVE - Features (2 items)
 
 | # | Item | Priority | Description |
 |---|------|----------|-------------|
-| 13 | Add More Models Button Handlers | HIGH | Wire up "Add More Models" button to trigger LLM addition flow |
-| 14 | Judge Re-runs with Combined Results | HIGH | Allow re-running Opus Judge with updated/combined multi-LLM data |
 | 15 | Disagreement Visualization | MEDIUM | Show visual indicators where different LLMs disagree on metric scores |
 | 16 | Session Management | MEDIUM | Improve session handling and state. Dual-storage (Session 8) addressed persistence |
 
@@ -494,22 +492,20 @@
 
 ## Priority Order for Remaining Work
 
-### 1. HIGH - Features
-- **#13** Add More Models Button Handlers
-- **#14** Judge Re-runs with Combined Results
-
-### 2. MEDIUM - Features
+### 1. MEDIUM - Features
 - **#15** Disagreement Visualization
 - **#16** Session Management
 
-### 3. INVESTIGATION
+### 2. INVESTIGATION
 - **#68** Court Orders Green Dot Bug (needs screenshot)
 
-### 4. LOW - Polish
+### 3. LOW - Polish
 - **#23-28** Documentation polish
 - **#29-30** Code quality
 
-### 5. COMPLETED (Session 18)
+### 4. COMPLETED (Session 18)
+- **#13** Add More Models Button Handlers — DONE (already implemented)
+- **#14** Judge Re-runs with Combined Results — DONE (auto-reruns)
 - **#22** Gamma Prompt Update — DONE
 - **#38** Supabase Profile Fetch Timeout — DONE (working well)
 - **#70** Verify Olivia 100 Metrics — DONE (57 contrast images aligned)
@@ -871,8 +867,8 @@ Opens a full-screen modal with:
 
 | Status | Count | % |
 |--------|-------|---|
-| Completed | 82 | 85% |
-| Active | 5 | 5% |
+| Completed | 84 | 88% |
+| Active | 3 | 3% |
 | Needs Investigation | 1 | 1% |
 | Deferred | 9 | 9% |
 
@@ -899,8 +895,6 @@ Opens a full-screen modal with:
 
 | Priority | Item | Description |
 |----------|------|-------------|
-| HIGH | #13 | Add More Models Button Handlers |
-| HIGH | #14 | Judge Re-runs with Combined Results |
 | MEDIUM | #15 | Disagreement Visualization |
 | MEDIUM | #16 | Session Management |
 | LOW | #23-28 | Documentation polish |
