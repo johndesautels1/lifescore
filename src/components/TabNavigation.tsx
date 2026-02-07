@@ -42,6 +42,12 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
       // FIX #55: Always accessible - ResultsTab handles no-data state with saved report selector
     },
     {
+      id: 'judges-report',
+      label: 'Judges Report',
+      icon: '📋',
+      // Always accessible - JudgeTab handles no-data state with saved report selector
+    },
+    {
       id: 'visuals',
       label: 'Visuals',
       icon: '📈',
@@ -57,12 +63,6 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
       label: 'Saved',
       icon: '💾',
       badge: savedCount > 0 ? savedCount : undefined,
-    },
-    {
-      id: 'judges-report',
-      label: 'Judges Report',
-      icon: '📋',
-      // Always accessible - JudgeTab handles no-data state with saved report selector
     },
     {
       id: 'about',
