@@ -740,8 +740,19 @@
   }
 
   .saved-item-actions {
+    display: flex !important;  /* FIX: Force display on tablet/mobile */
     justify-content: center;
     width: 100%;
+    gap: 0.5rem;
+  }
+
+  /* FIX: Ensure action buttons visible on 768px screens */
+  .action-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 40px;
+    min-height: 40px;
   }
 
   .saved-item-meta {
