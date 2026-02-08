@@ -1472,7 +1472,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1 && 'totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : comparisonResult?.city1?.totalScore ?? 0)}
+                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1 && 'totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult?.city1 && 'totalScore' in comparisonResult.city1 ? comparisonResult.city1.totalScore : 0))}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
@@ -1503,7 +1503,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2 && 'totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : comparisonResult?.city2?.totalScore ?? 0)}
+                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2 && 'totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult?.city2 && 'totalScore' in comparisonResult.city2 ? comparisonResult.city2.totalScore : 0))}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>

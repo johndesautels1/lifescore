@@ -963,7 +963,7 @@ const AppContent: React.FC = () => {
           {activeTab === 'visuals' && (
             <Suspense fallback={<div className="tab-loading">Loading Visuals...</div>}>
               <VisualsTab
-                result={enhancedMode ? enhancedResult : state.result}
+                result={(enhancedMode ? enhancedResult : state.result) || null}
                 reportState={gammaReportState}
                 setReportState={setGammaReportState}
                 exportFormat={gammaExportFormat}
@@ -1012,7 +1012,7 @@ const AppContent: React.FC = () => {
               ============================================================ */}
           {activeTab === 'judges-report' && (
             <JudgeTab
-              comparisonResult={enhancedMode ? enhancedResult : state.result}
+              comparisonResult={(enhancedMode ? enhancedResult : state.result) || null}
               userId={user?.id || 'guest'}
               savedJudgeReport={selectedSavedJudgeReport}
               onSavedReportLoaded={() => setSelectedSavedJudgeReport(null)}
