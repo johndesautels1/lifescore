@@ -1012,7 +1012,7 @@ const AppContent: React.FC = () => {
               ============================================================ */}
           {activeTab === 'judges-report' && (
             <JudgeTab
-              comparisonResult={enhancedResult || state.result || null}
+              comparisonResult={enhancedMode ? enhancedResult : state.result}
               userId={user?.id || 'guest'}
               savedJudgeReport={selectedSavedJudgeReport}
               onSavedReportLoaded={() => setSelectedSavedJudgeReport(null)}
