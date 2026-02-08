@@ -27,7 +27,6 @@ import {
   syncJudgeReportsFromSupabase,
   deleteSavedJudgeReport,
   clearAllJudgeReports,
-  isValidComparisonResult,
   fullDatabaseSync,
   type SavedComparison,
   type SavedGammaReport,
@@ -125,12 +124,10 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     // FIX 2026-01-26: Load BOTH standard and enhanced comparisons
     const standardComparisons = getLocalComparisons().map(c => ({ ...c, isEnhanced: false }));
 
-    // FIX 7.4: Use type guard instead of unsafe cast - filter out invalid entries
+    // Enhanced comparisons - already validated by getLocalEnhancedComparisons
     const enhancedComparisons = getLocalEnhancedComparisons()
-      .filter(c => isValidComparisonResult(c.result))
       .map(c => ({
         ...c,
-        // Safe cast after type guard validation
         result: c.result as unknown as ComparisonResult,
         isEnhanced: true
       }));
