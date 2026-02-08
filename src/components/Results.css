@@ -2,6 +2,54 @@
  * Results Component Styles
  */
 
+/* FIX 2026-02-08: Report Type Header Badge */
+.report-type-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.report-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.report-type-badge .badge-icon {
+  font-size: 1.1rem;
+}
+
+.report-type-badge.enhanced {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.report-type-badge.standard {
+  background: linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(14, 165, 233, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Dark mode */
+[data-theme="dark"] .report-type-badge.enhanced {
+  background: linear-gradient(135deg, #A78BFA 0%, #818CF8 100%);
+  box-shadow: 0 3px 12px rgba(167, 139, 250, 0.5);
+}
+
+[data-theme="dark"] .report-type-badge.standard {
+  background: linear-gradient(135deg, #38BDF8 0%, #2DD4BF 100%);
+  box-shadow: 0 3px 12px rgba(56, 189, 248, 0.5);
+}
+
 /* Winner Hero */
 .winner-hero {
   background: linear-gradient(135deg, var(--sapphire), var(--sapphire-light), var(--orange));

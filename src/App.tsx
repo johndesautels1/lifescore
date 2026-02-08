@@ -289,14 +289,17 @@ const AppContent: React.FC = () => {
     console.log('[App] Loading saved comparison:', result.comparisonId, result.city1.city, 'vs', result.city2.city);
 
     // FIX 7.4: Use type guard instead of unsafe casts for detecting enhanced comparisons
+    // FIX 2026-02-08: Set enhancedMode to match loaded report type - user clicks, report loads, no hoops
     if (isEnhancedComparisonResult(result)) {
       console.log('[App] Loading as ENHANCED comparison');
+      setEnhancedMode(true);
       setEnhancedResult(result as unknown as EnhancedComparisonResult);
       setEnhancedStatus('complete');
       // Also set base result for components that need it
       loadResult(result);
     } else {
       console.log('[App] Loading as standard comparison');
+      setEnhancedMode(false);
       loadResult(result);
       setEnhancedStatus('idle');
       setEnhancedResult(null);

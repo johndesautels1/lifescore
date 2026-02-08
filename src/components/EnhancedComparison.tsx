@@ -1430,6 +1430,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
   return (
     <div className="enhanced-results">
+      {/* FIX 2026-02-08: Clear report type badge in header */}
+      <div className="report-type-header">
+        <span className="report-type-badge enhanced">
+          <span className="badge-icon">⚡</span>
+          <span className="badge-text">Enhanced Report</span>
+        </span>
+      </div>
+
       {/* Winner Hero */}
       <div className={`enhanced-winner-hero ${isTie ? 'tie' : ''}`}>
         <div className="consensus-badge">

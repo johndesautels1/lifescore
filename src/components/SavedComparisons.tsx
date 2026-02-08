@@ -481,8 +481,17 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                             <span className="saved-cities-text">
                               {comparison.result.city1.city} vs {comparison.result.city2.city}
                             </span>
-                            {comparison.isEnhanced && (
-                              <span className="enhanced-badge" title="Multi-LLM Enhanced Comparison">⚡</span>
+                            {/* FIX 2026-02-08: Clear Enhanced/Standard badges with text */}
+                            {comparison.isEnhanced ? (
+                              <span className="report-type-badge enhanced" title="Multi-LLM Enhanced Comparison">
+                                <span className="badge-icon">⚡</span>
+                                <span className="badge-text">Enhanced</span>
+                              </span>
+                            ) : (
+                              <span className="report-type-badge standard" title="Standard Single-LLM Comparison">
+                                <span className="badge-icon">📊</span>
+                                <span className="badge-text">Standard</span>
+                              </span>
                             )}
                           </>
                         )}

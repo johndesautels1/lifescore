@@ -390,6 +390,13 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights
 
   return (
     <div className="results animate-slideUp">
+      {/* FIX 2026-02-08: Clear report type badge in header */}
+      <div className="report-type-header">
+        <span className="report-type-badge standard">
+          <span className="badge-icon">📊</span>
+          <span className="badge-text">Standard Report</span>
+        </span>
+      </div>
       <WinnerHero result={result} />
       <ScoreGrid result={result} />
       <CategoryBreakdown result={result} customWeights={customWeights} />
