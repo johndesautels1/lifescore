@@ -55,6 +55,7 @@ import {
   getLocalEnhancedComparisons,
   getSavedJudgeReports,
   saveJudgeReport,
+  fetchFullJudgeReport,
   type SavedJudgeReport,
 } from '../services/savedComparisons';
 import './JudgeTab.css';
@@ -149,44 +150,84 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   }, [refreshComparisons]);
 
   // FIX 2026-02-08: Load saved Judge report when passed from SavedComparisons
+  // Fetches full report from Supabase to get complete data (categoryAnalysis, etc.)
   useEffect(() => {
-    if (savedJudgeReport) {
+    if (!savedJudgeReport) return;
+
+    const loadReport = async () => {
       console.log('[JudgeTab] Loading saved Judge report:', savedJudgeReport.reportId);
 
-      // Convert SavedJudgeReport to JudgeReport format
-      const loadedReport: JudgeReport = {
-        reportId: savedJudgeReport.reportId,
-        generatedAt: savedJudgeReport.generatedAt,
-        userId: userId,
-        comparisonId: savedJudgeReport.comparisonId,
-        city1: savedJudgeReport.city1,
-        city2: savedJudgeReport.city2,
-        videoUrl: savedJudgeReport.videoUrl,
-        videoStatus: savedJudgeReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
-        summaryOfFindings: {
-          city1Score: savedJudgeReport.summaryOfFindings.city1Score,
-          city1Trend: 'stable', // Default, not stored in SavedJudgeReport
-          city2Score: savedJudgeReport.summaryOfFindings.city2Score,
-          city2Trend: 'stable', // Default, not stored in SavedJudgeReport
-          overallConfidence: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
-        },
-        categoryAnalysis: [], // Not stored in SavedJudgeReport
-        executiveSummary: {
-          recommendation: savedJudgeReport.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
-          rationale: savedJudgeReport.executiveSummary.rationale,
-          keyFactors: [],
-          futureOutlook: '',
-          confidenceLevel: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
-        },
-      };
+      // Try to fetch the full report from Supabase
+      const fullReport = await fetchFullJudgeReport(savedJudgeReport.reportId);
 
-      setJudgeReport(loadedReport);
+      if (fullReport) {
+        console.log('[JudgeTab] Loaded full report from Supabase:', fullReport.reportId);
+        // Use the complete report data from Supabase
+        const loadedReport: JudgeReport = {
+          reportId: fullReport.reportId,
+          generatedAt: fullReport.generatedAt,
+          userId: fullReport.userId || userId,
+          comparisonId: fullReport.comparisonId,
+          city1: fullReport.city1,
+          city2: fullReport.city2,
+          videoUrl: fullReport.videoUrl,
+          videoStatus: fullReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
+          summaryOfFindings: {
+            city1Score: fullReport.summaryOfFindings.city1Score,
+            city1Trend: fullReport.summaryOfFindings.city1Trend || 'stable',
+            city2Score: fullReport.summaryOfFindings.city2Score,
+            city2Trend: fullReport.summaryOfFindings.city2Trend || 'stable',
+            overallConfidence: fullReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+          },
+          categoryAnalysis: fullReport.categoryAnalysis || [],
+          executiveSummary: {
+            recommendation: fullReport.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
+            rationale: fullReport.executiveSummary.rationale,
+            keyFactors: fullReport.executiveSummary.keyFactors || [],
+            futureOutlook: fullReport.executiveSummary.futureOutlook || '',
+            confidenceLevel: fullReport.executiveSummary.confidenceLevel as 'high' | 'medium' | 'low',
+          },
+          freedomEducation: fullReport.freedomEducation,
+        };
+        setJudgeReport(loadedReport);
+      } else {
+        console.log('[JudgeTab] Full report not available, using summary data');
+        // Fallback: Convert SavedJudgeReport to JudgeReport format with limited data
+        const loadedReport: JudgeReport = {
+          reportId: savedJudgeReport.reportId,
+          generatedAt: savedJudgeReport.generatedAt,
+          userId: userId,
+          comparisonId: savedJudgeReport.comparisonId,
+          city1: savedJudgeReport.city1,
+          city2: savedJudgeReport.city2,
+          videoUrl: savedJudgeReport.videoUrl,
+          videoStatus: savedJudgeReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
+          summaryOfFindings: {
+            city1Score: savedJudgeReport.summaryOfFindings.city1Score,
+            city1Trend: 'stable',
+            city2Score: savedJudgeReport.summaryOfFindings.city2Score,
+            city2Trend: 'stable',
+            overallConfidence: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+          },
+          categoryAnalysis: [],
+          executiveSummary: {
+            recommendation: savedJudgeReport.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
+            rationale: savedJudgeReport.executiveSummary.rationale,
+            keyFactors: [],
+            futureOutlook: '',
+            confidenceLevel: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+          },
+        };
+        setJudgeReport(loadedReport);
+      }
 
       // Notify parent that we loaded the report
       if (onSavedReportLoaded) {
         onSavedReportLoaded();
       }
-    }
+    };
+
+    loadReport();
   }, [savedJudgeReport, userId, onSavedReportLoaded]);
 
   // FIX 2026-01-26: Track if report failed to load for user feedback

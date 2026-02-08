@@ -1252,6 +1252,83 @@ export function clearAllJudgeReports(): void {
   localStorage.removeItem(JUDGE_REPORTS_KEY);
 }
 
+/**
+ * FIX 2026-02-08: Fetch full Judge report from Supabase by report_id
+ * Returns the complete report with all category analysis and details
+ */
+export async function fetchFullJudgeReport(reportId: string): Promise<any | null> {
+  try {
+    if (!isSupabaseConfigured()) {
+      console.log('[savedComparisons] Supabase not configured');
+      return null;
+    }
+
+    const user = await getCurrentUser();
+    if (!user) {
+      console.log('[savedComparisons] No authenticated user');
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('judge_reports')
+      .select('*')
+      .eq('report_id', reportId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      console.error('[savedComparisons] Failed to fetch full Judge report:', error);
+      return null;
+    }
+
+    if (!data) {
+      console.log('[savedComparisons] Judge report not found:', reportId);
+      return null;
+    }
+
+    // Parse full_report if it's a string
+    let fullReport = data.full_report;
+    if (typeof fullReport === 'string') {
+      try {
+        fullReport = JSON.parse(fullReport);
+      } catch {
+        fullReport = null;
+      }
+    }
+
+    // Return the full report data, preferring full_report over individual columns
+    return {
+      reportId: data.report_id,
+      comparisonId: data.comparison_id,
+      generatedAt: data.created_at,
+      userId: data.user_id,
+      city1: data.city1_name || fullReport?.city1 || 'Unknown',
+      city2: data.city2_name || fullReport?.city2 || 'Unknown',
+      videoUrl: data.video_url,
+      videoStatus: data.video_status,
+      summaryOfFindings: fullReport?.summaryOfFindings || {
+        city1Score: data.city1_score || 0,
+        city1Trend: data.city1_trend || 'stable',
+        city2Score: data.city2_score || 0,
+        city2Trend: data.city2_trend || 'stable',
+        overallConfidence: data.overall_confidence || 'medium',
+      },
+      categoryAnalysis: fullReport?.categoryAnalysis || [],
+      executiveSummary: fullReport?.executiveSummary || {
+        recommendation: data.recommendation || 'tie',
+        rationale: data.rationale || '',
+        keyFactors: data.key_factors || [],
+        futureOutlook: data.future_outlook || '',
+        confidenceLevel: data.confidence_level || 'medium',
+      },
+      freedomEducation: fullReport?.freedomEducation || null,
+    };
+  } catch (error) {
+    console.error('[savedComparisons] Error fetching full Judge report:', error);
+    return null;
+  }
+}
+
 // ============================================================================
 // COURT ORDER STORAGE
 // ============================================================================
