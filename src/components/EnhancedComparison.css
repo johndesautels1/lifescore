@@ -5178,14 +5178,15 @@
   animation: fadeIn 0.3s ease;
 }
 
-.action-buttons {
+/* SCOPED to .enhanced-results to prevent leaking to other components */
+.enhanced-results .action-buttons {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.action-btn {
+.enhanced-results .action-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
@@ -5200,27 +5201,27 @@
   white-space: nowrap;
 }
 
-.action-btn .btn-icon {
+.enhanced-results .action-btn .btn-icon {
   font-size: 1.4rem;
 }
 
-.action-btn.save-btn {
+.enhanced-results .action-btn.save-btn {
   background: linear-gradient(135deg, var(--sapphire) 0%, #1a5276 100%);
   color: white;
 }
 
-.action-btn.save-btn:hover:not(:disabled) {
+.enhanced-results .action-btn.save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(15, 76, 129, 0.3);
 }
 
-.action-btn.save-btn.saved {
+.enhanced-results .action-btn.save-btn.saved {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   cursor: default;
 }
 
 /* ADDED 2026-01-25: Saving state animation */
-.action-btn.save-btn.saving {
+.enhanced-results .action-btn.save-btn.saving {
   background: linear-gradient(135deg, var(--sapphire) 0%, var(--sapphire-dark) 100%);
   cursor: wait;
   animation: pulse-enhanced-saving 1.5s infinite;
@@ -5240,25 +5241,25 @@
   color: var(--error);
 }
 
-.action-btn.share-btn {
+.enhanced-results .action-btn.share-btn {
   background: white;
   color: var(--sapphire);
   border-color: var(--sapphire);
 }
 
-.action-btn.share-btn:hover {
+.enhanced-results .action-btn.share-btn:hover {
   background: var(--sapphire);
   color: white;
   transform: translateY(-2px);
 }
 
-.action-btn.export-btn {
+.enhanced-results .action-btn.export-btn {
   background: white;
   color: var(--orange);
   border-color: var(--orange);
 }
 
-.action-btn.export-btn:hover {
+.enhanced-results .action-btn.export-btn:hover {
   background: var(--orange);
   color: white;
   transform: translateY(-2px);

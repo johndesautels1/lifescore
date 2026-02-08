@@ -907,14 +907,15 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    ACTION BUTTONS SECTION
    ═══════════════════════════════════════════════════════════════════════════ */
-.action-buttons-section {
+/* SCOPED to .judge-tab to prevent leaking to other components */
+.judge-tab .action-buttons-section {
   display: flex;
   justify-content: center;
   gap: 1rem;
   padding: 1rem 2rem 2rem;
 }
 
-.action-btn {
+.judge-tab .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -934,43 +935,43 @@
   transition: all 0.3s ease;
 }
 
-.action-btn .btn-text {
+.judge-tab .action-btn .btn-text {
   font-size: 0.85rem;
   color: #ffffff;  /* Crisp white text */
 }
 
-.action-btn:hover:not(:disabled) {
+.judge-tab .action-btn:hover:not(:disabled) {
   background: rgba(201, 162, 39, 0.2);
   border-color: var(--brushed-gold);
   transform: translateY(-2px);
 }
 
-.action-btn:disabled {
+.judge-tab .action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.action-btn .btn-icon {
+.judge-tab .action-btn .btn-icon {
   font-size: 1.275rem;
 }
 
 /* Download buttons - slightly larger */
-.action-btn.download-btn {
+.judge-tab .action-btn.download-btn {
   padding: 1.05rem 1.65rem;
   font-size: 0.85rem;
   gap: 0.6rem;
 }
 
-.action-btn.download-btn .btn-text {
+.judge-tab .action-btn.download-btn .btn-text {
   font-size: 0.85rem;
 }
 
 /* Save and Forward buttons - add spacing from download buttons */
-.action-btn.save-btn {
+.judge-tab .action-btn.save-btn {
   margin-right: 0.5rem;
 }
 
-.action-btn.forward-btn {
+.judge-tab .action-btn.forward-btn {
   margin-left: 0.5rem;
 }
 
