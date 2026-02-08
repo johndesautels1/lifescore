@@ -612,8 +612,9 @@ export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
 
 /**
  * Save enhanced comparisons to localStorage
+ * Returns true if save succeeded, false if failed
  */
-function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): void {
+function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): boolean {
   // Enforce lower limit for enhanced comparisons (they're ~200KB each)
   const trimmed = comparisons.slice(0, MAX_SAVED_ENHANCED);
   if (comparisons.length > MAX_SAVED_ENHANCED) {
@@ -623,7 +624,10 @@ function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): v
   const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(trimmed));
   if (success) {
     console.log('[savedComparisons] Saved', trimmed.length, 'enhanced comparisons to localStorage');
+  } else {
+    console.error('[savedComparisons] FAILED to save enhanced comparisons to localStorage');
   }
+  return success;
 }
 
 /**
@@ -645,12 +649,15 @@ export async function saveEnhancedComparisonLocal(result: EnhancedComparisonResu
     comparisons[existingIndex] = saved;
   } else {
     comparisons.unshift(saved);
-    if (comparisons.length > MAX_SAVED) {
+    if (comparisons.length > MAX_SAVED_ENHANCED) {
       comparisons.pop();
     }
   }
 
-  saveLocalEnhancedComparisons(comparisons);
+  const saveSuccess = saveLocalEnhancedComparisons(comparisons);
+  if (!saveSuccess) {
+    throw new Error('Failed to save enhanced comparison to localStorage');
+  }
 
   // Also save to Supabase database if user is authenticated
   // NON-BLOCKING: Don't wait for database sync - return immediately after localStorage save
@@ -705,12 +712,15 @@ export function saveEnhancedComparisonLocalSync(result: EnhancedComparisonResult
     comparisons[existingIndex] = saved;
   } else {
     comparisons.unshift(saved);
-    if (comparisons.length > MAX_SAVED) {
+    if (comparisons.length > MAX_SAVED_ENHANCED) {
       comparisons.pop();
     }
   }
 
-  saveLocalEnhancedComparisons(comparisons);
+  const saveSuccess = saveLocalEnhancedComparisons(comparisons);
+  if (!saveSuccess) {
+    throw new Error('Failed to save enhanced comparison to localStorage');
+  }
 
   // Fire and forget database save
   if (isSupabaseConfigured()) {
