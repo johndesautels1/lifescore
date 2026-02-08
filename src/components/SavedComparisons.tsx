@@ -536,7 +536,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                         title="View comparison"
                         aria-label={`View ${comparison.result?.city1?.city || 'City 1'} vs ${comparison.result?.city2?.city || 'City 2'}`}
                       >
-                        👁
+                        👁️
                       </button>
                       <button
                         className="action-btn edit-btn"
@@ -550,7 +550,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                         onClick={() => handleDelete(comparison.id, comparison.isEnhanced)}
                         title="Delete"
                       >
-                        🗑
+                        🗑️
                       </button>
                     </div>
                   </div>
@@ -599,7 +599,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           aria-label={`View ${report.city1} vs ${report.city2} report`}
                           onClick={() => console.log('[SavedComparisons] Opening Gamma report:', report.gammaUrl)}
                         >
-                          👁
+                          👁️
                         </a>
                         {report.pdfUrl && (
                           <a
@@ -628,7 +628,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           onClick={() => handleDeleteGammaReport(report.id)}
                           title="Delete"
                         >
-                          🗑
+                          🗑️
                         </button>
                       </div>
                     </div>
@@ -673,7 +673,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           onClick={() => handleDeleteJudgeReport(report.reportId)}
                           title="Delete"
                         >
-                          🗑
+                          🗑️
                         </button>
                       </div>
                     </div>
