@@ -2064,7 +2064,7 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
         .slice(0, MAX_SAVED);
       const mergedEnhancedArr = Array.from(mergedEnhancedMap.values())
         .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
-        .slice(0, MAX_SAVED);
+        .slice(0, MAX_SAVED_ENHANCED);
 
       saveLocalComparisons(mergedStandard);
       saveLocalEnhancedComparisons(mergedEnhancedArr);

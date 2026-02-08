@@ -90,10 +90,10 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
         syncJudgeReportsFromSupabase()
       ]);
 
-      // Now load everything (localStorage is now updated with Supabase data)
+      // Load comparisons from localStorage (which fullDatabaseSync just updated)
       loadComparisons();
 
-      // Use the synced data directly
+      // Use the synced data directly for reports
       setGammaReports(gammaFromDb);
       setJudgeReports(judgeFromDb);
 
