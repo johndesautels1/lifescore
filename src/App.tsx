@@ -963,7 +963,7 @@ const AppContent: React.FC = () => {
           {activeTab === 'visuals' && (
             <Suspense fallback={<div className="tab-loading">Loading Visuals...</div>}>
               <VisualsTab
-                result={enhancedResult || state.result || null}
+                result={enhancedMode ? enhancedResult : state.result}
                 reportState={gammaReportState}
                 setReportState={setGammaReportState}
                 exportFormat={gammaExportFormat}
@@ -1001,7 +1001,7 @@ const AppContent: React.FC = () => {
             >
               <Suspense fallback={<div className="tab-loading">Loading Olivia...</div>}>
                 <AskOlivia
-                  comparisonResult={enhancedResult || state.result || undefined}
+                  comparisonResult={enhancedMode ? enhancedResult : state.result}
                 />
               </Suspense>
             </FeatureGate>
@@ -1143,7 +1143,7 @@ const AppContent: React.FC = () => {
       {/* Olivia Chat Bubble - Shows on all pages EXCEPT Ask Olivia tab */}
       {activeTab !== 'olivia' && (
         <OliviaChatBubble
-          comparisonResult={enhancedResult || state.result || undefined}
+          comparisonResult={enhancedMode ? enhancedResult : state.result}
         />
       )}
 
