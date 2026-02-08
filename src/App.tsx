@@ -291,6 +291,10 @@ const AppContent: React.FC = () => {
 
     console.log('[App] Loading saved comparison:', result.comparisonId, result.city1.city, 'vs', result.city2.city);
 
+    // FIX 2026-02-08: Clear stale judge state to prevent data contamination
+    setJudgeResultLifted(null);
+    setSelectedSavedJudgeReport(null);
+
     // FIX 7.4: Use type guard instead of unsafe casts for detecting enhanced comparisons
     // FIX 2026-02-08: Set enhancedMode to match loaded report type - user clicks, report loads, no hoops
     if (isEnhancedComparisonResult(result)) {
@@ -390,6 +394,8 @@ const AppContent: React.FC = () => {
     // Reset lifted LLM state
     setLLMStates(new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }])));
     setJudgeResultLifted(null);
+    // FIX 2026-02-08: Also clear saved judge report state
+    setSelectedSavedJudgeReport(null);
     setLastJudgedCount(0);
     setPendingLLMToRun(null);
     resetOGMetaTags();
