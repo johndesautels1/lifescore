@@ -711,9 +711,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         const existingReports = getSavedJudgeReports() as JudgeReport[];
 
         // Find a report matching this comparison
+        // FIX 2026-02-08: ONLY match by comparisonId, NOT by city names
+        // Loose city name matching caused Berlin/Tampa report to load for Kansas City/Edinburgh
         const matchingReport = existingReports.find(r =>
-          r.comparisonId === currentComparisonId ||
-          (r.city1 === comparisonResult.city1.city && r.city2 === comparisonResult.city2.city)
+          r.comparisonId === currentComparisonId
         );
 
         if (matchingReport) {
@@ -780,10 +781,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
       if (existing) {
         // Update existing report (with 45s timeout)
+        // FIX 2026-02-08: Include city names in UPDATE to prevent metadata/content mismatch
         const { error } = await withTimeout(
           supabase
             .from('judge_reports')
             .update({
+              city1_name: report.city1,
+              city2_name: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
               city1_trend: report.summaryOfFindings.city1Trend,
               city2_score: report.summaryOfFindings.city2Score,

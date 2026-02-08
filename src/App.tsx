@@ -317,8 +317,11 @@ const AppContent: React.FC = () => {
   }, []);
 
   // FIX 2026-02-08: Handler to view a saved Judge report
+  // FIX 2026-02-08: Clear stale state to prevent contamination from previous comparisons
   const handleViewJudgeReport = useCallback((report: SavedJudgeReport) => {
     console.log('[App] View Judge report:', report.reportId, report.city1, 'vs', report.city2);
+    // CRITICAL: Clear stale comparison state to prevent Berlin/Tampa showing for Kansas City/Edinburgh
+    setEnhancedResult(null);
     // Store the selected report so JudgeTab can load it directly
     setSelectedSavedJudgeReport(report);
     // Switch to the judges-report tab
@@ -326,6 +329,10 @@ const AppContent: React.FC = () => {
   }, []);
 
   const handleCompare = async (city1: string, city2: string) => {
+    // FIX 2026-02-08: Clear stale state on new compare to prevent data contamination
+    setJudgeResultLifted(null);
+    setSelectedSavedJudgeReport(null);
+
     if (enhancedMode) {
       // ADMIN BYPASS: Skip usage checks for admin users
       if (!isAdmin) {
