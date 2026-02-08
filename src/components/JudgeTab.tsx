@@ -1111,8 +1111,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     );
   }
 
-  const city1Name = comparisonResult.city1.city;
-  const city2Name = comparisonResult.city2.city;
+  // FIX 2026-02-08: Use judgeReport's city names when viewing saved report
+  // This prevents showing wrong cities (e.g., Bern/Mesa for Baltimore/Bratislava)
+  const city1Name = judgeReport?.city1 || comparisonResult?.city1?.city || 'City 1';
+  const city2Name = judgeReport?.city2 || comparisonResult?.city2?.city || 'City 2';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
   return (
@@ -1466,11 +1468,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city1">
             <div className="card-header">
               <span className="city-name">{city1Name}</span>
-              <span className="city-country">{comparisonResult.city1.country}</span>
+              <span className="city-country">{comparisonResult?.city1?.country || ''}</span>
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city1Score ?? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : comparisonResult.city1.totalScore)}
+                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1 && 'totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : comparisonResult?.city1?.totalScore ?? 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
@@ -1497,11 +1499,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city2">
             <div className="card-header">
               <span className="city-name">{city2Name}</span>
-              <span className="city-country">{comparisonResult.city2.country}</span>
+              <span className="city-country">{comparisonResult?.city2?.country || ''}</span>
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city2Score ?? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : comparisonResult.city2.totalScore)}
+                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2 && 'totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : comparisonResult?.city2?.totalScore ?? 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
@@ -1657,7 +1659,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       {judgeReport && (
         <section className="court-order-section">
           <CourtOrderVideo
-            comparisonId={comparisonResult.comparisonId}
+            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
             winnerCity={
               judgeReport.executiveSummary.recommendation === 'city1'
                 ? city1Name
