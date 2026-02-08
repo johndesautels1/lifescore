@@ -87,6 +87,9 @@ const AppContent: React.FC = () => {
   const [judgeResultLifted, setJudgeResultLifted] = useState<JudgeOutput | null>(null);
   const [lastJudgedCount, setLastJudgedCount] = useState(0);
 
+  // FIX 2026-02-08: Selected saved Judge report to load in JudgeTab
+  const [selectedSavedJudgeReport, setSelectedSavedJudgeReport] = useState<SavedJudgeReport | null>(null);
+
   // Pending LLM to run (for Add More Models feature)
   const [pendingLLMToRun, setPendingLLMToRun] = useState<LLMProvider | null>(null);
 
@@ -316,8 +319,9 @@ const AppContent: React.FC = () => {
   // FIX 2026-02-08: Handler to view a saved Judge report
   const handleViewJudgeReport = useCallback((report: SavedJudgeReport) => {
     console.log('[App] View Judge report:', report.reportId, report.city1, 'vs', report.city2);
-    // Switch to the judges-report tab - the JudgeTab will load the report from localStorage
-    // based on the comparisonId or city name match
+    // Store the selected report so JudgeTab can load it directly
+    setSelectedSavedJudgeReport(report);
+    // Switch to the judges-report tab
     setActiveTab('judges-report');
   }, []);
 
@@ -995,6 +999,8 @@ const AppContent: React.FC = () => {
             <JudgeTab
               comparisonResult={enhancedResult || state.result || null}
               userId={user?.id || 'guest'}
+              savedJudgeReport={selectedSavedJudgeReport}
+              onSavedReportLoaded={() => setSelectedSavedJudgeReport(null)}
             />
           )}
 
