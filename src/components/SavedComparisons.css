@@ -231,13 +231,14 @@
 .no-saved {
   text-align: center;
   padding: 2rem;
-  color: var(--text-primary);
+  color: #FFD700;  /* Crisp yellow */
 }
 
 .no-saved p {
   margin-bottom: 0.5rem;
   font-weight: 600;
   font-size: 1rem;
+  color: #FFD700;  /* Crisp yellow */
 }
 
 .no-saved-hint {
@@ -646,7 +647,7 @@
 }
 
 [data-theme="dark"] .no-saved {
-  color: #f1f5f9;
+  color: #FFD700;  /* Crisp yellow */
 }
 
 [data-theme="dark"] .no-saved-hint {
