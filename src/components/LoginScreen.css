@@ -166,7 +166,7 @@
 .brand-tagline {
   font-size: 0.8rem;
   letter-spacing: 0.1em;
-  color: var(--ls-steel);
+  color: #F5A623;  /* Golden orange for visibility */
   margin: 0.5rem 0 0;
   text-transform: uppercase;
 }
@@ -660,7 +660,7 @@
 
 .oauth-divider span {
   font-size: 0.75rem;
-  color: var(--ls-steel);
+  color: #F5A623;  /* Golden orange for visibility */
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
