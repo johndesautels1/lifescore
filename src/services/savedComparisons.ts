@@ -1116,11 +1116,12 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
       }
 
       // Build SavedJudgeReport from Supabase record
+      // FIX 2026-02-08: Try multiple fallbacks for city names to avoid "Unknown"
       const newReport: SavedJudgeReport = {
         reportId: record.report_id,
         comparisonId: record.comparison_id,
-        city1: record.city1_name || 'Unknown',
-        city2: record.city2_name || 'Unknown',
+        city1: record.city1_name || fullReport?.city1 || 'Unknown',
+        city2: record.city2_name || fullReport?.city2 || 'Unknown',
         videoUrl: record.video_url || undefined,
         videoStatus: record.video_status || 'none',
         generatedAt: record.created_at,

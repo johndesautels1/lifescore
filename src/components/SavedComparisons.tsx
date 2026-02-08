@@ -37,6 +37,7 @@ import './SavedComparisons.css';
 
 interface SavedComparisonsProps {
   onLoadComparison: (result: ComparisonResult) => void;
+  onViewJudgeReport?: (report: SavedJudgeReport) => void;  // FIX 2026-02-08: Add callback to view Judge reports
   currentComparisonId?: string;
 }
 
@@ -47,6 +48,7 @@ interface DisplayComparison extends SavedComparison {
 
 const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   onLoadComparison,
+  onViewJudgeReport,
   currentComparisonId
 }) => {
   const [comparisons, setComparisons] = useState<DisplayComparison[]>([]);
@@ -657,6 +659,16 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                         </div>
                       </div>
                       <div className="saved-item-actions gamma-report-actions">
+                        {/* FIX 2026-02-08: Add View button for Judge reports */}
+                        {onViewJudgeReport && (
+                          <button
+                            className="action-btn view-btn"
+                            onClick={() => onViewJudgeReport(report)}
+                            title="View Judge Report"
+                          >
+                            👁️
+                          </button>
+                        )}
                         {report.videoUrl && report.videoStatus === 'ready' && (
                           <a
                             href={report.videoUrl}

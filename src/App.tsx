@@ -46,7 +46,7 @@ import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
-import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveEnhancedComparisonLocal } from './services/savedComparisons';
+import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
 import { resetOGMetaTags } from './hooks/useOGMeta';
@@ -311,6 +311,14 @@ const AppContent: React.FC = () => {
 
   const handleSaved = useCallback(() => {
     setSavedKey(prev => prev + 1);
+  }, []);
+
+  // FIX 2026-02-08: Handler to view a saved Judge report
+  const handleViewJudgeReport = useCallback((report: SavedJudgeReport) => {
+    console.log('[App] View Judge report:', report.reportId, report.city1, 'vs', report.city2);
+    // Switch to the judges-report tab - the JudgeTab will load the report from localStorage
+    // based on the comparisonId or city name match
+    setActiveTab('judges-report');
   }, []);
 
   const handleCompare = async (city1: string, city2: string) => {
@@ -955,6 +963,7 @@ const AppContent: React.FC = () => {
               <SavedComparisons
                 key={savedKey}
                 onLoadComparison={handleLoadSavedComparison}
+                onViewJudgeReport={handleViewJudgeReport}
                 currentComparisonId={state.result?.comparisonId}
               />
             </Suspense>
