@@ -66,6 +66,9 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // FIX 2026-02-08: State for embedded Gamma report viewer
+  const [embeddedGammaReport, setEmbeddedGammaReport] = useState<SavedGammaReport | null>(null);
+
   // Load comparisons on mount - sync from Supabase first
   useEffect(() => {
     syncAndLoadComparisons();
@@ -592,17 +595,18 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                         </div>
                       </div>
                       <div className="saved-item-actions gamma-report-actions">
-                        <a
-                          href={report.gammaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        {/* FIX 2026-02-08: Open Gamma report in embedded viewer instead of external link */}
+                        <button
                           className="action-btn view-btn"
                           title="View Report"
                           aria-label={`View ${report.city1} vs ${report.city2} report`}
-                          onClick={() => console.log('[SavedComparisons] Opening Gamma report:', report.gammaUrl)}
+                          onClick={() => {
+                            console.log('[SavedComparisons] Opening embedded Gamma report:', report.gammaUrl);
+                            setEmbeddedGammaReport(report);
+                          }}
                         >
                           👁️
-                        </a>
+                        </button>
                         {report.pdfUrl && (
                           <a
                             href={report.pdfUrl}
@@ -734,6 +738,43 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
               <button className="btn btn-primary" onClick={handleConnectGitHub}>
                 Connect
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FIX 2026-02-08: Embedded Gamma Report Viewer Modal */}
+      {embeddedGammaReport && (
+        <div className="modal-overlay gamma-embed-overlay" onClick={() => setEmbeddedGammaReport(null)}>
+          <div className="gamma-embed-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="gamma-embed-header">
+              <h3>{embeddedGammaReport.city1} vs {embeddedGammaReport.city2}</h3>
+              <div className="gamma-embed-actions">
+                <a
+                  href={embeddedGammaReport.gammaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  title="Open in new tab"
+                >
+                  Open External ↗
+                </a>
+                <button
+                  className="btn btn-close"
+                  onClick={() => setEmbeddedGammaReport(null)}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="gamma-embed-content">
+              <iframe
+                src={embeddedGammaReport.gammaUrl.replace('/docs/', '/embed/')}
+                className="gamma-embed-frame"
+                title={`LIFE SCORE Report: ${embeddedGammaReport.city1} vs ${embeddedGammaReport.city2}`}
+                allowFullScreen
+              />
             </div>
           </div>
         </div>
