@@ -333,9 +333,11 @@ const AppContent: React.FC = () => {
   }, []);
 
   const handleCompare = async (city1: string, city2: string) => {
-    // FIX 2026-02-08: Clear stale state on new compare to prevent data contamination
+    // FIX 2026-02-08: Clear ALL stale state on new compare to prevent data contamination
+    // CRITICAL: enhancedResult must be cleared for BOTH modes to prevent Bern/Mesa showing for Baltimore/Bratislava
     setJudgeResultLifted(null);
     setSelectedSavedJudgeReport(null);
+    setEnhancedResult(null);
 
     if (enhancedMode) {
       // ADMIN BYPASS: Skip usage checks for admin users
