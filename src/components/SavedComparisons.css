@@ -772,6 +772,91 @@
   background: rgba(0, 71, 171, 0.2);
 }
 
+/* ============================================
+   DATABASE SYNC SPINNER
+   ============================================ */
+.sync-spinner-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(0, 51, 122, 0.08) 100%);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(0, 71, 171, 0.15);
+}
+
+.sync-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sync-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 71, 171, 0.2);
+  border-top-color: var(--sapphire, #0047AB);
+  border-radius: 50%;
+  animation: sync-spin 1s linear infinite;
+}
+
+@keyframes sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sync-spinner-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--sapphire, #0047AB);
+  text-align: center;
+  animation: sync-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sync-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Dark mode for sync spinner */
+[data-theme="dark"] .sync-spinner-overlay {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.15) 0%, rgba(0, 51, 122, 0.2) 100%);
+  border-color: rgba(0, 71, 171, 0.3);
+}
+
+[data-theme="dark"] .sync-spinner {
+  border-color: rgba(100, 149, 237, 0.3);
+  border-top-color: #6495ED;
+}
+
+[data-theme="dark"] .sync-spinner-text {
+  color: #6495ED;
+}
+
+/* Mobile adjustments for sync spinner */
+@media (max-width: 480px) {
+  .sync-spinner-overlay {
+    padding: 1.5rem 1rem;
+  }
+
+  .sync-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+
+  .sync-spinner-text {
+    font-size: 0.875rem;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .saved-toolbar {

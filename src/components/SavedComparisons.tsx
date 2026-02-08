@@ -383,6 +383,16 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
             </div>
           )}
 
+          {/* Database Sync Spinner */}
+          {isSyncing && (
+            <div className="sync-spinner-overlay">
+              <div className="sync-spinner-container">
+                <div className="sync-spinner"></div>
+                <span className="sync-spinner-text">Database Sync in Progress...</span>
+              </div>
+            </div>
+          )}
+
           {/* Toolbar */}
           <div className="saved-toolbar">
             <div className="toolbar-left">
