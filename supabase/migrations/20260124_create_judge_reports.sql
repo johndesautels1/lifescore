@@ -6,6 +6,7 @@
 -- supabase db push
 --
 -- Created: 2026-01-24
+-- Updated: 2026-02-08 - Fixed foreign key references and nullable columns
 -- Purpose: Store Claude Opus 4.5 Judge verdicts with full analysis
 -- ============================================================================
 
@@ -15,44 +16,25 @@
 
 CREATE TABLE IF NOT EXISTS public.judge_reports (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  comparison_id UUID REFERENCES public.comparisons(id) ON DELETE SET NULL,
-
-  -- Report identifiers
-  report_id TEXT NOT NULL UNIQUE, -- Original reportId from app (e.g., LIFE-JDG-20260124-...)
-
-  -- Cities being compared
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  report_id TEXT NOT NULL UNIQUE,
   city1_name TEXT NOT NULL,
   city2_name TEXT NOT NULL,
-
-  -- Summary scores and trends
-  city1_score NUMERIC(5,2) NOT NULL,
-  city1_trend TEXT NOT NULL CHECK (city1_trend IN ('rising', 'stable', 'declining')),
-  city2_score NUMERIC(5,2) NOT NULL,
-  city2_trend TEXT NOT NULL CHECK (city2_trend IN ('rising', 'stable', 'declining')),
-  overall_confidence TEXT NOT NULL CHECK (overall_confidence IN ('high', 'medium', 'low')),
-
-  -- Executive summary
-  recommendation TEXT NOT NULL CHECK (recommendation IN ('city1', 'city2', 'tie')),
-  rationale TEXT NOT NULL,
-  key_factors JSONB NOT NULL DEFAULT '[]'::jsonb,
-  future_outlook TEXT NOT NULL,
-  confidence_level TEXT NOT NULL CHECK (confidence_level IN ('high', 'medium', 'low')),
-
-  -- Full report data (JSONB for category analysis and complete structure)
-  category_analysis JSONB NOT NULL DEFAULT '[]'::jsonb,
-  full_report JSONB NOT NULL, -- Complete JudgeReport object for flexibility
-
-  -- Video report (Phase C - HeyGen integration)
+  city1_score NUMERIC(5,2),
+  city1_trend TEXT CHECK (city1_trend IN ('rising', 'stable', 'declining')),
+  city2_score NUMERIC(5,2),
+  city2_trend TEXT CHECK (city2_trend IN ('rising', 'stable', 'declining')),
+  overall_confidence TEXT CHECK (overall_confidence IN ('high', 'medium', 'low')),
+  recommendation TEXT CHECK (recommendation IN ('city1', 'city2', 'tie')),
+  rationale TEXT,
+  key_factors JSONB DEFAULT '[]'::jsonb,
+  future_outlook TEXT,
+  confidence_level TEXT CHECK (confidence_level IN ('high', 'medium', 'low')),
+  category_analysis JSONB DEFAULT '[]'::jsonb,
+  full_report JSONB NOT NULL,
   video_url TEXT,
   video_status TEXT DEFAULT 'pending' CHECK (video_status IN ('pending', 'generating', 'ready', 'error')),
-
-  -- User customization
-  nickname TEXT,
-  notes TEXT,
-  is_favorite BOOLEAN DEFAULT false,
-
-  -- Timestamps
+  comparison_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -63,25 +45,28 @@ CREATE TABLE IF NOT EXISTS public.judge_reports (
 
 ALTER TABLE public.judge_reports ENABLE ROW LEVEL SECURITY;
 
--- Users can view their own judge reports
-CREATE POLICY "Users can view own judge reports"
-  ON public.judge_reports FOR SELECT
-  USING (auth.uid() = user_id);
+-- Drop existing policies if they exist (for clean re-runs)
+DROP POLICY IF EXISTS "judge_reports_select" ON public.judge_reports;
+DROP POLICY IF EXISTS "judge_reports_insert" ON public.judge_reports;
+DROP POLICY IF EXISTS "judge_reports_update" ON public.judge_reports;
+DROP POLICY IF EXISTS "judge_reports_delete" ON public.judge_reports;
+DROP POLICY IF EXISTS "Users can view own judge reports" ON public.judge_reports;
+DROP POLICY IF EXISTS "Users can insert own judge reports" ON public.judge_reports;
+DROP POLICY IF EXISTS "Users can update own judge reports" ON public.judge_reports;
+DROP POLICY IF EXISTS "Users can delete own judge reports" ON public.judge_reports;
 
--- Users can insert their own judge reports
-CREATE POLICY "Users can insert own judge reports"
-  ON public.judge_reports FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+-- Create RLS policies
+CREATE POLICY "judge_reports_select" ON public.judge_reports
+  FOR SELECT USING (user_id = auth.uid());
 
--- Users can update their own judge reports
-CREATE POLICY "Users can update own judge reports"
-  ON public.judge_reports FOR UPDATE
-  USING (auth.uid() = user_id);
+CREATE POLICY "judge_reports_insert" ON public.judge_reports
+  FOR INSERT WITH CHECK (user_id = auth.uid());
 
--- Users can delete their own judge reports
-CREATE POLICY "Users can delete own judge reports"
-  ON public.judge_reports FOR DELETE
-  USING (auth.uid() = user_id);
+CREATE POLICY "judge_reports_update" ON public.judge_reports
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY "judge_reports_delete" ON public.judge_reports
+  FOR DELETE USING (user_id = auth.uid());
 
 -- ============================================================================
 -- INDEXES (for query performance)
@@ -89,31 +74,11 @@ CREATE POLICY "Users can delete own judge reports"
 
 CREATE INDEX IF NOT EXISTS idx_judge_reports_user_id ON public.judge_reports(user_id);
 CREATE INDEX IF NOT EXISTS idx_judge_reports_report_id ON public.judge_reports(report_id);
-CREATE INDEX IF NOT EXISTS idx_judge_reports_cities ON public.judge_reports(city1_name, city2_name);
 CREATE INDEX IF NOT EXISTS idx_judge_reports_created_at ON public.judge_reports(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_judge_reports_favorite ON public.judge_reports(user_id, is_favorite) WHERE is_favorite = true;
-CREATE INDEX IF NOT EXISTS idx_judge_reports_comparison ON public.judge_reports(comparison_id);
-
--- ============================================================================
--- TRIGGERS
--- ============================================================================
-
--- Auto-update updated_at timestamp
-CREATE TRIGGER update_judge_reports_updated_at
-  BEFORE UPDATE ON public.judge_reports
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
 -- COMMENTS (documentation)
 -- ============================================================================
 
-COMMENT ON TABLE public.judge_reports IS 'Claude Opus 4.5 Judge verdicts with comprehensive freedom analysis, trend forecasting, and executive recommendations';
-COMMENT ON COLUMN public.judge_reports.report_id IS 'Unique report identifier generated by app (format: LIFE-JDG-YYYYMMDD-USERID-HASH)';
-COMMENT ON COLUMN public.judge_reports.city1_trend IS 'Judge assessment of freedom trend direction for city 1';
-COMMENT ON COLUMN public.judge_reports.city2_trend IS 'Judge assessment of freedom trend direction for city 2';
-COMMENT ON COLUMN public.judge_reports.recommendation IS 'The Judge final verdict - which city wins or if it is a tie';
-COMMENT ON COLUMN public.judge_reports.key_factors IS 'JSON array of the 5 most important factors in the verdict';
-COMMENT ON COLUMN public.judge_reports.category_analysis IS 'JSON array of per-category analysis for both cities';
-COMMENT ON COLUMN public.judge_reports.full_report IS 'Complete JudgeReport JSON object for backward compatibility';
-COMMENT ON COLUMN public.judge_reports.video_url IS 'HeyGen video URL when Christian avatar video is ready';
-COMMENT ON COLUMN public.judge_reports.video_status IS 'Status of HeyGen video generation';
+COMMENT ON TABLE public.judge_reports IS 'Claude Opus 4.5 Judge verdicts with comprehensive freedom analysis';
+COMMENT ON COLUMN public.judge_reports.full_report IS 'Complete JudgeReport JSON object - primary data source';
