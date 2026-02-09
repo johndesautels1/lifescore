@@ -4623,12 +4623,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.15rem;
   padding: 0.35rem 0.6rem;
   background: white;
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
-  min-width: 65px;
+  min-width: 70px;
+  width: 70px;
 }
 
 .city-score-box .city-name {
@@ -4879,16 +4881,14 @@
     padding: 0.85rem;
     gap: 0.5rem;
   }
-  }
 
   .agreed-scores {
     justify-content: center;
   }
-  }
 
   .agreed-difference {
     text-align: center;
-    text-align: left;
+
   }
 
   .city-score-box {
