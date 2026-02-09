@@ -149,8 +149,14 @@ async function evaluateCategoryBatch(
       success: boolean;
       scores: APIMetricScore[];
       error?: string;
+      warnings?: string[];
       usage?: { tokens: TokenUsage; tavily?: TavilyUsage };
     };
+
+    // Log any warnings from the API
+    if (result.warnings?.length) {
+      console.warn(`[CLIENT] ${provider}/${categoryId} warnings:`, result.warnings.join('; '));
+    }
 
     console.log(`[CLIENT] ${provider}/${categoryId} result: success=${result.success}, scores=${result.scores?.length || 0}, error=${result.error || 'none'}`);
 

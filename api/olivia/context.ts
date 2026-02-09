@@ -1356,7 +1356,7 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // CORS - open for context
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - standard preset for context
   if (!applyRateLimit(req.headers, 'olivia-context', 'standard', res)) {

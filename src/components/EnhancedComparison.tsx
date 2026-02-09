@@ -20,6 +20,15 @@ import EvidencePanel from './EvidencePanel';
 import ScoreMethodology from './ScoreMethodology';
 import './EnhancedComparison.css';
 
+// Helper: compute median of a sorted number array
+function computeMedian(sorted: number[]): number {
+  if (sorted.length === 0) return 0;
+  if (sorted.length % 2 === 0) {
+    return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+  }
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
 // Metric icons mapping - matches exact shortNames from metrics.ts
 const METRIC_ICONS: Record<string, string> = {
   // Personal Freedom (15)
@@ -2067,20 +2076,10 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     const city2LLMScoresMap = new Map(city2Metric?.llmScores?.map(s => [s.llmProvider, s]) || []);
 
                     // Calculate median verification - filter out null scores
-                    const city1Scores: number[] = (city1Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null)) || [];
-                    const city2Scores: number[] = (city2Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null)) || [];
-                    const sortedCity1 = [...city1Scores].sort((a, b) => a - b);
-                    const sortedCity2 = [...city2Scores].sort((a, b) => a - b);
-                    const medianCity1: number = sortedCity1.length > 0
-                      ? sortedCity1.length % 2 === 0
-                        ? (sortedCity1[sortedCity1.length/2 - 1] + sortedCity1[sortedCity1.length/2]) / 2
-                        : sortedCity1[Math.floor(sortedCity1.length/2)]
-                      : 0;
-                    const medianCity2: number = sortedCity2.length > 0
-                      ? sortedCity2.length % 2 === 0
-                        ? (sortedCity2[sortedCity2.length/2 - 1] + sortedCity2[sortedCity2.length/2]) / 2
-                        : sortedCity2[Math.floor(sortedCity2.length/2)]
-                      : 0;
+                    const sortedCity1 = (city1Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null) || []).sort((a, b) => a - b);
+                    const sortedCity2 = (city2Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null) || []).sort((a, b) => a - b);
+                    const medianCity1 = computeMedian(sortedCity1);
+                    const medianCity2 = computeMedian(sortedCity2);
 
                     return (
                       <div key={metric.id} className={`metric-row-wrapper ${isRowExpanded ? 'expanded' : ''}`}>

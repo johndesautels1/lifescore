@@ -585,7 +585,7 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // CORS - open for chat
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - standard preset for chat
   if (!applyRateLimit(req.headers, 'olivia-chat', 'standard', res)) {

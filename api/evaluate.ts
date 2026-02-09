@@ -25,6 +25,26 @@ interface CachedResearch {
 }
 const tavilyResearchCache = new Map<string, CachedResearch>();
 const RESEARCH_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes (within single comparison session)
+const RESEARCH_CACHE_MAX_ENTRIES = 50; // Cap to prevent unbounded memory growth
+
+function pruneResearchCache(): void {
+  if (tavilyResearchCache.size <= RESEARCH_CACHE_MAX_ENTRIES) return;
+  const now = Date.now();
+  // Remove expired entries first
+  for (const [key, entry] of tavilyResearchCache) {
+    if (now - entry.timestamp >= RESEARCH_CACHE_TTL_MS) {
+      tavilyResearchCache.delete(key);
+    }
+  }
+  // If still over limit, remove oldest entries
+  if (tavilyResearchCache.size > RESEARCH_CACHE_MAX_ENTRIES) {
+    const sorted = [...tavilyResearchCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = sorted.length - RESEARCH_CACHE_MAX_ENTRIES;
+    for (let i = 0; i < toRemove; i++) {
+      tavilyResearchCache.delete(sorted[i][0]);
+    }
+  }
+}
 
 // Stats tracking for logging
 const tavilyStats = {
@@ -250,6 +270,7 @@ interface EvaluationResponse {
   scores: MetricScore[];
   latencyMs: number;
   error?: string;
+  warnings?: string[];
   // Cost tracking data
   usage?: {
     tokens: TokenUsage;
@@ -596,11 +617,12 @@ async function getCachedTavilyResearch(city1: string, city2: string): Promise<Ta
 
   // Store in cache if successful
   if (result) {
+    pruneResearchCache();
     tavilyResearchCache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
-    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min)`);
+    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min, cache size: ${tavilyResearchCache.size})`);
   }
 
   return result;
@@ -1400,9 +1422,11 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
     console.log(`[PERPLEXITY] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
 
-    // Run batches sequentially to avoid rate limits
-    const result1 = await evaluateWithPerplexity(city1, city2, batch1);
-    const result2 = await evaluateWithPerplexity(city1, city2, batch2);
+    // Run batches in parallel — each batch is a separate API call with different metrics
+    const [result1, result2] = await Promise.all([
+      evaluateWithPerplexity(city1, city2, batch1),
+      evaluateWithPerplexity(city1, city2, batch2),
+    ]);
 
     // Merge results
     const combinedScores = [...result1.scores, ...result2.scores];
@@ -1742,6 +1766,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log Tavily usage stats for this evaluation
     tavilyStats.log(`${provider} - ${city1} vs ${city2}`);
+
+    // Surface warnings for partial failures
+    const warnings: string[] = result.warnings || [];
+    if (result.success && result.scores.length < metrics.length) {
+      warnings.push(`Only ${result.scores.length} of ${metrics.length} metrics were scored`);
+    }
+    if (tavilyStats.researchCacheMisses > 0 && tavilyStats.researchCacheHits === 0 && !result.usage?.tavily) {
+      warnings.push('Web research data was unavailable — scores may be less accurate');
+    }
+    if (warnings.length > 0) {
+      result.warnings = warnings;
+    }
 
     return res.status(200).json(result);
   } catch (error) {

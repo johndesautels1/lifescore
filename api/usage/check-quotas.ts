@@ -210,7 +210,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   try {
     const supabase = getSupabaseAdmin();

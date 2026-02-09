@@ -492,3 +492,31 @@
     text-align: center;
   }
 }
+
+/* Extremely small phones (320px and below) — stack everything vertically */
+@media (max-width: 320px) {
+  .header-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .header-left,
+  .header-right {
+    position: static;
+    transform: none;
+    order: unset;
+  }
+
+  .header-right {
+    transform: scale(0.65);
+    transform-origin: center;
+  }
+
+  .company-name,
+  .clues-branding,
+  .life-score-title {
+    font-size: 0.85rem;
+  }
+}

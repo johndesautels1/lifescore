@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './styles/dark-mode.css'
 import App from './App.tsx'
+import ErrorBoundary from './components/ErrorBoundary.tsx'
 
 // Offline/online detection
 window.addEventListener('offline', () => {
@@ -25,6 +26,8 @@ window.onunhandledrejection = (event: PromiseRejectionEvent) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )
