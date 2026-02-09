@@ -51,6 +51,15 @@
 }
 
 /* Winner Hero */
+
+@media (max-width: 768px) {
+  .report-type-badge {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+  }
+}
+
 .winner-hero {
   background: linear-gradient(135deg, var(--sapphire), var(--sapphire-light), var(--orange));
   color: white;
