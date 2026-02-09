@@ -84,6 +84,17 @@
   .llm-button-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+
+  .enhanced-results .report-type-badge {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .enhanced-results .report-type-badge.enhanced {
+    min-width: auto;
+  }
 }
 
 @media (max-width: 480px) {
