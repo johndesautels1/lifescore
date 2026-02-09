@@ -4558,11 +4558,11 @@
 }
 
 .agreed-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 0.75rem 1rem;
+  gap: 0.6rem;
+  padding: 1rem;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
   border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: var(--radius-md);
@@ -4571,7 +4571,7 @@
 
 .agreed-item:hover {
   border-color: #10B981;
-  transform: translateX(4px);
+  transform: scale(1.01);
 }
 
 .agreed-rank {
@@ -4583,11 +4583,14 @@
 
 .agreed-info {
   min-width: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .agreed-metric-name {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
@@ -4612,6 +4615,7 @@
 .agreed-scores {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 }
 
@@ -4872,18 +4876,18 @@
   }
 
   .agreed-item {
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
+    padding: 0.85rem;
     gap: 0.5rem;
+  }
   }
 
   .agreed-scores {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
+    justify-content: center;
+  }
   }
 
   .agreed-difference {
-    grid-column: 1 / -1;
+    text-align: center;
     text-align: left;
   }
 
