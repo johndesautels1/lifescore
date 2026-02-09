@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { toastError, toastInfo } from '../utils/toast';
 import type {
   ComparisonState,
   CategoryId,
@@ -464,7 +465,13 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
 
       // Check if we have ANY data to show
       if (city1MetricScores.length === 0) {
+        toastError('All evaluation categories failed — please try again');
         throw new Error(`All categories failed: ${failedCategories.join(', ')}`);
+      }
+
+      // Notify user if some categories failed
+      if (failedCategories.length > 0) {
+        toastInfo(`${failedCategories.length} category(s) had issues — showing ${city1MetricScores.length}/${ALL_METRICS.length} metrics`);
       }
 
       // Final progress update
@@ -621,9 +628,11 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
       // Only show error if this comparison wasn't intentionally cancelled
       // (cancelled = user started new comparison or navigated away)
       if (!currentController.signal.aborted) {
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        toastError(`Comparison failed: ${errorMessage}`);
         setState({
           status: 'error',
-          error: error instanceof Error ? error.message : 'An unexpected error occurred'
+          error: errorMessage
         });
       }
     }
