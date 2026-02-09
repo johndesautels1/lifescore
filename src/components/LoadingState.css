@@ -128,8 +128,8 @@
 
 .category-pill.current {
   background: rgba(201, 162, 39, 0.15);
-  border-color: #c9a227;
-  color: #c9a227;
+  border-color: #e6b800;
+  color: #e6b800;
   animation: currentPulse 1.5s ease-in-out infinite;
 }
 

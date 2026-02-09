@@ -16,7 +16,13 @@ import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 // TIMEOUT CONSTANTS
 // ============================================================================
 
-const CLIENT_TIMEOUT_MS = 240000; // 240 seconds for client-side fetch (must exceed server 180s)
+const CLIENT_BASE_TIMEOUT_MS = 120000; // 120 seconds base timeout
+const CLIENT_PER_METRIC_MS = 5000; // 5 seconds per metric for dynamic scaling
+
+// FIX: Dynamic timeout based on batch size — small categories don't wait 240s for failures
+function getClientTimeout(metricsCount: number): number {
+  return Math.min(CLIENT_BASE_TIMEOUT_MS + (metricsCount * CLIENT_PER_METRIC_MS), 300000);
+}
 
 // ============================================================================
 // TYPES
@@ -99,9 +105,10 @@ async function evaluateCategoryBatch(
 
   console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
 
-  // Client-side timeout - 240s per category (must exceed server 180s timeout)
+  // FIX: Dynamic client timeout based on batch size
+  const dynamicTimeout = getClientTimeout(metrics.length);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 
   try {
     // Call Vercel serverless function which has access to env vars

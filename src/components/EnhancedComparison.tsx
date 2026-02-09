@@ -1444,6 +1444,25 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         </span>
       </div>
 
+      {/* FIX: Show warning banner for partial LLM results */}
+      {(result as any).warning && (
+        <div className="partial-results-warning" style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '8px',
+          padding: '10px 16px',
+          margin: '0 0 12px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '0.85rem',
+          color: '#f59e0b'
+        }}>
+          <span>⚠️</span>
+          <span>{(result as any).warning}</span>
+        </div>
+      )}
+
       {/* Winner Hero */}
       <div className={`enhanced-winner-hero ${isTie ? 'tie' : ''}`}>
         <div className="consensus-badge">

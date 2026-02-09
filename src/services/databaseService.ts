@@ -634,17 +634,19 @@ export async function exportUserData(userId: string): Promise<{
 }> {
   requireDatabase();
 
+  // FIX: Add LIMIT to prevent unbounded queries on large accounts
+  const EXPORT_LIMIT = 1000;
   const [profile, comparisons, conversations, gammaReports] = await Promise.all([
     withTimeout(supabase.from('profiles').select('*').eq('id', userId).maybeSingle()),
-    withTimeout(supabase.from('comparisons').select('*').eq('user_id', userId)),
-    withTimeout(supabase.from('olivia_conversations').select('*').eq('user_id', userId)),
-    withTimeout(supabase.from('gamma_reports').select('*').eq('user_id', userId)),
+    withTimeout(supabase.from('comparisons').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(EXPORT_LIMIT)),
+    withTimeout(supabase.from('olivia_conversations').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(EXPORT_LIMIT)),
+    withTimeout(supabase.from('gamma_reports').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(EXPORT_LIMIT)),
   ]);
 
   // Get messages for all conversations
   const conversationIds = (conversations.data || []).map((c: any) => c.id);
   const messages = conversationIds.length > 0
-    ? await withTimeout(supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds))
+    ? await withTimeout(supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds).limit(EXPORT_LIMIT * 10))
     : { data: [] };
 
   return {

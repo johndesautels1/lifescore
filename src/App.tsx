@@ -158,16 +158,24 @@ const AppContent: React.FC = () => {
   });
 
   // Update saved count on mount and when savedKey changes
+  // FIX: Read from correct localStorage keys (was 'lifescore_comparisons' which doesn't exist)
   useEffect(() => {
-    const saved = localStorage.getItem('lifescore_comparisons');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSavedCount(Array.isArray(parsed) ? parsed.length : 0);
-      } catch {
-        setSavedCount(0);
+    let count = 0;
+    try {
+      const standard = localStorage.getItem('lifescore_saved_comparisons');
+      if (standard) {
+        const parsed = JSON.parse(standard);
+        if (Array.isArray(parsed)) count += parsed.length;
       }
+      const enhanced = localStorage.getItem('lifescore_saved_enhanced');
+      if (enhanced) {
+        const parsed = JSON.parse(enhanced);
+        if (Array.isArray(parsed)) count += parsed.length;
+      }
+    } catch {
+      // Ignore parse errors
     }
+    setSavedCount(count);
   }, [savedKey]);
 
   // Auto-switch to results tab when comparison completes (BOTH modes)

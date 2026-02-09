@@ -215,7 +215,7 @@
 
 @media (max-width: 480px) {
   .freedom-metrics-list {
-    max-height: 180px;
+    max-height: 250px; /* FIX: Was 180px, too short to show meaningful content */
   }
 
   .freedom-metric-card {

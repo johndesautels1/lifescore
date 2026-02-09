@@ -26,7 +26,7 @@
   --midnight: #0a1628;
   --cockpit-blue: #0d2847;
   --cockpit-blue-light: #1a3a5c;
-  --brushed-gold: #c9a227;
+  --brushed-gold: #e6b800; /* FIX: Improved contrast from #c9a227 to meet WCAG 4.5:1 */
   --gold-glow: #d4af37;
   --amber-active: #f59e0b;
   --british-racing: #004225;
@@ -38,7 +38,7 @@
 
   /* Premium gradients */
   --gradient-midnight: linear-gradient(180deg, #0a1628 0%, #0d2847 100%);
-  --gradient-gold: linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #c9a227 100%);
+  --gradient-gold: linear-gradient(135deg, #e6b800 0%, #d4af37 50%, #e6b800 100%);
   --gradient-cockpit: linear-gradient(135deg, rgba(13, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
   --gradient-bezel: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
 

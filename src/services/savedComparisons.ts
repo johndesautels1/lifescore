@@ -252,9 +252,15 @@ export function isEnhancedComparisonResult(result: ComparisonResult): result is 
   if (!result || typeof result !== 'object') return false;
   const r = result as unknown as Record<string, unknown>;
 
-  // Enhanced comparisons have llmsUsed array
+  // Enhanced comparisons have llmsUsed array — validate elements are strings
   if ('llmsUsed' in r && Array.isArray(r.llmsUsed) && r.llmsUsed.length > 0) {
-    return true;
+    // FIX: Validate array elements are actually LLM provider strings
+    const validProviders = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
+    const hasValidElements = r.llmsUsed.every(
+      (item: unknown) => typeof item === 'string' && validProviders.includes(item)
+    );
+    if (hasValidElements) return true;
+    // Corrupted array — fall through to secondary check
   }
 
   // Or totalConsensusScore on city objects
@@ -441,7 +447,7 @@ export function saveComparisonLocalSync(result: ComparisonResult, nickname?: str
 
   saveLocalComparisons(comparisons);
 
-  // Fire and forget database save
+  // FIX: Database save with error logging (was fire-and-forget with silent failures)
   if (isSupabaseConfigured()) {
     getCurrentUser().then(user => {
       if (user) {
@@ -449,12 +455,28 @@ export function saveComparisonLocalSync(result: ComparisonResult, nickname?: str
           .then(({ error }) => {
             if (error) {
               console.error('[savedComparisons] Database save failed:', error);
+              // Mark as unsynced so fullDatabaseSync picks it up later
+              const comparisons = getLocalComparisons();
+              const match = comparisons.find(c => c.id === saved.id);
+              if (match) {
+                match.synced = false;
+                saveLocalComparisons(comparisons);
+              }
             } else {
               console.log('[savedComparisons] Saved to database:', result.comparisonId);
+              // Mark as synced
+              const comparisons = getLocalComparisons();
+              const match = comparisons.find(c => c.id === saved.id);
+              if (match) {
+                match.synced = true;
+                saveLocalComparisons(comparisons);
+              }
             }
           });
       }
-    }).catch(console.error);
+    }).catch(err => {
+      console.error('[savedComparisons] Database save exception:', err);
+    });
   }
 
   return saved;
@@ -2072,6 +2094,7 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
 
     // Inline the sync logic (without lock check since we hold the lock)
     let syncedCount = 0;
+    let syncErrors = 0;
     const localComparisons = getLocalComparisons();
     const localEnhanced = getLocalEnhancedComparisons();
 
@@ -2081,21 +2104,33 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
         if (!error) {
           local.synced = true;
           syncedCount++;
+        } else {
+          syncErrors++;
+          console.error(`[savedComparisons] Failed to push comparison ${local.id}:`, error);
         }
       }
     }
 
     for (const local of localEnhanced) {
       const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
-      if (!error) syncedCount++;
+      if (!error) {
+        syncedCount++;
+      } else {
+        syncErrors++;
+        console.error(`[savedComparisons] Failed to push enhanced comparison:`, error);
+      }
     }
 
     saveLocalComparisons(localComparisons);
 
-    console.log(`[savedComparisons] Full sync complete: pulled ${pullAdded}, pushed ${syncedCount}`);
+    // FIX: Report partial failures instead of always reporting success
+    const hasErrors = syncErrors > 0;
+    console.log(`[savedComparisons] Full sync complete: pulled ${pullAdded}, pushed ${syncedCount}, errors ${syncErrors}`);
     return {
-      success: true,
-      message: `Sync complete: ${pullAdded} pulled, ${syncedCount} pushed`,
+      success: !hasErrors,
+      message: hasErrors
+        ? `Sync partial: ${pullAdded} pulled, ${syncedCount} pushed, ${syncErrors} failed`
+        : `Sync complete: ${pullAdded} pulled, ${syncedCount} pushed`,
       pulled: pullAdded,
       pushed: syncedCount
     };

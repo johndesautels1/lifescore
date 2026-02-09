@@ -156,8 +156,8 @@
 }
 
 .settings-tab.active {
-  color: #c9a227;
-  border-bottom-color: #c9a227;
+  color: #e6b800;
+  border-bottom-color: #e6b800;
 }
 
 /* FIX #57: Brighter tab icons */
@@ -532,7 +532,7 @@
 
 .tier-badge.pro {
   background: linear-gradient(135deg, rgba(201, 162, 39, 0.2) 0%, rgba(212, 175, 55, 0.2) 100%);
-  color: #c9a227;
+  color: #e6b800;
 }
 
 .tier-badge.enterprise {

@@ -360,6 +360,7 @@
 .report-type-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   margin-left: 0.75rem;
   padding: 0.3rem 0.6rem;
@@ -369,6 +370,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
+  min-width: 110px; /* FIX: Uniform badge sizing across report types */
 }
 
 .report-type-badge .badge-icon {
@@ -873,12 +875,13 @@
 
   .saved-toolbar {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center; /* FIX: Center buttons instead of stretching full width */
   }
 
   .toolbar-left,
   .toolbar-right {
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   .saved-item {
