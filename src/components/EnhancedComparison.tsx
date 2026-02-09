@@ -1119,12 +1119,18 @@ const LLMAgreementSection: React.FC<LLMAgreementSectionProps> = ({ result, city1
                 These metrics have the highest LLM consensus — you can trust these scores with confidence.
               </p>
               <div className="agreement-stats">
-                <span className="stat-badge unanimous">
-                  <span className="stat-count">{totalUnanimous}</span> Unanimous (σ &lt; 3)
-                </span>
-                <span className="stat-badge strong">
-                  <span className="stat-count">{totalStrong}</span> Strong (σ &lt; 8)
-                </span>
+                <div className="stat-badge-with-explanation">
+                  <span className="stat-badge unanimous">
+                    <span className="stat-count">{totalUnanimous}</span> Unanimous (σ &lt; 3)
+                  </span>
+                  <span className="stat-explanation">All LLMs within 3 points</span>
+                </div>
+                <div className="stat-badge-with-explanation">
+                  <span className="stat-badge strong">
+                    <span className="stat-count">{totalStrong}</span> Strong (σ &lt; 8)
+                  </span>
+                  <span className="stat-explanation">All LLMs within 8 points</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1615,13 +1621,19 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                         <span className="diff-name">{diff.name}</span>
                       </div>
                       <div className="diff-scores">
-                        <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
-                          {Math.round(diff.city1Score)}
-                        </span>
+                        <div className="diff-score-block">
+                          <span className="diff-city-label">{result.city1.city}</span>
+                          <span className={`diff-score ${diff.favoredCity === 'city1' ? 'favored' : ''}`}>
+                            {Math.round(diff.city1Score)}
+                          </span>
+                        </div>
                         <span className="diff-vs">vs</span>
-                        <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
-                          {Math.round(diff.city2Score)}
-                        </span>
+                        <div className="diff-score-block">
+                          <span className="diff-city-label">{result.city2.city}</span>
+                          <span className={`diff-score ${diff.favoredCity === 'city2' ? 'favored' : ''}`}>
+                            {Math.round(diff.city2Score)}
+                          </span>
+                        </div>
                       </div>
                       <div className={`diff-delta ${diff.favoredCity === 'city1' ? 'city1-leads' : 'city2-leads'}`}>
                         <span className="delta-pill">+{Math.round(diff.difference)}</span>
