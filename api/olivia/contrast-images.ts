@@ -58,8 +58,11 @@ const getSupabaseClient = () => {
 };
 
 // Generate cache key for the image pair
+// FIX: Sort cities alphabetically so "Austin vs Denver" and "Denver vs Austin"
+// share the same cache key — contrast images are symmetric and order-independent
 const getCacheKey = (cityA: string, cityB: string, metricId: string): string => {
-  return `contrast_${cityA.toLowerCase().replace(/\s+/g, '_')}_${cityB.toLowerCase().replace(/\s+/g, '_')}_${metricId}`;
+  const [a, b] = [cityA.toLowerCase().replace(/\s+/g, '_'), cityB.toLowerCase().replace(/\s+/g, '_')].sort();
+  return `contrast_${a}_${b}_${metricId}`;
 };
 
 // Check cache for existing images

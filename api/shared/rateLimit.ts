@@ -83,8 +83,19 @@ class RateLimiter {
 
     // Cleanup if store is too large
     if (store.size > this.MAX_ENTRIES) {
+      // First pass: remove expired entries
       for (const [k, v] of store.entries()) {
         if (v.resetTime < now) store.delete(k);
+      }
+      // FIX: If still over limit after removing expired, evict oldest 20%
+      // Under continuous traffic from many IPs, active entries accumulate
+      if (store.size > this.MAX_ENTRIES) {
+        const entries = [...store.entries()]
+          .sort((a, b) => a[1].resetTime - b[1].resetTime);
+        const toRemove = entries.slice(0, Math.floor(entries.length * 0.2));
+        for (const [k] of toRemove) {
+          store.delete(k);
+        }
       }
     }
 

@@ -560,9 +560,11 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
 // Cached wrapper for tavilyResearch - checks in-memory cache first
 // Original tavilyResearch() function above remains UNCHANGED
 async function getCachedTavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
-  // Normalize cache key (alphabetical order for consistent hits)
-  const [a, b] = [city1.toLowerCase(), city2.toLowerCase()].sort();
-  const cacheKey = `${a}:${b}`;
+  // FIX: Use order-specific cache key (NOT alphabetically sorted)
+  // Research content is order-specific ("city1's laws are X, city2's are Y")
+  // Alphabetical sorting caused reversed city pairs to get wrong research context,
+  // leading LLMs to generate systematically wrong scores
+  const cacheKey = `${city1.toLowerCase()}:${city2.toLowerCase()}`;
 
   // Check cache
   const cached = tavilyResearchCache.get(cacheKey);
@@ -580,11 +582,33 @@ async function getCachedTavilyResearch(city1: string, city2: string): Promise<Ta
 
   // Store in cache if successful
   if (result) {
+    // FIX: Evict expired entries to prevent unbounded memory growth
+    // Without cleanup, the Map grows indefinitely (~50-100KB per entry)
+    // and eventually exhausts Vercel function memory
+    if (tavilyResearchCache.size > 100) {
+      const now = Date.now();
+      for (const [k, v] of tavilyResearchCache.entries()) {
+        if (now - v.timestamp > RESEARCH_CACHE_TTL_MS) {
+          tavilyResearchCache.delete(k);
+        }
+      }
+      // If still over limit after evicting expired, remove oldest entries
+      if (tavilyResearchCache.size > 500) {
+        const entries = [...tavilyResearchCache.entries()]
+          .sort((a, b) => a[1].timestamp - b[1].timestamp);
+        const toRemove = entries.slice(0, Math.floor(entries.length * 0.2));
+        for (const [k] of toRemove) {
+          tavilyResearchCache.delete(k);
+        }
+        console.log(`[TAVILY RESEARCH CACHE] Evicted ${toRemove.length} oldest entries (size: ${tavilyResearchCache.size})`);
+      }
+    }
+
     tavilyResearchCache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
-    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min)`);
+    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min, cache size: ${tavilyResearchCache.size})`);
   }
 
   return result;
