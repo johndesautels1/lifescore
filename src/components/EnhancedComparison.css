@@ -237,6 +237,9 @@
   border-radius: 12px;
   padding: 1rem;
   margin: 1rem 0;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .category-progress-header {
@@ -265,6 +268,28 @@
   .category-progress-grid {
     grid-template-columns: 1fr;
   }
+
+  .category-batch-progress {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+
+  .category-progress-item {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .category-progress-item .cat-icon {
+    font-size: 0.9rem;
+  }
+
+  .category-progress-item .cat-name {
+    font-size: 0.7rem;
+  }
+
+  .category-progress-item .cat-metrics {
+    font-size: 0.65rem;
+  }
 }
 
 .category-progress-item {
@@ -277,6 +302,8 @@
   font-size: 0.8rem;
   border: 1px solid var(--gray-200);
   transition: all 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .category-progress-item.pending {
