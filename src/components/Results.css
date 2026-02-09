@@ -39,6 +39,16 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Match Standard Report badge to LIVE-100 badge dimensions */
+.results .report-type-badge.standard {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+}
+
 /* Dark mode */
 [data-theme="dark"] .report-type-badge.enhanced {
   background: linear-gradient(135deg, #A78BFA 0%, #818CF8 100%);
