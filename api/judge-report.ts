@@ -13,6 +13,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
@@ -398,13 +399,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Verify JWT Bearer token
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  const token = authHeader.substring(7);
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+  });
+
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !authUser) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
   const startTime = Date.now();
 
   try {
-    const { comparisonResult, userId } = req.body as JudgeReportRequest;
+    const { comparisonResult } = req.body as JudgeReportRequest;
+    // Override userId with authenticated identity to prevent IDOR
+    const userId = authUser.id;
 
-    if (!comparisonResult || !userId) {
-      return res.status(400).json({ error: 'Missing required fields: comparisonResult, userId' });
+    if (!comparisonResult) {
+      return res.status(400).json({ error: 'Missing required field: comparisonResult' });
     }
 
     const city1 = comparisonResult.city1.city;

@@ -67,7 +67,7 @@ import './App.css';
 
 // Main app content (requires auth)
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user, session } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
@@ -705,7 +705,7 @@ const AppContent: React.FC = () => {
                               try {
                                 const userId = user?.id || 'guest';
                                 console.log('[App] Starting Judge pre-generation in background...');
-                                startJudgePregeneration(result, userId);
+                                startJudgePregeneration(result, userId, session?.access_token);
                               } catch (pregenError) {
                                 console.error('[App] Judge pre-generation error (non-fatal):', pregenError);
                               }
