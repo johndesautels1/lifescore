@@ -456,3 +456,39 @@
     height: 14px;
   }
 }
+
+/* Very small phones — prevent header overlap */
+@media (max-width: 360px) {
+  .header-left,
+  .header-right {
+    position: static;
+    transform: none;
+  }
+
+  .header-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+  }
+
+  .header-left {
+    order: 1;
+  }
+
+  .header-right {
+    order: 2;
+    transform: scale(0.7);
+    transform-origin: center right;
+    max-width: none;
+  }
+
+  .company-name,
+  .clues-branding,
+  .life-score-title {
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+}

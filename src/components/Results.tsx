@@ -29,20 +29,20 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
   const confidence = (result.city1 as any).overallConfidence || (result as any).overallConsensusConfidence || 'medium';
 
   return (
-    <div className={`winner-hero ${isTie ? 'tie' : ''}`}>
+    <div className={`winner-hero ${isTie ? 'tie' : ''}`} aria-live="polite" aria-atomic="true">
       {!isTie ? (
         <>
-          <div className="winner-trophy">🏆</div>
+          <div className="winner-trophy" aria-hidden="true">🏆</div>
           <h2 className="winner-city">{winner.city}, {winner.country}</h2>
           <div className="winner-score">{Math.round(getScore(winner))}</div>
-          <p className="winner-label">LIFE SCORE™</p>
+          <p className="winner-label">LIFE SCORE™ — Winner</p>
           <p className="winner-difference">
             {result.scoreDifference} points more freedom than {loser.city}, {loser.country}
           </p>
         </>
       ) : (
         <>
-          <div className="winner-trophy">⚖️</div>
+          <div className="winner-trophy" aria-hidden="true">⚖️</div>
           <h2 className="winner-city">It's a Tie!</h2>
           <div className="winner-score">{Math.round(getScore(result.city1))}</div>
           <p className="winner-label">Both cities scored equally</p>
@@ -159,25 +159,27 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result, cu
                   <span className="bar-city">{result.city1.city}</span>
                   <span className={`bar-score ${city1Wins ? 'winning' : ''}`}>
                     {Math.round(city1Score)}%
+                    {city1Wins && <span className="winner-indicator" aria-label="Winner"> ✓</span>}
                   </span>
                 </div>
                 <div className="bar-bg">
-                  <div 
+                  <div
                     className={`bar-fill city1 ${city1Wins ? 'winning' : ''}`}
                     style={{ width: `${city1Score}%` }}
                   />
                 </div>
               </div>
-              
+
               <div className="bar-container">
                 <div className="bar-header">
                   <span className="bar-city">{result.city2.city}</span>
                   <span className={`bar-score ${city2Wins ? 'winning' : ''}`}>
                     {Math.round(city2Score)}%
+                    {city2Wins && <span className="winner-indicator" aria-label="Winner"> ✓</span>}
                   </span>
                 </div>
                 <div className="bar-bg">
-                  <div 
+                  <div
                     className={`bar-fill city2 ${city2Wins ? 'winning' : ''}`}
                     style={{ width: `${city2Score}%` }}
                   />

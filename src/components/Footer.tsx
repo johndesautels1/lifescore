@@ -33,13 +33,13 @@ const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
           <a href="tel:7274523506">📞 (727) 452-3506</a>
           <a href="mailto:cluesnomads@gmail.com">✉️ cluesnomads@gmail.com</a>
           <a href="mailto:brokerpinellas@gmail.com">✉️ brokerpinellas@gmail.com</a>
-          <a href="https://cluesnomad.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://cluesnomad.com" target="_blank" rel="noopener noreferrer" aria-label="cluesnomad.com (opens in new window)">
             🌐 cluesnomad.com
           </a>
-          <a href="https://youtube.com/@modernlodges" target="_blank" rel="noopener noreferrer">
+          <a href="https://youtube.com/@modernlodges" target="_blank" rel="noopener noreferrer" aria-label="YouTube: @modernlodges (opens in new window)">
             📺 YouTube: @modernlodges
           </a>
-          <a href="https://www.facebook.com/johndesautels1/" target="_blank" rel="noopener noreferrer" className="facebook-link">
+          <a href="https://www.facebook.com/johndesautels1/" target="_blank" rel="noopener noreferrer" className="facebook-link" aria-label="Facebook (opens in new window)">
             <span className="facebook-icon">f</span> Facebook
           </a>
         </div>

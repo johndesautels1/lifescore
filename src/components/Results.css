@@ -141,7 +141,12 @@
   color: var(--success-dark);
 }
 
-.score-label {  font-size: 0.875rem;  font-weight: 700;  color: #f97316 !important;  margin-top: 0.5rem;}
+.score-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--orange, #f97316);
+  margin-top: 0.5rem;
+}
 
 /* Category Breakdown */
 .category-breakdown {
@@ -282,9 +287,17 @@
   margin-bottom: 0.5rem;
 }
 
-.bar-city {  font-size: 0.875rem;  font-weight: 700;  color: var(--sapphire) !important;}
+.bar-city {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--sapphire);
+}
 
-.bar-score {  font-size: 0.875rem;  font-weight: 600;  color: #dc2626;}
+.bar-score {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #dc2626;
+}
 
 .bar-score.winning {
   color: var(--success-dark);
@@ -366,7 +379,7 @@
   font-style: normal;
   font-family: inherit;
   font-size: 0.95rem;
-  color: #F7931E !important;
+  color: var(--orange, #F7931E);
   cursor: help;
 }
 
@@ -374,7 +387,7 @@
   font-weight: 600;
   font-style: normal;
   font-size: 0.7rem;
-  color: #F7931E !important;
+  color: var(--orange, #F7931E);
 }
 
 .metric-score {
@@ -487,6 +500,15 @@
     grid-template-columns: 1fr;
   }
 
+  .bar-container {
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--sapphire);
+  }
+
+  .bar-container:nth-child(even) {
+    border-left-color: var(--orange);
+  }
+
   .winner-city {
     font-size: 1.5rem;
   }
@@ -559,6 +581,7 @@
     grid-column: 1 / -1;
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
     padding-bottom: 0.5rem;
@@ -567,6 +590,7 @@
 
   .metric-name {
     font-size: 0.85rem;
+    word-break: break-word;
   }
 
   /* Scores side by side, aligned under city headers */

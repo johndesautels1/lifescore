@@ -590,7 +590,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
   .settings-modal {
-    max-height: 100vh;
+    max-height: 95vh;
     border-radius: 16px 16px 0 0;
     margin-top: auto;
   }
@@ -600,6 +600,7 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     justify-content: flex-start;
+    position: relative;
   }
 
   .settings-tab {
@@ -614,7 +615,7 @@
 
   .settings-content {
     padding: 1rem;
-    padding-bottom: 2rem;  /* Extra space so last items are visible when scrolling */
+    padding-bottom: 3rem;
     -webkit-overflow-scrolling: touch;
   }
 

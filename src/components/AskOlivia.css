@@ -1386,31 +1386,16 @@ button.control-item.recording {
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .cockpit-header {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    text-align: center;
-    padding: 1rem;
-  }
-
-  /* Center OPENAI BRAIN status indicator */
-  .cockpit-left {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .status-cluster {
-    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    align-items: center;
-    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
   }
 
-  .status-indicator {
-    justify-content: center;
-  }
-
-  /* Center ASK OLIVIA */
+  /* Move title to top spanning full width */
   .cockpit-center {
+    grid-column: 1 / -1;
+    order: -1;
     width: 100%;
     text-align: center;
   }
@@ -1419,12 +1404,20 @@ button.control-item.recording {
     justify-content: center;
   }
 
+  /* Hide status cluster on mobile to save vertical space */
+  .status-cluster {
+    display: none;
+  }
+
+  .cockpit-left {
+    justify-content: flex-start;
+  }
+
   /* Center LOCAL + time display on mobile */
   .cockpit-right {
     display: flex;
-    justify-content: center !important;
+    justify-content: flex-end;
     align-items: center;
-    width: 100%;
   }
 
   .time-cluster {

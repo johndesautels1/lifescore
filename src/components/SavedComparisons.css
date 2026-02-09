@@ -425,7 +425,8 @@
   border: 1px solid var(--sapphire);
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
-  width: 200px;
+  width: 100%;
+  max-width: 200px;
 }
 
 .nickname-edit button {
@@ -911,7 +912,9 @@
   }
 
   .saved-tabs {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 
   .gamma-reports-toolbar {

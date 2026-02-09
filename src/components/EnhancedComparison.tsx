@@ -3,7 +3,7 @@
  * Multi-LLM consensus UI
  */
 
-import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
@@ -1317,14 +1317,25 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
   const isTie = result.winner === 'tie';
 
-  // Calculate top 5 differences for the summary
-  const topDifferences = calculateTopDifferences(result, 5);
+  // Memoize expensive calculations to avoid re-running on every render
+  const topDifferences = useMemo(() => calculateTopDifferences(result, 5), [result]);
 
-  // Check for dealbreaker failures
-  const city1AllMetrics = result.city1.categories.flatMap(c => c.metrics);
-  const city2AllMetrics = result.city2.categories.flatMap(c => c.metrics);
-  const city1FailedDealbreakers = checkDealbreakers(dealbreakers, city1AllMetrics);
-  const city2FailedDealbreakers = checkDealbreakers(dealbreakers, city2AllMetrics);
+  const { city1AllMetrics, city2AllMetrics } = useMemo(() => ({
+    city1AllMetrics: result.city1.categories.flatMap(c => c.metrics),
+    city2AllMetrics: result.city2.categories.flatMap(c => c.metrics),
+  }), [result]);
+
+  const city1FailedDealbreakers = useMemo(() => checkDealbreakers(dealbreakers, city1AllMetrics), [dealbreakers, city1AllMetrics]);
+  const city2FailedDealbreakers = useMemo(() => checkDealbreakers(dealbreakers, city2AllMetrics), [dealbreakers, city2AllMetrics]);
+
+  // Pre-build metric lookup maps indexed by metricId for O(1) access in the render loop
+  const metricLookupMaps = useMemo(() => {
+    const city1Map = new Map<string, typeof city1AllMetrics[0]>();
+    const city2Map = new Map<string, typeof city2AllMetrics[0]>();
+    for (const m of city1AllMetrics) city1Map.set(m.metricId, m);
+    for (const m of city2AllMetrics) city2Map.set(m.metricId, m);
+    return { city1Map, city2Map };
+  }, [city1AllMetrics, city2AllMetrics]);
 
   // Generate winner explanation narrative
   const generateExplanation = (): string => {
@@ -2023,8 +2034,8 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                   )}
 
                   {categoryMetrics.map(metric => {
-                    const city1Metric = city1Cat.metrics.find(m => m.metricId === metric.id);
-                    const city2Metric = city2Cat.metrics.find(m => m.metricId === metric.id);
+                    const city1Metric = metricLookupMaps.city1Map.get(metric.id);
+                    const city2Metric = metricLookupMaps.city2Map.get(metric.id);
                     const score1: number = city1Metric?.consensusScore ?? 0;
                     const score2: number = city2Metric?.consensusScore ?? 0;
                     const tooltip = getMetricTooltip(metric.shortName);
