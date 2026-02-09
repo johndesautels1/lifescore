@@ -159,15 +159,16 @@ const AppContent: React.FC = () => {
 
   // Update saved count on mount and when savedKey changes
   useEffect(() => {
-    const saved = localStorage.getItem('lifescore_comparisons');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSavedCount(Array.isArray(parsed) ? parsed.length : 0);
-      } catch {
-        setSavedCount(0);
-      }
-    }
+    let count = 0;
+    try {
+      const standard = localStorage.getItem('lifescore_saved_comparisons');
+      if (standard) count += JSON.parse(standard).length;
+    } catch { /* ignore parse errors */ }
+    try {
+      const enhanced = localStorage.getItem('lifescore_saved_enhanced');
+      if (enhanced) count += JSON.parse(enhanced).length;
+    } catch { /* ignore parse errors */ }
+    setSavedCount(count);
   }, [savedKey]);
 
   // Auto-switch to results tab when comparison completes (BOTH modes)
@@ -542,7 +543,7 @@ const AppContent: React.FC = () => {
                                     llmScores: [score],
                                     consensusScore: score.normalizedScore,
                                     legalScore: score.legalScore || score.normalizedScore,
-                                    enforcementScore: score.normalizedScore,
+                                    enforcementScore: score.enforcementScore || score.normalizedScore,
                                     confidenceLevel: 'moderate' as const,
                                     standardDeviation: 0,
                                     judgeExplanation: `Based on ${evalResult.provider} evaluation (partial - judge unavailable)`

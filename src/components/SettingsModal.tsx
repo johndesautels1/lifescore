@@ -6,6 +6,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess, TIER_NAMES } from '../hooks/useTierAccess';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { supabase } from '../lib/supabase';
 import './SettingsModal.css';
 
@@ -20,6 +21,7 @@ type SettingsTab = 'profile' | 'security' | 'subscription' | 'data';
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgradeClick }) => {
   const { user, profile, updateProfile, isConfigured } = useAuth();
   const { tier } = useTierAccess();
+  const focusTrapRef = useFocusTrap(isOpen);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
@@ -193,7 +195,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
   if (!isOpen) return null;
 
   return (
-    <div className="settings-modal-overlay" onClick={onClose}>
+    <div ref={focusTrapRef} className="settings-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Account Settings" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
       <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="settings-header">

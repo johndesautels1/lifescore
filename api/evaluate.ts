@@ -1288,11 +1288,16 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
     console.log(`[PERPLEXITY] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
 
-    // Run batches sequentially to avoid rate limits
-    const result1 = await evaluateWithPerplexity(city1, city2, batch1);
-    const result2 = await evaluateWithPerplexity(city1, city2, batch2);
+    // Run batches in parallel with allSettled for resilience — halves latency
+    const [settled1, settled2] = await Promise.allSettled([
+      evaluateWithPerplexity(city1, city2, batch1),
+      evaluateWithPerplexity(city1, city2, batch2)
+    ]);
 
-    // Merge results
+    const result1 = settled1.status === 'fulfilled' ? settled1.value : { provider: 'perplexity' as const, success: false, scores: [] as any[], error: String(settled1.reason), latencyMs: 0, usage: undefined };
+    const result2 = settled2.status === 'fulfilled' ? settled2.value : { provider: 'perplexity' as const, success: false, scores: [] as any[], error: String(settled2.reason), latencyMs: 0, usage: undefined };
+
+    // Merge whatever succeeded
     const combinedScores = [...result1.scores, ...result2.scores];
     const combinedLatency = Date.now() - startTime;
     const combinedSuccess = result1.success && result2.success;

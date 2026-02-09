@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess } from '../hooks/useTierAccess';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import type { UserTier } from '../types/database';
 import './PricingModal.css';
 
@@ -100,6 +101,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
 }) => {
   const { user, profile, session } = useAuth();
   const { tier: currentTier } = useTierAccess();
+  const focusTrapRef = useFocusTrap(isOpen);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('annual');
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
@@ -196,7 +198,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
   };
 
   return (
-    <div className="pricing-modal-overlay" onClick={onClose}>
+    <div ref={focusTrapRef} className="pricing-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Pricing" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
       <div className="pricing-modal" onClick={(e) => e.stopPropagation()}>
         {/* Close Button */}
         <button className="modal-close-btn" onClick={onClose}>

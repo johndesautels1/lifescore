@@ -1809,9 +1809,13 @@ export function importFromJSON(json: string): { success: boolean; message: strin
 // ============================================================================
 
 /**
- * FIX 7.5: Mutex lock to prevent race conditions during database sync
- * Prevents multiple simultaneous sync operations from corrupting data
+ * FIX 7.5+: Promise-based lock to prevent race conditions during database sync.
+ * A boolean check is NOT atomic across async gaps — two concurrent calls can both
+ * pass the check before either sets the lock. Using a Promise ensures that if a
+ * sync is in progress, subsequent callers await (or skip) the same operation.
  */
+let activeSyncPromise: Promise<any> | null = null;
+// Keep boolean for backward compat with sub-function lock checks
 let databaseSyncLock = false;
 
 /**
@@ -1998,16 +2002,18 @@ export async function syncToDatabase(): Promise<{ success: boolean; message: str
  * Note: Does not use mutex lock directly as it calls pullFromDatabase and syncToDatabase which have their own locks
  */
 export async function fullDatabaseSync(): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> {
-  // FIX 7.5: Check mutex lock at start to prevent multiple concurrent full syncs
-  if (databaseSyncLock) {
-    console.log('[savedComparisons] Database sync already in progress, skipping fullDatabaseSync');
-    return { success: false, message: 'Sync already in progress', pulled: 0, pushed: 0 };
+  // FIX 7.5+: Promise-based lock — if a sync is already running, return its result
+  // instead of starting a second concurrent sync (which could corrupt data)
+  if (activeSyncPromise) {
+    console.log('[savedComparisons] Database sync already in progress, awaiting existing sync');
+    return activeSyncPromise;
   }
 
   if (!isSupabaseConfigured()) {
     return { success: false, message: 'Database not configured.', pulled: 0, pushed: 0 };
   }
 
+  const doSync = async (): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> => {
   // FIX 7.5: Acquire lock for full sync duration
   databaseSyncLock = true;
 
@@ -2106,4 +2112,9 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
     // FIX 7.5: Always release lock
     databaseSyncLock = false;
   }
+  }; // end doSync
+
+  // FIX 7.5+: Store the promise so concurrent callers can await the same operation
+  activeSyncPromise = doSync().finally(() => { activeSyncPromise = null; });
+  return activeSyncPromise;
 }

@@ -700,7 +700,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
       {/* GitHub Connect Modal */}
       {showGitHubModal && (
-        <div className="modal-overlay" onClick={() => setShowGitHubModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowGitHubModal(false)} role="dialog" aria-modal="true" aria-label="Connect to GitHub" onKeyDown={(e) => { if (e.key === 'Escape') setShowGitHubModal(false); }}>
           <div className="github-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Connect to GitHub</h3>
             <p className="modal-description">

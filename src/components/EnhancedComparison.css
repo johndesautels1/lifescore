@@ -3134,7 +3134,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .metric-details-header.expandable-header {
-    grid-template-columns: 1fr 55px 55px 40px 40px 40px 30px;
+    grid-template-columns: 1fr minmax(65px, auto) minmax(65px, auto) 40px 40px 40px 30px;
     gap: 0.25rem;
     padding: 0.5rem;
     font-size: 0.75rem;
@@ -3144,8 +3144,15 @@
     grid-template-columns: 1fr 80px 80px 40px 40px 40px 30px;
   }
 
+  .metric-header-city {
+    max-width: none;
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .metric-row-expandable {
-    grid-template-columns: 1fr 55px 55px 40px 40px 40px 30px;
+    grid-template-columns: 1fr minmax(65px, auto) minmax(65px, auto) 40px 40px 40px 30px;
     gap: 0.25rem;
     padding: 0.5rem;
   }
@@ -3211,6 +3218,49 @@
 
   .verification-label {
     min-width: 70px;
+  }
+}
+
+/* Fix: Add 480px breakpoint — 7 columns at 55px each don't fit on 375px phones */
+@media (max-width: 480px) {
+  .metric-details-header.expandable-header {
+    grid-template-columns: 1fr minmax(55px, 1fr) minmax(55px, 1fr) 30px;
+    gap: 0.2rem;
+    padding: 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  /* Hide delta, llm-count, stddev columns — shown in expanded panel instead */
+  .metric-details-header.expandable-header .metric-header-delta,
+  .metric-details-header.expandable-header .metric-header-llms,
+  .metric-details-header.expandable-header .metric-header-stddev {
+    display: none;
+  }
+
+  .metric-details-header.dual-header.expandable-header {
+    grid-template-columns: 1fr minmax(55px, 1fr) minmax(55px, 1fr) 30px;
+  }
+
+  .metric-row-expandable {
+    grid-template-columns: 1fr minmax(55px, 1fr) minmax(55px, 1fr) 30px;
+    gap: 0.2rem;
+    padding: 0.4rem;
+  }
+
+  .metric-row-expandable.dual-row {
+    grid-template-columns: 1fr minmax(55px, 1fr) minmax(55px, 1fr) 30px;
+  }
+
+  .metric-row-expandable .metric-delta,
+  .metric-row-expandable .metric-llm-count,
+  .metric-row-expandable .metric-stddev {
+    display: none;
+  }
+
+  .metric-header-city {
+    max-width: none;
+    font-size: 0.7rem;
+    text-align: center;
   }
 }
 

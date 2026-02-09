@@ -18,6 +18,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ManualViewer from './ManualViewer';
 import EmiliaChat from './EmiliaChat';
 import { useAuth } from '../contexts/AuthContext';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import './HelpModal.css';
 
 export type ManualTabType = 'csm' | 'tech' | 'user' | 'legal' | 'schema' | 'equations';
@@ -44,6 +45,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<ManualTabType>('user');
   const [showChat, setShowChat] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const focusTrapRef = useFocusTrap(isOpen);
 
   // Get user info for access control
   const { user } = useAuth();
@@ -95,8 +97,13 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div
+      ref={focusTrapRef}
       className={`help-modal-overlay ${isClosing ? 'closing' : ''}`}
       onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Help"
+      onKeyDown={(e) => { if (e.key === 'Escape') handleOverlayClick(e as any); }}
     >
       <div className="help-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
