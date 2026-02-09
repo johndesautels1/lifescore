@@ -100,7 +100,7 @@ const PRICING_TIERS: PricingTier[] = [
 // ============================================================================
 
 const PricingPage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, session } = useAuth();
   const { tier: currentTier } = useTierAccess();
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -126,7 +126,10 @@ const PricingPage: React.FC = () => {
     try {
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           priceKey,
           userId: profile.id,
@@ -158,7 +161,10 @@ const PricingPage: React.FC = () => {
     try {
       const response = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ userId: profile.id }),
       });
 

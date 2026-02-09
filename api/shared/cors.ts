@@ -61,7 +61,7 @@ export function setCorsHeaders(
 
   res.setHeader('Access-Control-Allow-Origin', getAllowedOrigin(mode));
   res.setHeader('Access-Control-Allow-Methods', methods);
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 /**

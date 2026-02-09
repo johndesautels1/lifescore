@@ -98,7 +98,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
   highlightFeature,
   highlightTier,
 }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, session } = useAuth();
   const { tier: currentTier } = useTierAccess();
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('annual');
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -139,7 +139,10 @@ const PricingModal: React.FC<PricingModalProps> = ({
     try {
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           priceKey,
           userId: profile.id,
@@ -170,7 +173,10 @@ const PricingModal: React.FC<PricingModalProps> = ({
     try {
       const response = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ userId: profile.id }),
       });
 
