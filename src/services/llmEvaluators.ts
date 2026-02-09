@@ -226,7 +226,7 @@ async function evaluateCategoryBatch(
     // Provide clearer error message for timeout
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMsg = isTimeout
-      ? `Request timed out after ${CLIENT_TIMEOUT_MS / 1000} seconds for ${provider}/${categoryId}`
+      ? `Request timed out for ${provider}/${categoryId}`
       : (error instanceof Error ? error.message : 'Unknown error');
 
     console.error(`[CLIENT] ${provider}/${categoryId} fetch error:`, errorMsg);
@@ -297,10 +297,11 @@ export async function runSingleEvaluatorBatched(
     // Retry loop for network failures
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
+      const categoryTimeout = getClientTimeout(metrics.length);
       result = await withTimeout(
         evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
-        CLIENT_TIMEOUT_MS,
-        { success: false, scores: [], latencyMs: CLIENT_TIMEOUT_MS, error: `Timeout for ${categoryId}` }
+        categoryTimeout,
+        { success: false, scores: [], latencyMs: categoryTimeout, error: `Timeout for ${categoryId}` }
       );
 
       // If successful or non-retryable error, break
