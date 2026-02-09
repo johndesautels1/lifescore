@@ -10,15 +10,18 @@
 }
 
 .report-type-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  width: 100%;
+  text-align: center;
 }
 
 .report-type-badge .badge-icon {
@@ -51,17 +54,6 @@
 }
 
 /* Winner Hero */
-
-@media (max-width: 768px) {
-  .report-type-header .report-type-badge {
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-}
 
 .winner-hero {
   background: linear-gradient(135deg, var(--sapphire), var(--sapphire-light), var(--orange));
