@@ -26,11 +26,12 @@ import type { UserTier, UsageTracking } from '../types/database';
  * Uses exponential backoff on timeout/network errors.
  */
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Tier access query'
 ): Promise<T> {
-  return withRetry(() => promise, {
+  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 3,
@@ -339,7 +340,7 @@ export function useTierAccess(): TierAccessHook {
         };
       }
 
-      const { data, error } = await withTimeout(
+      const { data, error } = await withTimeout(() =>
         supabase
           .from('usage_tracking')
           .select('*')
@@ -410,7 +411,7 @@ export function useTierAccess(): TierAccessHook {
       }
 
       // Upsert usage record (with 45s timeout)
-      const { error } = await withTimeout(
+      const { error } = await withTimeout(() =>
         supabase.rpc('increment_usage', {
           p_user_id: profile.id,
           p_feature: column,
@@ -422,7 +423,7 @@ export function useTierAccess(): TierAccessHook {
         // Fallback: try direct upsert
         console.warn('[useTierAccess] RPC failed, trying direct upsert:', error);
 
-        const { data: existing } = await withTimeout(
+        const { data: existing } = await withTimeout(() =>
           supabase
             .from('usage_tracking')
             .select('*')
@@ -435,7 +436,7 @@ export function useTierAccess(): TierAccessHook {
           // Update existing record
           const existingData = existing as Record<string, unknown>;
           const currentValue = (existingData[column] as number) || 0;
-          await withTimeout(
+          await withTimeout(() =>
             supabase
               .from('usage_tracking')
               .update({ [column]: currentValue + 1 })
@@ -443,7 +444,7 @@ export function useTierAccess(): TierAccessHook {
           );
         } else {
           // Insert new record
-          await withTimeout(
+          await withTimeout(() =>
             supabase.from('usage_tracking').insert({
               user_id: profile.id,
               period_start: periodStart,

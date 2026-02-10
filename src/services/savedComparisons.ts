@@ -16,11 +16,12 @@ import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIM
  * Uses exponential backoff on timeout/network errors.
  */
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Saved comparisons query'
 ): Promise<T> {
-  return withRetry(() => promise, {
+  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 3,
@@ -557,7 +558,7 @@ export async function deleteComparisonLocal(id: string): Promise<boolean> {
       if (user) {
         // Find the database record by comparison_id
         // FIX 2026-01-29: Use maybeSingle() - record may not exist
-        const { data } = await withTimeout(
+        const { data } = await withTimeout(() =>
           supabase
             .from('comparisons')
             .select('id')
@@ -599,7 +600,7 @@ export async function updateNicknameLocal(id: string, nickname: string): Promise
       if (user) {
         // Find the database record by comparison_id
         // FIX 2026-01-29: Use maybeSingle() - record may not exist
-        const { data } = await withTimeout(
+        const { data } = await withTimeout(() =>
           supabase
             .from('comparisons')
             .select('id')
@@ -845,7 +846,7 @@ export async function deleteEnhancedComparisonLocal(id: string): Promise<boolean
       if (user) {
         // Find the database record by comparison_id
         // FIX 2026-01-29: Use maybeSingle() - record may not exist
-        const { data } = await withTimeout(
+        const { data } = await withTimeout(() =>
           supabase
             .from('comparisons')
             .select('id')
@@ -911,7 +912,7 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
     }
 
     // Fetch from Supabase with timeout (30s for slow mobile connections)
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout(() =>
       supabase
         .from('gamma_reports')
         .select('*')
@@ -1157,7 +1158,7 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
     }
 
     // Fetch from Supabase with timeout (30s for slow mobile connections)
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout(() =>
       supabase
         .from('judge_reports')
         .select('*')
