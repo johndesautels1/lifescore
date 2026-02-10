@@ -63,6 +63,7 @@ export interface SavedEnhancedComparison {
   result: EnhancedComparisonResult;
   savedAt: string;
   nickname?: string;
+  synced?: boolean;
 }
 
 // ============================================================================
@@ -2042,22 +2043,26 @@ export async function syncToDatabase(): Promise<{ success: boolean; message: str
       }
     }
 
-    // Sync enhanced comparisons
+    // Sync unsynced enhanced comparisons
     for (const local of localEnhanced) {
-      const { error } = await dbSaveComparison(
-        user.id,
-        local.result as unknown as Record<string, unknown>,
-        local.nickname
-      );
-      if (!error) {
-        syncedCount++;
-      } else {
-        console.error('[savedComparisons] Failed to sync enhanced:', local.id, error);
+      if (!local.synced) {
+        const { error } = await dbSaveComparison(
+          user.id,
+          local.result as unknown as Record<string, unknown>,
+          local.nickname
+        );
+        if (!error) {
+          local.synced = true;
+          syncedCount++;
+        } else {
+          console.error('[savedComparisons] Failed to sync enhanced:', local.id, error);
+        }
       }
     }
 
     // Update local storage with synced flags
     saveLocalComparisons(localComparisons);
+    saveLocalEnhancedComparisons(localEnhanced);
 
     console.log(`[savedComparisons] Synced ${syncedCount} comparisons to database`);
     return {
@@ -2174,16 +2179,20 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
     }
 
     for (const local of localEnhanced) {
-      const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
-      if (!error) {
-        syncedCount++;
-      } else {
-        syncErrors++;
-        console.error(`[savedComparisons] Failed to push enhanced comparison:`, error);
+      if (!local.synced) {
+        const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
+        if (!error) {
+          local.synced = true;
+          syncedCount++;
+        } else {
+          syncErrors++;
+          console.error(`[savedComparisons] Failed to push enhanced comparison:`, error);
+        }
       }
     }
 
     saveLocalComparisons(localComparisons);
+    saveLocalEnhancedComparisons(localEnhanced);
 
     // FIX: Report partial failures instead of always reporting success
     const hasErrors = syncErrors > 0;
