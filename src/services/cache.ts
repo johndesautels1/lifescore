@@ -14,6 +14,7 @@
 
 import type { LLMProvider, EnhancedComparisonResult, MetricConsensus } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // CONFIGURATION
@@ -216,28 +217,19 @@ class LocalStorageCache implements CacheStorage {
   }
 }
 
-// Vercel KV implementation (production)
+// Vercel KV implementation (production) — goes through server-side proxy
+// to keep KV_REST_API_TOKEN out of the client bundle.
 class VercelKVCache implements CacheStorage {
-  private baseUrl: string;
-  private token: string;
-
-  constructor() {
-    // These would be set via environment variables in production
-    this.baseUrl = import.meta.env.VITE_KV_REST_API_URL || '';
-    this.token = import.meta.env.VITE_KV_REST_API_TOKEN || '';
-  }
-
-  private get isConfigured(): boolean {
-    return Boolean(this.baseUrl && this.token);
-  }
-
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
-    if (!this.isConfigured) return null;
-
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetchWithTimeout(
-        `${this.baseUrl}/get/${key}`,
-        { headers: { Authorization: `Bearer ${this.token}` } },
+        '/api/kv-cache',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ operation: 'get', key }),
+        },
         CACHE_CONFIG.KV_TIMEOUT_MS
       );
 
@@ -261,22 +253,20 @@ class VercelKVCache implements CacheStorage {
   }
 
   async set<T>(key: string, entry: CacheEntry<T>): Promise<void> {
-    if (!this.isConfigured) return;
-
     try {
       const ttlSeconds = Math.ceil(entry.ttl / 1000);
+      const authHeaders = await getAuthHeaders();
       await fetchWithTimeout(
-        `${this.baseUrl}/set/${key}`,
+        '/api/kv-cache',
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
+            operation: 'set',
+            key,
             value: JSON.stringify(entry),
-            ex: ttlSeconds // TTL in seconds for Redis
-          })
+            ex: ttlSeconds,
+          }),
         },
         CACHE_CONFIG.KV_TIMEOUT_MS
       );
@@ -286,14 +276,14 @@ class VercelKVCache implements CacheStorage {
   }
 
   async delete(key: string): Promise<void> {
-    if (!this.isConfigured) return;
-
     try {
+      const authHeaders = await getAuthHeaders();
       await fetchWithTimeout(
-        `${this.baseUrl}/del/${key}`,
+        '/api/kv-cache',
         {
           method: 'POST',
-          headers: { Authorization: `Bearer ${this.token}` }
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ operation: 'del', key }),
         },
         CACHE_CONFIG.KV_TIMEOUT_MS
       );
