@@ -1160,12 +1160,20 @@ button.control-item.recording {
 }
 
 .header-btn.transcript-action {
-  border-color: rgba(201, 162, 39, 0.25);
-  color: var(--brushed-gold);
+  border-color: rgba(201, 162, 39, 0.5);
+  color: #c9a227;
+  background: rgba(201, 162, 39, 0.1);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.12em;
 }
 
 .header-btn.transcript-action:hover {
-  background: rgba(201, 162, 39, 0.12);
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(201, 162, 39, 0.7);
+  color: #e0bc3f;
+}
   border-color: rgba(201, 162, 39, 0.4);
 }
 
