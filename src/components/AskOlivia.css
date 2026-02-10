@@ -1174,8 +1174,6 @@ button.control-item.recording {
   border-color: rgba(201, 162, 39, 0.7);
   color: #e0bc3f;
 }
-  border-color: rgba(201, 162, 39, 0.4);
-}
 
 .header-btn.transcript-action:disabled {
   opacity: 0.3;
