@@ -578,14 +578,10 @@ export async function getSharedReport(
       };
     }
 
-    // Increment view count and update last accessed
-    await supabase
-      .from('report_shares')
-      .update({
-        view_count: share.view_count + 1,
-        last_accessed_at: new Date().toISOString()
-      })
-      .eq('id', share.id);
+    // Increment view count atomically (prevents race condition)
+    await supabase.rpc('increment_share_view_count', {
+      p_share_id: share.id,
+    });
 
     // Get full report (skip access logging for shared view, we track it separately)
     const { data: report, error: reportError } = await getReportWithHtml(share.report_id, false);
