@@ -7,6 +7,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 
 // ============================================================================
 // TYPES
@@ -275,6 +276,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // JWT auth — reject unauthenticated requests
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const { comparisonId, metricId, city } = req.body || {};

@@ -6,6 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -196,7 +197,8 @@ function buildContextMessage(context: any, textSummary?: string): string {
 async function callFieldEvidenceAPI(
   comparisonId: string,
   metricId: string,
-  city?: string
+  city?: string,
+  authToken?: string
 ): Promise<string> {
   try {
     // Use internal API call (same server)
@@ -204,11 +206,13 @@ async function callFieldEvidenceAPI(
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_BASE_URL || 'https://clueslifescore.com';
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
     const response = await fetchWithTimeout(
       `${baseUrl}/api/olivia/field-evidence`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ comparisonId, metricId, city }),
       },
       10000
@@ -231,7 +235,8 @@ async function callFieldEvidenceAPI(
  */
 async function handleToolCalls(
   toolCalls: ToolCall[],
-  comparisonId?: string
+  comparisonId?: string,
+  authToken?: string
 ): Promise<Array<{ tool_call_id: string; output: string }>> {
   const outputs: Array<{ tool_call_id: string; output: string }> = [];
 
@@ -241,7 +246,8 @@ async function handleToolCalls(
       const result = await callFieldEvidenceAPI(
         args.comparisonId || comparisonId || '',
         args.metricId,
-        args.city
+        args.city,
+        authToken
       );
       outputs.push({ tool_call_id: toolCall.id, output: result });
       console.log('[OLIVIA/CHAT] Tool call result for', args.metricId, ':', result.substring(0, 100));
@@ -395,7 +401,8 @@ async function waitForRun(
   threadId: string,
   runId: string,
   comparisonId?: string,
-  maxAttempts: number = 60
+  maxAttempts: number = 60,
+  authToken?: string
 ): Promise<OpenAIRun> {
   for (let i = 0; i < maxAttempts; i++) {
     const response = await fetchWithTimeout(
@@ -431,7 +438,7 @@ async function waitForRun(
       console.log('[OLIVIA/CHAT] Handling', toolCalls.length, 'tool calls');
 
       // Execute the tool calls
-      const toolOutputs = await handleToolCalls(toolCalls, comparisonId);
+      const toolOutputs = await handleToolCalls(toolCalls, comparisonId, authToken);
 
       // Submit the results back to OpenAI
       await submitToolOutputs(apiKey, threadId, runId, toolOutputs);
@@ -584,7 +591,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS - open for chat
+  // CORS
   if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - standard preset for chat
@@ -596,6 +603,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // JWT auth — reject unauthenticated requests
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const apiKey = getOpenAIKey();
@@ -662,8 +673,11 @@ export default async function handler(
     // Extract comparisonId for function calling
     const comparisonId = context?.comparison?.comparisonId;
 
+    // Forward auth token for internal API calls (field-evidence)
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
+
     // Wait for completion (handles tool calls automatically)
-    const completedRun = await waitForRun(apiKey, threadId, run.id, comparisonId);
+    const completedRun = await waitForRun(apiKey, threadId, run.id, comparisonId, 60, authToken);
     console.log('[OLIVIA/CHAT] Run completed');
 
     // Log token usage for cost tracking

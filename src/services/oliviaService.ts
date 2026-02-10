@@ -3,6 +3,7 @@
  * Client-side API wrapper for Olivia AI assistant
  */
 
+import { getAuthHeaders } from '../lib/supabase';
 import type {
   OliviaChatRequest,
   OliviaChatResponse,
@@ -75,11 +76,12 @@ export async function sendMessage(
     generateAudio: options.generateAudio,
   };
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/olivia/chat',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify(request),
     },
     90000 // 90 second timeout - server may retry on active runs
@@ -119,11 +121,12 @@ export async function generateTTS(
   text: string,
   options: { voiceId?: string } = {}
 ): Promise<TTSResponse> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/olivia/tts',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         text,
         voiceId: options.voiceId,

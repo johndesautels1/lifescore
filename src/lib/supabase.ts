@@ -237,6 +237,18 @@ export async function getCurrentSession() {
   return session;
 }
 
+/**
+ * Get Authorization headers for API calls.
+ * Returns { Authorization: 'Bearer <token>' } if user is logged in, empty object otherwise.
+ */
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  const session = await getCurrentSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return {};
+}
+
 if (import.meta.env.DEV) {
   supabase.auth.onAuthStateChange((event, session) => {
     console.log('[Supabase Auth]', event, session?.user?.email || 'no user');

@@ -12,6 +12,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -123,7 +124,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS - open for TTS
+  // CORS
   if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - standard preset for TTS
@@ -135,6 +136,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // JWT auth — reject unauthenticated requests
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const apiKey = getElevenLabsKey();

@@ -18,6 +18,7 @@
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { JudgeReport } from '../components/JudgeTab';
+import { getAuthHeaders } from '../lib/supabase';
 import { getSavedJudgeReports, type SavedJudgeReport } from './savedComparisons';
 
 // ============================================================================
@@ -121,9 +122,10 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
   });
 
   // Fire and forget - don't await
+  getAuthHeaders().then(authHeaders => {
   fetch('/api/avatar/generate-judge-video', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({
       comparisonId: report.comparisonId,
       script,
@@ -153,6 +155,7 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
     .catch((error) => {
       console.error('[JudgePregen] Video generation error:', error);
     });
+  }); // close getAuthHeaders().then
 }
 
 // ============================================================================
