@@ -793,23 +793,21 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           supabase
             .from('judge_reports')
             .update({
-              city1_name: report.city1,
-              city2_name: report.city2,
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
-              city1_trend: report.summaryOfFindings.city1Trend,
+              city1_trend: report.summaryOfFindings.city1Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city1Trend || null),
               city2_score: report.summaryOfFindings.city2Score,
-              city2_trend: report.summaryOfFindings.city2Trend,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
-              key_factors: report.executiveSummary.keyFactors || [],
-              future_outlook: report.executiveSummary.futureOutlook || '',
-              confidence_level: report.executiveSummary.confidenceLevel || 'medium',
+              city2_trend: report.summaryOfFindings.city2Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city2Trend || null),
+              winner: report.executiveSummary.recommendation === 'city1' ? report.city1
+                : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
+              winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
+              margin: Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score),
+              key_findings: report.executiveSummary.keyFactors || [],
               category_analysis: report.categoryAnalysis || [],
+              verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl,
-              video_status: report.videoStatus,
-              updated_at: new Date().toISOString()
+              video_url: report.videoUrl
             })
             .eq('report_id', report.reportId)
         );
@@ -824,23 +822,21 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             .insert({
               user_id: user.id,
               report_id: report.reportId,
-              comparison_id: report.comparisonId,
-              city1_name: report.city1,
-              city2_name: report.city2,
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
-              city1_trend: report.summaryOfFindings.city1Trend,
+              city1_trend: report.summaryOfFindings.city1Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city1Trend || null),
               city2_score: report.summaryOfFindings.city2Score,
-              city2_trend: report.summaryOfFindings.city2Trend,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
-              key_factors: report.executiveSummary.keyFactors || [],
-              future_outlook: report.executiveSummary.futureOutlook || '',
-              confidence_level: report.executiveSummary.confidenceLevel || 'medium',
+              city2_trend: report.summaryOfFindings.city2Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city2Trend || null),
+              winner: report.executiveSummary.recommendation === 'city1' ? report.city1
+                : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
+              winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
+              margin: Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score),
+              key_findings: report.executiveSummary.keyFactors || [],
               category_analysis: report.categoryAnalysis || [],
+              verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl,
-              video_status: report.videoStatus
+              video_url: report.videoUrl
             })
         );
 

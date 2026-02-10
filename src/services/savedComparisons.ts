@@ -1198,23 +1198,23 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
       }
 
       // Build SavedJudgeReport from Supabase record
-      // FIX 2026-02-08: Try multiple fallbacks for city names to avoid "Unknown"
+      // FIX 2026-02-10: Use correct DB column names (city1/city2, verdict, key_findings)
       const newReport: SavedJudgeReport = {
         reportId: record.report_id,
-        comparisonId: record.comparison_id,
-        city1: record.city1_name || fullReport?.city1 || 'Unknown',
-        city2: record.city2_name || fullReport?.city2 || 'Unknown',
+        comparisonId: fullReport?.comparisonId || record.report_id,
+        city1: record.city1 || fullReport?.city1 || 'Unknown',
+        city2: record.city2 || fullReport?.city2 || 'Unknown',
         videoUrl: record.video_url || undefined,
-        videoStatus: record.video_status || 'none',
+        videoStatus: record.video_url ? 'ready' : 'none',
         generatedAt: record.created_at,
         summaryOfFindings: {
           city1Score: record.city1_score || fullReport?.summaryOfFindings?.city1Score || 0,
           city2Score: record.city2_score || fullReport?.summaryOfFindings?.city2Score || 0,
-          overallConfidence: record.overall_confidence || fullReport?.summaryOfFindings?.overallConfidence || 'medium',
+          overallConfidence: fullReport?.summaryOfFindings?.overallConfidence || 'medium',
         },
         executiveSummary: {
-          recommendation: record.recommendation || fullReport?.executiveSummary?.recommendation || 'tie',
-          rationale: record.rationale || fullReport?.executiveSummary?.rationale || '',
+          recommendation: record.verdict || fullReport?.executiveSummary?.recommendation || 'tie',
+          rationale: fullReport?.executiveSummary?.rationale || '',
         },
       };
 
@@ -1278,18 +1278,17 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
             .upsert({
               user_id: user.id,
               report_id: report.reportId,
-              comparison_id: report.comparisonId,
-              city1_name: report.city1,  // FIX: Match JudgeTab column names
-              city2_name: report.city2,  // FIX: Match JudgeTab column names
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
               city2_score: report.summaryOfFindings.city2Score,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
+              winner: report.executiveSummary.recommendation === 'city1' ? report.city1
+                : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
+              winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
+              margin: Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score),
+              verdict: report.executiveSummary.recommendation,
               full_report: report,
               video_url: report.videoUrl || null,
-              video_status: report.videoStatus || 'none',
-              updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id,report_id' })
             .then(({ error }) => {
               if (error) {
@@ -1379,29 +1378,30 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
     }
 
     // Return the full report data, preferring full_report over individual columns
+    // FIX 2026-02-10: Use correct DB column names (city1/city2, verdict, key_findings)
     return {
       reportId: data.report_id,
-      comparisonId: data.comparison_id,
+      comparisonId: fullReport?.comparisonId || data.report_id,
       generatedAt: data.created_at,
       userId: data.user_id,
-      city1: data.city1_name || fullReport?.city1 || 'Unknown',
-      city2: data.city2_name || fullReport?.city2 || 'Unknown',
+      city1: data.city1 || fullReport?.city1 || 'Unknown',
+      city2: data.city2 || fullReport?.city2 || 'Unknown',
       videoUrl: data.video_url,
-      videoStatus: data.video_status,
+      videoStatus: data.video_url ? 'ready' : 'none',
       summaryOfFindings: fullReport?.summaryOfFindings || {
         city1Score: data.city1_score || 0,
         city1Trend: data.city1_trend || 'stable',
         city2Score: data.city2_score || 0,
         city2Trend: data.city2_trend || 'stable',
-        overallConfidence: data.overall_confidence || 'medium',
+        overallConfidence: 'medium',
       },
-      categoryAnalysis: fullReport?.categoryAnalysis || [],
+      categoryAnalysis: fullReport?.categoryAnalysis || data.category_analysis || [],
       executiveSummary: fullReport?.executiveSummary || {
-        recommendation: data.recommendation || 'tie',
-        rationale: data.rationale || '',
-        keyFactors: data.key_factors || [],
-        futureOutlook: data.future_outlook || '',
-        confidenceLevel: data.confidence_level || 'medium',
+        recommendation: data.verdict || 'tie',
+        rationale: '',
+        keyFactors: data.key_findings || [],
+        futureOutlook: '',
+        confidenceLevel: 'medium',
       },
       freedomEducation: fullReport?.freedomEducation || null,
     };

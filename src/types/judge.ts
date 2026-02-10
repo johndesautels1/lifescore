@@ -29,27 +29,25 @@ export interface PregenStatus {
 
 export interface JudgeReportRecord {
   id: string;
-  user_id: string;
+  user_id: string | null;
   report_id: string;
-  comparison_id: string;
-  city1_name: string;
-  city2_name: string;
-  city1_score: number;
-  city1_trend: 'rising' | 'stable' | 'declining';
-  city2_score: number;
-  city2_trend: 'rising' | 'stable' | 'declining';
-  overall_confidence: 'high' | 'medium' | 'low';
-  recommendation: 'city1' | 'city2' | 'tie';
-  rationale: string;
-  key_factors: string[];
-  future_outlook: string;
-  confidence_level: 'high' | 'medium' | 'low';
-  category_analysis: unknown;
-  full_report: unknown;
-  video_url?: string;
-  video_status: 'pending' | 'generating' | 'ready' | 'error';
+  city1: string;
+  city2: string;
+  city1_score: number | null;
+  city1_trend: string | null;
+  city2_score: number | null;
+  city2_trend: string | null;
+  winner: string | null;
+  winner_score: number | null;
+  margin: number | null;
+  key_findings: unknown[] | null;
+  category_analysis: unknown[] | null;
+  verdict: string | null;
+  full_report: Record<string, unknown> | null;
+  video_id: string | null;
+  video_url: string | null;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
 export interface AvatarVideoRecord {

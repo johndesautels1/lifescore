@@ -633,18 +633,20 @@ export interface ConsentLogInsert {
 export interface AvatarVideo {
   id: string;
   comparison_id: string;
-  video_url: string | null;
-  script: string | null;
+  city1: string;
+  city2: string;
+  winner: string;
+  winner_score: number | null;
+  loser_score: number | null;
+  script: string;
   audio_url: string | null;
-  replicate_prediction_id: string | null;
-  city1: string | null;
-  city2: string | null;
-  winner: string | null;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  video_url: string | null;
   duration_seconds: number | null;
-  expires_at: string | null;
+  replicate_prediction_id: string | null;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error: string | null;
   created_at: string;
-  updated_at: string;
+  completed_at: string | null;
 }
 
 // ============================================================================
@@ -653,25 +655,23 @@ export interface AvatarVideo {
 
 export interface JudgeReportRecord {
   id: string;
-  user_id: string;
+  user_id: string | null;
   report_id: string;
-  comparison_id: string | null;
-  city1_name: string;
-  city2_name: string;
-  city1_score: number;
-  city1_trend: 'rising' | 'improving' | 'stable' | 'declining';
-  city2_score: number;
-  city2_trend: 'rising' | 'improving' | 'stable' | 'declining';
-  overall_confidence: 'high' | 'medium' | 'low';
-  recommendation: 'city1' | 'city2' | 'tie';
-  rationale: string | null;
-  key_factors: unknown[] | null;
-  future_outlook: string | null;
-  confidence_level: 'high' | 'medium' | 'low' | null;
+  city1: string;
+  city2: string;
+  city1_score: number | null;
+  city1_trend: string | null;
+  city2_score: number | null;
+  city2_trend: string | null;
+  winner: string | null;
+  winner_score: number | null;
+  margin: number | null;
+  key_findings: unknown[] | null;
   category_analysis: unknown[] | null;
+  verdict: string | null;
   full_report: Record<string, unknown> | null;
+  video_id: string | null;
   video_url: string | null;
-  video_status: 'pending' | 'generating' | 'ready' | 'error';
   created_at: string;
   updated_at: string;
 }
