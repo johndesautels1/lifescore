@@ -13,8 +13,9 @@
  * © 2025-2026 All Rights Reserved
  */
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
 import type { UserTier, UsageTracking } from '../types/database';
 
 // ============================================================================
@@ -186,51 +187,87 @@ function getCurrentPeriodStart(): string {
 // HOOK
 // ============================================================================
 
-// Developer bypass emails - comma separated in env var
-// IMPORTANT: This grants SOVEREIGN (enterprise) access to admin/dev emails
-const DEV_BYPASS_EMAILS = (import.meta.env.VITE_DEV_BYPASS_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+// Admin status cache key — server-side /api/admin-check result cached in localStorage
+const ADMIN_CACHE_KEY = 'lifescore_admin_status';
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Hardcoded fallback in case env var isn't read properly
-// CRITICAL: These emails ALWAYS get enterprise tier, even if Supabase is down
-const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com'];
-
-// Cache admin status in localStorage for reliability when Supabase is slow
-const ADMIN_CACHE_KEY = 'lifescore_admin_bypass';
-
-function checkAndCacheAdminStatus(email: string): boolean {
-  if (!email) return false;
-
-  const normalizedEmail = email.toLowerCase().trim();
-  const isAdmin = DEV_BYPASS_EMAILS.includes(normalizedEmail) ||
-                  HARDCODED_BYPASS_EMAILS.includes(normalizedEmail);
-
-  if (isAdmin) {
-    // Cache admin status so it persists even if Supabase times out
-    try {
-      localStorage.setItem(ADMIN_CACHE_KEY, normalizedEmail);
-    } catch { /* localStorage not available */ }
-  }
-
-  return isAdmin;
+interface AdminCache {
+  isAdmin: boolean;
+  timestamp: number;
 }
 
-function getCachedAdminStatus(): boolean {
+/**
+ * Read cached admin status from localStorage.
+ * Returns null if cache is missing or expired.
+ */
+function getCachedAdminStatus(): boolean | null {
   try {
-    const cached = localStorage.getItem(ADMIN_CACHE_KEY);
-    if (cached) {
-      return HARDCODED_BYPASS_EMAILS.includes(cached) || DEV_BYPASS_EMAILS.includes(cached);
+    const raw = localStorage.getItem(ADMIN_CACHE_KEY);
+    if (!raw) return null;
+    const parsed: AdminCache = JSON.parse(raw);
+    if (Date.now() - parsed.timestamp > ADMIN_CACHE_TTL_MS) {
+      localStorage.removeItem(ADMIN_CACHE_KEY);
+      return null;
     }
+    return parsed.isAdmin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cache admin status in localStorage.
+ */
+function setCachedAdminStatus(isAdmin: boolean): void {
+  try {
+    const entry: AdminCache = { isAdmin, timestamp: Date.now() };
+    localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(entry));
   } catch { /* localStorage not available */ }
-  return false;
 }
 
 export function useTierAccess(): TierAccessHook {
   const { profile, user, isLoading: authLoading } = useAuth();
 
-  // Developer bypass - grant enterprise access to specified emails
-  // Check: 1) Current user email, 2) Cached admin status from previous session
-  const userEmail = user?.email?.toLowerCase() || '';
-  const isDeveloper = checkAndCacheAdminStatus(userEmail) || getCachedAdminStatus();
+  // Admin status — fetched from server-side /api/admin-check (no emails in client bundle)
+  const [isDeveloper, setIsDeveloper] = useState<boolean>(() => {
+    // Initialize from cache for instant rendering (avoids flash of wrong tier)
+    const cached = getCachedAdminStatus();
+    return cached ?? false;
+  });
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsDeveloper(false);
+      return;
+    }
+
+    // Check cache first
+    const cached = getCachedAdminStatus();
+    if (cached !== null) {
+      setIsDeveloper(cached);
+      return;
+    }
+
+    // Fetch from server
+    let cancelled = false;
+    (async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders.Authorization) return;
+        const res = await fetch('/api/admin-check', { headers: authHeaders });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const isAdmin = data.isAdmin === true;
+        setCachedAdminStatus(isAdmin);
+        if (!cancelled) setIsDeveloper(isAdmin);
+      } catch {
+        // Fail-closed: not admin on error
+        if (!cancelled) setIsDeveloper(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet.
   // Everyone else: fail-closed to FREE if profile hasn't loaded yet.
