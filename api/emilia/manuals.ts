@@ -838,7 +838,7 @@ else: higher score wins
 ## 9. THE JUDGE Analysis
 
 Claude Opus 4.5 provides:
-- **Trend Analysis**: rising, stable, declining
+- **Trend Analysis**: improving, stable, declining
 - **Category Analysis**: Per-category breakdown
 - **Executive Summary**: Final recommendation
 - **Override Capability**: Can override scores based on trends

@@ -79,9 +79,9 @@ export interface JudgeReport {
   videoStatus: 'pending' | 'generating' | 'ready' | 'error' | string;
   summaryOfFindings: {
     city1Score: number;
-    city1Trend?: 'rising' | 'stable' | 'declining';
+    city1Trend?: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend?: 'rising' | 'stable' | 'declining';
+    city2Trend?: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low' | string;
   };
   categoryAnalysis?: {
@@ -796,9 +796,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               city1: report.city1,
               city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
-              city1_trend: report.summaryOfFindings.city1Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city1Trend || null),
+              city1_trend: report.summaryOfFindings.city1Trend || null,
               city2_score: report.summaryOfFindings.city2Score,
-              city2_trend: report.summaryOfFindings.city2Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city2Trend || null),
+              city2_trend: report.summaryOfFindings.city2Trend || null,
               winner: report.executiveSummary.recommendation === 'city1' ? report.city1
                 : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
               winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
@@ -825,9 +825,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               city1: report.city1,
               city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
-              city1_trend: report.summaryOfFindings.city1Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city1Trend || null),
+              city1_trend: report.summaryOfFindings.city1Trend || null,
               city2_score: report.summaryOfFindings.city2Score,
-              city2_trend: report.summaryOfFindings.city2Trend === 'rising' ? 'improving' : (report.summaryOfFindings.city2Trend || null),
+              city2_trend: report.summaryOfFindings.city2Trend || null,
               winner: report.executiveSummary.recommendation === 'city1' ? report.city1
                 : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
               winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
@@ -955,7 +955,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     .verdict h2 { color: #d4af37; margin: 0; font-size: 2em; }
     .score-card { display: inline-block; padding: 15px 25px; margin: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; }
     .score-value { font-size: 2.5em; font-weight: bold; color: #10b981; }
-    .trend-rising { color: #22c55e; }
+    .trend-improving { color: #22c55e; }
     .trend-declining { color: #ef4444; }
     .trend-stable { color: #f59e0b; }
     .category { background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #c9a227; }
@@ -981,7 +981,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       <h3>${report.city1}</h3>
       <div class="score-value">${report.summaryOfFindings.city1Score}</div>
       <div class="trend-${report.summaryOfFindings.city1Trend}">
-        ${report.summaryOfFindings.city1Trend === 'rising' ? '↗️ Rising' :
+        ${report.summaryOfFindings.city1Trend === 'improving' ? '↗️ Improving' :
           report.summaryOfFindings.city1Trend === 'declining' ? '↘️ Declining' : '→ Stable'}
       </div>
     </div>
@@ -989,7 +989,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       <h3>${report.city2}</h3>
       <div class="score-value">${report.summaryOfFindings.city2Score}</div>
       <div class="trend-${report.summaryOfFindings.city2Trend}">
-        ${report.summaryOfFindings.city2Trend === 'rising' ? '↗️ Rising' :
+        ${report.summaryOfFindings.city2Trend === 'improving' ? '↗️ Improving' :
           report.summaryOfFindings.city2Trend === 'declining' ? '↘️ Declining' : '→ Stable'}
       </div>
     </div>
@@ -1024,17 +1024,17 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   };
 
   // Trend icon helper
-  const getTrendIcon = (trend: 'rising' | 'stable' | 'declining') => {
+  const getTrendIcon = (trend: 'improving' | 'stable' | 'declining') => {
     switch (trend) {
-      case 'rising': return '↗️';
+      case 'improving': return '↗️';
       case 'stable': return '→';
       case 'declining': return '↘️';
     }
   };
 
-  const getTrendClass = (trend: 'rising' | 'stable' | 'declining') => {
+  const getTrendClass = (trend: 'improving' | 'stable' | 'declining') => {
     switch (trend) {
-      case 'rising': return 'trend-rising';
+      case 'improving': return 'trend-improving';
       case 'stable': return 'trend-stable';
       case 'declining': return 'trend-declining';
     }

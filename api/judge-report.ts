@@ -98,9 +98,9 @@ interface JudgeReport {
   videoStatus: 'pending' | 'generating' | 'ready' | 'error';
   summaryOfFindings: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
   categoryAnalysis: {
@@ -147,8 +147,8 @@ interface FreedomEducationOutput {
 
 interface OpusJudgeResponse {
   summaryOfFindings: {
-    city1Trend: 'rising' | 'stable' | 'declining';
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
   categoryAnalysis: {
@@ -291,8 +291,8 @@ Provide a comprehensive Judge's Report in the following JSON format:
 
 {
   "summaryOfFindings": {
-    "city1Trend": "rising" | "stable" | "declining",
-    "city2Trend": "rising" | "stable" | "declining",
+    "city1Trend": "improving" | "stable" | "declining",
+    "city2Trend": "improving" | "stable" | "declining",
     "overallConfidence": "high" | "medium" | "low"
   },
   "categoryAnalysis": [
@@ -389,7 +389,7 @@ function parseOpusJudgeResponse(content: string): OpusJudgeResponse | null {
     }
 
     // Sanitize trend values
-    const validTrends = ['rising', 'stable', 'declining'];
+    const validTrends = ['improving', 'stable', 'declining'];
     if (!validTrends.includes(parsed.summaryOfFindings.city1Trend)) {
       parsed.summaryOfFindings.city1Trend = 'stable';
     }

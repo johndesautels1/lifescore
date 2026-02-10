@@ -716,9 +716,9 @@ interface JudgeReportData {
   };
   summaryOfFindings?: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
 }
@@ -739,9 +739,9 @@ interface GunComparisonData {
 // ============================================================================
 // HELPER: Get trend arrow emoji
 // ============================================================================
-function getTrendArrow(trend: 'rising' | 'stable' | 'declining' | undefined): string {
+function getTrendArrow(trend: 'improving' | 'stable' | 'declining' | undefined): string {
   switch (trend) {
-    case 'rising': return '📈';
+    case 'improving': return '📈';
     case 'declining': return '📉';
     case 'stable':
     default: return '➡️';
@@ -936,8 +936,8 @@ These metrics contributed most to ${winner}'s victory, accounting for the majori
 | ${judgeReport?.executiveSummary?.futureOutlook?.split('.').slice(0, 2).join('.') || 'Stable regulatory environment expected. Monitor upcoming legislative sessions for potential changes.'} | ${judgeReport?.categoryAnalysis?.[0]?.trendNotes || 'Current trajectory suggests maintaining relative position. Watch for policy reforms that could shift the balance.'} |
 
 **3-5 Year Forecast:**
-- ${city1Name}: ${city1Trend === 'rising' ? 'Likely to improve further' : city1Trend === 'declining' ? 'May face regulatory challenges' : 'Expected to maintain current levels'}
-- ${city2Name}: ${city2Trend === 'rising' ? 'Likely to improve further' : city2Trend === 'declining' ? 'May face regulatory challenges' : 'Expected to maintain current levels'}
+- ${city1Name}: ${city1Trend === 'improving' ? 'Likely to improve further' : city1Trend === 'declining' ? 'May face regulatory challenges' : 'Expected to maintain current levels'}
+- ${city2Name}: ${city2Trend === 'improving' ? 'Likely to improve further' : city2Trend === 'declining' ? 'May face regulatory challenges' : 'Expected to maintain current levels'}
 
 ---
 
@@ -2371,8 +2371,8 @@ function formatSectionFutureOutlook(
   const city1Trend = judgeReport?.summaryOfFindings?.city1Trend || 'stable';
   const city2Trend = judgeReport?.summaryOfFindings?.city2Trend || 'stable';
 
-  const getTrendIcon = (trend: string) => trend === 'rising' ? '📈' : trend === 'declining' ? '📉' : '➡️';
-  const getTrendColor = (trend: string) => trend === 'rising' ? '#10B981' : trend === 'declining' ? '#EF4444' : '#F59E0B';
+  const getTrendIcon = (trend: string) => trend === 'improving' ? '📈' : trend === 'declining' ? '📉' : '➡️';
+  const getTrendColor = (trend: string) => trend === 'improving' ? '#10B981' : trend === 'declining' ? '#EF4444' : '#F59E0B';
 
   return `
 ## SECTION 8: FUTURE OUTLOOK (Pages 56-59)
@@ -2388,10 +2388,10 @@ prompt="futuristic city skyline, timeline concept, progress and growth, modern a
 
 <smart-layout variant="circleStats">
 <item label="${city1Name}" value="${city1Trend.toUpperCase()}" color="${getTrendColor(city1Trend)}">
-${getTrendIcon(city1Trend)} ${city1Trend === 'rising' ? 'Improving freedom trajectory' : city1Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
+${getTrendIcon(city1Trend)} ${city1Trend === 'improving' ? 'Improving freedom trajectory' : city1Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
 </item>
 <item label="${city2Name}" value="${city2Trend.toUpperCase()}" color="${getTrendColor(city2Trend)}">
-${getTrendIcon(city2Trend)} ${city2Trend === 'rising' ? 'Improving freedom trajectory' : city2Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
+${getTrendIcon(city2Trend)} ${city2Trend === 'improving' ? 'Improving freedom trajectory' : city2Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
 </item>
 </smart-layout>
 
@@ -2412,13 +2412,13 @@ prompt="${city1Name} ${city1Country} future cityscape, modern development, optim
 
 <smart-layout variant="processSteps">
 <item label="📜 Legislative Pipeline">
-${city1Trend === 'rising' ? 'Pro-freedom reforms in progress. Deregulation likely.' : city1Trend === 'declining' ? 'New restrictions being debated. Increased regulation probable.' : 'No major changes expected. Status quo likely to continue.'}
+${city1Trend === 'improving' ? 'Pro-freedom reforms in progress. Deregulation likely.' : city1Trend === 'declining' ? 'New restrictions being debated. Increased regulation probable.' : 'No major changes expected. Status quo likely to continue.'}
 </item>
 <item label="🏛️ Political Climate">
-${city1Trend === 'rising' ? 'Leadership favoring individual freedom and economic openness.' : city1Trend === 'declining' ? 'Trend toward more government intervention and control.' : 'Balanced political environment with incremental changes.'}
+${city1Trend === 'improving' ? 'Leadership favoring individual freedom and economic openness.' : city1Trend === 'declining' ? 'Trend toward more government intervention and control.' : 'Balanced political environment with incremental changes.'}
 </item>
 <item label="💰 Economic Factors">
-${city1Trend === 'rising' ? 'Growing economy attracting talent and reducing regulatory burden.' : city1Trend === 'declining' ? 'Economic pressures may lead to increased taxation and regulation.' : 'Stable economy with predictable business environment.'}
+${city1Trend === 'improving' ? 'Growing economy attracting talent and reducing regulatory burden.' : city1Trend === 'declining' ? 'Economic pressures may lead to increased taxation and regulation.' : 'Stable economy with predictable business environment.'}
 </item>
 <item label="🌍 Global Position">
 ${city1Country === 'Portugal' || city1Country === 'Spain' || city1Country === 'Netherlands' ? 'EU regulations may override local freedoms in some areas.' : city1Country === 'United States' ? 'State/federal tensions may create uncertainty.' : 'Sovereign policy likely to remain consistent.'}
@@ -2442,13 +2442,13 @@ prompt="${city2Name} ${city2Country} future cityscape, modern development, urban
 
 <smart-layout variant="processSteps">
 <item label="📜 Legislative Pipeline">
-${city2Trend === 'rising' ? 'Pro-freedom reforms in progress. Deregulation likely.' : city2Trend === 'declining' ? 'New restrictions being debated. Increased regulation probable.' : 'No major changes expected. Status quo likely to continue.'}
+${city2Trend === 'improving' ? 'Pro-freedom reforms in progress. Deregulation likely.' : city2Trend === 'declining' ? 'New restrictions being debated. Increased regulation probable.' : 'No major changes expected. Status quo likely to continue.'}
 </item>
 <item label="🏛️ Political Climate">
-${city2Trend === 'rising' ? 'Leadership favoring individual freedom and economic openness.' : city2Trend === 'declining' ? 'Trend toward more government intervention and control.' : 'Balanced political environment with incremental changes.'}
+${city2Trend === 'improving' ? 'Leadership favoring individual freedom and economic openness.' : city2Trend === 'declining' ? 'Trend toward more government intervention and control.' : 'Balanced political environment with incremental changes.'}
 </item>
 <item label="💰 Economic Factors">
-${city2Trend === 'rising' ? 'Growing economy attracting talent and reducing regulatory burden.' : city2Trend === 'declining' ? 'Economic pressures may lead to increased taxation and regulation.' : 'Stable economy with predictable business environment.'}
+${city2Trend === 'improving' ? 'Growing economy attracting talent and reducing regulatory burden.' : city2Trend === 'declining' ? 'Economic pressures may lead to increased taxation and regulation.' : 'Stable economy with predictable business environment.'}
 </item>
 <item label="🌍 Global Position">
 ${city2Country === 'Portugal' || city2Country === 'Spain' || city2Country === 'Netherlands' ? 'EU regulations may override local freedoms in some areas.' : city2Country === 'United States' ? 'State/federal tensions may create uncertainty.' : 'Sovereign policy likely to remain consistent.'}
