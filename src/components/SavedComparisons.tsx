@@ -75,16 +75,31 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   }, []);
 
   // Sync reports AND comparisons from Supabase to ensure cross-device consistency
+  // Max 20 seconds — if Supabase is slow, show cached data and stop spinner
   const syncAndLoadComparisons = async () => {
     setIsSyncing(true);
 
-    try {
-      const dbSyncResult = await fullDatabaseSync();
+    const SYNC_TIMEOUT_MS = 20000; // 20 seconds max for entire sync
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Sync timed out')), SYNC_TIMEOUT_MS)
+    );
 
-      // Sync Gamma and Judge reports in parallel
-      const [gammaFromDb, judgeFromDb] = await Promise.all([
-        syncGammaReportsFromSupabase(),
-        syncJudgeReportsFromSupabase()
+    try {
+      const syncWork = async () => {
+        const dbSyncResult = await fullDatabaseSync();
+
+        // Sync Gamma and Judge reports in parallel
+        const [gammaFromDb, judgeFromDb] = await Promise.all([
+          syncGammaReportsFromSupabase(),
+          syncJudgeReportsFromSupabase()
+        ]);
+
+        return { dbSyncResult, gammaFromDb, judgeFromDb };
+      };
+
+      const { dbSyncResult, gammaFromDb, judgeFromDb } = await Promise.race([
+        syncWork(),
+        timeoutPromise
       ]);
 
       // Reload from localStorage (which fullDatabaseSync just updated)
@@ -101,7 +116,11 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
       }
     } catch (err) {
       console.error('[SavedComparisons] Sync error:', err);
-      showMessage('error', 'Sync failed - check connection');
+      loadComparisons(); // Still show cached data
+      const msg = err instanceof Error && err.message === 'Sync timed out'
+        ? 'Sync timed out — showing cached data'
+        : 'Sync failed — showing cached data';
+      showMessage('error', msg);
     } finally {
       setIsSyncing(false);
     }
