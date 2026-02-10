@@ -191,6 +191,10 @@ function buildJudgePrompt(
 ): string {
   const { city1: c1Data, city2: c2Data, llmsUsed, overallConsensusConfidence, disagreementSummary } = comparisonResult;
 
+  // Handle both enhanced (totalConsensusScore) and standard (totalScore) results
+  const c1Total = (c1Data as any).totalConsensusScore ?? (c1Data as any).totalScore ?? 0;
+  const c2Total = (c2Data as any).totalConsensusScore ?? (c2Data as any).totalScore ?? 0;
+
   // Build category summaries with metrics
   const categorySummaries: string[] = [];
   const allEvidence: string[] = [];
@@ -201,9 +205,10 @@ function buildJudgePrompt(
     const categoryName = categoryDef?.name || cat1.categoryId;
     const categoryWeight = categoryDef?.weight || 0;
 
-    // Handle both enhanced (averageConsensusScore) and standard (no average) results
-    const cat1Score = cat1.averageConsensusScore ?? cat1.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? 0), 0) / (cat1.metrics?.length || 1);
-    const cat2Score = cat2?.averageConsensusScore ?? cat2?.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? 0), 0) / (cat2?.metrics?.length || 1);
+    // Handle both enhanced (averageConsensusScore) and standard (averageScore) results
+    const getMetricScore = (m: any) => m.consensusScore ?? m.normalizedScore ?? 0;
+    const cat1Score = cat1.averageConsensusScore ?? (cat1 as any).averageScore ?? cat1.metrics?.reduce((sum: number, m: any) => sum + getMetricScore(m), 0) / (cat1.metrics?.length || 1);
+    const cat2Score = cat2?.averageConsensusScore ?? (cat2 as any)?.averageScore ?? cat2?.metrics?.reduce((sum: number, m: any) => sum + getMetricScore(m), 0) / (cat2?.metrics?.length || 1);
 
     let catSummary = `\n### ${categoryName} (Weight: ${categoryWeight}%)\n`;
     catSummary += `${city1}: ${(cat1Score ?? 0).toFixed(1)} | ${city2}: ${(cat2Score ?? 0).toFixed(1)}\n`;
@@ -214,8 +219,8 @@ function buildJudgePrompt(
     cat1.metrics.slice(0, 5).forEach(m => {
       const m2 = cat2?.metrics.find(x => x.metricId === m.metricId);
       const confidence = (m.confidenceLevel ?? 'moderate').toUpperCase();
-      const m1Score = m.consensusScore ?? 0;
-      const m2Score = m2?.consensusScore ?? 'N/A';
+      const m1Score = getMetricScore(m);
+      const m2Score = m2 ? getMetricScore(m2) : 'N/A';
       catSummary += `- ${m.metricId}: ${city1}=${m1Score} (Legal:${m.legalScore ?? 'N/A'}/Enf:${m.enforcementScore ?? 'N/A'}) | ${city2}=${m2Score} [${confidence}, σ=${m.standardDeviation ?? 0}]\n`;
 
       // Collect evidence (only exists in enhanced results)
@@ -259,8 +264,8 @@ You are not just analyzing scores - you are THE JUDGE who must:
 - City 2: ${city2} (${c2Data.country})
 
 ## CURRENT SCORES (from ${llmsUsed?.length || 1} LLM evaluators)
-- ${city1}: ${(c1Data.totalConsensusScore ?? 0).toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement ?? 'N/A'}%)
-- ${city2}: ${(c2Data.totalConsensusScore ?? 0).toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement ?? 'N/A'}%)
+- ${city1}: ${c1Total.toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement ?? 'N/A'}%)
+- ${city2}: ${c2Total.toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement ?? 'N/A'}%)
 - Overall Consensus Confidence: ${(overallConsensusConfidence ?? 'medium').toUpperCase()}
 ${disagreementSummary ? `- Disagreement Areas: ${disagreementSummary}` : ''}
 
