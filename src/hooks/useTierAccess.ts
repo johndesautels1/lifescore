@@ -231,22 +231,14 @@ export function useTierAccess(): TierAccessHook {
   const userEmail = user?.email?.toLowerCase() || '';
   const isDeveloper = checkAndCacheAdminStatus(userEmail) || getCachedAdminStatus();
 
-  // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet
-  // Also: if user is authenticated but profile failed to load, don't punish them with free tier
+  // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet.
+  // Everyone else: fail-closed to FREE if profile hasn't loaded yet.
   const profileTier = profile?.tier;
   const tier: UserTier = isDeveloper
     ? 'enterprise'
     : profileTier
       ? profileTier
-      : (user ? 'enterprise' : 'free'); // If logged in but no profile, assume enterprise (fail open)
-
-  if (isDeveloper) {
-    console.log('[useTierAccess] 🔓 ADMIN BYPASS ACTIVE for:', userEmail || 'cached', '→ SOVEREIGN tier');
-  } else if (user && !profileTier) {
-    console.log('[useTierAccess] ⚠️ Profile not loaded, failing open to SOVEREIGN for authenticated user');
-  } else if (authLoading) {
-    console.log('[useTierAccess] Auth loading, defaulting to:', tier);
-  }
+      : 'free'; // Fail-closed: no profile = free tier (prevents abuse if Supabase is down)
   const tierName = TIER_NAMES[tier];
   const limits = TIER_LIMITS[tier];
 
@@ -320,12 +312,12 @@ export function useTierAccess(): TierAccessHook {
 
     // Check actual usage from database
     if (!isSupabaseConfigured() || !profile?.id) {
-      // Fail open - allow if we can't check
+      // Fail-closed: deny if we can't verify usage (prevents abuse when DB is down)
       return {
-        allowed: true,
+        allowed: false,
         used: 0,
         limit,
-        remaining: limit,
+        remaining: 0,
         upgradeRequired: false,
         requiredTier: tier,
       };
@@ -377,12 +369,12 @@ export function useTierAccess(): TierAccessHook {
       };
     } catch (error) {
       console.error('[useTierAccess] Usage check error:', error);
-      // Fail open
+      // Fail-closed: deny on error to prevent unlimited free access when DB is down
       return {
-        allowed: true,
+        allowed: false,
         used: 0,
         limit,
-        remaining: limit,
+        remaining: 0,
         upgradeRequired: false,
         requiredTier: tier,
       };
