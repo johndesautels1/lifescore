@@ -174,8 +174,12 @@
 .score-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--orange, #f97316);
+  color: #1a202c;
   margin-top: 0.5rem;
+}
+
+[data-theme="dark"] .score-label {
+  color: var(--orange, #f97316);
 }
 
 /* Category Breakdown */
@@ -281,9 +285,18 @@
 }
 
 .category-weight {
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #ffffff;
+  background: #374151;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .category-weight {
+  background: #4b5563;
+  color: #f3f4f6;
 }
 
 .expand-icon {
@@ -850,23 +863,26 @@
 .metric-reasoning .reasoning-title {
   display: block;
   margin-bottom: 8px;
-  color: #333;
+  color: #1a202c;
+  font-weight: 700;
 }
 
 .metric-reasoning .reasoning-text {
   margin: 0;
-  color: #555;
+  color: #1f2937;
 }
 
 .metric-reasoning .reasoning-source {
   margin: 8px 0 0;
   font-size: 0.85em;
-  color: #777;
+  color: #374151;
+  font-weight: 500;
 }
 
 .metric-reasoning .reasoning-source a {
-  color: #4a90d9;
+  color: #1d4ed8;
   text-decoration: underline;
+  font-weight: 600;
 }
 
 [data-theme="dark"] .metric-reasoning {
