@@ -18,9 +18,11 @@ import './FreedomMetricsList.css';
 
 interface MetricCardProps {
   metric: FreedomExample;
+  winnerCity: string;
+  loserCity: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ metric }) => {
+const MetricCard: React.FC<MetricCardProps> = ({ metric, winnerCity, loserCity }) => {
   const scoreDiff = metric.winnerScore - metric.loserScore;
 
   return (
@@ -29,9 +31,9 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric }) => {
         <span className="metric-icon">{metric.metricIcon}</span>
         <span className="metric-name">{metric.metricName}</span>
         <div className="metric-scores">
-          <span className="winner-score">{metric.winnerScore.toFixed(0)}</span>
+          <span className="winner-score" title={winnerCity}>{metric.winnerScore.toFixed(0)}</span>
           <span className="score-separator">vs</span>
-          <span className="loser-score">{metric.loserScore.toFixed(0)}</span>
+          <span className="loser-score" title={loserCity}>{metric.loserScore.toFixed(0)}</span>
         </div>
       </div>
       <div className="metric-example">
@@ -53,7 +55,9 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric }) => {
 
 const FreedomMetricsList: React.FC<FreedomMetricsListProps> = ({
   metrics,
-  winnerCity: _winnerCity, // Reserved for future use
+  winnerCity,
+  loserCity,
+  categoryName,
 }) => {
   if (!metrics || metrics.length === 0) {
     return (
@@ -71,10 +75,21 @@ const FreedomMetricsList: React.FC<FreedomMetricsListProps> = ({
 
   return (
     <div className="freedom-metrics-list">
+      <div className="freedom-section-header">
+        <span className="section-winner-label">{winnerCity}</span>
+        <span className="section-category-context">leads in {categoryName}</span>
+      </div>
+      <div className="freedom-score-legend">
+        <span className="legend-winner">{winnerCity}</span>
+        <span className="legend-separator">vs</span>
+        <span className="legend-loser">{loserCity}</span>
+      </div>
       {sortedMetrics.map((metric) => (
         <MetricCard
           key={metric.metricId}
           metric={metric}
+          winnerCity={winnerCity}
+          loserCity={loserCity}
         />
       ))}
     </div>
