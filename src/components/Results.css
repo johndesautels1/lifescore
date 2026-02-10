@@ -153,6 +153,12 @@
   padding: 2rem;
 }
 
+/* P14: CSS containment for offscreen category sections */
+.category {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+}
+
 .breakdown-subtitle {
   font-weight: 700;
   color: #32CD32 !important;
@@ -771,4 +777,122 @@
 
 [data-theme="dark"] .save-message.error {
   color: #f87171;
+}
+
+/* P13: Extracted from inline styles — metric detail sections */
+.metric-details-missing {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.metric-details-missing .missing-icon {
+  font-size: 1.5em;
+  margin-right: 8px;
+}
+
+.metric-details-missing .missing-text {
+  color: #92400e;
+}
+
+[data-theme="dark"] .metric-details-missing {
+  background: #422006;
+  border-color: #d97706;
+}
+
+[data-theme="dark"] .metric-details-missing .missing-text {
+  color: #fbbf24;
+}
+
+.metric-reasoning {
+  background-color: #f8f9fa;
+  padding: 12px 16px;
+  margin-top: 4px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  line-height: 1.5;
+  border-left: 3px solid #4a90d9;
+}
+
+.metric-reasoning .reasoning-title {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.metric-reasoning .reasoning-text {
+  margin: 0;
+  color: #555;
+}
+
+.metric-reasoning .reasoning-source {
+  margin: 8px 0 0;
+  font-size: 0.85em;
+  color: #777;
+}
+
+.metric-reasoning .reasoning-source a {
+  color: #4a90d9;
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .metric-reasoning {
+  background-color: #1e293b;
+  border-left-color: #6ba3ff;
+}
+
+[data-theme="dark"] .metric-reasoning .reasoning-title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .metric-reasoning .reasoning-text {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .metric-reasoning .reasoning-source {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .metric-reasoning .reasoning-source a {
+  color: #6ba3ff;
+}
+
+.metric-row.clickable {
+  cursor: pointer;
+}
+
+.metric-click-hint {
+  font-size: 0.85em;
+  color: #FFFFFF;
+  margin-top: 8px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.results-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: #856404;
+}
+
+.results-warning strong,
+.results-warning span {
+  color: #856404;
+}
+
+[data-theme="dark"] .results-warning {
+  background-color: #422006;
+  border-color: #d97706;
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .results-warning strong,
+[data-theme="dark"] .results-warning span {
+  color: #fbbf24;
 }

@@ -153,6 +153,7 @@
   .tab-item {
     padding: 0.6rem 0.25rem;
     min-width: 50px;
+    min-height: 44px; /* WCAG touch target minimum */
   }
 
   .tab-icon {

@@ -434,6 +434,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app">
+      {/* A17: Skip-to-content link for keyboard users */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
+
       <Header
         onUpgradeClick={() => setShowPricingModal(true)}
         onCostDashboardClick={() => setShowCostDashboard(true)}
@@ -448,7 +453,7 @@ const AppContent: React.FC = () => {
         savedCount={savedCount}
       />
 
-      <main className="main-content">
+      <main className="main-content" id="main-content">
         <div className="container">
           {/* Live Badge - Always visible */}
           <div className="live-badge">

@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { trackError } from '../lib/errorTracking';
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundary] Uncaught error:', error, errorInfo);
+    trackError(error, 'ErrorBoundary', errorInfo.componentStack || undefined);
   }
 
   handleReload = () => {

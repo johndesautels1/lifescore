@@ -811,3 +811,65 @@
     text-align: center;
   }
 }
+
+/* 480px breakpoint for small mobile */
+@media (max-width: 480px) {
+  .gamma-section,
+  .in-app-visuals {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .gamma-section .section-title,
+  .in-app-visuals .section-title {
+    font-size: 1.05rem;
+  }
+
+  .section-description {
+    font-size: 0.85rem;
+  }
+
+  .generate-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+    min-height: 48px;
+  }
+
+  .format-btn {
+    padding: 0.625rem 0.75rem;
+    min-height: 44px;
+  }
+
+  .type-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    min-height: 48px;
+  }
+
+  .report-links {
+    gap: 0.5rem;
+  }
+
+  .report-link {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .embedded-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .gamma-embed-frame {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .gun-rights-option {
+    padding: 0.75rem;
+  }
+
+  .save-report-btn {
+    width: 100%;
+    min-height: 48px;
+  }
+}

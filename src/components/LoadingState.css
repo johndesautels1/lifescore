@@ -189,3 +189,33 @@
     min-height: 44px;
   }
 }
+
+@media (max-width: 480px) {
+  .loading-state {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .loading-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .loading-header p {
+    font-size: 0.85rem;
+  }
+
+  .progress-section {
+    max-width: 100%;
+  }
+
+  .current-category {
+    font-size: 1rem;
+  }
+
+  .loading-disclaimer {
+    padding: 0.75rem;
+  }
+
+  .loading-disclaimer p {
+    font-size: 0.8rem;
+  }
+}

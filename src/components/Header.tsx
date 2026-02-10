@@ -20,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
   const { tier } = useTierAccess();
 
   return (
-    <header className="header">
+    <header className="header" role="banner">
       <div className="header-container">
         {/* Theme Toggle - LEFT side */}
         <div className="header-left">

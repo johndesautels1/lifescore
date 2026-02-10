@@ -2,6 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// P10: Bundle analysis — run `ANALYZE=true npm run build` to generate report
+const analyze = process.env.ANALYZE === 'true';
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [

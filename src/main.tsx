@@ -4,6 +4,10 @@ import './index.css'
 import './styles/dark-mode.css'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
+import { initErrorTracking } from './lib/errorTracking.ts'
+
+// E10: Initialize global error tracking
+initErrorTracking();
 
 // Offline/online detection
 window.addEventListener('offline', () => {
@@ -18,11 +22,6 @@ window.addEventListener('offline', () => {
 window.addEventListener('online', () => {
   document.getElementById('offline-banner')?.remove();
 });
-
-// Global unhandled rejection handler
-window.onunhandledrejection = (event: PromiseRejectionEvent) => {
-  console.error('[Unhandled Promise Rejection]', event.reason);
-};
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -15,6 +15,75 @@ body {
   padding: 0;
 }
 
+/* A17: Skip-to-content link (WCAG 2.4.1) */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  padding: 0.75rem 1.5rem;
+  background: #0047AB;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+  top: 0;
+  outline: 3px solid #D4AF37;
+  outline-offset: 2px;
+}
+
+/* A18: Focus visible outlines for keyboard navigation (WCAG 2.4.7) */
+*:focus-visible {
+  outline: 3px solid #0047AB;
+  outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast focus for dark backgrounds */
+.header *:focus-visible,
+.tab-navigation *:focus-visible,
+.footer *:focus-visible,
+[data-theme="dark"] *:focus-visible {
+  outline-color: #D4AF37;
+}
+
+/* A19: Accessible disabled button styles (WCAG 1.4.3 contrast) */
+button:disabled,
+.btn:disabled {
+  opacity: 1 !important;
+  background: #d1d5db !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Preserve saved/saving btn styles when disabled */
+.save-btn.saved:disabled {
+  background: var(--success, #22c55e) !important;
+  color: white !important;
+}
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] .btn:disabled {
+  background: #374151 !important;
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .save-btn.saved:disabled {
+  background: var(--success, #22c55e) !important;
+  color: white !important;
+}
+
 /* Global reduced-motion preference (WCAG 2.3.3) */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -24,5 +93,65 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* A11y: Link underlines for non-nav links (WCAG 1.4.1) */
+main a:not(.btn):not(.report-link):not(.llm-add-btn) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+main a:not(.btn):not(.report-link):not(.llm-add-btn):hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Print styles */
+@media print {
+  .header,
+  .tab-navigation,
+  .footer,
+  .skip-to-content,
+  .olivia-chat-bubble,
+  .help-bubble,
+  .cookie-consent,
+  .save-comparison-bar,
+  .new-comparison,
+  .add-more-models,
+  .no-results-actions,
+  button:not(.category-header-btn) {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  .card {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  .winner-hero {
+    background: #f0f0f0 !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .winner-city,
+  .winner-score,
+  .winner-label,
+  .winner-difference {
+    color: black !important;
+  }
+
+  .bar-fill {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

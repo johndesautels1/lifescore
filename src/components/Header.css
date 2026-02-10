@@ -152,16 +152,29 @@
 }
 
 /* Header Right (User Account, Tier Badge, Money) */
-/* FIX: Reduced by 25% per user request */
+/* FIX: Use smaller sizes instead of scale() to preserve 44px touch targets */
 .header-right {
   position: absolute;
   top: 1rem;
   right: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  transform: scale(0.75);
-  transform-origin: top right;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.header-right button,
+.header-right a {
+  min-height: 36px;
+  min-width: 36px;
+}
+
+@media (max-width: 768px) {
+  .header-right button,
+  .header-right a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 .header {

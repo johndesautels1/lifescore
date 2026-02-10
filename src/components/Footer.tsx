@@ -18,7 +18,7 @@ const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
   };
 
   return (
-    <footer className="footer">
+    <footer className="footer" aria-label="Site footer">
       <div className="footer-container">
         <div className="footer-section">
           <h3>Company Information</h3>
