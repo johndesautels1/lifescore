@@ -7,7 +7,7 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   margin-bottom: 2rem;
-  overflow: hidden;
+  overflow: visible;  /* Fix: was 'hidden' — clipped action buttons (eye/delete) on mobile */
 }
 
 .saved-header-btn {

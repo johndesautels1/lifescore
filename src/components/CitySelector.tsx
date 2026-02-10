@@ -77,8 +77,10 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'na' | 'eu'>('all');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -113,14 +115,61 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
     onChange(metro);
     setIsOpen(false);
     setSearchQuery('');
+    setHighlightedIndex(-1);
   };
 
   const handleOpen = () => {
     if (!disabled) {
       setIsOpen(true);
+      setHighlightedIndex(-1);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
+
+  // Keyboard navigation for dropdown
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) return;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev < filteredMetros.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev > 0 ? prev - 1 : filteredMetros.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < filteredMetros.length) {
+          handleSelect(filteredMetros[highlightedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+        break;
+    }
+  };
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const items = listRef.current.querySelectorAll('.metro-option');
+      if (items[highlightedIndex]) {
+        items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex]);
+
+  // Reset highlighted index when search changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchQuery, activeTab]);
 
   return (
     <div className="metro-dropdown" ref={dropdownRef}>
@@ -146,7 +195,13 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
               placeholder="Search cities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="metro-search-input"
+              role="combobox"
+              aria-expanded={isOpen}
+              aria-autocomplete="list"
+              aria-controls={`${id}-listbox`}
+              aria-activedescendant={highlightedIndex >= 0 ? `${id}-option-${highlightedIndex}` : undefined}
             />
           </div>
 
@@ -174,15 +229,18 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
             </button>
           </div>
 
-          <div className="metro-list">
+          <div className="metro-list" ref={listRef} role="listbox" id={`${id}-listbox`}>
             {filteredMetros.length === 0 ? (
               <div className="metro-no-results">No cities found</div>
             ) : (
               filteredMetros.map((metro, index) => (
                 <button
                   key={`${metro.city}-${metro.country}-${index}`}
+                  id={`${id}-option-${index}`}
                   type="button"
-                  className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''}`}
+                  role="option"
+                  aria-selected={value?.city === metro.city && value?.country === metro.country}
+                  className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''} ${highlightedIndex === index ? 'highlighted' : ''}`}
                   onClick={() => handleSelect(metro)}
                 >
                   <span className="metro-city">{metro.city}</span>

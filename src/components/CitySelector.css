@@ -185,6 +185,12 @@
   background: rgba(15, 76, 129, 0.1);
 }
 
+.metro-option.highlighted {
+  background: var(--gray-100, #f3f4f6);
+  outline: 2px solid var(--sapphire, #0047AB);
+  outline-offset: -2px;
+}
+
 .metro-city {
   font-weight: 600;
   color: var(--gray-800);
