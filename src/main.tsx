@@ -1,31 +1,56 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Toaster } from 'react-hot-toast'
 import './index.css'
 import './styles/dark-mode.css'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { initErrorTracking } from './lib/errorTracking.ts'
+import { toastError } from './utils/toast'
 
-// E10: Initialize global error tracking
+// E10: Initialize global error tracking (internal buffer + reporting)
 initErrorTracking();
+
+// Global unhandled promise rejection handler — show toast to user
+window.onunhandledrejection = (event: PromiseRejectionEvent) => {
+  console.error('[Unhandled Rejection]', event.reason);
+  const message = event.reason instanceof Error
+    ? event.reason.message
+    : 'An unexpected error occurred';
+  toastError(message);
+};
+
+// Global error handler — show toast to user
+window.onerror = (_message, _source, _lineno, _colno, error) => {
+  console.error('[Global Error]', error);
+  if (error) {
+    toastError(error.message || 'An unexpected error occurred');
+  }
+};
 
 // Offline/online detection
 window.addEventListener('offline', () => {
-  const banner = document.createElement('div');
-  banner.id = 'offline-banner';
-  banner.setAttribute('role', 'alert');
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;text-align:center;padding:8px 16px;font-size:14px;font-family:system-ui,sans-serif;';
-  banner.textContent = 'No internet connection — some features may not work.';
-  document.body.prepend(banner);
+  toastError('No internet connection — some features may not work');
 });
 
 window.addEventListener('online', () => {
-  document.getElementById('offline-banner')?.remove();
+  import('./utils/toast').then(({ toastSuccess }) => {
+    toastSuccess('Back online');
+  });
 });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            maxWidth: '400px',
+            fontSize: '0.875rem',
+          },
+        }}
+      />
       <App />
     </ErrorBoundary>
   </StrictMode>,

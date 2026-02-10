@@ -3140,8 +3140,20 @@
     font-size: 0.75rem;
   }
 
+  /* Mobile #12 FIX: Dual score headers — wider columns + centered text */
   .metric-details-header.dual-header.expandable-header {
-    grid-template-columns: 1fr 80px 80px 40px 40px 40px 30px;
+    grid-template-columns: 1fr minmax(75px, 90px) minmax(75px, 90px) 35px 35px 35px 25px;
+  }
+
+  .metric-details-header.dual-header.expandable-header .metric-header-city {
+    max-width: none;
+    font-size: 0.65rem;
+    white-space: normal;
+    line-height: 1.2;
+    overflow: visible;
+    text-overflow: unset;
+    text-align: center;
+    padding: 0.2rem;
   }
 
   .metric-row-expandable {
@@ -3150,8 +3162,9 @@
     padding: 0.5rem;
   }
 
+  /* Mobile #12 FIX: Dual rows — match header column widths */
   .metric-row-expandable.dual-row {
-    grid-template-columns: 1fr 80px 80px 40px 40px 40px 30px;
+    grid-template-columns: 1fr minmax(75px, 90px) minmax(75px, 90px) 35px 35px 35px 25px;
   }
 
   .metric-row-expandable .metric-icon {
@@ -3211,6 +3224,88 @@
 
   .verification-label {
     min-width: 70px;
+  }
+}
+
+/* Mobile #16 FIX: 480px breakpoint — collapse 7-column grid to readable layout */
+@media (max-width: 480px) {
+  /* Simplified 4-column grid: metric name, city1 score, city2 score, expand */
+  .metric-details-header.expandable-header {
+    grid-template-columns: 1fr 50px 50px 25px;
+    gap: 0.15rem;
+    padding: 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  /* Hide delta, LLM count, and std deviation columns on small phones */
+  .metric-details-header.expandable-header .metric-header-delta,
+  .metric-details-header.expandable-header .metric-header-llms,
+  .metric-details-header.expandable-header .metric-header-stddev {
+    display: none;
+  }
+
+  .metric-row-expandable {
+    grid-template-columns: 1fr 50px 50px 25px;
+    gap: 0.15rem;
+    padding: 0.4rem;
+  }
+
+  .metric-row-expandable .metric-delta,
+  .metric-row-expandable .metric-llm-count,
+  .metric-row-expandable .metric-stddev {
+    display: none;
+  }
+
+  /* Dual mode at 480px — collapse to same simplified layout */
+  .metric-details-header.dual-header.expandable-header {
+    grid-template-columns: 1fr 55px 55px 25px;
+  }
+
+  .metric-details-header.dual-header.expandable-header .metric-header-delta,
+  .metric-details-header.dual-header.expandable-header .metric-header-llms,
+  .metric-details-header.dual-header.expandable-header .metric-header-stddev {
+    display: none;
+  }
+
+  .metric-row-expandable.dual-row {
+    grid-template-columns: 1fr 55px 55px 25px;
+  }
+
+  .metric-row-expandable.dual-row .metric-delta,
+  .metric-row-expandable.dual-row .metric-llm-count,
+  .metric-row-expandable.dual-row .metric-stddev {
+    display: none;
+  }
+
+  .metric-header-city {
+    max-width: none;
+    font-size: 0.65rem;
+    overflow: visible;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .metric-row-expandable .metric-name {
+    font-size: 0.7rem;
+  }
+
+  .metric-row-expandable .metric-score {
+    min-width: 45px;
+    height: 26px;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.3rem;
+  }
+
+  .metric-row-expandable .metric-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 0.8rem;
+  }
+
+  .expand-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
   }
 }
 
