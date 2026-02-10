@@ -19,6 +19,7 @@ import {
   getLocalEnhancedComparisons,
 } from '../services/savedComparisons';
 import { useDraggable } from '../hooks/useDraggable';
+import { toastSuccess } from '../utils/toast';
 import './OliviaChatBubble.css';
 
 interface OliviaChatBubbleProps {
@@ -223,11 +224,11 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
       } catch (err) {
         // User cancelled or error - copy to clipboard instead
         await navigator.clipboard.writeText(text);
-        alert('Conversation copied to clipboard!');
+        toastSuccess('Conversation copied to clipboard!');
       }
     } else {
       await navigator.clipboard.writeText(text);
-      alert('Conversation copied to clipboard!');
+      toastSuccess('Conversation copied to clipboard!');
     }
   }, [messages]);
 
