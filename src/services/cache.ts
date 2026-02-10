@@ -12,7 +12,7 @@
  * - Development: localStorage fallback
  */
 
-import type { LLMProvider, EnhancedComparisonResult, MetricConsensus, CityConsensusScore } from '../types/enhancedComparison';
+import type { LLMProvider, EnhancedComparisonResult, MetricConsensus } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 // ============================================================================
