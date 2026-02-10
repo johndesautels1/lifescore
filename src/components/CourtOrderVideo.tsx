@@ -51,11 +51,16 @@ interface CourtOrderVideoProps {
 
 const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   comparisonId,
-  winnerCity,
-  loserCity = 'City B',
+  winnerCity: propWinnerCity,
+  loserCity: propLoserCity = 'City B',
   winnerScore,
   freedomEducation,
 }) => {
+  // CRITICAL: Use freedomEducation's own city labels if available.
+  // The props may come from the overall verdict, but freedomEducation metrics
+  // are validated against actual per-metric scores on the server side.
+  const winnerCity = freedomEducation?.winnerCity || propWinnerCity;
+  const loserCity = freedomEducation?.loserCity || propLoserCity;
   const { user } = useAuth();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const {

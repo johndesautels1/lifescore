@@ -94,6 +94,8 @@ interface JudgeReport {
   comparisonId: string;
   city1: string;
   city2: string;
+  city1Country: string;
+  city2Country: string;
   videoUrl?: string;
   videoStatus: 'pending' | 'generating' | 'ready' | 'error';
   summaryOfFindings: {
@@ -275,7 +277,7 @@ ${categorySummaries.join('\n')}
 ${evidenceSection}
 ## TREND ANALYSIS INSTRUCTIONS
 For each city, assess whether freedom is:
-- **RISING**: Recent legal reforms, court decisions, or political shifts expanding freedom
+- **IMPROVING**: Recent legal reforms, court decisions, or political shifts expanding freedom
 - **STABLE**: No significant changes expected in the next 2-3 years
 - **DECLINING**: Recent restrictions, pending legislation, or political trends reducing freedom
 
@@ -618,7 +620,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         generatedAt: new Date().toISOString()
       };
 
-      console.log(`[JUDGE-REPORT] Freedom education data: ${freedomEducation.categories.length} categories, ${freedomEducation.categories.reduce((sum, c) => sum + c.winningMetrics.length, 0)} total metrics`);
+      // SAFEGUARD: Cross-reference freedomEducation metrics with actual comparison scores.
+      // The LLM may interpret "winner" as per-metric winner instead of overall winner,
+      // causing wrong city to be labeled as "leading" in a category.
+      const winnerIsCity1 = correctedRecommendation !== 'city2';
+      const getMetricScoreFE = (m: any) => m.consensusScore ?? m.normalizedScore ?? 0;
+
+      freedomEducation.categories.forEach(cat => {
+        const cat1 = comparisonResult.city1.categories.find((c: any) => c.categoryId === cat.categoryId);
+        const cat2 = comparisonResult.city2.categories.find((c: any) => c.categoryId === cat.categoryId);
+
+        cat.winningMetrics = cat.winningMetrics.filter(m => {
+          const m1 = cat1?.metrics.find((x: any) => x.metricId === m.metricId);
+          const m2 = cat2?.metrics.find((x: any) => x.metricId === m.metricId);
+          if (!m1 || !m2) return false;
+
+          const city1Score = getMetricScoreFE(m1);
+          const city2Score = getMetricScoreFE(m2);
+
+          // Force correct: winnerScore = overall winner's actual score
+          m.winnerScore = Math.round(winnerIsCity1 ? city1Score : city2Score);
+          m.loserScore = Math.round(winnerIsCity1 ? city2Score : city1Score);
+
+          // Only keep metrics where the overall winner actually leads by 10+
+          return m.winnerScore - m.loserScore >= 10;
+        });
+      });
+
+      // Remove categories with no valid winning metrics
+      freedomEducation.categories = freedomEducation.categories.filter(cat => cat.winningMetrics.length > 0);
+
+      console.log(`[JUDGE-REPORT] Freedom education data (validated): ${freedomEducation.categories.length} categories, ${freedomEducation.categories.reduce((sum, c) => sum + c.winningMetrics.length, 0)} total metrics`);
     }
 
     const judgeReport: JudgeReport = {
@@ -628,6 +660,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       comparisonId: comparisonResult.comparisonId,
       city1,
       city2,
+      city1Country: comparisonResult.city1.country || '',
+      city2Country: comparisonResult.city2.country || '',
       videoStatus: 'pending', // Will be updated by Phase C HeyGen integration
       summaryOfFindings: {
         city1Score: Math.round(city1Score),

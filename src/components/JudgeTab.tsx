@@ -76,6 +76,8 @@ export interface JudgeReport {
   comparisonId: string;
   city1: string;
   city2: string;
+  city1Country?: string;
+  city2Country?: string;
   videoUrl?: string;
   videoStatus: 'pending' | 'generating' | 'ready' | 'error' | string;
   summaryOfFindings: {
@@ -172,6 +174,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           comparisonId: fullReport.comparisonId,
           city1: fullReport.city1,
           city2: fullReport.city2,
+          city1Country: fullReport.city1Country,
+          city2Country: fullReport.city2Country,
           videoUrl: fullReport.videoUrl,
           videoStatus: fullReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
@@ -202,6 +206,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           comparisonId: savedJudgeReport.comparisonId,
           city1: savedJudgeReport.city1,
           city2: savedJudgeReport.city2,
+          city1Country: (savedJudgeReport as any).city1Country,
+          city2Country: (savedJudgeReport as any).city2Country,
           videoUrl: savedJudgeReport.videoUrl,
           videoStatus: savedJudgeReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
@@ -1119,15 +1125,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // This prevents showing wrong cities (e.g., Bern/Mesa for Baltimore/Bratislava)
   const city1Name = judgeReport?.city1 || comparisonResult?.city1?.city || 'City 1';
   const city2Name = judgeReport?.city2 || comparisonResult?.city2?.city || 'City 2';
-  // FIX 2026-02-10: Country must match the city being displayed, not the active comparison
-  // When viewing a saved report for Tampa vs Berlin while Zurich vs London is active,
-  // comparisonResult.city1.country would show "Switzerland" instead of "USA"
-  const city1Country = comparisonResult?.city1?.city === city1Name
-    ? comparisonResult.city1.country
-    : ALL_METROS.find(m => m.city === city1Name)?.country || '';
-  const city2Country = comparisonResult?.city2?.city === city2Name
-    ? comparisonResult.city2.country
-    : ALL_METROS.find(m => m.city === city2Name)?.country || '';
+  // FIX 2026-02-10: Country must come from the SAME source as the city name.
+  // Priority: judgeReport's own country > matching comparisonResult > ALL_METROS lookup
+  const city1Country = judgeReport?.city1Country
+    || (comparisonResult?.city1?.city === city1Name ? comparisonResult.city1.country : '')
+    || ALL_METROS.find(m => m.city === city1Name)?.country
+    || '';
+  const city2Country = judgeReport?.city2Country
+    || (comparisonResult?.city2?.city === city2Name ? comparisonResult.city2.country : '')
+    || ALL_METROS.find(m => m.city === city2Name)?.country
+    || '';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
   return (
@@ -1485,7 +1492,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1 && 'totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult?.city1 && 'totalScore' in comparisonResult.city1 ? comparisonResult.city1.totalScore : 0))}
+                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1?.city === city1Name ? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult.city1 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
@@ -1516,7 +1523,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2 && 'totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult?.city2 && 'totalScore' in comparisonResult.city2 ? comparisonResult.city2.totalScore : 0))}
+                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2?.city === city2Name ? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult.city2 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
