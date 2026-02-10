@@ -545,11 +545,11 @@ export async function getSharedReport(
   requireDatabase();
 
   try {
-    // Get share record
+    // Get share record via public view (excludes password_hash for safety)
     const { data: share, error: shareError } = await withTimeout(
       supabase
-        .from('report_shares')
-        .select('*')
+        .from('report_shares_public' as any)
+        .select('id, report_id, share_token, expires_at, max_views, view_count, requires_email, allowed_emails, created_at, last_accessed_at')
         .eq('share_token', shareToken)
         .single()
     );
