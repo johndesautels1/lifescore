@@ -266,6 +266,7 @@ You are not just analyzing scores - you are THE JUDGE who must:
 ## CURRENT SCORES (from ${llmsUsed?.length || 1} LLM evaluators)
 - ${city1}: ${c1Total.toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement ?? 'N/A'}%)
 - ${city2}: ${c2Total.toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement ?? 'N/A'}%)
+- **WINNER: ${c1Total >= c2Total ? city1 : city2}** (higher score = more freedom = the winner you MUST recommend)
 - Overall Consensus Confidence: ${(overallConsensusConfidence ?? 'medium').toUpperCase()}
 ${disagreementSummary ? `- Disagreement Areas: ${disagreementSummary}` : ''}
 
@@ -334,7 +335,7 @@ Provide a comprehensive Judge's Report in the following JSON format:
 
 ## CRITICAL INSTRUCTIONS
 1. You MUST provide analysis for ALL 6 categories: personal_freedom, housing_property, business_work, transportation, policing_legal, speech_lifestyle
-2. Your recommendation can OVERRIDE the raw scores if trend analysis suggests the "losing" city is actually better long-term
+2. **WINNER DETERMINATION**: The city with the HIGHER score in the CURRENT SCORES section above MUST be your recommendation. The scores were computed by multiple LLM evaluators across 100 metrics and represent the definitive ranking. You MUST NOT override the winner. Your role is to EXPLAIN why the winning city scored higher, add trend context, and provide rich analysis — NOT to second-guess the computed scores. If scores are tied, you may choose either.
 3. Be specific - cite particular laws, recent changes, or enforcement patterns you know about
 4. The keyFactors should be the 5 most important considerations, not just a summary of categories
 5. Consider the user's likely priorities: personal autonomy, property rights, business freedom, mobility, legal protection, self-expression
@@ -531,9 +532,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const city1Score = comparisonResult.city1.totalConsensusScore ?? (comparisonResult.city1 as any).totalScore ?? 0;
     const city2Score = comparisonResult.city2.totalConsensusScore ?? (comparisonResult.city2 as any).totalScore ?? 0;
 
+    // SAFEGUARD: Force-correct the recommendation if the LLM picked the wrong winner.
+    // The computed scores from multiple LLM evaluators are the ground truth.
+    let correctedRecommendation = opusResult.executiveSummary.recommendation;
+    if (city1Score !== city2Score) {
+      const scoreWinner: 'city1' | 'city2' = city1Score > city2Score ? 'city1' : 'city2';
+      if (correctedRecommendation !== scoreWinner) {
+        console.warn(`[JUDGE-REPORT] LLM recommended ${correctedRecommendation} but scores say ${scoreWinner} (${city1Score} vs ${city2Score}). Correcting.`);
+        correctedRecommendation = scoreWinner;
+      }
+    }
+    opusResult.executiveSummary.recommendation = correctedRecommendation;
+
     // Determine winner and loser cities
-    const winnerCity = opusResult.executiveSummary.recommendation === 'city1' ? city1 : city2;
-    const loserCity = opusResult.executiveSummary.recommendation === 'city1' ? city2 : city1;
+    const winnerCity = correctedRecommendation === 'city1' ? city1 : city2;
+    const loserCity = correctedRecommendation === 'city1' ? city2 : city1;
 
     // Build freedomEducation data from Opus response
     let freedomEducation: FreedomEducationOutput | undefined;
