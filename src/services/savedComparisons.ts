@@ -1356,12 +1356,15 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
       .select('*')
       .eq('report_id', reportId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[savedComparisons] Failed to fetch full Judge report:', error);
       return null;
     }
+
+    // No report found — valid "not yet generated" case
+    if (!data) return null;
 
     if (!data) {
       console.log('[savedComparisons] Judge report not found:', reportId);
