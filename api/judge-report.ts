@@ -202,8 +202,8 @@ function buildJudgePrompt(
     const categoryWeight = categoryDef?.weight || 0;
 
     // Handle both enhanced (averageConsensusScore) and standard (no average) results
-    const cat1Score = cat1.averageConsensusScore ?? cat1.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? m.normalizedScore ?? 0), 0) / (cat1.metrics?.length || 1);
-    const cat2Score = cat2?.averageConsensusScore ?? cat2?.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? m.normalizedScore ?? 0), 0) / (cat2?.metrics?.length || 1);
+    const cat1Score = cat1.averageConsensusScore ?? cat1.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? 0), 0) / (cat1.metrics?.length || 1);
+    const cat2Score = cat2?.averageConsensusScore ?? cat2?.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? 0), 0) / (cat2?.metrics?.length || 1);
 
     let catSummary = `\n### ${categoryName} (Weight: ${categoryWeight}%)\n`;
     catSummary += `${city1}: ${(cat1Score ?? 0).toFixed(1)} | ${city2}: ${(cat2Score ?? 0).toFixed(1)}\n`;
