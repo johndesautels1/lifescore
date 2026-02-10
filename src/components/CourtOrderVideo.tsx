@@ -15,6 +15,7 @@ import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { saveCourtOrder } from '../services/savedComparisons';
+import { toastSuccess, toastError } from '../utils/toast';
 import FreedomCategoryTabs from './FreedomCategoryTabs';
 import FreedomMetricsList from './FreedomMetricsList';
 import FreedomHeroFooter from './FreedomHeroFooter';
@@ -212,23 +213,27 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   // ══════════════════════════════════════════════════════════════════════════
 
   // Save Court Order via centralized service (localStorage + Supabase database)
+  // Deferred to avoid blocking UI (INP fix: was blocking 3.5s with sync alert + localStorage)
   const handleSaveCourtOrder = () => {
     if (!video?.videoUrl) return;
 
-    try {
-      saveCourtOrder({
-        comparisonId,
-        winnerCity,
-        winnerScore,
-        videoUrl: video.videoUrl,
-        savedAt: new Date().toISOString(),
-      });
-      console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
-      alert('Court Order saved successfully!');
-    } catch (error) {
-      console.error('[CourtOrderVideo] Failed to save Court Order:', error);
-      alert('Failed to save Court Order. Please try again.');
-    }
+    // Defer heavy work so the browser can paint the button press immediately
+    setTimeout(() => {
+      try {
+        saveCourtOrder({
+          comparisonId,
+          winnerCity,
+          winnerScore,
+          videoUrl: video.videoUrl,
+          savedAt: new Date().toISOString(),
+        });
+        console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
+        toastSuccess('Court Order saved successfully!');
+      } catch (error) {
+        console.error('[CourtOrderVideo] Failed to save Court Order:', error);
+        toastError('Failed to save Court Order. Please try again.');
+      }
+    }, 0);
   };
 
   // Download Court Order video
@@ -277,7 +282,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(video.videoUrl);
-        alert('Video URL copied to clipboard!');
+        toastSuccess('Video URL copied to clipboard!');
         console.log('[CourtOrderVideo] URL copied to clipboard');
       }
     } catch (err) {
@@ -285,9 +290,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(video.videoUrl);
-        alert('Video URL copied to clipboard!');
+        toastSuccess('Video URL copied to clipboard!');
       } catch {
-        alert('Unable to share. Video URL: ' + video.videoUrl);
+        toastError('Unable to share video');
       }
     }
   };

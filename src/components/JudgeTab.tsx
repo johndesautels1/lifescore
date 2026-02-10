@@ -45,6 +45,7 @@ async function withTimeout<T>(
     maxRetries: 3,
   });
 }
+import { toastSuccess, toastError } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
@@ -855,16 +856,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     console.log('[JudgeTab] Save report requested:', judgeReport.reportId);
 
-    // Save to localStorage
+    // Save to localStorage (deferred to avoid blocking UI)
     saveReportToLocalStorage(judgeReport);
 
     // Save to Supabase for authenticated users
     const savedToCloud = await saveReportToSupabase(judgeReport);
 
     if (savedToCloud) {
-      alert(`Report ${judgeReport.reportId} saved to your account!`);
+      toastSuccess(`Report ${judgeReport.reportId} saved to your account!`);
     } else {
-      alert(`Report ${judgeReport.reportId} saved locally. Sign in to save to cloud.`);
+      toastSuccess(`Report ${judgeReport.reportId} saved locally. Sign in to save to cloud.`);
     }
   };
 
@@ -891,7 +892,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       console.log('[JudgeTab] PDF downloaded:', judgeReport.reportId);
     } else if (format === 'video') {
       if (!judgeReport.videoUrl) {
-        alert('Video not yet available. Generate video report first.');
+        toastError('Video not yet available. Generate video report first.');
         return;
       }
       // Download video URL
@@ -927,9 +928,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       }).catch(console.error);
     } else {
       navigator.clipboard.writeText(summary).then(() => {
-        alert('Report summary copied to clipboard!');
+        toastSuccess('Report summary copied to clipboard!');
       }).catch(() => {
-        alert('Unable to copy to clipboard.');
+        toastError('Unable to copy to clipboard.');
       });
     }
   };
