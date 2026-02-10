@@ -738,6 +738,8 @@ export async function getApiCostSummary(
       .from('api_cost_records')
       .select('*')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(500)
   );
 
   if (error) {

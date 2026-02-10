@@ -698,6 +698,7 @@ export async function getReportAnalytics(
         .select('*')
         .eq('report_id', reportId)
         .order('accessed_at', { ascending: false })
+        .limit(100)
     );
 
     if (error) throw error;

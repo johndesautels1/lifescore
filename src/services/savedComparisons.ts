@@ -917,7 +917,8 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
         .from('gamma_reports')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(100),
       30000,
       'Gamma reports sync'
     );
@@ -1163,7 +1164,8 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
         .from('judge_reports')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(100),
       30000,
       'Judge reports sync'
     );
