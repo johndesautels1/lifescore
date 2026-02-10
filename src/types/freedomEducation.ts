@@ -103,6 +103,8 @@ export interface FreedomCategoryTabsProps {
 export interface FreedomMetricsListProps {
   metrics: FreedomExample[];
   winnerCity: string;
+  loserCity: string;
+  categoryName: string;
 }
 
 /**

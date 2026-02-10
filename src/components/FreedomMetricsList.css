@@ -11,10 +11,90 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 280px;
+  max-height: 320px;
   overflow-y: auto;
   padding-right: 0.5rem;
   margin-bottom: 1rem;
+}
+
+/* ============================================================================
+   SECTION HEADER - City Winner Label
+   ============================================================================ */
+
+.freedom-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.section-winner-label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #d4af37;
+  letter-spacing: -0.01em;
+}
+
+.section-category-context {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: lowercase;
+}
+
+/* Light mode */
+[data-theme="light"] .section-winner-label,
+:root:not([data-theme="dark"]) .section-winner-label {
+  color: #92710a;
+}
+
+[data-theme="light"] .section-category-context,
+:root:not([data-theme="dark"]) .section-category-context {
+  color: #4b5563;
+}
+
+/* Score Legend - City Names Above Scores */
+.freedom-score-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legend-winner {
+  color: #d4af37;
+}
+
+.legend-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.6rem;
+}
+
+.legend-loser {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Light mode legend */
+[data-theme="light"] .legend-winner,
+:root:not([data-theme="dark"]) .legend-winner {
+  color: #92710a;
+}
+
+[data-theme="light"] .legend-separator,
+:root:not([data-theme="dark"]) .legend-separator {
+  color: #9ca3af;
+}
+
+[data-theme="light"] .legend-loser,
+:root:not([data-theme="dark"]) .legend-loser {
+  color: #6b7280;
 }
 
 /* Custom scrollbar */
@@ -151,6 +231,52 @@
 }
 
 /* ============================================================================
+   LIGHT MODE - METRIC CARDS
+   ============================================================================ */
+
+[data-theme="light"] .freedom-metric-card,
+:root:not([data-theme="dark"]) .freedom-metric-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(146, 113, 10, 0.2);
+}
+
+[data-theme="light"] .freedom-metric-card:hover,
+:root:not([data-theme="dark"]) .freedom-metric-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(146, 113, 10, 0.4);
+}
+
+[data-theme="light"] .metric-name,
+:root:not([data-theme="dark"]) .metric-name {
+  color: #1a202c;
+}
+
+[data-theme="light"] .winner-score,
+:root:not([data-theme="dark"]) .winner-score {
+  color: #92710a;
+}
+
+[data-theme="light"] .score-separator,
+:root:not([data-theme="dark"]) .score-separator {
+  color: #9ca3af;
+}
+
+[data-theme="light"] .loser-score,
+:root:not([data-theme="dark"]) .loser-score {
+  color: #6b7280;
+}
+
+[data-theme="light"] .example-text,
+:root:not([data-theme="dark"]) .example-text {
+  color: #374151;
+}
+
+[data-theme="light"] .freedom-metrics-empty,
+:root:not([data-theme="dark"]) .freedom-metrics-empty {
+  color: #6b7280;
+}
+
+/* ============================================================================
    EMPTY STATE
    ============================================================================ */
 
@@ -181,9 +307,26 @@
 
 @media (max-width: 768px) {
   .freedom-metrics-list {
-    max-height: 220px;
+    max-height: 260px;
     gap: 0.6rem;
     padding-right: 0.25rem;
+  }
+
+  .freedom-section-header {
+    padding: 0.35rem 0.5rem;
+  }
+
+  .section-winner-label {
+    font-size: 0.9rem;
+  }
+
+  .section-category-context {
+    font-size: 0.7rem;
+  }
+
+  .freedom-score-legend {
+    font-size: 0.6rem;
+    padding: 0 0.5rem;
   }
 
   .freedom-metric-card {
