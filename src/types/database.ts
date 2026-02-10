@@ -797,6 +797,7 @@ export interface ApiCostRecord {
   olivia_total: number;
   tts_total: number;
   avatar_total: number;
+  kling_total: number;
   grand_total: number;
 
   // Full breakdown JSON for detailed view
@@ -823,6 +824,7 @@ export interface ApiCostRecordInsert {
   olivia_total: number;
   tts_total: number;
   avatar_total: number;
+  kling_total: number;
   grand_total: number;
   cost_breakdown: Record<string, unknown>;
 }

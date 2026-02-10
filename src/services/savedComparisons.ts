@@ -132,7 +132,7 @@ const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
 const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
 const MAX_SAVED = 100; // Standard comparisons
-const MAX_SAVED_ENHANCED = 20; // Enhanced comparisons are much larger (~200KB each)
+const MAX_SAVED_ENHANCED = 5; // Enhanced comparisons are ~200KB each; keep few in localStorage (rest in Supabase)
 
 /**
  * Safely save to localStorage with quota handling
@@ -685,19 +685,70 @@ export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
 }
 
 /**
+ * Strip heavy text fields from enhanced comparisons to reduce localStorage size.
+ * Each LLMMetricScore has explanation/evidence/sources that can be 1-5KB.
+ * With 100 metrics × 2 cities × 5 LLMs = 1000 objects, this adds up fast.
+ * Numeric scores are preserved — only verbose text is removed.
+ */
+function slimEnhancedForLocalStorage(comparisons: SavedEnhancedComparison[]): SavedEnhancedComparison[] {
+  return comparisons.map(comp => ({
+    ...comp,
+    result: {
+      ...comp.result,
+      city1: {
+        ...comp.result.city1,
+        categories: comp.result.city1.categories.map(cat => ({
+          ...cat,
+          metrics: cat.metrics.map(m => ({
+            ...m,
+            judgeExplanation: '', // Strip judge explanation (~100 chars each × 100 metrics)
+            llmScores: m.llmScores.map(s => ({
+              ...s,
+              explanation: undefined,  // Strip LLM explanation text
+              evidence: undefined,     // Strip evidence citations
+              sources: undefined,      // Strip source URLs
+              rawValue: typeof s.rawValue === 'string' ? null : s.rawValue, // Strip long string values
+            })),
+          })),
+        })),
+      },
+      city2: {
+        ...comp.result.city2,
+        categories: comp.result.city2.categories.map(cat => ({
+          ...cat,
+          metrics: cat.metrics.map(m => ({
+            ...m,
+            judgeExplanation: '',
+            llmScores: m.llmScores.map(s => ({
+              ...s,
+              explanation: undefined,
+              evidence: undefined,
+              sources: undefined,
+              rawValue: typeof s.rawValue === 'string' ? null : s.rawValue,
+            })),
+          })),
+        })),
+      },
+    },
+  }));
+}
+
+/**
  * Save enhanced comparisons to localStorage
  * Returns true if save succeeded, false if failed
  */
 function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): boolean {
-  // Enforce lower limit for enhanced comparisons (they're ~200KB each)
+  // Enforce lower limit for enhanced comparisons
   const trimmed = comparisons.slice(0, MAX_SAVED_ENHANCED);
   if (comparisons.length > MAX_SAVED_ENHANCED) {
     console.log(`[savedComparisons] Trimmed enhanced comparisons from ${comparisons.length} to ${MAX_SAVED_ENHANCED}`);
   }
 
-  const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(trimmed));
+  // Strip heavy text fields to fit within localStorage 5MB limit
+  const slim = slimEnhancedForLocalStorage(trimmed);
+  const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(slim));
   if (success) {
-    console.log('[savedComparisons] Saved', trimmed.length, 'enhanced comparisons to localStorage');
+    console.log('[savedComparisons] Saved', slim.length, 'enhanced comparisons to localStorage');
   } else {
     console.error('[savedComparisons] FAILED to save enhanced comparisons to localStorage');
   }
