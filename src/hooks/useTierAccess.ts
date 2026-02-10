@@ -190,6 +190,8 @@ function getCurrentPeriodStart(): string {
 // Admin status cache key — server-side /api/admin-check result cached in localStorage
 const ADMIN_CACHE_KEY = 'lifescore_admin_status';
 const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+// Grace period: if cache expired but server check fails, trust the old value for 1 hour
+const ADMIN_CACHE_GRACE_MS = 60 * 60 * 1000;
 
 interface AdminCache {
   isAdmin: boolean;
@@ -198,18 +200,23 @@ interface AdminCache {
 
 /**
  * Read cached admin status from localStorage.
- * Returns null if cache is missing or expired.
+ * Returns null if cache is missing or expired beyond grace period.
+ * If within grace period (expired but recent), still returns the value
+ * so the user isn't locked out while we try to reach the server.
  */
-function getCachedAdminStatus(): boolean | null {
+function getCachedAdminStatus(graceMode = false): boolean | null {
   try {
     const raw = localStorage.getItem(ADMIN_CACHE_KEY);
     if (!raw) return null;
     const parsed: AdminCache = JSON.parse(raw);
-    if (Date.now() - parsed.timestamp > ADMIN_CACHE_TTL_MS) {
-      localStorage.removeItem(ADMIN_CACHE_KEY);
-      return null;
-    }
-    return parsed.isAdmin;
+    const age = Date.now() - parsed.timestamp;
+    // Fresh cache — always trust
+    if (age <= ADMIN_CACHE_TTL_MS) return parsed.isAdmin;
+    // Grace mode — trust the old value if within grace period
+    if (graceMode && age <= ADMIN_CACHE_GRACE_MS) return parsed.isAdmin;
+    // Truly expired — remove
+    localStorage.removeItem(ADMIN_CACHE_KEY);
+    return null;
   } catch {
     return null;
   }
@@ -241,28 +248,47 @@ export function useTierAccess(): TierAccessHook {
       return;
     }
 
-    // Check cache first
+    // Check fresh cache first (within 5-min TTL)
     const cached = getCachedAdminStatus();
     if (cached !== null) {
       setIsDeveloper(cached);
       return;
     }
 
-    // Fetch from server
+    // Cache expired — fetch from server, but use grace period as fallback
+    const graceValue = getCachedAdminStatus(true); // trust old value for up to 1 hour
+    if (graceValue === true) {
+      // Keep them as admin while we verify in background
+      setIsDeveloper(true);
+    }
+
     let cancelled = false;
     (async () => {
       try {
         const authHeaders = await getAuthHeaders();
-        if (!authHeaders.Authorization) return;
-        const res = await fetch('/api/admin-check', { headers: authHeaders });
+        if (!authHeaders.Authorization) {
+          // Supabase session unavailable — trust grace value, don't lock out
+          // Will retry on next render when auth recovers
+          return;
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const res = await fetch('/api/admin-check', {
+          headers: authHeaders,
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
         if (!res.ok || cancelled) return;
         const data = await res.json();
         const isAdmin = data.isAdmin === true;
         setCachedAdminStatus(isAdmin);
         if (!cancelled) setIsDeveloper(isAdmin);
       } catch {
-        // Fail-closed: not admin on error
-        if (!cancelled) setIsDeveloper(false);
+        // On network/timeout error: trust grace value, don't lock out
+        // Only set false if there was never a cached true value
+        if (!cancelled && graceValue !== true) {
+          setIsDeveloper(false);
+        }
       }
     })();
 
