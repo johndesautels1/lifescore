@@ -63,9 +63,10 @@ CREATE POLICY "judge_reports_service_role" ON public.judge_reports
 DROP POLICY IF EXISTS "Videos are publicly readable" ON public.avatar_videos;
 DROP POLICY IF EXISTS "Service role can manage videos" ON public.avatar_videos;
 
--- From 20260125_create_judge_tables.sql
+-- From 20260125_create_judge_tables.sql (name variations found in DB)
 DROP POLICY IF EXISTS "Public can view completed videos" ON public.avatar_videos;
 DROP POLICY IF EXISTS "Service role has full access to avatar_videos" ON public.avatar_videos;
+DROP POLICY IF EXISTS "Service role full access avatar_videos" ON public.avatar_videos;
 
 -- Re-create ONE canonical set
 -- Only completed videos should be publicly readable (not pending/failed)

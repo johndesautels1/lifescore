@@ -21,9 +21,11 @@ DROP POLICY IF EXISTS "Anyone can view shares by token" ON public.report_shares;
 
 -- Create a secure view that excludes password_hash.
 -- App code should query this view for public/anonymous share lookups.
-CREATE OR REPLACE VIEW public.report_shares_public
-  WITH (security_invoker = on)
-AS
+-- NOTE: This view intentionally uses SECURITY DEFINER (the default).
+-- Anonymous users need to look up shared reports by token, but auth.uid() is null
+-- for anon users so security_invoker=on would block all access.
+-- The view IS the security boundary — it hides password_hash.
+CREATE OR REPLACE VIEW public.report_shares_public AS
   SELECT
     id,
     report_id,
