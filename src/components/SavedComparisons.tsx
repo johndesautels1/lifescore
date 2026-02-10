@@ -8,6 +8,7 @@ import type { ComparisonResult } from '../types/metrics';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
+  getAllEnhancedComparisons,
   deleteComparisonLocal,
   deleteEnhancedComparisonLocal,
   updateNicknameLocal,
@@ -127,28 +128,41 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     }
   };
 
-  const loadComparisons = () => {
-    // FIX 2026-01-26: Load BOTH standard and enhanced comparisons
+  const loadComparisons = async () => {
+    // Step 1: Show localStorage data instantly (no waiting)
     const standardComparisons = getLocalComparisons().map(c => ({ ...c, isEnhanced: false }));
-
-    // Enhanced comparisons - already validated by getLocalEnhancedComparisons
-    const enhancedComparisons = getLocalEnhancedComparisons()
+    const localEnhanced = getLocalEnhancedComparisons()
       .map(c => ({
         ...c,
         result: c.result as unknown as ComparisonResult,
         isEnhanced: true
       }));
 
-    // Merge and sort by savedAt date (newest first)
-    const allComparisons = [...standardComparisons, ...enhancedComparisons]
+    const localAll = [...standardComparisons, ...localEnhanced]
       .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 
-    console.log('[SavedComparisons] Loaded', standardComparisons.length, 'standard +', enhancedComparisons.length, 'enhanced comparisons');
-
-    setComparisons(allComparisons);
+    setComparisons(localAll);
     setGammaReports(getSavedGammaReports());
     setJudgeReports(getSavedJudgeReports());
     setSyncStatus(getSyncStatus());
+
+    // Step 2: Fetch older comparisons from Supabase in background (non-blocking)
+    try {
+      const allEnhanced = await getAllEnhancedComparisons();
+      if (allEnhanced.length > localEnhanced.length) {
+        const enhancedComparisons = allEnhanced.map(c => ({
+          ...c,
+          result: c.result as unknown as ComparisonResult,
+          isEnhanced: true
+        }));
+        const merged = [...standardComparisons, ...enhancedComparisons]
+          .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+        setComparisons(merged);
+        console.log('[SavedComparisons] Loaded', standardComparisons.length, 'standard +', allEnhanced.length, 'enhanced (local + Supabase)');
+      }
+    } catch {
+      // Supabase unavailable — local data already shown
+    }
   };
 
   const handleDeleteGammaReport = (id: string) => {

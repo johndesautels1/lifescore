@@ -685,74 +685,74 @@ export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
 }
 
 /**
- * Strip heavy text fields from enhanced comparisons to reduce localStorage size.
- * Each LLMMetricScore has explanation/evidence/sources that can be 1-5KB.
- * With 100 metrics × 2 cities × 5 LLMs = 1000 objects, this adds up fast.
- * Numeric scores are preserved — only verbose text is removed.
- */
-function slimEnhancedForLocalStorage(comparisons: SavedEnhancedComparison[]): SavedEnhancedComparison[] {
-  return comparisons.map(comp => ({
-    ...comp,
-    result: {
-      ...comp.result,
-      city1: {
-        ...comp.result.city1,
-        categories: comp.result.city1.categories.map(cat => ({
-          ...cat,
-          metrics: cat.metrics.map(m => ({
-            ...m,
-            judgeExplanation: '', // Strip judge explanation (~100 chars each × 100 metrics)
-            llmScores: m.llmScores.map(s => ({
-              ...s,
-              explanation: undefined,  // Strip LLM explanation text
-              evidence: undefined,     // Strip evidence citations
-              sources: undefined,      // Strip source URLs
-              rawValue: typeof s.rawValue === 'string' ? null : s.rawValue, // Strip long string values
-            })),
-          })),
-        })),
-      },
-      city2: {
-        ...comp.result.city2,
-        categories: comp.result.city2.categories.map(cat => ({
-          ...cat,
-          metrics: cat.metrics.map(m => ({
-            ...m,
-            judgeExplanation: '',
-            llmScores: m.llmScores.map(s => ({
-              ...s,
-              explanation: undefined,
-              evidence: undefined,
-              sources: undefined,
-              rawValue: typeof s.rawValue === 'string' ? null : s.rawValue,
-            })),
-          })),
-        })),
-      },
-    },
-  }));
-}
-
-/**
  * Save enhanced comparisons to localStorage
  * Returns true if save succeeded, false if failed
+ * Only keeps the most recent MAX_SAVED_ENHANCED (5) in localStorage.
+ * Older comparisons are available from Supabase via getAllEnhancedComparisons().
  */
 function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): boolean {
-  // Enforce lower limit for enhanced comparisons
+  // Enforce lower limit for enhanced comparisons (they're ~200KB each)
   const trimmed = comparisons.slice(0, MAX_SAVED_ENHANCED);
   if (comparisons.length > MAX_SAVED_ENHANCED) {
-    console.log(`[savedComparisons] Trimmed enhanced comparisons from ${comparisons.length} to ${MAX_SAVED_ENHANCED}`);
+    console.log(`[savedComparisons] Trimmed enhanced comparisons from ${comparisons.length} to ${MAX_SAVED_ENHANCED} (older ones in Supabase)`);
   }
 
-  // Strip heavy text fields to fit within localStorage 5MB limit
-  const slim = slimEnhancedForLocalStorage(trimmed);
-  const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(slim));
+  const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(trimmed));
   if (success) {
-    console.log('[savedComparisons] Saved', slim.length, 'enhanced comparisons to localStorage');
+    console.log('[savedComparisons] Saved', trimmed.length, 'enhanced comparisons to localStorage');
   } else {
     console.error('[savedComparisons] FAILED to save enhanced comparisons to localStorage');
   }
   return success;
+}
+
+/**
+ * Get ALL enhanced comparisons — local + Supabase database.
+ * Local comparisons are returned immediately (most recent 5).
+ * If user is authenticated, also fetches older ones from Supabase.
+ * Deduplicates by comparison ID (local wins for conflicts to preserve freshness).
+ */
+export async function getAllEnhancedComparisons(): Promise<SavedEnhancedComparison[]> {
+  const local = getLocalEnhancedComparisons();
+
+  // If Supabase is not configured or user not logged in, return local only
+  if (!isSupabaseConfigured()) return local;
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) return local;
+
+    const { data: dbComparisons, error } = await dbGetUserComparisons(user.id, { limit: MAX_SAVED });
+    if (error || !dbComparisons) return local;
+
+    // Merge: local first, then DB (local wins on duplicates)
+    const mergedMap = new Map<string, SavedEnhancedComparison>();
+    local.forEach(c => mergedMap.set(c.id, c));
+
+    for (const dbComp of dbComparisons) {
+      const compResult = dbComp.comparison_result as Record<string, unknown>;
+      const isEnhanced = 'llmsUsed' in compResult && Array.isArray(compResult.llmsUsed);
+      if (!isEnhanced) continue;
+
+      const comparisonId = dbComp.comparison_id;
+      if (mergedMap.has(comparisonId)) continue; // Local version wins
+
+      mergedMap.set(comparisonId, {
+        id: comparisonId,
+        result: compResult as unknown as EnhancedComparisonResult,
+        savedAt: dbComp.created_at || new Date().toISOString(),
+        nickname: dbComp.nickname || undefined,
+        synced: true,
+      });
+    }
+
+    // Sort by savedAt (newest first)
+    return Array.from(mergedMap.values())
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+  } catch (err) {
+    console.error('[savedComparisons] Failed to fetch enhanced from Supabase:', err);
+    return local;
+  }
 }
 
 /**
