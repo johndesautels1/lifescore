@@ -260,7 +260,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
           ${messages.map(msg => `
             <div class="message ${msg.role}">
               <div class="sender">${msg.role === 'assistant' ? 'OLIVIA' : 'YOU'}</div>
-              <div class="content">${msg.content}</div>
+              <div class="content">${msg.content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}</div>
               <div class="time">${msg.timestamp.toLocaleTimeString()}</div>
             </div>
           `).join('')}

@@ -32,6 +32,7 @@ import {
   type SavedGammaReport,
   type SavedJudgeReport
 } from '../services/savedComparisons';
+import { toastConfirm } from '../utils/toast';
 import './SavedComparisons.css';
 
 interface SavedComparisonsProps {
@@ -151,28 +152,28 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   };
 
   const handleDeleteGammaReport = (id: string) => {
-    if (window.confirm('Delete this saved report?')) {
+    toastConfirm('Delete this saved report?', () => {
       deleteGammaReport(id);
       loadComparisons();
       showMessage('success', 'Report deleted');
-    }
+    });
   };
 
   const handleDeleteJudgeReport = (reportId: string) => {
-    if (window.confirm('Delete this saved report?')) {
+    toastConfirm('Delete this saved report?', () => {
       deleteSavedJudgeReport(reportId);
       loadComparisons();
       showMessage('success', 'Report deleted');
-    }
+    });
   };
 
   const handleClearAllGammaReports = () => {
-    if (window.confirm('Delete ALL saved visual reports? This cannot be undone.')) {
+    toastConfirm('Delete ALL saved visual reports? This cannot be undone.', () => {
       clearAllGammaReports();
       clearAllJudgeReports();
       loadComparisons();
       showMessage('success', 'All reports cleared');
-    }
+    });
   };
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -180,8 +181,8 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
-  const handleDelete = async (id: string, isEnhanced?: boolean) => {
-    if (window.confirm('Delete this saved comparison?')) {
+  const handleDelete = (id: string, isEnhanced?: boolean) => {
+    toastConfirm('Delete this saved comparison?', async () => {
       // FIX 2026-01-26: Delete from correct storage based on comparison type
       // FIX 2026-01-26: Await async delete operations before reloading
       if (isEnhanced) {
@@ -191,7 +192,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
       }
       loadComparisons();
       showMessage('success', 'Comparison deleted');
-    }
+    });
   };
 
   const handleLoad = (comparison: DisplayComparison) => {
@@ -280,13 +281,13 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     }
   };
 
-  const handleDisconnectGitHub = async () => {
-    if (window.confirm('Disconnect from GitHub? Your local comparisons will be kept.')) {
+  const handleDisconnectGitHub = () => {
+    toastConfirm('Disconnect from GitHub? Your local comparisons will be kept.', async () => {
       await disconnectGitHub(false);
       setGitHubUsername(null);
       loadComparisons();
       showMessage('success', 'Disconnected from GitHub');
-    }
+    });
   };
 
   const handleSync = async () => {
@@ -331,11 +332,11 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Delete ALL saved comparisons? This cannot be undone.')) {
+    toastConfirm('Delete ALL saved comparisons? This cannot be undone.', () => {
       clearAllLocal();
       loadComparisons();
       showMessage('success', 'All comparisons cleared');
-    }
+    });
   };
 
   const formatDate = (dateStr: string) => {

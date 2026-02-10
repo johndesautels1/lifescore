@@ -715,7 +715,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     const loadCachedData = async () => {
       try {
-        const existingReports = getSavedJudgeReports() as JudgeReport[];
+        const existingReports = getSavedJudgeReports();
 
         // Find a report matching this comparison
         // FIX 2026-02-08: ONLY match by comparisonId, NOT by city names

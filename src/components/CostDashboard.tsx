@@ -23,6 +23,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../lib/supabase';
 import type { ApiCostRecord } from '../types/database';
+import { toastConfirm } from '../utils/toast';
 import './CostDashboard.css';
 
 interface CostDashboardProps {
@@ -86,9 +87,9 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
     }
   }, [isOpen, loadCosts]);
 
-  const handleClearData = async () => {
+  const handleClearData = () => {
     const deleteSource = user && dbConfigured ? 'database and browser' : 'browser';
-    if (window.confirm(`⚠️ DELETE ALL DATA?\n\nThis will permanently delete all cost tracking data from your ${deleteSource}.\n\nThis action cannot be undone.`)) {
+    toastConfirm(`Delete ALL cost tracking data from your ${deleteSource}? This cannot be undone.`, async () => {
       setIsSaving(true);
 
       // Always clear localStorage
@@ -119,7 +120,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       setDataSource('local');
       setIsSaving(false);
       setTimeout(() => setSaveMessage(null), 4000);
-    }
+    });
   };
 
   const handleSaveData = async () => {

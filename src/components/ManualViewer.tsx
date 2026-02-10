@@ -35,19 +35,28 @@ interface ManualContent {
 }
 
 // Sanitize HTML to prevent XSS — strip dangerous tags, attributes, and protocols
+// Note: For production-grade sanitization, consider DOMPurify. This covers common vectors.
 function sanitizeHtml(html: string): string {
-  // Remove script tags and their content
-  let clean = html.replace(/<script[\s\S]*?<\/script>/gi, '');
-  // Remove event handler attributes (onclick, onerror, onload, etc.)
+  // First, decode HTML entities that could hide dangerous content (&#106;avascript: etc.)
+  let clean = html.replace(/&#x?[0-9a-f]+;?/gi, (match) => {
+    const el = document.createElement('span');
+    el.innerHTML = match;
+    return el.textContent || '';
+  });
+  // Remove script tags and their content (including noscript)
+  clean = clean.replace(/<\/?(?:script|noscript)[\s\S]*?(?:>|$)/gi, '');
+  // Remove event handler attributes (onclick, onerror, onload, onmouseover, etc.)
+  // Handles spaces, newlines, and tabs between "on" and "="
   clean = clean.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
-  // Remove javascript: protocol in href/src attributes
-  clean = clean.replace(/(?:href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href="#"');
-  // Remove data: protocol in src (can be used for XSS)
-  clean = clean.replace(/src\s*=\s*(?:"data:[^"]*"|'data:[^']*')/gi, 'src=""');
-  // Remove style tags
+  // Remove javascript:, vbscript:, and data: protocols in ANY attribute (href, src, action, etc.)
+  // Handles whitespace and encoding tricks within the protocol
+  clean = clean.replace(/(?:href|src|action|formaction|xlink:href|poster|background)\s*=\s*(?:"[^"]*(?:javascript|vbscript|data)\s*:[^"]*"|'[^']*(?:javascript|vbscript|data)\s*:[^']*')/gi, 'href="#"');
+  // Remove style tags and their content
   clean = clean.replace(/<style[\s\S]*?<\/style>/gi, '');
-  // Remove iframe, object, embed, form tags
-  clean = clean.replace(/<\/?(iframe|object|embed|form|input|textarea|button|select)[\s\S]*?>/gi, '');
+  // Remove dangerous tags: iframe, object, embed, form elements, base, meta, link, svg (can contain script)
+  clean = clean.replace(/<\/?(iframe|object|embed|form|input|textarea|button|select|base|meta|link|svg|math|applet)[\s\S]*?>/gi, '');
+  // Remove style attributes (can contain expression() in old IE)
+  clean = clean.replace(/\s+style\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
   return clean;
 }
 

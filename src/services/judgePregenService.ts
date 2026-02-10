@@ -18,7 +18,7 @@
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { JudgeReport } from '../components/JudgeTab';
-import { getSavedJudgeReports } from './savedComparisons';
+import { getSavedJudgeReports, type SavedJudgeReport } from './savedComparisons';
 
 // ============================================================================
 // TYPES
@@ -165,10 +165,11 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
  */
 export async function checkExistingReport(
   comparisonId: string
-): Promise<JudgeReport | null> {
+): Promise<SavedJudgeReport | null> {
   try {
     // Check localStorage first (faster) via centralized service
-    const existingReports = getSavedJudgeReports() as JudgeReport[];
+    // SavedJudgeReport is a subset of JudgeReport — safe for comparisonId lookup
+    const existingReports = getSavedJudgeReports();
 
     const localReport = existingReports.find(
       (r) => r.comparisonId === comparisonId
