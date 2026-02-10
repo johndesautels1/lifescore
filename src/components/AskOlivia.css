@@ -1159,6 +1159,21 @@ button.control-item.recording {
   color: var(--platinum);
 }
 
+.header-btn.transcript-action {
+  border-color: rgba(201, 162, 39, 0.25);
+  color: var(--brushed-gold);
+}
+
+.header-btn.transcript-action:hover {
+  background: rgba(201, 162, 39, 0.12);
+  border-color: rgba(201, 162, 39, 0.4);
+}
+
+.header-btn.transcript-action:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
 .header-btn.close {
   border-color: rgba(239, 68, 68, 0.3);
   color: var(--error-red);
@@ -1534,6 +1549,23 @@ button.control-item.recording {
   .footer-left,
   .footer-right {
     justify-content: center;
+  }
+
+  /* Transcript header: wrap buttons on mobile */
+  .transcript-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .header-right {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .header-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.6rem;
   }
 }
 

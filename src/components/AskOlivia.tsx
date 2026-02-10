@@ -33,6 +33,7 @@ import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
 } from '../services/savedComparisons';
+import { toastSuccess } from '../utils/toast';
 import './AskOlivia.css';
 
 interface AskOliviaProps {
@@ -440,6 +441,117 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       }, 500);
     }
   }, [contrastImages, city1, city2]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TRANSCRIPT ACTIONS - Save, Download, Forward
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Save transcript as .txt file
+  const handleSaveTranscript = useCallback(() => {
+    if (messages.length === 0) return;
+
+    const text = messages.map(msg => {
+      const sender = msg.role === 'assistant' ? 'OLIVIA' : 'YOU';
+      const time = msg.timestamp.toLocaleString();
+      return `[${time}] ${sender}:\n${msg.content}\n`;
+    }).join('\n');
+
+    const header = `LIFE SCORE™ - Olivia Conversation Transcript\n${hasComparisonData ? `${city1} vs ${city2}` : 'General Conversation'}\nExported: ${new Date().toLocaleString()}\n${'='.repeat(60)}\n\n`;
+
+    const blob = new Blob([header + text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `olivia-transcript-${hasComparisonData ? `${city1}-vs-${city2}-` : ''}${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toastSuccess('Transcript saved!');
+  }, [messages, hasComparisonData, city1, city2]);
+
+  // Download transcript as printable HTML (opens print dialog)
+  const handleDownloadTranscript = useCallback(() => {
+    if (messages.length === 0) return;
+
+    const printContent = `
+      <html>
+        <head>
+          <title>LIFE SCORE - Olivia Transcript</title>
+          <style>
+            body { font-family: 'Inter', -apple-system, sans-serif; padding: 40px; max-width: 750px; margin: 0 auto; color: #1e293b; }
+            h1 { color: #c9a227; font-size: 22px; border-bottom: 2px solid #c9a227; padding-bottom: 12px; margin-bottom: 4px; }
+            .meta { color: #64748b; font-size: 12px; margin-bottom: 30px; }
+            .message { margin-bottom: 16px; padding: 14px 16px; border-radius: 8px; }
+            .assistant { background: #f8fafc; border-left: 3px solid #c9a227; }
+            .user { background: #f1f5f9; border-left: 3px solid #475569; }
+            .sender { font-weight: 700; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+            .assistant .sender { color: #c9a227; }
+            .user .sender { color: #475569; }
+            .content { line-height: 1.65; white-space: pre-wrap; font-size: 14px; }
+            .time { font-size: 10px; color: #94a3b8; margin-top: 8px; }
+            .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <h1>OLIVIA — AI Advisor Transcript</h1>
+          <div class="meta">${hasComparisonData ? `${city1} vs ${city2} &nbsp;|&nbsp; ` : ''}${new Date().toLocaleString()} &nbsp;|&nbsp; ${messages.length} messages</div>
+          ${messages.map(msg => `
+            <div class="message ${msg.role}">
+              <div class="sender">${msg.role === 'assistant' ? 'OLIVIA' : 'YOU'}</div>
+              <div class="content">${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+              <div class="time">${msg.timestamp.toLocaleTimeString()}</div>
+            </div>
+          `).join('')}
+          <div class="footer">LIFE SCORE™ by Clues Intelligence &nbsp;|&nbsp; clueslifescore.com</div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  }, [messages, hasComparisonData, city1, city2]);
+
+  // Forward transcript (share via Web Share API or copy to clipboard)
+  const handleForwardTranscript = useCallback(async () => {
+    if (messages.length === 0) return;
+
+    const text = messages.map(msg => {
+      const sender = msg.role === 'assistant' ? 'Olivia' : 'Me';
+      return `${sender}: ${msg.content}`;
+    }).join('\n\n');
+
+    const fullText = `LIFE SCORE™ - Olivia Conversation${hasComparisonData ? ` (${city1} vs ${city2})` : ''}\n${'─'.repeat(40)}\n\n${text}\n\n─\nExported from clueslifescore.com`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `LIFE SCORE - Olivia${hasComparisonData ? `: ${city1} vs ${city2}` : ''}`,
+          text: fullText,
+          url: window.location.href,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(fullText);
+      toastSuccess('Transcript copied to clipboard!');
+    } catch {
+      // Final fallback — select-all in a temp textarea
+      const textarea = document.createElement('textarea');
+      textarea.value = fullText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      toastSuccess('Transcript copied to clipboard!');
+    }
+  }, [messages, hasComparisonData, city1, city2]);
 
   // ═══════════════════════════════════════════════════════════════════
   // AUTO-VISUALIZE: Generate contrast images when Olivia discusses metrics
@@ -913,6 +1025,30 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               <span className="header-title">CONVERSATION TRANSCRIPT</span>
             </div>
             <div className="header-right">
+              <button
+                className="header-btn transcript-action"
+                onClick={handleSaveTranscript}
+                title="Save transcript as text file"
+                disabled={messages.length === 0}
+              >
+                <span>SAVE</span>
+              </button>
+              <button
+                className="header-btn transcript-action"
+                onClick={handleDownloadTranscript}
+                title="Download / print transcript"
+                disabled={messages.length === 0}
+              >
+                <span>DOWNLOAD</span>
+              </button>
+              <button
+                className="header-btn transcript-action"
+                onClick={handleForwardTranscript}
+                title="Forward / share transcript"
+                disabled={messages.length === 0}
+              >
+                <span>FORWARD</span>
+              </button>
               <button className="header-btn" onClick={clearHistory} title="Clear history">
                 <span>CLEAR</span>
               </button>
