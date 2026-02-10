@@ -83,19 +83,40 @@ INSERT INTO public.app_prompts (category, prompt_key, display_name, description,
 VALUES (
   'invideo',
   'moving_movie',
-  'Moving Movie — Full Screenplay',
-  'Complete 10-minute cinematic prompt for InVideo. Uses city names, scores, categories, and Judge findings to build a 7-act relocation story.',
-  '== LIFE SCORE™ MOVING MOVIE — INVIDEO CINEMATIC PROMPT ==
+  'Moving Movie — Full Screenplay v2',
+  '10-minute cinematic prompt for InVideo. 2nd-person voice ("you/your"), scores shown ONCE, same couple throughout, freedom/regulation focus, user name personalization. 7-act relocation story.',
+  '== LIFE SCORE™ MOVING MOVIE — INVIDEO CINEMATIC PROMPT v2 ==
 
 VIDEO SPECIFICATIONS:
-- Duration: 8-10 minutes
-- Style: Cinematic, emotional, documentary-style with narrative voiceover
+- Duration: EXACTLY 10 MINUTES (10:00). Not 9:30, not 10:30. Exactly 10:00.
+- Style: Cinematic, emotional, documentary-style with 2ND-PERSON narrative voiceover
 - Aspect Ratio: 16:9 (landscape)
 - Quality: 4K cinematic with color grading
 - Music: Emotional orchestral score, building from melancholy to triumph
-- Voiceover: Warm, professional narrator
+- Voiceover: Warm, professional narrator speaking DIRECTLY TO THE VIEWER
+  using "you" and "your" throughout. NEVER use 3rd person.
+  Address the viewer by name: "{{USER_NAME}}"
+
+⚠️ CRITICAL PRODUCTION RULES:
+
+1. SCORE ACCURACY: Scores appear ONCE on screen during Act 4 reveal.
+   After that, say "your LIFE SCORE" or "your freedom score" — never
+   repeat the numbers. Do NOT round, estimate, or invent different scores.
+
+2. CASTING CONTINUITY: Use the SAME primary couple in EVERY scene.
+   Friends/family/neighbors may be different. The main couple = same two
+   actors from Act 1 through Act 7. No switching.
+
+3. VOICE: ALL narration is 2nd person ("You wake up..." / "Your score...").
+   Use {{USER_NAME}} by name at key emotional moments.
+
+4. FREEDOM FOCUS: LIFE SCORE measures 100 legal freedom metrics across
+   6 categories. Weave "freedom" and "regulatory burden vs. liberty"
+   throughout the narrative. The losing city = restrictive, regulated.
+   The winning city = open, free, full of possibility.
 
 VARIABLES (replaced dynamically):
+- {{USER_NAME}} — Viewer''s real name (e.g. "Bob Jones")
 - {{WINNER_CITY}} — The winning city name
 - {{LOSER_CITY}} — The losing city name
 - {{WINNER_SCORE}} — Winner score out of 100
@@ -103,145 +124,141 @@ VARIABLES (replaced dynamically):
 - {{SCORE_DIFF}} — Point difference
 - {{JUDGE_SUMMARY}} — Judge verdict summary
 - {{CATEGORY_BREAKDOWN}} — 6 freedom category scores
-- {{WINNER_STRENGTHS}} — Key winning city advantages
-- {{LOSER_WEAKNESSES}} — Key losing city disadvantages
-- {{WINNER_VISUALS}} — City-type specific visuals (beach/mountain/urban/european/etc.)
+- {{WINNER_STRENGTHS}} — Key winning city freedom advantages
+- {{LOSER_WEAKNESSES}} — Laws & regulations that restrict your life
+- {{WINNER_VISUALS}} — City-type specific visuals
 
---- ACT 1: THE STRUGGLE (0:00 - 1:30) ---
+--- ACT 1: YOUR STRUGGLE (0:00 – 1:20) ---
 Mood: Melancholy, restless, searching
 Music: Soft piano, slightly dissonant, building unease
 
-SCENE 1.1 — THE MORNING ROUTINE
-A young couple in their current home. Morning coffee, staring out the window.
-Muted color palette. Gray tones. They look thoughtful, unfulfilled.
-They exchange a look that says "there has to be something better."
+SCENE 1.1 — YOUR MORNING ROUTINE
+Open on you in your current home. Morning coffee, staring out the window
+at {{LOSER_CITY}}. Gray, heavy. Something isn''t right.
+Voiceover: "{{USER_NAME}}, you''ve been searching for the right place...
+but everywhere you look, it''s just noise."
 
-SCENE 1.2 — THE FRUSTRATION
-Montage of failed search attempts:
-- Scrolling "Best Places to Live" articles (generic, clickbait)
+SCENE 1.2 — YOUR FRUSTRATION
+Montage of your search attempts:
+- Scrolling "Best Places to Live" articles — generic, useless
 - Overpriced relocation magazines with stale data
 - Social media groups where everyone argues
-- Water cooler colleagues: "Austin!" "Lisbon!" "Dubai!" — all opinions, no data
-Quick cuts, overwhelming. More confused than when they started.
+- Colleagues: "Austin!" "Lisbon!" "Dubai!" — all opinions, no data
+You sit on your couch, more confused than when you started.
 
---- ACT 2: THE DISCOVERY (1:30 - 3:00) ---
+--- ACT 2: YOUR DISCOVERY (1:20 – 2:40) ---
 Mood: Curiosity, growing hope
 Music: Piano lightens, strings enter softly
 
-SCENE 2.1 — HEARING ABOUT CLUES
-They discover CLUES (Comprehensive Location Utility & Evaluation System).
-A friend mentions it or they find it online.
-"It analyzed 10,000 cities for us."
+SCENE 2.1 — YOU HEAR ABOUT CLUES
+You discover CLUES (Comprehensive Location Utility & Evaluation System).
+"Have you tried CLUES? It analyzed over 10,000 cities for us."
 
-SCENE 2.2 — THE CLUES EXPERIENCE
-The main CLUES platform. AI asks smart questions about priorities.
-Beautiful data visualization: world map, cities narrowing.
-10,000 → 1,000 → 100 → a handful of finalists.
+SCENE 2.2 — YOUR CLUES EXPERIENCE
+The AI-powered CLUES platform narrows 10,000+ metros to your finalists.
+Beautiful data visualization: cities on a world map, funnel narrowing.
 
-SCENE 2.3 — THE SMILE
-On their porch, over coffee, or in bed with the laptop —
-a smile crosses both faces. CLUES showed real data-driven matches.
+SCENE 2.3 — YOUR FIRST SMILE
+A smile crosses your face. Real data. AI-validated.
 But which finalist is THE one?
 
---- ACT 3: THE MODULES (3:00 - 4:00) ---
+--- ACT 3: YOUR MODULES (2:40 – 3:50) ---
 Mood: Excitement, determination
 Music: Strings building, rhythmic pulse
 
 SCENE 3.1 — THE CLUES ECOSYSTEM
-20 specialty modules: Healthcare, Nature, Transport, Religion, Politics,
-Education, Cost of Living, Safety, Culture, Freedom (LIFE SCORE).
-Dashboard with module icons. They select what matters.
+20 specialty modules including Freedom (LIFE SCORE) — 100 legal metrics
+measuring how free you are to live your life.
 
-SCENE 3.2 — MEETING OLIVIA
-Olivia, the AI relocation agent, recommends:
-"Run a LIFE SCORE comparison between {{WINNER_CITY}} and {{LOSER_CITY}}.
-Freedom metrics will be critical for your lifestyle."
-They can barely wait.
+SCENE 3.2 — YOU MEET OLIVIA
+Olivia recommends: "Run a LIFE SCORE comparison between {{WINNER_CITY}}
+and {{LOSER_CITY}}. The freedom metrics — 100 legal measurements —
+will be critical for your lifestyle."
 
---- ACT 4: THE REVELATION (4:00 - 6:00) ---
+--- ACT 4: YOUR REVELATION (3:50 – 6:00) ---
 Mood: Awe, clarity, relief
 Music: Full orchestral swell
 
-SCENE 4.1 — RUNNING THE COMPARISON
-clueslifescore.com. Standard comparison first. Eyes widen.
+SCENE 4.1 — YOU RUN THE COMPARISON
+You log into clueslifescore.com. LIFE SCORE evaluates 100 legal freedom
+metrics across 6 categories.
 
 SCENE 4.2 — THE ENHANCED COMPARISON
-5 AI models (Claude, GPT-4o, Gemini, Grok, Perplexity) reach consensus.
-★ {{WINNER_CITY}}: {{WINNER_SCORE}}/100
-✗ {{LOSER_CITY}}: {{LOSER_SCORE}}/100
+5 AI models reach consensus. ★ THE SCORES APPEAR ON SCREEN (ONCE ONLY):
+  ★ {{WINNER_CITY}}: {{WINNER_SCORE}} / 100
+  ✗ {{LOSER_CITY}}: {{LOSER_SCORE}} / 100
+Voiceover: "{{USER_NAME}}, your LIFE SCORE results are in."
+⚠️ NEVER show these numbers again. Say "your LIFE SCORE" from now on.
 
-SCENE 4.3 — THE DINNER REVELATION
-Over dinner, the data is clear: {{WINNER_CITY}} wins by {{SCORE_DIFF}} points.
-Category breakdown with visual emphasis:
+SCENE 4.3 — YOUR DINNER REVELATION
+{{WINNER_CITY}} wins by {{SCORE_DIFF}} points across 100 legal metrics.
 {{CATEGORY_BREAKDOWN}}
-A peace comes over them. A purpose. A NEW purpose.
-Golden lighting. Hands held across the table.
+You hold hands across the table. You KNOW.
 
 SCENE 4.4 — THE JUDGE''S VERDICT
-LIFE SCORE Judge delivers the Court Order:
 {{JUDGE_SUMMARY}}
-Dramatic courtroom aesthetic. Gavel strikes. Verdict official.
+Dramatic courtroom aesthetic. Gavel strikes.
 
-SCENE 4.5 — THE LOSING CITY CONTRAST
-Brief flashback showing what {{LOSER_CITY}} would have meant:
+SCENE 4.5 — WHY {{LOSER_CITY}} FAILS YOUR FREEDOM
+{{LOSER_CITY}}''s regulatory nightmare:
 {{LOSER_WEAKNESSES}}
-Desaturated, restrictive imagery. Government buildings, long queues.
-They almost moved to the wrong place. LIFE SCORE saved them.
+Restrictive zoning, excessive permits, heavy-handed ordinances,
+bureaucratic barriers chipping away at your autonomy.
+Government buildings, long queues, regulatory red tape.
+You almost moved to the wrong place. LIFE SCORE saved you.
 
---- ACT 5: THE TRANSITION (6:00 - 7:30) ---
+--- ACT 5: YOUR TRANSITION (6:00 – 7:20) ---
 Mood: Bittersweet, hopeful
-Music: Gentle transition, hopeful melody
+Music: Gentle transition
 
-SCENE 5.1 — PACKING UP
-Boxes packed. Apartment emptied. Photos off walls.
-Muted but not sad — an ending that is a beginning.
+SCENE 5.1 — PACKING UP YOUR OLD LIFE
+Boxes packed. Apartment emptied. An ending that is a beginning.
 
-SCENE 5.2 — SAYING GOODBYE
-Party with friends. Hugs. Well wishes.
-"You are going to love {{WINNER_CITY}}."
+SCENE 5.2 — YOUR GOODBYES
+Goodbye party. Hugs. "You''re going to love {{WINNER_CITY}}."
 
-SCENE 5.3 — THE DEPARTURE
-Moving vans. Final drive through old neighborhood.
-One last look back. Deep breath. Smile. Forward.
+SCENE 5.3 — YOUR DEPARTURE
+Final drive through old neighborhood. One last look back. Forward.
+Voiceover: "{{USER_NAME}}, the old life is behind you now."
 
---- ACT 6: THE ARRIVAL (7:30 - 9:00) ---
+--- ACT 6: YOUR ARRIVAL (7:20 – 8:40) ---
 Mood: Joy, wonder, fresh start
 Music: Triumphant orchestral, soaring strings
 
-SCENE 6.1 — THE PLANE LANDS
+SCENE 6.1 — YOUR PLANE LANDS
 {{WINNER_CITY}} appears below. Vivid saturated colors.
-The visual palette completely transforms.
 
-SCENE 6.2 — FIRST STEPS
-Sun shining. Birds singing.
+SCENE 6.2 — YOUR FIRST STEPS IN {{WINNER_CITY}}
 {{WINNER_VISUALS}}
-Named landmarks from {{WINNER_CITY}}.
+Real landmarks from {{WINNER_CITY}}. This is YOUR city now.
 
-SCENE 6.3 — EXPLORING
-New neighborhood. First coffee at local cafe. Friendly neighbors.
-Wide establishing shots intercut with intimate couple moments.
+SCENE 6.3 — EXPLORING YOUR NEW HOME
+New neighborhood, first coffee, friendly neighbors.
 
---- ACT 7: LIVING THE DREAM (9:00 - 10:00) ---
+--- ACT 7: YOUR DREAM LIFE (8:40 – 10:00) ---
 Mood: Fulfillment, gratitude, peace
 Music: Emotional peak, gentle resolution
 
-SCENE 7.1 — DREAM LIFE MONTAGE
-Morning exercise, home office, date nights, weekend adventures.
+SCENE 7.1 — YOUR NEW LIFE MONTAGE
 Every shot radiates freedom, joy, purpose.
-Elegant data overlays:
-★ {{WINNER_CITY}}: {{WINNER_SCORE}}/100
-FREEDOM SCORE VERIFIED BY 5 AI MODELS
 {{WINNER_STRENGTHS}}
+"100 LEGAL METRICS. ONE CLEAR WINNER."
 
 SCENE 7.2 — THE FINAL SHOT
-Golden hour. The couple smiles.
-"Their new life. Scored by data. Chosen with confidence."
-"LIFE SCORE™ by Clues Intelligence"
+Golden hour. You look at each other and smile.
+"{{USER_NAME}}, welcome to your new life."
+"LIFE SCORE™ — 100 Freedom Metrics. Your Future, Quantified."
 "clueslifescore.com"
 
+--- END (EXACTLY 10:00) ---
+
 --- PRODUCTION NOTES ---
-Color: Cool/muted Acts 1-2, warming Act 3, mixed Acts 4-5, vivid Acts 6-7
+Duration: Act 1=1:20, Act 2=1:20, Act 3=1:10, Act 4=2:10, Act 5=1:20, Act 6=1:20, Act 7=1:20 = 10:00
+Casting: SAME couple in ALL scenes. No switching actors.
+Voice: 2nd person only. Use {{USER_NAME}} at opening, reveal, departure, final shot.
+Scores: Shown ONCE in Act 4. Say "your LIFE SCORE" after that.
+Color: Cool Acts 1-2, warming Act 3, mixed Acts 4-5, vivid Acts 6-7.
 Font: Elegant sans-serif. Gold #D4AF37 for branding.
-Music: Orchestral, no lyrics. Peaks at 2:30, 5:00, 7:30, 9:45.',
+Music: Orchestral, no lyrics. Peaks at 2:20, 4:30, 7:20, 9:45.',
   'cluesnomads@gmail.com'
 ) ON CONFLICT (category, prompt_key) DO NOTHING;
