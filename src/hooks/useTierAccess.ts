@@ -112,7 +112,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
 const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
   standardComparisons: 'standard_comparisons',
   enhancedComparisons: 'enhanced_comparisons',
-  oliviaMinutesPerMonth: 'olivia_minutes',
+  oliviaMinutesPerMonth: 'olivia_messages',
   judgeVideos: 'judge_videos',
   gammaReports: 'gamma_reports',
   grokVideos: 'grok_videos',
