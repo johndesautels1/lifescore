@@ -10,8 +10,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { handleCors } from '../shared/cors';
-import { checkRateLimit, RATE_LIMIT_PRESETS } from '../shared/rateLimit';
+import { handleCors } from '../shared/cors.js';
+import { checkRateLimit, RATE_LIMIT_PRESETS } from '../shared/rateLimit.js';
 
 // Vercel config
 export const config = {
