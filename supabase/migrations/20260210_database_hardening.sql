@@ -104,5 +104,21 @@ GRANT EXECUTE ON FUNCTION public.increment_share_view_count(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION public.increment_share_view_count(UUID) TO authenticated;
 
 -- ============================================================================
+-- #30: Fix grok_videos UNIQUE constraint (includes status = broken)
+-- ============================================================================
+
+-- The current constraint UNIQUE(city_name, video_type, status) prevents
+-- having two failed rows for the same city+type. But failures are expected
+-- and retries should be allowed. Replace with a partial unique index that
+-- only enforces uniqueness for completed videos.
+
+ALTER TABLE public.grok_videos
+  DROP CONSTRAINT IF EXISTS unique_city_video;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_grok_videos_unique_completed
+  ON public.grok_videos(city_name, video_type)
+  WHERE status = 'completed';
+
+-- ============================================================================
 -- Done. Run in Supabase SQL Editor.
 -- ============================================================================
