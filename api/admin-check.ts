@@ -4,6 +4,8 @@
  * Returns whether the authenticated user has admin/developer bypass status.
  * Keeps admin email list server-side only (not in the client JS bundle).
  *
+ * Requires env var: DEV_BYPASS_EMAILS (comma-separated admin emails)
+ *
  * GET /api/admin-check
  * Returns: { isAdmin: boolean }
  *
