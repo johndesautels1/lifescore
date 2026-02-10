@@ -508,16 +508,21 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     setVideoGenerationProgress('Initiating video generation...');
 
     // Build script for Christiano to speak
-    const winner = report.executiveSummary.recommendation === 'city1' ? report.city1 :
-      report.executiveSummary.recommendation === 'city2' ? report.city2 : 'TIE';
-    const winnerScore = report.executiveSummary.recommendation === 'city1'
-      ? report.summaryOfFindings.city1Score
-      : report.summaryOfFindings.city2Score;
-    const loserScore = report.executiveSummary.recommendation === 'city1'
-      ? report.summaryOfFindings.city2Score
-      : report.summaryOfFindings.city1Score;
+    const rec = report.executiveSummary.recommendation;
+    const isTie = rec === 'tie' ||
+      Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score) < 0.5;
 
-    const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+    // On tie: display city1 as slight leader (matches API behavior)
+    const winner = isTie ? report.city1 :
+      rec === 'city1' ? report.city1 : report.city2;
+    const winnerScore = isTie ? report.summaryOfFindings.city1Score :
+      rec === 'city1' ? report.summaryOfFindings.city1Score : report.summaryOfFindings.city2Score;
+    const loserScore = isTie ? report.summaryOfFindings.city2Score :
+      rec === 'city1' ? report.summaryOfFindings.city2Score : report.summaryOfFindings.city1Score;
+
+    const tieScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, I find this an exceptionally close case — both cities scored nearly identically at ${report.summaryOfFindings.city1Score} and ${report.summaryOfFindings.city2Score} respectively. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+    const winnerScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a freedom score of ${winnerScore} out of 100. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+    const script = isTie ? tieScript : winnerScript;
 
     const request: GenerateJudgeVideoRequest = {
       script,
