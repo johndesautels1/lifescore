@@ -163,9 +163,36 @@
 
 .metric-scores {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.35rem;
-  font-size: 0.85rem;  /* Slightly smaller overall */
+  font-size: 0.85rem;
+}
+
+.score-city-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.score-city-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-city-group.winner .score-city-label {
+  color: #d4af37;
+}
+
+.score-city-group.loser .score-city-label {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .winner-score {
@@ -175,13 +202,15 @@
 }
 
 .score-separator {
-  color: rgba(255, 255, 255, 0.75);  /* Brighter vs text */
-  font-size: 0.8rem;  /* Larger vs */
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
   font-weight: 500;
+  align-self: flex-end;
+  padding-bottom: 0.05rem;
 }
 
 .loser-score {
-  color: rgba(255, 255, 255, 0.6);  /* Slightly brighter */
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
   font-size: 0.85rem;
 }
@@ -249,6 +278,16 @@
 [data-theme="light"] .metric-name,
 :root:not([data-theme="dark"]) .metric-name {
   color: #1a202c;
+}
+
+[data-theme="light"] .score-city-group.winner .score-city-label,
+:root:not([data-theme="dark"]) .score-city-group.winner .score-city-label {
+  color: #92710a;
+}
+
+[data-theme="light"] .score-city-group.loser .score-city-label,
+:root:not([data-theme="dark"]) .score-city-group.loser .score-city-label {
+  color: #6b7280;
 }
 
 [data-theme="light"] .winner-score,
@@ -344,6 +383,11 @@
 
   .metric-scores {
     font-size: 0.7rem;
+  }
+
+  .score-city-label {
+    font-size: 0.55rem;
+    max-width: 4rem;
   }
 
   .example-text {
