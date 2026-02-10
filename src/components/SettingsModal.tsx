@@ -58,7 +58,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
     setStorageUsage({ used: totalBytes, percentage: Math.min(percentage, 100) });
   }, []);
 
-  // Clear all LIFE SCORE local data
+  // Clear all LIFE SCORE local data including cache entries
   const handleClearLocalData = useCallback(() => {
     const keysToRemove = [
       'lifescore_saved_enhanced',
@@ -68,6 +68,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
       'lifescore_court_orders',
     ];
     keysToRemove.forEach(key => localStorage.removeItem(key));
+    // Also clear all cache entries (lifescore:v1:*)
+    const cacheKeys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('lifescore:')) {
+        cacheKeys.push(key);
+      }
+    }
+    cacheKeys.forEach(key => localStorage.removeItem(key));
     setShowClearConfirm(false);
     setClearSuccess(true);
     calculateStorageUsage();

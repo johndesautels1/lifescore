@@ -136,6 +136,33 @@ const MAX_SAVED_ENHANCED = 20; // Enhanced comparisons are much larger (~200KB e
  * Safely save to localStorage with quota handling
  * If quota exceeded, removes oldest items until it fits
  */
+function clearExpiredCacheEntries(): number {
+  const cacheKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('lifescore:')) {
+      cacheKeys.push(key);
+    }
+  }
+  let cleared = 0;
+  for (const key of cacheKeys) {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const entry = JSON.parse(stored);
+        if (entry.timestamp && entry.ttl && Date.now() > entry.timestamp + entry.ttl) {
+          localStorage.removeItem(key);
+          cleared++;
+        }
+      }
+    } catch {
+      localStorage.removeItem(key);
+      cleared++;
+    }
+  }
+  return cleared;
+}
+
 function safeLocalStorageSet(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
@@ -144,11 +171,35 @@ function safeLocalStorageSet(key: string, value: string): boolean {
     if (error instanceof DOMException && error.name === 'QuotaExceededError') {
       console.warn(`[savedComparisons] localStorage quota exceeded for ${key}, attempting cleanup...`);
 
-      // Try to make room by removing oldest items
+      // Step 1: Clear expired cache entries first (biggest space savings)
+      const expiredCleared = clearExpiredCacheEntries();
+      if (expiredCleared > 0) {
+        console.log(`[savedComparisons] Cleared ${expiredCleared} expired cache entries`);
+        try {
+          localStorage.setItem(key, value);
+          return true;
+        } catch { /* still full, continue */ }
+      }
+
+      // Step 2: Remove ALL cache entries if still full
+      const allCacheKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k?.startsWith('lifescore:')) allCacheKeys.push(k);
+      }
+      allCacheKeys.forEach(k => localStorage.removeItem(k));
+      if (allCacheKeys.length > 0) {
+        console.log(`[savedComparisons] Cleared ${allCacheKeys.length} cache entries to free space`);
+        try {
+          localStorage.setItem(key, value);
+          return true;
+        } catch { /* still full, continue */ }
+      }
+
+      // Step 3: Try trimming the data itself
       try {
         const data = JSON.parse(value);
         if (Array.isArray(data) && data.length > 1) {
-          // Remove oldest 20% of items
           const removeCount = Math.max(1, Math.floor(data.length * 0.2));
           const trimmed = data.slice(0, data.length - removeCount);
           localStorage.setItem(key, JSON.stringify(trimmed));
@@ -156,7 +207,6 @@ function safeLocalStorageSet(key: string, value: string): boolean {
           return true;
         }
       } catch {
-        // If cleanup fails, clear the key entirely
         console.error(`[savedComparisons] Cleanup failed, clearing ${key}`);
         localStorage.removeItem(key);
       }
