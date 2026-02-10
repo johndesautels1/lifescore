@@ -1184,10 +1184,10 @@ ${freedomEd?.heroStatement || `${catWinner} demonstrates stronger ${config.name.
 
 ### PAGE ${pageBase + 1}: ALL ${config.name.toUpperCase()} METRICS
 
-<table colwidths="[5,30,12,12,12,12,10,7]" data-font-size="sm">
+<table colwidths="[5,25,12,12,12,12,10,12]" data-font-size="sm">
 
-| # | Metric | ${city1Name} (L) | ${city1Name} (E) | ${city2Name} (L) | ${city2Name} (E) | Winner | Conf |
-|---|--------|-----------------|-----------------|-----------------|-----------------|--------|------|
+| # | Metric | ${city1Name} (L) | ${city1Name} (E) | ${city2Name} (L) | ${city2Name} (E) | Winner | Confidence |
+|---|--------|-----------------|-----------------|-----------------|-----------------|--------|------------|
 ${cat1.metrics.map((m1, i) => {
   const m2 = cat2.metrics.find(m => m.metricId === m1.metricId);
   const name = getMetricDisplayName(m1.metricId);
@@ -1198,13 +1198,13 @@ ${cat1.metrics.map((m1, i) => {
   const s1 = m1.consensusScore ?? 0;
   const s2 = m2?.consensusScore ?? 0;
   const mWinner = s1 > s2 ? city1Name.slice(0, 8) : s2 > s1 ? city2Name.slice(0, 8) : 'TIE';
-  const conf = m1.confidenceLevel?.slice(0, 4).toUpperCase() || 'MOD';
+  const conf = (m1.confidenceLevel || 'moderate').charAt(0).toUpperCase() + (m1.confidenceLevel || 'moderate').slice(1);
   return `| ${i + 1} | ${name} | ${l1} | ${e1} | ${l2} | ${e2} | ${mWinner} | ${conf} |`;
 }).join('\n')}
 
 </table>
 
-**Legend:** L = Legal Score | E = Enforcement Score | Conf = Confidence (UNAN/STRO/MOD/SPLT)
+**Legend:** L = Legal Score | E = Enforcement Score | Confidence = Unanimous / Strong / Moderate / Split
 
 ---
 
@@ -1242,21 +1242,18 @@ ${judgeAnalysis?.trendNotes || `Both cities show stable trajectories in ${config
 
 **Overall Agreement: ${agreementPct}% - ${agreementPct >= 85 ? 'High Consensus' : agreementPct >= 70 ? 'Moderate Consensus' : 'Mixed Opinions'}**
 
-<smart-layout variant="circleStats">
+<smart-layout variant="solidBoxes" cellsize="15">
 ${cat1.metrics.slice(0, 12).map(m => {
   const name = getMetricDisplayName(m.metricId).slice(0, 20);
   const conf = m.confidenceLevel || 'moderate';
-  const color = getConfidenceColor(conf);
-  // Convert confidence level to numeric percentage for heat map
   const confValue = conf === 'unanimous' ? 95 : conf === 'strong' ? 85 : conf === 'moderate' ? 70 : 50;
+  const color = conf === 'unanimous' || conf === 'strong' ? '#10B981' : conf === 'moderate' ? '#F59E0B' : '#DC2626';
   return `<item label="${name}" value="${confValue}" color="${color}">${confValue}%</item>`;
 }).join('\n')}
 </smart-layout>
 
-**Interpretation:**
-- 🟢 Dark Green = High Agreement (>85% of LLMs aligned)
-- 🟡 Yellow = Moderate Agreement (70-85%)
-- 🟠 Orange = Mixed Opinions (<70%)
+**Legend:**
+- <labels><label variant="solid" color="#10B981">High/Strong Consensus</label> <label variant="solid" color="#F59E0B">Moderate Agreement</label> <label variant="solid" color="#DC2626">Split Opinion</label></labels>
 
 **Models with divergent views:** ${result.disagreementSummary?.split('.')[0] || 'Generally aligned across all 5 LLMs'}
 
@@ -1338,10 +1335,10 @@ Synthesizes all 5 evaluations into final scores and recommendation.
 
 **Interpretation: ${confidence?.toUpperCase()} CONFIDENCE**
 
-<smart-layout variant="circleStats">
-<item label="Data Points" value="1,200+">Dual scores across 100 metrics × 2 cities × 6 models</item>
-<item label="Sources Cited" value="500+">Unique references gathered by AI models</item>
-<item label="Agreement Rate" value="${agreementPct}%">Metrics with strong LLM consensus</item>
+<smart-layout variant="solidBoxes" cellsize="15">
+<item label="Data Points" value="1,200+" color="#10B981">Dual scores across 100 metrics × 2 cities × 6 models</item>
+<item label="Sources Cited" value="500+" color="#3B82F6">Unique references gathered by AI models</item>
+<item label="Agreement Rate" value="${agreementPct}%" color="${agreementPct >= 85 ? '#10B981' : agreementPct >= 70 ? '#F59E0B' : '#DC2626'}">Metrics with strong LLM consensus</item>
 </smart-layout>
 
 ${confidence === 'high' ? 'All 5 LLMs showed strong alignment on the vast majority of metrics, indicating reliable conclusions.' :
@@ -1616,15 +1613,19 @@ Emphasizes Business (35%), Housing (30%), Policing (20%)
 
 ### PAGE 75: EVIDENCE QUALITY BY CATEGORY
 
-<smart-layout variant="circleStatsWithBoldLine">
+<smart-layout variant="solidBoxes" cellsize="15">
 ${Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([catId, config]) => {
   const cat = result.city1.categories.find(c => c.categoryId === catId);
   const agreement = cat?.agreementLevel ?? 75;
-  return `<item label="${config.icon} ${config.name}" value="${agreement}%" color="${getConfidenceColor(agreement >= 85 ? 'high' : agreement >= 70 ? 'medium' : 'low')}">
+  const color = agreement >= 85 ? '#10B981' : agreement >= 70 ? '#F59E0B' : '#DC2626';
+  return `<item label="${config.icon} ${config.name}" value="${agreement}%" color="${color}">
 Evidence: Government sources, legal databases, enforcement reports
 </item>`;
 }).join('\n')}
 </smart-layout>
+
+**Legend:**
+- <labels><label variant="solid" color="#10B981">High/Strong Consensus</label> <label variant="solid" color="#F59E0B">Moderate Agreement</label> <label variant="solid" color="#DC2626">Split Opinion</label></labels>
 
 **Overall Report Confidence: ${result.overallConsensusConfidence?.toUpperCase()}**
 
@@ -1657,7 +1658,10 @@ function formatSection8EvidenceClosingBothCities(
           if (score.evidence && score.evidence.length > 0) {
             score.evidence.forEach(e => {
               if (city1Evidence.length < 15) {
-                city1Evidence.push(`"${e.title}" - ${e.snippet?.slice(0, 80) || 'Source cited'}... (${e.url?.slice(0, 50)}...)`);
+                const title = e.title || 'Source cited';
+                const snippet = e.snippet?.slice(0, 80) || 'Source cited';
+                const link = e.url ? `[${title}](${e.url})` : `"${title}"`;
+                city1Evidence.push(`${link} - ${snippet}...`);
               }
             });
           }
@@ -1674,7 +1678,10 @@ function formatSection8EvidenceClosingBothCities(
           if (score.evidence && score.evidence.length > 0) {
             score.evidence.forEach(e => {
               if (city2Evidence.length < 15) {
-                city2Evidence.push(`"${e.title}" - ${e.snippet?.slice(0, 80) || 'Source cited'}... (${e.url?.slice(0, 50)}...)`);
+                const title = e.title || 'Source cited';
+                const snippet = e.snippet?.slice(0, 80) || 'Source cited';
+                const link = e.url ? `[${title}](${e.url})` : `"${title}"`;
+                city2Evidence.push(`${link} - ${snippet}...`);
               }
             });
           }
@@ -1782,9 +1789,9 @@ prompt="modern tech company office, data analytics, professional team, global fr
 </smart-layout>
 
 **Contact:**
-- 🌐 Website: clueslifescore.com
-- 📧 Email: cluesnomads@gmail.com
-- 🐦 Twitter: @CluesLifeScore
+- 🌐 Website: [clueslifescore.com](https://clueslifescore.com)
+- 📧 Email: [cluesnomads@gmail.com](mailto:cluesnomads@gmail.com)
+- 🐦 Twitter: [@CluesLifeScore](https://x.com/CluesLifeScore)
 
 ---
 
@@ -2386,7 +2393,7 @@ prompt="futuristic city skyline, timeline concept, progress and growth, modern a
 
 # 🔮 Where Are These Cities Heading?
 
-<smart-layout variant="circleStats">
+<smart-layout variant="solidBoxes" cellsize="15">
 <item label="${city1Name}" value="${city1Trend.toUpperCase()}" color="${getTrendColor(city1Trend)}">
 ${getTrendIcon(city1Trend)} ${city1Trend === 'improving' ? 'Improving freedom trajectory' : city1Trend === 'declining' ? 'Increasing restrictions expected' : 'Stable - maintaining current levels'}
 </item>
@@ -2676,8 +2683,8 @@ Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
 ================================================================================
 
-Heat Maps: <smart-layout variant="circleStats"> with label and color attributes
-Gauges: <smart-layout variant="semiCircle"> or variant="circleStats">
+Heat Maps: <smart-layout variant="solidBoxes" cellsize="15"> with label, value, and color attributes
+Gauges: <smart-layout variant="semiCircle">
 Bars: <smart-layout variant="barStats">
 Process Steps: <smart-layout variant="processSteps" numbered="true">
 Solid Boxes: <smart-layout variant="solidBoxes">
