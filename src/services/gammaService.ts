@@ -1783,7 +1783,7 @@ prompt="modern tech company office, data analytics, professional team, global fr
 
 **Contact:**
 - 🌐 Website: clueslifescore.com
-- 📧 Email: info@clueslifescore.com
+- 📧 Email: cluesnomads@gmail.com
 - 🐦 Twitter: @CluesLifeScore
 
 ---
@@ -1861,7 +1861,7 @@ prompt="elegant minimalist design, world map silhouette, compass, premium qualit
 ---
 
 **Clues Intelligence LTD**
-🌐 clueslifescore.com | 📧 info@clueslifescore.com
+🌐 clueslifescore.com | 📧 cluesnomads@gmail.com
 
 *© 2025-2026 All Rights Reserved*
 

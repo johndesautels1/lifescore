@@ -42,7 +42,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
         </div>
         <div className="legal-modal-footer">
           <p>Clues Intelligence LTD &bull; United Kingdom</p>
-          <p>Contact: privacy@cluesintelligence.com</p>
+          <p>Contact: cluesnomads@gmail.com</p>
         </div>
       </div>
     </div>
@@ -99,7 +99,7 @@ const PrivacyContent: React.FC = () => (
     <h3>6. Your Rights</h3>
     <p><strong>UK/EU Residents (GDPR):</strong> Access, rectification, erasure, portability, restriction, and objection rights.</p>
     <p><strong>California Residents (CCPA):</strong> Know, delete, correct, and opt-out rights.</p>
-    <p>Exercise rights via Account Settings or email privacy@cluesintelligence.com</p>
+    <p>Exercise rights via Account Settings or email cluesnomads@gmail.com</p>
 
     <h3>7. Data Retention</h3>
     <p>
@@ -114,7 +114,7 @@ const PrivacyContent: React.FC = () => (
 
     <h3>9. Contact</h3>
     <p>
-      Email: privacy@cluesintelligence.com<br />
+      Email: cluesnomads@gmail.com<br />
       Supervisory Authority: UK Information Commissioner's Office (ico.org.uk)
     </p>
 
@@ -185,7 +185,7 @@ const TermsContent: React.FC = () => (
     </p>
 
     <h3>10. Contact</h3>
-    <p>Email: legal@cluesintelligence.com</p>
+    <p>Email: cluesnomads@gmail.com</p>
 
     <p className="legal-version">Document Version 1.0</p>
   </div>
@@ -248,7 +248,7 @@ const CookiesContent: React.FC = () => (
     </p>
 
     <h3>6. Contact</h3>
-    <p>Email: privacy@cluesintelligence.com</p>
+    <p>Email: cluesnomads@gmail.com</p>
 
     <p className="legal-version">Document Version 1.0</p>
   </div>
@@ -314,7 +314,7 @@ const AcceptableUseContent: React.FC = () => (
     </table>
 
     <h3>4. Reporting Violations</h3>
-    <p>Email: abuse@cluesintelligence.com</p>
+    <p>Email: cluesnomads@gmail.com</p>
 
     <p className="legal-version">Document Version 1.0</p>
   </div>
@@ -355,7 +355,7 @@ const RefundContent: React.FC = () => (
 
     <h3>3. How to Request a Refund</h3>
     <p><strong>Self-Service:</strong> Account Settings → Billing → Request Refund</p>
-    <p><strong>Email:</strong> billing@cluesintelligence.com</p>
+    <p><strong>Email:</strong> cluesnomads@gmail.com</p>
 
     <h4>Processing Time</h4>
     <table className="legal-table">
@@ -377,7 +377,7 @@ const RefundContent: React.FC = () => (
     </ul>
 
     <h3>5. Contact</h3>
-    <p>Email: billing@cluesintelligence.com</p>
+    <p>Email: cluesnomads@gmail.com</p>
 
     <p className="legal-version">Document Version 1.0</p>
   </div>

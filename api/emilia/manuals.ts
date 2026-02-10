@@ -147,7 +147,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Select "Cancel Plan"
 
 ## Contact Support
-- Email: support@cluesintelligence.com
+- Email: cluesnomads@gmail.com
 - Response time: 24-48 hours
 `,
 
@@ -156,7 +156,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 ## Support Overview
 
 ### Contact Methods
-- **Email**: support@cluesintelligence.com
+- **Email**: cluesnomads@gmail.com
 - **Response Time**: 24-48 hours (business days)
 
 ### Tier Limits
