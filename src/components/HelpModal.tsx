@@ -97,6 +97,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     <div
       className={`help-modal-overlay ${isClosing ? 'closing' : ''}`}
       onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Help"
     >
       <div className="help-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}

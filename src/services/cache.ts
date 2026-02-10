@@ -12,7 +12,7 @@
  * - Development: localStorage fallback
  */
 
-import type { LLMProvider, EnhancedComparisonResult, MetricConsensus } from '../types/enhancedComparison';
+import type { LLMProvider, EnhancedComparisonResult, MetricConsensus, CityConsensusScore } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 // ============================================================================
@@ -408,6 +408,21 @@ class CacheManager {
       return 'tie';
     };
 
+    // Swap city refs inside nested llmScores
+    const swapCityInCategories = (city: CityConsensusScore): CityConsensusScore => ({
+      ...city,
+      categories: city.categories.map(cat => ({
+        ...cat,
+        metrics: cat.metrics.map(metric => ({
+          ...metric,
+          llmScores: metric.llmScores.map(score => ({
+            ...score,
+            city: score.city ? swapWinner(score.city as 'city1' | 'city2' | 'tie') as 'city1' | 'city2' : score.city,
+          })),
+        })),
+      })),
+    });
+
     // Swap categoryWinners values
     const swappedCategoryWinners: Record<string, 'city1' | 'city2' | 'tie'> = {};
     for (const [key, value] of Object.entries(result.categoryWinners)) {
@@ -416,8 +431,8 @@ class CacheManager {
 
     return {
       ...result,
-      city1: result.city2,
-      city2: result.city1,
+      city1: swapCityInCategories(result.city2),
+      city2: swapCityInCategories(result.city1),
       winner: swapWinner(result.winner),
       categoryWinners: swappedCategoryWinners as typeof result.categoryWinners
     };

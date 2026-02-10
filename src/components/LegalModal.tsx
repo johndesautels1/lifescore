@@ -25,7 +25,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
   };
 
   return (
-    <div className="legal-modal-overlay" onClick={onClose}>
+    <div className="legal-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Legal Information">
       <div className="legal-modal" onClick={(e) => e.stopPropagation()}>
         <div className="legal-modal-header">
           <h2>{titles[page]}</h2>

@@ -34,6 +34,23 @@ interface ManualContent {
   rawContent?: string;
 }
 
+// Sanitize HTML to prevent XSS — strip dangerous tags, attributes, and protocols
+function sanitizeHtml(html: string): string {
+  // Remove script tags and their content
+  let clean = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+  // Remove event handler attributes (onclick, onerror, onload, etc.)
+  clean = clean.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  // Remove javascript: protocol in href/src attributes
+  clean = clean.replace(/(?:href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href="#"');
+  // Remove data: protocol in src (can be used for XSS)
+  clean = clean.replace(/src\s*=\s*(?:"data:[^"]*"|'data:[^']*')/gi, 'src=""');
+  // Remove style tags
+  clean = clean.replace(/<style[\s\S]*?<\/style>/gi, '');
+  // Remove iframe, object, embed, form tags
+  clean = clean.replace(/<\/?(iframe|object|embed|form|input|textarea|button|select)[\s\S]*?>/gi, '');
+  return clean;
+}
+
 // Basic markdown to HTML converter
 function markdownToHtml(markdown: string): string {
   let html = markdown;
@@ -54,13 +71,15 @@ function markdownToHtml(markdown: string): string {
   html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
 
   // Links - handle anchor links and external links differently
+  // Only allow http(s) and anchor (#) links — block javascript: and data: protocols
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, (_match, text, url) => {
     if (url.startsWith('#')) {
-      // Anchor links - mark as internal, will be handled by click handler
       return `<a href="${url}" class="internal-link" data-section="${url.slice(1)}">${text}</a>`;
-    } else {
-      // External links - open in new tab
+    } else if (url.startsWith('http://') || url.startsWith('https://')) {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="external-link">${text}</a>`;
+    } else {
+      // Block non-http protocols (javascript:, data:, vbscript:, etc.)
+      return `<span class="external-link">${text}</span>`;
     }
   });
 
@@ -90,7 +109,8 @@ function markdownToHtml(markdown: string): string {
   // Clean up empty paragraphs
   html = html.replace(/<p>\s*<\/p>/gim, '');
 
-  return html;
+  // Sanitize the final HTML to strip any remaining dangerous content
+  return sanitizeHtml(html);
 }
 
 // Parse markdown into sections

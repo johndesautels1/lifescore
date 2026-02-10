@@ -68,7 +68,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns Query result or throws after all retries exhausted
  */
 export async function withRetry<T>(
-  queryFn: () => PromiseLike<T>,
+  queryFn: (signal?: AbortSignal) => PromiseLike<T>,
   options: {
     maxRetries?: number;
     initialDelayMs?: number;
@@ -76,6 +76,7 @@ export async function withRetry<T>(
     backoffMultiplier?: number;
     timeoutMs?: number;
     operationName?: string;
+    signal?: AbortSignal;
   } = {}
 ): Promise<T> {
   const {
@@ -85,22 +86,35 @@ export async function withRetry<T>(
     backoffMultiplier = RETRY_CONFIG.backoffMultiplier,
     timeoutMs = SUPABASE_TIMEOUT_MS,
     operationName = 'Supabase query',
+    signal: externalSignal,
   } = options;
 
   let lastError: Error | null = null;
   let delay = initialDelayMs;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // D8: AbortController for hung connections — abort per-attempt
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    // Link external signal if provided
+    const onExternalAbort = () => controller.abort();
+    externalSignal?.addEventListener('abort', onExternalAbort);
+
     try {
-      // Wrap query with timeout
+      if (externalSignal?.aborted) {
+        throw new DOMException('Query aborted by caller', 'AbortError');
+      }
+
       const result = await Promise.race([
-        Promise.resolve(queryFn()),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`${operationName} timed out after ${timeoutMs}ms`)), timeoutMs)
-        ),
+        Promise.resolve(queryFn(controller.signal)),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error(`${operationName} timed out after ${timeoutMs}ms`));
+          });
+        }),
       ]);
 
-      // Success - log if it was a retry
       if (attempt > 0) {
         console.log(`[Supabase] ${operationName} succeeded on attempt ${attempt + 1}`);
       }
@@ -109,29 +123,30 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Check if this is a retryable error
+      // If externally aborted, don't retry
+      if (externalSignal?.aborted || lastError.name === 'AbortError') {
+        console.warn(`[Supabase] ${operationName} aborted`);
+        throw lastError;
+      }
+
       const isTimeout = lastError.message.includes('timed out');
       const isNetworkError = lastError.message.includes('network') || lastError.message.includes('fetch');
       const isRetryable = isTimeout || isNetworkError;
 
       if (!isRetryable || attempt === maxRetries) {
-        // Non-retryable error or exhausted retries
         console.error(`[Supabase] ${operationName} failed after ${attempt + 1} attempts:`, lastError.message);
         throw lastError;
       }
 
-      // Log retry attempt
       console.warn(`[Supabase] ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`);
-
-      // Wait before retry
       await sleep(delay);
-
-      // Increase delay for next retry (exponential backoff with cap)
       delay = Math.min(delay * backoffMultiplier, maxDelayMs);
+    } finally {
+      clearTimeout(timeoutId);
+      externalSignal?.removeEventListener('abort', onExternalAbort);
     }
   }
 
-  // Should never reach here, but TypeScript needs it
   throw lastError || new Error(`${operationName} failed`);
 }
 

@@ -26,7 +26,7 @@
   --midnight: #0a1628;
   --cockpit-blue: #0d2847;
   --cockpit-blue-light: #1a3a5c;
-  --brushed-gold: #c9a227;
+  --brushed-gold: #e6b800; /* FIX: Improved contrast from #c9a227 to meet WCAG 4.5:1 */
   --gold-glow: #d4af37;
   --amber-active: #f59e0b;
   --british-racing: #004225;
@@ -38,7 +38,7 @@
 
   /* Premium gradients */
   --gradient-midnight: linear-gradient(180deg, #0a1628 0%, #0d2847 100%);
-  --gradient-gold: linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #c9a227 100%);
+  --gradient-gold: linear-gradient(135deg, #e6b800 0%, #d4af37 50%, #e6b800 100%);
   --gradient-cockpit: linear-gradient(135deg, rgba(13, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
   --gradient-bezel: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
 
@@ -1386,31 +1386,16 @@ button.control-item.recording {
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .cockpit-header {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    text-align: center;
-    padding: 1rem;
-  }
-
-  /* Center OPENAI BRAIN status indicator */
-  .cockpit-left {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .status-cluster {
-    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    align-items: center;
-    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
   }
 
-  .status-indicator {
-    justify-content: center;
-  }
-
-  /* Center ASK OLIVIA */
+  /* Move title to top spanning full width */
   .cockpit-center {
+    grid-column: 1 / -1;
+    order: -1;
     width: 100%;
     text-align: center;
   }
@@ -1419,12 +1404,20 @@ button.control-item.recording {
     justify-content: center;
   }
 
+  /* Hide status cluster on mobile to save vertical space */
+  .status-cluster {
+    display: none;
+  }
+
+  .cockpit-left {
+    justify-content: flex-start;
+  }
+
   /* Center LOCAL + time display on mobile */
   .cockpit-right {
     display: flex;
-    justify-content: center !important;
+    justify-content: flex-end;
     align-items: center;
-    width: 100%;
   }
 
   .time-cluster {

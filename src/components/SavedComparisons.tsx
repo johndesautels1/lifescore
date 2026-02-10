@@ -68,53 +68,40 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   // FIX 2026-02-08: State for embedded Gamma report viewer
   const [embeddedGammaReport, setEmbeddedGammaReport] = useState<SavedGammaReport | null>(null);
 
-  // Load comparisons on mount - sync from Supabase first
+  // Load comparisons on mount — show cached data immediately, sync in background
   useEffect(() => {
-    syncAndLoadComparisons();
+    loadComparisons();
+    syncAndLoadComparisons().catch(console.error);
   }, []);
 
-  // FIX: Sync reports AND comparisons from Supabase to ensure cross-device consistency
+  // Sync reports AND comparisons from Supabase to ensure cross-device consistency
   const syncAndLoadComparisons = async () => {
     setIsSyncing(true);
-    console.log('[SavedComparisons] Starting full sync from Supabase...');
 
     try {
-      // FIX Session-19: FIRST sync actual comparisons (including Enhanced) from Supabase
-      // This was missing before - Enhanced comparisons from other devices weren't being pulled!
       const dbSyncResult = await fullDatabaseSync();
-      console.log('[SavedComparisons] Database sync result:', dbSyncResult);
 
-      // Then sync Gamma and Judge reports in parallel
+      // Sync Gamma and Judge reports in parallel
       const [gammaFromDb, judgeFromDb] = await Promise.all([
         syncGammaReportsFromSupabase(),
         syncJudgeReportsFromSupabase()
       ]);
 
-      // Load comparisons from localStorage (which fullDatabaseSync just updated)
+      // Reload from localStorage (which fullDatabaseSync just updated)
       loadComparisons();
 
-      // Use the synced data directly for reports
       setGammaReports(gammaFromDb);
       setJudgeReports(judgeFromDb);
 
       const totalReports = gammaFromDb.length + judgeFromDb.length;
       const totalComparisons = dbSyncResult.pulled + dbSyncResult.pushed;
-      console.log('[SavedComparisons] ✓ Full sync complete:',
-        dbSyncResult.pulled, 'comparisons pulled,',
-        dbSyncResult.pushed, 'pushed,',
-        gammaFromDb.length, 'gamma,',
-        judgeFromDb.length, 'judge reports');
 
       if (totalComparisons > 0 || totalReports > 0) {
         showMessage('success', `Synced ${dbSyncResult.pulled} comparisons + ${totalReports} reports`);
-      } else {
-        showMessage('error', 'No data found - are you logged in?');
       }
     } catch (err) {
       console.error('[SavedComparisons] Sync error:', err);
       showMessage('error', 'Sync failed - check connection');
-      // Fall back to localStorage only
-      loadComparisons();
     } finally {
       setIsSyncing(false);
     }
@@ -700,7 +687,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
       {/* GitHub Connect Modal */}
       {showGitHubModal && (
-        <div className="modal-overlay" onClick={() => setShowGitHubModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowGitHubModal(false)} role="dialog" aria-modal="true" aria-label="Connect to GitHub">
           <div className="github-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Connect to GitHub</h3>
             <p className="modal-description">
@@ -742,7 +729,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
       {/* FIX 2026-02-08: Embedded Gamma Report Viewer Modal */}
       {embeddedGammaReport && (
-        <div className="modal-overlay gamma-embed-overlay" onClick={() => setEmbeddedGammaReport(null)}>
+        <div className="modal-overlay gamma-embed-overlay" onClick={() => setEmbeddedGammaReport(null)} role="dialog" aria-modal="true" aria-label="Visual Report">
           <div className="gamma-embed-modal" onClick={(e) => e.stopPropagation()}>
             <div className="gamma-embed-header">
               <h3>{embeddedGammaReport.city1} vs {embeddedGammaReport.city2}</h3>

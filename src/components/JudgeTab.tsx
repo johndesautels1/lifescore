@@ -118,7 +118,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   savedJudgeReport,
   onSavedReportLoaded
 }) => {
-  const { supabaseUser, isAuthenticated } = useAuth();
+  const { supabaseUser, isAuthenticated, session } = useAuth();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
@@ -631,6 +631,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify({
           comparisonResult,

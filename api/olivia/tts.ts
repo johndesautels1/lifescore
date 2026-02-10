@@ -124,7 +124,7 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // CORS - open for TTS
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - standard preset for TTS
   if (!applyRateLimit(req.headers, 'olivia-tts', 'standard', res)) {

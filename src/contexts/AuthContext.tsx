@@ -75,14 +75,11 @@ interface AuthContextValue extends AuthState {
 }
 
 // ============================================================================
-// DEMO CREDENTIALS (when Supabase not configured)
+// DEMO MODE (when Supabase not configured)
+// Demo is disabled unless VITE_DEMO_ENABLED=true is set in environment.
 // ============================================================================
 
-const DEMO_CREDENTIALS = [
-  { email: 'demo@lifescore.com', password: 'demo123', name: 'Demo User' },
-  { email: 'admin@clues.com', password: 'admin123', name: 'Admin' },
-  { email: 'john@clues.com', password: 'clues2026', name: 'John D.' },
-];
+const DEMO_ENABLED = import.meta.env.VITE_DEMO_ENABLED === 'true';
 
 // ============================================================================
 // CONTEXT
@@ -321,40 +318,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-    // DEMO MODE
+    // DEMO MODE — only active when Supabase is not configured AND demo is explicitly enabled
     if (!state.isConfigured) {
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate delay
-
-      const match = DEMO_CREDENTIALS.find(
-        cred => cred.email.toLowerCase() === email.toLowerCase() && cred.password === password
-      );
-
-      // Also accept any email with password "lifescore"
-      if (match || password === 'lifescore') {
-        const name = match?.name || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const user: User = {
-          id: crypto.randomUUID(),
-          email: email.toLowerCase(),
-          name: name || 'User',
-        };
-
-        localStorage.setItem('lifescore_user', JSON.stringify(user));
+      if (!DEMO_ENABLED) {
         setState(prev => ({
           ...prev,
-          user,
-          isAuthenticated: true,
           isLoading: false,
-          error: null,
+          error: 'Authentication service is not configured. Please contact support.',
         }));
-        return { error: null };
+        return { error: new Error('Auth not configured') };
       }
 
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Generic demo user — no hardcoded credentials in client code
+      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const user: User = {
+        id: crypto.randomUUID(),
+        email: email.toLowerCase(),
+        name: name || 'Demo User',
+      };
+
+      localStorage.setItem('lifescore_user', JSON.stringify(user));
       setState(prev => ({
         ...prev,
+        user,
+        isAuthenticated: true,
         isLoading: false,
-        error: 'Invalid email or password. Try password: lifescore',
+        error: null,
       }));
-      return { error: new Error('Invalid credentials') };
+      return { error: null };
     }
 
     // SUPABASE MODE

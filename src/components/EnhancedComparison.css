@@ -4279,15 +4279,15 @@
   }
 
   .llm-score-mini .mini-llm-name {
-    font-size: 0.5rem;
+    font-size: 0.6rem; /* FIX: Was 0.5rem, unreadable on mobile */
   }
 
   .llm-score-mini .mini-icon {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 
   .llm-score-mini .mini-score {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 
   .city-consensus .consensus-value {
@@ -5137,8 +5137,8 @@
   }
 
   .llm-score-item {
-    min-width: 48px;
-    padding: 0.35rem 0.5rem;
+    min-width: 42px; /* FIX: Reduced from 48px to prevent overflow on small screens */
+    padding: 0.3rem 0.4rem;
   }
 
   .llm-item-icon {

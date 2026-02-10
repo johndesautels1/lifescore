@@ -248,6 +248,8 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .weight-row {
@@ -392,6 +394,8 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .category-weight-row {

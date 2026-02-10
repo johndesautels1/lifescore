@@ -444,3 +444,59 @@
     color: #6ba3ff;
   }
 }
+
+/* 480px: Extra-small mobile refinements */
+@media (max-width: 480px) {
+  .gun-modal {
+    border-radius: 8px;
+    width: 100%;
+  }
+
+  .gun-modal-header {
+    padding: 1rem;
+  }
+
+  .gun-modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .gun-close-btn {
+    font-size: 1.5rem;
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gun-modal-body,
+  .gun-disclaimer {
+    padding: 1rem;
+  }
+
+  .gun-disclaimer h4 {
+    font-size: 0.9rem;
+  }
+
+  .gun-disclaimer p {
+    font-size: 0.8rem;
+  }
+
+  .gun-cell {
+    font-size: 0.82rem;
+  }
+
+  .gun-cell-label {
+    font-size: 0.78rem;
+  }
+
+  .gun-summary {
+    padding: 0.875rem;
+    font-size: 0.82rem;
+  }
+
+  .gun-retry-btn {
+    min-height: 44px;
+    width: 100%;
+  }
+}

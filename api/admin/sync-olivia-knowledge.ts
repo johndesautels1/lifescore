@@ -8,12 +8,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
 const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || 'asst_3wbVjyY629u7fDylaK0s5gsM';
-const ADMIN_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com'];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 
 interface FileObject {
   id: string;
@@ -124,8 +125,11 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS - restricted to deployment origin only
+  const origin = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'https://lifescore.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -140,12 +144,50 @@ export default async function handler(
   }
 
   try {
-    // Simple admin check - in production you'd verify a JWT
-    const { adminEmail } = req.body || {};
-    if (!adminEmail || !ADMIN_EMAILS.includes(adminEmail)) {
+    // Verify JWT Bearer token
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const token = authHeader.substring(7);
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      res.status(500).json({ error: 'Server configuration error' });
+      return;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
+    }
+
+    // Verify user has admin role via profile tier
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tier, email')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const userEmail = user.email || profile?.email || '';
+    const isAdmin = profile?.tier === 'enterprise' && ADMIN_EMAILS.length > 0
+      ? ADMIN_EMAILS.includes(userEmail)
+      : profile?.tier === 'enterprise';
+
+    if (!isAdmin) {
       res.status(403).json({ error: 'Admin access required' });
       return;
     }
+
+    console.log(`[SYNC] Admin request from verified user: ${user.id}`);
 
     const apiKey = getOpenAIKey();
 

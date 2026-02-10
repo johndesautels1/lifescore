@@ -193,7 +193,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
   if (!isOpen) return null;
 
   return (
-    <div className="settings-modal-overlay" onClick={onClose}>
+    <div className="settings-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Account Settings">
       <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="settings-header">

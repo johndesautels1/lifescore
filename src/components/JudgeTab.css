@@ -27,7 +27,7 @@
   --midnight: #0a1628;
   --cockpit-blue: #0d2847;
   --cockpit-blue-light: #1a3a5c;
-  --brushed-gold: #c9a227;
+  --brushed-gold: #e6b800; /* FIX: Improved contrast from #c9a227 to meet WCAG 4.5:1 */
   --judge-gold: #d4af37;
   --amber-active: #f59e0b;
   --ice-white: #f8fafc;
@@ -41,7 +41,7 @@
 
   /* Premium gradients */
   --gradient-midnight: linear-gradient(180deg, #0a1628 0%, #0d2847 100%);
-  --gradient-gold: linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #c9a227 100%);
+  --gradient-gold: linear-gradient(135deg, #e6b800 0%, #d4af37 50%, #e6b800 100%);
   --gradient-cockpit: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(8, 18, 32, 0.98) 100%);
   --gradient-bezel: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
   --gradient-card: linear-gradient(135deg, rgba(13, 40, 71, 0.8) 0%, rgba(10, 22, 40, 0.9) 100%);
@@ -271,6 +271,17 @@
     max-width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+}
+
+/* FIX: Ensure dropdown doesn't truncate on very small screens */
+@media (max-width: 480px) {
+  .report-selector-bar .judge-report-dropdown {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -1689,7 +1700,7 @@
     max-width: none;
     justify-content: center;
     padding: 0.6rem 0.5rem;
-    font-size: 0.38rem;
+    font-size: 0.75rem; /* FIX: Was 0.38rem — unreadable on mobile */
     gap: 0.2rem;
   }
 

@@ -98,7 +98,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
   highlightFeature,
   highlightTier,
 }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, session } = useAuth();
   const { tier: currentTier } = useTierAccess();
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('annual');
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -139,7 +139,10 @@ const PricingModal: React.FC<PricingModalProps> = ({
     try {
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           priceKey,
           userId: profile.id,
@@ -170,7 +173,10 @@ const PricingModal: React.FC<PricingModalProps> = ({
     try {
       const response = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ userId: profile.id }),
       });
 
@@ -190,7 +196,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
   };
 
   return (
-    <div className="pricing-modal-overlay" onClick={onClose}>
+    <div className="pricing-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Pricing Plans">
       <div className="pricing-modal" onClick={(e) => e.stopPropagation()}>
         {/* Close Button */}
         <button className="modal-close-btn" onClick={onClose}>

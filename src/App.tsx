@@ -67,7 +67,7 @@ import './App.css';
 
 // Main app content (requires auth)
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user, session } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
@@ -158,16 +158,24 @@ const AppContent: React.FC = () => {
   });
 
   // Update saved count on mount and when savedKey changes
+  // FIX: Read from correct localStorage keys (was 'lifescore_comparisons' which doesn't exist)
   useEffect(() => {
-    const saved = localStorage.getItem('lifescore_comparisons');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSavedCount(Array.isArray(parsed) ? parsed.length : 0);
-      } catch {
-        setSavedCount(0);
+    let count = 0;
+    try {
+      const standard = localStorage.getItem('lifescore_saved_comparisons');
+      if (standard) {
+        const parsed = JSON.parse(standard);
+        if (Array.isArray(parsed)) count += parsed.length;
       }
+      const enhanced = localStorage.getItem('lifescore_saved_enhanced');
+      if (enhanced) {
+        const parsed = JSON.parse(enhanced);
+        if (Array.isArray(parsed)) count += parsed.length;
+      }
+    } catch {
+      // Ignore parse errors
     }
+    setSavedCount(count);
   }, [savedKey]);
 
   // Auto-switch to results tab when comparison completes (BOTH modes)
@@ -426,6 +434,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app">
+      {/* A17: Skip-to-content link for keyboard users */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
+
       <Header
         onUpgradeClick={() => setShowPricingModal(true)}
         onCostDashboardClick={() => setShowCostDashboard(true)}
@@ -440,7 +453,7 @@ const AppContent: React.FC = () => {
         savedCount={savedCount}
       />
 
-      <main className="main-content">
+      <main className="main-content" id="main-content">
         <div className="container">
           {/* Live Badge - Always visible */}
           <div className="live-badge">
@@ -705,7 +718,7 @@ const AppContent: React.FC = () => {
                               try {
                                 const userId = user?.id || 'guest';
                                 console.log('[App] Starting Judge pre-generation in background...');
-                                startJudgePregeneration(result, userId);
+                                startJudgePregeneration(result, userId, session?.access_token);
                               } catch (pregenError) {
                                 console.error('[App] Judge pre-generation error (non-fatal):', pregenError);
                               }

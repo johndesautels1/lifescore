@@ -26,6 +26,7 @@ import { getSavedJudgeReports } from './savedComparisons';
 
 interface PregenOptions {
   userId: string;
+  accessToken?: string;
   skipIfExists?: boolean;
 }
 
@@ -42,7 +43,7 @@ export function startBackgroundReportGeneration(
   comparisonResult: EnhancedComparisonResult | ComparisonResult,
   options: PregenOptions
 ): void {
-  const { userId } = options;
+  const { userId, accessToken } = options;
 
   console.log('[JudgePregen] Starting background report generation for:', {
     comparisonId: comparisonResult.comparisonId,
@@ -54,7 +55,10 @@ export function startBackgroundReportGeneration(
   // Fire and forget - don't await
   fetch('/api/judge-report', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+    },
     body: JSON.stringify({
       comparisonResult,
       userId,
@@ -236,7 +240,8 @@ export async function checkExistingVideo(
  */
 export function startJudgePregeneration(
   comparisonResult: EnhancedComparisonResult | ComparisonResult,
-  userId: string
+  userId: string,
+  accessToken?: string
 ): void {
   // Validate we have the required data
   if (!comparisonResult?.comparisonId) {
@@ -252,7 +257,7 @@ export function startJudgePregeneration(
   console.log('[JudgePregen] Initiating background pre-generation...');
 
   // Start report generation (which will chain to video generation)
-  startBackgroundReportGeneration(comparisonResult, { userId });
+  startBackgroundReportGeneration(comparisonResult, { userId, accessToken });
 }
 
 export default {
