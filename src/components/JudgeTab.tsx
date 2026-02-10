@@ -1483,12 +1483,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
-            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city1Trend) : ''}`}>
+            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city1Trend || 'stable') : ''}`}>
               <span className="trend-icon">
-                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city1Trend) : '—'}
+                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city1Trend || 'stable') : '—'}
               </span>
               <span className="trend-label">
-                {judgeReport?.summaryOfFindings.city1Trend.toUpperCase() ?? 'PENDING ANALYSIS'}
+                {judgeReport?.summaryOfFindings.city1Trend?.toUpperCase() ?? 'PENDING ANALYSIS'}
               </span>
             </div>
           </div>
@@ -1514,12 +1514,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
-            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city2Trend) : ''}`}>
+            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city2Trend || 'stable') : ''}`}>
               <span className="trend-icon">
-                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city2Trend) : '—'}
+                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city2Trend || 'stable') : '—'}
               </span>
               <span className="trend-label">
-                {judgeReport?.summaryOfFindings.city2Trend.toUpperCase() ?? 'PENDING ANALYSIS'}
+                {judgeReport?.summaryOfFindings.city2Trend?.toUpperCase() ?? 'PENDING ANALYSIS'}
               </span>
             </div>
           </div>
