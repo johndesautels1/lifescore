@@ -5,7 +5,6 @@
  * Wraps react-hot-toast with consistent styling for the app.
  */
 
-import React from 'react';
 import toast from 'react-hot-toast';
 
 /** Show a success toast */

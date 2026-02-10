@@ -71,20 +71,20 @@ import type { FreedomEducationData } from '../types/freedomEducation';
 export interface JudgeReport {
   reportId: string;
   generatedAt: string;
-  userId: string;
+  userId?: string;
   comparisonId: string;
   city1: string;
   city2: string;
   videoUrl?: string;
-  videoStatus: 'pending' | 'generating' | 'ready' | 'error';
+  videoStatus: 'pending' | 'generating' | 'ready' | 'error' | string;
   summaryOfFindings: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend?: 'rising' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
-    overallConfidence: 'high' | 'medium' | 'low';
+    city2Trend?: 'rising' | 'stable' | 'declining';
+    overallConfidence: 'high' | 'medium' | 'low' | string;
   };
-  categoryAnalysis: {
+  categoryAnalysis?: {
     categoryId: string;
     categoryName: string;
     city1Analysis: string;
@@ -92,11 +92,11 @@ export interface JudgeReport {
     trendNotes: string;
   }[];
   executiveSummary: {
-    recommendation: 'city1' | 'city2' | 'tie';
+    recommendation: 'city1' | 'city2' | 'tie' | string;
     rationale: string;
-    keyFactors: string[];
-    futureOutlook: string;
-    confidenceLevel: 'high' | 'medium' | 'low';
+    keyFactors?: string[];
+    futureOutlook?: string;
+    confidenceLevel?: 'high' | 'medium' | 'low' | string;
   };
   freedomEducation?: FreedomEducationData;
 }
@@ -520,8 +520,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     const loserScore = isTie ? report.summaryOfFindings.city2Score :
       rec === 'city1' ? report.summaryOfFindings.city2Score : report.summaryOfFindings.city1Score;
 
-    const tieScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, I find this an exceptionally close case — both cities scored nearly identically at ${report.summaryOfFindings.city1Score} and ${report.summaryOfFindings.city2Score} respectively. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
-    const winnerScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a freedom score of ${winnerScore} out of 100. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+    const tieScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, I find this an exceptionally close case — both cities scored nearly identically at ${report.summaryOfFindings.city1Score} and ${report.summaryOfFindings.city2Score} respectively. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
+    const winnerScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a freedom score of ${winnerScore} out of 100. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
     const script = isTie ? tieScript : winnerScript;
 
     const request: GenerateJudgeVideoRequest = {
@@ -802,10 +802,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               overall_confidence: report.summaryOfFindings.overallConfidence,
               recommendation: report.executiveSummary.recommendation,
               rationale: report.executiveSummary.rationale,
-              key_factors: report.executiveSummary.keyFactors,
-              future_outlook: report.executiveSummary.futureOutlook,
-              confidence_level: report.executiveSummary.confidenceLevel,
-              category_analysis: report.categoryAnalysis,
+              key_factors: report.executiveSummary.keyFactors || [],
+              future_outlook: report.executiveSummary.futureOutlook || '',
+              confidence_level: report.executiveSummary.confidenceLevel || 'medium',
+              category_analysis: report.categoryAnalysis || [],
               full_report: report,
               video_url: report.videoUrl,
               video_status: report.videoStatus,
@@ -834,10 +834,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               overall_confidence: report.summaryOfFindings.overallConfidence,
               recommendation: report.executiveSummary.recommendation,
               rationale: report.executiveSummary.rationale,
-              key_factors: report.executiveSummary.keyFactors,
-              future_outlook: report.executiveSummary.futureOutlook,
-              confidence_level: report.executiveSummary.confidenceLevel,
-              category_analysis: report.categoryAnalysis,
+              key_factors: report.executiveSummary.keyFactors || [],
+              future_outlook: report.executiveSummary.futureOutlook || '',
+              confidence_level: report.executiveSummary.confidenceLevel || 'medium',
+              category_analysis: report.categoryAnalysis || [],
               full_report: report,
               video_url: report.videoUrl,
               video_status: report.videoStatus
@@ -920,7 +920,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       `${judgeReport.city1} vs ${judgeReport.city2}\n\n` +
       `Winner: ${judgeReport.executiveSummary.recommendation === 'city1' ? judgeReport.city1 :
         judgeReport.executiveSummary.recommendation === 'city2' ? judgeReport.city2 : 'TIE'}\n` +
-      `Confidence: ${judgeReport.executiveSummary.confidenceLevel.toUpperCase()}\n\n` +
+      `Confidence: ${(judgeReport.executiveSummary.confidenceLevel || 'medium').toUpperCase()}\n\n` +
       `Rationale: ${judgeReport.executiveSummary.rationale.slice(0, 200)}...\n\n` +
       `Report ID: ${judgeReport.reportId}\n` +
       `Generated: ${new Date(judgeReport.generatedAt).toLocaleDateString()}`;
@@ -971,12 +971,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   <h1>⚖️ LIFE SCORE™ Judge's Report</h1>
   <p><strong>Report ID:</strong> ${report.reportId}<br>
   <strong>Generated:</strong> ${new Date(report.generatedAt).toLocaleString()}<br>
-  <strong>User ID:</strong> ${report.userId}</p>
+  <strong>User ID:</strong> ${report.userId || 'N/A'}</p>
 
   <div class="verdict">
     <h3>THE JUDGE'S VERDICT</h3>
     <h2>🏆 ${winner}</h2>
-    <p>Confidence: <strong>${report.executiveSummary.confidenceLevel.toUpperCase()}</strong></p>
+    <p>Confidence: <strong>${(report.executiveSummary.confidenceLevel || 'medium').toUpperCase()}</strong></p>
   </div>
 
   <h2>📊 Summary of Findings</h2>
@@ -1000,7 +1000,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   </div>
 
   <h2>📖 Detailed Category Analysis</h2>
-  ${report.categoryAnalysis.map(cat => `
+  ${(report.categoryAnalysis || []).map(cat => `
     <div class="category">
       <h3>${cat.categoryName}</h3>
       <p><strong>${report.city1}:</strong> ${cat.city1Analysis}</p>
@@ -1013,10 +1013,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   <p>${report.executiveSummary.rationale}</p>
 
   <h3>Key Factors</h3>
-  ${report.executiveSummary.keyFactors.map(f => `<div class="key-factor">◈ ${f}</div>`).join('')}
+  ${(report.executiveSummary.keyFactors || []).map(f => `<div class="key-factor">◈ ${f}</div>`).join('')}
 
   <h3>Future Outlook</h3>
-  <p>${report.executiveSummary.futureOutlook}</p>
+  <p>${report.executiveSummary.futureOutlook || ''}</p>
 
   <div class="footer">
     <p>LIFE SCORE™ - The Judge's Verdict<br>
@@ -1534,7 +1534,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         <div className="category-analysis-list">
           {CATEGORIES.map((category) => {
             const isExpanded = expandedCategories.has(category.id);
-            const analysis = judgeReport?.categoryAnalysis.find(a => a.categoryId === category.id);
+            const analysis = judgeReport?.categoryAnalysis?.find(a => a.categoryId === category.id);
 
             return (
               <div
@@ -1602,8 +1602,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                     ? city2Name
                     : 'TIE'}
                 </span>
-                <span className={`verdict-confidence ${judgeReport.executiveSummary.confidenceLevel}`}>
-                  {judgeReport.executiveSummary.confidenceLevel.toUpperCase()} CONFIDENCE
+                <span className={`verdict-confidence ${judgeReport.executiveSummary.confidenceLevel || 'medium'}`}>
+                  {(judgeReport.executiveSummary.confidenceLevel || 'medium').toUpperCase()} CONFIDENCE
                 </span>
               </div>
 
@@ -1615,7 +1615,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               <div className="key-factors-section">
                 <h3 className="factors-header">Key Factors</h3>
                 <ul className="factors-list">
-                  {judgeReport.executiveSummary.keyFactors.map((factor, idx) => (
+                  {(judgeReport.executiveSummary.keyFactors || []).map((factor, idx) => (
                     <li key={idx} className="factor-item">
                       <span className="factor-bullet">◈</span>
                       <span className="factor-text">{factor}</span>
@@ -1626,7 +1626,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
               <div className="outlook-section">
                 <h3 className="outlook-header">Future Outlook</h3>
-                <p className="outlook-text">{judgeReport.executiveSummary.futureOutlook}</p>
+                <p className="outlook-text">{judgeReport.executiveSummary.futureOutlook || ''}</p>
               </div>
             </>
           ) : (
