@@ -18,15 +18,11 @@ export default defineConfig({
             handler: 'NetworkOnly',
           },
           {
+            // Supabase: never cache authenticated responses in service worker.
+            // All Supabase data is user-specific; caching risks leaking data
+            // between users on shared devices.
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
-              },
-            },
+            handler: 'NetworkOnly',
           },
         ],
       },
