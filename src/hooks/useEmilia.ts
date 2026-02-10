@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateTTSCost } from '../utils/costCalculator';
+import { toastSuccess } from '../utils/toast';
 
 export interface EmiliaMessage {
   id: string;
@@ -337,7 +338,7 @@ export function useEmilia(): UseEmiliaReturn {
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(shareData.text);
-        alert('Conversation copied to clipboard!');
+        toastSuccess('Conversation copied to clipboard!');
       }
     } catch (err) {
       // User cancelled or error - silently fail

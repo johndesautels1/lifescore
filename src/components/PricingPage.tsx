@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { UserTier } from '../types/database';
+import { toastError } from '../utils/toast';
 import './PricingPage.css';
 
 // ============================================================================
@@ -116,7 +117,7 @@ const PricingPage: React.FC = () => {
   const handleCheckout = async (tierId: UserTier) => {
     if (tierId === 'free') return;
     if (!user?.email || !profile?.id) {
-      alert('Please sign in to upgrade your subscription.');
+      toastError('Please sign in to upgrade your subscription.');
       return;
     }
 
@@ -146,7 +147,7 @@ const PricingPage: React.FC = () => {
       }
     } catch (error) {
       console.error('[Pricing] Checkout error:', error);
-      alert('Failed to start checkout. Please try again.');
+      toastError('Failed to start checkout. Please try again.');
     } finally {
       setIsLoading(null);
     }
@@ -154,7 +155,7 @@ const PricingPage: React.FC = () => {
 
   // Handle manage subscription
   const handleManageSubscription = async () => {
-    if (!profile?.id) { console.error("[PricingPage] Cannot manage subscription: profile.id missing", { profile }); alert("Unable to manage subscription. Please refresh and try again."); return; }
+    if (!profile?.id) { console.error("[PricingPage] Cannot manage subscription: profile.id missing", { profile }); toastError("Unable to manage subscription. Please refresh and try again."); return; }
 
     setIsLoading('manage');
 
@@ -177,7 +178,7 @@ const PricingPage: React.FC = () => {
       }
     } catch (error) {
       console.error('[Pricing] Portal error:', error);
-      alert('Failed to open billing portal. Please try again.');
+      toastError('Failed to open billing portal. Please try again.');
     } finally {
       setIsLoading(null);
     }
