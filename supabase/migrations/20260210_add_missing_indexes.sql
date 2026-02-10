@@ -1,9 +1,11 @@
 -- ============================================================================
 -- ADD MISSING INDEXES FOR NEWER TABLES
 -- Safe to run: CREATE INDEX IF NOT EXISTS is idempotent
+-- Run on live DB: 2026-02-10
 -- ============================================================================
 
 -- consent_logs: RLS policy queries by user_id, compliance queries by date
+-- Note: consent_logs table created via SQL Editor on 2026-02-10
 CREATE INDEX IF NOT EXISTS idx_consent_logs_user_id
   ON consent_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_consent_logs_created_at
@@ -27,11 +29,6 @@ CREATE INDEX IF NOT EXISTS idx_invideo_overrides_city_name
 -- api_quota_settings: dashboard queries filter by is_active
 CREATE INDEX IF NOT EXISTS idx_api_quota_settings_active
   ON api_quota_settings(is_active) WHERE is_active = true;
-
--- avatar_videos: cleanup function filters by expires_at, lookups by comparison_id
-CREATE INDEX IF NOT EXISTS idx_avatar_videos_expires_at
-  ON avatar_videos(expires_at) WHERE expires_at IS NOT NULL;
--- Note: comparison_id may have UNIQUE constraint from 003 migration (implicit index)
 
 -- report_access_logs: analytics queries by report_id and date
 CREATE INDEX IF NOT EXISTS idx_report_access_logs_report_date
