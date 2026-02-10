@@ -381,6 +381,31 @@ function parseOpusJudgeResponse(content: string): OpusJudgeResponse | null {
       // Don't fail - we can work with partial data
     }
 
+    // Sanitize recommendation to valid enum value
+    const rec = parsed.executiveSummary.recommendation;
+    if (rec !== 'city1' && rec !== 'city2' && rec !== 'tie') {
+      console.warn(`[JUDGE-REPORT] Invalid recommendation "${rec}", defaulting to "city1"`);
+      parsed.executiveSummary.recommendation = 'city1';
+    }
+
+    // Sanitize trend values
+    const validTrends = ['rising', 'stable', 'declining'];
+    if (!validTrends.includes(parsed.summaryOfFindings.city1Trend)) {
+      parsed.summaryOfFindings.city1Trend = 'stable';
+    }
+    if (!validTrends.includes(parsed.summaryOfFindings.city2Trend)) {
+      parsed.summaryOfFindings.city2Trend = 'stable';
+    }
+
+    // Sanitize confidence levels
+    const validConfidence = ['high', 'medium', 'low'];
+    if (!validConfidence.includes(parsed.summaryOfFindings.overallConfidence)) {
+      parsed.summaryOfFindings.overallConfidence = 'medium';
+    }
+    if (!validConfidence.includes(parsed.executiveSummary.confidenceLevel)) {
+      parsed.executiveSummary.confidenceLevel = 'medium';
+    }
+
     return parsed as OpusJudgeResponse;
   } catch (error) {
     console.error('[JUDGE-REPORT] Failed to parse Opus response:', error);
@@ -532,21 +557,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const city1Score = comparisonResult.city1.totalConsensusScore ?? (comparisonResult.city1 as any).totalScore ?? 0;
     const city2Score = comparisonResult.city2.totalConsensusScore ?? (comparisonResult.city2 as any).totalScore ?? 0;
 
-    // SAFEGUARD: Force-correct the recommendation if the LLM picked the wrong winner.
-    // The computed scores from multiple LLM evaluators are the ground truth.
+    // SAFEGUARD: Force-correct the recommendation based on computed scores.
+    // The scores from multiple LLM evaluators are the ground truth.
     let correctedRecommendation = opusResult.executiveSummary.recommendation;
-    if (city1Score !== city2Score) {
-      const scoreWinner: 'city1' | 'city2' = city1Score > city2Score ? 'city1' : 'city2';
-      if (correctedRecommendation !== scoreWinner) {
-        console.warn(`[JUDGE-REPORT] LLM recommended ${correctedRecommendation} but scores say ${scoreWinner} (${city1Score} vs ${city2Score}). Correcting.`);
-        correctedRecommendation = scoreWinner;
+    if (city1Score > city2Score) {
+      if (correctedRecommendation !== 'city1') {
+        console.warn(`[JUDGE-REPORT] LLM recommended ${correctedRecommendation} but scores say city1 (${city1Score} vs ${city2Score}). Correcting.`);
+        correctedRecommendation = 'city1';
+      }
+    } else if (city2Score > city1Score) {
+      if (correctedRecommendation !== 'city2') {
+        console.warn(`[JUDGE-REPORT] LLM recommended ${correctedRecommendation} but scores say city2 (${city1Score} vs ${city2Score}). Correcting.`);
+        correctedRecommendation = 'city2';
       }
     }
+    // For exact ties, accept LLM's choice (it can pick either or 'tie')
     opusResult.executiveSummary.recommendation = correctedRecommendation;
 
-    // Determine winner and loser cities
-    const winnerCity = correctedRecommendation === 'city1' ? city1 : city2;
-    const loserCity = correctedRecommendation === 'city1' ? city2 : city1;
+    // Determine winner and loser cities (for ties, city1 is treated as "winner" for display)
+    const winnerCity = correctedRecommendation === 'city2' ? city2 : city1;
+    const loserCity = correctedRecommendation === 'city2' ? city1 : city2;
 
     // Build freedomEducation data from Opus response
     let freedomEducation: FreedomEducationOutput | undefined;
