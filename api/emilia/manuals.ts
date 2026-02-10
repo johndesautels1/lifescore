@@ -11,6 +11,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -920,7 +921,7 @@ export default async function handler(
     return;
   }
 
-  const { type, email } = req.query;
+  const { type } = req.query;
 
   if (!type || typeof type !== 'string' || !MANUAL_FILES[type]) {
     res.status(400).json({
@@ -930,10 +931,13 @@ export default async function handler(
     return;
   }
 
-  // Check authorization for restricted manuals
+  // Check authorization for restricted manuals — use JWT, not query param email
   if (RESTRICTED_MANUALS.includes(type)) {
-    const userEmail = typeof email === 'string' ? email : null;
-    const isAuthorized = await isUserAuthorized(userEmail);
+    const auth = await requireAuth(req, res);
+    if (!auth) return; // 401 already sent
+
+    // Verify the authenticated user's email is authorized
+    const isAuthorized = await isUserAuthorized(auth.email);
 
     if (!isAuthorized) {
       res.status(403).json({

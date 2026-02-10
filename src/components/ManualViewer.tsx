@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ManualTabType } from './HelpModal';
+import { getAuthHeaders } from '../lib/supabase';
 import './ManualViewer.css';
 
 interface ManualViewerProps {
@@ -180,11 +181,10 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
       setAccessDenied(false);
 
       try {
-        // Build URL with email for authorization
-        const url = userEmail
-          ? `/api/emilia/manuals?type=${type}&email=${encodeURIComponent(userEmail)}`
-          : `/api/emilia/manuals?type=${type}`;
-        const response = await fetch(url);
+        // Build URL — auth is via JWT header, not query param email
+        const url = `/api/emilia/manuals?type=${type}`;
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(url, { headers: authHeaders });
 
         if (!response.ok) {
           // Check for access denied (403)
