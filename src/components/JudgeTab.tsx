@@ -27,6 +27,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
+import { ALL_METROS } from '../data/metros';
 import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -1118,6 +1119,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // This prevents showing wrong cities (e.g., Bern/Mesa for Baltimore/Bratislava)
   const city1Name = judgeReport?.city1 || comparisonResult?.city1?.city || 'City 1';
   const city2Name = judgeReport?.city2 || comparisonResult?.city2?.city || 'City 2';
+  // FIX 2026-02-10: Country must match the city being displayed, not the active comparison
+  // When viewing a saved report for Tampa vs Berlin while Zurich vs London is active,
+  // comparisonResult.city1.country would show "Switzerland" instead of "USA"
+  const city1Country = comparisonResult?.city1?.city === city1Name
+    ? comparisonResult.city1.country
+    : ALL_METROS.find(m => m.city === city1Name)?.country || '';
+  const city2Country = comparisonResult?.city2?.city === city2Name
+    ? comparisonResult.city2.country
+    : ALL_METROS.find(m => m.city === city2Name)?.country || '';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
   return (
@@ -1471,7 +1481,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city1">
             <div className="card-header">
               <span className="city-name">{city1Name}</span>
-              <span className="city-country">{comparisonResult?.city1?.country || ''}</span>
+              <span className="city-country">{city1Country}</span>
             </div>
             <div className="card-score">
               <span className="score-value">
@@ -1502,7 +1512,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city2">
             <div className="card-header">
               <span className="city-name">{city2Name}</span>
-              <span className="city-country">{comparisonResult?.city2?.country || ''}</span>
+              <span className="city-country">{city2Country}</span>
             </div>
             <div className="card-score">
               <span className="score-value">
