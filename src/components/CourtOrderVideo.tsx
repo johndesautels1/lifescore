@@ -52,7 +52,7 @@ interface CourtOrderVideoProps {
 const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   comparisonId,
   winnerCity,
-  loserCity,
+  loserCity = 'City B',
   winnerScore,
   freedomEducation,
 }) => {
@@ -462,7 +462,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                 <FreedomMetricsList
                   metrics={currentCategoryData.winningMetrics}
                   winnerCity={winnerCity}
-                  loserCity={loserCity || 'City B'}
+                  loserCity={loserCity}
                   categoryName={currentCategoryData.categoryName}
                 />
 
