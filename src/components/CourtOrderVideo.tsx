@@ -462,7 +462,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                 <FreedomMetricsList
                   metrics={currentCategoryData.winningMetrics}
                   winnerCity={winnerCity}
-                  loserCity={loserCity}
+                  loserCity={loserCity || 'City B'}
                   categoryName={currentCategoryData.categoryName}
                 />
 
