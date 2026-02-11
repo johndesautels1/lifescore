@@ -40,17 +40,17 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Supabase query timeout in milliseconds.
- * 45s to handle cold starts and slow connections.
+ * 10s is generous for direct PostgREST calls — these are not serverless cold starts.
  */
-export const SUPABASE_TIMEOUT_MS = 45000;
+export const SUPABASE_TIMEOUT_MS = 10000;
 
 /**
  * Retry configuration for Supabase queries
  */
 export const RETRY_CONFIG = {
-  maxRetries: 3,
+  maxRetries: 2,
   initialDelayMs: 1000,  // 1 second
-  maxDelayMs: 10000,     // 10 seconds max
+  maxDelayMs: 5000,      // 5 seconds max
   backoffMultiplier: 2,  // Double delay each retry
 };
 
