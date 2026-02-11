@@ -76,7 +76,7 @@ If you believe a report contains significant errors:
 3. Select reason and submit
 
 ### 4.2 Email Request
-Email: billing@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 Include:
 - Account email
@@ -168,10 +168,10 @@ We may update this policy. Changes apply to purchases made after the update date
 ## 11. Contact
 
 **Billing inquiries:**
-Email: billing@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **General support:**
-Email: support@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **Mailing address:**
 Clues Intelligence LTD

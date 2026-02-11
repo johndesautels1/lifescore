@@ -88,8 +88,13 @@
   font-weight: 800;
   padding: 0.15rem 0.4rem;
   border-radius: 50px;
-  min-width: 18px;
+  min-width: 20px; /* FIX: Consistent badge sizing */
+  height: 20px;
+  line-height: 20px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Dark Mode */
@@ -148,6 +153,7 @@
   .tab-item {
     padding: 0.6rem 0.25rem;
     min-width: 50px;
+    min-height: 44px; /* WCAG touch target minimum */
   }
 
   .tab-icon {

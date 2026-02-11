@@ -28,20 +28,37 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  if (handleCors(req, res, 'open', { methods: 'GET, OPTIONS' })) return;
+  // CORS - restricted to deployment origin
+  if (handleCors(req, res, 'restricted', { methods: 'GET, OPTIONS' })) return;
 
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
-  const userId = req.query.userId as string;
-
-  if (!userId) {
-    res.status(400).json({ error: 'userId query parameter is required' });
+  // Verify JWT Bearer token
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Authentication required' });
     return;
   }
+
+  const token = authHeader.substring(7);
+
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  const authClient = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { persistSession: false },
+  });
+
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  // Use the authenticated user's ID — ignore any userId from query params
+  const userId = user.id;
 
   try {
     // Get subscription

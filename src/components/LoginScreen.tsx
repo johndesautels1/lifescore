@@ -241,6 +241,9 @@ const LoginScreen: React.FC = () => {
                     placeholder="you@example.com"
                     autoComplete="email"
                     disabled={isLoading}
+                    aria-required="true"
+                    aria-invalid={!!displayError}
+                    aria-describedby={displayError ? 'auth-error' : undefined}
                   />
                 </div>
               </div>
@@ -261,6 +264,9 @@ const LoginScreen: React.FC = () => {
                     placeholder="Enter your password"
                     autoComplete="current-password"
                     disabled={isLoading}
+                    aria-required="true"
+                    aria-invalid={!!displayError}
+                    aria-describedby={displayError ? 'auth-error' : undefined}
                   />
                   <button
                     type="button"
@@ -282,8 +288,8 @@ const LoginScreen: React.FC = () => {
               </button>
 
               {displayError && (
-                <div className="form-error">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                <div className="form-error" id="auth-error" role="alert">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                   <span>{displayError}</span>
@@ -451,8 +457,8 @@ const LoginScreen: React.FC = () => {
               </div>
 
               {displayError && (
-                <div className="form-error">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                <div className="form-error" id="auth-error" role="alert">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                   <span>{displayError}</span>
@@ -561,8 +567,8 @@ const LoginScreen: React.FC = () => {
               </div>
 
               {displayError && (
-                <div className="form-error">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                <div className="form-error" id="auth-error" role="alert">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                   <span>{displayError}</span>

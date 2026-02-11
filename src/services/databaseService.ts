@@ -58,12 +58,15 @@ import {
  * Uses exponential backoff on timeout/network errors.
  */
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Database query'
 ): Promise<T> {
-  // Wrap the promise in a function for withRetry
-  return withRetry(() => promise, {
+  // Accept both factory functions and raw promises for backwards compatibility.
+  // Factory functions enable true retry (re-execute query on each attempt).
+  // Raw promises still work but retries will await the same resolved/rejected result.
+  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 3,
@@ -119,7 +122,7 @@ export async function saveComparison(
     nickname,
   };
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('comparisons')
       .upsert(insert, { onConflict: 'user_id,comparison_id' })
@@ -160,7 +163,7 @@ export async function getUserComparisons(
     query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
   }
 
-  const { data, error } = await withTimeout(query);
+  const { data, error } = await withTimeout(() => query);
 
   return {
     data: (data as Comparison[]) || [],
@@ -176,7 +179,7 @@ export async function getComparison(
 ): Promise<{ data: Comparison | null; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('comparisons')
       .select('*')
@@ -198,7 +201,7 @@ export async function getComparisonWithRelations(
 ): Promise<{ data: ComparisonWithRelations | null; error: Error | null }> {
   requireDatabase();
 
-  const { data: comparison, error: compError } = await withTimeout(
+  const { data: comparison, error: compError } = await withTimeout(() =>
     supabase
       .from('comparisons')
       .select('*')
@@ -212,14 +215,14 @@ export async function getComparisonWithRelations(
 
   // Fetch related conversations and gamma reports in parallel with timeout
   const [conversationsResult, gammaResult] = await Promise.all([
-    withTimeout(
+    withTimeout(() =>
       supabase
         .from('olivia_conversations')
         .select('*')
         .eq('comparison_id', comparisonId)
         .order('created_at', { ascending: false })
     ),
-    withTimeout(
+    withTimeout(() =>
       supabase
         .from('gamma_reports')
         .select('*')
@@ -247,7 +250,7 @@ export async function updateComparison(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('comparisons')
       .update(updates)
@@ -265,7 +268,7 @@ export async function deleteComparison(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('comparisons')
       .delete()
@@ -307,7 +310,7 @@ export async function createOliviaConversation(
     title: title || null,
   };
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('olivia_conversations')
       .insert(insert)
@@ -344,7 +347,7 @@ export async function getUserConversations(
     query = query.limit(options.limit);
   }
 
-  const { data, error } = await withTimeout(query);
+  const { data, error } = await withTimeout(() => query);
 
   return {
     data: (data as OliviaConversation[]) || [],
@@ -361,7 +364,7 @@ export async function findConversationForComparison(
 ): Promise<{ data: OliviaConversation | null; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('olivia_conversations')
       .select('*')
@@ -387,7 +390,7 @@ export async function getConversationWithMessages(
 ): Promise<{ data: ConversationWithMessages | null; error: Error | null }> {
   requireDatabase();
 
-  const { data: conversation, error: convError } = await withTimeout(
+  const { data: conversation, error: convError } = await withTimeout(() =>
     supabase
       .from('olivia_conversations')
       .select('*')
@@ -399,7 +402,7 @@ export async function getConversationWithMessages(
     return { data: null, error: convError ? new Error(convError.message) : null };
   }
 
-  const { data: messages } = await withTimeout(
+  const { data: messages } = await withTimeout(() =>
     supabase
       .from('olivia_messages')
       .select('*')
@@ -410,7 +413,7 @@ export async function getConversationWithMessages(
   // Optionally fetch linked comparison
   let comparison: Comparison | undefined;
   if (conversation.comparison_id) {
-    const { data: comp } = await withTimeout(
+    const { data: comp } = await withTimeout(() =>
       supabase
         .from('comparisons')
         .select('*')
@@ -450,7 +453,7 @@ export async function addOliviaMessage(
     audio_url: audioUrl || null,
   };
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('olivia_messages')
       .insert(insert)
@@ -473,7 +476,7 @@ export async function updateConversationTitle(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('olivia_conversations')
       .update({ title })
@@ -491,7 +494,7 @@ export async function archiveConversation(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('olivia_conversations')
       .update({ is_active: false })
@@ -533,7 +536,7 @@ export async function saveGammaReport(
     city2: city2 || null,
   };
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('gamma_reports')
       .insert(insert)
@@ -555,7 +558,7 @@ export async function getGammaReportsForComparison(
 ): Promise<{ data: GammaReport[]; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('gamma_reports')
       .select('*')
@@ -578,7 +581,7 @@ export async function getUserGammaReports(
 ): Promise<{ data: GammaReport[]; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('gamma_reports')
       .select('*')
@@ -634,17 +637,19 @@ export async function exportUserData(userId: string): Promise<{
 }> {
   requireDatabase();
 
+  // FIX: Add LIMIT to prevent unbounded queries on large accounts
+  const EXPORT_LIMIT = 1000;
   const [profile, comparisons, conversations, gammaReports] = await Promise.all([
-    withTimeout(supabase.from('profiles').select('*').eq('id', userId).maybeSingle()),
-    withTimeout(supabase.from('comparisons').select('*').eq('user_id', userId)),
-    withTimeout(supabase.from('olivia_conversations').select('*').eq('user_id', userId)),
-    withTimeout(supabase.from('gamma_reports').select('*').eq('user_id', userId)),
+    withTimeout(() => supabase.from('profiles').select('*').eq('id', userId).maybeSingle()),
+    withTimeout(() => supabase.from('comparisons').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(EXPORT_LIMIT)),
+    withTimeout(() => supabase.from('olivia_conversations').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(EXPORT_LIMIT)),
+    withTimeout(() => supabase.from('gamma_reports').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(EXPORT_LIMIT)),
   ]);
 
   // Get messages for all conversations
   const conversationIds = (conversations.data || []).map((c: any) => c.id);
   const messages = conversationIds.length > 0
-    ? await withTimeout(supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds))
+    ? await withTimeout(() => supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds).limit(EXPORT_LIMIT * 10))
     : { data: [] };
 
   return {
@@ -668,7 +673,7 @@ export async function saveApiCostRecord(
 ): Promise<{ data: ApiCostRecord | null; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('api_cost_records')
       .upsert(record, { onConflict: 'user_id,comparison_id' })
@@ -705,7 +710,7 @@ export async function getUserApiCosts(
     query = query.range(options.offset, options.offset + (options.limit || 100) - 1);
   }
 
-  const { data, error } = await withTimeout(query);
+  const { data, error } = await withTimeout(() => query);
 
   return {
     data: (data as ApiCostRecord[]) || [],
@@ -728,11 +733,13 @@ export async function getApiCostSummary(
 }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('api_cost_records')
       .select('*')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(500)
   );
 
   if (error) {
@@ -770,7 +777,7 @@ export async function deleteAllApiCosts(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('api_cost_records')
       .delete()
@@ -788,7 +795,7 @@ export async function deleteApiCostRecord(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('api_cost_records')
       .delete()

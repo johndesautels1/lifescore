@@ -6,6 +6,10 @@
 -- Caches generated Christiano judge videos to avoid regenerating.
 -- Videos are cached by comparison_id (hash of cities + verdict).
 --
+-- NOTE: This table is also defined in 20260125_create_judge_tables.sql.
+-- Both use CREATE TABLE IF NOT EXISTS so only the first one applied matters.
+-- RLS policies are now managed by 20260210_cleanup_duplicate_policies.sql.
+--
 -- Clues Intelligence LTD
 -- © 2025-2026 All Rights Reserved
 -- ============================================================================

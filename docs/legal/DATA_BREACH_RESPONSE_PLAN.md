@@ -182,7 +182,7 @@ WHAT YOU CAN DO
 - [Recommendation 2]
 
 We sincerely apologize for any concern this may cause. If you have
-questions, please contact: security@cluesintelligence.com
+questions, please contact: cluesnomads@gmail.com
 
 Clues Intelligence LTD
 ```

@@ -37,7 +37,7 @@ LifeScore helps users make informed decisions about where to live by comparing c
 
 | Channel | Availability | Response Time |
 |---------|--------------|---------------|
-| Email Support (support@clueslifescore.com) | 24/7 | 24 hours |
+| Email Support (cluesnomads@gmail.com) | 24/7 | 24 hours |
 | Live Chat | 9 AM - 9 PM EST | Immediate |
 | Help Center (help.clueslifescore.com) | 24/7 (Self-service) | N/A |
 

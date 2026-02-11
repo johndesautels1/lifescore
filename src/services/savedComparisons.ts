@@ -16,11 +16,12 @@ import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIM
  * Uses exponential backoff on timeout/network errors.
  */
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Saved comparisons query'
 ): Promise<T> {
-  return withRetry(() => promise, {
+  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 3,
@@ -62,6 +63,7 @@ export interface SavedEnhancedComparison {
   result: EnhancedComparisonResult;
   savedAt: string;
   nickname?: string;
+  synced?: boolean;
 }
 
 // ============================================================================
@@ -130,12 +132,39 @@ const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
 const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
 const MAX_SAVED = 100; // Standard comparisons
-const MAX_SAVED_ENHANCED = 20; // Enhanced comparisons are much larger (~200KB each)
+const MAX_SAVED_ENHANCED = 5; // Enhanced comparisons are ~200KB each; keep few in localStorage (rest in Supabase)
 
 /**
  * Safely save to localStorage with quota handling
  * If quota exceeded, removes oldest items until it fits
  */
+function clearExpiredCacheEntries(): number {
+  const cacheKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('lifescore:')) {
+      cacheKeys.push(key);
+    }
+  }
+  let cleared = 0;
+  for (const key of cacheKeys) {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const entry = JSON.parse(stored);
+        if (entry.timestamp && entry.ttl && Date.now() > entry.timestamp + entry.ttl) {
+          localStorage.removeItem(key);
+          cleared++;
+        }
+      }
+    } catch {
+      localStorage.removeItem(key);
+      cleared++;
+    }
+  }
+  return cleared;
+}
+
 function safeLocalStorageSet(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
@@ -144,11 +173,35 @@ function safeLocalStorageSet(key: string, value: string): boolean {
     if (error instanceof DOMException && error.name === 'QuotaExceededError') {
       console.warn(`[savedComparisons] localStorage quota exceeded for ${key}, attempting cleanup...`);
 
-      // Try to make room by removing oldest items
+      // Step 1: Clear expired cache entries first (biggest space savings)
+      const expiredCleared = clearExpiredCacheEntries();
+      if (expiredCleared > 0) {
+        console.log(`[savedComparisons] Cleared ${expiredCleared} expired cache entries`);
+        try {
+          localStorage.setItem(key, value);
+          return true;
+        } catch { /* still full, continue */ }
+      }
+
+      // Step 2: Remove ALL cache entries if still full
+      const allCacheKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k?.startsWith('lifescore:')) allCacheKeys.push(k);
+      }
+      allCacheKeys.forEach(k => localStorage.removeItem(k));
+      if (allCacheKeys.length > 0) {
+        console.log(`[savedComparisons] Cleared ${allCacheKeys.length} cache entries to free space`);
+        try {
+          localStorage.setItem(key, value);
+          return true;
+        } catch { /* still full, continue */ }
+      }
+
+      // Step 3: Try trimming the data itself
       try {
         const data = JSON.parse(value);
         if (Array.isArray(data) && data.length > 1) {
-          // Remove oldest 20% of items
           const removeCount = Math.max(1, Math.floor(data.length * 0.2));
           const trimmed = data.slice(0, data.length - removeCount);
           localStorage.setItem(key, JSON.stringify(trimmed));
@@ -156,7 +209,6 @@ function safeLocalStorageSet(key: string, value: string): boolean {
           return true;
         }
       } catch {
-        // If cleanup fails, clear the key entirely
         console.error(`[savedComparisons] Cleanup failed, clearing ${key}`);
         localStorage.removeItem(key);
       }
@@ -252,9 +304,15 @@ export function isEnhancedComparisonResult(result: ComparisonResult): result is 
   if (!result || typeof result !== 'object') return false;
   const r = result as unknown as Record<string, unknown>;
 
-  // Enhanced comparisons have llmsUsed array
+  // Enhanced comparisons have llmsUsed array — validate elements are strings
   if ('llmsUsed' in r && Array.isArray(r.llmsUsed) && r.llmsUsed.length > 0) {
-    return true;
+    // FIX: Validate array elements are actually LLM provider strings
+    const validProviders = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
+    const hasValidElements = r.llmsUsed.every(
+      (item: unknown) => typeof item === 'string' && validProviders.includes(item)
+    );
+    if (hasValidElements) return true;
+    // Corrupted array — fall through to secondary check
   }
 
   // Or totalConsensusScore on city objects
@@ -441,7 +499,7 @@ export function saveComparisonLocalSync(result: ComparisonResult, nickname?: str
 
   saveLocalComparisons(comparisons);
 
-  // Fire and forget database save
+  // FIX: Database save with error logging (was fire-and-forget with silent failures)
   if (isSupabaseConfigured()) {
     getCurrentUser().then(user => {
       if (user) {
@@ -449,12 +507,28 @@ export function saveComparisonLocalSync(result: ComparisonResult, nickname?: str
           .then(({ error }) => {
             if (error) {
               console.error('[savedComparisons] Database save failed:', error);
+              // Mark as unsynced so fullDatabaseSync picks it up later
+              const comparisons = getLocalComparisons();
+              const match = comparisons.find(c => c.id === saved.id);
+              if (match) {
+                match.synced = false;
+                saveLocalComparisons(comparisons);
+              }
             } else {
               console.log('[savedComparisons] Saved to database:', result.comparisonId);
+              // Mark as synced
+              const comparisons = getLocalComparisons();
+              const match = comparisons.find(c => c.id === saved.id);
+              if (match) {
+                match.synced = true;
+                saveLocalComparisons(comparisons);
+              }
             }
           });
       }
-    }).catch(console.error);
+    }).catch(err => {
+      console.error('[savedComparisons] Database save exception:', err);
+    });
   }
 
   return saved;
@@ -485,7 +559,7 @@ export async function deleteComparisonLocal(id: string): Promise<boolean> {
       if (user) {
         // Find the database record by comparison_id
         // FIX 2026-01-29: Use maybeSingle() - record may not exist
-        const { data } = await withTimeout(
+        const { data } = await withTimeout(() =>
           supabase
             .from('comparisons')
             .select('id')
@@ -527,7 +601,7 @@ export async function updateNicknameLocal(id: string, nickname: string): Promise
       if (user) {
         // Find the database record by comparison_id
         // FIX 2026-01-29: Use maybeSingle() - record may not exist
-        const { data } = await withTimeout(
+        const { data } = await withTimeout(() =>
           supabase
             .from('comparisons')
             .select('id')
@@ -613,12 +687,14 @@ export function getLocalEnhancedComparisons(): SavedEnhancedComparison[] {
 /**
  * Save enhanced comparisons to localStorage
  * Returns true if save succeeded, false if failed
+ * Only keeps the most recent MAX_SAVED_ENHANCED (5) in localStorage.
+ * Older comparisons are available from Supabase via getAllEnhancedComparisons().
  */
 function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): boolean {
   // Enforce lower limit for enhanced comparisons (they're ~200KB each)
   const trimmed = comparisons.slice(0, MAX_SAVED_ENHANCED);
   if (comparisons.length > MAX_SAVED_ENHANCED) {
-    console.log(`[savedComparisons] Trimmed enhanced comparisons from ${comparisons.length} to ${MAX_SAVED_ENHANCED}`);
+    console.log(`[savedComparisons] Trimmed enhanced comparisons from ${comparisons.length} to ${MAX_SAVED_ENHANCED} (older ones in Supabase)`);
   }
 
   const success = safeLocalStorageSet(ENHANCED_STORAGE_KEY, JSON.stringify(trimmed));
@@ -628,6 +704,55 @@ function saveLocalEnhancedComparisons(comparisons: SavedEnhancedComparison[]): b
     console.error('[savedComparisons] FAILED to save enhanced comparisons to localStorage');
   }
   return success;
+}
+
+/**
+ * Get ALL enhanced comparisons — local + Supabase database.
+ * Local comparisons are returned immediately (most recent 5).
+ * If user is authenticated, also fetches older ones from Supabase.
+ * Deduplicates by comparison ID (local wins for conflicts to preserve freshness).
+ */
+export async function getAllEnhancedComparisons(): Promise<SavedEnhancedComparison[]> {
+  const local = getLocalEnhancedComparisons();
+
+  // If Supabase is not configured or user not logged in, return local only
+  if (!isSupabaseConfigured()) return local;
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) return local;
+
+    const { data: dbComparisons, error } = await dbGetUserComparisons(user.id, { limit: MAX_SAVED });
+    if (error || !dbComparisons) return local;
+
+    // Merge: local first, then DB (local wins on duplicates)
+    const mergedMap = new Map<string, SavedEnhancedComparison>();
+    local.forEach(c => mergedMap.set(c.id, c));
+
+    for (const dbComp of dbComparisons) {
+      const compResult = dbComp.comparison_result as Record<string, unknown>;
+      const isEnhanced = 'llmsUsed' in compResult && Array.isArray(compResult.llmsUsed);
+      if (!isEnhanced) continue;
+
+      const comparisonId = dbComp.comparison_id;
+      if (mergedMap.has(comparisonId)) continue; // Local version wins
+
+      mergedMap.set(comparisonId, {
+        id: comparisonId,
+        result: compResult as unknown as EnhancedComparisonResult,
+        savedAt: dbComp.created_at || new Date().toISOString(),
+        nickname: dbComp.nickname || undefined,
+        synced: true,
+      });
+    }
+
+    // Sort by savedAt (newest first)
+    return Array.from(mergedMap.values())
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+  } catch (err) {
+    console.error('[savedComparisons] Failed to fetch enhanced from Supabase:', err);
+    return local;
+  }
 }
 
 /**
@@ -773,7 +898,7 @@ export async function deleteEnhancedComparisonLocal(id: string): Promise<boolean
       if (user) {
         // Find the database record by comparison_id
         // FIX 2026-01-29: Use maybeSingle() - record may not exist
-        const { data } = await withTimeout(
+        const { data } = await withTimeout(() =>
           supabase
             .from('comparisons')
             .select('id')
@@ -839,12 +964,13 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
     }
 
     // Fetch from Supabase with timeout (30s for slow mobile connections)
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout(() =>
       supabase
         .from('gamma_reports')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(100),
       30000,
       'Gamma reports sync'
     );
@@ -1085,12 +1211,13 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
     }
 
     // Fetch from Supabase with timeout (30s for slow mobile connections)
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout(() =>
       supabase
         .from('judge_reports')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(100),
       30000,
       'Judge reports sync'
     );
@@ -1126,23 +1253,23 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
       }
 
       // Build SavedJudgeReport from Supabase record
-      // FIX 2026-02-08: Try multiple fallbacks for city names to avoid "Unknown"
+      // FIX 2026-02-10: Use correct DB column names (city1/city2, verdict, key_findings)
       const newReport: SavedJudgeReport = {
         reportId: record.report_id,
-        comparisonId: record.comparison_id,
-        city1: record.city1_name || fullReport?.city1 || 'Unknown',
-        city2: record.city2_name || fullReport?.city2 || 'Unknown',
+        comparisonId: fullReport?.comparisonId || record.report_id,
+        city1: record.city1 || fullReport?.city1 || 'Unknown',
+        city2: record.city2 || fullReport?.city2 || 'Unknown',
         videoUrl: record.video_url || undefined,
-        videoStatus: record.video_status || 'none',
+        videoStatus: record.video_url ? 'ready' : 'none',
         generatedAt: record.created_at,
         summaryOfFindings: {
           city1Score: record.city1_score || fullReport?.summaryOfFindings?.city1Score || 0,
           city2Score: record.city2_score || fullReport?.summaryOfFindings?.city2Score || 0,
-          overallConfidence: record.overall_confidence || fullReport?.summaryOfFindings?.overallConfidence || 'medium',
+          overallConfidence: fullReport?.summaryOfFindings?.overallConfidence || 'medium',
         },
         executiveSummary: {
-          recommendation: record.recommendation || fullReport?.executiveSummary?.recommendation || 'tie',
-          rationale: record.rationale || fullReport?.executiveSummary?.rationale || '',
+          recommendation: record.verdict || fullReport?.executiveSummary?.recommendation || 'tie',
+          rationale: fullReport?.executiveSummary?.rationale || '',
         },
       };
 
@@ -1206,18 +1333,17 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
             .upsert({
               user_id: user.id,
               report_id: report.reportId,
-              comparison_id: report.comparisonId,
-              city1_name: report.city1,  // FIX: Match JudgeTab column names
-              city2_name: report.city2,  // FIX: Match JudgeTab column names
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
               city2_score: report.summaryOfFindings.city2Score,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
+              winner: report.executiveSummary.recommendation === 'city1' ? report.city1
+                : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
+              winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
+              margin: Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score),
+              verdict: report.executiveSummary.recommendation,
               full_report: report,
               video_url: report.videoUrl || null,
-              video_status: report.videoStatus || 'none',
-              updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id,report_id' })
             .then(({ error }) => {
               if (error) {
@@ -1284,12 +1410,15 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
       .select('*')
       .eq('report_id', reportId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[savedComparisons] Failed to fetch full Judge report:', error);
       return null;
     }
+
+    // No report found — valid "not yet generated" case
+    if (!data) return null;
 
     if (!data) {
       console.log('[savedComparisons] Judge report not found:', reportId);
@@ -1307,29 +1436,30 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
     }
 
     // Return the full report data, preferring full_report over individual columns
+    // FIX 2026-02-10: Use correct DB column names (city1/city2, verdict, key_findings)
     return {
       reportId: data.report_id,
-      comparisonId: data.comparison_id,
+      comparisonId: fullReport?.comparisonId || data.report_id,
       generatedAt: data.created_at,
       userId: data.user_id,
-      city1: data.city1_name || fullReport?.city1 || 'Unknown',
-      city2: data.city2_name || fullReport?.city2 || 'Unknown',
+      city1: data.city1 || fullReport?.city1 || 'Unknown',
+      city2: data.city2 || fullReport?.city2 || 'Unknown',
       videoUrl: data.video_url,
-      videoStatus: data.video_status,
+      videoStatus: data.video_url ? 'ready' : 'none',
       summaryOfFindings: fullReport?.summaryOfFindings || {
         city1Score: data.city1_score || 0,
         city1Trend: data.city1_trend || 'stable',
         city2Score: data.city2_score || 0,
         city2Trend: data.city2_trend || 'stable',
-        overallConfidence: data.overall_confidence || 'medium',
+        overallConfidence: 'medium',
       },
-      categoryAnalysis: fullReport?.categoryAnalysis || [],
+      categoryAnalysis: fullReport?.categoryAnalysis || data.category_analysis || [],
       executiveSummary: fullReport?.executiveSummary || {
-        recommendation: data.recommendation || 'tie',
-        rationale: data.rationale || '',
-        keyFactors: data.key_factors || [],
-        futureOutlook: data.future_outlook || '',
-        confidenceLevel: data.confidence_level || 'medium',
+        recommendation: data.verdict || 'tie',
+        rationale: '',
+        keyFactors: data.key_findings || [],
+        futureOutlook: '',
+        confidenceLevel: 'medium',
       },
       freedomEducation: fullReport?.freedomEducation || null,
     };
@@ -1809,9 +1939,13 @@ export function importFromJSON(json: string): { success: boolean; message: strin
 // ============================================================================
 
 /**
- * FIX 7.5: Mutex lock to prevent race conditions during database sync
- * Prevents multiple simultaneous sync operations from corrupting data
+ * FIX 7.5+: Promise-based lock to prevent race conditions during database sync.
+ * A boolean check is NOT atomic across async gaps — two concurrent calls can both
+ * pass the check before either sets the lock. Using a Promise ensures that if a
+ * sync is in progress, subsequent callers await (or skip) the same operation.
  */
+let activeSyncPromise: Promise<any> | null = null;
+// Keep boolean for backward compat with sub-function lock checks
 let databaseSyncLock = false;
 
 /**
@@ -1960,22 +2094,26 @@ export async function syncToDatabase(): Promise<{ success: boolean; message: str
       }
     }
 
-    // Sync enhanced comparisons
+    // Sync unsynced enhanced comparisons
     for (const local of localEnhanced) {
-      const { error } = await dbSaveComparison(
-        user.id,
-        local.result as unknown as Record<string, unknown>,
-        local.nickname
-      );
-      if (!error) {
-        syncedCount++;
-      } else {
-        console.error('[savedComparisons] Failed to sync enhanced:', local.id, error);
+      if (!local.synced) {
+        const { error } = await dbSaveComparison(
+          user.id,
+          local.result as unknown as Record<string, unknown>,
+          local.nickname
+        );
+        if (!error) {
+          local.synced = true;
+          syncedCount++;
+        } else {
+          console.error('[savedComparisons] Failed to sync enhanced:', local.id, error);
+        }
       }
     }
 
     // Update local storage with synced flags
     saveLocalComparisons(localComparisons);
+    saveLocalEnhancedComparisons(localEnhanced);
 
     console.log(`[savedComparisons] Synced ${syncedCount} comparisons to database`);
     return {
@@ -1998,16 +2136,18 @@ export async function syncToDatabase(): Promise<{ success: boolean; message: str
  * Note: Does not use mutex lock directly as it calls pullFromDatabase and syncToDatabase which have their own locks
  */
 export async function fullDatabaseSync(): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> {
-  // FIX 7.5: Check mutex lock at start to prevent multiple concurrent full syncs
-  if (databaseSyncLock) {
-    console.log('[savedComparisons] Database sync already in progress, skipping fullDatabaseSync');
-    return { success: false, message: 'Sync already in progress', pulled: 0, pushed: 0 };
+  // FIX 7.5+: Promise-based lock — if a sync is already running, return its result
+  // instead of starting a second concurrent sync (which could corrupt data)
+  if (activeSyncPromise) {
+    console.log('[savedComparisons] Database sync already in progress, awaiting existing sync');
+    return activeSyncPromise;
   }
 
   if (!isSupabaseConfigured()) {
     return { success: false, message: 'Database not configured.', pulled: 0, pushed: 0 };
   }
 
+  const doSync = async (): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> => {
   // FIX 7.5: Acquire lock for full sync duration
   databaseSyncLock = true;
 
@@ -2072,6 +2212,7 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
 
     // Inline the sync logic (without lock check since we hold the lock)
     let syncedCount = 0;
+    let syncErrors = 0;
     const localComparisons = getLocalComparisons();
     const localEnhanced = getLocalEnhancedComparisons();
 
@@ -2081,21 +2222,37 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
         if (!error) {
           local.synced = true;
           syncedCount++;
+        } else {
+          syncErrors++;
+          console.error(`[savedComparisons] Failed to push comparison ${local.id}:`, error);
         }
       }
     }
 
     for (const local of localEnhanced) {
-      const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
-      if (!error) syncedCount++;
+      if (!local.synced) {
+        const { error } = await dbSaveComparison(user.id, local.result as unknown as Record<string, unknown>, local.nickname);
+        if (!error) {
+          local.synced = true;
+          syncedCount++;
+        } else {
+          syncErrors++;
+          console.error(`[savedComparisons] Failed to push enhanced comparison:`, error);
+        }
+      }
     }
 
     saveLocalComparisons(localComparisons);
+    saveLocalEnhancedComparisons(localEnhanced);
 
-    console.log(`[savedComparisons] Full sync complete: pulled ${pullAdded}, pushed ${syncedCount}`);
+    // FIX: Report partial failures instead of always reporting success
+    const hasErrors = syncErrors > 0;
+    console.log(`[savedComparisons] Full sync complete: pulled ${pullAdded}, pushed ${syncedCount}, errors ${syncErrors}`);
     return {
-      success: true,
-      message: `Sync complete: ${pullAdded} pulled, ${syncedCount} pushed`,
+      success: !hasErrors,
+      message: hasErrors
+        ? `Sync partial: ${pullAdded} pulled, ${syncedCount} pushed, ${syncErrors} failed`
+        : `Sync complete: ${pullAdded} pulled, ${syncedCount} pushed`,
       pulled: pullAdded,
       pushed: syncedCount
     };
@@ -2106,4 +2263,9 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
     // FIX 7.5: Always release lock
     databaseSyncLock = false;
   }
+  }; // end doSync
+
+  // FIX 7.5+: Store the promise so concurrent callers can await the same operation
+  activeSyncPromise = doSync().finally(() => { activeSyncPromise = null; });
+  return activeSyncPromise;
 }

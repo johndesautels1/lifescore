@@ -640,7 +640,7 @@ prompt="elegant minimalist design, world map silhouette, compass"
 ---
 
 **Clues Intelligence LTD**
-🌐 clueslifescore.com | 📧 info@clueslifescore.com
+🌐 clueslifescore.com | 📧 cluesnomads@gmail.com
 
 *© 2025-2026 All Rights Reserved*
 

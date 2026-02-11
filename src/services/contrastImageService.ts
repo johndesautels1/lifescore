@@ -11,6 +11,8 @@
  * - Work well with Flux image generation
  */
 
+import { getAuthHeaders } from '../lib/supabase';
+
 export interface MetricPromptTemplate {
   metricId: string;
   topic: string;
@@ -708,10 +710,12 @@ export function buildContrastRequest(
 export async function generateContrastImages(
   request: ContrastRequest
 ): Promise<ContrastImageResult> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch('/api/olivia/contrast-images', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
     body: JSON.stringify(request),
   });

@@ -12,6 +12,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { SimliClient } from 'simli-client';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // TYPES
@@ -103,22 +104,18 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     setError(null);
 
     try {
-      // Get credentials from Vite environment
-      const apiKey = import.meta.env.VITE_SIMLI_API_KEY;
-      const faceId = import.meta.env.VITE_SIMLI_FACE_ID;
-
-      // Validate credentials
-      if (!apiKey || !faceId) {
-        const missing = [];
-        if (!apiKey) missing.push('VITE_SIMLI_API_KEY');
-        if (!faceId) missing.push('VITE_SIMLI_FACE_ID');
-        const errorMsg = `Simli not configured. Missing: ${missing.join(', ')}. Add these to Vercel environment variables.`;
+      // Fetch credentials from server (keeps API key out of static JS bundle)
+      const authHeaders = await getAuthHeaders();
+      const configRes = await fetch('/api/simli-config', { headers: authHeaders });
+      if (!configRes.ok) {
+        const errorMsg = 'Simli not configured or auth failed.';
         console.error('[useSimli]', errorMsg);
         setError(errorMsg);
         setStatus('error');
         onErrorRef.current?.(errorMsg);
         return;
       }
+      const { apiKey, faceId } = await configRes.json();
 
       // Validate refs
       if (!videoRef?.current) {

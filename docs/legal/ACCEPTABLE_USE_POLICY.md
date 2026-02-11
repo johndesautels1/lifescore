@@ -104,7 +104,7 @@ When publicly sharing report data:
 
 If you become aware of any violations of this policy:
 
-**Email:** abuse@cluesintelligence.com
+**Email:** cluesnomads@gmail.com
 
 Include:
 - Description of the violation
@@ -127,7 +127,7 @@ We investigate all reports and take appropriate action.
 
 ### 7.2 Appeal Process
 If you believe action was taken in error:
-1. Email legal@cluesintelligence.com within 14 days
+1. Email cluesnomads@gmail.com within 14 days
 2. Explain the circumstances
 3. Provide any supporting evidence
 4. We will respond within 7 business days
@@ -151,10 +151,10 @@ Continued use after changes constitutes acceptance.
 ## 9. Contact
 
 **For AUP questions:**
-Email: legal@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **To report violations:**
-Email: abuse@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 ---
 

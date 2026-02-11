@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ManualTabType } from './HelpModal';
+import { getAuthHeaders } from '../lib/supabase';
 import './ManualViewer.css';
 
 interface ManualViewerProps {
@@ -32,6 +33,32 @@ interface ManualContent {
   lastUpdated: string;
   sections: ManualSection[];
   rawContent?: string;
+}
+
+// Sanitize HTML to prevent XSS — strip dangerous tags, attributes, and protocols
+// Note: For production-grade sanitization, consider DOMPurify. This covers common vectors.
+function sanitizeHtml(html: string): string {
+  // First, decode HTML entities that could hide dangerous content (&#106;avascript: etc.)
+  let clean = html.replace(/&#x?[0-9a-f]+;?/gi, (match) => {
+    const el = document.createElement('span');
+    el.innerHTML = match;
+    return el.textContent || '';
+  });
+  // Remove script tags and their content (including noscript)
+  clean = clean.replace(/<\/?(?:script|noscript)[\s\S]*?(?:>|$)/gi, '');
+  // Remove event handler attributes (onclick, onerror, onload, onmouseover, etc.)
+  // Handles spaces, newlines, and tabs between "on" and "="
+  clean = clean.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  // Remove javascript:, vbscript:, and data: protocols in ANY attribute (href, src, action, etc.)
+  // Handles whitespace and encoding tricks within the protocol
+  clean = clean.replace(/(?:href|src|action|formaction|xlink:href|poster|background)\s*=\s*(?:"[^"]*(?:javascript|vbscript|data)\s*:[^"]*"|'[^']*(?:javascript|vbscript|data)\s*:[^']*')/gi, 'href="#"');
+  // Remove style tags and their content
+  clean = clean.replace(/<style[\s\S]*?<\/style>/gi, '');
+  // Remove dangerous tags: iframe, object, embed, form elements, base, meta, link, svg (can contain script)
+  clean = clean.replace(/<\/?(iframe|object|embed|form|input|textarea|button|select|base|meta|link|svg|math|applet)[\s\S]*?>/gi, '');
+  // Remove style attributes (can contain expression() in old IE)
+  clean = clean.replace(/\s+style\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  return clean;
 }
 
 // Basic markdown to HTML converter
@@ -54,13 +81,15 @@ function markdownToHtml(markdown: string): string {
   html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
 
   // Links - handle anchor links and external links differently
+  // Only allow http(s) and anchor (#) links — block javascript: and data: protocols
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, (_match, text, url) => {
     if (url.startsWith('#')) {
-      // Anchor links - mark as internal, will be handled by click handler
       return `<a href="${url}" class="internal-link" data-section="${url.slice(1)}">${text}</a>`;
-    } else {
-      // External links - open in new tab
+    } else if (url.startsWith('http://') || url.startsWith('https://')) {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="external-link">${text}</a>`;
+    } else {
+      // Block non-http protocols (javascript:, data:, vbscript:, etc.)
+      return `<span class="external-link">${text}</span>`;
     }
   });
 
@@ -90,7 +119,8 @@ function markdownToHtml(markdown: string): string {
   // Clean up empty paragraphs
   html = html.replace(/<p>\s*<\/p>/gim, '');
 
-  return html;
+  // Sanitize the final HTML to strip any remaining dangerous content
+  return sanitizeHtml(html);
 }
 
 // Parse markdown into sections
@@ -151,11 +181,10 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
       setAccessDenied(false);
 
       try {
-        // Build URL with email for authorization
-        const url = userEmail
-          ? `/api/emilia/manuals?type=${type}&email=${encodeURIComponent(userEmail)}`
-          : `/api/emilia/manuals?type=${type}`;
-        const response = await fetch(url);
+        // Build URL — auth is via JWT header, not query param email
+        const url = `/api/emilia/manuals?type=${type}`;
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(url, { headers: authHeaders });
 
         if (!response.ok) {
           // Check for access denied (403)
@@ -397,6 +426,8 @@ function getManualTitle(type: ManualTabType): string {
       return 'App Schema & Database';
     case 'equations':
       return 'Judge Equations';
+    case 'prompts':
+      return 'Prompts';
     default:
       return 'Documentation';
   }

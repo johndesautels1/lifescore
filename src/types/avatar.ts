@@ -147,11 +147,20 @@ export interface Wav2LipInput {
 export interface AvatarVideoRecord {
   id: string;
   comparison_id: string;
-  video_url: string;
+  city1: string;
+  city2: string;
+  winner: string;
+  winner_score?: number;
+  loser_score?: number;
   script: string;
+  video_url: string;
+  audio_url?: string;
   duration_seconds?: number;
+  replicate_prediction_id?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
   created_at: string;
-  expires_at?: string;
+  completed_at?: string;
 }
 
 // ============================================================================

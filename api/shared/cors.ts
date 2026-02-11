@@ -12,7 +12,7 @@ import type { VercelResponse } from '@vercel/node';
 // TYPES
 // ============================================================================
 
-export type CorsMode = 'restricted' | 'open';
+export type CorsMode = 'restricted' | 'open' | 'same-app';
 
 export interface CorsOptions {
   methods?: string;  // Default: 'POST, OPTIONS'
@@ -28,7 +28,7 @@ export interface CorsOptions {
  * - open: Allows requests from any origin (*)
  */
 function getAllowedOrigin(mode: CorsMode): string {
-  if (mode === 'restricted') {
+  if (mode === 'restricted' || mode === 'same-app') {
     // Use Vercel's deployment URL if available, fallback to production domain
     return process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
@@ -61,7 +61,7 @@ export function setCorsHeaders(
 
   res.setHeader('Access-Control-Allow-Origin', getAllowedOrigin(mode));
   res.setHeader('Access-Control-Allow-Methods', methods);
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 /**

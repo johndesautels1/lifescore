@@ -43,8 +43,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  if (handleCors(req, res, 'open')) return;
+  // CORS - restricted to deployment origin
+  if (handleCors(req, res, 'restricted')) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -60,13 +60,31 @@ export default async function handler(
     return;
   }
 
+  // Verify JWT Bearer token
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  const token = authHeader.substring(7);
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  const authClient = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+  });
+
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
   try {
     const body = req.body as PortalRequest;
 
-    if (!body.userId) {
-      res.status(400).json({ error: 'userId is required' });
-      return;
-    }
+    // Override userId with authenticated user to prevent IDOR
+    body.userId = user.id;
 
     // Get user's Stripe customer ID from subscription record
     // FIX 2026-01-29: Use maybeSingle() - subscription may not exist

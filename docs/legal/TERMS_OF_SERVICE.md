@@ -273,7 +273,7 @@ These Terms are governed by the laws of England and Wales.
 
 ### 12.2 Dispute Resolution
 
-**Informal Resolution:** Before filing a claim, contact us at legal@cluesintelligence.com. We will attempt to resolve disputes informally within 30 days.
+**Informal Resolution:** Before filing a claim, contact us at cluesnomads@gmail.com. We will attempt to resolve disputes informally within 30 days.
 
 **Jurisdiction:** Courts of England and Wales have exclusive jurisdiction, except:
 
@@ -325,10 +325,10 @@ We are not liable for failures due to circumstances beyond our control (natural 
 ## 15. Contact Us
 
 **Legal inquiries:**
-Email: legal@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **General support:**
-Email: support@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **Mailing Address:**
 Clues Intelligence LTD

@@ -134,14 +134,16 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
                   const metric = ALL_METRICS.find(m => m.id === metricId);
                   if (!metric) return null;
                   return (
-                    <span
+                    <button
+                      type="button"
                       key={metricId}
                       className="selected-chip"
                       onClick={() => toggleDealbreaker(metricId)}
+                      aria-label={`Remove ${metric.shortName} dealbreaker`}
                     >
                       {METRIC_ICONS[metric.shortName] || '📊'} {metric.shortName}
-                      <span className="remove-x">×</span>
-                    </span>
+                      <span className="remove-x" aria-hidden="true">×</span>
+                    </button>
                   );
                 })}
               </div>

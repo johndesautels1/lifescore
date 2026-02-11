@@ -8,6 +8,10 @@
 -- Created: 2026-01-24
 -- Updated: 2026-02-08 - Fixed foreign key references and nullable columns
 -- Purpose: Store Claude Opus 4.5 Judge verdicts with full analysis
+--
+-- NOTE: This table is also defined in 20260125_create_judge_tables.sql.
+-- Both use CREATE TABLE IF NOT EXISTS so only the first one applied matters.
+-- RLS policies are now managed by 20260210_cleanup_duplicate_policies.sql.
 -- ============================================================================
 
 -- ============================================================================

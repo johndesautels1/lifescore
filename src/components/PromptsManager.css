@@ -1,0 +1,394 @@
+/**
+ * LIFE SCORE™ Prompts Manager Styles
+ * Sub-tab navigation + prompt cards with admin editing
+ */
+
+/* ============================================================================
+   CONTAINER
+   ============================================================================ */
+
+.prompts-manager {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ============================================================================
+   SUB-TAB NAVIGATION
+   ============================================================================ */
+
+.prompts-subtabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.prompts-subtabs::-webkit-scrollbar {
+  display: none;
+}
+
+.prompts-subtab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.prompts-subtab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.prompts-subtab.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.subtab-icon {
+  font-size: 14px;
+}
+
+.subtab-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   CONTENT AREA
+   ============================================================================ */
+
+.prompts-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Loading */
+.prompts-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.prompts-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: prompt-spin 0.8s linear infinite;
+}
+
+@keyframes prompt-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error */
+.prompts-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: #f87171;
+  font-size: 14px;
+}
+
+.prompts-error button {
+  padding: 6px 16px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Empty */
+.prompts-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 0;
+  color: #64748b;
+  text-align: center;
+}
+
+.prompts-empty .empty-icon {
+  font-size: 40px;
+  opacity: 0.5;
+}
+
+.prompts-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.prompts-empty .empty-hint {
+  font-size: 12px;
+  color: #475569;
+}
+
+/* ============================================================================
+   PROMPT CARDS
+   ============================================================================ */
+
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prompt-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.prompt-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.prompt-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.prompt-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.prompt-card-desc {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.prompt-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.meta-dot {
+  color: #475569;
+}
+
+.prompt-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.prompt-action-btn {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.prompt-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.prompt-action-btn.copy-btn.copied {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.prompt-action-btn.edit-btn {
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+}
+
+.prompt-action-btn.edit-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+/* ============================================================================
+   PROMPT TEXT DISPLAY
+   ============================================================================ */
+
+.prompt-card-text {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.prompt-card-text::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prompt-card-text::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prompt-card-text::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+/* ============================================================================
+   PROMPT EDITOR (Admin)
+   ============================================================================ */
+
+.prompt-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(139, 92, 246, 0.04);
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.prompt-editor-textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.prompt-editor-textarea:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+.prompt-editor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.prompt-editor-btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.prompt-editor-btn.save-btn {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff;
+}
+
+.prompt-editor-btn.save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.prompt-editor-btn.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.prompt-editor-btn.cancel-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prompt-editor-btn.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 600px) {
+  .prompts-subtabs {
+    padding: 8px 12px;
+    gap: 3px;
+  }
+
+  .prompts-subtab {
+    padding: 6px 10px;
+  }
+
+  .subtab-label {
+    font-size: 11px;
+  }
+
+  .prompts-content {
+    padding: 12px;
+  }
+
+  .prompt-card-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .prompt-card-actions {
+    align-self: flex-end;
+  }
+
+  .prompt-card-text {
+    font-size: 11px;
+    max-height: 300px;
+  }
+
+  .prompt-editor-textarea {
+    min-height: 200px;
+  }
+}

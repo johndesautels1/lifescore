@@ -170,3 +170,43 @@
 .facebook-link:hover .facebook-icon {
   background: #166fe5;
 }
+
+@media (max-width: 480px) {
+  .footer {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .footer-section h3 {
+    font-size: 1.05rem;
+  }
+
+  .footer-section p,
+  .footer-section small,
+  .footer-section a {
+    font-size: 0.8rem;
+  }
+
+  .footer-legal-links {
+    gap: 0.25rem;
+  }
+
+  .legal-link {
+    font-size: 0.75rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .legal-separator {
+    font-size: 0.65rem;
+  }
+
+  .footer-bottom p {
+    font-size: 0.8rem;
+  }
+
+  .footer-bottom small {
+    font-size: 0.7rem;
+  }
+}

@@ -130,7 +130,7 @@ Before sharing data with third parties:
 
 When a customer exercises their rights (access, deletion, etc.):
 
-1. Forward request to privacy@cluesintelligence.com
+1. Forward request to cluesnomads@gmail.com
 2. Do NOT attempt to fulfill the request yourself
 3. Do NOT discuss the request with others
 4. Respond within 24 hours acknowledging receipt
@@ -147,7 +147,7 @@ When a customer exercises their rights (access, deletion, etc.):
 - Discover a vulnerability
 - Are asked to violate this policy
 
-**Report to:** security@cluesintelligence.com or your manager
+**Report to:** cluesnomads@gmail.com or your manager
 
 **No retaliation:** Good-faith reporting is protected.
 
@@ -191,8 +191,8 @@ Violations of this policy may result in:
 
 ## 12. Questions & Concerns
 
-**Policy questions:** legal@cluesintelligence.com
-**Security concerns:** security@cluesintelligence.com
+**Policy questions:** cluesnomads@gmail.com
+**Security concerns:** cluesnomads@gmail.com
 **Anonymous reporting:** [Establish channel if needed]
 
 ---

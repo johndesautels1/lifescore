@@ -11,6 +11,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateTTSCost } from '../utils/costCalculator';
+import { toastSuccess } from '../utils/toast';
+import { getAuthHeaders } from '../lib/supabase';
 
 export interface EmiliaMessage {
   id: string;
@@ -148,9 +150,10 @@ export function useEmilia(): UseEmiliaReturn {
       setError(null);
 
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/message', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
             threadId,
             message: text.trim(),
@@ -337,7 +340,7 @@ export function useEmilia(): UseEmiliaReturn {
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(shareData.text);
-        alert('Conversation copied to clipboard!');
+        toastSuccess('Conversation copied to clipboard!');
       }
     } catch (err) {
       // User cancelled or error - silently fail
@@ -401,9 +404,10 @@ export function useEmilia(): UseEmiliaReturn {
 
       try {
         // Try ElevenLabs TTS first
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/speak', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({ text: content }),
         });
 

@@ -6145,7 +6145,7 @@ Users may receive email alerts at warning thresholds.
 
 ## 36.5 Support & Contact
 
-- **Email Support:** support@clueslifescore.com
+- **Email Support:** cluesnomads@gmail.com
 - **Help Center:** help.clueslifescore.com
 - **Website:** clueslifescore.com
 

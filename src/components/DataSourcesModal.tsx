@@ -73,7 +73,7 @@ export const DataSourcesModal: React.FC<DataSourcesModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Data Sources">
       <div className="data-sources-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>📚 Data Sources</h3>

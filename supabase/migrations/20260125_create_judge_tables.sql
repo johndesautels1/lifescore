@@ -1,6 +1,10 @@
 -- LIFE SCORE - Judge Tables Migration
 -- Run this in Supabase SQL Editor to create required tables
 --
+-- NOTE: The judge_reports table is also defined in 20260124_create_judge_reports.sql
+-- Both use CREATE TABLE IF NOT EXISTS so running either or both is safe.
+-- This file (20260125) is the canonical version that also creates avatar_videos.
+--
 -- Tables created:
 --   1. avatar_videos - Caches generated judge videos
 --   2. judge_reports - Stores saved judge reports

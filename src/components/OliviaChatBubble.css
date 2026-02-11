@@ -11,7 +11,7 @@
    CONTAINER
    ═══════════════════════════════════════════════════════════════════════════ */
 .olivia-bubble-container {
-  --bubble-gold: #c9a227;
+  --bubble-gold: #e6b800; /* FIX: Improved contrast from #c9a227 (3.2:1) to meet WCAG 4.5:1 */
   --bubble-midnight: #0a1628;
   --bubble-navy: #0d2847;
   --bubble-platinum: #e2e8f0;

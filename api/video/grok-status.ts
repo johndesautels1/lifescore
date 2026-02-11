@@ -209,7 +209,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open', { methods: 'GET, POST, OPTIONS' })) return;
+  if (handleCors(req, res, 'same-app', { methods: 'GET, POST, OPTIONS' })) return;
 
   // ========================================================================
   // POST - Cache check
