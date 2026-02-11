@@ -876,10 +876,10 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
               ) : (
                 <p className="disagreement-intro">All metrics showed strong LLM agreement. Scores are highly reliable.</p>
               )}
-              <span className="summary-detail">
-                Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
-              </span>
             </div>
+            <span className="summary-detail">
+              Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
+            </span>
           </div>
 
           {/* LLM Panel - Show who evaluated */}

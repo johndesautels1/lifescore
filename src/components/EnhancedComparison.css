@@ -3947,6 +3947,7 @@
 /* Summary */
 .disagreement-summary {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem;
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(124, 58, 237, 0.02) 100%);
@@ -4018,6 +4019,8 @@
   display: block;
   text-align: center;
   margin-top: 0.75rem;
+  width: 100%;
+  flex-basis: 100%;
 }
 
 /* Evaluators */
