@@ -20,21 +20,6 @@ import { WeightPresets, type CategoryWeights } from './WeightPresets';
 import type { LawLivedRatio, CategoryId } from '../types/metrics';
 import './CitySelector.css';
 
-// Country → flag emoji mapping
-const COUNTRY_FLAGS: Record<string, string> = {
-  'USA': '🇺🇸', 'Canada': '🇨🇦',
-  'UK': '🇬🇧', 'France': '🇫🇷', 'Germany': '🇩🇪', 'Italy': '🇮🇹', 'Spain': '🇪🇸',
-  'Netherlands': '🇳🇱', 'Belgium': '🇧🇪', 'Austria': '🇦🇹', 'Switzerland': '🇨🇭',
-  'Sweden': '🇸🇪', 'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Finland': '🇫🇮', 'Iceland': '🇮🇸',
-  'Ireland': '🇮🇪', 'Portugal': '🇵🇹', 'Greece': '🇬🇷', 'Poland': '🇵🇱',
-  'Czech Republic': '🇨🇿', 'Hungary': '🇭🇺', 'Romania': '🇷🇴', 'Bulgaria': '🇧🇬',
-  'Croatia': '🇭🇷', 'Slovakia': '🇸🇰', 'Slovenia': '🇸🇮', 'Estonia': '🇪🇪',
-  'Latvia': '🇱🇻', 'Lithuania': '🇱🇹', 'Luxembourg': '🇱🇺', 'Malta': '🇲🇹',
-  'Cyprus': '🇨🇾', 'Monaco': '🇲🇨',
-};
-
-const getFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
-
 // Country → short code for badges
 const COUNTRY_CODES: Record<string, string> = {
   'USA': 'US', 'Canada': 'CA',
@@ -226,7 +211,7 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
       >
         <span className="metro-select-value">
           {value ? (
-            <><span className="metro-flag">{getFlag(value.country)}</span> {formatMetro(value)}</>
+            <><span className="metro-country-badge">{getCountryCode(value.country)}</span> {formatMetro(value)}</>
           ) : 'Select a city...'}
         </span>
         <span className="metro-select-arrow">{isOpen ? '▲' : '▼'}</span>
@@ -295,7 +280,6 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
                   className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''} ${highlightedIndex === index ? 'highlighted' : ''}`}
                   onClick={() => handleSelect(metro)}
                 >
-                  <span className="metro-flag">{getFlag(metro.country)}</span>
                   <div className="metro-details">
                     <span className="metro-city">
                       <HighlightMatch text={metro.city} query={searchQuery} />

@@ -211,12 +211,6 @@
   border-left-color: var(--sapphire);
 }
 
-.metro-flag {
-  font-size: 1.35rem;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
 .metro-details {
   display: flex;
   flex-direction: column;
