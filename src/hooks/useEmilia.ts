@@ -103,9 +103,10 @@ export function useEmilia(): UseEmiliaReturn {
         }
 
         // Create new thread
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/thread', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
         });
 
         if (!response.ok) {
@@ -201,9 +202,10 @@ export function useEmilia(): UseEmiliaReturn {
     const reinit = async () => {
       setIsInitializing(true);
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/thread', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
         });
         const data = await response.json();
         if (data.success && data.threadId) {

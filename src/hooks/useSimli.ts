@@ -252,9 +252,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       console.log('[useSimli] Calling simli-speak API...');
 
       // Call server-side API to generate TTS audio
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/avatar/simli-speak', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           sessionId: session?.sessionId,
           text,

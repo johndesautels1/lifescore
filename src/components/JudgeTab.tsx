@@ -28,7 +28,7 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
 import { ALL_METROS } from '../data/metros';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -421,9 +421,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     const poll = async () => {
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/judge-video', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({ action: 'status', talkId })
         });
 
