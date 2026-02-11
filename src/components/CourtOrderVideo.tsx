@@ -75,12 +75,16 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
 
   // Video ref for playback control
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // User video upload state
+  const [userVideoUrl, setUserVideoUrl] = useState<string | null>(null);
 
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
@@ -121,8 +125,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     return () => { cancelled = true; };
   }, [comparisonId, winnerCity]);
 
-  // The effective video URL: InVideo override takes priority over Kling-generated
-  const effectiveVideoUrl = invideoOverride?.video_url || video?.videoUrl;
+  // The effective video URL: User upload > InVideo override > Kling-generated
+  const effectiveVideoUrl = userVideoUrl || invideoOverride?.video_url || video?.videoUrl;
 
   // Admin: Submit InVideo URL override
   const handleSubmitOverride = async () => {
@@ -305,6 +309,38 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     }
   };
 
+  // Handle user video file upload
+  const handleUserVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate it's a video file
+    if (!file.type.startsWith('video/')) {
+      toastError('Please select a video file');
+      return;
+    }
+
+    // Revoke previous blob URL to prevent memory leak
+    if (userVideoUrl) {
+      URL.revokeObjectURL(userVideoUrl);
+    }
+
+    const blobUrl = URL.createObjectURL(file);
+    setUserVideoUrl(blobUrl);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  };
+
+  // Clean up blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (userVideoUrl) {
+        URL.revokeObjectURL(userVideoUrl);
+      }
+    };
+  }, [userVideoUrl]);
+
   // Format time
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -341,6 +377,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setCurrentTime(0);
     setDuration(0);
     setVideoErrorCount(0);
+    if (userVideoUrl) {
+      URL.revokeObjectURL(userVideoUrl);
+      setUserVideoUrl(null);
+    }
   }, [comparisonId]);
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -377,28 +417,37 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     const videoUrl = effectiveVideoUrl;
     if (!videoUrl) return;
 
+    const filename = `court-order-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
+
     try {
       console.log('[CourtOrderVideo] Downloading video:', videoUrl);
 
-      // Fetch the video
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `court-order-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      // For blob URLs (user uploads), use the URL directly as download href
+      if (videoUrl.startsWith('blob:')) {
+        const a = document.createElement('a');
+        a.href = videoUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // For remote URLs, fetch first then download as blob
+        const response = await fetch(videoUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
 
       console.log('[CourtOrderVideo] Download initiated');
     } catch (err) {
       console.error('[CourtOrderVideo] Download error:', err);
-      // Fallback: open in new tab
-      window.open(videoUrl, '_blank');
+      toastError('Failed to download video. Please try again.');
     }
   };
 
@@ -488,10 +537,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         <div className="lcd-screen">
           <div className="lcd-bezel">
             <div className="lcd-display">
-              {(isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride) ? (
+              {userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride) ? (
                 <video
                   ref={videoRef}
-                  src={effectiveVideoUrl || invideoOverride?.video_url}
+                  src={effectiveVideoUrl}
                   className="court-video"
                   onEnded={handleVideoEnded}
                   onTimeUpdate={handleTimeUpdate}
@@ -527,8 +576,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
               )}
             </div>
 
-            {/* Video Controls - Show when video is ready OR InVideo override exists */}
-            {((isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride)) && (
+            {/* Video Controls - Show when video is ready, InVideo override, or user upload */}
+            {(userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride)) && (
               <div className="lcd-controls">
                 <button
                   className="control-btn play-btn"
@@ -570,10 +619,30 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           </div>
         )}
 
-        {/* Action Button */}
+        {/* Hidden file input for user video upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="video/*"
+          onChange={handleUserVideoUpload}
+          style={{ display: 'none' }}
+        />
+
+        {/* Action Buttons */}
         <div className="court-actions">
+          {/* User uploaded video: play button */}
+          {userVideoUrl && !isPlaying && (
+            <button
+              className="watch-future-btn"
+              onClick={handlePlayPause}
+            >
+              <span className="btn-icon">▶</span>
+              <span className="btn-text">PLAY YOUR VIDEO</span>
+            </button>
+          )}
+
           {/* InVideo override: skip generation, go straight to play */}
-          {invideoOverride && !isPlaying && (
+          {!userVideoUrl && invideoOverride && !isPlaying && (
             <button
               className="watch-future-btn"
               onClick={handlePlayPause}
@@ -583,8 +652,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             </button>
           )}
 
-          {/* No override: normal generation flow */}
-          {!invideoOverride && !hasStarted && !isReady && (
+          {/* No override, no user upload: normal generation flow */}
+          {!userVideoUrl && !invideoOverride && !hasStarted && !isReady && (
             <button
               className="see-court-order-btn"
               onClick={handleGenerateVideo}
@@ -595,13 +664,35 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             </button>
           )}
 
-          {!invideoOverride && isReady && !isPlaying && (
+          {!userVideoUrl && !invideoOverride && isReady && !isPlaying && (
             <button
               className="watch-future-btn"
               onClick={handlePlayPause}
             >
               <span className="btn-icon">▶</span>
               <span className="btn-text">WATCH YOUR FUTURE</span>
+            </button>
+          )}
+
+          {/* Upload your own video button - always visible when no user video loaded */}
+          {!userVideoUrl && (
+            <button
+              className="upload-video-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="btn-icon">🎥</span>
+              <span className="btn-text">UPLOAD YOUR VIDEO</span>
+            </button>
+          )}
+
+          {/* Replace uploaded video */}
+          {userVideoUrl && (
+            <button
+              className="upload-video-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="btn-icon">🔄</span>
+              <span className="btn-text">CHANGE VIDEO</span>
             </button>
           )}
         </div>
@@ -675,7 +766,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         {/* ════════════════════════════════════════════════════════════════
             COURT ORDER ACTION BUTTONS - Save, Download, Share/Forward
         ════════════════════════════════════════════════════════════════ */}
-        {((isReady && effectiveVideoUrl) || invideoOverride) && (
+        {(userVideoUrl || (isReady && effectiveVideoUrl) || invideoOverride) && (
           <div className="court-order-action-buttons">
             <button
               className="court-action-btn save-btn"
