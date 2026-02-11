@@ -28,6 +28,7 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
 import { ALL_METROS } from '../data/metros';
+import { getFlagUrl } from '../utils/countryFlags';
 import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -1136,6 +1137,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     || (comparisonResult?.city2?.city === city2Name ? comparisonResult.city2.country : '')
     || ALL_METROS.find(m => m.city === city2Name)?.country
     || '';
+  // Region (state/province) from metro data
+  const city1Region = ALL_METROS.find(m => m.city === city1Name && m.country === city1Country)?.region
+    || ALL_METROS.find(m => m.city === city1Name)?.region
+    || '';
+  const city2Region = ALL_METROS.find(m => m.city === city2Name && m.country === city2Country)?.region
+    || ALL_METROS.find(m => m.city === city2Name)?.region
+    || '';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
   return (
@@ -1489,7 +1497,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city1">
             <div className="card-header">
               <span className="city-name">{city1Name}</span>
-              <span className="city-country">{city1Country}</span>
+              {city1Region && <span className="city-region">{city1Region}</span>}
+              <span className="city-country">
+                {city1Country && (
+                  <img className="city-flag-img" src={getFlagUrl(city1Country)} alt={city1Country} width={20} height={15} loading="lazy" />
+                )}
+                {city1Country}
+              </span>
             </div>
             <div className="card-score">
               <span className="score-value">
@@ -1520,7 +1534,13 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city2">
             <div className="card-header">
               <span className="city-name">{city2Name}</span>
-              <span className="city-country">{city2Country}</span>
+              {city2Region && <span className="city-region">{city2Region}</span>}
+              <span className="city-country">
+                {city2Country && (
+                  <img className="city-flag-img" src={getFlagUrl(city2Country)} alt={city2Country} width={20} height={15} loading="lazy" />
+                )}
+                {city2Country}
+              </span>
             </div>
             <div className="card-score">
               <span className="score-value">

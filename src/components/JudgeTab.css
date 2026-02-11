@@ -1101,11 +1101,32 @@
   margin-bottom: 0.25rem;
 }
 
+.city-region {
+  display: block;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.04em;
+}
+
 .city-country {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   font-size: 0.85rem;
   color: var(--steel-gray);
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.city-flag-img {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  vertical-align: middle;
 }
 
 .card-score {
