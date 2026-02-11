@@ -116,25 +116,38 @@
   gap: 0.75rem;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .evidence-filters {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .filter-label {
-  color: #ffffff;
+  color: #1e293b;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .filter-label {
+  color: #ffffff;
 }
 
 .filter-btn {
   padding: 0.4rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 71, 171, 0.3);
   background: transparent;
-  color: #ffffff;
+  color: #1e293b;
   border-radius: 20px;
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .filter-btn {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
 }
 
 .filter-btn:hover {
@@ -174,12 +187,20 @@
   align-items: center;
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .evidence-group-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .evidence-metric {
   font-weight: 600;
-  color: var(--text-primary, #fff);
+  color: #1e293b;
+}
+
+[data-theme="dark"] .evidence-metric {
+  color: #ffffff;
 }
 
 .evidence-city {
@@ -200,24 +221,36 @@
 }
 
 .evidence-item {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 71, 171, 0.04);
   border-radius: 6px;
   padding: 0.75rem;
+}
+
+[data-theme="dark"] .evidence-item {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .evidence-link {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--primary-color, #00d4ff);
+  color: #0047AB;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   transition: color 0.2s ease;
 }
 
 .evidence-link:hover {
-  color: #4dd8ff;
+  color: #1a5276;
   text-decoration: underline;
+}
+
+[data-theme="dark"] .evidence-link {
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .evidence-link:hover {
+  color: #93C5FD;
 }
 
 .link-icon {
@@ -234,7 +267,7 @@
 .evidence-snippet {
   margin: 0.5rem 0 0.25rem;
   font-size: 0.85rem;
-  color: #ffffff;
+  color: #374151;
   font-weight: 400;
   line-height: 1.4;
   display: -webkit-box;
@@ -243,18 +276,30 @@
   overflow: hidden;
 }
 
+[data-theme="dark"] .evidence-snippet {
+  color: #e2e8f0;
+}
+
 .evidence-date {
   font-size: 0.75rem;
-  color: #ffffff;
+  color: #6b7280;
   font-weight: 400;
+}
+
+[data-theme="dark"] .evidence-date {
+  color: #94a3b8;
 }
 
 /* No evidence state */
 .no-evidence {
   text-align: center;
   padding: 2rem;
-  color: #ffffff;
+  color: #374151;
   font-weight: 400;
+}
+
+[data-theme="dark"] .no-evidence {
+  color: #e2e8f0;
 }
 
 .no-evidence p {
@@ -263,22 +308,34 @@
 
 .no-evidence-hint {
   font-size: 0.9rem;
-  color: #ffffff;
+  color: #6b7280;
   font-weight: 400;
+}
+
+[data-theme="dark"] .no-evidence-hint {
+  color: #94a3b8;
 }
 
 /* Summary footer */
 .evidence-summary {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   text-align: center;
+}
+
+[data-theme="dark"] .evidence-summary {
+  border-top-color: rgba(255, 255, 255, 0.1);
 }
 
 .summary-text {
   font-size: 0.85rem;
-  color: #ffffff;
+  color: #374151;
   font-weight: 400;
+}
+
+[data-theme="dark"] .summary-text {
+  color: #e2e8f0;
 }
 
 /* Scrollbar styling */
@@ -341,21 +398,31 @@
   }
 }
 
-/* Light mode overrides */
-@media (prefers-color-scheme: light) {
-  .evidence-panel-container {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
-    border-color: rgba(99, 102, 241, 0.2);
-  }
+/* Light mode overrides — use data-theme instead of prefers-color-scheme */
+[data-theme="light"] .evidence-panel-container {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+  border-color: rgba(99, 102, 241, 0.2);
+}
 
-  .evidence-group {
-    background: white;
-    border-color: var(--gray-200, #e5e7eb);
-  }
+[data-theme="light"] .evidence-group {
+  background: white;
+  border-color: var(--gray-200, #e5e7eb);
+}
 
-  .evidence-item {
-    background: var(--gray-50, #f9fafb);
-  }
+[data-theme="light"] .evidence-item {
+  background: var(--gray-50, #f9fafb);
+}
+
+[data-theme="light"] .evidence-panel-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .evidence-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .evidence-panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* B3 Fix: LLM attribution badge in evidence group header */

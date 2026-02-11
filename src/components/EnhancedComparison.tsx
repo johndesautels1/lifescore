@@ -1740,46 +1740,64 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                           </>
                         )}
 
-                        {/* Bug G fix: Calculation Verification */}
+                        {/* Bug G fix: Calculation Verification - Premium card layout */}
                         {(diff.city1LlmScores?.length || diff.city2LlmScores?.length) && (
                           <div className="diff-calculation-verification">
                             <h4 className="verification-header">🔢 Score Calculation</h4>
-                            {diff.city1LlmScores && diff.city1LlmScores.length > 0 && (() => {
-                              const scores = diff.city1LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
-                              if (scores.length === 0) return null;
-                              const mid = Math.floor(scores.length / 2);
-                              const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
-                              const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city1Score);
-                              return (
-                                <div className="diff-verification-row">
-                                  <span className="diff-verification-label">{result.city1.city}:</span>
-                                  <span className="diff-verification-calc">
-                                    Median of [{scores.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(calculatedMedian)}</strong>
+                            <div className="verification-grid">
+                              {diff.city1LlmScores && diff.city1LlmScores.length > 0 && (() => {
+                                const scores = diff.city1LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
+                                if (scores.length === 0) return null;
+                                const mid = Math.floor(scores.length / 2);
+                                const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
+                                const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city1Score);
+                                return (
+                                  <div className="verification-card">
+                                    <div className="verification-city-name">{result.city1.city}</div>
+                                    <div className="verification-scores-row">
+                                      {scores.map((s, i) => (
+                                        <span key={i} className="verification-score-chip">{Math.round(s)}</span>
+                                      ))}
+                                    </div>
+                                    <div className="verification-median">
+                                      Median = <strong>{Math.round(calculatedMedian)}</strong>
+                                    </div>
                                     {isAdjusted && (
-                                      <span className="diff-opus-adjusted"> → {Math.round(diff.city1Score)} (Opus adjusted)</span>
+                                      <div className="verification-opus-badge">
+                                        → {Math.round(diff.city1Score)}
+                                        <span className="opus-label">Opus adjusted</span>
+                                      </div>
                                     )}
-                                  </span>
-                                </div>
-                              );
-                            })()}
-                            {diff.city2LlmScores && diff.city2LlmScores.length > 0 && (() => {
-                              const scores = diff.city2LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
-                              if (scores.length === 0) return null;
-                              const mid = Math.floor(scores.length / 2);
-                              const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
-                              const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city2Score);
-                              return (
-                                <div className="diff-verification-row">
-                                  <span className="diff-verification-label">{result.city2.city}:</span>
-                                  <span className="diff-verification-calc">
-                                    Median of [{scores.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(calculatedMedian)}</strong>
+                                  </div>
+                                );
+                              })()}
+                              {diff.city2LlmScores && diff.city2LlmScores.length > 0 && (() => {
+                                const scores = diff.city2LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
+                                if (scores.length === 0) return null;
+                                const mid = Math.floor(scores.length / 2);
+                                const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
+                                const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city2Score);
+                                return (
+                                  <div className="verification-card">
+                                    <div className="verification-city-name">{result.city2.city}</div>
+                                    <div className="verification-scores-row">
+                                      {scores.map((s, i) => (
+                                        <span key={i} className="verification-score-chip">{Math.round(s)}</span>
+                                      ))}
+                                    </div>
+                                    <div className="verification-median">
+                                      Median = <strong>{Math.round(calculatedMedian)}</strong>
+                                    </div>
                                     {isAdjusted && (
-                                      <span className="diff-opus-adjusted"> → {Math.round(diff.city2Score)} (Opus adjusted)</span>
+                                      <div className="verification-opus-badge">
+                                        → {Math.round(diff.city2Score)}
+                                        <span className="opus-label">Opus adjusted</span>
+                                      </div>
                                     )}
-                                  </span>
-                                </div>
-                              );
-                            })()}
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </div>
                         )}
 

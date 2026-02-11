@@ -736,3 +736,157 @@
     font-size: 0.75rem;
   }
 }
+
+/* ============================================================================
+   LIGHT MODE INSIDE BLUE FOOTER — ScoreMethodology lives inside .enhanced-footer
+   which has a blue gradient. Text must be white/light to be readable.
+   ============================================================================ */
+
+.enhanced-footer .score-methodology {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+
+.enhanced-footer .methodology-title {
+  color: #ffffff !important;
+}
+
+.enhanced-footer .methodology-subtitle {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.enhanced-footer .methodology-arrow {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.enhanced-footer .methodology-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.enhanced-footer .stage-title {
+  color: #ffffff !important;
+}
+
+.enhanced-footer .stage-label {
+  color: #F7931E !important;
+}
+
+.enhanced-footer .stage-content p {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.enhanced-footer .stage-content strong {
+  color: #F7931E !important;
+}
+
+.enhanced-footer .stage-divider {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 20%,
+    rgba(212, 175, 55, 0.25) 50%,
+    rgba(255, 255, 255, 0.12) 80%,
+    transparent 100%
+  );
+}
+
+.enhanced-footer .stage-number {
+  background: linear-gradient(135deg, #F7931E, #D4AF37);
+}
+
+.enhanced-footer .score-dimension,
+.enhanced-footer .weight-table,
+.enhanced-footer .judge-flow,
+.enhanced-footer .category-weights-visual,
+.enhanced-footer .bonus-card,
+.enhanced-footer .transparency-features {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.enhanced-footer .dimension-label,
+.enhanced-footer .weight-value,
+.enhanced-footer .judge-step,
+.enhanced-footer .category-weight-label,
+.enhanced-footer .bonus-label,
+.enhanced-footer .category-weight-pct {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.enhanced-footer .dimension-desc,
+.enhanced-footer .bonus-detail {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.enhanced-footer .dimension-badge.legal {
+  background: rgba(96, 165, 250, 0.2);
+  color: #93C5FD;
+}
+
+.enhanced-footer .dimension-badge.enforcement {
+  background: rgba(247, 147, 30, 0.2);
+  color: #FBBF24;
+}
+
+.enhanced-footer .formula-block {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.enhanced-footer .formula-label {
+  color: #D4AF37;
+}
+
+.enhanced-footer .formula-block code {
+  color: #D4AF37;
+}
+
+.enhanced-footer .weight-bar-track,
+.enhanced-footer .category-weight-bar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.enhanced-footer .weight-confidence.high {
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.enhanced-footer .weight-confidence.medium {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.15);
+}
+
+.enhanced-footer .weight-confidence.low {
+  color: #F87171;
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.enhanced-footer .confidence-inline.high {
+  color: #34D399;
+}
+.enhanced-footer .confidence-inline.medium {
+  color: #FBBF24;
+}
+.enhanced-footer .confidence-inline.low {
+  color: #F87171;
+}
+
+.enhanced-footer .bonus-value {
+  background: linear-gradient(135deg, #60A5FA, #D4AF37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.enhanced-footer .transparency-feature div {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.enhanced-footer .transparency-feature strong {
+  color: #F7931E !important;
+}
+
+.enhanced-footer .judge-arrow {
+  color: #D4AF37;
+}

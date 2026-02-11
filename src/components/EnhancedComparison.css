@@ -1596,61 +1596,114 @@
   color: #64748b;
 }
 
-/* Bug G fix: Calculation Verification in Top 5 Deciding Factors */
+/* Bug G fix: Calculation Verification in Top 5 Deciding Factors - Premium Card Layout */
 .diff-calculation-verification {
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.04) 0%, rgba(212, 175, 55, 0.04) 100%);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  font-family: monospace;
-  font-size: 0.85rem;
   border: 1px solid rgba(0, 71, 171, 0.15);
 }
 
 .verification-header {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
-  font-weight: 600;
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--gray-700);
   font-family: system-ui, -apple-system, sans-serif;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
-.diff-verification-row {
+.verification-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.verification-card {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 71, 171, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   gap: 0.5rem;
-  margin-bottom: 0.4rem;
 }
 
-.diff-verification-row:last-child {
-  margin-bottom: 0;
-}
-
-.diff-verification-label {
-  font-weight: 600;
+.verification-city-name {
+  font-weight: 800;
+  font-size: 0.9rem;
   color: #0047AB;
-  min-width: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.diff-verification-calc {
+.verification-scores-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.verification-score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.verification-median {
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
   color: #374151;
 }
 
-.diff-verification-calc strong {
+.verification-median strong {
   color: #16a34a;
-  font-size: 1em;
+  font-size: 1.1em;
 }
 
-.diff-opus-adjusted {
+.verification-opus-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
   color: #F7931E;
-  font-style: italic;
+}
+
+.verification-opus-badge .opus-label {
+  font-size: 0.7rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #F7931E;
+  opacity: 0.85;
+}
+
+@media (max-width: 480px) {
+  .verification-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Dark mode for calculation verification */
 [data-theme="dark"] .diff-calculation-verification {
-  background: rgba(30, 30, 50, 0.7);
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.08) 0%, rgba(212, 175, 55, 0.06) 100%);
   border-color: rgba(107, 163, 255, 0.2);
 }
 
@@ -1658,19 +1711,35 @@
   color: #e2e8f0;
 }
 
-[data-theme="dark"] .diff-verification-label {
+[data-theme="dark"] .verification-card {
+  background: rgba(30, 30, 50, 0.8);
+  border-color: rgba(107, 163, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .verification-city-name {
   color: #6ba3ff;
 }
 
-[data-theme="dark"] .diff-verification-calc {
+[data-theme="dark"] .verification-score-chip {
+  background: linear-gradient(135deg, #252538 0%, #1e1e30 100%);
+  border-color: #3d3d55;
   color: #e5e7eb;
 }
 
-[data-theme="dark"] .diff-verification-calc strong {
+[data-theme="dark"] .verification-median {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .verification-median strong {
   color: #4ade80;
 }
 
-[data-theme="dark"] .diff-opus-adjusted {
+[data-theme="dark"] .verification-opus-badge {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .verification-opus-badge .opus-label {
   color: #fbbf24;
 }
 
@@ -3933,18 +4002,22 @@
 }
 
 .disagreement-summary .metric-bullet-stddev {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-family: monospace;
-  font-weight: 600;
-  color: #7c3aed;
-  background: rgba(124, 58, 237, 0.12);
-  padding: 0.15rem 0.4rem;
+  font-weight: 700;
+  color: #E8820C;
+  background: rgba(232, 130, 12, 0.12);
+  padding: 0.2rem 0.5rem;
   border-radius: 4px;
 }
 
 .disagreement-summary .summary-detail {
-  font-size: 0.8rem;
-  color: var(--gray-500);
+  font-size: 0.85rem;
+  color: #D35400;
+  font-weight: 700;
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
 }
 
 /* Evaluators */
@@ -4105,8 +4178,9 @@
 }
 
 .disputed-deviation {
-  font-size: 0.75rem;
-  color: var(--gray-500);
+  font-size: 0.8rem;
+  color: #E8820C;
+  font-weight: 700;
   margin-top: 0.25rem;
 }
 
@@ -4165,8 +4239,9 @@
 .city-block-stddev {
   font-size: 0.7rem;
   font-family: monospace;
-  color: var(--gray-500);
-  background: var(--gray-100);
+  color: #E8820C;
+  font-weight: 700;
+  background: rgba(232, 130, 12, 0.1);
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
 }
@@ -4304,8 +4379,8 @@
 }
 
 [data-theme="dark"] .city-block-stddev {
-  color: #9090a0;
-  background: rgba(107, 163, 255, 0.1);
+  color: #F7931E;
+  background: rgba(247, 147, 30, 0.15);
 }
 
 [data-theme="dark"] .llm-score-mini {
@@ -4748,8 +4823,9 @@
 }
 
 .agreed-deviation {
-  font-size: 0.75rem;
-  color: var(--gray-500);
+  font-size: 0.8rem;
+  color: #E8820C;
+  font-weight: 700;
   margin-top: 0.25rem;
 }
 
@@ -4790,7 +4866,7 @@
 .city-score-box .city-score {
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--gray-700);
+  color: #D97706;
 }
 
 .city-score-box .city-score.winner {
@@ -4948,7 +5024,7 @@
 }
 
 [data-theme="dark"] .agreed-deviation {
-  color: #9090a0;
+  color: #F7931E;
 }
 
 [data-theme="dark"] .city-score-box {
@@ -4961,7 +5037,7 @@
 }
 
 [data-theme="dark"] .city-score-box .city-score {
-  color: #e5e7eb;
+  color: #FBBF24;
 }
 
 [data-theme="dark"] .city-score-box .city-score.winner {
@@ -5094,12 +5170,12 @@
 }
 
 [data-theme="dark"] .disagreement-summary .metric-bullet-stddev {
-  color: #a78bfa;
-  background: rgba(124, 58, 237, 0.2);
+  color: #F7931E;
+  background: rgba(247, 147, 30, 0.15);
 }
 
 [data-theme="dark"] .disagreement-summary .summary-detail {
-  color: #b0b0c0;
+  color: #F7931E;
 }
 
 [data-theme="dark"] .llm-evaluators {
@@ -5149,7 +5225,7 @@
 }
 
 [data-theme="dark"] .disputed-deviation {
-  color: #b0b0c0;
+  color: #F7931E;
 }
 
 [data-theme="dark"] .scores-section-label {
@@ -5322,16 +5398,17 @@
   color: var(--gray-600);
 }
 
-/* Footer - Premium Blue Gradient */
+/* Footer - Premium Blue Gradient — override .card bg in ALL modes */
 .enhanced-footer {
-  background: linear-gradient(135deg, #0047AB 0%, #1a5276 50%, #0d3d6b 100%);
+  background: linear-gradient(135deg, #0047AB 0%, #1a5276 50%, #0d3d6b 100%) !important;
   padding: 1.5rem !important;
   text-align: left;
   border-radius: 0 0 16px 16px;
+  border: 1px solid rgba(0, 71, 171, 0.6) !important;
 }
 
 .enhanced-footer h4 {
-  color: white;
+  color: white !important;
   margin-bottom: 0.75rem;
   font-size: 1.1rem;
   font-weight: 700;
@@ -5340,13 +5417,13 @@
 
 .enhanced-footer p {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.95) !important;
   margin-bottom: 0.5rem;
   line-height: 1.6;
 }
 
 .enhanced-footer p strong {
-  color: #F7931E;
+  color: #F7931E !important;
 }
 
 .data-sources-btn {
