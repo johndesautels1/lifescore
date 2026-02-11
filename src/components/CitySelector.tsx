@@ -35,6 +35,21 @@ const COUNTRY_FLAGS: Record<string, string> = {
 
 const getFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
 
+// Country → short code for badges
+const COUNTRY_CODES: Record<string, string> = {
+  'USA': 'US', 'Canada': 'CA',
+  'UK': 'UK', 'France': 'FR', 'Germany': 'DE', 'Italy': 'IT', 'Spain': 'ES',
+  'Netherlands': 'NL', 'Belgium': 'BE', 'Austria': 'AT', 'Switzerland': 'CH',
+  'Sweden': 'SE', 'Norway': 'NO', 'Denmark': 'DK', 'Finland': 'FI', 'Iceland': 'IS',
+  'Ireland': 'IE', 'Portugal': 'PT', 'Greece': 'GR', 'Poland': 'PL',
+  'Czech Republic': 'CZ', 'Hungary': 'HU', 'Romania': 'RO', 'Bulgaria': 'BG',
+  'Croatia': 'HR', 'Slovakia': 'SK', 'Slovenia': 'SI', 'Estonia': 'EE',
+  'Latvia': 'LV', 'Lithuania': 'LT', 'Luxembourg': 'LU', 'Malta': 'MT',
+  'Cyprus': 'CY', 'Monaco': 'MC',
+};
+
+const getCountryCode = (country: string): string => COUNTRY_CODES[country] || country.slice(0, 2).toUpperCase();
+
 // Highlight matching text in search results
 const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query }) => {
   if (!query) return <>{text}</>;
@@ -285,10 +300,11 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
                     <span className="metro-city">
                       <HighlightMatch text={metro.city} query={searchQuery} />
                     </span>
-                    <span className="metro-location">
-                      {metro.region ? `${metro.region}, ${metro.country}` : metro.country}
-                    </span>
+                    {metro.region && (
+                      <span className="metro-region">{metro.region}</span>
+                    )}
                   </div>
+                  <span className="metro-country-badge">{getCountryCode(metro.country)}</span>
                 </button>
               ))
             )}
