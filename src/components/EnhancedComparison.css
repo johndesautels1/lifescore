@@ -5922,7 +5922,7 @@
     gap: 0.5rem;
   }
 
-  .action-btn {
+  .enhanced-results .action-btn {
     flex: 1 1 calc(50% - 0.25rem);
     min-width: 67px;
     padding: 0.75rem 0.35rem;
@@ -6009,7 +6009,7 @@
   }
 
   /* Small mobile: Action buttons stack */
-  .action-btn {
+  .enhanced-results .action-btn {
     flex: 1 1 100%;
   }
 

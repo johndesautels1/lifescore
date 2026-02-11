@@ -454,7 +454,7 @@
   gap: 0.375rem;
 }
 
-.action-btn {
+.saved-comparisons .action-btn {
   width: 32px;
   height: 32px;  /* Fixed: was 7px which hid the button */
   display: flex;
@@ -468,7 +468,7 @@
   transition: all var(--transition-fast);
 }
 
-.action-btn:hover {
+.saved-comparisons .action-btn:hover {
   background: var(--gray-100);
 }
 
@@ -619,7 +619,7 @@
   color: #FFA500;
 }
 
-[data-theme="dark"] .action-btn {
+[data-theme="dark"] .saved-comparisons .action-btn {
   background: rgba(51, 65, 85, 0.8);
   border-color: #475569;
 }
@@ -894,7 +894,7 @@
   }
 
   /* FIX: Ensure action buttons visible on 768px screens */
-  .action-btn {
+  .saved-comparisons .action-btn {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -936,7 +936,7 @@
   }
 
   /* FIX Bug #6 & #8: Ensure action buttons visible and clickable on mobile */
-  .action-btn {
+  .saved-comparisons .action-btn {
     display: flex !important;  /* Force display */
     width: 44px !important;  /* Larger touch target */
     height: 44px !important;  /* Larger touch target */
