@@ -2245,25 +2245,44 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               </table>
                             </div>
 
-                            {/* Calculation Verification */}
+                            {/* Calculation Verification — Premium Card Layout */}
                             <div className="calculation-verification">
-                              <div className="verification-row">
-                                <span className="verification-label">{result.city1.city}:</span>
-                                <span className="verification-calc">
-                                  Median of [{sortedCity1.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(medianCity1)}</strong>
+                              <h4 className="calc-verify-header">🔢 Score Calculation</h4>
+                              <div className="calc-verify-grid">
+                                <div className="calc-verify-card">
+                                  <div className="calc-verify-city">{result.city1.city}</div>
+                                  <div className="calc-verify-chips">
+                                    {sortedCity1.map((s, i) => (
+                                      <span key={i} className="calc-verify-chip">{Math.round(s)}</span>
+                                    ))}
+                                  </div>
+                                  <div className="calc-verify-median">
+                                    Median = <strong>{Math.round(medianCity1)}</strong>
+                                  </div>
                                   {Math.round(medianCity1) !== Math.round(score1) && (
-                                    <span className="opus-adjusted" title="Adjusted by Opus Judge"> → {Math.round(score1)} (Opus adjusted)</span>
+                                    <div className="calc-verify-opus">
+                                      → {Math.round(score1)}
+                                      <span className="opus-label">Opus adjusted</span>
+                                    </div>
                                   )}
-                                </span>
-                              </div>
-                              <div className="verification-row">
-                                <span className="verification-label">{result.city2.city}:</span>
-                                <span className="verification-calc">
-                                  Median of [{sortedCity2.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(medianCity2)}</strong>
+                                </div>
+                                <div className="calc-verify-card">
+                                  <div className="calc-verify-city">{result.city2.city}</div>
+                                  <div className="calc-verify-chips">
+                                    {sortedCity2.map((s, i) => (
+                                      <span key={i} className="calc-verify-chip">{Math.round(s)}</span>
+                                    ))}
+                                  </div>
+                                  <div className="calc-verify-median">
+                                    Median = <strong>{Math.round(medianCity2)}</strong>
+                                  </div>
                                   {Math.round(medianCity2) !== Math.round(score2) && (
-                                    <span className="opus-adjusted" title="Adjusted by Opus Judge"> → {Math.round(score2)} (Opus adjusted)</span>
+                                    <div className="calc-verify-opus">
+                                      → {Math.round(score2)}
+                                      <span className="opus-label">Opus adjusted</span>
+                                    </div>
                                   )}
-                                </span>
+                                </div>
                               </div>
                             </div>
 

@@ -2878,46 +2878,103 @@
   background: linear-gradient(90deg, rgba(67, 20, 120, 0.06) 0%, rgba(88, 28, 135, 0.10) 100%);
 }
 
-/* Calculation verification */
+/* Calculation verification — Premium Card Layout (LLM Breakdown) */
 .calculation-verification {
-  background: linear-gradient(135deg, rgba(88, 28, 135, 0.10) 0%, rgba(180, 140, 20, 0.08) 100%);
-  border-radius: 8px;
-  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.06) 0%, rgba(212, 175, 55, 0.04) 100%);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  font-size: 0.85rem;
-  font-family: monospace;
-  border: 1px solid rgba(88, 28, 135, 0.2);
+  border: 1px solid rgba(88, 28, 135, 0.15);
 }
 
-.verification-row {
+.calc-verify-header {
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  font-family: system-ui, -apple-system, sans-serif;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.calc-verify-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.calc-verify-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  border: 1px solid rgba(88, 28, 135, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   gap: 0.5rem;
-  margin-bottom: 0.4rem;
 }
 
-.verification-row:last-child {
-  margin-bottom: 0;
-}
-
-.verification-label {
-  font-weight: 600;
+.calc-verify-city {
+  font-weight: 800;
+  font-size: 0.9rem;
   color: #3b0764;
-  min-width: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.verification-calc {
+.calc-verify-chips {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.calc-verify-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #c4b5fd;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3b0764;
+}
+
+.calc-verify-median {
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
   color: #374151;
 }
 
-.verification-calc strong {
+.calc-verify-median strong {
   color: #059669;
+  font-size: 1.1em;
 }
 
-.opus-adjusted {
-  color: #b8860b;
-  font-style: italic;
-  margin-left: 0.5rem;
+.calc-verify-opus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #F7931E;
+}
+
+.calc-verify-opus .opus-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #F7931E;
+  opacity: 0.85;
 }
 
 /* Breakdown stats */
@@ -3166,24 +3223,44 @@
 }
 
 [data-theme="dark"] .calculation-verification {
-  background: linear-gradient(135deg, rgba(88, 28, 135, 0.20) 0%, rgba(180, 140, 20, 0.12) 100%);
-  border-color: rgba(147, 51, 234, 0.35);
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.15) 0%, rgba(212, 175, 55, 0.08) 100%);
+  border-color: rgba(147, 51, 234, 0.3);
 }
 
-[data-theme="dark"] .verification-label {
+[data-theme="dark"] .calc-verify-header {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .calc-verify-card {
+  background: rgba(30, 30, 50, 0.8);
+  border-color: rgba(147, 51, 234, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .calc-verify-city {
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .calc-verify-chip {
+  background: linear-gradient(135deg, #252538 0%, #1e1e30 100%);
+  border-color: #4a3870;
   color: #ede9fe;
 }
 
-[data-theme="dark"] .verification-calc {
+[data-theme="dark"] .calc-verify-median {
   color: #e5e7eb;
 }
 
-[data-theme="dark"] .verification-calc strong {
-  color: #34d399;
+[data-theme="dark"] .calc-verify-median strong {
+  color: #4ade80;
 }
 
-[data-theme="dark"] .opus-adjusted {
-  color: #fef3c7;
+[data-theme="dark"] .calc-verify-opus {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .calc-verify-opus .opus-label {
+  color: #fbbf24;
 }
 
 [data-theme="dark"] .breakdown-stats {
@@ -3309,12 +3386,11 @@
   }
 
   .calculation-verification {
-    font-size: 0.75rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
   }
 
-  .verification-label {
-    min-width: 70px;
+  .calc-verify-grid {
+    grid-template-columns: 1fr;
   }
 }
 
