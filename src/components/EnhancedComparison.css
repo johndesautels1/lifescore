@@ -2158,8 +2158,13 @@
 
 .cat-score .score-value {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--sapphire);
+  font-weight: 800;
+  color: #0047AB !important;
+  /* Override unscoped JudgeTab.css .score-value gradient that bleeds into this context */
+  -webkit-text-fill-color: #0047AB !important;
+  background: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
 }
 
 .cat-score .agreement-tag {
@@ -5669,7 +5674,8 @@
 }
 
 [data-theme="dark"] .cat-score .score-value {
-  color: var(--sapphire-light);
+  color: #60A5FA !important;
+  -webkit-text-fill-color: #60A5FA !important;
 }
 
 [data-theme="dark"] .category-header-btn {
