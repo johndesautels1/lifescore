@@ -417,6 +417,8 @@ function getManualTitle(type: ManualTabType): string {
       return 'App Schema & Database';
     case 'equations':
       return 'Judge Equations';
+    case 'prompts':
+      return 'GAMMA Prompt Templates';
     default:
       return 'Documentation';
   }

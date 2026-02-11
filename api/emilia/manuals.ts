@@ -27,6 +27,7 @@ const MANUAL_FILES: Record<string, string> = {
   legal: 'LEGAL_COMPLIANCE_MANUAL.md',
   schema: 'APP_SCHEMA_MANUAL.md',
   equations: 'JUDGE_EQUATIONS_MANUAL.md',
+  prompts: 'GAMMA_PROMPTS_MANUAL.md',
 };
 
 // Manual titles
@@ -37,10 +38,11 @@ const MANUAL_TITLES: Record<string, string> = {
   legal: 'Legal Compliance',
   schema: 'App Schema & Database',
   equations: 'Judge Mathematical Equations',
+  prompts: 'GAMMA Prompt Templates',
 };
 
 // Manuals that require admin authorization
-const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations'];
+const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations', 'prompts'];
 
 // Hardcoded admin emails (fallback if table doesn't exist yet)
 const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
