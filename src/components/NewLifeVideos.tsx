@@ -71,6 +71,13 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3; // Reset state after 3 failed load attempts
 
+  // FIX: Detect expired Replicate URLs (expire after ~24h)
+  const isExpiredUrl = useCallback((url: string | undefined | null): boolean => {
+    if (!url) return false;
+    // Replicate delivery URLs are temporary and expire
+    return url.includes('replicate.delivery');
+  }, []);
+
   // Determine winner/loser from result
   const winner = result.winner;
   const winnerCity = winner === 'city1' ? result.city1.city : result.city2.city;
@@ -213,6 +220,20 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     }
   }, [videoErrorCount, reset]);
 
+  // FIX: Auto-reset when expired Replicate URLs are detected (skip error loop entirely)
+  useEffect(() => {
+    if (isReady && videoPair) {
+      const winnerExpired = isExpiredUrl(videoPair.winner?.videoUrl);
+      const loserExpired = isExpiredUrl(videoPair.loser?.videoUrl);
+      if (winnerExpired || loserExpired) {
+        console.warn('[NewLifeVideos] Expired Replicate URLs detected - resetting for regeneration');
+        reset();
+        setHasStarted(false);
+        setIsPlaying(false);
+      }
+    }
+  }, [isReady, videoPair, isExpiredUrl, reset]);
+
   // Reset when result changes
   useEffect(() => {
     reset();
@@ -253,7 +274,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="score-badge">{winnerScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
-              {isReady && videoPair?.winner?.videoUrl && videoPair.winner.videoUrl.startsWith('http') ? (
+              {isReady && videoPair?.winner?.videoUrl && videoPair.winner.videoUrl.startsWith('http') && !isExpiredUrl(videoPair.winner.videoUrl) ? (
                 <video
                   ref={winnerVideoRef}
                   src={videoPair.winner.videoUrl}
@@ -262,13 +283,14 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                   onError={(e) => handleVideoError('winner', e)}
                   playsInline
                   preload="auto"
+                  crossOrigin="anonymous"
                   controlsList="nodownload"
                 />
               ) : (
                 <div className="video-placeholder winner-placeholder">
                   <div className="placeholder-icon">🌟</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : 'Freedom awaits'}
+                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : isExpiredUrl(videoPair?.winner?.videoUrl) ? 'Video expired — regenerate' : 'Freedom awaits'}
                   </div>
                 </div>
               )}
@@ -301,7 +323,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="score-badge">{loserScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
-              {isReady && videoPair?.loser?.videoUrl && videoPair.loser.videoUrl.startsWith('http') ? (
+              {isReady && videoPair?.loser?.videoUrl && videoPair.loser.videoUrl.startsWith('http') && !isExpiredUrl(videoPair.loser.videoUrl) ? (
                 <video
                   ref={loserVideoRef}
                   src={videoPair.loser.videoUrl}
@@ -310,13 +332,14 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                   onError={(e) => handleVideoError('loser', e)}
                   playsInline
                   preload="auto"
+                  crossOrigin="anonymous"
                   controlsList="nodownload"
                 />
               ) : (
                 <div className="video-placeholder loser-placeholder">
                   <div className="placeholder-icon">⛓️</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : 'Oppression looms'}
+                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : isExpiredUrl(videoPair?.loser?.videoUrl) ? 'Video expired — regenerate' : 'Oppression looms'}
                   </div>
                 </div>
               )}

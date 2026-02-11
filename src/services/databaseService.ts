@@ -505,6 +505,20 @@ export async function archiveConversation(
 }
 
 // ============================================================================
+// HELPERS: UUID validation
+// ============================================================================
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate if a string is a proper UUID.
+ * Some tables (gamma_reports) use UUID columns for comparison_id.
+ */
+function isValidUUID(str: string): boolean {
+  return UUID_REGEX.test(str);
+}
+
+// ============================================================================
 // GAMMA REPORTS
 // ============================================================================
 
@@ -524,9 +538,17 @@ export async function saveGammaReport(
 ): Promise<{ data: GammaReport | null; error: Error | null }> {
   requireDatabase();
 
+  // FIX: gamma_reports.comparison_id is UUID type in Postgres.
+  // Non-UUID comparison IDs (e.g. "LIFE-ENH-charlotte-cork") cause 400 errors.
+  // Generate a valid UUID when the comparison ID isn't in UUID format.
+  const safeComparisonId = isValidUUID(comparisonId) ? comparisonId : crypto.randomUUID();
+  if (safeComparisonId !== comparisonId) {
+    console.warn(`[DB] comparison_id "${comparisonId}" is not a UUID, using generated UUID: ${safeComparisonId}`);
+  }
+
   const insert: GammaReportInsert = {
     user_id: userId,
-    comparison_id: comparisonId,
+    comparison_id: safeComparisonId,
     gamma_generation_id: gammaGenerationId,
     gamma_url: gammaUrl,
     pdf_url: pdfUrl || null,

@@ -124,7 +124,13 @@ export async function uploadUserVideo(
 
   if (uploadError) {
     console.error('[VideoStorage] Upload failed:', uploadError);
-    throw new Error(`Upload failed: ${uploadError.message}`);
+    // FIX: Provide user-friendly message for Supabase bucket size limit
+    const msg = uploadError.message || '';
+    if (msg.includes('exceeded') && msg.includes('size')) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      throw new Error(`Video too large (${sizeMB}MB). Supabase storage limit exceeded. Try compressing the video or using a shorter clip (under 50MB).`);
+    }
+    throw new Error(`Upload failed: ${msg}`);
   }
 
   // Get public URL

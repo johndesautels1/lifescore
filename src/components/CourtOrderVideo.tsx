@@ -93,6 +93,12 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
+  // FIX: Detect expired Replicate URLs (expire after ~24h)
+  const isExpiredUrl = useCallback((url: string | undefined | null): boolean => {
+    if (!url) return false;
+    return url.includes('replicate.delivery');
+  }, []);
+
   // ══════════════════════════════════════════════════════════════════════════
   // INVIDEO OVERRIDE STATE
   // ══════════════════════════════════════════════════════════════════════════
@@ -129,7 +135,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   }, [comparisonId, winnerCity]);
 
   // The effective video URL: User upload > InVideo override > Kling-generated
-  const effectiveVideoUrl = userVideoUrl || invideoOverride?.video_url || video?.videoUrl;
+  // FIX: Skip expired Replicate URLs (they expire after ~24h)
+  const generatedVideoUrl = video?.videoUrl && !video.videoUrl.includes('replicate.delivery') ? video.videoUrl : null;
+  const effectiveVideoUrl = userVideoUrl || invideoOverride?.video_url || generatedVideoUrl;
 
   // Admin: Submit InVideo URL override
   const handleSubmitOverride = async () => {
@@ -589,7 +597,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         <div className="lcd-screen">
           <div className="lcd-bezel">
             <div className="lcd-display">
-              {userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride) ? (
+              {(userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride)) && effectiveVideoUrl ? (
                 <video
                   ref={videoRef}
                   src={effectiveVideoUrl}
@@ -599,6 +607,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                   onLoadedMetadata={handleLoadedMetadata}
                   onError={handleVideoError}
                   playsInline
+                  crossOrigin="anonymous"
                 />
               ) : (
                 <div className="lcd-placeholder">
