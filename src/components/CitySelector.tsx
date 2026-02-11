@@ -35,6 +35,24 @@ const COUNTRY_CODES: Record<string, string> = {
 
 const getCountryCode = (country: string): string => COUNTRY_CODES[country] || country.slice(0, 2).toUpperCase();
 
+// Country → ISO 3166-1 alpha-2 (lowercase) for flagcdn.com
+const COUNTRY_ISO: Record<string, string> = {
+  'USA': 'us', 'Canada': 'ca',
+  'UK': 'gb', 'France': 'fr', 'Germany': 'de', 'Italy': 'it', 'Spain': 'es',
+  'Netherlands': 'nl', 'Belgium': 'be', 'Austria': 'at', 'Switzerland': 'ch',
+  'Sweden': 'se', 'Norway': 'no', 'Denmark': 'dk', 'Finland': 'fi', 'Iceland': 'is',
+  'Ireland': 'ie', 'Portugal': 'pt', 'Greece': 'gr', 'Poland': 'pl',
+  'Czech Republic': 'cz', 'Hungary': 'hu', 'Romania': 'ro', 'Bulgaria': 'bg',
+  'Croatia': 'hr', 'Slovakia': 'sk', 'Slovenia': 'si', 'Estonia': 'ee',
+  'Latvia': 'lv', 'Lithuania': 'lt', 'Luxembourg': 'lu', 'Malta': 'mt',
+  'Cyprus': 'cy', 'Monaco': 'mc',
+};
+
+const getFlagUrl = (country: string): string => {
+  const iso = COUNTRY_ISO[country] || country.slice(0, 2).toLowerCase();
+  return `https://flagcdn.com/w40/${iso}.png`;
+};
+
 // Highlight matching text in search results
 const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query }) => {
   if (!query) return <>{text}</>;
@@ -211,7 +229,11 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
       >
         <span className="metro-select-value">
           {value ? (
-            <><span className="metro-country-badge">{getCountryCode(value.country)}</span> {formatMetro(value)}</>
+            <>
+              <img className="metro-flag-img" src={getFlagUrl(value.country)} alt={value.country} width={20} height={15} />
+              <span className="metro-country-badge">{getCountryCode(value.country)}</span>
+              {' '}{formatMetro(value)}
+            </>
           ) : 'Select a city...'}
         </span>
         <span className="metro-select-arrow">{isOpen ? '▲' : '▼'}</span>
@@ -288,6 +310,14 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
                       <span className="metro-region">{metro.region}</span>
                     )}
                   </div>
+                  <img
+                    className="metro-flag-img"
+                    src={getFlagUrl(metro.country)}
+                    alt={metro.country}
+                    width={20}
+                    height={15}
+                    loading="lazy"
+                  />
                   <span className="metro-country-badge">{getCountryCode(metro.country)}</span>
                 </button>
               ))

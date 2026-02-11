@@ -232,6 +232,17 @@
   font-weight: 700;
 }
 
+/* Tiny country flag widget */
+.metro-flag-img {
+  flex-shrink: 0;
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  vertical-align: middle;
+}
+
 /* Orange country code badge */
 .metro-country-badge {
   flex-shrink: 0;
