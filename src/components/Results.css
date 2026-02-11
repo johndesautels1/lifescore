@@ -147,7 +147,7 @@
   padding: 1.5rem;
 }
 
-.score-box {
+.results .score-box {
   background: var(--gray-50);
   border: 2px solid var(--gray-200);
   border-radius: var(--radius-md);
@@ -155,25 +155,25 @@
   text-align: center;
 }
 
-.score-box.winner {
+.results .score-box.winner {
   background: #f0fdf4;
   border-color: var(--success);
 }
 
-.score-box h3 {
+.results .score-box h3 {
   font-size: 1.25rem;
   color: var(--sapphire);
   margin-bottom: 0.75rem;
 }
 
-.score-box .score {
+.results .score-box .score {
   font-size: 3rem;
   font-weight: 800;
   color: var(--gray-700);
   line-height: 1;
 }
 
-.score-box.winner .score {
+.results .score-box.winner .score {
   color: var(--success-dark);
 }
 

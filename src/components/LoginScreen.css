@@ -199,19 +199,19 @@
   }
 }
 
-.card-header {
+.login-screen .card-header {
   text-align: center;
   margin-bottom: 2rem;
 }
 
-.card-header h2 {
+.login-screen .card-header h2 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--ls-white);
   margin: 0;
 }
 
-.card-header p {
+.login-screen .card-header p {
   font-size: 0.875rem;
   color: var(--ls-steel);
   margin: 0.5rem 0 0;
@@ -226,13 +226,13 @@
   gap: 1.25rem;
 }
 
-.form-group {
+.login-screen .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-group label {
+.login-screen .form-group label {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -260,7 +260,7 @@
   color: var(--ls-gold);
 }
 
-.form-group input {
+.login-screen .form-group input {
   width: 100%;
   padding: 0.875rem 1rem 0.875rem 2.75rem;
   background: rgba(255, 255, 255, 0.05);
@@ -272,18 +272,18 @@
   transition: all 0.2s ease;
 }
 
-.form-group input::placeholder {
+.login-screen .form-group input::placeholder {
   color: var(--ls-steel);
 }
 
-.form-group input:focus {
+.login-screen .form-group input:focus {
   outline: none;
   border-color: var(--ls-gold);
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 3px var(--ls-gold-glow);
 }
 
-.form-group input:disabled {
+.login-screen .form-group input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -373,7 +373,7 @@
   color: var(--ls-platinum);
 }
 
-.spinner {
+.login-screen .spinner {
   width: 18px;
   height: 18px;
   border: 2px solid transparent;
@@ -488,7 +488,7 @@
     font-size: 1.5rem;
   }
 
-  .card-header h2 {
+  .login-screen .card-header h2 {
     font-size: 1.25rem;
   }
 }
@@ -626,7 +626,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    CARD HEADER FIX - Make description more visible
    ═══════════════════════════════════════════════════════════════════════════ */
-.card-header p {
+.login-screen .card-header p {
   font-size: 0.9rem;
   color: var(--ls-platinum);
   margin: 0.5rem 0 0;

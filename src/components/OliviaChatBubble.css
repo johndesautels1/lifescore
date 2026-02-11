@@ -432,7 +432,7 @@
   align-self: flex-start;
 }
 
-.message-avatar {
+.olivia-bubble-container .message-avatar {
   width: 28px;
   height: 28px;
   background: linear-gradient(135deg, var(--bubble-gold) 0%, #d4af37 100%);
@@ -446,7 +446,7 @@
   flex-shrink: 0;
 }
 
-.message-bubble {
+.olivia-bubble-container .message-bubble {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -473,7 +473,7 @@
   border-radius: 12px 12px 4px 12px;
 }
 
-.message-footer {
+.olivia-bubble-container .message-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -481,7 +481,7 @@
   padding: 0 0.5rem;
 }
 
-.message-time {
+.olivia-bubble-container .message-time {
   font-size: 0.65rem;
   color: var(--bubble-steel);
 }
@@ -548,12 +548,12 @@
   border-radius: 12px 12px 12px 4px;
 }
 
-.typing-indicator {
+.olivia-bubble-container .typing-indicator {
   display: flex;
   gap: 4px;
 }
 
-.typing-indicator span {
+.olivia-bubble-container .typing-indicator span {
   width: 6px;
   height: 6px;
   background: var(--bubble-gold);
@@ -561,8 +561,8 @@
   animation: typing-dot 1.4s ease-in-out infinite both;
 }
 
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+.olivia-bubble-container .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.olivia-bubble-container .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
 
 @keyframes typing-dot {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
@@ -582,7 +582,7 @@
   color: var(--bubble-error);
 }
 
-.error-icon {
+.olivia-bubble-container .error-icon {
   width: 18px;
   height: 18px;
   background: var(--bubble-error);
@@ -818,7 +818,7 @@
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .message-bubble.typing {
+[data-theme="dark"] .olivia-bubble-container .message-bubble.typing {
   background: #1e293b;
   border-color: rgba(255, 255, 255, 0.1);
 }
