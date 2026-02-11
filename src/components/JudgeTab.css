@@ -921,25 +921,26 @@
 /* SCOPED to .judge-tab to prevent leaking to other components */
 .judge-tab .action-buttons-section {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  padding: 2rem 2rem 3rem;
-  max-width: 1200px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  padding: 2rem;
+  max-width: 100%;
   margin: 0 auto;
 }
 
 .judge-tab .action-btn {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 2.5rem 2rem;
-  min-height: 160px;
+  padding: 1.25rem 2rem;
+  min-height: auto;
+  width: 100%;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: 14px;
+  border-radius: 10px;
   color: #ffffff;
   font-family: var(--font-display);
   font-size: 1rem;
@@ -970,7 +971,7 @@
 }
 
 .judge-tab .action-btn .btn-icon {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
 }
 
 /* Remove old inconsistent sizing overrides */
@@ -1691,17 +1692,17 @@
   /* FIX: Action buttons — 2x2 grid on tablet */
   .action-buttons-section {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-    padding: 1.5rem;
+    gap: 0.75rem;
+    padding: 1rem;
   }
 
   .judge-tab .action-btn {
-    min-height: 140px;
-    padding: 2rem 1.5rem;
+    min-height: auto;
+    padding: 1rem 1.25rem;
   }
 
   .judge-tab .action-btn .btn-icon {
-    font-size: 2rem;
+    font-size: 1.25rem;
   }
 
   .judge-tab .action-btn .btn-text {
@@ -1800,20 +1801,21 @@
     font-size: 0.7rem;
   }
 
-  /* FIX: Action buttons — 2x2 grid on small mobile */
+  /* FIX: Action buttons — single column, full width on small mobile */
   .action-buttons-section {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
   }
 
   .judge-tab .action-btn {
-    min-height: 128px;
-    padding: 1.5rem 1rem;
+    min-height: auto;
+    padding: 1rem 1.25rem;
+    width: 100%;
   }
 
   .judge-tab .action-btn .btn-icon {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
   }
 
   .judge-tab .action-btn .btn-text {
