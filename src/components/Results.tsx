@@ -76,13 +76,13 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({ result }) => {
   return (
     <div className="score-grid card">
       <div className={`score-box ${city1Wins ? 'winner' : ''}`}>
-        <h3>{result.city1.city}, {result.city1.country}</h3>
+        <h3>{result.city1.city}{result.city1.region ? `, ${result.city1.region}` : ''}, {result.city1.country}</h3>
         <div className="score">{Math.round(getScore(result.city1))}</div>
         <p className="score-label">Total LIFE SCORE™</p>
       </div>
 
       <div className={`score-box ${city2Wins ? 'winner' : ''}`}>
-        <h3>{result.city2.city}, {result.city2.country}</h3>
+        <h3>{result.city2.city}{result.city2.region ? `, ${result.city2.region}` : ''}, {result.city2.country}</h3>
         <div className="score">{Math.round(getScore(result.city2))}</div>
         <p className="score-label">Total LIFE SCORE™</p>
       </div>

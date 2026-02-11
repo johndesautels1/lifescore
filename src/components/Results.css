@@ -26,28 +26,34 @@
 }
 
 .report-type-badge.enhanced {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
-  color: #ffffff;
-  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #E8E0F0 0%, #EDE9F5 100%);
+  color: #2D2D2D;
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  font-weight: 800;
 }
 
 .report-type-badge.standard {
-  background: linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%);
-  color: #ffffff;
-  box-shadow: 0 3px 10px rgba(14, 165, 233, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #E0F2FE 0%, #E0FAF5 100%);
+  color: #2D2D2D;
+  box-shadow: 0 3px 10px rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  font-weight: 800;
 }
 
 /* Dark mode */
 [data-theme="dark"] .report-type-badge.enhanced {
-  background: linear-gradient(135deg, #A78BFA 0%, #818CF8 100%);
-  box-shadow: 0 3px 12px rgba(167, 139, 250, 0.5);
+  background: linear-gradient(135deg, #3B2D5E 0%, #2E2654 100%);
+  color: #E8E0F0;
+  box-shadow: 0 3px 12px rgba(167, 139, 250, 0.3);
+  border: 1px solid rgba(167, 139, 250, 0.4);
 }
 
 [data-theme="dark"] .report-type-badge.standard {
-  background: linear-gradient(135deg, #38BDF8 0%, #2DD4BF 100%);
-  box-shadow: 0 3px 12px rgba(56, 189, 248, 0.5);
+  background: linear-gradient(135deg, #1E3A4F 0%, #1E3D3D 100%);
+  color: #E0F2FE;
+  box-shadow: 0 3px 12px rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.4);
 }
 
 /* Winner Hero */

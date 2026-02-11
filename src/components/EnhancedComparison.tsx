@@ -1457,7 +1457,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         {!isTie ? (
           <>
             <div className="winner-trophy">🏆</div>
-            <h2 className="winner-city">{winner.city}, {winner.country}</h2>
+            <h2 className="winner-city">{winner.city}{winner.region ? `, ${winner.region}` : ''}, {winner.country}</h2>
             <div className="winner-score">{winner.totalConsensusScore}</div>
             <p className="winner-label">CONSENSUS LIFE SCORE™</p>
 
@@ -1538,32 +1538,48 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       {/* Score Comparison */}
       <div className="enhanced-score-grid card">
         <div className={`score-box ${result.winner === 'city1' ? 'winner' : ''}`}>
-          <h3>{result.city1.city}, {result.city1.country}</h3>
+          <h3>{result.city1.city}{result.city1.region ? `, ${result.city1.region}` : ''}, {result.city1.country}</h3>
           <div className="consensus-score">{result.city1.totalConsensusScore}</div>
           <div className="agreement-meter">
-            <span className="agreement-label">{result.llmsUsed.length > 1 ? 'LLM Agreement:' : 'Confidence:'}</span>
-            <div className="agreement-bar">
-              <div
-                className="agreement-fill"
-                style={{ width: `${result.city1.overallAgreement}%` }}
-              />
-            </div>
-            <span className="agreement-value">{result.city1.overallAgreement}%</span>
+            {result.llmsUsed.length > 1 ? (
+              <>
+                <span className="agreement-label">LLM Agreement:</span>
+                <div className="agreement-bar">
+                  <div
+                    className="agreement-fill"
+                    style={{ width: `${result.city1.overallAgreement}%` }}
+                  />
+                </div>
+                <span className="agreement-value">{result.city1.overallAgreement}%</span>
+              </>
+            ) : (
+              <span className="agreement-label single-llm-note">
+                1 of 5 AI models evaluated — add more for consensus scoring
+              </span>
+            )}
           </div>
         </div>
 
         <div className={`score-box ${result.winner === 'city2' ? 'winner' : ''}`}>
-          <h3>{result.city2.city}, {result.city2.country}</h3>
+          <h3>{result.city2.city}{result.city2.region ? `, ${result.city2.region}` : ''}, {result.city2.country}</h3>
           <div className="consensus-score">{result.city2.totalConsensusScore}</div>
           <div className="agreement-meter">
-            <span className="agreement-label">{result.llmsUsed.length > 1 ? 'LLM Agreement:' : 'Confidence:'}</span>
-            <div className="agreement-bar">
-              <div
-                className="agreement-fill"
-                style={{ width: `${result.city2.overallAgreement}%` }}
-              />
-            </div>
-            <span className="agreement-value">{result.city2.overallAgreement}%</span>
+            {result.llmsUsed.length > 1 ? (
+              <>
+                <span className="agreement-label">LLM Agreement:</span>
+                <div className="agreement-bar">
+                  <div
+                    className="agreement-fill"
+                    style={{ width: `${result.city2.overallAgreement}%` }}
+                  />
+                </div>
+                <span className="agreement-value">{result.city2.overallAgreement}%</span>
+              </>
+            ) : (
+              <span className="agreement-label single-llm-note">
+                1 of 5 AI models evaluated — add more for consensus scoring
+              </span>
+            )}
           </div>
         </div>
       </div>

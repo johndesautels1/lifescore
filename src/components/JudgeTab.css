@@ -909,18 +909,22 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 /* SCOPED to .judge-tab to prevent leaking to other components */
 .judge-tab .action-buttons-section {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem 2rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 2rem;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .judge-tab .action-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
-  padding: 0.9rem 1.125rem;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  min-height: 80px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -933,11 +937,16 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .judge-tab .action-btn .btn-text {
-  font-size: 0.85rem;
-  color: #ffffff;  /* Crisp white text */
+  font-size: 0.7rem;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .judge-tab .action-btn:hover:not(:disabled) {
@@ -952,27 +961,33 @@
 }
 
 .judge-tab .action-btn .btn-icon {
-  font-size: 1.275rem;
+  font-size: 1.5rem;
 }
 
-/* Download buttons - slightly larger */
+/* All action buttons uniform sizing */
 .judge-tab .action-btn.download-btn {
-  padding: 1.05rem 1.65rem;
-  font-size: 0.85rem;
-  gap: 0.6rem;
+  /* Same as base .action-btn — no overrides needed */
 }
 
 .judge-tab .action-btn.download-btn .btn-text {
-  font-size: 0.85rem;
+  font-size: 0.7rem;
 }
 
-/* Save and Forward buttons - add spacing from download buttons */
+/* Remove old margin hacks */
 .judge-tab .action-btn.save-btn {
-  margin-right: 0.5rem;
+  margin-right: 0;
 }
 
 .judge-tab .action-btn.forward-btn {
-  margin-left: 0.5rem;
+  margin-left: 0;
+}
+
+/* Responsive: 2x2 grid on small screens */
+@media (max-width: 480px) {
+  .judge-tab .action-buttons-section {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1rem;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
