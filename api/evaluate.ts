@@ -656,6 +656,36 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
 
   const startTime = Date.now();
 
+  // FIX: Batch split for large categories (Housing = 20 metrics) to prevent timeouts
+  const BATCH_THRESHOLD = 12;
+  if (metrics.length > BATCH_THRESHOLD) {
+    console.log(`[CLAUDE] Large category (${metrics.length} metrics), splitting into batches`);
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+    console.log(`[CLAUDE] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    const result1 = await evaluateWithClaude(city1, city2, batch1);
+    const result2 = await evaluateWithClaude(city1, city2, batch2);
+
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedSuccess = result1.success && result2.success;
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[CLAUDE] Batched: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+    return {
+      provider: 'claude-sonnet',
+      success: combinedSuccess || combinedScores.length > 0,
+      scores: combinedScores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
+
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
   let tavilyContext = '';
   if (process.env.TAVILY_API_KEY) {
@@ -947,10 +977,40 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 
   const startTime = Date.now();
 
+  // FIX: Batch split for large categories (Housing = 20, Policing = 15) to prevent timeouts
+  const BATCH_THRESHOLD = 15;
+  if (metrics.length > BATCH_THRESHOLD) {
+    console.log(`[GEMINI] Large category (${metrics.length} metrics), splitting into batches`);
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+    console.log(`[GEMINI] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    const result1 = await evaluateWithGemini(city1, city2, batch1);
+    const result2 = await evaluateWithGemini(city1, city2, batch2);
+
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedSuccess = result1.success && result2.success;
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[GEMINI] Batched: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+    return {
+      provider: 'gemini-3-pro',
+      success: combinedSuccess || combinedScores.length > 0,
+      scores: combinedScores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
+
   // GEMINI-SPECIFIC ADDENDUM (optimized for Reasoning-over-Grounding)
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
-  // UPDATED 2026-01-24: Added conciseness requirements to stay within 8192 token output limit
-  const isLargeCategory = metrics.length >= 20;
+  // FIX: Lowered threshold from 20 to 12 to also cover Policing (15 metrics) timeouts
+  const isLargeCategory = metrics.length >= 12;
   const geminiAddendum = `
 ## GEMINI-SPECIFIC INSTRUCTIONS
 - Use Google Search grounding to verify current ${new Date().getFullYear()} legal status for both cities
@@ -960,12 +1020,12 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 - You have the full context window - maintain consistency across all ${metrics.length} metrics
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
 ${isLargeCategory ? `
-## CRITICAL: CONCISENESS REQUIRED (Large category with ${metrics.length} metrics)
+## CRITICAL: CONCISENESS REQUIRED (${metrics.length} metrics)
 - Keep "reasoning" to 1 sentence only (under 25 words)
 - Include only 1 source per metric (most authoritative only)
 - Include only 1 evidence item per city per metric
 - Omit verbose explanations - scores and brief justification are sufficient
-- This is required to fit within 8192 token output limit
+- This is required to fit within the output token limit
 ` : ''}`;
 
   // Gemini system instruction
