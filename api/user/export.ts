@@ -48,13 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Rate limit (1 export per hour per IP)
   const clientIP = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 'unknown';
-  const rateResult = checkRateLimit(clientIP, { windowMs: 3600000, maxRequests: 1 });
-  if (!rateResult.allowed) {
-    return res.status(429).json({
-      error: 'RATE_LIMITED',
-      message: 'You can only export your data once per hour.',
-      resetIn: rateResult.resetIn,
-    });
+  if (!checkRateLimit(clientIP, 'user/export', { windowMs: 3600000, maxRequests: 1 }, res)) {
+    return;
   }
 
   // Only allow POST

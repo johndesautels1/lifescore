@@ -39,9 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Rate limit (30 per minute - consent changes shouldn't be frequent)
   const clientIP = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 'unknown';
-  const rateResult = checkRateLimit(clientIP, { windowMs: 60000, maxRequests: 30 });
-  if (!rateResult.allowed) {
-    return res.status(429).json({ error: 'RATE_LIMITED' });
+  if (!checkRateLimit(clientIP, 'consent/log', { windowMs: 60000, maxRequests: 30 }, res)) {
+    return;
   }
 
   // Only allow POST
