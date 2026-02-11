@@ -280,6 +280,28 @@
 }
 
 /* ============================================================================
+   UPLOAD PROGRESS
+   ============================================================================ */
+
+.upload-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.upload-status-text {
+  color: var(--accent-color, #D4AF37);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ============================================================================
    ERROR STATE
    ============================================================================ */
 
@@ -368,7 +390,8 @@
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
 }
 
-.see-court-order-btn:disabled {
+.see-court-order-btn:disabled,
+.upload-video-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;

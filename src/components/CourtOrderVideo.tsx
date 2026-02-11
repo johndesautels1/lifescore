@@ -17,6 +17,7 @@ import { useTierAccess } from '../hooks/useTierAccess';
 import { saveCourtOrder } from '../services/savedComparisons';
 import { toastSuccess, toastError } from '../utils/toast';
 import { supabase } from '../lib/supabase';
+import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
 import FreedomCategoryTabs from './FreedomCategoryTabs';
 import FreedomMetricsList from './FreedomMetricsList';
 import FreedomHeroFooter from './FreedomHeroFooter';
@@ -85,6 +86,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
 
   // User video upload state
   const [userVideoUrl, setUserVideoUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [userVideoStoragePath, setUserVideoStoragePath] = useState<string | null>(null);
 
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
@@ -309,36 +313,68 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     }
   };
 
-  // Handle user video file upload
-  const handleUserVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle user video file upload: instant blob preview + background Supabase upload
+  const handleUserVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate it's a video file
-    if (!file.type.startsWith('video/')) {
-      toastError('Please select a video file');
+    // Reset input so re-selecting the same file triggers onChange again
+    e.target.value = '';
+
+    // Validate with the storage service validator (checks type + size)
+    const validation = validateVideoFile(file);
+    if (!validation.valid) {
+      toastError(validation.error || 'Invalid video file');
       return;
     }
 
     // Revoke previous blob URL to prevent memory leak
-    if (userVideoUrl) {
+    if (userVideoUrl && userVideoUrl.startsWith('blob:')) {
       URL.revokeObjectURL(userVideoUrl);
     }
 
+    // 1. Instant preview via blob URL
     const blobUrl = URL.createObjectURL(file);
     setUserVideoUrl(blobUrl);
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setUserVideoStoragePath(null);
 
-    // Reset input so re-selecting the same file triggers onChange again
-    e.target.value = '';
+    // 2. Background upload to Supabase (if user is logged in)
+    if (user?.id) {
+      setIsUploading(true);
+      setUploadStatus('Saving to cloud...');
+      try {
+        const result = await uploadUserVideo(
+          user.id,
+          comparisonId,
+          file,
+          (progress) => setUploadStatus(progress.message)
+        );
+
+        // Swap blob URL with permanent Supabase URL
+        URL.revokeObjectURL(blobUrl);
+        setUserVideoUrl(result.publicUrl);
+        setUserVideoStoragePath(result.storagePath);
+        setUploadStatus(null);
+        toastSuccess('Video saved to cloud!');
+        console.log('[CourtOrderVideo] Video uploaded to Supabase:', result.publicUrl);
+      } catch (err) {
+        // Upload failed — keep the blob URL so video still plays locally
+        console.error('[CourtOrderVideo] Supabase upload failed:', err);
+        setUploadStatus(null);
+        toastError('Cloud save failed — video plays locally only');
+      } finally {
+        setIsUploading(false);
+      }
+    }
   };
 
-  // Clean up blob URL on unmount
+  // Clean up blob URL on unmount (only revoke blob: URLs, not Supabase URLs)
   useEffect(() => {
     return () => {
-      if (userVideoUrl) {
+      if (userVideoUrl && userVideoUrl.startsWith('blob:')) {
         URL.revokeObjectURL(userVideoUrl);
       }
     };
@@ -380,10 +416,13 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setCurrentTime(0);
     setDuration(0);
     setVideoErrorCount(0);
-    if (userVideoUrl) {
+    if (userVideoUrl && userVideoUrl.startsWith('blob:')) {
       URL.revokeObjectURL(userVideoUrl);
-      setUserVideoUrl(null);
     }
+    setUserVideoUrl(null);
+    setUserVideoStoragePath(null);
+    setIsUploading(false);
+    setUploadStatus(null);
   }, [comparisonId]);
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -395,6 +434,12 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const handleSaveCourtOrder = () => {
     const videoUrl = effectiveVideoUrl;
     if (!videoUrl) return;
+
+    // Don't save blob URLs to database — they're ephemeral
+    if (videoUrl.startsWith('blob:')) {
+      toastError('Video is still uploading. Please wait for cloud save to complete.');
+      return;
+    }
 
     // Defer heavy work so the browser can paint the button press immediately
     setTimeout(() => {
@@ -611,6 +656,14 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           <div className="lcd-reflection"></div>
         </div>
 
+        {/* Upload Progress Indicator */}
+        {isUploading && uploadStatus && (
+          <div className="upload-progress-bar">
+            <div className="lcd-spinner" style={{ width: 16, height: 16, borderWidth: 2 }}></div>
+            <span className="upload-status-text">{uploadStatus}</span>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="court-error">
@@ -682,6 +735,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             <button
               className="upload-video-btn"
               onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
             >
               <span className="btn-icon">🎥</span>
               <span className="btn-text">UPLOAD YOUR VIDEO</span>
@@ -693,9 +747,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             <button
               className="upload-video-btn"
               onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
             >
               <span className="btn-icon">🔄</span>
-              <span className="btn-text">CHANGE VIDEO</span>
+              <span className="btn-text">{isUploading ? 'UPLOADING...' : 'CHANGE VIDEO'}</span>
             </button>
           )}
         </div>
