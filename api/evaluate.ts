@@ -1408,22 +1408,26 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     : buildBasePrompt(city1, city2, metrics);
   const prompt = tavilyContext + basePrompt + perplexityAddendum;
 
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.perplexity.ai/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'sonar-reasoning-pro',
-          messages: [
-            {
-              role: 'system',
-              // UPDATED 2026-02-03: Optimized per Perplexity suggestions - clearer structure, evidence limits, confidence rules
-              content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
+  // Retry loop (3 attempts with exponential backoff, matching Gemini/Grok pattern)
+  const MAX_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[PERPLEXITY] Attempt ${attempt}/${MAX_RETRIES} for ${metrics.length} metrics`);
+
+      const response = await fetchWithTimeout(
+        'https://api.perplexity.ai/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'sonar-reasoning-pro',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
 
 ## SCORING RULES
 - Follow the scoring scale in the user message (0-100 with 5 anchor bands)
@@ -1434,6 +1438,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 - "sources": Include 2-3 URLs for reliability and verification
 - "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
 - Keep reasoning brief (1-2 sentences max)
+- IMPORTANT: Minimize your <think> reasoning to conserve output tokens for the JSON response
 
 ## CONFIDENCE RULES
 - "high": Clear, current data from official sources
@@ -1451,8 +1456,8 @@ Return ONLY valid JSON (no markdown, no explanation):
       "city2Legal": 60,
       "city2Enforcement": 55,
       "confidence": "high",
-      "reasoning": "Brief 1-2 sentence explanation",
-      "sources": ["url1", "url2", "url3"],
+      "reasoning": "Brief explanation",
+      "sources": ["url1", "url2"],
       "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
       "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
     }
@@ -1460,111 +1465,143 @@ Return ONLY valid JSON (no markdown, no explanation):
 }
 
 You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
-            },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 16384,
-          temperature: 0.3,
-          return_citations: true,  // FIX: Request citations from Perplexity API
-          // NOTE: Removed strict json_schema - conflicts with sonar-reasoning-pro thinking output
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+              },
+              { role: 'user', content: prompt }
+            ],
+            // FIX: Increased from 16384 to 32768 — sonar-reasoning-pro <think> tokens
+            // consume part of max_tokens budget, causing JSON output truncation
+            max_tokens: 32768,
+            temperature: 0.3,
+            return_citations: true,
+          })
+        },
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
-    }
-
-    const data = await response.json();
-
-    // Perplexity API response format detection (handles multiple formats)
-    let rawText = '';
-
-    // Format 1: New 'output' array format
-    if (data.output?.length) {
-      const last = data.output[data.output.length - 1];
-      const contentArr = last?.content ?? [];
-      const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
-      rawText = textPart?.text ?? '';
-    }
-
-    // Format 2: Legacy 'choices' format (OpenAI-compatible)
-    if (!rawText && data.choices?.[0]?.message?.content) {
-      rawText = data.choices[0].message.content;
-    }
-
-    // Format 3: Direct 'content' field
-    if (!rawText && typeof data.content === 'string') {
-      rawText = data.content;
-    }
-
-    // Format 4: Direct 'text' field
-    if (!rawText && typeof data.text === 'string') {
-      rawText = data.text;
-    }
-
-    if (!rawText) {
-      console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
-      console.error('[PERPLEXITY] Full response:', JSON.stringify(data).slice(0, 1000));
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity - no output or choices' };
-    }
-
-    // Strip <think>...</think> blocks from reasoning models
-    rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-
-    // Check for JSON in code blocks first
-    const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
-    let candidate = codeMatch ? codeMatch[1].trim() : rawText;
-
-    // Extract JSON object - try multiple patterns
-    let jsonMatch = candidate.match(/\{[\s\S]*\}/);
-
-    // If no match, try to find JSON that starts with {"evaluations"
-    if (!jsonMatch) {
-      const evalMatch = candidate.match(/\{"evaluations"[\s\S]*\}/);
-      if (evalMatch) jsonMatch = evalMatch;
-    }
-
-    // If still no match, try to extract from raw text (ignoring code blocks)
-    if (!jsonMatch && !codeMatch) {
-      // Try finding JSON anywhere in the response
-      const jsonStart = rawText.indexOf('{"evaluations"');
-      if (jsonStart !== -1) {
-        const jsonSubstr = rawText.substring(jsonStart);
-        jsonMatch = jsonSubstr.match(/\{[\s\S]*\}/);
+      if (!response.ok) {
+        const errorText = await response.text();
+        // Don't retry 4xx errors (bad request, auth issues)
+        if (response.status >= 400 && response.status < 500) {
+          return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+        }
+        // Retry 5xx errors with backoff
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] ${response.status} error, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error after ${MAX_RETRIES} retries: ${response.status} - ${errorText}` };
       }
+
+      const data = await response.json();
+
+      // Perplexity uses OpenAI-compatible format: choices[0].message.content
+      let rawText = '';
+
+      // Primary format: OpenAI-compatible choices array
+      if (data.choices?.[0]?.message?.content) {
+        rawText = data.choices[0].message.content;
+      }
+
+      // Fallback: output array format
+      if (!rawText && data.output?.length) {
+        const last = data.output[data.output.length - 1];
+        const contentArr = last?.content ?? [];
+        const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
+        rawText = textPart?.text ?? '';
+      }
+
+      // Fallback: Direct content/text fields
+      if (!rawText && typeof data.content === 'string') rawText = data.content;
+      if (!rawText && typeof data.text === 'string') rawText = data.text;
+
+      if (!rawText) {
+        console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
+        console.error('[PERPLEXITY] Full response:', JSON.stringify(data).slice(0, 1000));
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] Empty response, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity after retries' };
+      }
+
+      // Strip <think>...</think> blocks from reasoning models
+      rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+      // Check for JSON in code blocks first
+      const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
+      let candidate = codeMatch ? codeMatch[1].trim() : rawText;
+
+      // Extract JSON object - try multiple patterns
+      let jsonMatch = candidate.match(/\{[\s\S]*\}/);
+
+      // If no match, try to find JSON that starts with {"evaluations"
+      if (!jsonMatch) {
+        const evalMatch = candidate.match(/\{"evaluations"[\s\S]*\}/);
+        if (evalMatch) jsonMatch = evalMatch;
+      }
+
+      // If still no match, try to extract from raw text
+      if (!jsonMatch && !codeMatch) {
+        const jsonStart = rawText.indexOf('{"evaluations"');
+        if (jsonStart !== -1) {
+          const jsonSubstr = rawText.substring(jsonStart);
+          jsonMatch = jsonSubstr.match(/\{[\s\S]*\}/);
+        }
+      }
+
+      if (!jsonMatch) {
+        console.error('[PERPLEXITY] No JSON found. Preview:', rawText.slice(0, 500));
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] No JSON in response, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output after retries' };
+      }
+
+      const scores = parseResponse(jsonMatch[0], 'perplexity');
+      if (scores.length === 0) {
+        console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', jsonMatch[0].slice(0, 300));
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] 0 scores parsed, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+      }
+
+      // Extract token usage from Perplexity response (same format as OpenAI)
+      const usage: TokenUsage = {
+        inputTokens: data?.usage?.prompt_tokens || 0,
+        outputTokens: data?.usage?.completion_tokens || 0
+      };
+
+      return {
+        provider: 'perplexity',
+        success: scores.length > 0,
+        scores,
+        latencyMs: Date.now() - startTime,
+        usage: { tokens: usage }
+      };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
+      if (attempt < MAX_RETRIES) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.warn(`[PERPLEXITY] Exception on attempt ${attempt}: ${errorMsg}, retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
     }
-
-    if (!jsonMatch) {
-      console.error('[PERPLEXITY] No JSON object found. Text preview:', rawText.slice(0, 500));
-      console.error('[PERPLEXITY] Candidate preview:', candidate.slice(0, 500));
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output' };
-    }
-
-    const scores = parseResponse(jsonMatch[0], 'perplexity');
-    if (scores.length === 0) {
-      console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', jsonMatch[0].slice(0, 300));
-    }
-
-    // Extract token usage from Perplexity response (same format as OpenAI)
-    const usage: TokenUsage = {
-      inputTokens: data?.usage?.prompt_tokens || 0,
-      outputTokens: data?.usage?.completion_tokens || 0
-    };
-
-    return {
-      provider: 'perplexity',
-      success: scores.length > 0,
-      scores,
-      latencyMs: Date.now() - startTime,
-      usage: { tokens: usage }
-    };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key and network');
-    return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
+
+  // Should never reach here, but TypeScript safety
+  return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Unexpected end of retry loop' };
 }
 
 // Main handler
