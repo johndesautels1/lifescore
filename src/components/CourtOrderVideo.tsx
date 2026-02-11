@@ -23,44 +23,6 @@ import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '.
 import './CourtOrderVideo.css';
 
 // ============================================================================
-// INVIDEO LINK HELPERS
-// ============================================================================
-
-const INVIDEO_STORAGE_KEY = 'lifescore_invideo_';
-
-/** Check if URL is a direct video file (mp4, webm, etc.) */
-const isDirectVideoUrl = (url: string): boolean => {
-  try {
-    const pathname = new URL(url).pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|mov)(\?|$)/.test(pathname);
-  } catch {
-    return false;
-  }
-};
-
-/** Load saved InVideo URL from localStorage */
-const loadInvideoUrl = (comparisonId: string): string => {
-  try {
-    return localStorage.getItem(INVIDEO_STORAGE_KEY + comparisonId) || '';
-  } catch {
-    return '';
-  }
-};
-
-/** Save InVideo URL to localStorage */
-const persistInvideoUrl = (comparisonId: string, url: string): void => {
-  try {
-    if (url.trim()) {
-      localStorage.setItem(INVIDEO_STORAGE_KEY + comparisonId, url.trim());
-    } else {
-      localStorage.removeItem(INVIDEO_STORAGE_KEY + comparisonId);
-    }
-  } catch {
-    // localStorage unavailable
-  }
-};
-
-// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -107,12 +69,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
-
-  // InVideo link state
-  const [invideoUrl, setInvideoUrl] = useState('');
-  const [invideoLoaded, setInvideoLoaded] = useState(false);
-  const [invideoPlaying, setInvideoPlaying] = useState(false);
-  const invideoRef = useRef<HTMLVideoElement>(null);
 
   // Freedom Education tab state
   const [activeCategory, setActiveCategory] = useState<CategoryId>('personal_freedom');
@@ -249,12 +205,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setCurrentTime(0);
     setDuration(0);
     setVideoErrorCount(0);
-
-    // Load saved InVideo URL for this comparison
-    const savedUrl = loadInvideoUrl(comparisonId);
-    setInvideoUrl(savedUrl);
-    setInvideoLoaded(!!savedUrl);
-    setInvideoPlaying(false);
   }, [comparisonId]);
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -340,80 +290,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         alert('Unable to share. Video URL: ' + video.videoUrl);
       }
     }
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // INVIDEO LINK HANDLERS
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // Load InVideo URL into the player
-  const handleLoadInvideo = () => {
-    const trimmed = invideoUrl.trim();
-    if (!trimmed) return;
-
-    try {
-      new URL(trimmed); // Validate URL
-    } catch {
-      alert('Please enter a valid URL');
-      return;
-    }
-
-    persistInvideoUrl(comparisonId, trimmed);
-    setInvideoLoaded(true);
-    setInvideoPlaying(false);
-    console.log('[CourtOrderVideo] InVideo URL loaded:', trimmed);
-  };
-
-  // Play/pause InVideo
-  const handleInvideoPlayPause = () => {
-    if (!invideoRef.current) return;
-    if (invideoPlaying) {
-      invideoRef.current.pause();
-      setInvideoPlaying(false);
-    } else {
-      invideoRef.current.play().then(() => {
-        setInvideoPlaying(true);
-      }).catch(err => {
-        console.error('[CourtOrderVideo] InVideo play error:', err);
-      });
-    }
-  };
-
-  // Save InVideo URL to localStorage
-  const handleSaveInvideo = () => {
-    persistInvideoUrl(comparisonId, invideoUrl);
-    alert('InVideo link saved!');
-  };
-
-  // Download InVideo video
-  const handleDownloadInvideo = async () => {
-    if (!invideoUrl) return;
-    if (isDirectVideoUrl(invideoUrl)) {
-      try {
-        const response = await fetch(invideoUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invideo-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } catch {
-        window.open(invideoUrl, '_blank');
-      }
-    } else {
-      window.open(invideoUrl, '_blank');
-    }
-  };
-
-  // Clear InVideo link
-  const handleClearInvideo = () => {
-    setInvideoUrl('');
-    setInvideoLoaded(false);
-    setInvideoPlaying(false);
-    persistInvideoUrl(comparisonId, '');
   };
 
   return (
@@ -601,102 +477,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             </button>
           </div>
         )}
-
-        {/* ════════════════════════════════════════════════════════════════
-            INVIDEO LINK SECTION - Paste & Play external video URL
-        ════════════════════════════════════════════════════════════════ */}
-        <div className="invideo-link-section">
-          <div className="invideo-header">
-            <span className="invideo-icon">🎬</span>
-            <span className="invideo-title">InVideo Link</span>
-          </div>
-
-          <div className="invideo-input-row">
-            <input
-              type="url"
-              className="invideo-url-input"
-              placeholder="Paste InVideo video URL here..."
-              value={invideoUrl}
-              onChange={(e) => {
-                setInvideoUrl(e.target.value);
-                if (invideoLoaded) setInvideoLoaded(false);
-              }}
-            />
-            {invideoUrl.trim() && !invideoLoaded && (
-              <button
-                className="invideo-load-btn"
-                onClick={handleLoadInvideo}
-              >
-                ▶ LOAD
-              </button>
-            )}
-            {invideoLoaded && (
-              <button
-                className="invideo-clear-btn"
-                onClick={handleClearInvideo}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* InVideo Inline Player */}
-          {invideoLoaded && invideoUrl && (
-            <div className="invideo-player-section">
-              <div className="lcd-bezel invideo-bezel">
-                <div className="lcd-display">
-                  {isDirectVideoUrl(invideoUrl) ? (
-                    <video
-                      ref={invideoRef}
-                      src={invideoUrl}
-                      className="court-video"
-                      controls
-                      playsInline
-                      onPlay={() => setInvideoPlaying(true)}
-                      onPause={() => setInvideoPlaying(false)}
-                      onEnded={() => setInvideoPlaying(false)}
-                    />
-                  ) : (
-                    <iframe
-                      src={invideoUrl}
-                      className="invideo-iframe"
-                      title="InVideo Player"
-                      allow="autoplay; fullscreen"
-                      allowFullScreen
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* InVideo Action Buttons */}
-              <div className="court-order-action-buttons invideo-actions">
-                {isDirectVideoUrl(invideoUrl) && (
-                  <button
-                    className="court-action-btn"
-                    onClick={handleInvideoPlayPause}
-                  >
-                    <span className="btn-icon">{invideoPlaying ? '⏸' : '▶'}</span>
-                    <span className="btn-text">{invideoPlaying ? 'PAUSE' : 'PLAY'}</span>
-                  </button>
-                )}
-                <button
-                  className="court-action-btn"
-                  onClick={handleSaveInvideo}
-                >
-                  <span className="btn-icon">💾</span>
-                  <span className="btn-text">SAVE</span>
-                </button>
-                <button
-                  className="court-action-btn"
-                  onClick={handleDownloadInvideo}
-                >
-                  <span className="btn-icon">⬇️</span>
-                  <span className="btn-text">DOWNLOAD</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
         </div>
       </div>
     </FeatureGate>
