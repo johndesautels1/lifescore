@@ -275,8 +275,12 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           setIsPlaying(true);
         }).catch(err => {
           console.error('[CourtOrderVideo] Play error:', err);
+          toastError('Video failed to play. It may still be loading.');
         });
       }
+    } else {
+      console.warn('[CourtOrderVideo] Play pressed but video element not ready');
+      toastError('Video is not loaded yet. Please wait a moment.');
     }
   };
 
@@ -397,12 +401,17 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
       console.log('[CourtOrderVideo] Video error threshold reached - resetting to allow regeneration');
+      // Clear broken InVideo override so we fall back to Kling generation
+      if (invideoOverride) {
+        console.warn('[CourtOrderVideo] Clearing broken InVideo override, falling back to Kling');
+        setInvideoOverride(null);
+      }
       reset();
       setHasStarted(false);
       setIsPlaying(false);
       setVideoErrorCount(0);
     }
-  }, [videoErrorCount, reset]);
+  }, [videoErrorCount, reset, invideoOverride]);
 
   // Reset when comparisonId changes
   useEffect(() => {

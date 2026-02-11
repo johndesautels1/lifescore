@@ -703,8 +703,10 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
     const batch2 = metrics.slice(midpoint);
     console.log(`[CLAUDE] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
 
-    const result1 = await evaluateWithClaude(city1, city2, batch1);
-    const result2 = await evaluateWithClaude(city1, city2, batch2);
+    const [result1, result2] = await Promise.all([
+      evaluateWithClaude(city1, city2, batch1),
+      evaluateWithClaude(city1, city2, batch2)
+    ]);
 
     const combinedScores = [...result1.scores, ...result2.scores];
     const combinedSuccess = result1.success && result2.success;
@@ -1112,16 +1114,18 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
   const startTime = Date.now();
 
   // FIX: Batch split for large categories (Housing = 20, Policing = 15) to prevent timeouts
-  const BATCH_THRESHOLD = 15;
-  if (metrics.length > BATCH_THRESHOLD) {
+  const BATCH_THRESHOLD = 12;
+  if (metrics.length >= BATCH_THRESHOLD) {
     console.log(`[GEMINI] Large category (${metrics.length} metrics), splitting into batches`);
     const midpoint = Math.ceil(metrics.length / 2);
     const batch1 = metrics.slice(0, midpoint);
     const batch2 = metrics.slice(midpoint);
     console.log(`[GEMINI] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
 
-    const result1 = await evaluateWithGemini(city1, city2, batch1);
-    const result2 = await evaluateWithGemini(city1, city2, batch2);
+    const [result1, result2] = await Promise.all([
+      evaluateWithGemini(city1, city2, batch1),
+      evaluateWithGemini(city1, city2, batch2)
+    ]);
 
     const combinedScores = [...result1.scores, ...result2.scores];
     const combinedSuccess = result1.success && result2.success;
