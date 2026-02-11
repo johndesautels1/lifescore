@@ -88,7 +88,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [userVideoUrl, setUserVideoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const [userVideoStoragePath, setUserVideoStoragePath] = useState<string | null>(null);
 
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
@@ -339,8 +338,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    setUserVideoStoragePath(null);
-
     // 2. Background upload to Supabase (if user is logged in)
     if (user?.id) {
       setIsUploading(true);
@@ -356,7 +353,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         // Swap blob URL with permanent Supabase URL
         URL.revokeObjectURL(blobUrl);
         setUserVideoUrl(result.publicUrl);
-        setUserVideoStoragePath(result.storagePath);
         setUploadStatus(null);
         toastSuccess('Video saved to cloud!');
         console.log('[CourtOrderVideo] Video uploaded to Supabase:', result.publicUrl);
@@ -420,7 +416,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       URL.revokeObjectURL(userVideoUrl);
     }
     setUserVideoUrl(null);
-    setUserVideoStoragePath(null);
     setIsUploading(false);
     setUploadStatus(null);
   }, [comparisonId]);
