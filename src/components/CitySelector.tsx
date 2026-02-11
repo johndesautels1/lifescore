@@ -5,7 +5,7 @@
  * Searchable dropdown with 200 metropolitan areas (100 NA + 100 EU)
  */
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ALL_METROS,
   NORTH_AMERICAN_METROS,
