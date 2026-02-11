@@ -1380,6 +1380,8 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 0.5rem;
+  text-align: center;
+  width: 100%;
 }
 
 .verdict-confidence {
@@ -1724,6 +1726,15 @@
     color: #ffffff !important;  /* Crisp white text on mobile */
   }
 
+  /* Fix: Verdict winner badge centering on mobile */
+  .verdict-banner {
+    padding: 1.25rem 1rem;
+  }
+
+  .verdict-winner {
+    font-size: 1.5rem;
+  }
+
   .pending-features {
     grid-template-columns: 1fr 1fr;
   }
@@ -1835,6 +1846,11 @@
     font-size: 0.85rem;
     white-space: nowrap;
     color: #ffffff !important;  /* Crisp white text on mobile */
+  }
+
+  /* Fix: Verdict winner badge centering on small phones */
+  .verdict-winner {
+    font-size: 1.25rem;
   }
 
   .pending-features {
