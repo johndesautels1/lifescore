@@ -658,6 +658,9 @@ export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
                 </span>
               );
             })}
+            <span className="llm-badge llm-badge-judge" title="Final consensus judge">
+              {LLM_CONFIGS['claude-opus'].icon} Judge
+            </span>
           </div>
         </div>
       )}

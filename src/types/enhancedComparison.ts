@@ -99,12 +99,12 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   }
 };
 
-// Default 5 LLMs for enhanced comparison (Claude Opus is judge)
+// Default 5 LLMs for enhanced comparison (matches firing sequence order)
 export const DEFAULT_ENHANCED_LLMS: LLMProvider[] = [
+  'claude-sonnet',
   'gpt-4o',
   'gemini-3-pro',
   'grok-4',
-  'claude-sonnet',
   'perplexity'
 ];
 
