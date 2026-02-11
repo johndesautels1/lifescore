@@ -147,7 +147,7 @@
   100% { transform: translateX(100%); }
 }
 
-.loading-text {
+.contrast-displays .loading-text {
   position: relative;
   font-size: 0.65rem;
   font-weight: 600;
@@ -476,7 +476,7 @@
     height: 8px;
   }
 
-  .loading-text {
+  .contrast-displays .loading-text {
     font-size: 0.6rem;
   }
 

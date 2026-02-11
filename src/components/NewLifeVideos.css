@@ -36,7 +36,7 @@
   font-size: 1.75rem;
 }
 
-.section-subtitle {
+.new-life-videos .section-subtitle {
   color: var(--text-secondary, #a0a0c0);
   font-size: 0.95rem;
   margin: 0;
@@ -384,7 +384,7 @@
   margin-bottom: 1rem;
 }
 
-.progress-bar {
+.new-life-videos .progress-bar {
   height: 8px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
@@ -392,7 +392,7 @@
   margin-bottom: 0.5rem;
 }
 
-.progress-fill {
+.new-life-videos .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-color, #D4AF37), #f0d878);
   border-radius: 4px;
@@ -464,8 +464,8 @@
   margin-bottom: 1rem;
 }
 
-.generate-btn,
-.play-btn {
+.new-life-videos .generate-btn,
+.new-life-videos .play-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -479,28 +479,28 @@
   transition: all 0.2s ease;
 }
 
-.primary-btn {
+.new-life-videos .primary-btn {
   background: var(--accent-color, #D4AF37);
   color: #000000;
 }
 
-.primary-btn:hover:not(:disabled) {
+.new-life-videos .primary-btn:hover:not(:disabled) {
   background: #e5c04a;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
 }
 
-.primary-btn:disabled {
+.new-life-videos .primary-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-icon {
+.new-life-videos .btn-icon {
   font-size: 1.25rem;
 }
 
-.btn-text {
+.new-life-videos .btn-text {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -565,7 +565,7 @@
   font-size: 0.95rem;
 }
 
-.spinner {
+.new-life-videos .spinner {
   display: inline-block;
   width: 20px;
   height: 20px;
@@ -591,7 +591,7 @@
   border-top: 1px solid var(--border-color, #2a2a4a);
 }
 
-.info-text {
+.new-life-videos .info-text {
   color: var(--text-secondary, #a0a0c0);
   font-size: 0.85rem;
   margin: 0;

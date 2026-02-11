@@ -6,7 +6,7 @@
   margin-bottom: 2rem;
 }
 
-.section-title {
+.city-selector-card .section-title {
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--sapphire);
@@ -316,7 +316,7 @@
   to { transform: rotate(360deg); }
 }
 
-.info-text {
+.city-selector-card .info-text {
   font-size: 0.875rem;
   color: var(--gray-500);
   text-align: center;
@@ -329,14 +329,14 @@
   font-weight: 600;
 }
 
-.popular-section {
+.city-selector-card .popular-section {
   margin-top: 1.5rem;
   margin-bottom: 2.25rem; /* 36px buffer before Customize Priorities/Dealbreakers */
   padding-top: 1.5rem;
   border-top: 1px solid var(--gray-200);
 }
 
-.popular-section h3 {
+.city-selector-card .popular-section h3 {
   text-align: center;
   font-size: 1rem;
   color: var(--gray-500);
@@ -399,7 +399,7 @@
     grid-template-columns: 1fr;
   }
 
-  .section-title {
+  .city-selector-card .section-title {
     font-size: 1.25rem;
   }
 
@@ -416,7 +416,7 @@
     font-size: 0.8rem;
   }
 
-  .share-btn {
+  .city-selector-card .share-btn {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
   }

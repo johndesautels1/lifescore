@@ -85,12 +85,12 @@
    TAB CONTENT
    ============================================================================ */
 
-.tab-icon {
+.freedom-tabs-container .tab-icon {
   font-size: 1.25rem;
   line-height: 1;
 }
 
-.tab-name {
+.freedom-tabs-container .tab-name {
   font-size: 0.85rem;  /* FIX #69: Reduced slightly for better balance */
   font-weight: 700;  /* FIX #69: Bolder weight */
   color: rgba(255, 255, 255, 0.9);  /* FIX #69: Brighter text */
@@ -104,7 +104,7 @@
   color: #d4af37;
 }
 
-.tab-count {
+.freedom-tabs-container .tab-count {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,15 +142,15 @@
     min-width: 60px;
   }
 
-  .tab-icon {
+  .freedom-tabs-container .tab-icon {
     font-size: 1.1rem;
   }
 
-  .tab-name {
+  .freedom-tabs-container .tab-name {
     font-size: 0.75rem;  /* FIX #69: Scaled for mobile */
   }
 
-  .tab-count {
+  .freedom-tabs-container .tab-count {
     min-width: 16px;
     height: 16px;
     font-size: 0.6rem;
@@ -163,11 +163,11 @@
     min-width: 52px;
   }
 
-  .tab-icon {
+  .freedom-tabs-container .tab-icon {
     font-size: 1rem;
   }
 
-  .tab-name {
+  .freedom-tabs-container .tab-name {
     font-size: 0.7rem;  /* Scaled for small mobile */
   }
 }

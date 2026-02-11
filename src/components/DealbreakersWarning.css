@@ -16,14 +16,14 @@
   50% { box-shadow: 0 0 20px 4px rgba(220, 38, 38, 0.15); }
 }
 
-.warning-header {
+.dealbreakers-warning .warning-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
 
-.warning-icon {
+.dealbreakers-warning .warning-icon {
   font-size: 1.5rem;
   animation: shake 0.5s ease-in-out infinite;
 }
@@ -34,13 +34,13 @@
   75% { transform: rotate(5deg); }
 }
 
-.warning-title {
+.dealbreakers-warning .warning-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: #DC2626;
 }
 
-.warning-text {
+.dealbreakers-warning .warning-text {
   color: var(--gray-700);
   font-size: 0.95rem;
   margin-bottom: 1rem;
@@ -86,7 +86,7 @@
   background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%);
 }
 
-[data-theme="dark"] .warning-text {
+[data-theme="dark"] .dealbreakers-warning .warning-text {
   color: var(--gray-300);
 }
 

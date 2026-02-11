@@ -107,7 +107,7 @@
   font-size: 0.9rem;
 }
 
-.clear-btn {
+.dealbreakers-panel .clear-btn {
   background: none;
   border: none;
   color: #ffffff;  /* FIX #64: Crisp white Clear All text */
@@ -117,7 +117,7 @@
   font-weight: 600;
 }
 
-.clear-btn:hover {
+.dealbreakers-panel .clear-btn:hover {
   color: #DC2626;
 }
 
@@ -193,11 +193,11 @@
   gap: 0.5rem;
 }
 
-.category-icon {
+.dealbreakers-panel .category-icon {
   font-size: 1.25rem;
 }
 
-.category-name {
+.dealbreakers-panel .category-name {
   font-weight: 600;
   color: var(--gray-700);
   font-size: 0.95rem;
@@ -301,7 +301,7 @@
   background: var(--gray-600);
 }
 
-[data-theme="dark"] .category-name {
+[data-theme="dark"] .dealbreakers-panel .category-name {
   color: var(--gray-200);
 }
 

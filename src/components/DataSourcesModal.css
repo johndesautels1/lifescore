@@ -110,18 +110,18 @@
   flex-shrink: 0;
 }
 
-.modal-footer {
+.data-sources-modal .modal-footer {
   padding-top: 1rem;
   border-top: 1px solid var(--gray-200);
 }
 
-.modal-footer p {
+.data-sources-modal .modal-footer p {
   font-size: 0.85rem;
   color: var(--gray-600);
   margin: 0;
 }
 
-.modal-footer strong {
+.data-sources-modal .modal-footer strong {
   color: #0047AB;
 }
 
@@ -164,15 +164,15 @@
   color: #b0b0c0;
 }
 
-[data-theme="dark"] .modal-footer {
+[data-theme="dark"] .data-sources-modal .modal-footer {
   border-top-color: #3d3d55;
 }
 
-[data-theme="dark"] .modal-footer p {
+[data-theme="dark"] .data-sources-modal .modal-footer p {
   color: #b0b0c0;
 }
 
-[data-theme="dark"] .modal-footer strong {
+[data-theme="dark"] .data-sources-modal .modal-footer strong {
   color: #6ba3ff;
 }
 

@@ -127,7 +127,7 @@
   width: 100%;
 }
 
-.quick-label {
+.emilia-chat .quick-label {
   font-size: 12px;
   color: #64748b;
   text-transform: uppercase;
@@ -136,7 +136,7 @@
   margin-bottom: 10px;
 }
 
-.quick-buttons {
+.emilia-chat .quick-buttons {
   display: flex;
   flex-direction: column;
   gap: 8px;

@@ -136,7 +136,7 @@
   border: 1px solid rgba(201, 162, 39, 0.1);
 }
 
-.toggle-btn {
+.pricing-page .toggle-btn {
   position: relative;
   padding: 0.75rem 1.5rem;
   border: none;
@@ -149,13 +149,13 @@
   color: var(--ls-steel);
 }
 
-.toggle-btn.active {
+.pricing-page .toggle-btn.active {
   background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
   color: var(--ls-midnight);
   box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
 }
 
-.toggle-btn:not(.active):hover {
+.pricing-page .toggle-btn:not(.active):hover {
   color: var(--ls-platinum);
 }
 
@@ -274,7 +274,7 @@
 }
 
 /* Card Price */
-.card-price {
+.pricing-page .card-price {
   text-align: center;
   margin-bottom: 2rem;
   padding: 1rem 0;
@@ -321,7 +321,7 @@
 }
 
 /* Card Features */
-.card-features {
+.pricing-page .card-features {
   list-style: none;
   padding: 0;
   margin: 0 0 2rem;
@@ -361,7 +361,7 @@
 }
 
 /* Card Action */
-.card-action {
+.pricing-page .card-action {
   margin-top: auto;
 }
 

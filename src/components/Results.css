@@ -278,12 +278,12 @@
   gap: 0.75rem;
 }
 
-.category-icon {
+.results .category-icon {
   font-size: 1.5rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.category-name {
+.results .category-name {
   font-weight: 700;
   font-size: 1.05rem;
   color: #1a202c;
@@ -305,7 +305,7 @@
   color: #f3f4f6;
 }
 
-.expand-icon {
+.results .expand-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,7 +320,7 @@
   transition: all 0.3s ease;
 }
 
-.category-header-btn:hover .expand-icon {
+.results .category-header-btn:hover .expand-icon {
   background: linear-gradient(135deg, #F7931E 0%, #e67e00 100%);
   box-shadow: 0 4px 12px rgba(247, 147, 30, 0.4);
   transform: scale(1.05);
@@ -771,7 +771,7 @@
   font-size: 0.875rem;
 }
 
-.save-btn {
+.results .save-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -786,21 +786,21 @@
   transition: all var(--transition-fast);
 }
 
-.save-btn:hover:not(:disabled) {
+.results .save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.save-btn:disabled {
+.results .save-btn:disabled {
   cursor: default;
 }
 
-.save-btn.saved {
+.results .save-btn.saved {
   background: var(--success);
 }
 
 /* ADDED 2026-01-25: Saving state animation */
-.save-btn.saving {
+.results .save-btn.saving {
   background: var(--sapphire);
   cursor: wait;
   animation: pulse-saving 1.5s infinite;

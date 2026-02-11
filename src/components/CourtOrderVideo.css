@@ -159,7 +159,7 @@
 }
 
 /* Generating State */
-.generating-state {
+.court-order-wrapper .generating-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -254,7 +254,7 @@
   border: none;
 }
 
-.time-display {
+.court-order-wrapper .time-display {
   font-size: 0.75rem;
   color: var(--text-secondary, #a0a0c0);
   text-align: right;
@@ -397,7 +397,7 @@
   transform: none;
 }
 
-.btn-icon {
+.court-order-wrapper .btn-icon {
   font-size: 1.1rem;
 }
 

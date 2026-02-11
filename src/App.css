@@ -51,7 +51,7 @@
   padding: 3rem 2rem;
 }
 
-.error-icon {
+.app .error-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
 }
@@ -77,7 +77,7 @@
   padding: 2rem;
 }
 
-.section-title {
+.app .section-title {
   color: var(--sapphire);
   margin-bottom: 1.5rem;
 }

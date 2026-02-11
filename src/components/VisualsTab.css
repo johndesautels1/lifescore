@@ -117,11 +117,11 @@
   color: #f59e0b;
 }
 
-.section-icon {
+.visuals-tab .section-icon {
   font-size: 1.5rem;
 }
 
-.section-description {
+.visuals-tab .section-description {
   color: rgba(255, 255, 255, 0.85);
   margin: 0 0 1.5rem 0;
 }
@@ -173,7 +173,7 @@
   font-weight: 600;
 }
 
-.generate-btn {
+.visuals-tab .generate-btn {
   padding: 0.75rem 2rem;
   border: none;
   border-radius: 8px;
@@ -183,17 +183,17 @@
   transition: all 0.2s ease;
 }
 
-.primary-btn {
+.visuals-tab .primary-btn {
   background: var(--accent-color, #D4AF37);
   color: #000000;
 }
 
-.primary-btn:hover {
+.visuals-tab .primary-btn:hover {
   background: var(--accent-hover, #E5C04B);
   transform: translateY(-1px);
 }
 
-.secondary-btn {
+.visuals-tab .secondary-btn {
   background: transparent;
   border: 2px solid #D4AF37;
   color: #D4AF37;
@@ -201,14 +201,14 @@
   transition: all 0.2s ease;
 }
 
-.secondary-btn:hover {
+.visuals-tab .secondary-btn:hover {
   background: rgba(212, 175, 55, 0.15);
   border-color: #E5C04B;
   color: #E5C04B;
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
 }
 
-.secondary-btn:active {
+.visuals-tab .secondary-btn:active {
   background: rgba(212, 175, 55, 0.25);
   border-color: #F5D05B;
   color: #F5D05B;
@@ -217,7 +217,7 @@
 }
 
 /* Progress State */
-.generating-state {
+.visuals-tab .generating-state {
   text-align: center;
   padding: 1.5rem;
 }
@@ -231,7 +231,7 @@
   margin-bottom: 1rem;
 }
 
-.spinner {
+.visuals-tab .spinner {
   width: 32px;
   height: 32px;
   border: 3px solid rgba(212, 175, 55, 0.3);
@@ -252,7 +252,7 @@
   color: #D4AF37;
 }
 
-.progress-bar {
+.visuals-tab .progress-bar {
   height: 10px;
   background: rgba(42, 42, 74, 0.8);
   border-radius: 5px;
@@ -261,7 +261,7 @@
   border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
-.progress-fill {
+.visuals-tab .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #D4AF37, #E5C04B);
   border-radius: 5px;
@@ -269,7 +269,7 @@
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
-.status-message {
+.visuals-tab .status-message {
   color: #ffffff;
   font-size: 1rem;
   font-weight: 500;
@@ -420,7 +420,7 @@
   color: #000000;
 }
 
-.reset-btn {
+.visuals-tab .reset-btn {
   margin-top: 0.5rem;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -434,7 +434,7 @@
   gap: 1rem;
 }
 
-.error-message {
+.visuals-tab .error-message {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -442,7 +442,7 @@
   font-weight: 500;
 }
 
-.error-icon {
+.visuals-tab .error-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,7 +455,7 @@
   font-weight: bold;
 }
 
-.retry-btn {
+.visuals-tab .retry-btn {
   padding: 0.5rem 1rem;
 }
 
@@ -825,11 +825,11 @@
     font-size: 1.05rem;
   }
 
-  .section-description {
+  .visuals-tab .section-description {
     font-size: 0.85rem;
   }
 
-  .generate-btn {
+  .visuals-tab .generate-btn {
     padding: 0.875rem 1.5rem;
     font-size: 0.9rem;
     min-height: 48px;

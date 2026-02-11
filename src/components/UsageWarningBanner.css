@@ -204,7 +204,7 @@
   overflow: hidden;
 }
 
-.progress-bar {
+.usage-warning-banner .progress-bar {
   height: 100%;
   border-radius: 4px;
   transition: width 0.5s ease;
@@ -250,7 +250,7 @@
   margin-top: 4px;
 }
 
-.dismiss-btn {
+.usage-warning-banner .dismiss-btn {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -263,7 +263,7 @@
   transition: color 0.2s;
 }
 
-.dismiss-btn:hover {
+.usage-warning-banner .dismiss-btn:hover {
   color: white;
 }
 

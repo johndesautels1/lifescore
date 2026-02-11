@@ -205,7 +205,7 @@
   color: #ffffff;
 }
 
-.section-description {
+.settings-modal-overlay .section-description {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-secondary, #6b7280);
@@ -515,7 +515,7 @@
   gap: 0.5rem;
 }
 
-.tier-badge {
+.settings-modal-overlay .tier-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -525,17 +525,17 @@
   width: fit-content;
 }
 
-.tier-badge.free {
+.settings-modal-overlay .tier-badge.free {
   background: rgba(107, 114, 128, 0.1);
   color: #6b7280;
 }
 
-.tier-badge.pro {
+.settings-modal-overlay .tier-badge.pro {
   background: linear-gradient(135deg, rgba(201, 162, 39, 0.2) 0%, rgba(212, 175, 55, 0.2) 100%);
   color: #e6b800;
 }
 
-.tier-badge.enterprise {
+.settings-modal-overlay .tier-badge.enterprise {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
   color: #8b5cf6;
 }

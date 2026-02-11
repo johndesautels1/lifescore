@@ -502,7 +502,7 @@
   to { transform: rotate(360deg); }
 }
 
-.loading-text {
+.olivia-premium .loading-text {
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.2em;
@@ -517,7 +517,7 @@
 }
 
 /* Retry Button for Connection Errors */
-.retry-btn {
+.olivia-premium .retry-btn {
   margin-top: 1rem;
   padding: 0.6rem 1.5rem;
   background: transparent;
@@ -531,7 +531,7 @@
   transition: all 0.2s ease;
 }
 
-.retry-btn:hover {
+.olivia-premium .retry-btn:hover {
   background: var(--brushed-gold);
   color: var(--midnight);
 }
@@ -692,12 +692,12 @@ button.control-item.recording {
   50% { opacity: 0.7; }
 }
 
-.btn-icon {
+.olivia-premium .btn-icon {
   font-size: 2rem;
   filter: brightness(1.3);
 }
 
-.btn-text {
+.olivia-premium .btn-text {
   text-transform: uppercase;
   font-size: 0.8rem;
   white-space: nowrap;
@@ -721,7 +721,7 @@ button.control-item.recording {
 
 
 /* Message count badge */
-.message-count {
+.olivia-premium .message-count {
   position: absolute;
   top: -6px;
   right: -6px;
@@ -739,7 +739,7 @@ button.control-item.recording {
 }
 
 /* Pause button - centered below */
-.pause-btn {
+.olivia-premium .pause-btn {
   padding: 0.75rem 2rem;
   background: rgba(239, 68, 68, 0.2);
   border: 1px solid var(--error-red);
@@ -753,7 +753,7 @@ button.control-item.recording {
   animation: pulse-recording 1s infinite;
 }
 
-.pause-btn:hover {
+.olivia-premium .pause-btn:hover {
   background: rgba(239, 68, 68, 0.3);
 }
 
@@ -1321,7 +1321,7 @@ button.control-item.recording {
   font-size: 0.85rem;
 }
 
-.error-icon {
+.olivia-premium .error-icon {
   font-size: 1rem;
 }
 
@@ -1495,7 +1495,7 @@ button.control-item.recording {
     font-size: 0.85rem;
   }
 
-  .btn-text {
+  .olivia-premium .btn-text {
     font-size: 0.75rem;
   }
 
@@ -1691,7 +1691,7 @@ button.control-item.recording {
     font-size: 0.8rem;
   }
 
-  .btn-text {
+  .olivia-premium .btn-text {
     font-size: 0.7rem;
   }
 
@@ -1723,7 +1723,7 @@ button.control-item.recording {
     padding: 1rem;
   }
 
-  .loading-text {
+  .olivia-premium .loading-text {
     font-size: 0.65rem;
   }
 
@@ -1731,7 +1731,7 @@ button.control-item.recording {
     font-size: 0.55rem;
   }
 
-  .retry-btn {
+  .olivia-premium .retry-btn {
     padding: 0.5rem 1rem;
     font-size: 0.65rem;
   }
@@ -1749,7 +1749,7 @@ button.control-item.recording {
   }
 
   /* Pause button sizing */
-  .pause-btn {
+  .olivia-premium .pause-btn {
     padding: 0.6rem 1.5rem;
     font-size: 0.75rem;
   }
