@@ -330,6 +330,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+
+    // Reset input so re-selecting the same file triggers onChange again
+    e.target.value = '';
   };
 
   // Clean up blob URL on unmount
