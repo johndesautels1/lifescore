@@ -109,12 +109,6 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   const [isLimited, setIsLimited] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // ADMIN BYPASS: Admin users get unlimited access to EVERYTHING - no gates, no limits
-  // This is the owner/developer override that should NEVER show any popups
-  if (isAdmin) {
-    return <>{children}</>;
-  }
-
   // Determine the required tier
   const actualRequiredTier = requiredTier || getRequiredTier(feature);
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
@@ -124,7 +118,7 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   // legitimate users while their session loads. Once loaded, proper access check applies.
   const hasAccess = isLoading ? true : canAccess(feature);
 
-  // Check usage limits
+  // Check usage limits — ALL hooks must be called before any early returns
   useEffect(() => {
     if (hasAccess && showUsage && !isUnlimited(feature)) {
       checkUsage(feature).then((result) => {
@@ -139,6 +133,12 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
       });
     }
   }, [hasAccess, showUsage, feature]);
+
+  // ADMIN BYPASS: Admin users get unlimited access to EVERYTHING - no gates, no limits
+  // This is the owner/developer override that should NEVER show any popups
+  if (isAdmin) {
+    return <>{children}</>;
+  }
 
   // Handle upgrade button click
   const handleUpgrade = () => {
