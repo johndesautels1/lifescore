@@ -5,7 +5,7 @@
  * Searchable dropdown with 200 metropolitan areas (100 NA + 100 EU)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   ALL_METROS,
   NORTH_AMERICAN_METROS,
@@ -19,6 +19,35 @@ import { DealbreakersPanel } from './DealbreakersPanel';
 import { WeightPresets, type CategoryWeights } from './WeightPresets';
 import type { LawLivedRatio, CategoryId } from '../types/metrics';
 import './CitySelector.css';
+
+// Country → flag emoji mapping
+const COUNTRY_FLAGS: Record<string, string> = {
+  'USA': '🇺🇸', 'Canada': '🇨🇦',
+  'UK': '🇬🇧', 'France': '🇫🇷', 'Germany': '🇩🇪', 'Italy': '🇮🇹', 'Spain': '🇪🇸',
+  'Netherlands': '🇳🇱', 'Belgium': '🇧🇪', 'Austria': '🇦🇹', 'Switzerland': '🇨🇭',
+  'Sweden': '🇸🇪', 'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Finland': '🇫🇮', 'Iceland': '🇮🇸',
+  'Ireland': '🇮🇪', 'Portugal': '🇵🇹', 'Greece': '🇬🇷', 'Poland': '🇵🇱',
+  'Czech Republic': '🇨🇿', 'Hungary': '🇭🇺', 'Romania': '🇷🇴', 'Bulgaria': '🇧🇬',
+  'Croatia': '🇭🇷', 'Slovakia': '🇸🇰', 'Slovenia': '🇸🇮', 'Estonia': '🇪🇪',
+  'Latvia': '🇱🇻', 'Lithuania': '🇱🇹', 'Luxembourg': '🇱🇺', 'Malta': '🇲🇹',
+  'Cyprus': '🇨🇾', 'Monaco': '🇲🇨',
+};
+
+const getFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
+
+// Highlight matching text in search results
+const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query }) => {
+  if (!query) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="search-highlight">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+};
 
 // Helper to find metro by formatted string (e.g., "Tampa, Florida, USA")
 const findMetroByFormatted = (formatted: string): Metro | undefined => {
@@ -181,7 +210,9 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
         disabled={disabled}
       >
         <span className="metro-select-value">
-          {value ? formatMetro(value) : 'Select a city...'}
+          {value ? (
+            <><span className="metro-flag">{getFlag(value.country)}</span> {formatMetro(value)}</>
+          ) : 'Select a city...'}
         </span>
         <span className="metro-select-arrow">{isOpen ? '▲' : '▼'}</span>
       </button>
@@ -211,27 +242,33 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
               className={`metro-tab ${activeTab === 'all' ? 'active' : ''}`}
               onClick={() => setActiveTab('all')}
             >
-              All (200)
+              🌎 All ({searchQuery ? filteredMetros.length : 200})
             </button>
             <button
               type="button"
               className={`metro-tab ${activeTab === 'na' ? 'active' : ''}`}
               onClick={() => setActiveTab('na')}
             >
-              N. America (100)
+              🇺🇸 N. America
             </button>
             <button
               type="button"
               className={`metro-tab ${activeTab === 'eu' ? 'active' : ''}`}
               onClick={() => setActiveTab('eu')}
             >
-              Europe (100)
+              🇪🇺 Europe
             </button>
           </div>
 
+          {searchQuery && (
+            <div className="metro-search-count">
+              {filteredMetros.length} {filteredMetros.length === 1 ? 'city' : 'cities'} found
+            </div>
+          )}
+
           <div className="metro-list" ref={listRef} role="listbox" id={`${id}-listbox`}>
             {filteredMetros.length === 0 ? (
-              <div className="metro-no-results">No cities found</div>
+              <div className="metro-no-results">No cities match "{searchQuery}"</div>
             ) : (
               filteredMetros.map((metro, index) => (
                 <button
@@ -243,10 +280,15 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
                   className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''} ${highlightedIndex === index ? 'highlighted' : ''}`}
                   onClick={() => handleSelect(metro)}
                 >
-                  <span className="metro-city">{metro.city}</span>
-                  <span className="metro-location">
-                    {metro.region ? `${metro.region}, ${metro.country}` : metro.country}
-                  </span>
+                  <span className="metro-flag">{getFlag(metro.country)}</span>
+                  <div className="metro-details">
+                    <span className="metro-city">
+                      <HighlightMatch text={metro.city} query={searchQuery} />
+                    </span>
+                    <span className="metro-location">
+                      {metro.region ? `${metro.region}, ${metro.country}` : metro.country}
+                    </span>
+                  </div>
                 </button>
               ))
             )}

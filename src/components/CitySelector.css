@@ -136,12 +136,12 @@
 
 .metro-tab {
   flex: 1;
-  padding: 0.5rem;
+  padding: 0.625rem 0.5rem;
   background: none;
   border: none;
   cursor: pointer;
   font-family: var(--font-family);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--gray-500);
   transition: all var(--transition-fast);
 }
@@ -165,8 +165,9 @@
 .metro-option {
   width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.625rem 1rem;
   background: none;
   border: none;
@@ -191,6 +192,18 @@
   outline-offset: -2px;
 }
 
+.metro-flag {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.metro-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .metro-city {
   font-weight: 600;
   color: var(--gray-800);
@@ -208,6 +221,24 @@
   text-align: center;
   color: var(--gray-500);
   font-size: 0.875rem;
+}
+
+/* Search highlight */
+.search-highlight {
+  background: rgba(212, 175, 55, 0.3);
+  color: inherit;
+  font-weight: 700;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Search result count */
+.metro-search-count {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  text-align: right;
+  border-bottom: 1px solid var(--gray-100);
 }
 
 /* Dark mode support for dropdown */
@@ -267,6 +298,15 @@
 
 [data-theme="dark"] .metro-location {
   color: var(--gray-400);
+}
+
+[data-theme="dark"] .search-highlight {
+  background: rgba(212, 175, 55, 0.4);
+}
+
+[data-theme="dark"] .metro-search-count {
+  color: var(--gray-400);
+  border-color: var(--gray-700);
 }
 
 /* Compare Actions Container - Stacked vertically */
