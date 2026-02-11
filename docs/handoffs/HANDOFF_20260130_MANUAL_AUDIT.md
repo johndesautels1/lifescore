@@ -52,7 +52,7 @@
 | 567-568 | §14 FAQs | OUTDATED | Lists supported browsers | Verify current browser support | Low |
 | 570-571 | §14 FAQs | INCOMPLETE | "Currently web-only" | Mention PWA capability if exists | Low |
 | 589-596 | Getting Help | ✅ FIXED | `help.clueslifescore.com` | `help.clueslifescore.com` | Critical |
-| 594 | Getting Help | ✅ FIXED | `support@clueslifescore.com` | `support@clueslifescore.com` | Critical |
+| 594 | Getting Help | ✅ FIXED | `cluesnomads@gmail.com` | `cluesnomads@gmail.com` | Critical |
 | N/A | MISSING SECTION | MISSING | No Cost Dashboard section | Add §15: Cost Dashboard & Usage Monitoring | High |
 | N/A | MISSING SECTION | MISSING | No Emilia section | Add §16: Emilia Help Assistant | High |
 | N/A | MISSING SECTION | MISSING | No API quota alerts | Mention email alerts for quota warnings | Medium |
@@ -67,7 +67,7 @@
 | 3 | Header | OUTDATED | Version 1.0 | Version 2.0 | Medium |
 | 4 | Header | OUTDATED | January 28, 2026 | January 30, 2026 | Medium |
 | 40-42 | §1 Support Channels | UNVERIFIED | "Live Chat 9AM-9PM EST" | Verify if live chat exists | Critical |
-| 42 | §1 Support Channels | MISSING | No email address | Add: support@clueslifescore.com | High |
+| 42 | §1 Support Channels | MISSING | No email address | Add: cluesnomads@gmail.com | High |
 | 69-73 | §2 Available Cities | UNVERIFIED | "200 metropolitan areas" | Verify count in metros.ts | Medium |
 | 70-71 | §2 Available Cities | UNVERIFIED | "100 NA + 100 Europe" | Verify actual distribution | Medium |
 | 81-89 | §3 Tier Comparison | WRONG | "Comparisons: 1/month" all tiers | Verify actual limits | Critical |

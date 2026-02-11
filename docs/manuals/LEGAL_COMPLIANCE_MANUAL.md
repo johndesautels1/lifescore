@@ -332,7 +332,7 @@ To add new authorized users:
 | Role | Contact |
 |------|---------|
 | Admin | cluesnomads@gmail.com |
-| Support | support@cluesintelligence.com |
+| Support | cluesnomads@gmail.com |
 | Legal | cluesnomads@gmail.com |
 
 ### 10.2 Important Links

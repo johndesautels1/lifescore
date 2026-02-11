@@ -152,7 +152,7 @@ Material changes will be communicated via our cookie consent banner.
 
 For questions about our use of cookies:
 
-**Email:** privacy@cluesintelligence.com
+**Email:** cluesnomads@gmail.com
 
 **Mailing Address:**
 Clues Intelligence LTD

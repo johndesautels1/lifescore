@@ -321,6 +321,26 @@
   }
 }
 
+@media (max-width: 480px) {
+  .evidence-panel-header {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .evidence-panel-content {
+    padding: 0.5rem 0.75rem;
+    max-height: 250px;
+  }
+
+  .evidence-item {
+    font-size: 0.8rem;
+  }
+
+  .evidence-toggle-btn {
+    min-height: 44px;
+    font-size: 0.85rem;
+  }
+}
+
 /* Light mode overrides */
 @media (prefers-color-scheme: light) {
   .evidence-panel-container {

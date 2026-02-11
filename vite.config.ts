@@ -11,22 +11,18 @@ export default defineConfig({
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo-512.png'],
       manifest: false, // Use our custom manifest.json in public folder
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.openai\.com\/.*/i,
             handler: 'NetworkOnly',
           },
           {
+            // Supabase: never cache authenticated responses in service worker.
+            // All Supabase data is user-specific; caching risks leaking data
+            // between users on shared devices.
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
-              },
-            },
+            handler: 'NetworkOnly',
           },
         ],
       },

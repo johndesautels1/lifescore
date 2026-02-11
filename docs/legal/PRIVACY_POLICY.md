@@ -17,7 +17,7 @@ London W1W 5PF
 United Kingdom
 Company Number: 16966151
 
-**Contact:** privacy@cluesintelligence.com
+**Contact:** cluesnomads@gmail.com
 
 By using the Service, you agree to the collection and use of information in accordance with this policy.
 
@@ -144,8 +144,8 @@ You have the right to:
 | **Rectification** | Correct inaccurate data | Account Settings > Edit Profile |
 | **Erasure** | Request deletion of your data | Account Settings > Delete Account |
 | **Portability** | Receive data in machine-readable format | Account Settings > Download My Data |
-| **Restriction** | Limit how we process your data | Contact privacy@cluesintelligence.com |
-| **Object** | Object to processing based on legitimate interest | Contact privacy@cluesintelligence.com |
+| **Restriction** | Limit how we process your data | Contact cluesnomads@gmail.com |
+| **Object** | Object to processing based on legitimate interest | Contact cluesnomads@gmail.com |
 | **Withdraw Consent** | Withdraw previously given consent | Account Settings or contact us |
 
 **Response Time:** Within 30 days of verified request.
@@ -166,7 +166,7 @@ You have the right to:
 
 **We do not sell personal information.** If this changes, we will provide a "Do Not Sell or Share My Personal Information" link.
 
-To exercise your rights, contact: privacy@cluesintelligence.com
+To exercise your rights, contact: cluesnomads@gmail.com
 
 ### 8.3 Other US States
 
@@ -196,7 +196,7 @@ We implement appropriate technical and organizational measures:
 - Regular security assessments
 - Employee training
 
-No method is 100% secure. Report vulnerabilities to: security@cluesintelligence.com
+No method is 100% secure. Report vulnerabilities to: cluesnomads@gmail.com
 
 ---
 
@@ -221,10 +221,10 @@ Continued use after changes constitutes acceptance of the updated policy.
 ## 13. Contact Us
 
 **For privacy inquiries:**
-Email: privacy@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **For general inquiries:**
-Email: support@cluesintelligence.com
+Email: cluesnomads@gmail.com
 
 **Mailing Address:**
 Clues Intelligence LTD

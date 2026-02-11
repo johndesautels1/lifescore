@@ -197,7 +197,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
   };
 
   return (
-    <div className="pricing-modal-overlay" onClick={onClose}>
+    <div className="pricing-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Pricing Plans">
       <div className="pricing-modal" onClick={(e) => e.stopPropagation()}>
         {/* Close Button */}
         <button className="modal-close-btn" onClick={onClose}>

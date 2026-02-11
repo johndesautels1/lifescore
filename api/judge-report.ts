@@ -94,13 +94,15 @@ interface JudgeReport {
   comparisonId: string;
   city1: string;
   city2: string;
+  city1Country: string;
+  city2Country: string;
   videoUrl?: string;
   videoStatus: 'pending' | 'generating' | 'ready' | 'error';
   summaryOfFindings: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
   categoryAnalysis: {
@@ -147,8 +149,8 @@ interface FreedomEducationOutput {
 
 interface OpusJudgeResponse {
   summaryOfFindings: {
-    city1Trend: 'rising' | 'stable' | 'declining';
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
   categoryAnalysis: {
@@ -191,6 +193,10 @@ function buildJudgePrompt(
 ): string {
   const { city1: c1Data, city2: c2Data, llmsUsed, overallConsensusConfidence, disagreementSummary } = comparisonResult;
 
+  // Handle both enhanced (totalConsensusScore) and standard (totalScore) results
+  const c1Total = (c1Data as any).totalConsensusScore ?? (c1Data as any).totalScore ?? 0;
+  const c2Total = (c2Data as any).totalConsensusScore ?? (c2Data as any).totalScore ?? 0;
+
   // Build category summaries with metrics
   const categorySummaries: string[] = [];
   const allEvidence: string[] = [];
@@ -201,9 +207,10 @@ function buildJudgePrompt(
     const categoryName = categoryDef?.name || cat1.categoryId;
     const categoryWeight = categoryDef?.weight || 0;
 
-    // Handle both enhanced (averageConsensusScore) and standard (no average) results
-    const cat1Score = cat1.averageConsensusScore ?? cat1.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? m.normalizedScore ?? 0), 0) / (cat1.metrics?.length || 1);
-    const cat2Score = cat2?.averageConsensusScore ?? cat2?.metrics?.reduce((sum, m) => sum + (m.consensusScore ?? m.normalizedScore ?? 0), 0) / (cat2?.metrics?.length || 1);
+    // Handle both enhanced (averageConsensusScore) and standard (averageScore) results
+    const getMetricScore = (m: any) => m.consensusScore ?? m.normalizedScore ?? 0;
+    const cat1Score = cat1.averageConsensusScore ?? (cat1 as any).averageScore ?? cat1.metrics?.reduce((sum: number, m: any) => sum + getMetricScore(m), 0) / (cat1.metrics?.length || 1);
+    const cat2Score = cat2?.averageConsensusScore ?? (cat2 as any)?.averageScore ?? cat2?.metrics?.reduce((sum: number, m: any) => sum + getMetricScore(m), 0) / (cat2?.metrics?.length || 1);
 
     let catSummary = `\n### ${categoryName} (Weight: ${categoryWeight}%)\n`;
     catSummary += `${city1}: ${(cat1Score ?? 0).toFixed(1)} | ${city2}: ${(cat2Score ?? 0).toFixed(1)}\n`;
@@ -214,8 +221,8 @@ function buildJudgePrompt(
     cat1.metrics.slice(0, 5).forEach(m => {
       const m2 = cat2?.metrics.find(x => x.metricId === m.metricId);
       const confidence = (m.confidenceLevel ?? 'moderate').toUpperCase();
-      const m1Score = m.consensusScore ?? 0;
-      const m2Score = m2?.consensusScore ?? 'N/A';
+      const m1Score = getMetricScore(m);
+      const m2Score = m2 ? getMetricScore(m2) : 'N/A';
       catSummary += `- ${m.metricId}: ${city1}=${m1Score} (Legal:${m.legalScore ?? 'N/A'}/Enf:${m.enforcementScore ?? 'N/A'}) | ${city2}=${m2Score} [${confidence}, σ=${m.standardDeviation ?? 0}]\n`;
 
       // Collect evidence (only exists in enhanced results)
@@ -259,8 +266,9 @@ You are not just analyzing scores - you are THE JUDGE who must:
 - City 2: ${city2} (${c2Data.country})
 
 ## CURRENT SCORES (from ${llmsUsed?.length || 1} LLM evaluators)
-- ${city1}: ${(c1Data.totalConsensusScore ?? 0).toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement ?? 'N/A'}%)
-- ${city2}: ${(c2Data.totalConsensusScore ?? 0).toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement ?? 'N/A'}%)
+- ${city1}: ${c1Total.toFixed(1)}/100 (Agreement: ${c1Data.overallAgreement ?? 'N/A'}%)
+- ${city2}: ${c2Total.toFixed(1)}/100 (Agreement: ${c2Data.overallAgreement ?? 'N/A'}%)
+- **WINNER: ${c1Total >= c2Total ? city1 : city2}** (higher score = more freedom = the winner you MUST recommend)
 - Overall Consensus Confidence: ${(overallConsensusConfidence ?? 'medium').toUpperCase()}
 ${disagreementSummary ? `- Disagreement Areas: ${disagreementSummary}` : ''}
 
@@ -269,7 +277,7 @@ ${categorySummaries.join('\n')}
 ${evidenceSection}
 ## TREND ANALYSIS INSTRUCTIONS
 For each city, assess whether freedom is:
-- **RISING**: Recent legal reforms, court decisions, or political shifts expanding freedom
+- **IMPROVING**: Recent legal reforms, court decisions, or political shifts expanding freedom
 - **STABLE**: No significant changes expected in the next 2-3 years
 - **DECLINING**: Recent restrictions, pending legislation, or political trends reducing freedom
 
@@ -285,8 +293,8 @@ Provide a comprehensive Judge's Report in the following JSON format:
 
 {
   "summaryOfFindings": {
-    "city1Trend": "rising" | "stable" | "declining",
-    "city2Trend": "rising" | "stable" | "declining",
+    "city1Trend": "improving" | "stable" | "declining",
+    "city2Trend": "improving" | "stable" | "declining",
     "overallConfidence": "high" | "medium" | "low"
   },
   "categoryAnalysis": [
@@ -329,7 +337,7 @@ Provide a comprehensive Judge's Report in the following JSON format:
 
 ## CRITICAL INSTRUCTIONS
 1. You MUST provide analysis for ALL 6 categories: personal_freedom, housing_property, business_work, transportation, policing_legal, speech_lifestyle
-2. Your recommendation can OVERRIDE the raw scores if trend analysis suggests the "losing" city is actually better long-term
+2. **WINNER DETERMINATION**: The city with the HIGHER score in the CURRENT SCORES section above MUST be your recommendation. The scores were computed by multiple LLM evaluators across 100 metrics and represent the definitive ranking. You MUST NOT override the winner. Your role is to EXPLAIN why the winning city scored higher, add trend context, and provide rich analysis — NOT to second-guess the computed scores. If scores are tied, you may choose either.
 3. Be specific - cite particular laws, recent changes, or enforcement patterns you know about
 4. The keyFactors should be the 5 most important considerations, not just a summary of categories
 5. Consider the user's likely priorities: personal autonomy, property rights, business freedom, mobility, legal protection, self-expression
@@ -373,6 +381,31 @@ function parseOpusJudgeResponse(content: string): OpusJudgeResponse | null {
     if (!Array.isArray(parsed.categoryAnalysis) || parsed.categoryAnalysis.length < 6) {
       console.warn(`[JUDGE-REPORT] Expected 6 category analyses, got ${parsed.categoryAnalysis?.length || 0}`);
       // Don't fail - we can work with partial data
+    }
+
+    // Sanitize recommendation to valid enum value
+    const rec = parsed.executiveSummary.recommendation;
+    if (rec !== 'city1' && rec !== 'city2' && rec !== 'tie') {
+      console.warn(`[JUDGE-REPORT] Invalid recommendation "${rec}", defaulting to "city1"`);
+      parsed.executiveSummary.recommendation = 'city1';
+    }
+
+    // Sanitize trend values
+    const validTrends = ['improving', 'stable', 'declining'];
+    if (!validTrends.includes(parsed.summaryOfFindings.city1Trend)) {
+      parsed.summaryOfFindings.city1Trend = 'stable';
+    }
+    if (!validTrends.includes(parsed.summaryOfFindings.city2Trend)) {
+      parsed.summaryOfFindings.city2Trend = 'stable';
+    }
+
+    // Sanitize confidence levels
+    const validConfidence = ['high', 'medium', 'low'];
+    if (!validConfidence.includes(parsed.summaryOfFindings.overallConfidence)) {
+      parsed.summaryOfFindings.overallConfidence = 'medium';
+    }
+    if (!validConfidence.includes(parsed.executiveSummary.confidenceLevel)) {
+      parsed.executiveSummary.confidenceLevel = 'medium';
     }
 
     return parsed as OpusJudgeResponse;
@@ -526,9 +559,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const city1Score = comparisonResult.city1.totalConsensusScore ?? (comparisonResult.city1 as any).totalScore ?? 0;
     const city2Score = comparisonResult.city2.totalConsensusScore ?? (comparisonResult.city2 as any).totalScore ?? 0;
 
-    // Determine winner and loser cities
-    const winnerCity = opusResult.executiveSummary.recommendation === 'city1' ? city1 : city2;
-    const loserCity = opusResult.executiveSummary.recommendation === 'city1' ? city2 : city1;
+    // SAFEGUARD: Force-correct the recommendation based on computed scores.
+    // The scores from multiple LLM evaluators are the ground truth.
+    let correctedRecommendation = opusResult.executiveSummary.recommendation;
+    if (city1Score > city2Score) {
+      if (correctedRecommendation !== 'city1') {
+        console.warn(`[JUDGE-REPORT] LLM recommended ${correctedRecommendation} but scores say city1 (${city1Score} vs ${city2Score}). Correcting.`);
+        correctedRecommendation = 'city1';
+      }
+    } else if (city2Score > city1Score) {
+      if (correctedRecommendation !== 'city2') {
+        console.warn(`[JUDGE-REPORT] LLM recommended ${correctedRecommendation} but scores say city2 (${city1Score} vs ${city2Score}). Correcting.`);
+        correctedRecommendation = 'city2';
+      }
+    }
+    // For exact ties, accept LLM's choice (it can pick either or 'tie')
+    opusResult.executiveSummary.recommendation = correctedRecommendation;
+
+    // Determine winner and loser cities (for ties, city1 is treated as "winner" for display)
+    const winnerCity = correctedRecommendation === 'city2' ? city2 : city1;
+    const loserCity = correctedRecommendation === 'city2' ? city1 : city2;
 
     // Build freedomEducation data from Opus response
     let freedomEducation: FreedomEducationOutput | undefined;
@@ -570,7 +620,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         generatedAt: new Date().toISOString()
       };
 
-      console.log(`[JUDGE-REPORT] Freedom education data: ${freedomEducation.categories.length} categories, ${freedomEducation.categories.reduce((sum, c) => sum + c.winningMetrics.length, 0)} total metrics`);
+      // SAFEGUARD: Cross-reference freedomEducation metrics with actual comparison scores.
+      // The LLM may interpret "winner" as per-metric winner instead of overall winner,
+      // causing wrong city to be labeled as "leading" in a category.
+      const winnerIsCity1 = correctedRecommendation !== 'city2';
+      const getMetricScoreFE = (m: any) => m.consensusScore ?? m.normalizedScore ?? 0;
+
+      freedomEducation.categories.forEach(cat => {
+        const cat1 = comparisonResult.city1.categories.find((c: any) => c.categoryId === cat.categoryId);
+        const cat2 = comparisonResult.city2.categories.find((c: any) => c.categoryId === cat.categoryId);
+
+        cat.winningMetrics = cat.winningMetrics.filter(m => {
+          const m1 = cat1?.metrics.find((x: any) => x.metricId === m.metricId);
+          const m2 = cat2?.metrics.find((x: any) => x.metricId === m.metricId);
+          if (!m1 || !m2) return false;
+
+          const city1Score = getMetricScoreFE(m1);
+          const city2Score = getMetricScoreFE(m2);
+
+          // Force correct: winnerScore = overall winner's actual score
+          m.winnerScore = Math.round(winnerIsCity1 ? city1Score : city2Score);
+          m.loserScore = Math.round(winnerIsCity1 ? city2Score : city1Score);
+
+          // Only keep metrics where the overall winner actually leads by 10+
+          return m.winnerScore - m.loserScore >= 10;
+        });
+      });
+
+      // Remove categories with no valid winning metrics
+      freedomEducation.categories = freedomEducation.categories.filter(cat => cat.winningMetrics.length > 0);
+
+      console.log(`[JUDGE-REPORT] Freedom education data (validated): ${freedomEducation.categories.length} categories, ${freedomEducation.categories.reduce((sum, c) => sum + c.winningMetrics.length, 0)} total metrics`);
     }
 
     const judgeReport: JudgeReport = {
@@ -580,6 +660,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       comparisonId: comparisonResult.comparisonId,
       city1,
       city2,
+      city1Country: comparisonResult.city1.country || '',
+      city2Country: comparisonResult.city2.country || '',
       videoStatus: 'pending', // Will be updated by Phase C HeyGen integration
       summaryOfFindings: {
         city1Score: Math.round(city1Score),

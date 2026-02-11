@@ -80,7 +80,7 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
                     src={images.cityAImage.url}
                     alt={images.cityAImage.caption}
                     className="screen-image"
-                    loading="eager"
+                    loading="lazy"
                   />
                   <div className="image-vignette"></div>
                 </div>
@@ -148,7 +148,7 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
                     src={images.cityBImage.url}
                     alt={images.cityBImage.caption}
                     className="screen-image"
-                    loading="eager"
+                    loading="lazy"
                   />
                   <div className="image-vignette"></div>
                 </div>

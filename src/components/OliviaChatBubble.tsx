@@ -260,7 +260,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
           ${messages.map(msg => `
             <div class="message ${msg.role}">
               <div class="sender">${msg.role === 'assistant' ? 'OLIVIA' : 'YOU'}</div>
-              <div class="content">${msg.content}</div>
+              <div class="content">${msg.content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}</div>
               <div class="time">${msg.timestamp.toLocaleTimeString()}</div>
             </div>
           `).join('')}
@@ -367,8 +367,9 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                       setPlayingMessageId(null);
                     }}
                     title="Stop Audio"
+                    aria-label="Stop audio playback"
                   >
-                    <svg viewBox="0 0 24 24" width="14" height="14">
+                    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
                       <rect fill="currentColor" x="6" y="6" width="12" height="12"/>
                     </svg>
                   </button>
@@ -445,6 +446,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                         className={`msg-play-btn ${playingMessageId === msg.id ? 'playing' : ''}`}
                         onClick={() => handlePlayMessage(msg.id, msg.content)}
                         title={playingMessageId === msg.id ? 'Stop' : 'Listen'}
+                        aria-label={playingMessageId === msg.id ? 'Stop audio' : 'Play message audio'}
                       >
                         {playingMessageId === msg.id ? (
                           <svg viewBox="0 0 24 24" width="12" height="12">

@@ -13,6 +13,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -217,12 +218,16 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // JWT auth — reject unauthenticated requests
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   const replicateToken = process.env.REPLICATE_API_TOKEN;
   if (!replicateToken) {

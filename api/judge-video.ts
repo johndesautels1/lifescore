@@ -157,9 +157,9 @@ interface JudgeReport {
   videoStatus: 'pending' | 'generating' | 'ready' | 'error';
   summaryOfFindings: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
   categoryAnalysis: {
@@ -219,9 +219,9 @@ function generateVideoScript(report: JudgeReport): string {
   }
 
   // Trend descriptions
-  const getTrendDescription = (trend: 'rising' | 'stable' | 'declining'): string => {
+  const getTrendDescription = (trend: 'improving' | 'stable' | 'declining'): string => {
     switch (trend) {
-      case 'rising': return 'on an upward trajectory';
+      case 'improving': return 'on an upward trajectory';
       case 'declining': return 'showing signs of decline';
       case 'stable': return 'holding steady';
     }

@@ -18,7 +18,8 @@
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { JudgeReport } from '../components/JudgeTab';
-import { getSavedJudgeReports } from './savedComparisons';
+import { getAuthHeaders } from '../lib/supabase';
+import { getSavedJudgeReports, type SavedJudgeReport } from './savedComparisons';
 
 // ============================================================================
 // TYPES
@@ -112,7 +113,7 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
       ? report.summaryOfFindings.city2Score
       : report.summaryOfFindings.city1Score;
 
-  const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+  const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
 
   console.log('[JudgePregen] Starting background video generation for:', {
     reportId: report.reportId,
@@ -121,9 +122,10 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
   });
 
   // Fire and forget - don't await
+  getAuthHeaders().then(authHeaders => {
   fetch('/api/avatar/generate-judge-video', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({
       comparisonId: report.comparisonId,
       script,
@@ -153,6 +155,7 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
     .catch((error) => {
       console.error('[JudgePregen] Video generation error:', error);
     });
+  }); // close getAuthHeaders().then
 }
 
 // ============================================================================
@@ -165,10 +168,11 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
  */
 export async function checkExistingReport(
   comparisonId: string
-): Promise<JudgeReport | null> {
+): Promise<SavedJudgeReport | null> {
   try {
     // Check localStorage first (faster) via centralized service
-    const existingReports = getSavedJudgeReports() as JudgeReport[];
+    // SavedJudgeReport is a subset of JudgeReport — safe for comparisonId lookup
+    const existingReports = getSavedJudgeReports();
 
     const localReport = existingReports.find(
       (r) => r.comparisonId === comparisonId

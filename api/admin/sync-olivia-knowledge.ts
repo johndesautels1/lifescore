@@ -14,7 +14,10 @@ import * as path from 'path';
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
 const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || 'asst_3wbVjyY629u7fDylaK0s5gsM';
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+const ADMIN_EMAILS_ENV = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+const ADMIN_EMAILS = ADMIN_EMAILS_ENV.length > 0
+  ? ADMIN_EMAILS_ENV
+  : ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
 
 interface FileObject {
   id: string;
@@ -177,10 +180,8 @@ export default async function handler(
       .eq('id', user.id)
       .maybeSingle();
 
-    const userEmail = user.email || profile?.email || '';
-    const isAdmin = profile?.tier === 'enterprise' && ADMIN_EMAILS.length > 0
-      ? ADMIN_EMAILS.includes(userEmail)
-      : profile?.tier === 'enterprise';
+    const userEmail = (user.email || profile?.email || '').toLowerCase();
+    const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
     if (!isAdmin) {
       res.status(403).json({ error: 'Admin access required' });

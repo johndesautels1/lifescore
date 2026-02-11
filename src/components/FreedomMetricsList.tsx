@@ -31,9 +31,15 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, winnerCity, loserCity }
         <span className="metric-icon">{metric.metricIcon}</span>
         <span className="metric-name">{metric.metricName}</span>
         <div className="metric-scores">
-          <span className="winner-score" title={winnerCity}>{metric.winnerScore.toFixed(0)}</span>
+          <span className="score-city-group winner">
+            <span className="score-city-label">{winnerCity}</span>
+            <span className="winner-score">{metric.winnerScore.toFixed(0)}</span>
+          </span>
           <span className="score-separator">vs</span>
-          <span className="loser-score" title={loserCity}>{metric.loserScore.toFixed(0)}</span>
+          <span className="score-city-group loser">
+            <span className="score-city-label">{loserCity}</span>
+            <span className="loser-score">{metric.loserScore.toFixed(0)}</span>
+          </span>
         </div>
       </div>
       <div className="metric-example">

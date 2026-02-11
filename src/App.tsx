@@ -6,7 +6,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useCallback, useEffect, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useReducer, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import Header from './components/Header';
@@ -19,6 +19,7 @@ import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
 import Results from './components/Results';
 import JudgeTab from './components/JudgeTab';
+import { toastSuccess, toastError, toastInfo } from './utils/toast';
 
 // Phase 2 Performance: Lazy load tab components (2026-02-02)
 const SavedComparisons = React.lazy(() => import('./components/SavedComparisons'));
@@ -65,6 +66,190 @@ import { saveApiCostRecord } from './services/databaseService';
 import './styles/globals.css';
 import './App.css';
 
+// ============================================================================
+// PERF #1: useReducer for modal/UI state (was 8 separate useState = 8 re-renders)
+// ============================================================================
+interface ModalState {
+  showAPIKeyModal: boolean;
+  showPricingModal: boolean;
+  pricingHighlight: { feature?: string; tier?: 'free' | 'pro' | 'enterprise' };
+  showCostDashboard: boolean;
+  showSettingsModal: boolean;
+  activeLegalPage: LegalPage;
+  showAboutSection: boolean;
+}
+
+type ModalAction =
+  | { type: 'OPEN_API_KEY_MODAL' }
+  | { type: 'CLOSE_API_KEY_MODAL' }
+  | { type: 'OPEN_PRICING'; highlight?: { feature?: string; tier?: 'free' | 'pro' | 'enterprise' } }
+  | { type: 'CLOSE_PRICING' }
+  | { type: 'OPEN_COST_DASHBOARD' }
+  | { type: 'CLOSE_COST_DASHBOARD' }
+  | { type: 'OPEN_SETTINGS' }
+  | { type: 'CLOSE_SETTINGS' }
+  | { type: 'OPEN_SETTINGS_THEN_PRICING' }
+  | { type: 'SET_LEGAL_PAGE'; page: LegalPage }
+  | { type: 'TOGGLE_ABOUT' };
+
+const modalInitialState: ModalState = {
+  showAPIKeyModal: false,
+  showPricingModal: false,
+  pricingHighlight: {},
+  showCostDashboard: false,
+  showSettingsModal: false,
+  activeLegalPage: null,
+  showAboutSection: true,
+};
+
+function modalReducer(state: ModalState, action: ModalAction): ModalState {
+  switch (action.type) {
+    case 'OPEN_API_KEY_MODAL':
+      return { ...state, showAPIKeyModal: true };
+    case 'CLOSE_API_KEY_MODAL':
+      return { ...state, showAPIKeyModal: false };
+    case 'OPEN_PRICING':
+      return { ...state, showPricingModal: true, pricingHighlight: action.highlight || {} };
+    case 'CLOSE_PRICING':
+      return { ...state, showPricingModal: false, pricingHighlight: {} };
+    case 'OPEN_COST_DASHBOARD':
+      return { ...state, showCostDashboard: true };
+    case 'CLOSE_COST_DASHBOARD':
+      return { ...state, showCostDashboard: false };
+    case 'OPEN_SETTINGS':
+      return { ...state, showSettingsModal: true };
+    case 'CLOSE_SETTINGS':
+      return { ...state, showSettingsModal: false };
+    case 'OPEN_SETTINGS_THEN_PRICING':
+      return { ...state, showSettingsModal: false, showPricingModal: true };
+    case 'SET_LEGAL_PAGE':
+      return { ...state, activeLegalPage: action.page };
+    case 'TOGGLE_ABOUT':
+      return { ...state, showAboutSection: !state.showAboutSection };
+    default:
+      return state;
+  }
+}
+
+// ============================================================================
+// PERF #1: useReducer for enhanced comparison state (was 11 useState = 11 re-renders on reset)
+// ============================================================================
+interface EnhancedState {
+  enhancedMode: boolean;
+  enhancedStatus: 'idle' | 'running' | 'complete';
+  enhancedResult: EnhancedComparisonResult | null;
+  pendingCities: { city1: string; city2: string } | null;
+  judgeResult: JudgeOutput | null;
+  lastJudgedCount: number;
+  selectedSavedJudgeReport: SavedJudgeReport | null;
+  pendingLLMToRun: LLMProvider | null;
+  failuresAcknowledged: boolean;
+}
+
+type EnhancedAction =
+  | { type: 'SET_MODE'; enabled: boolean }
+  | { type: 'START_COMPARISON'; cities: { city1: string; city2: string } }
+  | { type: 'SET_RESULT'; result: EnhancedComparisonResult }
+  | { type: 'SET_STATUS'; status: 'idle' | 'running' | 'complete' }
+  | { type: 'CLEAR_RESULT' }
+  | { type: 'SET_JUDGE_RESULT'; result: JudgeOutput | null }
+  | { type: 'SET_LAST_JUDGED_COUNT'; count: number }
+  | { type: 'SET_SAVED_JUDGE_REPORT'; report: SavedJudgeReport | null }
+  | { type: 'SET_PENDING_LLM'; llm: LLMProvider | null }
+  | { type: 'SET_PENDING_CITIES'; cities: { city1: string; city2: string } }
+  | { type: 'ACKNOWLEDGE_FAILURES' }
+  | { type: 'RESET_FAILURES_ACK' }
+  | { type: 'LOAD_ENHANCED_SAVED'; result: EnhancedComparisonResult }
+  | { type: 'LOAD_STANDARD_SAVED' }
+  | { type: 'VIEW_JUDGE_REPORT'; report: SavedJudgeReport }
+  | { type: 'CLEAR_STALE_STATE' }
+  | { type: 'FULL_RESET' };
+
+const enhancedInitialState: EnhancedState = {
+  enhancedMode: false,
+  enhancedStatus: 'idle',
+  enhancedResult: null,
+  pendingCities: null,
+  judgeResult: null,
+  lastJudgedCount: 0,
+  selectedSavedJudgeReport: null,
+  pendingLLMToRun: null,
+  failuresAcknowledged: false,
+};
+
+function enhancedReducer(state: EnhancedState, action: EnhancedAction): EnhancedState {
+  switch (action.type) {
+    case 'SET_MODE':
+      return { ...state, enhancedMode: action.enabled };
+    case 'START_COMPARISON':
+      return {
+        ...state,
+        enhancedStatus: 'running',
+        enhancedResult: null,
+        pendingCities: action.cities,
+        failuresAcknowledged: false,
+      };
+    case 'SET_RESULT':
+      return { ...state, enhancedResult: action.result, enhancedStatus: 'complete' };
+    case 'SET_STATUS':
+      return { ...state, enhancedStatus: action.status };
+    case 'CLEAR_RESULT':
+      return { ...state, enhancedResult: null };
+    case 'SET_JUDGE_RESULT':
+      return { ...state, judgeResult: action.result };
+    case 'SET_LAST_JUDGED_COUNT':
+      return { ...state, lastJudgedCount: action.count };
+    case 'SET_SAVED_JUDGE_REPORT':
+      return { ...state, selectedSavedJudgeReport: action.report };
+    case 'SET_PENDING_LLM':
+      return { ...state, pendingLLMToRun: action.llm };
+    case 'SET_PENDING_CITIES':
+      return { ...state, pendingCities: action.cities };
+    case 'ACKNOWLEDGE_FAILURES':
+      return { ...state, failuresAcknowledged: true };
+    case 'RESET_FAILURES_ACK':
+      return { ...state, failuresAcknowledged: false };
+    case 'LOAD_ENHANCED_SAVED':
+      return {
+        ...state,
+        enhancedMode: true,
+        enhancedResult: action.result,
+        enhancedStatus: 'complete',
+        judgeResult: null,
+        selectedSavedJudgeReport: null,
+      };
+    case 'LOAD_STANDARD_SAVED':
+      return {
+        ...state,
+        enhancedMode: false,
+        enhancedStatus: 'idle',
+        enhancedResult: null,
+        judgeResult: null,
+        selectedSavedJudgeReport: null,
+      };
+    case 'VIEW_JUDGE_REPORT':
+      return {
+        ...state,
+        enhancedResult: null,
+        selectedSavedJudgeReport: action.report,
+      };
+    case 'CLEAR_STALE_STATE':
+      return {
+        ...state,
+        judgeResult: null,
+        selectedSavedJudgeReport: null,
+        enhancedResult: null,
+      };
+    case 'FULL_RESET':
+      return {
+        ...enhancedInitialState,
+        enhancedMode: state.enhancedMode, // Preserve mode toggle
+      };
+    default:
+      return state;
+  }
+}
+
 // Main app content (requires auth)
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, user, session } = useAuth();
@@ -72,66 +257,47 @@ const AppContent: React.FC = () => {
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
 
-  // Enhanced mode state
-  const [enhancedMode, setEnhancedMode] = useState(false);
-  const [showAPIKeyModal, setShowAPIKeyModal] = useState(false);
-  const [apiKeys, setApiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys());
-  const [enhancedStatus, setEnhancedStatus] = useState<'idle' | 'running' | 'complete'>('idle');
-  const [enhancedResult, setEnhancedResult] = useState<EnhancedComparisonResult | null>(null);
-  const [pendingCities, setPendingCities] = useState<{ city1: string; city2: string } | null>(null);
+  // PERF #1: Modal/UI state — single reducer instead of 8 useState
+  const [modals, dispatchModal] = useReducer(modalReducer, modalInitialState);
 
-  // LIFTED STATE from LLMSelector (for incremental LLM feature)
+  // PERF #1: Enhanced comparison state — single reducer instead of 11 useState
+  const [enhanced, dispatchEnhanced] = useReducer(enhancedReducer, enhancedInitialState);
+
+  // API keys (kept as useState — updated rarely, used in computed value)
+  const [apiKeys, setApiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys());
+
+  // LIFTED STATE from LLMSelector (Map type doesn't work well in reducers)
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
     new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
   );
-  const [judgeResultLifted, setJudgeResultLifted] = useState<JudgeOutput | null>(null);
-  const [lastJudgedCount, setLastJudgedCount] = useState(0);
 
-  // FIX 2026-02-08: Selected saved Judge report to load in JudgeTab
-  const [selectedSavedJudgeReport, setSelectedSavedJudgeReport] = useState<SavedJudgeReport | null>(null);
-
-  // Pending LLM to run (for Add More Models feature)
-  const [pendingLLMToRun, setPendingLLMToRun] = useState<LLMProvider | null>(null);
-
-  // Category failures tracking - user must acknowledge before seeing results
-  const [failuresAcknowledged, setFailuresAcknowledged] = useState(false);
-
-  // Dealbreakers state
+  // Scoring preferences (kept as useState — set independently by CitySelector)
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
-
-  // Custom weights state - used for persona-based scoring (Digital Nomad, Entrepreneur, etc.)
   const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
-
-  // Law vs Lived preference state - controls how legal and enforcement scores are combined
   const [lawLivedRatio, setLawLivedRatio] = useState<LawLivedRatio>({ law: 50, lived: 50 });
   const [conservativeMode, setConservativeMode] = useState(false);
 
-  // LIFTED STATE: Gamma visual report (persists across tab switches)
-  const [gammaReportState, setGammaReportState] = useState<VisualReportState>({
-    status: 'idle',
-  });
+  // Gamma visual report state (kept separate — set by VisualsTab child)
+  const [gammaReportState, setGammaReportState] = useState<VisualReportState>({ status: 'idle' });
   const [gammaExportFormat, setGammaExportFormat] = useState<'pdf' | 'pptx'>('pdf');
   const [showGammaEmbedded, setShowGammaEmbedded] = useState(false);
 
-  // About section collapse state
-  const [showAboutSection, setShowAboutSection] = useState(true);
-
-  // Tab navigation state
+  // Tab navigation and saved count
   const [activeTab, setActiveTab] = useState<TabId>('compare');
   const [savedCount, setSavedCount] = useState(0);
 
-  // Legal modal state
-  const [activeLegalPage, setActiveLegalPage] = useState<LegalPage>(null);
+  // Destructure for convenience (preserves original variable names across JSX)
+  const {
+    enhancedMode, enhancedStatus, enhancedResult, pendingCities,
+    judgeResult: judgeResultLifted, lastJudgedCount,
+    selectedSavedJudgeReport, pendingLLMToRun, failuresAcknowledged,
+  } = enhanced;
 
-  // Pricing modal state
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const [pricingHighlight, setPricingHighlight] = useState<{ feature?: string; tier?: 'free' | 'pro' | 'enterprise' }>({});
-
-  // Cost dashboard state (admin feature)
-  const [showCostDashboard, setShowCostDashboard] = useState(false);
-
-  // Settings modal state
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const {
+    showAPIKeyModal, showPricingModal, pricingHighlight,
+    showCostDashboard, showSettingsModal, activeLegalPage,
+    showAboutSection,
+  } = modals;
 
   const availableLLMs = getAvailableLLMs(apiKeys);
 
@@ -158,16 +324,24 @@ const AppContent: React.FC = () => {
   });
 
   // Update saved count on mount and when savedKey changes
+  // FIX: Read from correct localStorage keys (was 'lifescore_comparisons' which doesn't exist)
   useEffect(() => {
-    const saved = localStorage.getItem('lifescore_comparisons');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSavedCount(Array.isArray(parsed) ? parsed.length : 0);
-      } catch {
-        setSavedCount(0);
+    let count = 0;
+    try {
+      const standard = localStorage.getItem('lifescore_saved_comparisons');
+      if (standard) {
+        const parsed = JSON.parse(standard);
+        if (Array.isArray(parsed)) count += parsed.length;
       }
+      const enhanced = localStorage.getItem('lifescore_saved_enhanced');
+      if (enhanced) {
+        const parsed = JSON.parse(enhanced);
+        if (Array.isArray(parsed)) count += parsed.length;
+      }
+    } catch {
+      // Ignore parse errors
     }
+    setSavedCount(count);
   }, [savedKey]);
 
   // Auto-switch to results tab when comparison completes (BOTH modes)
@@ -186,7 +360,7 @@ const AppContent: React.FC = () => {
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
     if (enhancedStatus === 'running') {
-      setFailuresAcknowledged(false);
+      dispatchEnhanced({ type: 'RESET_FAILURES_ACK' });
     }
   }, [enhancedStatus]);
 
@@ -243,10 +417,10 @@ const AppContent: React.FC = () => {
 
         // Also set pending cities from the existing result
         if (!pendingCities) {
-          setPendingCities({
+          dispatchEnhanced({ type: 'SET_PENDING_CITIES', cities: {
             city1: `${state.result.city1.city}, ${state.result.city1.region || ''} ${state.result.city1.country}`.replace(/\s+/g, ' ').trim(),
             city2: `${state.result.city2.city}, ${state.result.city2.region || ''} ${state.result.city2.country}`.replace(/\s+/g, ' ').trim()
-          });
+          } });
         }
       }
     }
@@ -264,11 +438,10 @@ const AppContent: React.FC = () => {
   // Listen for 'openPricing' events from FeatureGate components
   useEffect(() => {
     const handleOpenPricing = (e: CustomEvent<{ feature?: string; requiredTier?: 'free' | 'pro' | 'enterprise' }>) => {
-      setPricingHighlight({
+      dispatchModal({ type: 'OPEN_PRICING', highlight: {
         feature: e.detail?.feature,
         tier: e.detail?.requiredTier,
-      });
-      setShowPricingModal(true);
+      }});
     };
 
     window.addEventListener('openPricing', handleOpenPricing as EventListener);
@@ -281,35 +454,30 @@ const AppContent: React.FC = () => {
     // FIX 2026-01-26: Add defensive checks to prevent crashes when loading saved comparisons
     if (!result) {
       console.error('[App] handleLoadSavedComparison called with null/undefined result');
+      toastError('Failed to load comparison — data is missing');
       return;
     }
 
     if (!result.city1 || !result.city2) {
       console.error('[App] handleLoadSavedComparison: result missing city data', result);
+      toastError('Failed to load comparison — city data is incomplete');
       return;
     }
 
     console.log('[App] Loading saved comparison:', result.comparisonId, result.city1.city, 'vs', result.city2.city);
 
     // FIX 2026-02-08: Clear stale judge state to prevent data contamination
-    setJudgeResultLifted(null);
-    setSelectedSavedJudgeReport(null);
-
     // FIX 7.4: Use type guard instead of unsafe casts for detecting enhanced comparisons
     // FIX 2026-02-08: Set enhancedMode to match loaded report type - user clicks, report loads, no hoops
     if (isEnhancedComparisonResult(result)) {
       console.log('[App] Loading as ENHANCED comparison');
-      setEnhancedMode(true);
-      setEnhancedResult(result as unknown as EnhancedComparisonResult);
-      setEnhancedStatus('complete');
+      dispatchEnhanced({ type: 'LOAD_ENHANCED_SAVED', result: result as unknown as EnhancedComparisonResult });
       // Also set base result for components that need it
       loadResult(result);
     } else {
       console.log('[App] Loading as standard comparison');
-      setEnhancedMode(false);
+      dispatchEnhanced({ type: 'LOAD_STANDARD_SAVED' });
       loadResult(result);
-      setEnhancedStatus('idle');
-      setEnhancedResult(null);
     }
 
     // FIX 2026-01-25: Switch to results tab after loading saved comparison
@@ -325,19 +493,15 @@ const AppContent: React.FC = () => {
   const handleViewJudgeReport = useCallback((report: SavedJudgeReport) => {
     console.log('[App] View Judge report:', report.reportId, report.city1, 'vs', report.city2);
     // CRITICAL: Clear stale comparison state to prevent Berlin/Tampa showing for Kansas City/Edinburgh
-    setEnhancedResult(null);
-    // Store the selected report so JudgeTab can load it directly
-    setSelectedSavedJudgeReport(report);
+    dispatchEnhanced({ type: 'VIEW_JUDGE_REPORT', report });
     // Switch to the judges-report tab
     setActiveTab('judges-report');
   }, []);
 
-  const handleCompare = async (city1: string, city2: string) => {
+  const handleCompare = useCallback(async (city1: string, city2: string) => {
     // FIX 2026-02-08: Clear ALL stale state on new compare to prevent data contamination
     // CRITICAL: enhancedResult must be cleared for BOTH modes to prevent Bern/Mesa showing for Baltimore/Bratislava
-    setJudgeResultLifted(null);
-    setSelectedSavedJudgeReport(null);
-    setEnhancedResult(null);
+    dispatchEnhanced({ type: 'CLEAR_STALE_STATE' });
 
     if (enhancedMode) {
       // ADMIN BYPASS: Skip usage checks for admin users
@@ -347,11 +511,11 @@ const AppContent: React.FC = () => {
 
         if (!usageResult.allowed) {
           // User has hit their limit - show pricing modal
-          setPricingHighlight({
+          toastInfo('Enhanced comparison limit reached — upgrade for more');
+          dispatchModal({ type: 'OPEN_PRICING', highlight: {
             feature: 'enhancedComparisons',
             tier: usageResult.requiredTier,
-          });
-          setShowPricingModal(true);
+          }});
           return;
         }
 
@@ -360,9 +524,8 @@ const AppContent: React.FC = () => {
       }
 
       // Run enhanced comparison
-      setEnhancedStatus('running');
-      setEnhancedResult(null);
-      setPendingCities({ city1, city2 });
+      toastInfo(`Starting enhanced comparison: ${city1.split(',')[0]} vs ${city2.split(',')[0]}`);
+      dispatchEnhanced({ type: 'START_COMPARISON', cities: { city1, city2 } });
     } else {
       // ADMIN BYPASS: Skip usage checks for admin users
       if (!isAdmin) {
@@ -371,11 +534,11 @@ const AppContent: React.FC = () => {
 
         if (!usageResult.allowed) {
           // User has hit their limit - show pricing modal
-          setPricingHighlight({
+          toastInfo('Comparison limit reached — upgrade for more');
+          dispatchModal({ type: 'OPEN_PRICING', highlight: {
             feature: 'standardComparisons',
             tier: usageResult.requiredTier,
-          });
-          setShowPricingModal(true);
+          }});
           return;
         }
 
@@ -384,28 +547,27 @@ const AppContent: React.FC = () => {
       }
 
       // Run the comparison with user's scoring preferences
-      await compare(city1, city2, { lawLivedRatio, conservativeMode, customWeights });
+      try {
+        await compare(city1, city2, { lawLivedRatio, conservativeMode, customWeights });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Comparison failed';
+        toastError(msg);
+      }
     }
-  };
+  }, [enhancedMode, isAdmin, checkUsage, incrementUsage, compare, lawLivedRatio, conservativeMode, customWeights]);
 
-  const handleReset = () => {
+  // PERF #1: handleReset was 10 separate setState calls → now 1 dispatch + 1 setState + 1 reset
+  const handleReset = useCallback(() => {
     reset();
-    setEnhancedStatus('idle');
-    setEnhancedResult(null);
-    setPendingCities(null);
-    // Reset lifted LLM state
+    dispatchEnhanced({ type: 'FULL_RESET' });
+    // Reset lifted LLM state (Map — kept as useState)
     setLLMStates(new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }])));
-    setJudgeResultLifted(null);
-    // FIX 2026-02-08: Also clear saved judge report state
-    setSelectedSavedJudgeReport(null);
-    setLastJudgedCount(0);
-    setPendingLLMToRun(null);
     resetOGMetaTags();
-  };
+  }, [reset]);
 
-  const handleSaveAPIKeys = (keys: LLMAPIKeys) => {
+  const handleSaveAPIKeys = useCallback((keys: LLMAPIKeys) => {
     setApiKeys(keys);
-  };
+  }, []);
 
   // Show loading spinner while checking auth
   if (authLoading) {
@@ -426,10 +588,15 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app">
+      {/* A17: Skip-to-content link for keyboard users */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
+
       <Header
-        onUpgradeClick={() => setShowPricingModal(true)}
-        onCostDashboardClick={() => setShowCostDashboard(true)}
-        onSettingsClick={() => setShowSettingsModal(true)}
+        onUpgradeClick={() => dispatchModal({ type: 'OPEN_PRICING' })}
+        onCostDashboardClick={() => dispatchModal({ type: 'OPEN_COST_DASHBOARD' })}
+        onSettingsClick={() => dispatchModal({ type: 'OPEN_SETTINGS' })}
       />
 
       {/* Tab Navigation */}
@@ -440,7 +607,7 @@ const AppContent: React.FC = () => {
         savedCount={savedCount}
       />
 
-      <main className="main-content">
+      <main className="main-content" id="main-content">
         <div className="container">
           {/* Live Badge - Always visible */}
           <div className="live-badge">
@@ -467,8 +634,8 @@ const AppContent: React.FC = () => {
               >
                 <EnhancedModeToggle
                   enabled={enhancedMode}
-                  onToggle={setEnhancedMode}
-                  onConfigureKeys={() => setShowAPIKeyModal(true)}
+                  onToggle={(enabled: boolean) => dispatchEnhanced({ type: 'SET_MODE', enabled })}
+                  onConfigureKeys={() => dispatchModal({ type: 'OPEN_API_KEY_MODAL' })}
                   availableLLMs={availableLLMs}
                 />
               </FeatureGate>
@@ -507,11 +674,11 @@ const AppContent: React.FC = () => {
                     llmStates={llmStates}
                     setLLMStates={setLLMStates}
                     judgeResult={judgeResultLifted}
-                    setJudgeResult={setJudgeResultLifted}
+                    setJudgeResult={((result: JudgeOutput | null) => dispatchEnhanced({ type: 'SET_JUDGE_RESULT', result })) as React.Dispatch<React.SetStateAction<JudgeOutput | null>>}
                     lastJudgedCount={lastJudgedCount}
-                    setLastJudgedCount={setLastJudgedCount}
+                    setLastJudgedCount={((count: number) => dispatchEnhanced({ type: 'SET_LAST_JUDGED_COUNT', count })) as React.Dispatch<React.SetStateAction<number>>}
                     pendingLLMToRun={pendingLLMToRun}
-                    clearPendingLLM={() => setPendingLLMToRun(null)}
+                    clearPendingLLM={() => dispatchEnhanced({ type: 'SET_PENDING_LLM', llm: null })}
                     onResultsUpdate={(llmResults, judgeResult) => {
                       console.log('[App] onResultsUpdate called | llmResults:', llmResults.size, '| judgeResult:', !!judgeResult);
 
@@ -696,9 +863,9 @@ const AppContent: React.FC = () => {
                             }
                             // === END COST TRACKING ===
 
-                            setEnhancedResult(result);
-                            setEnhancedStatus('complete');
+                            dispatchEnhanced({ type: 'SET_RESULT', result });
                             console.log('[App] State updated - tab should switch now');
+                            toastSuccess(`Comparison complete: ${result.city1?.city} vs ${result.city2?.city}`);
 
                             // === JUDGE PRE-GENERATION ===
                             if (!isPartial) {
@@ -728,8 +895,9 @@ const AppContent: React.FC = () => {
                             // === END AUTO-SAVE ===
                           } catch (buildError) {
                             console.error('[App] Error building enhanced result:', buildError);
+                            toastError('Error building results — showing partial data');
                             // FIX: Still set a minimal result so results page shows
-                            setEnhancedResult({
+                            dispatchEnhanced({ type: 'SET_RESULT', result: {
                               city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
                               city2: { city: pendingCities.city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
                               winner: 'tie',
@@ -743,13 +911,13 @@ const AppContent: React.FC = () => {
                               disagreementSummary: 'Error building results - partial data shown',
                               processingStats: { totalTimeMs: 0, llmTimings: {} as any, metricsEvaluated: 0 },
                               warning: `Error building results: ${buildError instanceof Error ? buildError.message : 'Unknown error'}`
-                            } as any);
-                            setEnhancedStatus('complete');
+                            } as any });
                           }
                         }).catch(importError => {
                           console.error('Error importing opusJudge module:', importError);
+                          toastError('Error loading result module — showing partial data');
                           // FIX: Set minimal result so results page shows
-                          setEnhancedResult({
+                          dispatchEnhanced({ type: 'SET_RESULT', result: {
                             city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
                             city2: { city: pendingCities.city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
                             winner: 'tie',
@@ -763,8 +931,7 @@ const AppContent: React.FC = () => {
                             disagreementSummary: 'Module import error - partial data shown',
                             processingStats: { totalTimeMs: 0, llmTimings: {} as any, metricsEvaluated: 0 },
                             warning: 'Error loading result builder module'
-                          } as any);
-                          setEnhancedStatus('complete');
+                          } as any });
                         });
                       };
 
@@ -786,6 +953,7 @@ const AppContent: React.FC = () => {
                       } else if (llmResults.size > 0 && !judgeResult) {
                         // FIX: Judge failed but we have LLM results - build partial result
                         console.warn('[App] Judge failed but LLM results available - building partial result from', llmResults.size, 'LLMs');
+                        toastInfo('Judge unavailable — showing results from ' + llmResults.size + ' LLMs');
                         buildAndSetResult(null, true);
                       }
                     }}
@@ -834,7 +1002,7 @@ const AppContent: React.FC = () => {
                   </div>
                   <button
                     className="btn btn-primary see-results-btn"
-                    onClick={() => setFailuresAcknowledged(true)}
+                    onClick={() => dispatchEnhanced({ type: 'ACKNOWLEDGE_FAILURES' })}
                   >
                     I Understand — SEE RESULTS
                   </button>
@@ -894,8 +1062,8 @@ const AppContent: React.FC = () => {
                               className={`llm-add-btn ${isCompleted ? 'completed' : ''} ${isRunning ? 'running' : ''} ${isFailed ? 'failed' : ''}`}
                               disabled={isCompleted || isRunning}
                               onClick={() => {
-                                setPendingLLMToRun(llm);  // Track which LLM to run
-                                setEnhancedStatus('running');
+                                dispatchEnhanced({ type: 'SET_PENDING_LLM', llm });
+                                dispatchEnhanced({ type: 'SET_STATUS', status: 'running' });
                                 setActiveTab('compare');
                               }}
                               title={isCompleted ? 'Already completed' : isRunning ? 'Running...' : 'Click to add'}
@@ -1015,7 +1183,7 @@ const AppContent: React.FC = () => {
               comparisonResult={(enhancedMode ? enhancedResult : state.result) || null}
               userId={user?.id || 'guest'}
               savedJudgeReport={selectedSavedJudgeReport}
-              onSavedReportLoaded={() => setSelectedSavedJudgeReport(null)}
+              onSavedReportLoaded={() => dispatchEnhanced({ type: 'SET_SAVED_JUDGE_REPORT', report: null })}
             />
           )}
 
@@ -1026,7 +1194,7 @@ const AppContent: React.FC = () => {
             <div className="about-section card">
               <button
                 className="section-toggle"
-                onClick={() => setShowAboutSection(!showAboutSection)}
+                onClick={() => dispatchModal({ type: 'TOGGLE_ABOUT' })}
               >
                 <h3 className="section-title">About LIFE SCORE™</h3>
                 <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`}>▼</span>
@@ -1127,15 +1295,15 @@ const AppContent: React.FC = () => {
         </div>
       </main>
 
-      <Footer onOpenLegal={setActiveLegalPage} />
+      <Footer onOpenLegal={(page: LegalPage) => dispatchModal({ type: 'SET_LEGAL_PAGE', page })} />
 
       {/* Legal Modal */}
-      <LegalModal page={activeLegalPage} onClose={() => setActiveLegalPage(null)} />
+      <LegalModal page={activeLegalPage} onClose={() => dispatchModal({ type: 'SET_LEGAL_PAGE', page: null })} />
 
       {/* API Key Configuration Modal */}
       <APIKeyModal
         isOpen={showAPIKeyModal}
-        onClose={() => setShowAPIKeyModal(false)}
+        onClose={() => dispatchModal({ type: 'CLOSE_API_KEY_MODAL' })}
         onSave={handleSaveAPIKeys}
         initialKeys={apiKeys}
       />
@@ -1157,8 +1325,7 @@ const AppContent: React.FC = () => {
       <PricingModal
         isOpen={showPricingModal}
         onClose={() => {
-          setShowPricingModal(false);
-          setPricingHighlight({});
+          dispatchModal({ type: 'CLOSE_PRICING' });
         }}
         highlightFeature={pricingHighlight.feature}
         highlightTier={pricingHighlight.tier}
@@ -1167,16 +1334,15 @@ const AppContent: React.FC = () => {
       {/* Admin Cost Dashboard */}
       <CostDashboard
         isOpen={showCostDashboard}
-        onClose={() => setShowCostDashboard(false)}
+        onClose={() => dispatchModal({ type: 'CLOSE_COST_DASHBOARD' })}
       />
 
       {/* Settings Modal */}
       <SettingsModal
         isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
+        onClose={() => dispatchModal({ type: 'CLOSE_SETTINGS' })}
         onUpgradeClick={() => {
-          setShowSettingsModal(false);
-          setShowPricingModal(true);
+          dispatchModal({ type: 'OPEN_SETTINGS_THEN_PRICING' });
         }}
       />
     </div>

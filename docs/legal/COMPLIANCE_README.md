@@ -137,7 +137,7 @@
 
 - **Data Controller:** Clues Intelligence LTD
 - **Registered Address:** 167-169 Great Portland Street, 5th Floor, London W1W 5PF, UK
-- **Privacy Contact:** privacy@cluesintelligence.com
+- **Privacy Contact:** cluesnomads@gmail.com
 - **Admin Contact:** cluesnomads@gmail.com
 - **DPO:** Not required (below threshold)
 - **EU Representative:** Not required (UK company post-Brexit)

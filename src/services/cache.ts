@@ -14,6 +14,7 @@
 
 import type { LLMProvider, EnhancedComparisonResult, MetricConsensus } from '../types/enhancedComparison';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // CONFIGURATION
@@ -116,6 +117,11 @@ interface CacheStorage {
 
 // LocalStorage implementation (development/fallback)
 class LocalStorageCache implements CacheStorage {
+  // FIX: Guard flag to prevent recursive clearExpired() calls
+  // Concurrent set() calls could both trigger clearExpired() simultaneously,
+  // iterating keys while another call modifies localStorage
+  private isClearing = false;
+
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
     try {
       const stored = localStorage.getItem(key);
@@ -146,8 +152,11 @@ class LocalStorageCache implements CacheStorage {
       localStorage.setItem(key, JSON.stringify(entry));
     } catch (error) {
       // localStorage might be full - clear old entries
-      console.warn('Cache storage full, clearing old entries');
-      await this.clearExpired();
+      // FIX: Check guard flag to prevent recursive clearExpired() calls
+      if (!this.isClearing) {
+        console.warn('Cache storage full, clearing old entries');
+        await this.clearExpired();
+      }
       try {
         localStorage.setItem(key, JSON.stringify(entry));
       } catch {
@@ -177,51 +186,50 @@ class LocalStorageCache implements CacheStorage {
   }
 
   async clearExpired(): Promise<number> {
-    const keys = await this.keys();
-    let cleared = 0;
+    // FIX: Guard against recursive calls from concurrent set() operations
+    if (this.isClearing) return 0;
+    this.isClearing = true;
 
-    for (const key of keys) {
-      try {
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          const entry = JSON.parse(stored) as CacheEntry<unknown>;
-          if (Date.now() > entry.timestamp + entry.ttl) {
-            localStorage.removeItem(key);
-            cleared++;
+    try {
+      const keys = await this.keys();
+      let cleared = 0;
+
+      for (const key of keys) {
+        try {
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const entry = JSON.parse(stored) as CacheEntry<unknown>;
+            if (Date.now() > entry.timestamp + entry.ttl) {
+              localStorage.removeItem(key);
+              cleared++;
+            }
           }
+        } catch {
+          localStorage.removeItem(key);
+          cleared++;
         }
-      } catch {
-        localStorage.removeItem(key);
-        cleared++;
       }
-    }
 
-    return cleared;
+      return cleared;
+    } finally {
+      this.isClearing = false;
+    }
   }
 }
 
-// Vercel KV implementation (production)
+// Vercel KV implementation (production) — goes through server-side proxy
+// to keep KV_REST_API_TOKEN out of the client bundle.
 class VercelKVCache implements CacheStorage {
-  private baseUrl: string;
-  private token: string;
-
-  constructor() {
-    // These would be set via environment variables in production
-    this.baseUrl = import.meta.env.VITE_KV_REST_API_URL || '';
-    this.token = import.meta.env.VITE_KV_REST_API_TOKEN || '';
-  }
-
-  private get isConfigured(): boolean {
-    return Boolean(this.baseUrl && this.token);
-  }
-
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
-    if (!this.isConfigured) return null;
-
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetchWithTimeout(
-        `${this.baseUrl}/get/${key}`,
-        { headers: { Authorization: `Bearer ${this.token}` } },
+        '/api/kv-cache',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ operation: 'get', key }),
+        },
         CACHE_CONFIG.KV_TIMEOUT_MS
       );
 
@@ -245,22 +253,20 @@ class VercelKVCache implements CacheStorage {
   }
 
   async set<T>(key: string, entry: CacheEntry<T>): Promise<void> {
-    if (!this.isConfigured) return;
-
     try {
       const ttlSeconds = Math.ceil(entry.ttl / 1000);
+      const authHeaders = await getAuthHeaders();
       await fetchWithTimeout(
-        `${this.baseUrl}/set/${key}`,
+        '/api/kv-cache',
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
+            operation: 'set',
+            key,
             value: JSON.stringify(entry),
-            ex: ttlSeconds // TTL in seconds for Redis
-          })
+            ex: ttlSeconds,
+          }),
         },
         CACHE_CONFIG.KV_TIMEOUT_MS
       );
@@ -270,14 +276,14 @@ class VercelKVCache implements CacheStorage {
   }
 
   async delete(key: string): Promise<void> {
-    if (!this.isConfigured) return;
-
     try {
+      const authHeaders = await getAuthHeaders();
       await fetchWithTimeout(
-        `${this.baseUrl}/del/${key}`,
+        '/api/kv-cache',
         {
           method: 'POST',
-          headers: { Authorization: `Bearer ${this.token}` }
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ operation: 'del', key }),
         },
         CACHE_CONFIG.KV_TIMEOUT_MS
       );
@@ -399,6 +405,11 @@ class CacheManager {
   /**
    * Phase 4: Swap city1 and city2 data in a comparison result
    * Used when cache hit is for reversed city order
+   *
+   * FIX: Now recursively swaps ALL nested city references including:
+   * - LLMMetricScore.city ('city1' <-> 'city2')
+   * - EvidenceItem.city (actual city name strings)
+   * - scoreDifference (negated)
    */
   private swapCityOrder(result: EnhancedComparisonResult): EnhancedComparisonResult {
     // Swap winner value
@@ -408,17 +419,56 @@ class CacheManager {
       return 'tie';
     };
 
+    // Original city names for evidence swapping
+    const originalCity1Name = result.city1.city;
+    const originalCity2Name = result.city2.city;
+
     // Swap categoryWinners values
     const swappedCategoryWinners: Record<string, 'city1' | 'city2' | 'tie'> = {};
     for (const [key, value] of Object.entries(result.categoryWinners)) {
       swappedCategoryWinners[key] = swapWinner(value);
     }
 
+    // Deep-swap city references in categories and their nested metrics
+    const swapCategories = (categories: EnhancedComparisonResult['city1']['categories']) => {
+      return categories.map(cat => ({
+        ...cat,
+        metrics: cat.metrics.map(metric => ({
+          ...metric,
+          llmScores: metric.llmScores.map(score => ({
+            ...score,
+            // Swap 'city1' <-> 'city2' position markers
+            city: score.city === 'city1' ? 'city2' as const
+              : score.city === 'city2' ? 'city1' as const
+              : score.city,
+            // Swap actual city names in evidence items
+            evidence: score.evidence?.map(ev => ({
+              ...ev,
+              city: ev.city === originalCity1Name ? originalCity2Name
+                : ev.city === originalCity2Name ? originalCity1Name
+                : ev.city
+            }))
+          }))
+        }))
+      }));
+    };
+
+    // Swap the city objects and fix all nested references
+    const swappedCity1 = {
+      ...result.city2,
+      categories: swapCategories(result.city2.categories)
+    };
+    const swappedCity2 = {
+      ...result.city1,
+      categories: swapCategories(result.city1.categories)
+    };
+
     return {
       ...result,
-      city1: result.city2,
-      city2: result.city1,
+      city1: swappedCity1,
+      city2: swappedCity2,
       winner: swapWinner(result.winner),
+      scoreDifference: -result.scoreDifference,
       categoryWinners: swappedCategoryWinners as typeof result.categoryWinners
     };
   }

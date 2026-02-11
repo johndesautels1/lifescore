@@ -39,7 +39,7 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // CORS
-  if (handleCors(req, res, 'open', { methods: 'POST, OPTIONS' })) return;
+  if (handleCors(req, res, 'same-app', { methods: 'POST, OPTIONS' })) return;
 
   // Method check
   if (req.method !== 'POST') {

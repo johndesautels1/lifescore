@@ -27,7 +27,7 @@
   --midnight: #0a1628;
   --cockpit-blue: #0d2847;
   --cockpit-blue-light: #1a3a5c;
-  --brushed-gold: #c9a227;
+  --brushed-gold: #e6b800; /* FIX: Improved contrast from #c9a227 to meet WCAG 4.5:1 */
   --judge-gold: #d4af37;
   --amber-active: #f59e0b;
   --ice-white: #f8fafc;
@@ -35,13 +35,13 @@
   --platinum: #e2e8f0;
   --error-red: #ef4444;
   --verdict-green: #10b981;
-  --rising-green: #22c55e;
+  --improving-green: #22c55e;
   --declining-red: #ef4444;
   --stable-amber: #f59e0b;
 
   /* Premium gradients */
   --gradient-midnight: linear-gradient(180deg, #0a1628 0%, #0d2847 100%);
-  --gradient-gold: linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #c9a227 100%);
+  --gradient-gold: linear-gradient(135deg, #e6b800 0%, #d4af37 50%, #e6b800 100%);
   --gradient-cockpit: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(8, 18, 32, 0.98) 100%);
   --gradient-bezel: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
   --gradient-card: linear-gradient(135deg, rgba(13, 40, 71, 0.8) 0%, rgba(10, 22, 40, 0.9) 100%);
@@ -271,6 +271,17 @@
     max-width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+}
+
+/* FIX: Ensure dropdown doesn't truncate on very small screens */
+@media (max-width: 480px) {
+  .report-selector-bar .judge-report-dropdown {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -911,9 +922,9 @@
 .judge-tab .action-buttons-section {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-  padding: 1rem 1.5rem 2rem;
-  max-width: 700px;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem 2rem;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -923,29 +934,27 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 1rem 0.75rem;
+  padding: 1.25rem 1rem;
   min-height: 80px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: #ffffff;
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .judge-tab .action-btn .btn-text {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #ffffff;
-  text-align: center;
-  line-height: 1.2;
   white-space: nowrap;
 }
 
@@ -964,30 +973,17 @@
   font-size: 1.5rem;
 }
 
-/* All action buttons uniform sizing */
+/* Remove old inconsistent sizing overrides */
 .judge-tab .action-btn.download-btn {
-  /* Same as base .action-btn — no overrides needed */
+  /* Same size as all other buttons via grid */
 }
 
-.judge-tab .action-btn.download-btn .btn-text {
-  font-size: 0.7rem;
-}
-
-/* Remove old margin hacks */
 .judge-tab .action-btn.save-btn {
-  margin-right: 0;
+  /* No extra margin — grid handles spacing */
 }
 
 .judge-tab .action-btn.forward-btn {
-  margin-left: 0;
-}
-
-/* Responsive: 2x2 grid on small screens */
-@media (max-width: 480px) {
-  .judge-tab .action-buttons-section {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 1rem;
-  }
+  /* No extra margin — grid handles spacing */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1153,13 +1149,13 @@
   letter-spacing: 0.1em;
 }
 
-.card-trend.trend-rising {
+.card-trend.trend-improving {
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.card-trend.trend-rising .trend-label {
-  color: var(--rising-green);
+.card-trend.trend-improving .trend-label {
+  color: var(--improving-green);
 }
 
 .card-trend.trend-stable {
@@ -1692,38 +1688,26 @@
     justify-content: center;
   }
 
-  /* FIX #10: Center buttons on mobile */
+  /* FIX: Action buttons — 2x2 grid on tablet */
   .action-buttons-section {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
     padding: 1rem;
   }
 
-  .action-btn {
-    flex: 0 1 auto;
-    min-width: 70px;
-    max-width: none;
-    justify-content: center;
-    padding: 0.6rem 0.5rem;
-    font-size: 0.38rem;
-    gap: 0.2rem;
+  .judge-tab .action-btn {
+    min-height: 70px;
+    padding: 1rem 0.75rem;
   }
 
-  /* FIX: Reset margins on mobile to ensure perfect centering */
-  .action-btn.save-btn,
-  .action-btn.forward-btn {
-    margin: 0;
+  .judge-tab .action-btn .btn-icon {
+    font-size: 1.25rem;
   }
 
-  .action-btn .btn-icon {
-    font-size: 0.85rem;
-  }
-
-  .action-btn .btn-text {
-    font-size: 0.85rem;
+  .judge-tab .action-btn .btn-text {
+    font-size: 0.7rem;
     white-space: nowrap;
-    color: #ffffff !important;  /* Crisp white text on mobile */
+    color: #ffffff;
   }
 
   /* Fix: Verdict winner badge centering on mobile */
@@ -1816,36 +1800,26 @@
     font-size: 0.7rem;
   }
 
-  /* FIX #10: Center buttons on small mobile */
+  /* FIX: Action buttons — 2x2 grid on small mobile */
   .action-buttons-section {
-    justify-content: center;
-    gap: 0.4rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
     padding: 0.75rem;
   }
 
-  .action-btn {
-    flex: 0 1 auto;
-    min-width: 60px;
-    max-width: none;
-    padding: 0.5rem 0.4rem;
-    font-size: 0.32rem;
-    gap: 0.15rem;
+  .judge-tab .action-btn {
+    min-height: 64px;
+    padding: 0.75rem 0.5rem;
   }
 
-  .action-btn .btn-icon {
-    font-size: 0.85rem;
+  .judge-tab .action-btn .btn-icon {
+    font-size: 1.1rem;
   }
 
-  /* FIX: Reset margins on mobile to ensure perfect centering */
-  .action-btn.save-btn,
-  .action-btn.forward-btn {
-    margin: 0;
-  }
-
-  .action-btn .btn-text {
-    font-size: 0.85rem;
+  .judge-tab .action-btn .btn-text {
+    font-size: 0.65rem;
     white-space: nowrap;
-    color: #ffffff !important;  /* Crisp white text on mobile */
+    color: #ffffff;
   }
 
   /* Fix: Verdict winner badge centering on small phones */

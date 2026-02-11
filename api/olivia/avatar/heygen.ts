@@ -216,7 +216,7 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // CORS - open for avatar
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - standard preset for avatar
   if (!applyRateLimit(req.headers, 'heygen', 'standard', res)) {

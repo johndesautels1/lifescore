@@ -173,13 +173,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[Auth] No profile found for user (will use defaults)');
       }
 
-      fetchingRef.current = null;
       return { profile: profile || null, preferences: preferences || null };
     } catch (error) {
       console.error('[Auth] Error in fetchUserData:', error);
-      fetchingRef.current = null;
       // Return nulls on timeout/error - app continues without DB profile
       return { profile: null, preferences: null };
+    } finally {
+      // Always reset fetchingRef — prevents permanent deadlock if fetch hangs or throws
+      fetchingRef.current = null;
     }
   }, [state.isConfigured]);
 
