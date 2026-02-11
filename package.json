@@ -37,5 +37,9 @@
   },
   "description": "LIFE SCORE - Legal Independence & Freedom Evaluation. Compare cities across 100 freedom metrics.",
   "author": "John E. Desautels & Associates",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "overrides": {
+    "path-to-regexp": "6.3.0",
+    "undici": "7.21.0"
+  }
 }

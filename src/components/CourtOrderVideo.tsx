@@ -93,11 +93,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
-  // FIX: Detect expired Replicate URLs (expire after ~24h)
-  const isExpiredUrl = useCallback((url: string | undefined | null): boolean => {
-    if (!url) return false;
-    return url.includes('replicate.delivery');
-  }, []);
 
   // ══════════════════════════════════════════════════════════════════════════
   // INVIDEO OVERRIDE STATE
