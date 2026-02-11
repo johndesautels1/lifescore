@@ -17,6 +17,7 @@ import type {
 } from '../types/avatar';
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateAvatarCost, calculateTTSCost } from '../utils/costCalculator';
+import { getAuthHeaders } from '../lib/supabase';
 
 const API_BASE = '/api/avatar';
 const POLL_INTERVAL = 3000; // 3 seconds
@@ -157,9 +158,10 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     try {
       console.log('[useJudgeVideo] Generating video for:', request.city1, 'vs', request.city2, 'genId:', myGenerationId);
 
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`${API_BASE}/generate-judge-video`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify(request),
         signal: controller.signal,
       });
