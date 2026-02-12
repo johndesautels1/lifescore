@@ -17,12 +17,13 @@ export function useTTS(
   options: {
     voiceId?: string;
     autoPlay?: boolean;
+    speed?: number;
     onStart?: () => void;
     onEnd?: () => void;
     onError?: (error: string) => void;
   } = {}
 ): UseTTSReturn {
-  const { voiceId, autoPlay: _autoPlay = false, onStart, onEnd, onError } = options;
+  const { voiceId, autoPlay: _autoPlay = false, speed = 1.0, onStart, onEnd, onError } = options;
   void _autoPlay; // Reserved for future auto-play on load feature
 
   // State
@@ -89,8 +90,9 @@ export function useTTS(
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
 
-      // Set new source and play
+      // Set new source, apply speed, and play
       audioRef.current.src = url;
+      audioRef.current.playbackRate = speed;
       await audioRef.current.play();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to play audio';
@@ -117,6 +119,7 @@ export function useTTS(
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = speed; // Match speed across all TTS paths
         utterance.onstart = () => {
           setIsPlaying(true);
           onStartRef.current?.();

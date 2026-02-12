@@ -39,6 +39,7 @@ interface TTSRequest {
   outputFormat?: string;
   stability?: number;
   similarityBoost?: number;
+  speed?: number;
 }
 
 // ============================================================================
@@ -76,7 +77,7 @@ function truncateText(text: string, maxChars: number = 5000): string {
  * OpenAI TTS fallback for Olivia (when ElevenLabs fails/quota exceeded)
  * Uses 'nova' voice - warm, conversational female
  */
-async function generateOpenAIAudio(text: string): Promise<{ audioUrl: string; durationMs: number }> {
+async function generateOpenAIAudio(text: string, speed: number = 1.0): Promise<{ audioUrl: string; durationMs: number }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   if (!openaiKey) {
     throw new Error('OPENAI_API_KEY not configured for TTS fallback');
@@ -95,6 +96,7 @@ async function generateOpenAIAudio(text: string): Promise<{ audioUrl: string; du
       voice: 'nova', // Warm, conversational female voice for Olivia
       input: text,
       response_format: 'mp3',
+      speed: speed || 1.0,
     }),
   });
 
@@ -177,6 +179,7 @@ export default async function handler(
           voice_settings: {
             stability,
             similarity_boost: similarityBoost,
+            speed: req.body.speed || 1.0,
           },
         }),
       },
@@ -190,7 +193,7 @@ export default async function handler(
       // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
       if (response.status === 401 || response.status === 429) {
         console.log('[OLIVIA/TTS] ElevenLabs failed, trying OpenAI fallback...');
-        const fallbackResult = await generateOpenAIAudio(processedText);
+        const fallbackResult = await generateOpenAIAudio(processedText, req.body.speed || 1.0);
         res.status(200).json({
           audioUrl: fallbackResult.audioUrl,
           durationMs: fallbackResult.durationMs,
@@ -235,7 +238,7 @@ export default async function handler(
       if (text) {
         console.log('[OLIVIA/TTS] Primary TTS failed, attempting OpenAI fallback...');
         const processedFallbackText = truncateText(text.trim());
-        const fallbackResult = await generateOpenAIAudio(processedFallbackText);
+        const fallbackResult = await generateOpenAIAudio(processedFallbackText, req.body.speed || 1.0);
         res.status(200).json({
           audioUrl: fallbackResult.audioUrl,
           durationMs: fallbackResult.durationMs,
