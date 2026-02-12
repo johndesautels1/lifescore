@@ -4,7 +4,7 @@
  * Admin-editable prompts viewer with sub-tab navigation.
  * Displayed in the Help Modal under the "Prompts" tab.
  *
- * Sub-tabs: InVideo | Judge | Olivia | Gamma | Evaluate (expandable)
+ * Sub-tabs: Evaluate | Judge | Olivia | Gamma | Video | InVideo
  * Admin can view and edit prompts inline.
  */
 
@@ -30,13 +30,14 @@ interface AppPrompt {
   updated_at: string;
 }
 
-// Sub-tab configuration
+// Sub-tab configuration — ordered by evaluation pipeline flow
 const PROMPT_CATEGORIES: { id: string; label: string; icon: string }[] = [
-  { id: 'invideo', label: 'InVideo', icon: '🎬' },
+  { id: 'evaluate', label: 'Evaluate', icon: '🔬' },
   { id: 'judge', label: 'Judge', icon: '⚖️' },
   { id: 'olivia', label: 'Olivia', icon: '🎙️' },
   { id: 'gamma', label: 'Gamma', icon: '📊' },
-  { id: 'evaluate', label: 'Evaluate', icon: '🔬' },
+  { id: 'video', label: 'Video', icon: '🎥' },
+  { id: 'invideo', label: 'InVideo', icon: '🎬' },
 ];
 
 const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
@@ -50,7 +51,7 @@ const PromptsManager: React.FC = () => {
   const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
 
   // State
-  const [activeCategory, setActiveCategory] = useState('invideo');
+  const [activeCategory, setActiveCategory] = useState('evaluate');
   const [prompts, setPrompts] = useState<AppPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
