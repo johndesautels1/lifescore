@@ -709,6 +709,18 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
       return null;
     }
 
+    // Skip cache entries with expired Replicate delivery URLs (~24h expiry)
+    if (data?.video_url?.includes('replicate.delivery')) {
+      console.log('[GROK-VIDEO] Cache hit has expired Replicate URL, forcing regeneration');
+      return null;
+    }
+
+    // Skip cache entries with no video URL (incomplete records)
+    if (data && !data.video_url) {
+      console.log('[GROK-VIDEO] Cache hit has no video URL, forcing regeneration');
+      return null;
+    }
+
     return data;
   } catch (err) {
     console.warn('[GROK-VIDEO] Cache check failed:', err);
@@ -730,6 +742,19 @@ async function checkProcessing(userId: string, comparisonId: string, videoType: 
     if (error) {
       console.warn('[GROK-VIDEO] Processing check error:', error.message);
       return null;
+    }
+
+    // Skip stale records stuck in processing for > 10 minutes (dead generations)
+    if (data?.created_at) {
+      const ageMs = Date.now() - new Date(data.created_at).getTime();
+      if (ageMs > 10 * 60 * 1000) {
+        console.log('[GROK-VIDEO] Stale processing record (', Math.round(ageMs / 60000), 'min old), marking failed');
+        await supabaseAdmin
+          .from('grok_videos')
+          .update({ status: 'failed', error_message: 'Generation timed out (stale)' })
+          .eq('id', data.id);
+        return null;
+      }
     }
 
     return data;
