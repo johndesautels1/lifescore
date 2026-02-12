@@ -705,16 +705,14 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                             👁️
                           </button>
                         )}
-                        {report.videoUrl && report.videoStatus === 'ready' && (
-                          <a
-                            href={report.videoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        {report.videoUrl && report.videoStatus === 'ready' && onViewJudgeReport && (
+                          <button
                             className="action-btn view-btn"
+                            onClick={() => onViewJudgeReport(report)}
                             title="Watch Video"
                           >
                             🎬
-                          </a>
+                          </button>
                         )}
                         <button
                           className="action-btn delete-btn"
