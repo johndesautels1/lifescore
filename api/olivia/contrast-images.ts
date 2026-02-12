@@ -4,9 +4,10 @@
  * Generates AI contrast images using Flux (via Replicate) to visualize
  * the lived experience differences between two cities for specific metrics.
  *
- * Example: Cannabis legality metric
- * - City A (legal): Person enjoying coffee in a sunny cafe
- * - City B (illegal): Person looking worried near warning signs
+ * Images are downloaded from Replicate and stored permanently in Supabase
+ * Storage so URLs never expire (Replicate CDN URLs expire after ~1 hour).
+ *
+ * Storage path: contrast-images/{cache_key}_a.webp / _b.webp
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -17,6 +18,9 @@ import { requireAuth } from '../shared/auth.js';
 // Replicate API configuration
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const FLUX_MODEL = 'black-forest-labs/flux-schnell'; // Fast, cheap model
+
+// Supabase Storage bucket for contrast images
+const STORAGE_BUCKET = 'contrast-images';
 
 interface ContrastImageRequest {
   topic: string;
@@ -47,7 +51,7 @@ interface ContrastImageResponse {
   cached: boolean;
 }
 
-// Initialize Supabase for caching
+// Initialize Supabase for caching + storage
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -60,12 +64,80 @@ const getSupabaseClient = () => {
 };
 
 // Generate cache key for the image pair
-// FIX: Sort cities alphabetically so "Austin vs Denver" and "Denver vs Austin"
+// Sort cities alphabetically so "Austin vs Denver" and "Denver vs Austin"
 // share the same cache key — contrast images are symmetric and order-independent
 const getCacheKey = (cityA: string, cityB: string, metricId: string): string => {
   const [a, b] = [cityA.toLowerCase().replace(/\s+/g, '_'), cityB.toLowerCase().replace(/\s+/g, '_')].sort();
   return `contrast_${a}_${b}_${metricId}`;
 };
+
+// Get the public URL for a file in Supabase Storage
+function getStoragePublicUrl(supabaseUrl: string, storagePath: string): string {
+  return `${supabaseUrl}/storage/v1/object/public/${STORAGE_BUCKET}/${storagePath}`;
+}
+
+// Download an image from a URL and return as Buffer
+async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string }> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download image: ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') || 'image/webp';
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  return { buffer, contentType };
+}
+
+// Upload an image to Supabase Storage and return the public URL
+async function uploadToStorage(
+  storagePath: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  if (!supabaseUrl) return null;
+
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(storagePath, buffer, {
+      contentType,
+      cacheControl: '31536000', // 1 year cache (immutable content)
+      upsert: true, // Overwrite if regenerated
+    });
+
+  if (error) {
+    console.error(`[contrast-images] Storage upload failed for ${storagePath}:`, error.message);
+    return null;
+  }
+
+  return getStoragePublicUrl(supabaseUrl, storagePath);
+}
+
+// Download from Replicate and persist to Supabase Storage
+async function persistImage(
+  replicateUrl: string,
+  storagePath: string
+): Promise<string> {
+  try {
+    const { buffer, contentType } = await downloadImage(replicateUrl);
+    const permanentUrl = await uploadToStorage(storagePath, buffer, contentType);
+
+    if (permanentUrl) {
+      console.log(`[contrast-images] Persisted to storage: ${storagePath}`);
+      return permanentUrl;
+    }
+  } catch (err) {
+    console.error(`[contrast-images] Persist failed, falling back to Replicate URL:`, err);
+  }
+
+  // Fallback: return the Replicate URL (will expire, but at least works short-term)
+  return replicateUrl;
+}
 
 // Check cache for existing images
 async function checkCache(cacheKey: string): Promise<ContrastImageResponse | null> {
@@ -73,7 +145,6 @@ async function checkCache(cacheKey: string): Promise<ContrastImageResponse | nul
   if (!supabase) return null;
 
   try {
-    // FIX 2026-01-29: Use maybeSingle() - cache entry may not exist
     const { data, error } = await supabase
       .from('contrast_image_cache')
       .select('*')
@@ -87,8 +158,8 @@ async function checkCache(cacheKey: string): Promise<ContrastImageResponse | nul
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
 
     if (cacheAge > thirtyDays) {
-      // Cache expired, delete it
-      await supabase.from('contrast_image_cache').delete().eq('cache_key', cacheKey);
+      // Cache expired — delete the storage files and the cache row
+      await cleanupCacheEntry(supabase, cacheKey, data);
       return null;
     }
 
@@ -103,10 +174,31 @@ async function checkCache(cacheKey: string): Promise<ContrastImageResponse | nul
   }
 }
 
-// Save to cache
+// Clean up expired cache entry and its storage files
+async function cleanupCacheEntry(
+  supabase: ReturnType<typeof createClient>,
+  cacheKey: string,
+  data: { city_a_storage_path?: string; city_b_storage_path?: string }
+): Promise<void> {
+  try {
+    // Delete storage files if they exist
+    const pathsToDelete = [data.city_a_storage_path, data.city_b_storage_path].filter(Boolean) as string[];
+    if (pathsToDelete.length > 0) {
+      await supabase.storage.from(STORAGE_BUCKET).remove(pathsToDelete);
+    }
+
+    // Delete the cache row
+    await supabase.from('contrast_image_cache').delete().eq('cache_key', cacheKey);
+  } catch (err) {
+    console.error('[contrast-images] Cache cleanup failed:', err);
+  }
+}
+
+// Save to cache (now includes storage paths)
 async function saveToCache(
   cacheKey: string,
-  response: ContrastImageResponse
+  response: ContrastImageResponse,
+  storagePaths: { cityA: string; cityB: string }
 ): Promise<void> {
   const supabase = getSupabaseClient();
   if (!supabase) return;
@@ -116,8 +208,10 @@ async function saveToCache(
       cache_key: cacheKey,
       city_a_url: response.cityAImage.url,
       city_a_caption: response.cityAImage.caption,
+      city_a_storage_path: storagePaths.cityA,
       city_b_url: response.cityBImage.url,
       city_b_caption: response.cityBImage.caption,
+      city_b_storage_path: storagePaths.cityB,
       topic: response.topic,
       created_at: new Date().toISOString(),
     });
@@ -267,22 +361,35 @@ export default async function handler(
       negativeCity.context
     );
 
-    // Generate both images in parallel
-    const [positiveUrl, negativeUrl] = await Promise.all([
+    // Generate both images in parallel via Replicate
+    const [positiveReplicateUrl, negativeReplicateUrl] = await Promise.all([
       generateFluxImage(positivePrompt),
       generateFluxImage(negativePrompt),
     ]);
 
-    // Build response with images assigned to correct cities
+    // Storage paths for permanent storage
+    const cityAStoragePath = `${cacheKey}_a.webp`;
+    const cityBStoragePath = `${cacheKey}_b.webp`;
+
+    // Download from Replicate and upload to Supabase Storage (in parallel)
+    const cityAReplicateUrl = cityAIsBetter ? positiveReplicateUrl : negativeReplicateUrl;
+    const cityBReplicateUrl = cityAIsBetter ? negativeReplicateUrl : positiveReplicateUrl;
+
+    const [cityAPermanentUrl, cityBPermanentUrl] = await Promise.all([
+      persistImage(cityAReplicateUrl, cityAStoragePath),
+      persistImage(cityBReplicateUrl, cityBStoragePath),
+    ]);
+
+    // Build response with permanent Supabase Storage URLs
     const response: ContrastImageResponse = {
       cityAImage: {
-        url: cityAIsBetter ? positiveUrl : negativeUrl,
+        url: cityAPermanentUrl,
         caption: cityAIsBetter
           ? `Freedom and ease in ${body.cityA.name}`
           : `Restrictions in ${body.cityA.name}`,
       },
       cityBImage: {
-        url: cityAIsBetter ? negativeUrl : positiveUrl,
+        url: cityBPermanentUrl,
         caption: cityAIsBetter
           ? `Restrictions in ${body.cityB.name}`
           : `Freedom and ease in ${body.cityB.name}`,
@@ -291,10 +398,13 @@ export default async function handler(
       cached: false,
     };
 
-    // Save to cache for future requests
-    await saveToCache(cacheKey, response);
+    // Save to cache with storage paths for future cleanup
+    await saveToCache(cacheKey, response, {
+      cityA: cityAStoragePath,
+      cityB: cityBStoragePath,
+    });
 
-    console.log(`[contrast-images] Successfully generated images for ${body.topic}`);
+    console.log(`[contrast-images] Successfully generated and persisted images for ${body.topic}`);
     res.status(200).json(response);
 
   } catch (error) {
