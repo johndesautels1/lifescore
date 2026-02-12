@@ -12,6 +12,7 @@ import {
   storeCostBreakdown,
   formatCost,
   toApiCostRecordInsert,
+  type APICallCost,
   type ComparisonCostBreakdown,
   type CostSummary
 } from '../utils/costCalculator';
@@ -34,7 +35,6 @@ interface CostDashboardProps {
 export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [costs, setCosts] = useState<ComparisonCostBreakdown[]>([]);
-  const [_dbCosts, setDbCosts] = useState<ApiCostRecord[]>([]);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonCostBreakdown | null>(null);
   const [showPricing, setShowPricing] = useState(false);
@@ -46,31 +46,119 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
 
   const dbConfigured = isSupabaseConfigured();
 
+  // Convert a DB ApiCostRecord to ComparisonCostBreakdown for display
+  const dbRecordToBreakdown = (record: ApiCostRecord): ComparisonCostBreakdown => {
+    const makeCallCost = (provider: string, model: string, total: number, context: string): APICallCost[] =>
+      total > 0 ? [{ provider, model, inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: total, timestamp: new Date(record.created_at).getTime(), context }] : [];
+
+    const opusJudge: APICallCost | null = record.opus_judge_total > 0
+      ? { provider: 'claude-opus', model: 'claude-opus-4-5', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.opus_judge_total, timestamp: new Date(record.created_at).getTime(), context: 'judge' }
+      : null;
+
+    return {
+      comparisonId: record.comparison_id,
+      city1: record.city1_name,
+      city2: record.city2_name,
+      mode: record.mode,
+      timestamp: new Date(record.created_at).getTime(),
+      claudeSonnet: makeCallCost('claude-sonnet', 'claude-sonnet-4-5', record.claude_sonnet_total, 'evaluation'),
+      gpt4o: makeCallCost('gpt-4o', 'gpt-4o', record.gpt4o_total, 'evaluation'),
+      gemini: makeCallCost('gemini-3-pro', 'gemini-3-pro', record.gemini_total, 'evaluation'),
+      grok: makeCallCost('grok-4', 'grok-4', record.grok_total, 'evaluation'),
+      perplexity: makeCallCost('perplexity', 'perplexity-sonar', record.perplexity_total, 'evaluation'),
+      evaluatorTotal: record.claude_sonnet_total + record.gpt4o_total + record.gemini_total + record.grok_total + record.perplexity_total,
+      opusJudge,
+      judgeTotal: record.opus_judge_total,
+      tavilyResearch: null,
+      tavilySearches: [],
+      tavilyTotal: record.tavily_total,
+      gamma: null,
+      gammaTotal: record.gamma_total,
+      olivia: [],
+      oliviaTotal: record.olivia_total,
+      tts: [],
+      ttsTotal: record.tts_total,
+      avatar: [],
+      avatarTotal: record.avatar_total,
+      kling: [],
+      klingTotal: record.kling_total,
+      grandTotal: record.grand_total,
+    };
+  };
+
+  // Build a CostSummary from an array of breakdowns
+  const buildSummary = (items: ComparisonCostBreakdown[]): CostSummary => {
+    const enhancedCount = items.filter(c => c.mode === 'enhanced').length;
+    const simpleCount = items.filter(c => c.mode === 'simple').length;
+    const gt = items.reduce((s, c) => s + (c.grandTotal || 0), 0);
+    return {
+      totalComparisons: items.length,
+      simpleComparisons: simpleCount,
+      enhancedComparisons: enhancedCount,
+      grandTotal: gt,
+      tavilyCost: items.reduce((s, c) => s + (c.tavilyTotal || 0), 0),
+      claudeSonnetCost: items.reduce((s, c) => s + c.claudeSonnet.reduce((a, x) => a + x.totalCost, 0), 0),
+      gpt4oCost: items.reduce((s, c) => s + c.gpt4o.reduce((a, x) => a + x.totalCost, 0), 0),
+      geminiCost: items.reduce((s, c) => s + c.gemini.reduce((a, x) => a + x.totalCost, 0), 0),
+      grokCost: items.reduce((s, c) => s + c.grok.reduce((a, x) => a + x.totalCost, 0), 0),
+      perplexityCost: items.reduce((s, c) => s + c.perplexity.reduce((a, x) => a + x.totalCost, 0), 0),
+      claudeOpusCost: items.reduce((s, c) => s + (c.opusJudge?.totalCost || 0), 0),
+      gammaCost: items.reduce((s, c) => s + (c.gammaTotal || 0), 0),
+      oliviaCost: items.reduce((s, c) => s + (c.oliviaTotal || 0), 0),
+      ttsCost: items.reduce((s, c) => s + (c.ttsTotal || 0), 0),
+      avatarCost: items.reduce((s, c) => s + (c.avatarTotal || 0), 0),
+      klingCost: items.reduce((s, c) => s + (c.klingTotal || 0), 0),
+      totalEvaluatorCost: items.reduce((s, c) => s + (c.evaluatorTotal || 0), 0),
+      totalJudgeCost: items.reduce((s, c) => s + (c.judgeTotal || 0), 0),
+      totalGammaCost: items.reduce((s, c) => s + (c.gammaTotal || 0), 0),
+      totalOliviaCost: items.reduce((s, c) => s + (c.oliviaTotal || 0), 0),
+      totalTTSCost: items.reduce((s, c) => s + (c.ttsTotal || 0), 0),
+      totalAvatarCost: items.reduce((s, c) => s + (c.avatarTotal || 0), 0),
+      totalKlingCost: items.reduce((s, c) => s + (c.klingTotal || 0), 0),
+      avgCostPerEnhanced: enhancedCount > 0 ? gt / enhancedCount : 0,
+      avgCostPerSimple: simpleCount > 0 ? gt / simpleCount : 0,
+    };
+  };
+
   // Load cost data from database (if authenticated) or localStorage
   const loadCosts = useCallback(async () => {
     setIsLoading(true);
 
     // Always load localStorage data first (fast, offline-capable)
     const localCosts = getStoredCosts();
-    setCosts(localCosts);
-    setSummary(calculateCostSummary());
 
     // If user is authenticated and DB is configured, load from database
     if (user && dbConfigured) {
       try {
         const { data, error } = await getUserApiCosts(user.id, { limit: 100 });
         if (!error && data.length > 0) {
-          setDbCosts(data);
           setDataSource('database');
           setLastSaved(new Date(data[0].created_at));
-        } else if (localCosts.length > 0) {
-          setDataSource('local');
+
+          // Merge: DB records as primary, supplement with local-only records
+          const dbBreakdowns = data.map(dbRecordToBreakdown);
+          const dbComparisonIds = new Set(data.map(r => r.comparison_id));
+          const localOnly = localCosts.filter(c => !dbComparisonIds.has(c.comparisonId));
+          const merged = [...dbBreakdowns, ...localOnly];
+          setCosts(merged);
+          setSummary(buildSummary(merged));
+        } else {
+          // No DB data — use local
+          setCosts(localCosts);
+          setSummary(calculateCostSummary());
+          if (localCosts.length > 0) {
+            setDataSource('local');
+          }
         }
       } catch (err) {
         console.warn('[CostDashboard] Failed to load from database, using local:', err);
+        setCosts(localCosts);
+        setSummary(calculateCostSummary());
         setDataSource('local');
       }
     } else {
+      setCosts(localCosts);
+      setSummary(calculateCostSummary());
       setDataSource('local');
       if (localCosts.length > 0) {
         setLastSaved(new Date());
@@ -104,7 +192,6 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
             console.error('[CostDashboard] Failed to delete from database:', error);
             setSaveMessage('✗ Cleared local data, but database deletion failed');
           } else {
-            setDbCosts([]);
             setSaveMessage('✓ All data deleted from database and browser');
           }
         } catch (err) {
