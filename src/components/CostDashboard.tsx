@@ -196,7 +196,6 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
             console.error('[CostDashboard] Failed to delete from database:', error);
             setSaveMessage('✗ Cleared local data, but database deletion failed');
           } else {
-            setDbCosts([]);
             setSaveMessage('✓ All data deleted from database and browser');
           }
         } catch (err) {
