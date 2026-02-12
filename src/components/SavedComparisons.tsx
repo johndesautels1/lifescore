@@ -407,7 +407,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
               >
                 {isSyncing ? '⟳ Syncing...' : '☁️ Sync Cloud'}
               </button>
-              {syncStatus.connected ? (
+              {syncStatus.connected && (
                 <>
                   <button className="toolbar-btn sync-btn" onClick={handleSync} title="Sync to GitHub">
                     ⬆ Push
@@ -419,12 +419,16 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                     Disconnect
                   </button>
                 </>
-              ) : (
+              )}
+            </div>
+            {/* Connect GitHub - centered on page, separate from toolbar-left */}
+            {!syncStatus.connected && (
+              <div className="toolbar-center">
                 <button className="toolbar-btn github-connect-btn" onClick={() => setShowGitHubModal(true)}>
                   <span className="github-icon">⬡</span> Connect GitHub
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             <div className="toolbar-right">
               <button className="toolbar-btn" onClick={handleExport} title="Export to file">
                 📤 Export
