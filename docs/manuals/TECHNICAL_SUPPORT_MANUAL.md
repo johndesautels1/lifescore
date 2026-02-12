@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 2.4
-**Last Updated:** February 5, 2026
+**Version:** 3.0
+**Last Updated:** February 12, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -9,23 +9,24 @@
 ## Table of Contents
 
 1. [System Architecture](#1-system-architecture)
-2. [Technology Stack](#2-technology-stack)
-3. [API Reference](#3-api-reference)
-4. [Database Schema](#4-database-schema)
-5. [Authentication & Authorization](#5-authentication--authorization)
-6. [LLM Provider Integration](#6-llm-provider-integration)
-7. [Tavily Integration](#7-tavily-integration)
-8. [Video Generation Pipeline](#8-video-generation-pipeline)
-9. [Performance Optimization](#9-performance-optimization)
-10. [Error Handling & Logging](#10-error-handling--logging)
-11. [Deployment & Infrastructure](#11-deployment--infrastructure)
-12. [Debugging Procedures](#12-debugging-procedures)
-13. [Known Issues & Workarounds](#13-known-issues--workarounds)
-14. [Monitoring & Alerts](#14-monitoring--alerts)
-15. [Security Considerations](#15-security-considerations)
-16. [API Quota Monitoring System](#16-api-quota-monitoring-system)
-17. [TTS Fallback System](#17-tts-fallback-system)
-18. [Dual-Storage Save Architecture](#18-dual-storage-save-architecture)
+2. [Coding Standards & Developer Guide](#2-coding-standards--developer-guide)
+3. [Technology Stack](#3-technology-stack)
+4. [API Reference](#4-api-reference)
+5. [Database Schema](#5-database-schema)
+6. [Authentication & Authorization](#6-authentication--authorization)
+7. [LLM Provider Integration](#7-llm-provider-integration)
+8. [Tavily Integration](#8-tavily-integration)
+9. [Video Generation Pipeline](#9-video-generation-pipeline)
+10. [Performance Optimization](#10-performance-optimization)
+11. [Error Handling & Logging](#11-error-handling--logging)
+12. [Deployment & Infrastructure](#12-deployment--infrastructure)
+13. [Debugging Procedures](#13-debugging-procedures)
+14. [Known Issues & Workarounds](#14-known-issues--workarounds)
+15. [Monitoring & Alerts](#15-monitoring--alerts)
+16. [Security Considerations](#16-security-considerations)
+17. [API Quota Monitoring System](#17-api-quota-monitoring-system)
+18. [TTS Fallback System](#18-tts-fallback-system)
+19. [Dual-Storage Save Architecture](#19-dual-storage-save-architecture)
 
 ---
 
@@ -70,31 +71,509 @@ User Request → Vercel Function → Tavily Research → LLM Evaluation →
 ### 1.3 Key Directories
 
 ```
-D:\lifescore\
-├── api/                    # Vercel serverless functions
-│   ├── evaluate.ts         # Main comparison endpoint
-│   ├── judge.ts            # Opus consensus evaluation
-│   ├── gamma.ts            # Report generation
-│   ├── olivia/             # AI assistant endpoints
-│   ├── video/              # Video generation
-│   └── shared/             # Shared utilities
-├── src/
-│   ├── components/         # React components
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utility libraries
-│   ├── data/               # Static data (metros.ts)
-│   ├── types/              # TypeScript definitions
-│   └── utils/              # Helper functions
+lifescore/
+├── api/                    # Vercel serverless functions (backend)
+│   ├── shared/             #   Shared utilities (auth, CORS, rate limiting)
+│   ├── avatar/             #   Judge avatar video generation (Simli, Wav2Lip)
+│   ├── olivia/             #   Olivia AI assistant endpoints
+│   │   └── avatar/         #     Olivia avatar streaming (WebRTC)
+│   ├── video/              #   Grok & InVideo video generation
+│   ├── stripe/             #   Billing & subscription management
+│   ├── user/               #   User account operations (GDPR delete/export)
+│   ├── admin/              #   Admin-only endpoints
+│   ├── consent/            #   GDPR consent logging
+│   ├── usage/              #   API quota checking
+│   └── emilia/             #   Emilia help widget backend
+│
+├── src/                    # React TypeScript frontend
+│   ├── components/         #   React components (UI)
+│   ├── services/           #   Business logic & API clients
+│   ├── hooks/              #   Custom React hooks
+│   ├── types/              #   TypeScript type definitions
+│   ├── contexts/           #   React context providers (auth)
+│   ├── data/               #   Static data (metrics, cities, tooltips)
+│   ├── shared/             #   Code shared between frontend & backend
+│   ├── utils/              #   Utility functions
+│   └── lib/                #   Library wrappers (Supabase client, etc.)
+│
+├── supabase/               # Database
+│   └── migrations/         #   PostgreSQL migration files (run in order)
+│
+├── public/                 # Static assets (icons, logos, PWA manifest)
+├── scripts/                # Build & utility scripts
 ├── docs/                   # Documentation
-├── supabase/               # Database migrations
-└── public/                 # Static assets
+│   ├── legal/              #   Legal compliance (DPAs, GDPR)
+│   ├── manuals/            #   User & support manuals
+│   └── handoffs/           #   Session handoff notes
+└── .claude-temp/           # Temporary files (gitignored)
 ```
 
 ---
 
-## 2. Technology Stack
+## 2. Coding Standards & Developer Guide
 
-### 2.1 Frontend
+This section defines the commenting conventions, naming rules, and structural map that every developer working on LIFE SCORE must follow. For the full standalone reference, see also `docs/CODING_STANDARDS.md`.
+
+### 2.1 File Headers (Required on Every File)
+
+Every `.ts` / `.tsx` file must start with a JSDoc header:
+
+```typescript
+/**
+ * ComponentName / ServiceName / HookName
+ *
+ * Brief one-line description of what this file does.
+ *
+ * Key responsibilities:
+ * - Responsibility 1
+ * - Responsibility 2
+ *
+ * Dependencies: list key external services (Supabase, Stripe, Simli, etc.)
+ *
+ * @module components/EnhancedComparison
+ */
+```
+
+**For API endpoints, add the route:**
+
+```typescript
+/**
+ * Evaluate API Endpoint
+ *
+ * Runs multi-LLM city comparison with Tavily research enrichment.
+ *
+ * POST /api/evaluate
+ *
+ * Body: { city1: string, city2: string, metrics: string[], llm: string }
+ * Returns: ComparisonResult with scored metrics and evidence
+ *
+ * Dependencies: OpenAI, Claude, Tavily, Supabase
+ *
+ * @module api/evaluate
+ */
+```
+
+### 2.2 Section Dividers
+
+Use section dividers to break large files into logical blocks:
+
+```typescript
+// ============================================================================
+// SECTION NAME
+// ============================================================================
+```
+
+Use for: state declarations, event handlers, render helpers, effects, API calls.
+
+Example in a component:
+
+```typescript
+// ============================================================================
+// STATE & REFS
+// ============================================================================
+
+const [cities, setCities] = useState<City[]>([]);
+const abortRef = useRef<AbortController | null>(null);
+
+// ============================================================================
+// DATA FETCHING
+// ============================================================================
+
+const fetchComparison = async () => { ... };
+
+// ============================================================================
+// EVENT HANDLERS
+// ============================================================================
+
+const handleSubmit = () => { ... };
+
+// ============================================================================
+// RENDER
+// ============================================================================
+
+return ( ... );
+```
+
+### 2.3 Function Comments
+
+**Public / exported functions** — always document with JSDoc:
+
+```typescript
+/**
+ * Fetches and scores a city comparison using the selected LLM provider.
+ *
+ * @param city1 - First city name (e.g. "Austin, TX")
+ * @param city2 - Second city name (e.g. "Lisbon, Portugal")
+ * @param metrics - Array of metric IDs to evaluate
+ * @returns Scored comparison result with evidence
+ * @throws {ApiError} When the LLM provider is unreachable
+ */
+export async function evaluateCities(
+  city1: string,
+  city2: string,
+  metrics: string[]
+): Promise<ComparisonResult> { ... }
+```
+
+**Private / internal functions** — a brief comment is sufficient:
+
+```typescript
+/** Normalizes city name for cache key lookup. */
+function normalizeCityKey(name: string): string { ... }
+```
+
+**Trivial getters/setters** — no comment needed.
+
+### 2.4 Inline Comments
+
+Use inline comments to explain **why**, not **what**:
+
+```typescript
+// BAD - describes what the code does (obvious from reading it)
+// Set loading to true
+setLoading(true);
+
+// GOOD - explains why this specific approach is used
+// Abort any in-flight request before starting a new one to prevent race conditions
+abortRef.current?.abort();
+abortRef.current = new AbortController();
+```
+
+### 2.5 Fix & Session Markers
+
+When fixing bugs or making changes tied to a specific session/issue, use this format:
+
+```typescript
+// FIX #<number>: Brief description of what was fixed and why
+// Example:
+// FIX #73: Import cost tracking utilities — was causing undefined errors on CostDashboard
+
+// SESSION <id>: Brief description of what was added/changed
+// Example:
+// SESSION LIFESCORE-AUDIT-20260123-001: Added GDPR consent logging
+```
+
+### 2.6 TODO / FIXME / HACK
+
+Use these markers consistently so they can be grep'd:
+
+```typescript
+// TODO: Description of future work needed
+// FIXME: Description of known bug that needs fixing
+// HACK: Description of workaround — explain WHY it's a hack and what the proper fix would be
+// PERF: Performance-related note (optimization applied or needed)
+// SECURITY: Security-sensitive code that needs extra review attention
+```
+
+### 2.7 SQL Migration Comments
+
+Every migration file must start with:
+
+```sql
+-- ============================================================
+-- Migration: Short Title
+-- Date: YYYY-MM-DD
+-- Author: Name
+--
+-- Purpose:
+--   What this migration does and why.
+--
+-- Tables affected: table1, table2
+-- Reversible: yes/no
+-- ============================================================
+```
+
+For individual statements in migrations, comment what each block does:
+
+```sql
+-- Add user_id index for RLS policy performance
+CREATE INDEX IF NOT EXISTS idx_reports_user_id ON public.reports(user_id);
+
+-- Drop duplicate index (user_preferences_user_id_idx duplicates the UNIQUE constraint)
+DROP INDEX IF EXISTS public.user_preferences_user_id_idx;
+```
+
+### 2.8 CSS Comments
+
+Group related styles with headers:
+
+```css
+/* ============================================================================
+   Component: CitySelector
+   ============================================================================ */
+
+/* --- Layout --- */
+.container { ... }
+
+/* --- Interactive States --- */
+.container:hover { ... }
+
+/* --- Responsive (mobile-first) --- */
+@media (max-width: 768px) { ... }
+```
+
+### 2.9 What NOT to Comment
+
+- Obvious code (`const count = 0; // initialize count to zero`)
+- Closing braces (`} // end if`, `} // end function`)
+- Auto-generated code unless modified
+- Commented-out code — delete it, git has history
+
+### 2.10 Naming Conventions
+
+#### Files
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| Components | PascalCase | `CitySelector.tsx` |
+| Services | camelCase | `gammaService.ts` |
+| Hooks | camelCase with `use` prefix | `useComparison.ts` |
+| Types | camelCase | `metrics.ts` |
+| Utils | camelCase | `costCalculator.ts` |
+| API endpoints | kebab-case | `judge-report.ts` |
+| CSS modules | PascalCase matching component | `CitySelector.module.css` |
+| Migrations | `YYYYMMDD_description.sql` | `20260212_advisor_remediation.sql` |
+
+#### Code
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| Components | PascalCase | `EnhancedComparison` |
+| Functions | camelCase | `fetchComparison()` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+| Types/Interfaces | PascalCase | `ComparisonResult` |
+| Enums | PascalCase | `AvatarProvider` |
+| Boolean variables | `is`/`has`/`should` prefix | `isLoading`, `hasAccess` |
+| Event handlers | `handle` prefix | `handleSubmit()` |
+| Callbacks/props | `on` prefix | `onComplete` |
+
+#### Branches
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| Feature | `feature/<description>` | `feature/olivia-chat` |
+| Fix | `fix/<description>` | `fix/judge-timeout` |
+| Claude sessions | `claude/<auto-generated>` | `claude/lifescore-debug-42MtS` |
+
+### 2.11 Component Guide
+
+#### Core Application
+
+| Component | What It Does |
+|-----------|-------------|
+| `App.tsx` | Root component. Manages tabs, auth gate, lazy-loading of tab content. |
+| `LoginScreen.tsx` | Supabase auth — email/password login, signup, password reset. |
+| `Header.tsx` | Top navigation bar with logo, user menu, theme toggle. |
+| `Footer.tsx` | Bottom bar with legal links and copyright. |
+| `TabNavigation.tsx` | Main tab switcher (Compare, Results, Visuals, Judge, Olivia, etc.). |
+
+#### Comparison Engine
+
+| Component | What It Does |
+|-----------|-------------|
+| `CitySelector.tsx` | Typeahead city picker. User selects two cities to compare. |
+| `EnhancedComparison.tsx` | The main comparison view. Orchestrates multi-LLM evaluation, shows metric scores, evidence panels, consensus voting. Largest component (~2,400 lines). |
+| `Results.tsx` | Displays scored metric table after comparison completes. |
+| `SavedComparisons.tsx` | Lists user's saved comparisons with search, delete, re-open. |
+| `DealbreakersWarning.tsx` | Warns when a category weight exceeds safe thresholds. |
+| `WeightPresets.tsx` | Predefined category weight configurations. |
+| `ScoreMethodology.tsx` | Explains how the 100-metric scoring system works. |
+
+#### AI Assistants
+
+| Component | What It Does |
+|-----------|-------------|
+| `AskOlivia.tsx` | Full chat interface with Olivia (AI assistant). Sends messages, displays responses, handles TTS and avatar streaming. |
+| `OliviaChatBubble.tsx` | Individual chat message bubble with avatar and formatting. |
+| `OliviaAvatar.tsx` | Simli WebRTC video player — renders Olivia's face in real-time. |
+| `EmiliaChat.tsx` | Lightweight help widget. Uses OpenAI assistant for support questions. |
+
+#### Judge & Legal
+
+| Component | What It Does |
+|-----------|-------------|
+| `JudgeTab.tsx` | AI judge that renders a legal-style verdict. Generates analysis, creates avatar video, shows verdict with reasoning. |
+| `JudgeVideo.tsx` | Video player for pre-rendered judge avatar videos. |
+| `CourtOrderVideo.tsx` | Formatted court-order-style video report with legal styling. |
+| `GunComparisonModal.tsx` | Dedicated modal for comparing gun rights between jurisdictions. |
+
+#### Visual Reports
+
+| Component | What It Does |
+|-----------|-------------|
+| `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. |
+| `NewLifeVideos.tsx` | Grok-generated video playlist for "New Life" scenarios. |
+
+#### User & Settings
+
+| Component | What It Does |
+|-----------|-------------|
+| `SettingsModal.tsx` | User preferences — theme, default view, comparison settings. |
+| `CostDashboard.tsx` | Shows API usage costs per provider (OpenAI, Tavily, Simli, etc.). |
+| `PricingModal.tsx` / `PricingPage.tsx` | Subscription tier display and Stripe checkout trigger. |
+| `FeatureGate.tsx` | Wraps features that require a specific tier. Shows upgrade prompt if locked. |
+| `CookieConsent.tsx` | GDPR cookie consent banner. |
+
+#### UI Utilities
+
+| Component | What It Does |
+|-----------|-------------|
+| `ErrorBoundary.tsx` | Catches React render errors, shows fallback UI. |
+| `LoadingState.tsx` | Skeleton loading placeholders. |
+| `ThemeToggle.tsx` | Dark/light mode switch. |
+| `HelpModal.tsx` / `HelpBubble.tsx` | Contextual help overlays. |
+| `LegalModal.tsx` | Legal/compliance information display. |
+| `UsageWarningBanner.tsx` | Shows warning when user approaches API quota limits. |
+
+### 2.12 Services Guide
+
+Services contain the core business logic. They sit between components/hooks and the API.
+
+| Service | What It Does |
+|---------|-------------|
+| `gammaService.ts` | Integrates with Gamma API to generate PDF/PPTX visual reports. Handles prompt building, polling, download URLs. Largest service (~3,100 lines). |
+| `savedComparisons.ts` | CRUD operations for saved comparisons. Uses Supabase for persistence with localStorage as fallback cache. |
+| `databaseService.ts` | Low-level Supabase database operations — queries, inserts, updates across all tables. |
+| `reportStorageService.ts` | Manages report saving, sharing links, and Supabase Storage uploads. |
+| `contrastImageService.ts` | Generates visual contrast images comparing two cities (calls Replicate). |
+| `cache.ts` | In-memory caching layer for comparison results and city data. Reduces redundant API calls. |
+| `llmEvaluators.ts` | Orchestrates multi-LLM evaluation. Sends prompts to Claude, GPT-4, Gemini, Grok, Llama and collects scored results. |
+| `oliviaService.ts` | Client-side Olivia chat integration — manages threads, sends messages, handles streaming. |
+| `grokVideoService.ts` | Client-side Grok video generation — triggers generation, polls status, handles downloads. |
+| `opusJudge.ts` | Claude Opus judge verdict generation — builds legal-style prompt, parses structured verdict. |
+| `judgePregenService.ts` | Pre-generates judge verdicts in the background after comparison completes. |
+| `videoStorageService.ts` | Uploads and retrieves videos from Supabase Storage buckets. |
+| `enhancedComparison.ts` | State management for enhanced (multi-LLM) comparison mode. |
+| `rateLimiter.ts` | Client-side rate limiting to prevent excessive API calls before they hit the server. |
+
+### 2.13 Hooks Guide
+
+Custom hooks encapsulate stateful logic and side effects.
+
+| Hook | What It Does |
+|------|-------------|
+| `useComparison` | Core comparison state machine — manages city selection, evaluation trigger, results, loading states. Used by EnhancedComparison. |
+| `useOliviaChat` | Manages Olivia chat state — message history, sending, receiving, thread management. |
+| `useSimli` | Manages Simli WebRTC session — connection setup, video/audio streams, reconnection. |
+| `useTTS` | Text-to-speech — sends text to ElevenLabs, plays audio response. |
+| `useAvatarProvider` | Selects and initializes the active avatar provider (Simli, D-ID, HeyGen). |
+| `useJudgeVideo` | Manages judge video generation — triggers Wav2Lip, polls status, caches result. |
+| `useGrokVideo` | Manages Grok video generation — triggers, polls, handles completion. |
+| `useContrastImages` | Manages contrast image generation and caching. |
+| `useTierAccess` | Returns current user's tier and feature access flags. Used by FeatureGate. |
+| `useApiUsageMonitor` | Tracks API usage in real-time, triggers warnings when approaching limits. |
+| `useEmilia` | Manages Emilia help widget state — open/close, message sending. |
+| `useGunComparison` | Manages gun rights comparison modal state and data. |
+| `useOGMeta` | Sets Open Graph meta tags for social sharing. |
+| `useURLParams` | Syncs comparison state with URL query parameters. |
+| `useDraggable` | Adds drag-and-drop capability to elements. |
+| `useFocusTrap` | Traps keyboard focus within modals for accessibility (a11y). |
+
+### 2.14 Type System Guide
+
+All types live in `src/types/`. Import from the barrel export:
+
+```typescript
+import type { ComparisonResult, MetricDefinition, Profile } from '@/types';
+```
+
+| File | Key Types |
+|------|-----------|
+| `metrics.ts` | `Category`, `MetricDefinition`, `ScoringCriteria`, `ComparisonResult`, `MetricScore` |
+| `database.ts` | `Profile`, `Comparison`, `GammaReport`, `JudgeReport`, `ConsentLog` |
+| `avatar.ts` | `SimliSession`, `AvatarConfig`, `StreamStatus`, `AvatarProvider` |
+| `gamma.ts` | `VisualReportResponse`, `GammaGenerationStatus` |
+| `apiUsage.ts` | `UsageQuota`, `CostRecord`, `RateLimitStatus` |
+| `olivia.ts` | `OliviaConfig`, `ChatMessage`, `StreamingOptions` |
+| `enhancedComparison.ts` | `EnhancedComparisonResult`, `MetricConsensus`, `EvidenceItem` |
+| `grokVideo.ts` | `GrokVideoRequest`, `VideoStatus` |
+| `judge.ts` | `JudgeOutput`, `Verdict`, `LegalAnalysis` |
+
+### 2.15 Data Flow Diagrams
+
+#### City Comparison (main flow)
+
+```
+User selects City A & City B
+         │
+         ▼
+    CitySelector component
+         │
+         ▼
+    useComparison hook (state machine)
+         │
+         ▼
+    POST /api/evaluate
+    ├── Tavily API (web research on both cities)
+    ├── LLM (Claude/GPT/Gemini/Grok scores 100 metrics)
+    └── Returns ComparisonResult
+         │
+         ▼
+    Results component (displays scored metrics)
+         │
+         ├──► "Save" → savedComparisons service → Supabase
+         ├──► "Visual Report" → gammaService → Gamma API → PDF/PPTX
+         ├──► "Judge Verdict" → opusJudge → Claude Opus → avatar video
+         └──► "Ask Olivia" → oliviaService → OpenAI thread → Simli avatar
+```
+
+#### Authentication Flow
+
+```
+LoginScreen → Supabase Auth (email/password)
+         │
+         ▼
+    AuthContext provider (wraps entire app)
+         │
+         ▼
+    useTierAccess hook (reads profile.tier)
+         │
+         ▼
+    FeatureGate components (show/hide features by tier)
+```
+
+#### Billing Flow
+
+```
+PricingModal → POST /api/stripe/create-checkout-session
+         │
+         ▼
+    Stripe Checkout (external)
+         │
+         ▼
+    POST /api/stripe/webhook (payment confirmed)
+         │
+         ▼
+    Updates profiles.tier in Supabase
+         │
+         ▼
+    AuthContext refreshes → features unlock
+```
+
+### 2.16 Quick Reference: Where Things Live
+
+| "I need to..." | Go to... |
+|----------------|----------|
+| Add a new UI component | `src/components/` |
+| Add business logic | `src/services/` |
+| Add a React hook | `src/hooks/` |
+| Add an API endpoint | `api/` |
+| Add a TypeScript type | `src/types/` |
+| Add a database migration | `supabase/migrations/` |
+| Add a static asset | `public/` |
+| Add documentation | `docs/` |
+| Add a utility function | `src/utils/` |
+| Modify auth logic | `src/contexts/AuthContext.tsx` |
+| Modify Supabase client | `src/lib/supabase.ts` |
+| Modify build config | `vite.config.ts` |
+| Modify deploy config | `vercel.json` |
+| Modify scoring metrics | `src/data/metrics.ts` |
+
+---
+
+## 3. Technology Stack
+
+### 3.1 Frontend
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
@@ -103,7 +582,7 @@ D:\lifescore\
 | Vite | 6.x | Build tool |
 | Tailwind CSS | 3.x | Styling (if used) |
 
-### 2.2 Backend
+### 3.2 Backend
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
@@ -111,7 +590,7 @@ D:\lifescore\
 | Vercel Functions | - | Serverless API |
 | Supabase | - | Database + Auth |
 
-### 2.3 AI Providers
+### 3.3 AI Providers
 
 | Provider | Type ID | Model | Use Case |
 |----------|---------|-------|----------|
@@ -123,7 +602,7 @@ D:\lifescore\
 | Perplexity | `perplexity` | sonar-reasoning-pro | Research evaluator |
 | Tavily | N/A | Search + Research | Web research |
 
-### 2.4 Media Services
+### 3.4 Media Services
 
 | Service | Purpose |
 |---------|---------|
@@ -136,9 +615,9 @@ D:\lifescore\
 
 ---
 
-## 3. API Reference
+## 4. API Reference
 
-### 3.1 Core Endpoints
+### 4.1 Core Endpoints
 
 #### POST /api/evaluate
 
@@ -218,7 +697,7 @@ D:\lifescore\
 }
 ```
 
-### 3.2 Olivia Endpoints
+### 4.2 Olivia Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -227,7 +706,7 @@ D:\lifescore\
 | /api/olivia/speak | POST | Generate TTS |
 | /api/olivia/contrast-images | POST | Generate comparison images |
 
-### 3.3 Video Endpoints
+### 4.3 Video Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -236,7 +715,7 @@ D:\lifescore\
 | /api/avatar/generate-judge-video | POST | Generate judge video |
 | /api/avatar/video-status | GET | Check judge video status |
 
-### 3.4 Emilia Endpoints
+### 4.4 Emilia Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -247,7 +726,7 @@ D:\lifescore\
 
 **Knowledge Sync:** Run `npx ts-node scripts/sync-emilia-knowledge.ts` after updating manuals.
 
-### 3.5 Usage/Quota Endpoints
+### 4.5 Usage/Quota Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -255,7 +734,7 @@ D:\lifescore\
 | /api/usage/check-quotas | POST | Update usage, trigger alerts |
 | /api/usage/elevenlabs | GET | Real-time ElevenLabs usage |
 
-### 3.6 Avatar Endpoints (Additional)
+### 4.6 Avatar Endpoints (Additional)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -263,9 +742,9 @@ D:\lifescore\
 
 ---
 
-## 4. Database Schema
+## 5. Database Schema
 
-### 4.1 Current Tables (18 total)
+### 5.1 Current Tables (18 total)
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
@@ -294,7 +773,7 @@ D:\lifescore\
 - `court_orders`: New table for saved Court Order videos. Unique constraint on `(user_id, comparison_id)`. RLS: users can only CRUD their own.
 - `comparisons`: Actual table name is `comparisons`, not `saved_comparisons` as some older docs reference.
 
-### 4.2 Missing Schema (Needs Creation)
+### 5.2 Missing Schema (Needs Creation)
 
 **city_evaluations (PROPOSED FOR CACHING):**
 ```sql
@@ -313,7 +792,7 @@ CREATE TABLE city_evaluations (
 );
 ```
 
-### 4.3 Row Level Security (RLS)
+### 5.3 Row Level Security (RLS)
 
 All tables have RLS enabled with policies:
 - Users can only read/write their own data
@@ -322,16 +801,16 @@ All tables have RLS enabled with policies:
 
 ---
 
-## 5. Authentication & Authorization
+## 6. Authentication & Authorization
 
-### 5.1 Auth Flow
+### 6.1 Auth Flow
 
 ```
 User Login → Supabase Auth → JWT Token →
 → Stored in localStorage → Sent in headers
 ```
 
-### 5.2 Session Management
+### 6.2 Session Management
 
 ```typescript
 // src/lib/supabase.ts
@@ -344,7 +823,7 @@ const supabase = createClient(url, anonKey, {
 });
 ```
 
-### 5.3 Tier Enforcement
+### 6.3 Tier Enforcement
 
 **Client-side:** `src/hooks/useTierAccess.ts`
 **Server-side:** `api/shared/tierCheck.ts`
@@ -358,7 +837,7 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
 }
 ```
 
-### 5.4 API Key Handling
+### 6.4 API Key Handling
 
 User-provided API keys are:
 - Passed in request body (not stored)
@@ -368,9 +847,9 @@ User-provided API keys are:
 
 ---
 
-## 6. LLM Provider Integration
+## 7. LLM Provider Integration
 
-### 6.1 Provider Configuration
+### 7.1 Provider Configuration
 
 | Provider | Endpoint | Auth Method |
 |----------|----------|-------------|
@@ -380,7 +859,7 @@ User-provided API keys are:
 | xAI | https://api.x.ai/v1/chat/completions | Bearer token |
 | Perplexity | https://api.perplexity.ai/chat/completions | Bearer token |
 
-### 6.2 Timeout Settings
+### 7.2 Timeout Settings
 
 #### Server-Side (API Routes)
 ```typescript
@@ -414,7 +893,7 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 - Grok: 180s (includes search)
 - Perplexity: 120s
 
-### 6.3 Token Pricing
+### 7.3 Token Pricing
 
 | Provider | Input (per 1M) | Output (per 1M) |
 |----------|---------------|-----------------|
@@ -425,7 +904,7 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 | Grok 4 | $3.00 | $15.00 (estimated) |
 | Perplexity | $1.00 | $5.00 |
 
-### 6.4 Error Handling
+### 7.4 Error Handling
 
 ```typescript
 try {
@@ -441,7 +920,7 @@ try {
 }
 ```
 
-### 6.5 Supabase Retry Logic (Added 2026-01-29)
+### 7.5 Supabase Retry Logic (Added 2026-01-29)
 
 All Supabase queries use automatic retry with exponential backoff to handle transient failures.
 
@@ -497,7 +976,7 @@ const profile = await withRetryFallback(
 - `src/hooks/useTierAccess.ts` - Tier checking
 - `src/components/JudgeTab.tsx` - Judge report operations
 
-### 6.6 LLM Evaluator Retry Logic (Added 2026-02-04)
+### 7.6 LLM Evaluator Retry Logic (Added 2026-02-04)
 
 Both Gemini and Grok evaluators now include retry logic with exponential backoff to handle cold start timeouts and transient failures.
 
@@ -538,7 +1017,7 @@ backoffMs = 2^(attempt-1) * 1000  // 1s, 2s, 4s delays
 - ❌ GPT-4o (uses SDK with built-in retry)
 - ❌ Perplexity (single attempt currently)
 
-### 6.7 Cost Tracking Auto-Sync (Added 2026-02-04)
+### 7.7 Cost Tracking Auto-Sync (Added 2026-02-04)
 
 API cost data is now automatically synchronized to Supabase after each comparison completes (Fix #50).
 
@@ -566,9 +1045,9 @@ Comparison completes → finalizeCostBreakdown() →
 
 ---
 
-## 7. Tavily Integration
+## 8. Tavily Integration
 
-### 7.1 APIs Used
+### 8.1 APIs Used
 
 **Research API (`/research`):**
 - One call per comparison
@@ -580,7 +1059,7 @@ Comparison completes → finalizeCostBreakdown() →
 - Focused category queries
 - Cost: ~2-3 credits each
 
-### 7.2 Authentication
+### 8.2 Authentication
 
 ```typescript
 const getTavilyHeaders = (apiKey: string) => ({
@@ -590,7 +1069,7 @@ const getTavilyHeaders = (apiKey: string) => ({
 });
 ```
 
-### 7.3 Search Configuration
+### 8.3 Search Configuration
 
 ```typescript
 {
@@ -606,7 +1085,7 @@ const getTavilyHeaders = (apiKey: string) => ({
 }
 ```
 
-### 7.4 APIs NOT Used (Opportunities)
+### 8.4 APIs NOT Used (Opportunities)
 
 - **Extract API:** Could cache source content
 - **Agent API:** Could resolve LLM disagreements
@@ -614,9 +1093,9 @@ const getTavilyHeaders = (apiKey: string) => ({
 
 ---
 
-## 8. Video Generation Pipeline
+## 9. Video Generation Pipeline
 
-### 8.1 Judge Video Flow
+### 9.1 Judge Video Flow
 
 ```
 Script Generation (LLM) → TTS Audio (ElevenLabs) →
@@ -624,7 +1103,7 @@ Script Generation (LLM) → TTS Audio (ElevenLabs) →
 → Poll for completion → Return URL
 ```
 
-### 8.2 Grok/Kling Video Flow
+### 9.2 Grok/Kling Video Flow
 
 ```
 Client Request → /api/video/grok-generate →
@@ -634,7 +1113,7 @@ Client Request → /api/video/grok-generate →
 → Return video URL when complete
 ```
 
-### 8.3 Kling AI JWT Generation
+### 9.3 Kling AI JWT Generation
 
 ```typescript
 // api/video/grok-status.ts:34-62
@@ -649,7 +1128,7 @@ function generateKlingJWT(accessKey: string, secretKey: string): string {
 }
 ```
 
-### 8.4 Video Status Values
+### 9.4 Video Status Values
 
 | Status | Meaning |
 |--------|---------|
@@ -658,7 +1137,7 @@ function generateKlingJWT(accessKey: string, secretKey: string): string {
 | completed | Video ready |
 | failed | Generation failed |
 
-### 8.5 Video Error Handling (Added 2026-02-04)
+### 9.5 Video Error Handling (Added 2026-02-04)
 
 NewLifeVideos component now tracks video load errors and auto-resets when URLs expire (Fix #48).
 
@@ -689,7 +1168,7 @@ Video element onError event →
 - `src/components/NewLifeVideos.tsx` - Error tracking and reset
 - `src/hooks/useGrokVideo.ts` - `reset()` function clears state
 
-### 8.6 Judge Pre-generation System
+### 9.6 Judge Pre-generation System
 
 **Added:** 2026-01-29
 
@@ -745,9 +1224,9 @@ User clicks Judge tab (JudgeTab.tsx)
 
 ---
 
-## 9. Performance Optimization
+## 10. Performance Optimization
 
-### 9.1 Current Bottlenecks
+### 10.1 Current Bottlenecks
 
 | Issue | Impact | Location |
 |-------|--------|----------|
@@ -757,7 +1236,7 @@ User clicks Judge tab (JudgeTab.tsx)
 | 240s timeout | Slow failures | evaluate.ts:15 |
 | Large component (2265 lines) | Slow initial load | EnhancedComparison.tsx |
 
-### 9.2 Recommended Fixes
+### 10.2 Recommended Fixes
 
 **Priority 1 - Quick Wins:**
 1. Reduce LLM timeout to 120s
@@ -776,7 +1255,7 @@ User clicks Judge tab (JudgeTab.tsx)
 3. Cache write after evaluation
 4. Delta updates for stale data
 
-### 9.3 Expected Improvements
+### 10.3 Expected Improvements
 
 | Fix | Time Saved |
 |-----|------------|
@@ -787,9 +1266,9 @@ User clicks Judge tab (JudgeTab.tsx)
 
 ---
 
-## 10. Error Handling & Logging
+## 11. Error Handling & Logging
 
-### 10.1 Error Response Format
+### 11.1 Error Response Format
 
 ```typescript
 {
@@ -802,7 +1281,7 @@ User clicks Judge tab (JudgeTab.tsx)
 }
 ```
 
-### 10.2 Common Error Codes
+### 11.2 Common Error Codes
 
 | Code | Meaning | Action |
 |------|---------|--------|
@@ -812,7 +1291,7 @@ User clicks Judge tab (JudgeTab.tsx)
 | PROVIDER_ERROR | LLM API error | Try different provider |
 | NO_DATA | Metrics unavailable | Check city validity |
 
-### 10.3 Logging Locations
+### 11.3 Logging Locations
 
 - **Console:** Development debugging
 - **Vercel Logs:** Production API calls
@@ -820,9 +1299,9 @@ User clicks Judge tab (JudgeTab.tsx)
 
 ---
 
-## 11. Deployment & Infrastructure
+## 12. Deployment & Infrastructure
 
-### 11.1 Vercel Configuration
+### 12.1 Vercel Configuration
 
 ```json
 // vercel.json
@@ -835,7 +1314,7 @@ User clicks Judge tab (JudgeTab.tsx)
 }
 ```
 
-### 11.2 Environment Variables (Vercel)
+### 12.2 Environment Variables (Vercel)
 
 **Required (Production):**
 - `VITE_SUPABASE_URL` - Supabase project URL (client)
@@ -867,7 +1346,7 @@ User clicks Judge tab (JudgeTab.tsx)
 - `RESEND_FROM_EMAIL` - Custom sender email
 - `XAI_API_KEY` - Alias for GROK_API_KEY
 
-### 11.3 Build Commands
+### 12.3 Build Commands
 
 ```bash
 # Development
@@ -882,9 +1361,9 @@ npm run preview
 
 ---
 
-## 12. Debugging Procedures
+## 13. Debugging Procedures
 
-### 12.1 Comparison Not Completing
+### 13.1 Comparison Not Completing
 
 1. Check Vercel function logs for timeout
 2. Verify API keys are valid
@@ -892,21 +1371,21 @@ npm run preview
 4. Try single provider instead of enhanced
 5. Reduce category batch size
 
-### 12.2 Scores Showing "No Data"
+### 13.2 Scores Showing "No Data"
 
 1. Verify Tavily returned results
 2. Check LLM response parsing
 3. Look for JSON parse errors
 4. Check metric ID mappings
 
-### 12.3 Video Generation Stuck
+### 13.3 Video Generation Stuck
 
 1. Check `grok_videos` table for job status
 2. Verify Kling/Replicate API keys
 3. Check for JWT expiration
 4. Review error_message field
 
-### 12.4 Olivia Not Responding
+### 13.4 Olivia Not Responding
 
 1. Check OpenAI thread ID validity
 2. Verify message limits not exceeded
@@ -915,9 +1394,9 @@ npm run preview
 
 ---
 
-## 13. Known Issues & Workarounds
+## 14. Known Issues & Workarounds
 
-### 13.1 Active Issues
+### 14.1 Active Issues
 
 | Issue | Workaround | Status |
 |-------|------------|--------|
@@ -925,7 +1404,7 @@ npm run preview
 | Slow enhanced comparison | Use standard mode | Performance fix planned |
 | Video generation delays | Polling with timeout | Infrastructure |
 
-### 13.2 Resolved Issues
+### 14.2 Resolved Issues
 
 | Issue | Resolution | Date |
 |-------|------------|------|
@@ -945,9 +1424,9 @@ npm run preview
 
 ---
 
-## 14. Monitoring & Alerts
+## 15. Monitoring & Alerts
 
-### 14.1 Key Metrics to Monitor
+### 15.1 Key Metrics to Monitor
 
 - API response times
 - Error rates by endpoint
@@ -955,7 +1434,7 @@ npm run preview
 - Tavily credit usage
 - Video generation success rate
 
-### 14.2 Alert Thresholds
+### 15.2 Alert Thresholds
 
 | Metric | Warning | Critical |
 |--------|---------|----------|
@@ -965,23 +1444,23 @@ npm run preview
 
 ---
 
-## 15. Security Considerations
+## 16. Security Considerations
 
-### 15.1 API Key Security
+### 16.1 API Key Security
 
 - Never log API keys
 - Don't store user-provided keys
 - Use environment variables for system keys
 - Rotate keys quarterly
 
-### 15.2 Data Protection
+### 16.2 Data Protection
 
 - RLS enabled on all tables
 - User data isolated by user_id
 - GDPR compliance logging
 - 30-day deletion queue
 
-### 15.3 Rate Limiting
+### 16.3 Rate Limiting
 
 ```typescript
 // api/shared/rateLimit.ts
@@ -995,13 +1474,13 @@ const LIMITS = {
 
 ---
 
-## 16. API Quota Monitoring System
+## 17. API Quota Monitoring System
 
 **Added:** 2026-01-30
 
 Comprehensive quota tracking for all 16 API providers with admin-configurable limits, color-coded warnings, and email alerts.
 
-### 16.1 All 16 Tracked Providers
+### 17.1 All 16 Tracked Providers
 
 | Provider Key | Display Name | Icon | Quota Type | Default Limit | Pricing |
 |--------------|--------------|------|------------|---------------|---------|
@@ -1022,7 +1501,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | `kling` | Kling AI Video | 🖼️ | credits | 100 | ~$0.05/image |
 | `gamma` | Gamma Reports | 📊 | credits | 50 | ~$0.50/generation |
 
-### 16.2 Warning Thresholds
+### 17.2 Warning Thresholds
 
 | Level | Percentage | Color | Action |
 |-------|------------|-------|--------|
@@ -1032,7 +1511,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | Red | 85-99% | 🔴 | Email alert sent |
 | Exceeded | 100%+ | ⚫ | Email alert + fallback activated |
 
-### 16.3 Database Tables
+### 17.3 Database Tables
 
 **api_quota_settings** - Admin-configurable limits:
 - provider_key TEXT UNIQUE (e.g., 'elevenlabs')
@@ -1046,19 +1525,19 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 
 **api_quota_alert_log** - Email history
 
-### 16.4 API Endpoints
+### 17.4 API Endpoints
 
 - GET /api/usage/check-quotas - Returns all quota statuses
 - POST /api/usage/check-quotas - Updates usage and triggers alerts
 - GET /api/usage/elevenlabs - Real-time ElevenLabs subscription usage
 
-### 16.5 Email Alerts
+### 17.5 Email Alerts
 
 **Recipients:** brokerpinellas@gmail.com, cluesnomads@gmail.com
 **Provider:** Resend API
 **Domain:** clueslifescore.com (verified)
 
-### 16.6 Fallback Chain
+### 17.6 Fallback Chain
 
 | Primary | Fallback | Trigger |
 |---------|----------|---------|
@@ -1066,19 +1545,19 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | Simli Avatar | D-ID Avatar | Quota exceeded |
 | D-ID Avatar | Replicate | Quota exceeded |
 
-### 16.7 CostDashboard Integration
+### 17.7 CostDashboard Integration
 
 Access via 💰 icon in app header. Shows color-coded quota cards for all 16 providers.
 
 ---
 
-## 17. TTS Fallback System
+## 18. TTS Fallback System
 
 **Added:** 2026-01-30
 
 Automatic fallback from ElevenLabs to OpenAI TTS when quota exceeded.
 
-### 17.1 Voice Assignments
+### 18.1 Voice Assignments
 
 | Character | OpenAI Voice ID |
 |-----------|-----------------|
@@ -1088,7 +1567,7 @@ Automatic fallback from ElevenLabs to OpenAI TTS when quota exceeded.
 
 **Important:** Olivia and Emilia use DIFFERENT voices.
 
-### 17.2 Implementation Files
+### 18.2 Implementation Files
 
 | File | Character | Voice |
 |------|-----------|-------|
@@ -1096,19 +1575,19 @@ Automatic fallback from ElevenLabs to OpenAI TTS when quota exceeded.
 | api/emilia/speak.ts | Emilia | shimmer |
 | api/judge-video.ts | Christiano | onyx |
 
-### 17.3 OpenAI TTS Pricing
+### 18.3 OpenAI TTS Pricing
 
 tts-1 (standard): $0.015 / 1K characters
 
 ---
 
-## 18. Dual-Storage Save Architecture
+## 19. Dual-Storage Save Architecture
 
 **Added:** 2026-02-05 (Session 8/9)
 
 All user data now saves to BOTH localStorage (offline-first, instant) AND Supabase (cloud backup, cross-device sync). Every `localStorage.setItem` and every Supabase call is wrapped in try/catch so one failing doesn't block the other.
 
-### 18.1 Save Map
+### 19.1 Save Map
 
 | Data | localStorage Key | Supabase Table | Service Function |
 |------|-----------------|---------------|-----------------|
@@ -1122,11 +1601,11 @@ All user data now saves to BOTH localStorage (offline-first, instant) AND Supaba
 | Excluded Categories | `lifescore_excluded_categories` | `user_preferences.excluded_categories` | `saveUserPreferenceToDb()` |
 | Dealbreakers | `lifescore_dealbreakers` | `user_preferences.dealbreakers` | `saveUserPreferenceToDb()` |
 
-### 18.2 Central Service File
+### 19.2 Central Service File
 
 **`src/services/savedComparisons.ts`** — All save/load/delete functions live here.
 
-### 18.3 Error Handling Pattern
+### 19.3 Error Handling Pattern
 
 ```typescript
 // Every save follows this pattern:
@@ -1146,7 +1625,7 @@ try {
 }
 ```
 
-### 18.4 Debugging Save Issues
+### 19.4 Debugging Save Issues
 
 | Symptom | Check |
 |---------|-------|
@@ -1155,7 +1634,7 @@ try {
 | Data missing on new device | Verify user is logged in (Supabase auth) |
 | Duplicate entries | Check upsert onConflict constraints in databaseService.ts |
 
-### 18.5 Key Files
+### 19.5 Key Files
 
 | File | Role |
 |------|------|
@@ -1176,7 +1655,8 @@ try {
 | 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Fixed Simli=PRIMARY (§2.4), Added Emilia (§3.4), Usage/Quota (§3.5), Avatar (§3.6) endpoints |
 | 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Version sync with User/CS manuals |
 | 2.3 | 2026-02-04 | Claude Opus 4.5 | LLM retry logic (§6.6), cost tracking auto-sync (§6.7), video error handling (§8.5), resolved issues |
-| 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections (user_preferences, judge_reports), AI model names updated (§2.3), Tavily timeout fix (§6.2), 8 resolved issues added (§13.2) |
+| 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections, AI model names updated, Tavily timeout fix, 8 resolved issues |
+| 3.0 | 2026-02-12 | Claude Opus 4.6 | Integrated Coding Standards & Developer Guide as §2 (comment standards, naming conventions, component/service/hook/type guides, data flow diagrams, quick reference). Upgraded §1.3 directory tree. Renumbered §§2-18 to §§3-19. |
 
 ---
 
