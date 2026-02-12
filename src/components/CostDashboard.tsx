@@ -12,6 +12,7 @@ import {
   storeCostBreakdown,
   formatCost,
   toApiCostRecordInsert,
+  type APICallCost,
   type ComparisonCostBreakdown,
   type CostSummary
 } from '../utils/costCalculator';
@@ -33,7 +34,6 @@ interface CostDashboardProps {
 export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [costs, setCosts] = useState<ComparisonCostBreakdown[]>([]);
-  const [dbCosts, setDbCosts] = useState<ApiCostRecord[]>([]);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonCostBreakdown | null>(null);
   const [showPricing, setShowPricing] = useState(false);
@@ -46,28 +46,44 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
   const dbConfigured = isSupabaseConfigured();
 
   // Convert a DB ApiCostRecord to ComparisonCostBreakdown for display
-  const dbRecordToBreakdown = (record: ApiCostRecord): ComparisonCostBreakdown => ({
-    comparisonId: record.comparison_id,
-    city1: record.city1_name,
-    city2: record.city2_name,
-    mode: record.mode,
-    timestamp: new Date(record.created_at).getTime(),
-    claudeSonnet: record.claude_sonnet_total > 0 ? [{ provider: 'claude-sonnet', model: 'claude-sonnet-4-5', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.claude_sonnet_total, timestamp: Date.now(), context: 'evaluation' }] : [],
-    gpt4o: record.gpt4o_total > 0 ? [{ provider: 'gpt-4o', model: 'gpt-4o', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.gpt4o_total, timestamp: Date.now(), context: 'evaluation' }] : [],
-    gemini: record.gemini_total > 0 ? [{ provider: 'gemini-3-pro', model: 'gemini-3-pro', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.gemini_total, timestamp: Date.now(), context: 'evaluation' }] : [],
-    grok: record.grok_total > 0 ? [{ provider: 'grok-4', model: 'grok-4', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.grok_total, timestamp: Date.now(), context: 'evaluation' }] : [],
-    perplexity: record.perplexity_total > 0 ? [{ provider: 'perplexity', model: 'perplexity-sonar', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.perplexity_total, timestamp: Date.now(), context: 'evaluation' }] : [],
-    opusJudge: record.opus_judge_total > 0 ? { provider: 'claude-opus', model: 'claude-opus-4-5', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.opus_judge_total, timestamp: Date.now(), context: 'judge' } : undefined,
-    tavilyResearch: undefined,
-    tavilySearches: [],
-    tavilyTotal: record.tavily_total,
-    gammaTotal: record.gamma_total,
-    oliviaTotal: record.olivia_total,
-    ttsTotal: record.tts_total,
-    avatarTotal: record.avatar_total,
-    klingTotal: 0,
-    grandTotal: record.grand_total,
-  } as ComparisonCostBreakdown);
+  const dbRecordToBreakdown = (record: ApiCostRecord): ComparisonCostBreakdown => {
+    const claudeSonnet: APICallCost[] = record.claude_sonnet_total > 0 ? [{ provider: 'claude-sonnet', model: 'claude-sonnet-4-5', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.claude_sonnet_total, timestamp: Date.now(), context: 'evaluation' }] : [];
+    const gpt4o: APICallCost[] = record.gpt4o_total > 0 ? [{ provider: 'gpt-4o', model: 'gpt-4o', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.gpt4o_total, timestamp: Date.now(), context: 'evaluation' }] : [];
+    const gemini: APICallCost[] = record.gemini_total > 0 ? [{ provider: 'gemini-3-pro', model: 'gemini-3-pro', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.gemini_total, timestamp: Date.now(), context: 'evaluation' }] : [];
+    const grok: APICallCost[] = record.grok_total > 0 ? [{ provider: 'grok-4', model: 'grok-4', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.grok_total, timestamp: Date.now(), context: 'evaluation' }] : [];
+    const perplexity: APICallCost[] = record.perplexity_total > 0 ? [{ provider: 'perplexity', model: 'perplexity-sonar', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.perplexity_total, timestamp: Date.now(), context: 'evaluation' }] : [];
+    const opusJudge: APICallCost | null = record.opus_judge_total > 0 ? { provider: 'claude-opus', model: 'claude-opus-4-5', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.opus_judge_total, timestamp: Date.now(), context: 'judge' } : null;
+    const evaluatorTotal = record.claude_sonnet_total + record.gpt4o_total + record.gemini_total + record.grok_total + record.perplexity_total;
+    return {
+      comparisonId: record.comparison_id,
+      city1: record.city1_name,
+      city2: record.city2_name,
+      mode: record.mode,
+      timestamp: new Date(record.created_at).getTime(),
+      claudeSonnet: claudeSonnet,
+      gpt4o: gpt4o,
+      gemini: gemini,
+      grok: grok,
+      perplexity: perplexity,
+      evaluatorTotal: evaluatorTotal,
+      opusJudge: opusJudge,
+      judgeTotal: record.opus_judge_total,
+      tavilyResearch: null,
+      tavilySearches: [],
+      tavilyTotal: record.tavily_total,
+      gamma: null,
+      gammaTotal: record.gamma_total,
+      olivia: [],
+      oliviaTotal: record.olivia_total,
+      tts: [],
+      ttsTotal: record.tts_total,
+      avatar: [],
+      avatarTotal: record.avatar_total,
+      kling: [],
+      klingTotal: 0,
+      grandTotal: record.grand_total,
+    };
+  };
 
   // Load cost data from database (if authenticated) or localStorage
   const loadCosts = useCallback(async () => {
@@ -81,7 +97,6 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       try {
         const { data, error } = await getUserApiCosts(user.id, { limit: 100 });
         if (!error && data.length > 0) {
-          setDbCosts(data);
           setDataSource('database');
           setLastSaved(new Date(data[0].created_at));
 
@@ -93,10 +108,21 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
           setCosts(merged);
 
           // Calculate summary from merged data
+          const totalEval = merged.reduce((s, c) => s + (c.evaluatorTotal || 0), 0);
+          const totalJudge = merged.reduce((s, c) => s + (c.judgeTotal || 0), 0);
+          const totalGamma = merged.reduce((s, c) => s + (c.gammaTotal || 0), 0);
+          const totalOlivia = merged.reduce((s, c) => s + (c.oliviaTotal || 0), 0);
+          const totalTTS = merged.reduce((s, c) => s + (c.ttsTotal || 0), 0);
+          const totalAvatar = merged.reduce((s, c) => s + (c.avatarTotal || 0), 0);
+          const totalKling = merged.reduce((s, c) => s + (c.klingTotal || 0), 0);
+          const enhancedCount = merged.filter(c => c.mode === 'enhanced').length;
+          const simpleCount = merged.filter(c => c.mode === 'simple').length;
+          const gt = merged.reduce((s, c) => s + (c.grandTotal || 0), 0);
           const mergedSummary: CostSummary = {
             totalComparisons: merged.length,
-            enhancedComparisons: merged.filter(c => c.mode === 'enhanced').length,
-            grandTotal: merged.reduce((s, c) => s + (c.grandTotal || 0), 0),
+            simpleComparisons: simpleCount,
+            enhancedComparisons: enhancedCount,
+            grandTotal: gt,
             tavilyCost: merged.reduce((s, c) => s + (c.tavilyTotal || 0), 0),
             claudeSonnetCost: merged.reduce((s, c) => s + c.claudeSonnet.reduce((a, x) => a + x.totalCost, 0), 0),
             gpt4oCost: merged.reduce((s, c) => s + c.gpt4o.reduce((a, x) => a + x.totalCost, 0), 0),
@@ -104,16 +130,21 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
             grokCost: merged.reduce((s, c) => s + c.grok.reduce((a, x) => a + x.totalCost, 0), 0),
             perplexityCost: merged.reduce((s, c) => s + c.perplexity.reduce((a, x) => a + x.totalCost, 0), 0),
             claudeOpusCost: merged.reduce((s, c) => s + (c.opusJudge?.totalCost || 0), 0),
-            gammaCost: merged.reduce((s, c) => s + (c.gammaTotal || 0), 0),
-            oliviaCost: merged.reduce((s, c) => s + (c.oliviaTotal || 0), 0),
-            ttsCost: merged.reduce((s, c) => s + (c.ttsTotal || 0), 0),
-            avatarCost: merged.reduce((s, c) => s + (c.avatarTotal || 0), 0),
-            klingCost: merged.reduce((s, c) => s + (c.klingTotal || 0), 0),
-            avgCostPerComparison: 0,
-            avgCostPerEnhanced: 0,
+            gammaCost: totalGamma,
+            oliviaCost: totalOlivia,
+            ttsCost: totalTTS,
+            avatarCost: totalAvatar,
+            klingCost: totalKling,
+            totalEvaluatorCost: totalEval,
+            totalJudgeCost: totalJudge,
+            totalGammaCost: totalGamma,
+            totalOliviaCost: totalOlivia,
+            totalTTSCost: totalTTS,
+            totalAvatarCost: totalAvatar,
+            totalKlingCost: totalKling,
+            avgCostPerEnhanced: enhancedCount > 0 ? gt / enhancedCount : 0,
+            avgCostPerSimple: simpleCount > 0 ? gt / simpleCount : 0,
           };
-          mergedSummary.avgCostPerComparison = mergedSummary.totalComparisons > 0 ? mergedSummary.grandTotal / mergedSummary.totalComparisons : 0;
-          mergedSummary.avgCostPerEnhanced = mergedSummary.enhancedComparisons > 0 ? mergedSummary.grandTotal / mergedSummary.enhancedComparisons : 0;
           setSummary(mergedSummary);
         } else {
           // No DB data — use local

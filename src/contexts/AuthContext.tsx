@@ -13,7 +13,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry } from '../lib/supabase';
 import type { Profile, UserPreferences } from '../types/database';
 import { fullDatabaseSync } from '../services/savedComparisons';
 

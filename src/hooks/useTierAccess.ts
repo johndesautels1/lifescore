@@ -14,7 +14,7 @@
  */
 
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type { UserTier, UsageTracking } from '../types/database';
 
 // ============================================================================

@@ -9,7 +9,7 @@
  * - User preferences
  */
 
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 import type {
   Comparison,
   ComparisonInsert,
