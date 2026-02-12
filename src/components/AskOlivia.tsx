@@ -16,7 +16,7 @@
  * "The name is Olivia. Just Olivia."
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, startTransition } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { OliviaQuickAction } from '../types/olivia';
@@ -932,7 +932,12 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               className="chat-textarea"
               placeholder={usageLimitReached ? "Daily limit reached - Upgrade for more" : "Type your message to Olivia..."}
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                // FIX INP: Mark state update as non-urgent so browser can paint
+                // between keystrokes without blocking for full component re-render
+                startTransition(() => setInputText(val));
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
