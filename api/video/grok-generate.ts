@@ -954,25 +954,25 @@ export default async function handler(
 
       console.log('[GROK-VIDEO] Generating New Life videos:', winnerCity, 'vs', loserCity, forceRegenerate ? '(FORCE REGEN)' : '');
 
-      // Generate both videos in parallel
-      const [winnerResult, loserResult] = await Promise.all([
-        generateSingleVideo(
-          body.userId,
-          body.comparisonId,
-          winnerCity,
-          'winner_mood',
-          winnerCityType || detectCityType(winnerCity),
-          !!forceRegenerate
-        ),
-        generateSingleVideo(
-          body.userId,
-          body.comparisonId,
-          loserCity,
-          'loser_mood',
-          loserCityType || detectCityType(loserCity),
-          !!forceRegenerate
-        ),
-      ]);
+      // Generate videos sequentially (loser first, then winner) to prevent Vercel 120s timeout
+      // Parallel Promise.all was causing both Kling submissions to race the clock and timeout at ~73%
+      const loserResult = await generateSingleVideo(
+        body.userId,
+        body.comparisonId,
+        loserCity,
+        'loser_mood',
+        loserCityType || detectCityType(loserCity),
+        !!forceRegenerate
+      );
+
+      const winnerResult = await generateSingleVideo(
+        body.userId,
+        body.comparisonId,
+        winnerCity,
+        'winner_mood',
+        winnerCityType || detectCityType(winnerCity),
+        !!forceRegenerate
+      );
 
       // Increment usage: count 1 for the winner+loser pair (only if NOT fully cached)
       const fullyFromCache = winnerResult.cached && loserResult.cached;

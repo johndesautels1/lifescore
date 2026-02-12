@@ -229,13 +229,13 @@ export default async function handler(
 
     try {
       if (videoType === 'new_life') {
-        // Check for both winner and loser videos
-        const [winnerResult, loserResult] = await Promise.all([
+        // Check for both loser and winner videos (loser first for consistency)
+        const [loserResult, winnerResult] = await Promise.all([
           supabaseAdmin
             .from('grok_videos')
             .select('*')
-            .eq('city_name', city1.toLowerCase())
-            .eq('video_type', 'winner_mood')
+            .eq('city_name', city2.toLowerCase())
+            .eq('video_type', 'loser_mood')
             .eq('status', 'completed')
             .order('created_at', { ascending: false })
             .limit(1)
@@ -243,8 +243,8 @@ export default async function handler(
           supabaseAdmin
             .from('grok_videos')
             .select('*')
-            .eq('city_name', city2.toLowerCase())
-            .eq('video_type', 'loser_mood')
+            .eq('city_name', city1.toLowerCase())
+            .eq('video_type', 'winner_mood')
             .eq('status', 'completed')
             .order('created_at', { ascending: false })
             .limit(1)

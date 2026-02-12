@@ -140,14 +140,14 @@ export function useGrokVideo(): UseGrokVideoReturn {
         return;
       }
 
-      // Check both videos in parallel
-      const [winnerResult, loserResult] = await Promise.all([
-        currentPair.winner.status !== 'completed'
-          ? checkVideoStatus(currentPair.winner.id)
-          : Promise.resolve({ success: true, video: currentPair.winner }),
+      // Check both videos (loser first, then winner — matches generation order)
+      const [loserResult, winnerResult] = await Promise.all([
         currentPair.loser.status !== 'completed'
           ? checkVideoStatus(currentPair.loser.id)
           : Promise.resolve({ success: true, video: currentPair.loser }),
+        currentPair.winner.status !== 'completed'
+          ? checkVideoStatus(currentPair.winner.id)
+          : Promise.resolve({ success: true, video: currentPair.winner }),
       ]);
 
       // Update pair

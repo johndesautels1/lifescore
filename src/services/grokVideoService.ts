@@ -172,9 +172,10 @@ export async function checkVideoPairStatus(
   winnerVideoId: string,
   loserVideoId: string
 ): Promise<{ winner: GrokVideoStatusResponse; loser: GrokVideoStatusResponse }> {
-  const [winnerStatus, loserStatus] = await Promise.all([
-    checkVideoStatus(winnerVideoId),
+  // Check loser first, then winner (matches sequential generation order)
+  const [loserStatus, winnerStatus] = await Promise.all([
     checkVideoStatus(loserVideoId),
+    checkVideoStatus(winnerVideoId),
   ]);
 
   return { winner: winnerStatus, loser: loserStatus };
@@ -241,28 +242,29 @@ export async function pollVideoPairUntilComplete(
   let loserVideo: GrokVideo | null = null;
 
   while (attempts < maxAttempts && (!winnerComplete || !loserComplete)) {
-    const [winnerResult, loserResult] = await Promise.all([
-      !winnerComplete ? checkVideoStatus(winnerVideoId) : Promise.resolve(null),
+    // Check loser first, then winner (matches sequential generation order)
+    const [loserResult, winnerResult] = await Promise.all([
       !loserComplete ? checkVideoStatus(loserVideoId) : Promise.resolve(null),
+      !winnerComplete ? checkVideoStatus(winnerVideoId) : Promise.resolve(null),
     ]);
 
-    // Check winner status
-    if (winnerResult?.video) {
-      if (winnerResult.video.status === 'completed') {
-        winnerComplete = true;
-        winnerVideo = winnerResult.video;
-      } else if (winnerResult.video.status === 'failed') {
-        throw new Error(`Winner video failed: ${winnerResult.video.errorMessage}`);
-      }
-    }
-
-    // Check loser status
+    // Check loser status (generated first)
     if (loserResult?.video) {
       if (loserResult.video.status === 'completed') {
         loserComplete = true;
         loserVideo = loserResult.video;
       } else if (loserResult.video.status === 'failed') {
         throw new Error(`Loser video failed: ${loserResult.video.errorMessage}`);
+      }
+    }
+
+    // Check winner status (generated second)
+    if (winnerResult?.video) {
+      if (winnerResult.video.status === 'completed') {
+        winnerComplete = true;
+        winnerVideo = winnerResult.video;
+      } else if (winnerResult.video.status === 'failed') {
+        throw new Error(`Winner video failed: ${winnerResult.video.errorMessage}`);
       }
     }
 

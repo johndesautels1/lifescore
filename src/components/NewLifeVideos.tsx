@@ -121,19 +121,19 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const handlePlayVideos = async () => {
     if (winnerVideoRef.current && loserVideoRef.current) {
       if (isPlaying) {
-        winnerVideoRef.current.pause();
         loserVideoRef.current.pause();
+        winnerVideoRef.current.pause();
         setIsPlaying(false);
       } else {
-        // Sync start both videos
-        winnerVideoRef.current.currentTime = 0;
+        // Sync start both videos (loser first — generated first)
         loserVideoRef.current.currentTime = 0;
+        winnerVideoRef.current.currentTime = 0;
 
         try {
           // MOBILE FIX: Try to play with sound first
           await Promise.all([
-            winnerVideoRef.current.play(),
             loserVideoRef.current.play(),
+            winnerVideoRef.current.play(),
           ]);
           setIsPlaying(true);
         } catch (err) {
@@ -141,26 +141,26 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
 
           // MOBILE FALLBACK: Play muted first (mobile autoplay requirement)
           try {
-            winnerVideoRef.current.muted = true;
             loserVideoRef.current.muted = true;
+            winnerVideoRef.current.muted = true;
 
             await Promise.all([
-              winnerVideoRef.current.play(),
               loserVideoRef.current.play(),
+              winnerVideoRef.current.play(),
             ]);
 
             // Unmute after successful play start
             setTimeout(() => {
-              if (winnerVideoRef.current) winnerVideoRef.current.muted = false;
               if (loserVideoRef.current) loserVideoRef.current.muted = false;
+              if (winnerVideoRef.current) winnerVideoRef.current.muted = false;
             }, 100);
 
             setIsPlaying(true);
           } catch (mutedErr) {
             console.error('[NewLifeVideos] Even muted play failed:', mutedErr);
             // Last resort: try loading videos first
-            winnerVideoRef.current.load();
             loserVideoRef.current.load();
+            winnerVideoRef.current.load();
           }
         }
       }
@@ -225,9 +225,9 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const hasTriggeredRegenRef = useRef(false);
   useEffect(() => {
     if (isReady && videoPair && !hasTriggeredRegenRef.current) {
-      const winnerExpired = isExpiredUrl(videoPair.winner?.videoUrl);
       const loserExpired = isExpiredUrl(videoPair.loser?.videoUrl);
-      if (winnerExpired || loserExpired) {
+      const winnerExpired = isExpiredUrl(videoPair.winner?.videoUrl);
+      if (loserExpired || winnerExpired) {
         console.warn('[NewLifeVideos] Expired Replicate URLs detected - forcing regeneration');
         hasTriggeredRegenRef.current = true;
         reset();
