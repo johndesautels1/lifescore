@@ -335,18 +335,27 @@ const AppContent: React.FC = () => {
     setSavedCount(count);
   }, [savedKey]);
 
-  // Auto-switch to results tab when comparison completes (BOTH modes)
+  // Auto-switch to results tab when comparison COMPLETES (BOTH modes)
+  // Only switch on actual completion transitions, not on mode toggle with stale results
   // BUT: If there are category failures, require user to click "SEE RESULTS" first
+  const prevEnhancedStatusRef = React.useRef(enhancedStatus);
+  const prevStandardStatusRef = React.useRef(state.status);
   useEffect(() => {
-    if (hasEnhancedResults || hasStandardResults) {
-      // If there are failures, only switch if user acknowledged them
+    const enhancedJustCompleted = enhancedStatus === 'complete' && prevEnhancedStatusRef.current === 'running';
+    const standardJustCompleted = state.status === 'success' && prevStandardStatusRef.current === 'loading';
+
+    if (enhancedJustCompleted || standardJustCompleted) {
+      // If there are failures, keep the transition pending until user acknowledges
       if (hasCategoryFailures && !failuresAcknowledged) {
-        // Don't auto-switch - user must click "SEE RESULTS" button
         return;
       }
       setActiveTab('results');
     }
-  }, [hasEnhancedResults, hasStandardResults, hasCategoryFailures, failuresAcknowledged]);
+
+    // Update refs after handling transitions
+    prevEnhancedStatusRef.current = enhancedStatus;
+    prevStandardStatusRef.current = state.status;
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
@@ -988,7 +997,10 @@ const AppContent: React.FC = () => {
                   </div>
                   <button
                     className="btn btn-primary see-results-btn"
-                    onClick={() => dispatchEnhanced({ type: 'ACKNOWLEDGE_FAILURES' })}
+                    onClick={() => {
+                      dispatchEnhanced({ type: 'ACKNOWLEDGE_FAILURES' });
+                      setActiveTab('results');
+                    }}
                   >
                     I Understand — SEE RESULTS
                   </button>
