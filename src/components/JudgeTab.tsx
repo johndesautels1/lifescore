@@ -1049,8 +1049,22 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     }
   };
 
+  // Saved report is loading from Supabase — show brief loading state
+  if (!comparisonResult && !judgeReport && savedJudgeReport) {
+    return (
+      <div className="judge-tab">
+        <div className="judge-no-data">
+          <div className="no-data-icon">⚖️</div>
+          <h3>Loading Judge Report...</h3>
+          <p>{savedJudgeReport.city1} vs {savedJudgeReport.city2}</p>
+        </div>
+      </div>
+    );
+  }
+
   // No comparison data state - show report selector dropdown
-  if (!comparisonResult) {
+  // Skip this gate when a saved Judge report has been loaded into state.
+  if (!comparisonResult && !judgeReport) {
     const hasSavedReports = savedComparisons.length > 0 || savedEnhanced.length > 0;
 
     return (
