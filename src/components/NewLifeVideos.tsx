@@ -387,7 +387,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             user?.id ? (
               <button
                 className="generate-btn primary-btn"
-                onClick={handleGenerateVideos}
+                onClick={() => handleGenerateVideos()}
                 disabled={isGenerating}
               >
                 <span className="btn-icon">👁️</span>
