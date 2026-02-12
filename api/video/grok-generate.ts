@@ -64,6 +64,7 @@ interface NewLifeVideosRequest {
   loserCity: string;
   winnerCityType?: CityType;
   loserCityType?: CityType;
+  forceRegenerate?: boolean;
 }
 
 interface CourtOrderVideoRequest {
@@ -710,8 +711,13 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
     }
 
     // Skip cache entries with expired Replicate delivery URLs (~24h expiry)
+    // Also mark them as failed so they don't block future checkProcessing() calls
     if (data?.video_url?.includes('replicate.delivery')) {
-      console.log('[GROK-VIDEO] Cache hit has expired Replicate URL, forcing regeneration');
+      console.log('[GROK-VIDEO] Cache hit has expired Replicate URL, marking failed + forcing regeneration');
+      await supabaseAdmin
+        .from('grok_videos')
+        .update({ status: 'failed', error_message: 'Replicate URL expired (~24h)' })
+        .eq('id', data.id);
       return null;
     }
 
@@ -728,7 +734,7 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
   }
 }
 
-async function checkProcessing(userId: string, comparisonId: string, videoType: VideoType): Promise<GrokVideoRecord | null> {
+async function checkProcessing(userId: string, comparisonId: string, videoType: VideoType, forceRegenerate: boolean = false): Promise<GrokVideoRecord | null> {
   try {
     const { data, error } = await supabaseAdmin
       .from('grok_videos')
@@ -744,10 +750,22 @@ async function checkProcessing(userId: string, comparisonId: string, videoType: 
       return null;
     }
 
-    // Skip stale records stuck in processing for > 10 minutes (dead generations)
-    if (data?.created_at) {
+    if (!data) return null;
+
+    // FIX: If force regenerate requested, mark any existing processing record as failed
+    if (forceRegenerate) {
+      console.log('[GROK-VIDEO] Force regenerate requested, marking existing record as failed:', data.id);
+      await supabaseAdmin
+        .from('grok_videos')
+        .update({ status: 'failed', error_message: 'Superseded by force regeneration' })
+        .eq('id', data.id);
+      return null;
+    }
+
+    // FIX: Reduced stale timeout from 10 min to 3 min (dead generations)
+    if (data.created_at) {
       const ageMs = Date.now() - new Date(data.created_at).getTime();
-      if (ageMs > 10 * 60 * 1000) {
+      if (ageMs > 3 * 60 * 1000) {
         console.log('[GROK-VIDEO] Stale processing record (', Math.round(ageMs / 60000), 'min old), marking failed');
         await supabaseAdmin
           .from('grok_videos')
@@ -793,21 +811,24 @@ async function generateSingleVideo(
   comparisonId: string,
   cityName: string,
   videoType: VideoType,
-  cityType: CityType
+  cityType: CityType,
+  forceRegenerate: boolean = false
 ): Promise<{
   video: Partial<GrokVideoRecord>;
   cached: boolean;
   reused: boolean;
 }> {
-  // Check cache first (reuse across users for same city)
-  const cached = await checkCache(cityName, videoType);
-  if (cached) {
-    console.log('[GROK-VIDEO] Cache hit for:', cityName, videoType);
-    return { video: cached, cached: true, reused: cached.user_id !== userId };
+  // Check cache first (reuse across users for same city) - skip if forcing regeneration
+  if (!forceRegenerate) {
+    const cached = await checkCache(cityName, videoType);
+    if (cached) {
+      console.log('[GROK-VIDEO] Cache hit for:', cityName, videoType);
+      return { video: cached, cached: true, reused: cached.user_id !== userId };
+    }
   }
 
-  // Check if already processing for this user
-  const processing = await checkProcessing(userId, comparisonId, videoType);
+  // Check if already processing for this user (force flag will clear stale records)
+  const processing = await checkProcessing(userId, comparisonId, videoType, forceRegenerate);
   if (processing) {
     console.log('[GROK-VIDEO] Already processing for:', cityName, videoType);
     return { video: processing, cached: false, reused: false };
@@ -921,7 +942,7 @@ export default async function handler(
     // NEW LIFE VIDEOS (Winner + Loser pair)
     // ========================================================================
     if (body.action === 'new_life_videos') {
-      const { winnerCity, loserCity, winnerCityType, loserCityType } = body as NewLifeVideosRequest;
+      const { winnerCity, loserCity, winnerCityType, loserCityType, forceRegenerate } = body as NewLifeVideosRequest;
 
       if (!winnerCity || !loserCity) {
         res.status(400).json({
@@ -931,7 +952,7 @@ export default async function handler(
         return;
       }
 
-      console.log('[GROK-VIDEO] Generating New Life videos:', winnerCity, 'vs', loserCity);
+      console.log('[GROK-VIDEO] Generating New Life videos:', winnerCity, 'vs', loserCity, forceRegenerate ? '(FORCE REGEN)' : '');
 
       // Generate both videos in parallel
       const [winnerResult, loserResult] = await Promise.all([
@@ -940,14 +961,16 @@ export default async function handler(
           body.comparisonId,
           winnerCity,
           'winner_mood',
-          winnerCityType || detectCityType(winnerCity)
+          winnerCityType || detectCityType(winnerCity),
+          !!forceRegenerate
         ),
         generateSingleVideo(
           body.userId,
           body.comparisonId,
           loserCity,
           'loser_mood',
-          loserCityType || detectCityType(loserCity)
+          loserCityType || detectCityType(loserCity),
+          !!forceRegenerate
         ),
       ]);
 

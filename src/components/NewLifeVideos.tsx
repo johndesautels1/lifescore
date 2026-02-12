@@ -85,16 +85,16 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const winnerScore = winner === 'city1' ? result.city1.totalConsensusScore : result.city2.totalConsensusScore;
   const loserScore = winner === 'city1' ? result.city2.totalConsensusScore : result.city1.totalConsensusScore;
 
-  // Handle video generation
-  const handleGenerateVideos = async () => {
+  // Handle video generation (forceRegenerate bypasses "already processing" block on backend)
+  const handleGenerateVideos = async (forceRegenerate: boolean = false) => {
     if (!user?.id) {
       console.warn('[NewLifeVideos] No user ID available');
       return;
     }
 
     // ADMIN BYPASS: Skip usage checks for admin users
-    if (!isAdmin) {
-      // Check usage limits before generating Grok videos
+    if (!isAdmin && !forceRegenerate) {
+      // Check usage limits before generating Grok videos (skip on force regen — already counted)
       const usageResult = await checkUsage('grokVideos');
       if (!usageResult.allowed) {
         console.log('[NewLifeVideos] Grok video limit reached:', usageResult);
@@ -113,6 +113,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
       comparisonId: result.comparisonId,
       winnerCity,
       loserCity,
+      forceRegenerate,
     });
   };
 
@@ -220,16 +221,19 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     }
   }, [videoErrorCount, reset]);
 
-  // FIX: Auto-reset when expired Replicate URLs are detected (skip error loop entirely)
+  // FIX: Auto-regenerate when expired Replicate URLs are detected (not just reset)
+  const hasTriggeredRegenRef = useRef(false);
   useEffect(() => {
-    if (isReady && videoPair) {
+    if (isReady && videoPair && !hasTriggeredRegenRef.current) {
       const winnerExpired = isExpiredUrl(videoPair.winner?.videoUrl);
       const loserExpired = isExpiredUrl(videoPair.loser?.videoUrl);
       if (winnerExpired || loserExpired) {
-        console.warn('[NewLifeVideos] Expired Replicate URLs detected - resetting for regeneration');
+        console.warn('[NewLifeVideos] Expired Replicate URLs detected - forcing regeneration');
+        hasTriggeredRegenRef.current = true;
         reset();
-        setHasStarted(false);
         setIsPlaying(false);
+        // Auto-trigger regeneration with force flag
+        handleGenerateVideos(true);
       }
     }
   }, [isReady, videoPair, isExpiredUrl, reset]);
@@ -240,6 +244,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     setHasStarted(false);
     setIsPlaying(false);
     setVideoErrorCount(0);
+    hasTriggeredRegenRef.current = false;
   }, [result.comparisonId]);
 
   return (
@@ -369,7 +374,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
           <div className="video-error">
             <span className="error-icon">!</span>
             <span className="error-text">{error}</span>
-            <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); }}>
+            <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); handleGenerateVideos(true); }}>
               Try Again
             </button>
           </div>

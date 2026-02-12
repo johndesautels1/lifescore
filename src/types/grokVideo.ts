@@ -93,6 +93,7 @@ export interface GenerateNewLifeVideosRequest {
   loserCity: string;
   winnerCityType?: CityType;
   loserCityType?: CityType;
+  forceRegenerate?: boolean;
 }
 
 export interface GenerateNewLifeVideosResponse {

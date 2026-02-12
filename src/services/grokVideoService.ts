@@ -66,11 +66,16 @@ export async function generateNewLifeVideos(
   request: GenerateNewLifeVideosRequest
 ): Promise<GenerateNewLifeVideosResponse> {
   // Auto-detect city types if not provided
-  const requestWithTypes: GenerateNewLifeVideosRequest = {
+  const requestWithTypes: GenerateNewLifeVideosRequest & { forceRegenerate?: boolean } = {
     ...request,
     winnerCityType: request.winnerCityType || detectCityType(request.winnerCity),
     loserCityType: request.loserCityType || detectCityType(request.loserCity),
   };
+
+  // Pass through forceRegenerate if set
+  if (request.forceRegenerate) {
+    requestWithTypes.forceRegenerate = true;
+  }
 
   const response = await fetchWithTimeout(
     '/api/video/grok-generate',
