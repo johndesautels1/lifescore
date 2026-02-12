@@ -305,14 +305,14 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         // Send audio chunks to Simli with FASTER-than-realtime pacing
         // Chunk size: 6000 bytes (Simli recommended per docs.simli.com)
-        // Pacing: ~150ms per chunk — FASTER than the 187.5ms of audio per chunk
+        // Pacing: ~115ms per chunk — well ahead of the 187.5ms of audio per chunk
         //   PCM16 @ 16kHz mono = 32000 bytes/sec → 6000 bytes = 187.5ms
-        //   Use 150ms (faster delivery) so Simli builds a buffer ahead of playback.
-        //   When chunks arrive slower than real-time, Simli rushes lip animation
-        //   to avoid gaps. Delivering faster lets Simli pace lips at natural speed.
-        //   Legacy avatars need explicit pacing; Trinity handles it internally
+        //   150ms was still 25% too fast on lips. Lower = more buffer = slower lips.
+        //   115ms delivers ~63% ahead of real-time, giving Simli ample buffer
+        //   to pace lip animation at natural speech speed.
+        //   Tuning history: 0→180→205(worse)→150(25% fast)→115
         const chunkSize = 6000;
-        const pacingMs = 150;
+        const pacingMs = 115;
 
         // Split into chunks
         const chunks: Uint8Array[] = [];
