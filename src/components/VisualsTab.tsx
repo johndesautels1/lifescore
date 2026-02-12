@@ -176,6 +176,35 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     setSavedReports(getSavedGammaReports());
   }, [reportsRefreshKey, isReportSaved]);
 
+  // Auto-save Gamma reports when generation completes
+  useEffect(() => {
+    if (
+      reportState.status === 'completed' &&
+      reportState.gammaUrl &&
+      reportState.generationId &&
+      result &&
+      !isReportSaved
+    ) {
+      const effectiveComparisonId = result.comparisonId || `LIFE-${Date.now()}-${result.city1.city.slice(0, 3).toUpperCase()}`;
+
+      // Only auto-save if not already saved for this comparison
+      if (!hasGammaReportForComparison(effectiveComparisonId)) {
+        console.log('[VisualsTab] Auto-saving Gamma report for:', effectiveComparisonId);
+        saveGammaReport({
+          comparisonId: effectiveComparisonId,
+          city1: result.city1.city,
+          city2: result.city2.city,
+          gammaUrl: reportState.gammaUrl,
+          pdfUrl: reportState.pdfUrl,
+          pptxUrl: reportState.pptxUrl,
+          generationId: reportState.generationId,
+        });
+        setIsReportSaved(true);
+        setReportsRefreshKey(k => k + 1);
+      }
+    }
+  }, [reportState.status, reportState.gammaUrl, reportState.generationId, result, isReportSaved]);
+
   // Check if report is already saved when component mounts or report changes
   const comparisonId = result?.comparisonId || '';
   const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
@@ -323,7 +352,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
 
-  if (!result && !hasSavedComparisons) {
+  if (!result && !hasSavedComparisons && savedReports.length === 0) {
     return (
       <div className="visuals-tab">
         <div className="no-results-message card">
@@ -381,10 +410,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         </div>
       )}
 
-      {/* Choose Existing Gamma Report Dropdown */}
-      {savedReports.length > 0 && (
-        <div className="report-selector-section gamma-report-selector">
-          <label className="report-selector-label">Choose Existing Gamma Report:</label>
+      {/* Choose Existing Gamma Report Dropdown - ALWAYS visible */}
+      <div className="report-selector-section gamma-report-selector">
+        <label className="report-selector-label">View Existing Gamma Report:</label>
+        {savedReports.length > 0 ? (
           <select
             className="report-selector-dropdown"
             value=""
@@ -397,15 +426,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               }
             }}
           >
-            <option value="">Select a saved Gamma report to view...</option>
+            <option value="">Select a report to view ({savedReports.length} saved)...</option>
             {savedReports.map((report) => (
               <option key={report.id} value={report.id}>
                 {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
               </option>
             ))}
           </select>
-        </div>
-      )}
+        ) : (
+          <div className="no-saved-reports-msg">
+            No saved Gamma reports yet. Reports are auto-saved when generated.
+          </div>
+        )}
+      </div>
 
       {/* No result selected message */}
       {!result && !viewingReport && (
