@@ -768,6 +768,25 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     loadCachedData();
   }, [currentComparisonId]); // FIX: Only depend on the ID string, not full object or callback
 
+  // FIX: Auto-play video when a cached report with video loads
+  useEffect(() => {
+    if (judgeReport?.videoUrl && judgeReport.videoStatus === 'ready' && videoRef.current) {
+      // Small delay to ensure the <video> element has mounted and src is set
+      const timer = setTimeout(() => {
+        if (videoRef.current && videoRef.current.readyState >= 1) {
+          videoRef.current.play().then(() => {
+            setIsPlaying(true);
+            console.log('[JudgeTab] Auto-playing cached video');
+          }).catch((err) => {
+            // Browser may block autoplay - that's OK, user can click play
+            console.log('[JudgeTab] Autoplay blocked by browser:', err.message);
+          });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [judgeReport?.videoUrl, judgeReport?.videoStatus]);
+
   // Save report to Supabase (for authenticated users)
   const saveReportToSupabase = async (report: JudgeReport): Promise<boolean> => {
     if (!isSupabaseConfigured()) {
@@ -1212,6 +1231,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               const value = e.target.value;
               setSelectedComparisonId(value === '' ? null : value);
               setJudgeReport(null); // Clear existing report when switching
+              // FIX: Reset video player state when switching reports
+              setIsPlaying(false);
+              setCurrentVideoTime(0);
+              setVideoDuration(0);
             }}
           >
             <option value="">
@@ -1282,10 +1305,21 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                   src={judgeReport.videoUrl}
                   className="judge-video"
                   playsInline
+                  autoPlay
                   onTimeUpdate={() => setCurrentVideoTime(videoRef.current?.currentTime || 0)}
                   onLoadedMetadata={() => {
                     setVideoDuration(videoRef.current?.duration || 0);
                     console.log('[JudgeTab] Video loaded, duration:', videoRef.current?.duration);
+                  }}
+                  onCanPlay={() => {
+                    // FIX: Auto-play when video is ready (e.g. loaded from cache)
+                    if (videoRef.current && videoRef.current.paused) {
+                      videoRef.current.play().then(() => {
+                        setIsPlaying(true);
+                      }).catch(() => {
+                        // Autoplay blocked - user can click play
+                      });
+                    }
                   }}
                   onEnded={() => setIsPlaying(false)}
                   onError={(e) => {

@@ -929,7 +929,9 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleSendMessage();
+                  // FIX: Defer heavy async work off the event handler to avoid
+                  // blocking INP (was 422ms). Let the browser paint first.
+                  setTimeout(() => handleSendMessage(), 0);
                 }
               }}
               disabled={usageLimitReached}

@@ -381,11 +381,37 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         </div>
       )}
 
+      {/* Choose Existing Gamma Report Dropdown */}
+      {savedReports.length > 0 && (
+        <div className="report-selector-section gamma-report-selector">
+          <label className="report-selector-label">Choose Existing Gamma Report:</label>
+          <select
+            className="report-selector-dropdown"
+            value=""
+            onChange={(e) => {
+              const reportId = e.target.value;
+              if (!reportId) return;
+              const report = savedReports.find(r => r.id === reportId);
+              if (report) {
+                setViewingReport(report);
+              }
+            }}
+          >
+            <option value="">Select a saved Gamma report to view...</option>
+            {savedReports.map((report) => (
+              <option key={report.id} value={report.id}>
+                {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* No result selected message */}
-      {!result && (
+      {!result && !viewingReport && (
         <div className="no-results-message card">
           <h3>Select a Report</h3>
-          <p>Choose a saved comparison from the dropdown above to generate visualizations.</p>
+          <p>Choose a saved comparison from the dropdown above to generate visualizations, or select an existing Gamma report.</p>
         </div>
       )}
 

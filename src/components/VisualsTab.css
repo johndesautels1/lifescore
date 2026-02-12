@@ -97,6 +97,17 @@
   }
 }
 
+/* Gamma Report Selector - distinct styling */
+.gamma-report-selector {
+  margin-top: 0.5rem;
+  border-color: rgba(201, 162, 39, 0.3);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(10, 22, 40, 0.95));
+}
+
+.gamma-report-selector .report-selector-label {
+  color: #c9a227;
+}
+
 /* ============================================================================
    GAMMA SECTION
    ============================================================================ */
