@@ -425,7 +425,8 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
         duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
         aspect_ratio: '16:9',
         mode: 'std', // Standard mode (cost-effective)
-        sound: 'on', // Enable audio (v2.6 feature)
+        // Note: sound requires 'pro' mode on kling-v2-6; std mode does not support sound
+        // See: Kling API error 1201 - "model/mode(kling-v2-6/std) is not supported with sound on"
       }),
     });
 

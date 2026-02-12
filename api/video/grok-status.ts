@@ -211,6 +211,11 @@ export default async function handler(
 ): Promise<void> {
   if (handleCors(req, res, 'same-app', { methods: 'GET, POST, OPTIONS' })) return;
 
+  // Prevent browser/CDN caching - status polling must always get fresh data
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   // ========================================================================
   // POST - Cache check
   // ========================================================================
