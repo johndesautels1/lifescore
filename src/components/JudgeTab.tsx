@@ -1326,7 +1326,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                     console.error('[JudgeTab] Video error:', e.currentTarget.error?.message);
                     console.error('[JudgeTab] Video URL was:', judgeReport.videoUrl);
                   }}
-                  onCanPlay={() => console.log('[JudgeTab] Video can play')}
                 />
               ) : (
                 <div className="video-placeholder">
