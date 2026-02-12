@@ -32,15 +32,34 @@ export default defineConfig({
     }),
   ],
   build: {
-    // Phase 1 Performance Optimization (2026-02-02)
-    // Removed chunkSizeWarningLimit to expose true bundle warnings
-    // Added manualChunks for vendor code splitting
+    // Performance: dynamic chunk splitting to reduce bundle warnings
+    // index.js was 708KB, AskOlivia.js was 541KB
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks - external dependencies (safe to split)
-          'react-vendor': ['react', 'react-dom'],
-          'supabase': ['@supabase/supabase-js'],
+        manualChunks(id) {
+          // Vendor chunks — split large external dependencies
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/@supabase/')) {
+            return 'supabase';
+          }
+          if (id.includes('node_modules/simli-client/')) {
+            return 'simli';
+          }
+          if (id.includes('node_modules/stripe/')) {
+            return 'stripe';
+          }
+          // App chunks — split large internal modules
+          if (id.includes('/services/llmEvaluators') || id.includes('/services/opusJudge')) {
+            return 'llm-evaluators';
+          }
+          if (id.includes('/services/gammaService')) {
+            return 'gamma-service';
+          }
+          if (id.includes('/data/') || id.includes('/shared/metrics')) {
+            return 'app-data';
+          }
         }
       }
     }
