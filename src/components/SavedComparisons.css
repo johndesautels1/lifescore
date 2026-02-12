@@ -171,6 +171,8 @@
   background: #24292f;
   color: white;
   border-color: #24292f;
+  padding: 0.5rem 1.5rem;
+  white-space: nowrap;
 }
 
 .github-connect-btn:hover {
