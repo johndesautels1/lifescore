@@ -20,6 +20,9 @@ import {
   hasGammaReportForComparison,
   getLocalComparisons,
   getLocalEnhancedComparisons,
+  getSavedGammaReports,
+  deleteGammaReport,
+  type SavedGammaReport,
 } from '../services/savedComparisons';
 import NewLifeVideos from './NewLifeVideos';
 import FeatureGate from './FeatureGate';
@@ -162,6 +165,16 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // Save report state
   const [isReportSaved, setIsReportSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Saved reports library state
+  const [savedReports, setSavedReports] = useState<SavedGammaReport[]>([]);
+  const [viewingReport, setViewingReport] = useState<SavedGammaReport | null>(null);
+  const [reportsRefreshKey, setReportsRefreshKey] = useState(0);
+
+  // Load saved reports
+  useEffect(() => {
+    setSavedReports(getSavedGammaReports());
+  }, [reportsRefreshKey, isReportSaved]);
 
   // Check if report is already saved when component mounts or report changes
   const comparisonId = result?.comparisonId || '';
@@ -583,6 +596,100 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
         )}
       </div>
+      )}
+
+      {/* Saved Reports Library */}
+      {savedReports.length > 0 && !viewingReport && (
+        <div className="saved-reports-section card">
+          <h3 className="section-title">
+            <span className="section-icon">📁</span>
+            Saved Reports ({savedReports.length})
+          </h3>
+          <div className="saved-reports-list">
+            {savedReports.map((report) => (
+              <div key={report.id} className="saved-report-item">
+                <div className="report-info">
+                  <span className="report-cities">{report.city1} vs {report.city2}</span>
+                  <span className="report-date">{new Date(report.savedAt).toLocaleDateString()}</span>
+                </div>
+                <div className="report-actions">
+                  <button
+                    className="report-action-btn view"
+                    onClick={() => setViewingReport(report)}
+                    title="View report"
+                  >
+                    View
+                  </button>
+                  {report.pdfUrl && (
+                    <a
+                      href={report.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="report-action-btn download"
+                      title="Download PDF"
+                    >
+                      PDF
+                    </a>
+                  )}
+                  {report.pptxUrl && (
+                    <a
+                      href={report.pptxUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="report-action-btn download"
+                      title="Download PowerPoint"
+                    >
+                      PPTX
+                    </a>
+                  )}
+                  <button
+                    className="report-action-btn delete"
+                    onClick={() => {
+                      if (window.confirm(`Delete report for ${report.city1} vs ${report.city2}?`)) {
+                        deleteGammaReport(report.id);
+                        setReportsRefreshKey(k => k + 1);
+                      }
+                    }}
+                    title="Delete report"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Viewing a saved report */}
+      {viewingReport && (
+        <div className="saved-report-viewer card">
+          <div className="embedded-header">
+            <h3>{viewingReport.city1} vs {viewingReport.city2} — Saved Report</h3>
+            <div className="embedded-actions">
+              <a
+                href={viewingReport.gammaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="external-link-btn"
+              >
+                Open External ↗
+              </a>
+              <button
+                className="close-embed-btn"
+                onClick={() => setViewingReport(null)}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+          <iframe
+            src={viewingReport.gammaUrl?.replace('/docs/', '/embed/')}
+            className="gamma-embed-frame"
+            title="LIFE SCORE Saved Report"
+            allowFullScreen
+          />
+        </div>
       )}
 
       {/* In-App Visualizations - Only for Enhanced mode */}

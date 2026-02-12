@@ -873,3 +873,115 @@
     min-height: 48px;
   }
 }
+
+/* ============================================================================
+   SAVED REPORTS LIBRARY
+   ============================================================================ */
+
+.saved-reports-section {
+  padding: 1.25rem;
+}
+
+.saved-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.saved-report-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--card-background, rgba(26, 26, 46, 0.6));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.saved-report-item .report-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-report-item .report-cities {
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-report-item .report-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #888);
+}
+
+.saved-report-item .report-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.report-action-btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #aaa);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.report-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #fff);
+}
+
+.report-action-btn.view {
+  color: var(--accent-color, #d4af37);
+  border-color: var(--accent-color, rgba(212, 175, 55, 0.3));
+}
+
+.report-action-btn.view:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.report-action-btn.delete {
+  color: #e74c3c;
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.report-action-btn.delete:hover {
+  background: rgba(231, 76, 60, 0.15);
+}
+
+.saved-report-viewer {
+  padding: 1rem;
+}
+
+.saved-report-viewer .gamma-embed-frame {
+  width: 100%;
+  height: 70vh;
+  border: none;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .saved-report-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .saved-report-item .report-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
