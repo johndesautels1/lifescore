@@ -23,7 +23,7 @@ import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 // CONSTANTS
 // ============================================================================
 
-const VIDEO_GENERATE_TIMEOUT = 120000; // 2 minutes for initial submission
+const VIDEO_GENERATE_TIMEOUT = 240000; // 4 minutes for initial submission (sequential loser+winner)
 const VIDEO_STATUS_TIMEOUT = 30000; // 30 seconds for status checks
 const POLL_INTERVAL = 3000; // 3 seconds between polls
 

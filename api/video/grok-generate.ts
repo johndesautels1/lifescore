@@ -18,7 +18,7 @@ import crypto from 'crypto';
 // ============================================================================
 
 export const config = {
-  maxDuration: 120, // 2 minutes for video generation submission
+  maxDuration: 240, // 4 minutes for sequential video generation (loser + winner)
 };
 
 // Grok API configuration
