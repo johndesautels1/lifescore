@@ -177,16 +177,19 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const enhancedJustCompleted = enhancedStatus === 'complete' && prevEnhancedStatusRef.current === 'running';
     const standardJustCompleted = state.status === 'success' && prevStandardStatusRef.current === 'loading';
-    prevEnhancedStatusRef.current = enhancedStatus;
-    prevStandardStatusRef.current = state.status;
 
     if (enhancedJustCompleted || standardJustCompleted) {
-      // If there are failures, only switch if user acknowledged them
+      // If there are failures, keep the transition pending until user acknowledges
+      // Don't update refs yet so we can re-detect the transition on next render
       if (hasCategoryFailures && !failuresAcknowledged) {
         return;
       }
       setActiveTab('results');
     }
+
+    // Only update refs after we've either navigated or had no transition to handle
+    prevEnhancedStatusRef.current = enhancedStatus;
+    prevStandardStatusRef.current = state.status;
   }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged]);
 
   // Reset failures acknowledgment when starting a new comparison
@@ -840,7 +843,10 @@ const AppContent: React.FC = () => {
                   </div>
                   <button
                     className="btn btn-primary see-results-btn"
-                    onClick={() => setFailuresAcknowledged(true)}
+                    onClick={() => {
+                      setFailuresAcknowledged(true);
+                      setActiveTab('results');
+                    }}
                   >
                     I Understand — SEE RESULTS
                   </button>
