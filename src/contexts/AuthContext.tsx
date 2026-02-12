@@ -13,7 +13,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry } from '../lib/supabase';
 import type { Profile, UserPreferences } from '../types/database';
 import { fullDatabaseSync } from '../services/savedComparisons';
 
@@ -138,7 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[Auth] Fetching profile for user:", userId);
 
     try {
-      // Fetch profile and preferences in parallel with retry + exponential backoff
+      // Fetch profile and preferences in parallel with reduced timeout/retries
+      // to prevent long blocking loops when Supabase is slow or unreachable.
+      // Fail fast, fail open — the app works without profile data.
+      const PROFILE_TIMEOUT_MS = 15000; // 15s — more lenient than default but won't hang forever
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -146,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select('id, email, full_name, tier, avatar_url, created_at')
             .eq('id', userId)
             .maybeSingle(),
-          { operationName: 'Profile fetch', timeoutMs: SUPABASE_TIMEOUT_MS }
+          { operationName: 'Profile fetch', timeoutMs: PROFILE_TIMEOUT_MS, maxRetries: 1 }
         ).catch(err => {
           console.error('[Auth] Profile fetch failed after retries:', err.message);
           return { data: null, error: err };
@@ -157,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select('*')
             .eq('user_id', userId)
             .maybeSingle(),
-          { operationName: 'Preferences fetch', timeoutMs: SUPABASE_TIMEOUT_MS }
+          { operationName: 'Preferences fetch', timeoutMs: PROFILE_TIMEOUT_MS, maxRetries: 1 }
         ).catch(err => {
           console.error('[Auth] Preferences fetch failed after retries:', err.message);
           return { data: null, error: err };
