@@ -611,14 +611,12 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
 interface EnhancedModeToggleProps {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
-  onConfigureKeys: () => void;
   availableLLMs: LLMProvider[];
 }
 
 export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
   enabled,
   onToggle,
-  onConfigureKeys,
   availableLLMs
 }) => {
   return (
@@ -636,9 +634,6 @@ export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
             Enhanced Mode
           </span>
         </label>
-        <button className="configure-btn" onClick={onConfigureKeys} title="Configure API Keys">
-          ⚙️
-        </button>
       </div>
 
       {enabled && (

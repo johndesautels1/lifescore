@@ -33,7 +33,6 @@ import SettingsModal from './components/SettingsModal';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
-  APIKeyModal,
   EnhancedResults,
   LLMSelector,
   EVALUATOR_LLMS,
@@ -70,7 +69,6 @@ import './App.css';
 // PERF #1: useReducer for modal/UI state (was 8 separate useState = 8 re-renders)
 // ============================================================================
 interface ModalState {
-  showAPIKeyModal: boolean;
   showPricingModal: boolean;
   pricingHighlight: { feature?: string; tier?: 'free' | 'pro' | 'enterprise' };
   showCostDashboard: boolean;
@@ -80,8 +78,6 @@ interface ModalState {
 }
 
 type ModalAction =
-  | { type: 'OPEN_API_KEY_MODAL' }
-  | { type: 'CLOSE_API_KEY_MODAL' }
   | { type: 'OPEN_PRICING'; highlight?: { feature?: string; tier?: 'free' | 'pro' | 'enterprise' } }
   | { type: 'CLOSE_PRICING' }
   | { type: 'OPEN_COST_DASHBOARD' }
@@ -93,7 +89,6 @@ type ModalAction =
   | { type: 'TOGGLE_ABOUT' };
 
 const modalInitialState: ModalState = {
-  showAPIKeyModal: false,
   showPricingModal: false,
   pricingHighlight: {},
   showCostDashboard: false,
@@ -104,10 +99,6 @@ const modalInitialState: ModalState = {
 
 function modalReducer(state: ModalState, action: ModalAction): ModalState {
   switch (action.type) {
-    case 'OPEN_API_KEY_MODAL':
-      return { ...state, showAPIKeyModal: true };
-    case 'CLOSE_API_KEY_MODAL':
-      return { ...state, showAPIKeyModal: false };
     case 'OPEN_PRICING':
       return { ...state, showPricingModal: true, pricingHighlight: action.highlight || {} };
     case 'CLOSE_PRICING':
@@ -263,8 +254,8 @@ const AppContent: React.FC = () => {
   // PERF #1: Enhanced comparison state — single reducer instead of 11 useState
   const [enhanced, dispatchEnhanced] = useReducer(enhancedReducer, enhancedInitialState);
 
-  // API keys (kept as useState — updated rarely, used in computed value)
-  const [apiKeys, setApiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys());
+  // API keys (read once from localStorage — keys now managed via Vercel env vars)
+  const [apiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys);
 
   // LIFTED STATE from LLMSelector (Map type doesn't work well in reducers)
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
@@ -294,7 +285,7 @@ const AppContent: React.FC = () => {
   } = enhanced;
 
   const {
-    showAPIKeyModal, showPricingModal, pricingHighlight,
+    showPricingModal, pricingHighlight,
     showCostDashboard, showSettingsModal, activeLegalPage,
     showAboutSection,
   } = modals;
@@ -565,10 +556,6 @@ const AppContent: React.FC = () => {
     resetOGMetaTags();
   }, [reset]);
 
-  const handleSaveAPIKeys = useCallback((keys: LLMAPIKeys) => {
-    setApiKeys(keys);
-  }, []);
-
   // Show loading spinner while checking auth
   if (authLoading) {
     return (
@@ -635,7 +622,6 @@ const AppContent: React.FC = () => {
                 <EnhancedModeToggle
                   enabled={enhancedMode}
                   onToggle={(enabled: boolean) => dispatchEnhanced({ type: 'SET_MODE', enabled })}
-                  onConfigureKeys={() => dispatchModal({ type: 'OPEN_API_KEY_MODAL' })}
                   availableLLMs={availableLLMs}
                 />
               </FeatureGate>
@@ -1299,14 +1285,6 @@ const AppContent: React.FC = () => {
 
       {/* Legal Modal */}
       <LegalModal page={activeLegalPage} onClose={() => dispatchModal({ type: 'SET_LEGAL_PAGE', page: null })} />
-
-      {/* API Key Configuration Modal */}
-      <APIKeyModal
-        isOpen={showAPIKeyModal}
-        onClose={() => dispatchModal({ type: 'CLOSE_API_KEY_MODAL' })}
-        onSave={handleSaveAPIKeys}
-        initialKeys={apiKeys}
-      />
 
       {/* Olivia Chat Bubble - Shows on all pages EXCEPT Ask Olivia tab */}
       {activeTab !== 'olivia' && (
