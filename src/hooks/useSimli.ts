@@ -157,9 +157,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         retryDelay_ms: 2000,
         videoReceivedTimeout: 15000,
         enableSFU: true,
-        // 'artalk' = legacy avatars (proper lip sync pacing)
-        // 'fasttalk' = Trinity avatars (handles own buffering, 2x lip speed on legacy)
-        model: 'artalk' as const,
+        // Leave empty to use SDK default ('fasttalk')
+        // 'fasttalk' = server-side buffering (Trinity + legacy)
+        // 'artalk' = client-side pacing required (tested: worse on legacy)
+        model: '' as const,
         enableConsoleLogs: true,
       };
 
@@ -372,12 +373,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       speakingTimeoutRef.current = null;
     }
 
-    // Send empty audio to clear Simli buffer (multiple times to ensure it's cleared)
+    // Use SDK ClearBuffer to flush server-side audio queue
+    // (avoids sending silence data that could accumulate and desync lip timing)
     if (simliClientRef.current) {
-      const silence = new Uint8Array(6000);
-      simliClientRef.current.sendAudioData(silence);
-      simliClientRef.current.sendAudioData(silence);
-      simliClientRef.current.sendAudioData(silence);
+      simliClientRef.current.ClearBuffer();
     }
 
     // AGGRESSIVE: Directly pause and mute the audio element

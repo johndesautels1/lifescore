@@ -676,7 +676,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
                     ref={videoRef}
                     autoPlay
                     playsInline
-                    muted={false}
+                    muted
                     className="avatar-video"
                   />
                   {/* Simli AI audio element (required by SDK) */}
