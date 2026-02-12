@@ -157,7 +157,9 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         retryDelay_ms: 2000,
         videoReceivedTimeout: 15000,
         enableSFU: true,
-        model: '' as const,
+        // 'artalk' = legacy avatars (proper lip sync pacing)
+        // 'fasttalk' = Trinity avatars (handles own buffering, 2x lip speed on legacy)
+        model: 'artalk' as const,
         enableConsoleLogs: true,
       };
 
