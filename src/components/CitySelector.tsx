@@ -148,11 +148,16 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
     setHighlightedIndex(-1);
   };
 
-  const handleOpen = () => {
+  const handleToggle = () => {
     if (!disabled) {
-      setIsOpen(true);
-      setHighlightedIndex(-1);
-      setTimeout(() => inputRef.current?.focus(), 0);
+      if (isOpen) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      } else {
+        setIsOpen(true);
+        setHighlightedIndex(-1);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
     }
   };
 
@@ -207,7 +212,7 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
       <button
         type="button"
         className={`metro-select-btn ${isOpen ? 'open' : ''}`}
-        onClick={handleOpen}
+        onClick={handleToggle}
         disabled={disabled}
       >
         <span className="metro-select-value">
