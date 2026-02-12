@@ -49,6 +49,7 @@ export interface UseAvatarProviderReturn {
   error: string | null;
   isConnected: boolean;
   isSpeaking: boolean;
+  isPaused: boolean;
 
   // Provider info
   activeProvider: AvatarProvider;
@@ -60,6 +61,8 @@ export interface UseAvatarProviderReturn {
   speak: (text: string, options?: { emotion?: string; speed?: number }) => Promise<void>;
   disconnect: () => void;
   interrupt: () => void;
+  pause: () => void;
+  resume: () => void;
 
   // Provider control
   switchProvider: (provider: AvatarProvider) => void;
@@ -281,6 +284,19 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     onSpeakingEndRef.current?.();
   }, [activeProvider, simli, did, autoFallback, triggerFallback]);
 
+  const pause = useCallback(() => {
+    if (activeProvider === 'simli') {
+      simli.pause();
+    }
+    // D-ID doesn't support pause natively - use interrupt as fallback
+  }, [activeProvider, simli]);
+
+  const resume = useCallback(() => {
+    if (activeProvider === 'simli') {
+      simli.resume();
+    }
+  }, [activeProvider, simli]);
+
   const disconnect = useCallback(() => {
     if (activeProvider === 'simli') {
       simli.disconnect();
@@ -379,6 +395,7 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     error: facadeError,
     isConnected: currentProviderState.isConnected,
     isSpeaking: currentProviderState.isSpeaking,
+    isPaused: activeProvider === 'simli' ? simli.isPaused : false,
 
     // Provider info
     activeProvider,
@@ -390,6 +407,8 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     speak,
     disconnect,
     interrupt,
+    pause,
+    resume,
 
     // Provider control
     switchProvider,

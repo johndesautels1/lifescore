@@ -120,7 +120,7 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
               className="avatar-video"
               autoPlay
               playsInline
-              muted={false}
+              muted
             />
             <audio ref={audioRef} autoPlay />
           </>

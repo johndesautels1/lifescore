@@ -126,10 +126,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     status: avatarStatus,
     isConnected: isAvatarConnected,
     isSpeaking: isAvatarSpeaking,
+    isPaused: isAvatarPaused,
     connect: connectAvatar,
     speak: makeAvatarSpeak,
     disconnect: disconnectAvatar,
     interrupt: interruptAvatar,
+    pause: pauseAvatar,
+    resume: resumeAvatar,
     error: avatarError,
     activeProvider,
     hasFallenBack,
@@ -694,17 +697,21 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
                   {/* Video Controls Overlay - Always visible when video is enabled */}
                   {isAvatarReady && (
                     <div className="video-controls-overlay">
-                      {(isAvatarSpeaking || isTTSSpeaking) ? (
+                      {(isAvatarSpeaking || isTTSSpeaking || isAvatarPaused) ? (
                         <button
-                          className="video-control-btn pause-btn"
+                          className={`video-control-btn ${isAvatarPaused ? 'resume-btn' : 'pause-btn'}`}
                           onClick={() => {
-                            interruptAvatar();
-                            stopSpeaking();
+                            if (isAvatarPaused) {
+                              resumeAvatar();
+                            } else {
+                              pauseAvatar();
+                              stopSpeaking();
+                            }
                           }}
-                          title="Pause Olivia"
+                          title={isAvatarPaused ? "Resume Olivia" : "Pause Olivia"}
                         >
-                          <span className="control-icon">⏸</span>
-                          <span className="control-label">PAUSE</span>
+                          <span className="control-icon">{isAvatarPaused ? '▶' : '⏸'}</span>
+                          <span className="control-label">{isAvatarPaused ? 'RESUME' : 'PAUSE'}</span>
                         </button>
                       ) : (
                         <div className="video-control-status">
@@ -964,16 +971,20 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           </div>
         )}
 
-        {/* Pause button - shows when Olivia is speaking */}
-        {(isAvatarSpeaking || isTTSSpeaking) && (
+        {/* Pause/Resume button - shows when Olivia is speaking or paused */}
+        {(isAvatarSpeaking || isTTSSpeaking || isAvatarPaused) && (
           <button
-            className="pause-btn"
+            className={isAvatarPaused ? 'resume-btn' : 'pause-btn'}
             onClick={() => {
-              interruptAvatar();
-              stopSpeaking();
+              if (isAvatarPaused) {
+                resumeAvatar();
+              } else {
+                pauseAvatar();
+                stopSpeaking();
+              }
             }}
           >
-            ⏸ PAUSE OLIVIA
+            {isAvatarPaused ? '▶ RESUME OLIVIA' : '⏸ PAUSE OLIVIA'}
           </button>
         )}
 

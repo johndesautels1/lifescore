@@ -45,10 +45,13 @@ export interface UseSimliReturn {
   status: SimliSessionStatus;
   isConnected: boolean;
   isSpeaking: boolean;
+  isPaused: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   speak: (text: string, options?: Partial<SimliSpeakRequest>) => Promise<void>;
   interrupt: () => void;
+  pause: () => void;
+  resume: () => void;
   error: string | null;
 }
 
@@ -75,6 +78,8 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   const simliClientRef = useRef<SimliClient | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const interruptedRef = useRef<boolean>(false); // Flag to stop audio chunk sending
+  const pausedRef = useRef<boolean>(false); // Flag to pause/resume chunk sending
+  const [isPaused, setIsPaused] = useState(false);
 
   // Callback refs - prevent re-renders from causing reconnections
   const onConnectedRef = useRef(onConnected);
@@ -300,12 +305,12 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
         // Send audio chunks to Simli with real-time pacing
         // Chunk size: 6000 bytes (Simli recommended per docs.simli.com)
-        // Pacing: ~180ms per chunk to match audio playback rate
+        // Pacing: ~205ms per chunk to slightly trail audio playback rate
         //   PCM16 @ 16kHz mono = 32000 bytes/sec → 6000 bytes = 187.5ms
-        //   Use 180ms (slightly faster) to build small buffer without lip desync
+        //   Use 205ms (slightly slower) so lips don't outrun the voice audio
         //   Legacy avatars need explicit pacing; Trinity handles it internally
         const chunkSize = 6000;
-        const pacingMs = 180;
+        const pacingMs = 205;
 
         // Split into chunks
         const chunks: Uint8Array[] = [];
@@ -313,12 +318,17 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
           chunks.push(audioBytes.slice(i, Math.min(i + chunkSize, audioBytes.length)));
         }
 
-        // Send chunks with pacing - stops if interrupted
+        // Send chunks with pacing - stops if interrupted, waits if paused
         let chunkIndex = 0;
         const sendNextChunk = () => {
           // Check if interrupted before sending next chunk
           if (interruptedRef.current) {
             console.log('[useSimli] Audio sending interrupted at chunk', chunkIndex, 'of', chunks.length);
+            return;
+          }
+          // If paused, wait and retry without advancing
+          if (pausedRef.current) {
+            setTimeout(sendNextChunk, 50);
             return;
           }
           if (chunkIndex < chunks.length && simliClientRef.current) {
@@ -359,9 +369,47 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   }, [isConnected, session, status, audioRef, videoRef]);
 
   /**
+   * Pause current speech - freezes chunk sending and pauses audio/video
+   * Can be resumed with resume()
+   */
+  const pause = useCallback(() => {
+    if (pausedRef.current) return; // Already paused
+    console.log('[useSimli] ⏸ PAUSE - Freezing audio/video');
+    pausedRef.current = true;
+    setIsPaused(true);
+
+    if (audioRef?.current) {
+      audioRef.current.pause();
+    }
+    if (videoRef?.current) {
+      videoRef.current.pause();
+    }
+  }, [audioRef, videoRef]);
+
+  /**
+   * Resume from pause - resumes chunk sending and plays audio/video
+   */
+  const resume = useCallback(() => {
+    if (!pausedRef.current) return; // Not paused
+    console.log('[useSimli] ▶ RESUME - Unfreezing audio/video');
+    pausedRef.current = false;
+    setIsPaused(false);
+
+    if (audioRef?.current) {
+      audioRef.current.play().catch(() => {});
+    }
+    if (videoRef?.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [audioRef, videoRef]);
+
+  /**
    * Interrupt current speech - aggressively stop all audio
    */
   const interrupt = useCallback(() => {
+    // Also clear pause state on interrupt
+    pausedRef.current = false;
+    setIsPaused(false);
     console.log('[useSimli] 🛑 INTERRUPT - Stopping all audio');
 
     // CRITICAL: Set interrupt flag to stop audio chunk loop
@@ -420,10 +468,13 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     status,
     isConnected,
     isSpeaking,
+    isPaused,
     connect,
     disconnect,
     speak,
     interrupt,
+    pause,
+    resume,
     error,
   };
 }
