@@ -913,6 +913,58 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
               <span className="header-title">CONVERSATION TRANSCRIPT</span>
             </div>
             <div className="header-right">
+              {/* Download transcript as text file */}
+              <button
+                className="header-btn"
+                onClick={() => {
+                  if (messages.length === 0) return;
+                  const text = messages.map(m =>
+                    `[${m.role === 'assistant' ? 'OLIVIA' : 'YOU'}] ${m.timestamp.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n${m.content}`
+                  ).join('\n\n---\n\n');
+                  const header = `LIFE SCORE™ — Ask Olivia Transcript\n${hasComparisonData ? `${city1} vs ${city2}` : 'General Chat'}\n${new Date().toLocaleDateString()}\n${'='.repeat(50)}\n\n`;
+                  const blob = new Blob([header + text], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `olivia-transcript-${new Date().toISOString().split('T')[0]}.txt`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                disabled={messages.length === 0}
+                title="Download transcript as text file"
+              >
+                <span>SAVE</span>
+              </button>
+              {/* Share / copy transcript */}
+              <button
+                className="header-btn"
+                onClick={async () => {
+                  if (messages.length === 0) return;
+                  const text = messages.map(m =>
+                    `[${m.role === 'assistant' ? 'OLIVIA' : 'YOU'}] ${m.content}`
+                  ).join('\n\n');
+                  const header = `LIFE SCORE™ — Ask Olivia Transcript\n${hasComparisonData ? `${city1} vs ${city2}` : 'General Chat'}\n\n`;
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ title: 'Olivia Transcript', text: header + text });
+                    } else {
+                      await navigator.clipboard.writeText(header + text);
+                      window.alert('Transcript copied to clipboard!');
+                    }
+                  } catch {
+                    try {
+                      await navigator.clipboard.writeText(header + text);
+                      window.alert('Transcript copied to clipboard!');
+                    } catch { /* clipboard unavailable */ }
+                  }
+                }}
+                disabled={messages.length === 0}
+                title="Share or copy transcript to clipboard"
+              >
+                <span>SHARE</span>
+              </button>
               <button className="header-btn" onClick={clearHistory} title="Clear history">
                 <span>CLEAR</span>
               </button>

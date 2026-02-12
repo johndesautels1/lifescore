@@ -109,12 +109,6 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   const [isLimited, setIsLimited] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // ADMIN BYPASS: Admin users get unlimited access to EVERYTHING - no gates, no limits
-  // This is the owner/developer override that should NEVER show any popups
-  if (isAdmin) {
-    return <>{children}</>;
-  }
-
   // Determine the required tier
   const actualRequiredTier = requiredTier || getRequiredTier(feature);
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
@@ -125,7 +119,9 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   const hasAccess = isLoading ? true : canAccess(feature);
 
   // Check usage limits
+  // NOTE: Hooks must always be called in the same order — admin bypass is AFTER hooks
   useEffect(() => {
+    if (isAdmin) return; // Admin bypass: skip usage checks entirely
     if (hasAccess && showUsage && !isUnlimited(feature)) {
       checkUsage(feature).then((result) => {
         if (result.limit > 0) {
@@ -138,7 +134,16 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
         }
       });
     }
-  }, [hasAccess, showUsage, feature]);
+  }, [hasAccess, showUsage, feature, isAdmin]);
+
+  // ADMIN BYPASS: Admin users get unlimited access to EVERYTHING - no gates, no limits
+  // Placed after all hooks to comply with React rules of hooks
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
+  // User is already at the highest tier — can't upgrade further
+  const isAtMaxTier = tier === 'enterprise';
 
   // Handle upgrade button click
   const handleUpgrade = () => {
@@ -215,32 +220,41 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
 
           <h4 className="gate-title">
             {isLimited
-              ? 'Limit Reached'
+              ? 'Monthly Limit Reached'
               : lockedTitle || `Upgrade to ${TIER_NAMES[actualRequiredTier]}`}
           </h4>
 
           <p className="gate-message">
             {isLimited
-              ? `You've used all ${usageInfo?.limit} ${featureInfo.title.toLowerCase()} this month.`
+              ? isAtMaxTier
+                ? `You've used all ${usageInfo?.limit} ${featureInfo.title.toLowerCase()} this month. Your limit resets on the 1st of next month.`
+                : `You've used all ${usageInfo?.limit} ${featureInfo.title.toLowerCase()} this month.`
               : lockedMessage || featureInfo.description}
           </p>
 
-          <button className="gate-upgrade-btn" onClick={handleUpgrade}>
-            <span className="btn-icon">✨</span>
-            <span className="btn-text">
-              {isLimited ? 'Upgrade for Unlimited' : 'Unlock This Feature'}
-            </span>
-          </button>
+          {/* Don't show upgrade button if user is already at the highest tier */}
+          {!(isLimited && isAtMaxTier) && (
+            <button className="gate-upgrade-btn" onClick={handleUpgrade}>
+              <span className="btn-icon">✨</span>
+              <span className="btn-text">
+                {isLimited ? 'Upgrade for More' : 'Unlock This Feature'}
+              </span>
+            </button>
+          )}
 
           <div className="gate-tier-info">
             <span className="current-tier">Current: {TIER_NAMES[tier]}</span>
-            <span className="tier-arrow">→</span>
-            <span className="required-tier">{TIER_NAMES[actualRequiredTier]}</span>
+            {!isAtMaxTier && (
+              <>
+                <span className="tier-arrow">→</span>
+                <span className="required-tier">{TIER_NAMES[actualRequiredTier]}</span>
+              </>
+            )}
           </div>
 
           {allowDismiss && (
             <button className="gate-continue-btn" onClick={handleDismiss}>
-              Continue with free features
+              {isLimited && isAtMaxTier ? 'Dismiss' : 'Continue with free features'}
             </button>
           )}
         </div>

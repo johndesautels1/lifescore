@@ -22,19 +22,21 @@ import type { UserTier, UsageTracking } from '../types/database';
 // ============================================================================
 
 /**
- * Wrap a Supabase query with retry logic and timeout.
- * Uses exponential backoff on timeout/network errors.
+ * Wrap a Supabase query promise with a simple timeout.
+ * NOTE: Since a pre-created promise is passed (not a factory function),
+ * retrying is useless — the same promise would be re-awaited.
  */
 async function withTimeout<T>(
   promise: PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Tier access query'
 ): Promise<T> {
-  return withRetry(() => promise, {
-    timeoutMs: ms,
-    operationName,
-    maxRetries: 3,
-  });
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${operationName} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
 }
 
 // ============================================================================

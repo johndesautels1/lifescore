@@ -17,18 +17,17 @@ import CookieConsent from './components/CookieConsent';
 import TabNavigation, { type TabId } from './components/TabNavigation';
 import CitySelector from './components/CitySelector';
 import LoadingState from './components/LoadingState';
-import Results from './components/Results';
-import JudgeTab from './components/JudgeTab';
-
-// Phase 2 Performance: Lazy load tab components (2026-02-02)
+// Lazy load tab and modal components to reduce initial bundle size
+const Results = React.lazy(() => import('./components/Results'));
+const JudgeTab = React.lazy(() => import('./components/JudgeTab'));
 const SavedComparisons = React.lazy(() => import('./components/SavedComparisons'));
 const VisualsTab = React.lazy(() => import('./components/VisualsTab'));
 const AskOlivia = React.lazy(() => import('./components/AskOlivia'));
+const CostDashboard = React.lazy(() => import('./components/CostDashboard'));
+const SettingsModal = React.lazy(() => import('./components/SettingsModal'));
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
-import CostDashboard from './components/CostDashboard';
 import HelpBubble from './components/HelpBubble';
-import SettingsModal from './components/SettingsModal';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
@@ -170,18 +169,25 @@ const AppContent: React.FC = () => {
     }
   }, [savedKey]);
 
-  // Auto-switch to results tab when comparison completes (BOTH modes)
+  // Auto-switch to results tab when comparison COMPLETES (BOTH modes)
+  // Only switch on actual completion transitions, not on mode toggle with stale results
   // BUT: If there are category failures, require user to click "SEE RESULTS" first
+  const prevEnhancedStatusRef = React.useRef(enhancedStatus);
+  const prevStandardStatusRef = React.useRef(state.status);
   useEffect(() => {
-    if (hasEnhancedResults || hasStandardResults) {
+    const enhancedJustCompleted = enhancedStatus === 'complete' && prevEnhancedStatusRef.current === 'running';
+    const standardJustCompleted = state.status === 'success' && prevStandardStatusRef.current === 'loading';
+    prevEnhancedStatusRef.current = enhancedStatus;
+    prevStandardStatusRef.current = state.status;
+
+    if (enhancedJustCompleted || standardJustCompleted) {
       // If there are failures, only switch if user acknowledged them
       if (hasCategoryFailures && !failuresAcknowledged) {
-        // Don't auto-switch - user must click "SEE RESULTS" button
         return;
       }
       setActiveTab('results');
     }
-  }, [hasEnhancedResults, hasStandardResults, hasCategoryFailures, failuresAcknowledged]);
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
@@ -859,7 +865,7 @@ const AppContent: React.FC = () => {
               RESULTS TAB
               ============================================================ */}
           {activeTab === 'results' && (
-            <>
+            <Suspense fallback={<div className="tab-loading">Loading Results...</div>}>
               {/* Enhanced Comparison Results - FIX: Use EnhancedResults directly to avoid duplicate evaluation */}
               {enhancedMode && enhancedStatus === 'complete' && enhancedResult && (
                 <>
@@ -954,7 +960,7 @@ const AppContent: React.FC = () => {
                   </div>
                 </div>
               )}
-            </>
+            </Suspense>
           )}
 
           {/* ============================================================
@@ -1011,12 +1017,14 @@ const AppContent: React.FC = () => {
               JUDGES REPORT TAB - The Final Verdict
               ============================================================ */}
           {activeTab === 'judges-report' && (
-            <JudgeTab
-              comparisonResult={(enhancedMode ? enhancedResult : state.result) || null}
-              userId={user?.id || 'guest'}
-              savedJudgeReport={selectedSavedJudgeReport}
-              onSavedReportLoaded={() => setSelectedSavedJudgeReport(null)}
-            />
+            <Suspense fallback={<div className="tab-loading">Loading Judge Report...</div>}>
+              <JudgeTab
+                comparisonResult={(enhancedMode ? enhancedResult : state.result) || null}
+                userId={user?.id || 'guest'}
+                savedJudgeReport={selectedSavedJudgeReport}
+                onSavedReportLoaded={() => setSelectedSavedJudgeReport(null)}
+              />
+            </Suspense>
           )}
 
           {/* ============================================================
@@ -1165,20 +1173,28 @@ const AppContent: React.FC = () => {
       />
 
       {/* Admin Cost Dashboard */}
-      <CostDashboard
-        isOpen={showCostDashboard}
-        onClose={() => setShowCostDashboard(false)}
-      />
+      {showCostDashboard && (
+        <Suspense fallback={null}>
+          <CostDashboard
+            isOpen={showCostDashboard}
+            onClose={() => setShowCostDashboard(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        onUpgradeClick={() => {
-          setShowSettingsModal(false);
-          setShowPricingModal(true);
-        }}
-      />
+      {showSettingsModal && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+            onUpgradeClick={() => {
+              setShowSettingsModal(false);
+              setShowPricingModal(true);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
