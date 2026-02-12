@@ -27,6 +27,7 @@ const VisualsTab = React.lazy(() => import('./components/VisualsTab'));
 const AskOlivia = React.lazy(() => import('./components/AskOlivia'));
 const CostDashboard = React.lazy(() => import('./components/CostDashboard'));
 const SettingsModal = React.lazy(() => import('./components/SettingsModal'));
+const AboutClues = React.lazy(() => import('./components/AboutClues'));
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import HelpBubble from './components/HelpBubble';
@@ -68,6 +69,8 @@ import './App.css';
 // ============================================================================
 // PERF #1: useReducer for modal/UI state (was 8 separate useState = 8 re-renders)
 // ============================================================================
+type AboutTabView = 'lifescore' | 'clues';
+
 interface ModalState {
   showPricingModal: boolean;
   pricingHighlight: { feature?: string; tier?: 'free' | 'pro' | 'enterprise' };
@@ -75,6 +78,7 @@ interface ModalState {
   showSettingsModal: boolean;
   activeLegalPage: LegalPage;
   showAboutSection: boolean;
+  activeAboutTab: AboutTabView;
 }
 
 type ModalAction =
@@ -86,7 +90,8 @@ type ModalAction =
   | { type: 'CLOSE_SETTINGS' }
   | { type: 'OPEN_SETTINGS_THEN_PRICING' }
   | { type: 'SET_LEGAL_PAGE'; page: LegalPage }
-  | { type: 'TOGGLE_ABOUT' };
+  | { type: 'TOGGLE_ABOUT' }
+  | { type: 'SET_ABOUT_TAB'; tab: AboutTabView };
 
 const modalInitialState: ModalState = {
   showPricingModal: false,
@@ -95,6 +100,7 @@ const modalInitialState: ModalState = {
   showSettingsModal: false,
   activeLegalPage: null,
   showAboutSection: true,
+  activeAboutTab: 'lifescore',
 };
 
 function modalReducer(state: ModalState, action: ModalAction): ModalState {
@@ -117,6 +123,8 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
       return { ...state, activeLegalPage: action.page };
     case 'TOGGLE_ABOUT':
       return { ...state, showAboutSection: !state.showAboutSection };
+    case 'SET_ABOUT_TAB':
+      return { ...state, activeAboutTab: action.tab };
     default:
       return state;
   }
@@ -287,7 +295,7 @@ const AppContent: React.FC = () => {
   const {
     showPricingModal, pricingHighlight,
     showCostDashboard, showSettingsModal, activeLegalPage,
-    showAboutSection,
+    showAboutSection, activeAboutTab,
   } = modals;
 
   const availableLLMs = getAvailableLLMs(apiKeys);
@@ -1188,107 +1196,137 @@ const AppContent: React.FC = () => {
           )}
 
           {/* ============================================================
-              ABOUT TAB
+              ABOUT TAB — Two top-level sub-tabs: LifeScore / Clues
               ============================================================ */}
           {activeTab === 'about' && (
-            <div className="about-section card">
-              <button
-                className="section-toggle"
-                onClick={() => dispatchModal({ type: 'TOGGLE_ABOUT' })}
-              >
-                <h3 className="section-title">About LIFE SCORE™</h3>
-                <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`}>▼</span>
-              </button>
+            <div className="about-tab-wrapper">
+              {/* Top-level About sub-tab navigation */}
+              <div className="about-top-tabs">
+                <button
+                  className={`about-top-tab ${activeAboutTab === 'lifescore' ? 'active' : ''}`}
+                  onClick={() => dispatchModal({ type: 'SET_ABOUT_TAB', tab: 'lifescore' })}
+                >
+                  <span className="about-top-tab-icon">⚖️</span>
+                  <span>About LifeScore</span>
+                </button>
+                <button
+                  className={`about-top-tab ${activeAboutTab === 'clues' ? 'active' : ''}`}
+                  onClick={() => dispatchModal({ type: 'SET_ABOUT_TAB', tab: 'clues' })}
+                >
+                  <span className="about-top-tab-icon">🌍</span>
+                  <span>About Clues</span>
+                </button>
+              </div>
 
-              {showAboutSection && (
-                <>
-                  <div className="about-content">
-                    <p>
-                      <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
-                      framework developed by Clues Intelligence LTD that analyzes both <em>legal freedom</em> (written law)
-                      and <em>lived freedom</em> (enforcement reality) across
-                      <span className="highlight"> 100 specific metrics</span> in six key categories:
-                    </p>
+              {/* About LifeScore — existing content */}
+              {activeAboutTab === 'lifescore' && (
+                <div className="about-section card">
+                  <button
+                    className="section-toggle"
+                    onClick={() => dispatchModal({ type: 'TOGGLE_ABOUT' })}
+                  >
+                    <h3 className="section-title">About LIFE SCORE™</h3>
+                    <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`}>▼</span>
+                  </button>
 
-                    <div className="category-summary">
-                      <div className="category-item">
-                        <span className="cat-icon">🗽</span>
-                        <div className="cat-info">
-                          <strong>Personal Autonomy</strong>
-                          <span>15 metrics - Vice laws, substance policies, personal choices</span>
+                  {showAboutSection && (
+                    <>
+                      <div className="about-content">
+                        <p>
+                          <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
+                          framework developed by Clues Intelligence LTD that analyzes both <em>legal freedom</em> (written law)
+                          and <em>lived freedom</em> (enforcement reality) across
+                          <span className="highlight"> 100 specific metrics</span> in six key categories:
+                        </p>
+
+                        <div className="category-summary">
+                          <div className="category-item">
+                            <span className="cat-icon">🗽</span>
+                            <div className="cat-info">
+                              <strong>Personal Autonomy</strong>
+                              <span>15 metrics - Vice laws, substance policies, personal choices</span>
+                            </div>
+                          </div>
+
+                          <div className="category-item">
+                            <span className="cat-icon">🏠</span>
+                            <div className="cat-info">
+                              <strong>Housing & Property Rights</strong>
+                              <span>20 metrics - HOA restrictions, property taxes, zoning</span>
+                            </div>
+                          </div>
+
+                          <div className="category-item">
+                            <span className="cat-icon">💼</span>
+                            <div className="cat-info">
+                              <strong>Business & Work Regulation</strong>
+                              <span>25 metrics - Licensing, employment laws, regulatory burden</span>
+                            </div>
+                          </div>
+
+                          <div className="category-item">
+                            <span className="cat-icon">🚇</span>
+                            <div className="cat-info">
+                              <strong>Transportation & Movement</strong>
+                              <span>15 metrics - Car dependency, public transit, mobility freedom</span>
+                            </div>
+                          </div>
+
+                          <div className="category-item">
+                            <span className="cat-icon">⚖️</span>
+                            <div className="cat-info">
+                              <strong>Policing & Legal System</strong>
+                              <span>15 metrics - Enforcement, incarceration, legal costs</span>
+                            </div>
+                          </div>
+
+                          <div className="category-item">
+                            <span className="cat-icon">🎭</span>
+                            <div className="cat-info">
+                              <strong>Speech & Lifestyle</strong>
+                              <span>10 metrics - Free expression, cultural norms, privacy</span>
+                            </div>
+                          </div>
                         </div>
+
+                        <p className="methodology">
+                          Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Multiple LLMs
+                          with our proprietary weighted average LIFE score technology to verify each metric with actual laws, regulations, and current data.
+                          <span className="highlight"> No fabricated data.</span> Every score
+                          is backed by verifiable sources.
+                        </p>
+
+                        <p className="part-of">
+                          This tool is part of the <strong className="brand-text">CLUES™</strong> (Comprehensive
+                          Location & Utility Evaluation System) platform, helping individuals make informed decisions
+                          about international relocation based on real data, not assumptions.
+                        </p>
                       </div>
 
-                      <div className="category-item">
-                        <span className="cat-icon">🏠</span>
-                        <div className="cat-info">
-                          <strong>Housing & Property Rights</strong>
-                          <span>20 metrics - HOA restrictions, property taxes, zoning</span>
+                      <div className="metrics-count">
+                        <div className="count-box">
+                          <span className="count-number">{ALL_METRICS.length}</span>
+                          <span className="count-label">Total Metrics</span>
+                        </div>
+                        <div className="count-box">
+                          <span className="count-number">6</span>
+                          <span className="count-label">Categories</span>
+                        </div>
+                        <div className="count-box">
+                          <span className="count-number">∞</span>
+                          <span className="count-label">Cities Comparable</span>
                         </div>
                       </div>
+                    </>
+                  )}
+                </div>
+              )}
 
-                      <div className="category-item">
-                        <span className="cat-icon">💼</span>
-                        <div className="cat-info">
-                          <strong>Business & Work Regulation</strong>
-                          <span>25 metrics - Licensing, employment laws, regulatory burden</span>
-                        </div>
-                      </div>
-
-                      <div className="category-item">
-                        <span className="cat-icon">🚇</span>
-                        <div className="cat-info">
-                          <strong>Transportation & Movement</strong>
-                          <span>15 metrics - Car dependency, public transit, mobility freedom</span>
-                        </div>
-                      </div>
-
-                      <div className="category-item">
-                        <span className="cat-icon">⚖️</span>
-                        <div className="cat-info">
-                          <strong>Policing & Legal System</strong>
-                          <span>15 metrics - Enforcement, incarceration, legal costs</span>
-                        </div>
-                      </div>
-
-                      <div className="category-item">
-                        <span className="cat-icon">🎭</span>
-                        <div className="cat-info">
-                          <strong>Speech & Lifestyle</strong>
-                          <span>10 metrics - Free expression, cultural norms, privacy</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="methodology">
-                      Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Multiple LLMs
-                      with our proprietary weighted average LIFE score technology to verify each metric with actual laws, regulations, and current data.
-                      <span className="highlight"> No fabricated data.</span> Every score
-                      is backed by verifiable sources.
-                    </p>
-
-                    <p className="part-of">
-                      This tool is part of the <strong className="brand-text">CLUES™</strong> (Comprehensive
-                      Location & Utility Evaluation System) platform, helping individuals make informed decisions
-                      about international relocation based on real data, not assumptions.
-                    </p>
-                  </div>
-
-                  <div className="metrics-count">
-                    <div className="count-box">
-                      <span className="count-number">{ALL_METRICS.length}</span>
-                      <span className="count-label">Total Metrics</span>
-                    </div>
-                    <div className="count-box">
-                      <span className="count-number">6</span>
-                      <span className="count-label">Categories</span>
-                    </div>
-                    <div className="count-box">
-                      <span className="count-number">∞</span>
-                      <span className="count-label">Cities Comparable</span>
-                    </div>
-                  </div>
-                </>
+              {/* About Clues — new component */}
+              {activeAboutTab === 'clues' && (
+                <Suspense fallback={<div className="tab-loading">Loading About Clues...</div>}>
+                  <AboutClues />
+                </Suspense>
               )}
             </div>
           )}
