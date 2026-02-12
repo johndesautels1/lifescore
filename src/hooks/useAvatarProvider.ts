@@ -284,18 +284,39 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     onSpeakingEndRef.current?.();
   }, [activeProvider, simli, did, autoFallback, triggerFallback]);
 
+  const [didPaused, setDidPaused] = useState(false);
+
   const pause = useCallback(() => {
     if (activeProvider === 'simli') {
       simli.pause();
+    } else {
+      // D-ID doesn't support native pause - pause the video/audio elements directly
+      if (effectiveVideoRef?.current) {
+        effectiveVideoRef.current.pause();
+      }
+      if (effectiveAudioRef?.current) {
+        effectiveAudioRef.current.pause();
+      }
+      setDidPaused(true);
+      console.log('[useAvatarProvider] D-ID paused via video/audio element');
     }
-    // D-ID doesn't support pause natively - use interrupt as fallback
-  }, [activeProvider, simli]);
+  }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
 
   const resume = useCallback(() => {
     if (activeProvider === 'simli') {
       simli.resume();
+    } else {
+      // D-ID: resume video/audio elements
+      if (effectiveVideoRef?.current) {
+        effectiveVideoRef.current.play().catch(() => {});
+      }
+      if (effectiveAudioRef?.current) {
+        effectiveAudioRef.current.play().catch(() => {});
+      }
+      setDidPaused(false);
+      console.log('[useAvatarProvider] D-ID resumed via video/audio element');
     }
-  }, [activeProvider, simli]);
+  }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
 
   const disconnect = useCallback(() => {
     if (activeProvider === 'simli') {
@@ -334,8 +355,9 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
       console.log('[useAvatarProvider] Browser speech synthesis cancelled');
     }
 
-    // Reset speaking state in facade
+    // Reset speaking and pause state in facade
     setFacadeStatus('connected');
+    setDidPaused(false);
   }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
 
   // ============================================================================
@@ -395,7 +417,7 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     error: facadeError,
     isConnected: currentProviderState.isConnected,
     isSpeaking: currentProviderState.isSpeaking,
-    isPaused: activeProvider === 'simli' ? simli.isPaused : false,
+    isPaused: activeProvider === 'simli' ? simli.isPaused : didPaused,
 
     // Provider info
     activeProvider,

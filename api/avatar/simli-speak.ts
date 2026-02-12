@@ -101,7 +101,7 @@ export default async function handler(
                 similarity_boost: emotionSettings.similarity_boost,
                 style: emotionSettings.style,
                 use_speaker_boost: true,
-                speed: 1.0,
+                speed: body.speed || 1.0,
               },
             }),
             signal: controller.signal,
