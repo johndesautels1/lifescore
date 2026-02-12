@@ -875,6 +875,105 @@
 }
 
 /* ============================================================================
+   EXISTING REPORT BANNER (View Existing Report)
+   ============================================================================ */
+
+.existing-report-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 8px;
+}
+
+.existing-report-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.existing-report-icon {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.existing-report-text {
+  font-size: 0.85rem;
+  color: var(--text-primary, #e0e0e0);
+  font-weight: 500;
+}
+
+.existing-report-date {
+  color: var(--text-secondary, #888);
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.existing-report-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.existing-report-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.existing-report-btn.view {
+  background: rgba(201, 162, 39, 0.15);
+  border-color: rgba(201, 162, 39, 0.5);
+  color: #d4af37;
+}
+
+.existing-report-btn.view:hover {
+  background: rgba(201, 162, 39, 0.25);
+  border-color: rgba(201, 162, 39, 0.7);
+  color: #e0bc3f;
+}
+
+.existing-report-btn.download {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary, #aaa);
+}
+
+.existing-report-btn.download:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #fff);
+}
+
+@media (max-width: 640px) {
+  .existing-report-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .existing-report-actions {
+    width: 100%;
+  }
+
+  .existing-report-btn.view {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* ============================================================================
    SAVED REPORTS LIBRARY
    ============================================================================ */
 

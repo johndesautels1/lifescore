@@ -180,6 +180,11 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const comparisonId = result?.comparisonId || '';
   const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
 
+  // Find the matching saved report for current comparison (for "View Existing Report")
+  const existingReport = isAlreadySaved
+    ? savedReports.find(r => r.comparisonId === comparisonId) || null
+    : null;
+
   const handleSaveReport = useCallback(() => {
     if (!result) {
       setSaveMessage('Error: No comparison data available');
@@ -394,6 +399,49 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         <p className="section-description">
           Create a professional presentation of your {result.city1.city} vs {result.city2.city} comparison.
         </p>
+
+        {/* Existing Report Banner — shown when a saved report matches this comparison */}
+        {reportState.status === 'idle' && existingReport && (
+          <div className="existing-report-banner">
+            <div className="existing-report-info">
+              <span className="existing-report-icon">✓</span>
+              <span className="existing-report-text">
+                You already have a report for this comparison
+                <span className="existing-report-date">
+                  (saved {new Date(existingReport.savedAt).toLocaleDateString()})
+                </span>
+              </span>
+            </div>
+            <div className="existing-report-actions">
+              <button
+                className="existing-report-btn view"
+                onClick={() => setViewingReport(existingReport)}
+              >
+                View Existing Report
+              </button>
+              {existingReport.pdfUrl && (
+                <a
+                  href={existingReport.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="existing-report-btn download"
+                >
+                  PDF
+                </a>
+              )}
+              {existingReport.pptxUrl && (
+                <a
+                  href={existingReport.pptxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="existing-report-btn download"
+                >
+                  PPTX
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {reportState.status === 'idle' && (
           <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
