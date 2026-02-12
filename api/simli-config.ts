@@ -3,6 +3,7 @@
  *
  * Returns Simli credentials to authenticated users only.
  * Keeps SIMLI_API_KEY out of the static JS bundle.
+ * Face ID: Set via SIMLI_FACE_ID env var (legacy avatar supported).
  *
  * GET /api/simli-config
  *
