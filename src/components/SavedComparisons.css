@@ -167,12 +167,21 @@
   background: var(--gray-200);
 }
 
+.toolbar-center {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
 .github-connect-btn {
   background: #24292f;
   color: white;
   border-color: #24292f;
-  padding: 0.5rem 1.5rem;
+  padding: 0.65rem 2rem;
+  font-size: 0.85rem;
   white-space: nowrap;
+  border-radius: var(--radius-lg, 8px);
+  letter-spacing: 0.02em;
 }
 
 .github-connect-btn:hover {
@@ -877,9 +886,11 @@
   }
 
   .toolbar-left,
-  .toolbar-right {
+  .toolbar-right,
+  .toolbar-center {
     justify-content: center;
     flex-wrap: wrap;
+    width: 100%;
   }
 
   .saved-item {

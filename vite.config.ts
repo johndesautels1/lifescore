@@ -11,8 +11,21 @@ export default defineConfig({
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo-512.png'],
       manifest: false, // Use our custom manifest.json in public folder
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
+        // Pre-cache only the app shell: index.html, core CSS, and critical vendor chunks.
+        // Lazy-loaded tab chunks (Results, JudgeTab, AskOlivia, etc.) are cached on first
+        // use via runtimeCaching below — NOT pre-cached on install.
+        globPatterns: ['**/*.html', '**/index-*.js', '**/index-*.css', '**/react-vendor-*.js', '**/supabase-*.js', '**/app-data-*.js', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
         runtimeCaching: [
+          {
+            // Lazy-loaded JS/CSS chunks: cache on first use (StaleWhileRevalidate)
+            // so second visit loads instantly, but first visit only fetches what's needed.
+            urlPattern: /\/assets\/.*\.(js|css)$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'lazy-chunks',
+              expiration: { maxEntries: 50, maxAgeSeconds: 7 * 24 * 60 * 60 },
+            },
+          },
           {
             urlPattern: /^https:\/\/api\.openai\.com\/.*/i,
             handler: 'NetworkOnly',

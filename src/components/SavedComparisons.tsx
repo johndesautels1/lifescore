@@ -17,6 +17,7 @@ import {
   syncToGitHub,
   pullFromGitHub,
   getSyncStatus,
+  getGitHubConfig,
   exportToJSON,
   importFromJSON,
   clearAllLocal,
@@ -144,7 +145,17 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     setComparisons(localAll);
     setGammaReports(getSavedGammaReports());
     setJudgeReports(getSavedJudgeReports());
-    setSyncStatus(getSyncStatus());
+
+    // INP fix: compute sync status from already-loaded data instead of calling
+    // getSyncStatus() which re-parses getLocalComparisons() from localStorage
+    // a second time (~800ms duplicate JSON.parse that was causing 2.4s INP block)
+    const config = getGitHubConfig();
+    const hasPendingChanges = standardComparisons.some(c => !c.synced);
+    setSyncStatus({
+      connected: !!config?.accessToken,
+      hasPendingChanges,
+      gistId: config?.gistId,
+    });
 
     // Step 2: Fetch older comparisons from Supabase in background (non-blocking)
     try {
@@ -428,7 +439,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
               >
                 {isSyncing ? '⟳ Syncing...' : '☁️ Sync Cloud'}
               </button>
-              {syncStatus.connected ? (
+              {syncStatus.connected && (
                 <>
                   <button className="toolbar-btn sync-btn" onClick={handleSync} title="Sync to GitHub">
                     ⬆ Push
@@ -440,12 +451,15 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                     Disconnect
                   </button>
                 </>
-              ) : (
+              )}
+            </div>
+            {!syncStatus.connected && (
+              <div className="toolbar-center">
                 <button className="toolbar-btn github-connect-btn" onClick={() => setShowGitHubModal(true)}>
                   <span className="github-icon">⬡</span> Connect GitHub
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             <div className="toolbar-right">
               <button className="toolbar-btn" onClick={handleExport} title="Export to file">
                 📤 Export
