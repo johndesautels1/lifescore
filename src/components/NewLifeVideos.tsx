@@ -85,10 +85,16 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const winnerScore = winner === 'city1' ? result.city1.totalConsensusScore : result.city2.totalConsensusScore;
   const loserScore = winner === 'city1' ? result.city2.totalConsensusScore : result.city1.totalConsensusScore;
 
+  // Local error state for usage/auth failures (separate from video generation errors)
+  const [localError, setLocalError] = useState<string | null>(null);
+
   // Handle video generation (forceRegenerate bypasses "already processing" block on backend)
   const handleGenerateVideos = async (forceRegenerate: boolean = false) => {
+    setLocalError(null);
+
     if (!user?.id) {
       console.warn('[NewLifeVideos] No user ID available');
+      setLocalError('Please sign in to generate videos.');
       return;
     }
 
@@ -97,7 +103,12 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
       // Check usage limits before generating Grok videos (skip on force regen — already counted)
       const usageResult = await checkUsage('grokVideos');
       if (!usageResult.allowed) {
-        console.log('[NewLifeVideos] Grok video limit reached:', usageResult);
+        console.warn('[NewLifeVideos] Grok video limit reached:', usageResult);
+        if (usageResult.upgradeRequired) {
+          setLocalError('Upgrade to Sovereign to unlock City Life Videos.');
+        } else {
+          setLocalError('Monthly video limit reached. Resets on the 1st.');
+        }
         return;
       }
 
@@ -244,6 +255,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     setHasStarted(false);
     setIsPlaying(false);
     setVideoErrorCount(0);
+    setLocalError(null);
     hasTriggeredRegenRef.current = false;
   }, [result.comparisonId]);
 
@@ -370,11 +382,11 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
         )}
 
         {/* Error Display */}
-        {error && (
+        {(error || localError) && (
           <div className="video-error">
             <span className="error-icon">!</span>
-            <span className="error-text">{error}</span>
-            <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); handleGenerateVideos(true); }}>
+            <span className="error-text">{error || localError}</span>
+            <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); setLocalError(null); handleGenerateVideos(true); }}>
               Try Again
             </button>
           </div>

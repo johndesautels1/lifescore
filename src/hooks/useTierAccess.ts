@@ -193,6 +193,9 @@ const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 // Grace period: if cache expired but server check fails, trust the old value for 1 hour
 const ADMIN_CACHE_GRACE_MS = 60 * 60 * 1000;
 
+// Tier cache — survives Supabase outages so users aren't demoted to free
+const TIER_CACHE_KEY = 'lifescore_user_tier';
+
 interface AdminCache {
   isAdmin: boolean;
   timestamp: number;
@@ -229,6 +232,30 @@ function setCachedAdminStatus(isAdmin: boolean): void {
   try {
     const entry: AdminCache = { isAdmin, timestamp: Date.now() };
     localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(entry));
+  } catch { /* localStorage not available */ }
+}
+
+function getCachedTier(): UserTier | null {
+  try {
+    const cached = localStorage.getItem(TIER_CACHE_KEY);
+    if (cached === 'free' || cached === 'pro' || cached === 'enterprise') {
+      return cached;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedTier(tier: UserTier): void {
+  try {
+    localStorage.setItem(TIER_CACHE_KEY, tier);
+  } catch { /* localStorage not available */ }
+}
+
+function clearCachedTier(): void {
+  try {
+    localStorage.removeItem(TIER_CACHE_KEY);
   } catch { /* localStorage not available */ }
 }
 
@@ -296,13 +323,30 @@ export function useTierAccess(): TierAccessHook {
   }, [user?.id]);
 
   // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet.
-  // Everyone else: fail-closed to FREE if profile hasn't loaded yet.
+  // Everyone else: use cached tier when profile unavailable (Supabase timeout resilience).
+  // Only fall back to 'free' for truly new/unknown users (no cache, no profile).
   const profileTier = profile?.tier;
+  const cachedTier = user?.id ? getCachedTier() : null; // Only use cache for authenticated users
   const tier: UserTier = isDeveloper
     ? 'enterprise'
     : profileTier
       ? profileTier
-      : 'free'; // Fail-closed: no profile = free tier (prevents abuse if Supabase is down)
+      : cachedTier || 'free'; // Use cached tier if profile unavailable, then free as last resort
+
+  // Cache the tier whenever we get it from the profile (so it survives Supabase outages)
+  useEffect(() => {
+    if (profileTier) {
+      setCachedTier(profileTier);
+    }
+  }, [profileTier]);
+
+  // Clear tier cache on sign-out (no user = no cached tier)
+  useEffect(() => {
+    if (!user?.id) {
+      clearCachedTier();
+    }
+  }, [user?.id]);
+
   const tierName = TIER_NAMES[tier];
   const limits = TIER_LIMITS[tier];
 
@@ -375,8 +419,11 @@ export function useTierAccess(): TierAccessHook {
     }
 
     // Check actual usage from database
-    if (!isSupabaseConfigured() || !profile?.id) {
-      // Fail-closed: deny if we can't verify usage (prevents abuse when DB is down)
+    // Use user.id (from auth session) instead of profile.id — auth session survives
+    // even when profile fetch times out due to Supabase connectivity issues
+    const userId = profile?.id || user?.id;
+    if (!isSupabaseConfigured() || !userId) {
+      // Fail-closed: deny if we can't verify usage AND have no user ID at all
       return {
         allowed: false,
         used: 0,
@@ -407,7 +454,7 @@ export function useTierAccess(): TierAccessHook {
         supabase
           .from('usage_tracking')
           .select('*')
-          .eq('user_id', profile.id)
+          .eq('user_id', userId)
           .eq('period_start', periodStart)
           .maybeSingle()
       );
@@ -456,8 +503,11 @@ export function useTierAccess(): TierAccessHook {
       return false;
     }
 
+    // Use user.id (auth session) as fallback when profile hasn't loaded
+    const userId = profile?.id || user?.id;
+
     // If unlimited or Supabase not configured, just return true
-    if (usageCheck.limit === -1 || !isSupabaseConfigured() || !profile?.id) {
+    if (usageCheck.limit === -1 || !isSupabaseConfigured() || !userId) {
       return true;
     }
 
@@ -476,7 +526,7 @@ export function useTierAccess(): TierAccessHook {
       // Upsert usage record (with 45s timeout)
       const { error } = await withTimeout(() =>
         supabase.rpc('increment_usage', {
-          p_user_id: profile.id,
+          p_user_id: userId,
           p_feature: column,
           p_amount: 1,
         })
@@ -490,7 +540,7 @@ export function useTierAccess(): TierAccessHook {
           supabase
             .from('usage_tracking')
             .select('*')
-            .eq('user_id', profile.id)
+            .eq('user_id', userId)
             .eq('period_start', periodStart)
             .maybeSingle()
         );
@@ -509,7 +559,7 @@ export function useTierAccess(): TierAccessHook {
           // Insert new record
           await withTimeout(() =>
             supabase.from('usage_tracking').insert({
-              user_id: profile.id,
+              user_id: userId,
               period_start: periodStart,
               period_end: periodEnd,
               [column]: 1,
