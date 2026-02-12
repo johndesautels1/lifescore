@@ -177,11 +177,10 @@
   background: #24292f;
   color: white;
   border-color: #24292f;
-  padding: 0.65rem 2rem;
-  font-size: 0.85rem;
   white-space: nowrap;
-  border-radius: var(--radius-lg, 8px);
-  letter-spacing: 0.02em;
+  min-width: 16rem;
+  min-height: 3.5rem;
+  justify-content: center;
 }
 
 .github-connect-btn:hover {
