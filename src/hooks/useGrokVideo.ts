@@ -164,13 +164,14 @@ export function useGrokVideo(): UseGrokVideoReturn {
       const loserDone = updatedPair.loser?.status === 'completed';
 
       // Base progress: each completed video = 50%
-      let progressPct = (winnerDone ? 50 : 0) + (loserDone ? 50 : 0);
+      const completedPct = (winnerDone ? 50 : 0) + (loserDone ? 50 : 0);
 
-      // Add gradual progress based on poll attempts for videos still processing
-      // Max ~45% per video before completion (so it doesn't reach 50% until actually done)
-      const pollProgress = Math.min(pollAttemptsRef.current * 2, 45);
-      if (!winnerDone) progressPct += pollProgress / 2;
-      if (!loserDone) progressPct += pollProgress / 2;
+      // For incomplete videos: smoothly fill the remaining gap toward 95%
+      // FIX: Previous formula capped at 73% when one video was done (50 + 45/2).
+      // New formula: scale remaining percentage by poll fraction (0→90%).
+      const remainingPct = 100 - completedPct;
+      const pollFraction = Math.min(pollAttemptsRef.current / MAX_POLL_ATTEMPTS, 0.9);
+      let progressPct = completedPct + (remainingPct * pollFraction);
 
       // Cap at 95% until actually complete
       if (!winnerDone || !loserDone) {

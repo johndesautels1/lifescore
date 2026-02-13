@@ -252,6 +252,29 @@ export default async function handler(
         ]);
 
         if (winnerResult.data && loserResult.data) {
+          // FIX: Validate replicate delivery URLs before serving as cache hits
+          for (const entry of [winnerResult.data, loserResult.data]) {
+            if (entry.video_url?.includes('replicate.delivery')) {
+              try {
+                const headResp = await fetch(entry.video_url, { method: 'HEAD' });
+                if (!headResp.ok) {
+                  console.warn(`[GROK-STATUS] Cached replicate URL expired (${headResp.status}), invalidating video ${entry.id}`);
+                  await supabaseAdmin
+                    .from('grok_videos')
+                    .update({ status: 'failed', error_message: `Replicate URL expired (HTTP ${headResp.status})` })
+                    .eq('id', entry.id);
+                  // Cache miss — at least one URL is dead
+                  res.status(200).json({ hasCached: false });
+                  return;
+                }
+              } catch {
+                // Network error on HEAD — don't trust the cache
+                res.status(200).json({ hasCached: false });
+                return;
+              }
+            }
+          }
+
           res.status(200).json({
             hasCached: true,
             videos: {
@@ -423,6 +446,28 @@ export default async function handler(
 
         video.status = 'failed';
         video.error_message = providerStatus.error;
+      }
+    }
+
+    // FIX: Validate completed replicate.delivery URLs with a HEAD check.
+    // These URLs expire after ~24h and return 404 — mark as failed so the
+    // frontend doesn't render a broken video element.
+    if (video.status === 'completed' && video.video_url?.includes('replicate.delivery')) {
+      try {
+        const headResp = await fetch(video.video_url, { method: 'HEAD' });
+        if (!headResp.ok) {
+          console.warn(`[GROK-STATUS] Replicate delivery URL returned ${headResp.status}, marking video ${video.id} as failed`);
+          await supabaseAdmin
+            .from('grok_videos')
+            .update({ status: 'failed', error_message: `Replicate URL expired (HTTP ${headResp.status})` })
+            .eq('id', video.id);
+          video.status = 'failed';
+          video.video_url = null;
+          video.error_message = `Replicate URL expired (HTTP ${headResp.status})`;
+        }
+      } catch (headErr) {
+        console.warn('[GROK-STATUS] HEAD check failed for replicate URL:', headErr);
+        // Don't fail the whole request — just return the video as-is
       }
     }
 
