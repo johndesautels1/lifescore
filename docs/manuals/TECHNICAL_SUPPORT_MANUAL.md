@@ -1308,9 +1308,11 @@ User clicks "Generate Video" in ReportPresenter →
 
 | Variable | Purpose |
 |----------|---------|
-| `HEYGEN_API_KEY` | HeyGen API authentication (existing — also used by streaming avatar) |
-| `HEYGEN_AVATAR_ID` | Avatar ID for video generation (existing) |
-| `HEYGEN_VOICE_ID` | Voice ID for video generation (existing) |
+| `HEYGEN_API_KEY` | HeyGen API authentication (streaming avatar + video generation) |
+| `HEYGEN_AVATAR_ID` | Avatar ID for Olivia (streaming + video) |
+| `HEYGEN_VOICE_ID` | Voice ID for Olivia (streaming + video) |
+| `HEYGEN_CHRISTIAN_AVATAR_ID` | Avatar ID for Judge Christiano |
+| `HEYGEN_CHRISTIAN_VOICE_ID` | Voice ID for Judge Christiano |
 
 ### 9.8 Court Order Video Storage (Added 2026-02-11)
 
@@ -1496,7 +1498,9 @@ User clicks Judge tab (JudgeTab.tsx)
 - `GROK_API_KEY` - xAI Grok evaluator
 - `PERPLEXITY_API_KEY` - Perplexity evaluator
 - `DID_API_KEY` - D-ID avatar fallback
-- `HEYGEN_API_KEY` - HeyGen avatar fallback
+- `HEYGEN_API_KEY` - HeyGen premium avatar (streaming + video)
+- `HEYGEN_CHRISTIAN_AVATAR_ID` - HeyGen Judge Christiano avatar
+- `HEYGEN_CHRISTIAN_VOICE_ID` - HeyGen Judge Christiano voice
 - `RESEND_FROM_EMAIL` - Custom sender email
 - `XAI_API_KEY` - Alias for GROK_API_KEY
 - `KV_REST_API_URL` - Vercel KV cache (server-side only)

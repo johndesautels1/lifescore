@@ -97,10 +97,12 @@ DID_API_KEY=xxx
 DID_PRESENTER_URL=xxx
 DID_JUDGE_PRESENTER_URL=xxx
 
-# HeyGen (deprecated)
+# HeyGen (Olivia streaming avatar + video, Christiano avatar)
 HEYGEN_API_KEY=xxx
 HEYGEN_AVATAR_ID=xxx
 HEYGEN_VOICE_ID=xxx
+HEYGEN_CHRISTIAN_AVATAR_ID=xxx
+HEYGEN_CHRISTIAN_VOICE_ID=xxx
 
 # Replicate (Judge video)
 REPLICATE_API_TOKEN=xxx

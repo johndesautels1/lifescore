@@ -951,6 +951,10 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `DID_PRESENTER_URL` | Olivia avatar image |
 | `DID_JUDGE_PRESENTER_URL` | Christiano avatar image |
 | `HEYGEN_API_KEY` | HeyGen avatar |
+| `HEYGEN_AVATAR_ID` | HeyGen Olivia avatar ID |
+| `HEYGEN_VOICE_ID` | HeyGen Olivia voice ID |
+| `HEYGEN_CHRISTIAN_AVATAR_ID` | HeyGen Judge Christiano avatar ID |
+| `HEYGEN_CHRISTIAN_VOICE_ID` | HeyGen Judge Christiano voice ID |
 | `CHRISTIANO_IMAGE_URL` | Judge avatar source image |
 | `REPLICATE_API_TOKEN` | Replicate (video fallback + Wav2Lip) |
 | `WEBHOOK_BASE_URL` | Video generation webhook URL |
