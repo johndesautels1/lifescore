@@ -126,7 +126,9 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   };
 
   // Handle play both videos simultaneously
-  // FIX: Use allSettled so one broken video doesn't prevent the other from playing
+  // FIX: Use allSettled so one broken video doesn't prevent the other from playing.
+  // Do NOT gate on readyState — .play() returns a promise that resolves once the
+  // browser has buffered enough data. Pre-checking readyState races the blob load.
   const handlePlayVideos = async () => {
     const winner = winnerVideoRef.current;
     const loser = loserVideoRef.current;
@@ -144,17 +146,12 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     if (loser) loser.currentTime = 0;
     if (winner) winner.currentTime = 0;
 
-    // Build play promises only for videos that have loaded media
+    // Collect play() promises for every mounted video element
     const playPromises: Promise<void>[] = [];
-    if (winner?.readyState && winner.readyState >= 2) playPromises.push(winner.play());
-    if (loser?.readyState && loser.readyState >= 2) playPromises.push(loser.play());
+    if (winner) playPromises.push(winner.play());
+    if (loser) playPromises.push(loser.play());
 
-    if (playPromises.length === 0) {
-      console.warn('[NewLifeVideos] No videos ready to play, trying muted load');
-      if (winner) { winner.muted = true; winner.load(); }
-      if (loser) { loser.muted = true; loser.load(); }
-      return;
-    }
+    if (playPromises.length === 0) return;
 
     try {
       const results = await Promise.allSettled(playPromises);
@@ -169,12 +166,11 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
         if (loser) loser.muted = true;
 
         const mutedPromises: Promise<void>[] = [];
-        if (winner?.readyState && winner.readyState >= 2) mutedPromises.push(winner.play());
-        if (loser?.readyState && loser.readyState >= 2) mutedPromises.push(loser.play());
+        if (winner) mutedPromises.push(winner.play());
+        if (loser) mutedPromises.push(loser.play());
 
         const mutedResults = await Promise.allSettled(mutedPromises);
         if (mutedResults.some(r => r.status === 'fulfilled')) {
-          // Unmute after successful play start
           setTimeout(() => {
             if (winnerVideoRef.current) winnerVideoRef.current.muted = false;
             if (loserVideoRef.current) loserVideoRef.current.muted = false;
