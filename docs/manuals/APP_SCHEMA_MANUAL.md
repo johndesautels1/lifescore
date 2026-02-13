@@ -684,7 +684,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `FreedomCategoryTabs.tsx` | 6-tab navigation for Court Order Freedom Education |
 | `FreedomHeroFooter.tsx` | AI-generated hero statement per category tab |
 | `FreedomMetricsList.tsx` | Winning metrics with scores and real-world examples |
-| `VisualsTab.tsx` | Gamma report viewer with saved reports library + Read/Watch Presenter toggle |
+| `VisualsTab.tsx` | Gamma report viewer with saved reports library + Read/Listen to Presenter toggle |
 | `ReportPresenter.tsx` | Olivia video presenter: Live PIP avatar overlay + pre-rendered HeyGen video with download |
 
 ### 3.6 Subscription & Settings

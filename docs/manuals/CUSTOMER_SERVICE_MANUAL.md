@@ -449,7 +449,7 @@ Olivia can now present Gamma report findings as an AI avatar video:
 **How to access:**
 1. Go to the Visuals tab
 2. Generate or load a saved Gamma report
-3. Click the **Watch Presenter** toggle (switches from Read mode)
+3. Click the **Listen to Presenter** toggle (switches from Read mode)
 4. Choose Live Presenter or Generate Video
 
 **Tier Availability:** Available to all users who can generate Gamma reports (NAVIGATOR and SOVEREIGN).

@@ -108,7 +108,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Generate PDF/PPTX reports via Gamma
 - AI-generated "New Life" videos (Freedom vs Imprisonment)
 - Judge verdict video with Court Order option
-- **Olivia Video Presenter** (HeyGen): Toggle "Watch Presenter" to have Olivia narrate your Gamma report
+- **Olivia Video Presenter** (HeyGen): Toggle "Listen to Presenter" to have Olivia narrate your Gamma report
   - Live Presenter: Real-time HeyGen streaming avatar overlay (instant)
   - Generate Video: Pre-rendered HeyGen MP4 download (up to 10 min)
   - Uses HEYGEN_OLIVIA_AVATAR_ID + HEYGEN_OLIVIA_VOICE_ID (separate from ElevenLabs/OpenAI)

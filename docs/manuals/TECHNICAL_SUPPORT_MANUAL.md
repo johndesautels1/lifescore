@@ -402,7 +402,7 @@ Group related styles with headers:
 
 | Component | What It Does |
 |-----------|-------------|
-| `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. Read/Watch Presenter toggle. |
+| `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. Read/Listen to Presenter toggle. |
 | `ReportPresenter.tsx` | Olivia video presenter with Live (PIP avatar overlay) and Video (pre-rendered MP4) sub-modes. |
 | `NewLifeVideos.tsx` | Side-by-side winner (FREEDOM) vs loser (IMPRISONMENT) videos. Blob URL conversion for CORS-safe playback, expired URL detection, auto-reset after 3 failed loads, download with fetch→blob→ObjectURL. |
 | `AboutClues.tsx` | About Clues tab with 6 sub-tabs presenting the 18-page ecosystem document. |
@@ -1275,7 +1275,7 @@ The Olivia Video Presenter allows users to watch an AI avatar present their Gamm
 Real-time avatar overlay on the Gamma report iframe using HeyGen Streaming Avatar API (existing WebRTC endpoint).
 
 ```
-User clicks "Watch Presenter" toggle on VisualsTab →
+User clicks "Listen to Presenter" toggle on VisualsTab →
 → ReportPresenter mounts as PIP overlay on iframe →
 → presenterService.ts generates narration segments from comparison data (client-side) →
 → Segments: intro → winner → 6 categories → highlights → consensus → conclusion →
@@ -1317,7 +1317,7 @@ User clicks "Generate Video" in ReportPresenter →
 | `api/olivia/avatar/heygen-video.ts` | Vercel serverless endpoint for HeyGen video generation and status polling |
 | `src/components/ReportPresenter.tsx` | Full presenter UI: Live/Video sub-mode tabs, PIP overlay, video player, download |
 | `src/components/ReportPresenter.css` | Styles for all presenter states (overlay, controls, video player, progress bar) |
-| `src/components/VisualsTab.tsx` | Read/Watch Presenter toggle integration |
+| `src/components/VisualsTab.tsx` | Read/Listen to Presenter toggle integration |
 | `src/components/VisualsTab.css` | Toggle button styles |
 
 #### Environment Variables

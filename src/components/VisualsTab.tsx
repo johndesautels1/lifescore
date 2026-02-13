@@ -702,7 +702,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 <div className="embedded-header">
                   <h3>LIFE SCORE™ Visual Report</h3>
                   <div className="embedded-actions">
-                    {/* Read / Watch Presenter Toggle */}
+                    {/* Read / Listen to Presenter Toggle */}
                     <div className="report-view-toggle">
                       <button
                         className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
@@ -714,7 +714,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                         className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
                         onClick={() => setReportViewMode('presenter')}
                       >
-                        🎬 Watch Presenter
+                        🎧 Listen to Presenter
                       </button>
                     </div>
                     <a
@@ -838,7 +838,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           <div className="embedded-header">
             <h3>{viewingReport.city1} vs {viewingReport.city2} — Saved Report</h3>
             <div className="embedded-actions">
-              {/* Read / Watch Presenter Toggle */}
+              {/* Read / Listen to Presenter Toggle */}
               {result && (
                 <div className="report-view-toggle">
                   <button
@@ -851,7 +851,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
                     onClick={() => setReportViewMode('presenter')}
                   >
-                    🎬 Watch Presenter
+                    🎧 Listen to Presenter
                   </button>
                 </div>
               )}
