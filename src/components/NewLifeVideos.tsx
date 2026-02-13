@@ -67,6 +67,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
+  // Blob URLs for CORS-safe video playback (Kling CDN may not send CORS headers)
+  const [winnerBlobUrl, setWinnerBlobUrl] = useState<string | null>(null);
+  const [loserBlobUrl, setLoserBlobUrl] = useState<string | null>(null);
+
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3; // Reset state after 3 failed load attempts
@@ -249,6 +253,46 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     }
   }, [isReady, videoPair, isExpiredUrl, reset]);
 
+  // Fetch videos as blob URLs to bypass CORS restrictions on Kling/Replicate CDN
+  // Same technique as the download handler — fetch → blob → createObjectURL
+  useEffect(() => {
+    if (!isReady || !videoPair) return;
+
+    let cancelled = false;
+
+    const fetchBlob = async (url: string | undefined | null): Promise<string | null> => {
+      if (!url || !url.startsWith('http') || url.includes('replicate.delivery')) return null;
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) return null;
+        const blob = await resp.blob();
+        if (cancelled) return null;
+        return URL.createObjectURL(blob);
+      } catch {
+        return null;
+      }
+    };
+
+    Promise.all([
+      fetchBlob(videoPair.winner?.videoUrl),
+      fetchBlob(videoPair.loser?.videoUrl),
+    ]).then(([wBlob, lBlob]) => {
+      if (cancelled) {
+        if (wBlob) URL.revokeObjectURL(wBlob);
+        if (lBlob) URL.revokeObjectURL(lBlob);
+        return;
+      }
+      setWinnerBlobUrl(wBlob);
+      setLoserBlobUrl(lBlob);
+    });
+
+    return () => {
+      cancelled = true;
+      setWinnerBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+      setLoserBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    };
+  }, [isReady, videoPair?.winner?.videoUrl, videoPair?.loser?.videoUrl]);
+
   // Reset when result changes
   useEffect(() => {
     reset();
@@ -294,13 +338,12 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               {isReady && videoPair?.winner?.videoUrl && videoPair.winner.videoUrl.startsWith('http') && !isExpiredUrl(videoPair.winner.videoUrl) ? (
                 <video
                   ref={winnerVideoRef}
-                  src={videoPair.winner.videoUrl}
+                  src={winnerBlobUrl || videoPair.winner.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
                   onError={(e) => handleVideoError('winner', e)}
                   playsInline
                   preload="auto"
-                  crossOrigin="anonymous"
                   controlsList="nodownload"
                 />
               ) : (
@@ -343,13 +386,12 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               {isReady && videoPair?.loser?.videoUrl && videoPair.loser.videoUrl.startsWith('http') && !isExpiredUrl(videoPair.loser.videoUrl) ? (
                 <video
                   ref={loserVideoRef}
-                  src={videoPair.loser.videoUrl}
+                  src={loserBlobUrl || videoPair.loser.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
                   onError={(e) => handleVideoError('loser', e)}
                   playsInline
                   preload="auto"
-                  crossOrigin="anonymous"
                   controlsList="nodownload"
                 />
               ) : (
