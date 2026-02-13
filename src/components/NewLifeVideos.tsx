@@ -75,11 +75,14 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3; // Reset state after 3 failed load attempts
 
-  // FIX: Detect expired Replicate URLs (expire after ~24h)
-  const isExpiredUrl = useCallback((url: string | undefined | null): boolean => {
-    if (!url) return false;
-    // Replicate delivery URLs are temporary and expire
-    return url.includes('replicate.delivery');
+  // Replicate delivery URLs expire after ~24h, but we should TRY to play them
+  // rather than assume they're expired. If they truly fail, the error handler
+  // (handleVideoError → error count threshold) will trigger regeneration.
+  // The backend cache check already marks expired replicate URLs as failed.
+  const isExpiredUrl = useCallback((_url: string | undefined | null): boolean => {
+    // Never block rendering — let the video element attempt to load.
+    // If the URL is truly expired, the onError handler will catch it.
+    return false;
   }, []);
 
   // Determine winner/loser from result
@@ -236,22 +239,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     }
   }, [videoErrorCount, reset]);
 
-  // FIX: Auto-regenerate when expired Replicate URLs are detected (not just reset)
+  // Auto-regeneration is handled by the error count threshold (handleVideoError).
+  // When a video element fails to load (truly expired URL), the error count
+  // reaches MAX_VIDEO_ERRORS and resets the state so the user can regenerate.
   const hasTriggeredRegenRef = useRef(false);
-  useEffect(() => {
-    if (isReady && videoPair && !hasTriggeredRegenRef.current) {
-      const loserExpired = isExpiredUrl(videoPair.loser?.videoUrl);
-      const winnerExpired = isExpiredUrl(videoPair.winner?.videoUrl);
-      if (loserExpired || winnerExpired) {
-        console.warn('[NewLifeVideos] Expired Replicate URLs detected - forcing regeneration');
-        hasTriggeredRegenRef.current = true;
-        reset();
-        setIsPlaying(false);
-        // Auto-trigger regeneration with force flag
-        handleGenerateVideos(true);
-      }
-    }
-  }, [isReady, videoPair, isExpiredUrl, reset]);
 
   // Fetch videos as blob URLs to bypass CORS restrictions on Kling/Replicate CDN
   // Same technique as the download handler — fetch → blob → createObjectURL
@@ -261,7 +252,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     let cancelled = false;
 
     const fetchBlob = async (url: string | undefined | null): Promise<string | null> => {
-      if (!url || !url.startsWith('http') || url.includes('replicate.delivery')) return null;
+      if (!url || !url.startsWith('http')) return null;
       try {
         const resp = await fetch(url);
         if (!resp.ok) return null;
