@@ -217,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // SUPABASE MODE: Get initial session with timeout (45s for slow Supabase cold starts)
     const SESSION_TIMEOUT_MS = 45000;
     let initialLoadDone = false; // Tracks whether the first profile fetch has completed
+    let initialUserId: string | null = null; // Track which user getSession already loaded
     const sessionTimeout = setTimeout(() => {
       if (!initialLoadDone) {
         console.warn("[Auth] Session check timed out after 45s");
@@ -238,6 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (session?.user) {
         initialLoadDone = true;
+        initialUserId = session.user.id;
         clearTimeout(sessionTimeout);
         const { profile, preferences } = await fetchUserData(session.user.id);
         const user = normalizeUser(session.user, profile as Profile | null);
@@ -280,7 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // If getSession already handled the initial load, skip the duplicate fetch.
           // onAuthStateChange fires SIGNED_IN on page load AND on actual sign-in,
           // causing two redundant profile fetches that both timeout.
-          if (initialLoadDone && state.supabaseUser?.id === session.user.id) {
+          if (initialLoadDone && initialUserId === session.user.id) {
             console.log('[Auth] Skipping duplicate SIGNED_IN for same user');
             return;
           }
