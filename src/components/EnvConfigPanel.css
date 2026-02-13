@@ -295,6 +295,90 @@
 }
 
 /* ============================================
+   Knowledge Base Sync
+   ============================================ */
+
+.env-sync-section {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, rgba(13, 148, 136, 0.02) 100%);
+}
+
+.env-sync-description {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  padding: 0 14px 12px;
+  line-height: 1.5;
+}
+
+.env-sync-buttons {
+  display: flex;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.env-sync-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  border-radius: 8px;
+  background: rgba(20, 184, 166, 0.08);
+  color: #14B8A6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.env-sync-btn:hover:not(:disabled) {
+  background: rgba(20, 184, 166, 0.15);
+  border-color: rgba(20, 184, 166, 0.5);
+  transform: translateY(-1px);
+}
+
+.env-sync-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.env-sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.env-sync-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(20, 184, 166, 0.2);
+  border-top-color: #14B8A6;
+  border-radius: 50%;
+  animation: env-spin 0.8s linear infinite;
+}
+
+.env-sync-result {
+  margin: 0 14px 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.env-sync-result.success {
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.env-sync-result.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+/* ============================================
    Responsive
    ============================================ */
 
@@ -318,5 +402,9 @@
 
   .env-summary-note {
     display: none;
+  }
+
+  .env-sync-buttons {
+    flex-direction: column;
   }
 }

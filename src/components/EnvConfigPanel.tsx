@@ -11,7 +11,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAuthHeaders } from '../lib/supabase';
 import './EnvConfigPanel.css';
 
@@ -71,6 +71,11 @@ const EnvConfigPanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [revealedVars, setRevealedVars] = useState<Set<string>>(new Set());
 
+  // Knowledge base sync state
+  const [syncingOlivia, setSyncingOlivia] = useState(false);
+  const [syncingEmilia, setSyncingEmilia] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ target: string; success: boolean; message: string } | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -129,6 +134,32 @@ const EnvConfigPanel: React.FC = () => {
     });
   };
 
+  const handleSync = useCallback(async (target: 'olivia' | 'emilia') => {
+    const setLoading = target === 'olivia' ? setSyncingOlivia : setSyncingEmilia;
+    setLoading(true);
+    setSyncResult(null);
+
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/sync-${target}-knowledge`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const label = target === 'olivia' ? 'Olivia' : 'Emilia';
+        setSyncResult({ target, success: true, message: `${label} knowledge base synced successfully` });
+      } else {
+        setSyncResult({ target, success: false, message: data.error || 'Sync failed' });
+      }
+    } catch {
+      setSyncResult({ target, success: false, message: 'Network error — could not reach server' });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="env-config-panel">
@@ -171,6 +202,45 @@ const EnvConfigPanel: React.FC = () => {
           All API keys are managed via Vercel environment variables.
           This panel shows current configuration status as an emergency reference.
         </p>
+      </div>
+
+      {/* Knowledge Base Sync */}
+      <div className="env-category env-sync-section">
+        <div className="env-category-header">
+          <h4 className="env-category-title">AI Knowledge Base Sync</h4>
+        </div>
+        <p className="env-sync-description">
+          Push updated manuals to OpenAI Assistants. Run after editing any documentation.
+        </p>
+        <div className="env-sync-buttons">
+          <button
+            className="env-sync-btn"
+            onClick={() => handleSync('emilia')}
+            disabled={syncingEmilia}
+          >
+            {syncingEmilia ? (
+              <><span className="env-sync-spinner" /> Syncing Emilia...</>
+            ) : (
+              <>Sync Emilia (6 manuals)</>
+            )}
+          </button>
+          <button
+            className="env-sync-btn"
+            onClick={() => handleSync('olivia')}
+            disabled={syncingOlivia}
+          >
+            {syncingOlivia ? (
+              <><span className="env-sync-spinner" /> Syncing Olivia...</>
+            ) : (
+              <>Sync Olivia (knowledge base)</>
+            )}
+          </button>
+        </div>
+        {syncResult && (
+          <div className={`env-sync-result ${syncResult.success ? 'success' : 'error'}`}>
+            {syncResult.success ? '✓' : '!'} {syncResult.message}
+          </div>
+        )}
       </div>
 
       {/* Category Groups */}
