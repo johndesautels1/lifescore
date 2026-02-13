@@ -474,7 +474,7 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
   const response = await fetch(`${REPLICATE_API_URL}/models/${REPLICATE_VIDEO_MODEL}/predictions`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${replicateToken}`,
+      'Authorization': `Token ${replicateToken}`,
       'Content-Type': 'application/json',
       'Prefer': 'wait=5', // Wait up to 5 seconds for fast responses
     },
@@ -710,15 +710,19 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
       return null;
     }
 
-    // Skip cache entries with expired Replicate delivery URLs (~24h expiry)
-    // Also mark them as failed so they don't block future checkProcessing() calls
-    if (data?.video_url?.includes('replicate.delivery')) {
-      console.log('[GROK-VIDEO] Cache hit has expired Replicate URL, marking failed + forcing regeneration');
-      await supabaseAdmin
-        .from('grok_videos')
-        .update({ status: 'failed', error_message: 'Replicate URL expired (~24h)' })
-        .eq('id', data.id);
-      return null;
+    // Replicate delivery URLs expire after ~24h — only invalidate if actually old
+    if (data?.video_url?.includes('replicate.delivery') && data.created_at) {
+      const ageMs = Date.now() - new Date(data.created_at).getTime();
+      const TWENTY_HOURS_MS = 20 * 60 * 60 * 1000;
+      if (ageMs > TWENTY_HOURS_MS) {
+        console.log('[GROK-VIDEO] Cache hit has expired Replicate URL (age:', Math.round(ageMs / 3600000), 'h), marking failed');
+        await supabaseAdmin
+          .from('grok_videos')
+          .update({ status: 'failed', error_message: 'Replicate URL expired (~24h)' })
+          .eq('id', data.id);
+        return null;
+      }
+      console.log('[GROK-VIDEO] Cache hit with fresh Replicate URL (age:', Math.round(ageMs / 3600000), 'h)');
     }
 
     // Skip cache entries with no video URL (incomplete records)
