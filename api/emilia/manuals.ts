@@ -72,7 +72,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 2. **Choose Comparison Mode**
    - **Standard Mode**: Uses Claude Sonnet for fast, accurate analysis
-   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-5.2, Gemini 3 Pro, Grok 4, Perplexity Sonar) with consensus scoring
+   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity Sonar) with consensus scoring
 
 3. **Run the Comparison**
    - Click "Compare Cities"
@@ -240,7 +240,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### AI Providers
 - **Claude Sonnet 4.5**: Primary evaluator
-- **GPT-5.2**: Enhanced mode evaluator
+- **GPT-4o**: Enhanced mode evaluator
 - **Gemini 3 Pro**: Enhanced mode evaluator
 - **Grok 4**: Enhanced mode evaluator
 - **Perplexity Sonar**: Enhanced mode evaluator
@@ -417,15 +417,19 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 ### Olivia
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/olivia/thread | POST | Create conversation |
-| /api/olivia/message | POST | Send message |
-| /api/olivia/speak | POST | Generate TTS |
+| /api/olivia/chat | POST | Main chat (OpenAI Assistants API) |
+| /api/olivia/context | POST | Transform comparison data into Olivia context |
+| /api/olivia/tts | POST | ElevenLabs TTS with OpenAI fallback |
+| /api/olivia/field-evidence | POST | Source evidence for specific metrics |
+| /api/olivia/gun-comparison | POST | Standalone gun rights comparison |
+| /api/olivia/contrast-images | POST | AI contrast images via Flux |
 
 ### Emilia
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | /api/emilia/thread | POST | Create thread (JWT auth) |
 | /api/emilia/message | POST | Send message |
+| /api/emilia/speak | POST | Emilia TTS (ElevenLabs + OpenAI fallback) |
 | /api/emilia/manuals | GET | Get docs (JWT auth) |
 
 ### Other
@@ -536,6 +540,12 @@ Each metric produces **4 raw scores**:
 normalizedScore = (legalScore × lawWeight + enforcementScore × livedWeight) / 100
 Default: lawWeight = 50, livedWeight = 50
 \`\`\`
+
+### Conservative Mode (Worst-Case)
+\`\`\`
+normalizedScore = MIN(legalScore, enforcementScore)
+\`\`\`
+Uses the **lower** of law vs lived reality — worst-case scenario. Overrides the weighted average when enabled.
 
 ---
 

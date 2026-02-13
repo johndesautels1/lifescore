@@ -203,7 +203,7 @@ Metric: LGBTQ+ Rights
 | **Evaluator 1** | Score metrics | Claude Sonnet 4.5 | Native ✅ |
 | **Evaluator 2** | Score metrics | Perplexity Sonar Pro | Native ✅ |
 | **Evaluator 3** | Score metrics | Gemini 3 Pro (`gemini-3-pro-preview`) | Native ✅ |
-| **Evaluator 4** | Score metrics | GPT-5.2 | Tavily ✅ |
+| **Evaluator 4** | Score metrics | GPT-4o | Tavily ✅ |
 | **Evaluator 5** | Score metrics | Grok | Tavily ✅ |
 | **Final Judge** | Synthesize consensus | Claude Opus 4.5 | None (judges evaluators) |
 
@@ -255,7 +255,7 @@ Metric: LGBTQ+ Rights
 │       │  └──────────────────┘    │                         │
 │       │             │             │                         │
 │  ┌────┴─────┐  ┌────┴─────┐  ┌───┴──────┐                  │
-│  │  GPT-5.2  │  │   Grok   │  │ Tavily   │  (Tavily First)  │
+│  │  GPT-4o   │  │   Grok   │  │ Tavily   │  (Tavily First)  │
 │  └────┬─────┘  └────┬─────┘  │ Search   │                  │
 │       │             │        └──────────┘                  │
 │       └──────┬──────┘                                       │

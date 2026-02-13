@@ -598,7 +598,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 |----------|---------|-------|----------|
 | Anthropic | `claude-sonnet` | claude-sonnet-4-5-20250929 | Primary evaluator |
 | Anthropic | `claude-opus` | claude-opus-4-5-20251101 | Judge/consensus |
-| OpenAI | `gpt-5.2` | gpt-5.2 | Secondary evaluator |
+| OpenAI | `gpt-4o` | gpt-4o | Secondary evaluator |
 | Google | `gemini-3-pro` | gemini-3-pro-preview | Evaluator with Google Search |
 | xAI | `grok-4` | grok-4 | Evaluator with X search |
 | Perplexity | `perplexity` | sonar-reasoning-pro | Research evaluator |
