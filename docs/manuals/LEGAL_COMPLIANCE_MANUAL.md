@@ -1,7 +1,7 @@
 # LIFE SCORE - Legal Compliance Manual
 
-**Document Version:** 1.0
-**Last Updated:** February 2, 2026
+**Document Version:** 1.1
+**Last Updated:** February 13, 2026
 **Classification:** INTERNAL - Admin Access Only
 
 ---
@@ -68,6 +68,8 @@ United Kingdom
 | City comparisons | Service delivery | Contract performance | Until account deletion |
 | Olivia conversations | AI advisor chat history | Contract performance | Until account deletion |
 | Emilia help chat | Help assistant sessions | Contract performance | Session-based (browser only) |
+| Court Order videos | Judge verdict videos (Supabase Storage) | Contract performance | Until account deletion |
+| App prompts | System prompt references (admin-editable) | Legitimate interest | Permanent |
 | Payment info | Billing (via Stripe) | Contract performance | Per Stripe retention |
 | IP address | Security, rate limiting | Legitimate interest | 90 days |
 | Usage analytics | Service improvement | Legitimate interest | Anonymized after 30 days |
@@ -100,6 +102,9 @@ We must honor these GDPR rights:
 | ElevenLabs | Text-to-Speech | SIGNED | Via Terms |
 | Gamma | Report Generation | PENDING | Email required |
 | Kling AI | Video Generation | PENDING | Email required |
+| Replicate | Video Generation (Minimax fallback) | PENDING | Email required |
+| Simli | Avatar Video (WebRTC) | PENDING | Email required |
+| Resend | Email Notifications | SIGNED | Via Terms |
 | Vercel | Hosting | SIGNED | Via Terms |
 
 **DPA Request Email Template:**
@@ -293,11 +298,30 @@ London W1W 5PF
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-13 | All Manuals | Comprehensive update for ~200 commits of changes | Claude Opus 4.6 |
+| 2026-02-10 | Security | JWT auth added to 8+ API endpoints; auth bypass fixed on /api/emilia/manuals | Claude Opus 4.6 |
 | 2026-02-02 | All | Added registered address | Claude |
 | 2026-01-30 | Privacy Policy | Initial version | Claude |
 | 2026-01-30 | Terms of Service | Initial version | Claude |
 | 2026-01-30 | Cookie Policy | Initial version | Claude |
 | 2026-01-30 | Refund Policy | Initial version | Claude |
+
+### 8.3 Security Improvements (2026-02-10)
+
+The following security hardening was applied:
+- **JWT auth required** on 8+ previously unprotected API endpoints (emilia/manuals, emilia/thread, avatar/simli-speak, judge-video, etc.)
+- **Auth bypass fixed** on `/api/emilia/manuals` — was previously bypassable via unverified email query parameter
+- **Database hardening** — RLS policies strengthened on report_shares, judge_reports, gamma_reports
+- **Admin check caching** — 5-min TTL with 1-hour grace period prevents lockout during Supabase timeouts
+- **grok_videos UNIQUE constraint** now includes status column to prevent data integrity issues
+
+### 8.4 New Storage Bucket
+
+A `user-videos` Supabase Storage bucket was added (2026-02-11) for Court Order video uploads:
+- 100 MB max file size
+- Public read access for sharing
+- RLS: users can only upload to their own path (`user-videos/{userId}/`)
+- This constitutes a new data processing activity that should be reflected in the Privacy Policy
 
 ---
 

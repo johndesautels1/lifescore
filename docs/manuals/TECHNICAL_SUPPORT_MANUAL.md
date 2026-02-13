@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 3.0
-**Last Updated:** February 12, 2026
+**Version:** 4.0
+**Last Updated:** February 13, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -58,7 +58,8 @@
 │ - RLS         │    │ - xAI (Grok)  │    │ - Gamma       │
 └───────────────┘    │ - Perplexity  │    │ - D-ID        │
                      │ - Tavily      │    │ - Simli       │
-                     └───────────────┘    └───────────────┘
+                     └───────────────┘    │ - Resend      │
+                                          └───────────────┘
 ```
 
 ### 1.2 Data Flow
@@ -371,7 +372,7 @@ Group related styles with headers:
 
 | Component | What It Does |
 |-----------|-------------|
-| `CitySelector.tsx` | Typeahead city picker. User selects two cities to compare. |
+| `CitySelector.tsx` | Typeahead city picker with orange country badges, flag emojis, search highlighting. User selects two cities to compare. |
 | `EnhancedComparison.tsx` | The main comparison view. Orchestrates multi-LLM evaluation, shows metric scores, evidence panels, consensus voting. Largest component (~2,400 lines). |
 | `Results.tsx` | Displays scored metric table after comparison completes. |
 | `SavedComparisons.tsx` | Lists user's saved comparisons with search, delete, re-open. |
@@ -402,7 +403,8 @@ Group related styles with headers:
 | Component | What It Does |
 |-----------|-------------|
 | `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. |
-| `NewLifeVideos.tsx` | Grok-generated video playlist for "New Life" scenarios. |
+| `NewLifeVideos.tsx` | Side-by-side winner (FREEDOM) vs loser (IMPRISONMENT) videos. Blob URL conversion for CORS-safe playback, expired URL detection, auto-reset after 3 failed loads, download with fetch→blob→ObjectURL. |
+| `AboutClues.tsx` | About Clues tab with 6 sub-tabs presenting the 18-page ecosystem document. |
 
 #### User & Settings
 
@@ -458,7 +460,7 @@ Custom hooks encapsulate stateful logic and side effects.
 | `useTTS` | Text-to-speech — sends text to ElevenLabs, plays audio response. |
 | `useAvatarProvider` | Selects and initializes the active avatar provider (Simli, D-ID, HeyGen). |
 | `useJudgeVideo` | Manages judge video generation — triggers Wav2Lip, polls status, caches result. |
-| `useGrokVideo` | Manages Grok video generation — triggers, polls, handles completion. |
+| `useGrokVideo` | Manages Grok video generation — triggers New Life pair (winner+loser) and Court Order (single) modes. Polls at 3s intervals, max 6 minutes (120 attempts). Progress: 50% per completed video, scaling to 95%. Integrates Kling cost tracking. |
 | `useContrastImages` | Manages contrast image generation and caching. |
 | `useTierAccess` | Returns current user's tier and feature access flags. Used by FeatureGate. |
 | `useApiUsageMonitor` | Tracks API usage in real-time, triggers warnings when approaching limits. |
@@ -710,21 +712,32 @@ PricingModal → POST /api/stripe/create-checkout-session
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| /api/video/grok-generate | POST | Start video generation |
-| /api/video/grok-status | GET | Check video status |
-| /api/avatar/generate-judge-video | POST | Generate judge video |
+| /api/video/grok-generate | POST | Start video generation (two actions: `new_life_videos` pair, `court_order_video` single). Kling AI primary, Replicate fallback. SOVEREIGN only. |
+| /api/video/grok-status | GET | Check video status. HEAD-validates replicate.delivery URLs, auto-marks expired as failed. |
+| /api/video/invideo-override | POST | Admin cinematic prompt override per comparison |
+| /api/avatar/generate-judge-video | POST | Generate judge video (JWT auth required) |
 | /api/avatar/video-status | GET | Check judge video status |
 
 ### 4.4 Emilia Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| /api/emilia/thread | POST | Create new conversation thread |
+| /api/emilia/thread | POST | Create new conversation thread (JWT auth required) |
 | /api/emilia/message | POST | Send message, get response |
 | /api/emilia/speak | POST | TTS with shimmer voice |
-| /api/emilia/manuals | GET | Fetch manual content |
+| /api/emilia/manuals | GET | Fetch manual content (JWT auth required — no longer accepts unverified email param) |
 
 **Knowledge Sync:** Run `npx ts-node scripts/sync-emilia-knowledge.ts` after updating manuals.
+
+### 4.7 Prompts Endpoints (Added 2026-02-10)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/prompts | GET | Fetch all 50 system prompts (admin only) |
+| /api/prompts | POST | Create new prompt (admin only) |
+| /api/prompts | PUT | Update existing prompt text (admin only) |
+
+50 prompts across 6 categories: evaluate (11), judge (8), olivia (7), gamma (8), video (8), invideo (8). Visible in Help Modal > Prompts tab.
 
 ### 4.5 Usage/Quota Endpoints
 
@@ -744,7 +757,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 
 ## 5. Database Schema
 
-### 5.1 Current Tables (18 total)
+### 5.1 Current Tables (21 total)
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
@@ -752,7 +765,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | comparisons | Saved comparisons (NOTE: code references this, not `saved_comparisons`) | city1, city2, scores |
 | olivia_conversations | Chat threads | openai_thread_id |
 | olivia_messages | Chat messages | role, content |
-| gamma_reports | Report URLs | gamma_url, pdf_url, generation_id |
+| gamma_reports | Report URLs, city names | gamma_url, pdf_url, generation_id, city1, city2 |
 | user_preferences | Single-row-per-user settings (upsert on `user_id`) | weight_presets, dealbreakers, law_lived_preferences, excluded_categories |
 | subscriptions | Stripe billing | stripe_subscription_id |
 | usage_tracking | Monthly limits | comparisons, messages |
@@ -760,18 +773,34 @@ PricingModal → POST /api/stripe/create-checkout-session
 | judge_reports | Judge verdicts (unique on `user_id, report_id`) | winner, margin, verdict, full_report |
 | avatar_videos | Judge video cache | video_url, status |
 | api_cost_records | Cost tracking | provider totals |
-| grok_videos | Grok video cache | city_name, video_type |
+| grok_videos | Grok video cache | city_name, video_type, status (UNIQUE includes status) |
 | contrast_image_cache | Olivia images | cache_key, urls |
 | api_quota_settings | Admin quota limits | provider_key, monthly_limit, warning thresholds |
 | api_quota_alert_log | Email alert history | provider_key, alert_level, sent_at |
 | authorized_manual_access | Manual access control | email, access_level, granted_by |
-| court_orders | Court Order video saves *(Added Session 8)* | user_id, comparison_id, winner_city, video_url |
+| court_orders | Court Order video saves | user_id, comparison_id, winner_city, video_url, video_storage_path |
+| app_prompts | All 50 system prompts (6 categories: evaluate, judge, olivia, gamma, video, invideo) | category, prompt_key, display_name, prompt_text, last_edited_by |
+| invideo_overrides | Admin cinematic prompt overrides per comparison | comparison_id, custom_prompt, created_by |
+| report_shares | Shared report links | share_token, report_type, expires_at |
 
-**Schema Notes (Updated 2026-02-05):**
-- `user_preferences`: Single-row-per-user design. New JSONB columns: `weight_presets`, `law_lived_preferences`, `excluded_categories`, `dealbreakers`. Upsert on `user_id`.
+### 5.2 Storage Buckets (3 total)
+
+| Bucket | Purpose | Max Size | Access |
+|--------|---------|----------|--------|
+| `avatars` | User profile pictures | 5 MB | User-owned RLS |
+| `judge-videos` | Judge avatar video cache | 50 MB | Service role write, public read |
+| `user-videos` | Court Order video uploads | 100 MB | User-owned RLS (`user-videos/{userId}/{file}`) |
+
+**Schema Notes (Updated 2026-02-13):**
+- `user_preferences`: Single-row-per-user design. JSONB columns: `weight_presets`, `law_lived_preferences`, `excluded_categories`, `dealbreakers`. Upsert on `user_id`.
 - `judge_reports`: Column names are `winner`, `margin`, `verdict`, `full_report`. Unique constraint on `(user_id, report_id)`.
-- `court_orders`: New table for saved Court Order videos. Unique constraint on `(user_id, comparison_id)`. RLS: users can only CRUD their own.
+- `court_orders`: Unique constraint on `(user_id, comparison_id)`. RLS: users can only CRUD their own. Added `video_storage_path` for Supabase Storage uploads.
 - `comparisons`: Actual table name is `comparisons`, not `saved_comparisons` as some older docs reference.
+- `gamma_reports`: Added `city1`, `city2` TEXT columns with index `idx_gamma_reports_cities` for cross-device sync.
+- `grok_videos`: UNIQUE constraint now includes `status` column (database hardening fix).
+- `app_prompts`: 50 reference prompts across 6 categories. Admin-editable via Help Modal > Prompts tab. Most prompts are dynamically generated in TypeScript; these are read-only references.
+- `invideo_overrides`: Allows cinematic prompt customization per comparison for admins.
+- `report_shares`: Hardened RLS policies (database hardening migration).
 
 ### 5.2 Missing Schema (Needs Creation)
 
@@ -1103,20 +1132,33 @@ Script Generation (LLM) → TTS Audio (ElevenLabs) →
 → Poll for completion → Return URL
 ```
 
-### 9.2 Grok/Kling Video Flow
+### 9.2 Grok/Kling Video Flow (Updated 2026-02-13)
 
 ```
 Client Request → /api/video/grok-generate →
-→ Try Kling AI (primary) → Fallback to Replicate Minimax →
+→ Two actions supported:
+   1. "new_life_videos" — generates winner (FREEDOM) + loser (IMPRISONMENT) pair
+   2. "court_order_video" — generates single "perfect life" video
+→ Try Kling AI (primary, model kling-v2-6, 10s duration, 'std' mode) →
+→ Fallback to Replicate Minimax (minimax/video-01) on Kling failure →
 → Store job ID in grok_videos table →
-→ Client polls /api/video/grok-status →
-→ Return video URL when complete
+→ Client polls /api/video/grok-status at 3s intervals →
+→ Return video URL when complete (max 6 min / 120 poll attempts)
 ```
+
+**Sequential Generation (Critical Fix):**
+Videos are now generated sequentially (loser first, then winner) — NOT in parallel. This prevents Vercel timeout at ~73% that occurred with parallel Promise.all. API timeout is 240 seconds (doubled from original 120s).
+
+**City Type Detection:**
+Automatic city type classification for prompt optimization: beach, mountain, urban, desert, european, tropical.
+
+**Stale Processing Detection:**
+Auto-fails processing records older than 3 minutes to prevent stuck video jobs.
 
 ### 9.3 Kling AI JWT Generation
 
 ```typescript
-// api/video/grok-status.ts:34-62
+// api/video/grok-status.ts
 function generateKlingJWT(accessKey: string, secretKey: string): string {
   const header = { alg: 'HS256', typ: 'JWT' };
   const payload = {
@@ -1124,9 +1166,11 @@ function generateKlingJWT(accessKey: string, secretKey: string): string {
     exp: Math.floor(Date.now() / 1000) + 1800, // 30 min
     nbf: Math.floor(Date.now() / 1000) - 5
   };
-  // Sign with secretKey
+  // Sign with HMAC-SHA256 using secretKey
 }
 ```
+
+**Kling Error Code 1201:** Model/mode not supported with sound. App uses 'std' mode (no sound, cost-effective).
 
 ### 9.4 Video Status Values
 
@@ -1137,11 +1181,21 @@ function generateKlingJWT(accessKey: string, secretKey: string): string {
 | completed | Video ready |
 | failed | Generation failed |
 
-### 9.5 Video Error Handling (Added 2026-02-04)
+### 9.5 Video Playback & Error Handling (Updated 2026-02-13)
 
-NewLifeVideos component now tracks video load errors and auto-resets when URLs expire (Fix #48).
+**Blob URL Playback (CORS-safe):**
+NewLifeVideos converts remote video URLs to local blob URLs for reliable cross-origin playback. The fetch→blob→ObjectURL pattern bypasses CDN CORS restrictions.
 
-**Configuration (`src/components/NewLifeVideos.tsx`):**
+**Expired URL Detection:**
+- Replicate CDN URLs expire after ~24 hours
+- Backend HEAD-checks replicate.delivery URLs before returning cached videos
+- Frontend verifies `content-type: video/*` on blob fetch (rejects HTML error pages)
+- Dead URLs tracked in state Set, showing "Video expired — regenerate" placeholder
+
+**Promise.allSettled for Playback:**
+Play button uses `Promise.allSettled` (not `Promise.all`) so one broken video doesn't block the other from playing.
+
+**Error Count Auto-Reset:**
 ```typescript
 MAX_VIDEO_ERRORS = 3  // Reset after 3 failed load attempts
 ```
@@ -1155,18 +1209,29 @@ Video element onError event →
 → User sees "SEE YOUR NEW LIFE!" button again
 ```
 
-**Logging:**
-```
-[NewLifeVideos] winner video load error: <event>
-[NewLifeVideos] Video error count: 1/3
-[NewLifeVideos] Video error count: 2/3
-[NewLifeVideos] Video error count: 3/3
-[NewLifeVideos] Video error threshold reached - resetting to allow regeneration
+**Progress Bar Calculation (Fixed 2026-02-13):**
+Old formula capped at 73%. New formula:
+```typescript
+const completedPct = (winnerDone ? 50 : 0) + (loserDone ? 50 : 0);
+const remainingPct = 100 - completedPct;
+const pollFraction = Math.min(pollAttempts / MAX_POLL_ATTEMPTS, 0.9);
+let progressPct = completedPct + (remainingPct * pollFraction);
+if (!winnerDone || !loserDone) progressPct = Math.min(progressPct, 95);
 ```
 
 **Files Involved:**
-- `src/components/NewLifeVideos.tsx` - Error tracking and reset
-- `src/hooks/useGrokVideo.ts` - `reset()` function clears state
+- `src/components/NewLifeVideos.tsx` - Blob URL playback, error tracking, dead URL detection
+- `src/hooks/useGrokVideo.ts` - Poll loop, progress calculation, `reset()` function
+- `api/video/grok-status.ts` - HEAD validation of replicate URLs, stale detection
+- `api/video/grok-generate.ts` - Sequential generation, Kling/Replicate providers
+
+### 9.7 Court Order Video Storage (Added 2026-02-11)
+
+Court Order videos can now be uploaded to Supabase Storage for permanent access:
+- **Bucket:** `user-videos` (100 MB limit, public reads)
+- **Path:** `user-videos/{userId}/{file}`
+- **Column:** `court_orders.video_storage_path`
+- RLS policies enforce user-owned uploads only
 
 ### 9.6 Judge Pre-generation System
 
@@ -1331,11 +1396,13 @@ User clicks Judge tab (JudgeTab.tsx)
 **Required (Features):**
 - `ELEVENLABS_API_KEY` - TTS for Olivia/Emilia/Judge
 - `ELEVENLABS_VOICE_ID` - Default voice ID
-- `SIMLI_API_KEY` - Primary avatar video generation
-- `KLING_VIDEO_API_KEY` - Primary video generation
-- `KLING_VIDEO_SECRET` - Kling JWT signing
-- `REPLICATE_API_TOKEN` - Video generation (Wav2Lip/Minimax)
+- `SIMLI_API_KEY` - Primary avatar video generation (server-side only; client fetches via /api/simli-config)
+- `KLING_VIDEO_API_KEY` - Primary video generation (Kling AI)
+- `KLING_VIDEO_SECRET` - Kling JWT signing (HMAC-SHA256)
+- `REPLICATE_API_TOKEN` - Video generation (Wav2Lip/Minimax fallback)
 - `GAMMA_API_KEY` - PDF/PPTX report generation
+- `RESEND_API_KEY` - Email alerts and notifications
+- `EMILIA_ASSISTANT_ID` - OpenAI Assistant ID for Emilia help widget
 
 **Optional:**
 - `GEMINI_API_KEY` - Google Gemini evaluator
@@ -1345,6 +1412,14 @@ User clicks Judge tab (JudgeTab.tsx)
 - `HEYGEN_API_KEY` - HeyGen avatar fallback
 - `RESEND_FROM_EMAIL` - Custom sender email
 - `XAI_API_KEY` - Alias for GROK_API_KEY
+- `KV_REST_API_URL` - Vercel KV cache (server-side only)
+- `KV_REST_API_TOKEN` - Vercel KV cache (server-side only)
+
+**Deprecated (No Longer Client-Side):**
+- `VITE_SIMLI_API_KEY` → Now server-side, fetched via `/api/simli-config` proxy
+- `VITE_SIMLI_FACE_ID` → Now server-side, fetched via `/api/simli-config` proxy
+- `VITE_DEV_BYPASS_EMAILS` → Admin check now server-side via `/api/admin-check`
+- `VITE_KV_REST_API_*` → Now proxied via `/api/kv-cache`
 
 ### 12.3 Build Commands
 
@@ -1402,7 +1477,6 @@ npm run preview
 |-------|------------|--------|
 | Perplexity partial failures | Graceful degradation | Investigating |
 | Slow enhanced comparison | Use standard mode | Performance fix planned |
-| Video generation delays | Polling with timeout | Infrastructure |
 
 ### 14.2 Resolved Issues
 
@@ -1421,6 +1495,18 @@ npm run preview
 | judge_reports schema mismatch | Column names corrected: winner, margin, verdict, full_report | 2026-02-05 |
 | judge_reports onConflict wrong | Changed from report_id to (user_id, report_id) constraint | 2026-02-05 |
 | Tavily timeout too long | Reduced from 240s to 45s | 2026-02-05 |
+| Judge "winner is TIE" bug | Tie handling fixed — no more "winner is TIE" text in video scripts | 2026-02-10 |
+| Judge wrong city winner | Score passing fixed in standard mode; winner/loser logic corrected | 2026-02-10 |
+| Judge trend DB constraint | Trend values standardized to 'improving' to match DB CHECK constraint | 2026-02-10 |
+| Auth bypass on /api/emilia/manuals | JWT auth required; unverified email query param removed | 2026-02-10 |
+| 8 unprotected API endpoints | JWT auth added to emilia/thread, avatar/simli-speak, judge-video, +5 others | 2026-02-10 |
+| Video progress bar stuck at 73% | New formula: remaining percentage × poll fraction (scales to 95%) | 2026-02-13 |
+| Play button not working | Removed readyState >= 2 gate; blob URLs load async so play() called directly | 2026-02-13 |
+| Promise.all blocking playback | Switched to Promise.allSettled so one broken video doesn't block the other | 2026-02-13 |
+| Expired replicate URLs from cache | HEAD validation on replicate.delivery URLs; auto-marks expired as failed | 2026-02-13 |
+| Blob fetch creating garbage blobs | Content-type check before creating blob; dead URLs tracked in state Set | 2026-02-13 |
+| grok_videos UNIQUE constraint | UNIQUE constraint now includes status column (database hardening) | 2026-02-10 |
+| Parallel video generation timeout | Sequential generation (loser first, then winner); timeout doubled to 240s | 2026-02-13 |
 
 ---
 
@@ -1460,7 +1546,24 @@ npm run preview
 - GDPR compliance logging
 - 30-day deletion queue
 
-### 16.3 Rate Limiting
+### 16.3 JWT Auth Requirements (Added 2026-02-10)
+
+The following endpoints now require JWT authentication headers (previously unprotected):
+
+| Endpoint | Security Fix |
+|----------|-------------|
+| `/api/emilia/manuals` | Was bypassable via unverified email query param |
+| `/api/emilia/thread` | Added JWT verification |
+| `/api/avatar/simli-speak` | Added JWT verification |
+| `/api/judge-video` | Added JWT verification |
+| + 5 additional endpoints | All now require valid auth header |
+
+**Admin Check Caching:**
+- Admin status cached with 5-minute TTL + 1-hour grace period
+- Prevents admin lockout during Supabase timeouts
+- Tier cache survives transient database failures
+
+### 16.4 Rate Limiting
 
 ```typescript
 // api/shared/rateLimit.ts
@@ -1646,6 +1749,36 @@ try {
 
 ---
 
+## 20. App Prompts System (Added 2026-02-10)
+
+### 20.1 Overview
+
+All 50 system prompts used across the application are cataloged in the `app_prompts` database table and viewable/editable through the Help Modal > Prompts tab (admin only).
+
+### 20.2 Prompt Categories
+
+| Category | Count | Purpose |
+|----------|-------|---------|
+| evaluate | 11 | LLM evaluation prompts for city comparison |
+| judge | 8 | Judge verdict and analysis prompts |
+| olivia | 7 | Olivia AI assistant system prompts |
+| gamma | 8 | Report generation prompts |
+| video | 8 | Video generation prompts (Kling/Replicate) |
+| invideo | 8 | Cinematic video override prompts |
+
+### 20.3 Key Files
+
+| File | Purpose |
+|------|---------|
+| `api/prompts.ts` | GET/POST/PUT for managing prompts (admin only) |
+| `src/components/ManualViewer.tsx` | Integrated with app_prompts DB for real-time editing |
+| `supabase/migrations/20260210_create_app_prompts.sql` | Table schema |
+| `supabase/migrations/20260212_seed_all_prompts.sql` | 50 reference prompts seeded |
+
+**Note:** Most prompts are dynamically generated in TypeScript code at runtime. The database entries are read-only references that admins can view and customize.
+
+---
+
 ## Document Control
 
 | Version | Date | Author | Changes |
@@ -1657,6 +1790,7 @@ try {
 | 2.3 | 2026-02-04 | Claude Opus 4.5 | LLM retry logic (§6.6), cost tracking auto-sync (§6.7), video error handling (§8.5), resolved issues |
 | 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections, AI model names updated, Tavily timeout fix, 8 resolved issues |
 | 3.0 | 2026-02-12 | Claude Opus 4.6 | Integrated Coding Standards & Developer Guide as §2 (comment standards, naming conventions, component/service/hook/type guides, data flow diagrams, quick reference). Upgraded §1.3 directory tree. Renumbered §§2-18 to §§3-19. |
+| 4.0 | 2026-02-13 | Claude Opus 4.6 | Major update: 21 DB tables (was 18), 3 storage buckets, new app_prompts/invideo_overrides tables, sequential video generation, blob URL playback, expired URL detection, Promise.allSettled, progress bar fix, 12 new resolved issues, JWT auth on 8+ endpoints, admin check caching, Prompts system (§20), new env vars, deprecated VITE_* vars |
 
 ---
 
