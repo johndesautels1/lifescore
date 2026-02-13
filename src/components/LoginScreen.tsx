@@ -5,7 +5,7 @@
  * Clean, professional design.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './LoginScreen.css';
 
@@ -56,15 +56,30 @@ const LoginScreen: React.FC = () => {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Load saved credentials on mount
+  // Load saved credentials on mount — auto-sign-in if Remember Me was checked
+  const autoSignInAttempted = useRef(false);
   useEffect(() => {
     const saved = loadSavedCredentials();
     if (saved) {
       setEmail(saved.email);
       setPassword(saved.password);
       setRememberMe(true);
+
+      // Auto-sign-in: if we have saved credentials, sign in automatically
+      // This runs once on mount — prevents repeated attempts on failure
+      if (!autoSignInAttempted.current) {
+        autoSignInAttempted.current = true;
+        signInWithEmail(saved.email, saved.password).then(({ error: signInError }) => {
+          if (signInError) {
+            // Credentials are stale/invalid — clear them so user isn't stuck in a loop
+            console.warn('[Remember Me] Auto-sign-in failed, clearing saved credentials');
+            clearSavedCredentials();
+            setRememberMe(false);
+          }
+        });
+      }
     }
-  }, []);
+  }, [signInWithEmail]);
 
   const resetForm = useCallback(() => {
     setEmail('');
