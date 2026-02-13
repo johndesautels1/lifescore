@@ -28,7 +28,7 @@ const HEYGEN_API_V2 = 'https://api.heygen.com/v2';
 const HEYGEN_API_V1 = 'https://api.heygen.com/v1';
 const HEYGEN_TIMEOUT_MS = 60000;
 
-// Avatar & voice defaults (same env vars as streaming endpoint)
+// Olivia avatar & voice defaults
 const DEFAULT_AVATAR_ID = process.env.HEYGEN_AVATAR_ID || '';
 const DEFAULT_VOICE_ID = process.env.HEYGEN_VOICE_ID || '';
 
@@ -112,7 +112,7 @@ async function generateVideo(
   apiKey: string,
   script: string,
   avatarId: string,
-  voiceId?: string,
+  voiceId: string,
   title?: string
 ): Promise<string> {
   const scenes = splitScriptIntoScenes(script);
@@ -126,7 +126,7 @@ async function generateVideo(
     voice: {
       type: 'text',
       input_text: sceneText,
-      voice_id: voiceId || undefined,
+      voice_id: voiceId,
     },
     background: {
       type: 'color' as const,
@@ -275,16 +275,26 @@ export default async function handler(
           return;
         }
 
-        if (!DEFAULT_AVATAR_ID && !avatarId) {
+        const effectiveAvatarId = avatarId || DEFAULT_AVATAR_ID;
+        const effectiveVoiceId = voiceId || DEFAULT_VOICE_ID;
+
+        if (!effectiveAvatarId) {
           res.status(400).json({ error: 'HEYGEN_AVATAR_ID not configured and no avatarId provided' });
           return;
         }
 
+        if (!effectiveVoiceId) {
+          res.status(400).json({ error: 'HEYGEN_VOICE_ID not configured and no voiceId provided. Set HEYGEN_VOICE_ID in Vercel environment variables.' });
+          return;
+        }
+
+        console.log('[HEYGEN-VIDEO] Using avatar:', effectiveAvatarId, 'voice:', effectiveVoiceId);
+
         const generatedVideoId = await generateVideo(
           apiKey,
           script,
-          avatarId || DEFAULT_AVATAR_ID,
-          voiceId || DEFAULT_VOICE_ID || undefined,
+          effectiveAvatarId,
+          effectiveVoiceId,
           title
         );
 
