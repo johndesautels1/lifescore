@@ -359,6 +359,7 @@
   border-radius: 8px;
   font-size: 13px;
   color: #f87171;
+  flex-wrap: wrap;
 }
 
 .emilia-error .error-icon {
@@ -373,6 +374,47 @@
   font-weight: 700;
   font-size: 12px;
   flex-shrink: 0;
+}
+
+.emilia-error .error-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.emilia-error .error-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.error-retry-btn,
+.error-dismiss-btn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.error-retry-btn {
+  background: rgba(20, 184, 166, 0.15);
+  color: #14B8A6;
+}
+
+.error-retry-btn:hover {
+  background: rgba(20, 184, 166, 0.25);
+}
+
+.error-dismiss-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+
+.error-dismiss-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
 }
 
 /* ============================================
@@ -569,6 +611,97 @@
 .emilia-action-btn.clear:hover:not(:disabled) {
   border-color: rgba(239, 68, 68, 0.3);
   color: #f87171;
+}
+
+/* ============================================
+   Markdown Rendered Content
+   ============================================ */
+
+.md-rendered {
+  white-space: normal;
+}
+
+.md-rendered p {
+  margin: 0 0 8px 0;
+}
+
+.md-rendered p:last-child {
+  margin-bottom: 0;
+}
+
+.md-rendered strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.md-rendered em {
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+.md-rendered .md-h3,
+.md-rendered .md-h4 {
+  color: #14B8A6;
+  margin: 12px 0 6px 0;
+  font-weight: 600;
+}
+
+.md-rendered .md-h3 {
+  font-size: 15px;
+}
+
+.md-rendered .md-h4 {
+  font-size: 14px;
+}
+
+.md-rendered .md-inline-code {
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+  color: #14B8A6;
+}
+
+.md-rendered .md-code-block {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+.md-rendered .md-code-block code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.md-rendered .md-list {
+  margin: 6px 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.md-rendered .md-list li {
+  margin: 3px 0;
+  line-height: 1.5;
+}
+
+.md-rendered .md-link {
+  color: #14B8A6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md-rendered .md-link:hover {
+  color: #2dd4bf;
 }
 
 /* ============================================

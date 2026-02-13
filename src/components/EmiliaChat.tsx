@@ -11,10 +11,71 @@
  * - Message history persistence
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useEmilia } from '../hooks/useEmilia';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import './EmiliaChat.css';
+
+// ============================================================================
+// LIGHTWEIGHT MARKDOWN RENDERER
+// Converts common markdown patterns to HTML for chat messages.
+// Handles: bold, italic, inline code, code blocks, links, lists, headers.
+// ============================================================================
+
+function renderMarkdown(text: string): string {
+  let html = text
+    // Escape HTML entities first
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Code blocks (``` ... ```)
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_match, _lang, code) => {
+    return `<pre class="md-code-block"><code>${code.trim()}</code></pre>`;
+  });
+
+  // Inline code (`...`)
+  html = html.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>');
+
+  // Bold + italic (***text***)
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+
+  // Bold (**text**)
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic (*text*)
+  html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+
+  // Headers (### h3, ## h2, # h1 — at line start)
+  html = html.replace(/^### (.+)$/gm, '<h4 class="md-h4">$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3 class="md-h3">$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h3 class="md-h3">$1</h3>');
+
+  // Unordered lists (- item or * item)
+  html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul class="md-list">$1</ul>');
+
+  // Numbered lists (1. item)
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+  // Links [text](url)
+  html = html.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>'
+  );
+
+  // Line breaks (double newline → paragraph break, single → <br>)
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+
+  // Wrap in paragraph
+  html = `<p>${html}</p>`;
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p>\s*<\/p>/g, '');
+
+  return html;
+}
 
 interface EmiliaChatProps {
   onBack?: () => void;
@@ -31,6 +92,8 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
     isInitializing,
     error,
     sendMessage,
+    retryLastMessage,
+    dismissError,
     clearConversation,
     downloadConversation,
     printConversation,
@@ -196,40 +259,14 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
 
         {/* Message list */}
         {messages.map((msg) => (
-          <div key={msg.id} className={`emilia-message ${msg.role}`}>
-            {msg.role === 'assistant' && (
-              <div className="message-avatar">
-                <span>E</span>
-              </div>
-            )}
-            <div className="message-bubble">
-              <div className="message-content">{msg.content}</div>
-              <div className="message-footer">
-                <span className="message-time">{formatTime(msg.timestamp)}</span>
-                {msg.role === 'assistant' && (
-                  <button
-                    className={`message-play-btn ${playingMessageId === msg.id ? 'playing' : ''}`}
-                    onClick={() =>
-                      playingMessageId === msg.id
-                        ? stopPlaying()
-                        : playMessage(msg.id, msg.content)
-                    }
-                    title={playingMessageId === msg.id ? 'Stop' : 'Listen'}
-                  >
-                    {playingMessageId === msg.id ? (
-                      <svg viewBox="0 0 24 24" width="12" height="12">
-                        <rect fill="currentColor" x="6" y="6" width="12" height="12" />
-                      </svg>
-                    ) : (
-                      <svg viewBox="0 0 24 24" width="12" height="12">
-                        <path fill="currentColor" d="M8 5v14l11-7z" />
-                      </svg>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <MessageBubble
+            key={msg.id}
+            msg={msg}
+            playingMessageId={playingMessageId}
+            onPlay={playMessage}
+            onStop={stopPlaying}
+            formatTime={formatTime}
+          />
         ))}
 
         {/* Loading indicator */}
@@ -248,11 +285,19 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
           </div>
         )}
 
-        {/* Error message */}
+        {/* Error message with retry */}
         {error && (
           <div className="emilia-error">
             <span className="error-icon">!</span>
-            <span>{error}</span>
+            <span className="error-text">{error}</span>
+            <div className="error-actions">
+              <button className="error-retry-btn" onClick={retryLastMessage}>
+                Retry
+              </button>
+              <button className="error-dismiss-btn" onClick={dismissError}>
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
 
@@ -382,5 +427,68 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
     </div>
   );
 };
+
+// ============================================================================
+// MEMOIZED MESSAGE BUBBLE — renders markdown for assistant, plain for user
+// ============================================================================
+
+interface MessageBubbleProps {
+  msg: { id: string; role: 'user' | 'assistant'; content: string; timestamp: Date };
+  playingMessageId: string | null;
+  onPlay: (id: string, content: string) => void;
+  onStop: () => void;
+  formatTime: (date: Date) => string;
+}
+
+const MessageBubble = React.memo<MessageBubbleProps>(({ msg, playingMessageId, onPlay, onStop, formatTime }) => {
+  const renderedHtml = useMemo(
+    () => (msg.role === 'assistant' ? renderMarkdown(msg.content) : null),
+    [msg.role, msg.content]
+  );
+
+  return (
+    <div className={`emilia-message ${msg.role}`}>
+      {msg.role === 'assistant' && (
+        <div className="message-avatar">
+          <span>E</span>
+        </div>
+      )}
+      <div className="message-bubble">
+        {msg.role === 'assistant' && renderedHtml ? (
+          <div
+            className="message-content md-rendered"
+            dangerouslySetInnerHTML={{ __html: renderedHtml }}
+          />
+        ) : (
+          <div className="message-content">{msg.content}</div>
+        )}
+        <div className="message-footer">
+          <span className="message-time">{formatTime(msg.timestamp)}</span>
+          {msg.role === 'assistant' && (
+            <button
+              className={`message-play-btn ${playingMessageId === msg.id ? 'playing' : ''}`}
+              onClick={() =>
+                playingMessageId === msg.id ? onStop() : onPlay(msg.id, msg.content)
+              }
+              title={playingMessageId === msg.id ? 'Stop' : 'Listen'}
+            >
+              {playingMessageId === msg.id ? (
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                  <rect fill="currentColor" x="6" y="6" width="12" height="12" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                  <path fill="currentColor" d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+MessageBubble.displayName = 'MessageBubble';
 
 export default EmiliaChat;
