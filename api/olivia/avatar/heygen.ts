@@ -15,9 +15,9 @@ import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
 const HEYGEN_API_BASE = 'https://api.heygen.com/v1';
 const HEYGEN_TIMEOUT_MS = 60000;
 
-// Default avatar (can be overridden via env)
-const DEFAULT_AVATAR_ID = process.env.HEYGEN_AVATAR_ID || '';
-const DEFAULT_VOICE_ID = process.env.HEYGEN_VOICE_ID || '';
+// Olivia avatar & voice defaults
+const DEFAULT_AVATAR_ID = process.env.HEYGEN_OLIVIA_AVATAR_ID || '';
+const DEFAULT_VOICE_ID = process.env.HEYGEN_OLIVIA_VOICE_ID || '';
 
 // ============================================================================
 // TYPES
@@ -242,7 +242,7 @@ export default async function handler(
     switch (action) {
       case 'create': {
         if (!DEFAULT_AVATAR_ID) {
-          res.status(400).json({ error: 'HEYGEN_AVATAR_ID not configured' });
+          res.status(400).json({ error: 'HEYGEN_OLIVIA_AVATAR_ID not configured' });
           return;
         }
 

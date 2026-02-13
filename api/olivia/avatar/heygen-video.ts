@@ -29,8 +29,8 @@ const HEYGEN_API_V1 = 'https://api.heygen.com/v1';
 const HEYGEN_TIMEOUT_MS = 60000;
 
 // Olivia avatar & voice defaults
-const DEFAULT_AVATAR_ID = process.env.HEYGEN_AVATAR_ID || '';
-const DEFAULT_VOICE_ID = process.env.HEYGEN_VOICE_ID || '';
+const DEFAULT_AVATAR_ID = process.env.HEYGEN_OLIVIA_AVATAR_ID || '';
+const DEFAULT_VOICE_ID = process.env.HEYGEN_OLIVIA_VOICE_ID || '';
 
 // Max script length (HeyGen limit ~5000 chars per scene for reliable generation)
 const MAX_SCRIPT_LENGTH = 15000;
@@ -279,12 +279,12 @@ export default async function handler(
         const effectiveVoiceId = voiceId || DEFAULT_VOICE_ID;
 
         if (!effectiveAvatarId) {
-          res.status(400).json({ error: 'HEYGEN_AVATAR_ID not configured and no avatarId provided' });
+          res.status(400).json({ error: 'HEYGEN_OLIVIA_AVATAR_ID not configured and no avatarId provided' });
           return;
         }
 
         if (!effectiveVoiceId) {
-          res.status(400).json({ error: 'HEYGEN_VOICE_ID not configured and no voiceId provided. Set HEYGEN_VOICE_ID in Vercel environment variables.' });
+          res.status(400).json({ error: 'HEYGEN_OLIVIA_VOICE_ID not configured and no voiceId provided. Set HEYGEN_OLIVIA_VOICE_ID in Vercel environment variables.' });
           return;
         }
 

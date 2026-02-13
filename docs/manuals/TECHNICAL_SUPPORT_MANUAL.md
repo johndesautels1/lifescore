@@ -1309,8 +1309,8 @@ User clicks "Generate Video" in ReportPresenter →
 | Variable | Purpose |
 |----------|---------|
 | `HEYGEN_API_KEY` | HeyGen API authentication (streaming avatar + video generation) |
-| `HEYGEN_AVATAR_ID` | Avatar ID for Olivia (streaming + video) |
-| `HEYGEN_VOICE_ID` | Voice ID for Olivia (streaming + video) |
+| `HEYGEN_OLIVIA_AVATAR_ID` | Avatar ID for Olivia (streaming + video) |
+| `HEYGEN_OLIVIA_VOICE_ID` | Voice ID for Olivia (streaming + video) |
 | `HEYGEN_CHRISTIAN_AVATAR_ID` | Avatar ID for Judge Christiano |
 | `HEYGEN_CHRISTIAN_VOICE_ID` | Voice ID for Judge Christiano |
 
