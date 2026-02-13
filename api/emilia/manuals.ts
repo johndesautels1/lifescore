@@ -72,7 +72,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 2. **Choose Comparison Mode**
    - **Standard Mode**: Uses Claude Sonnet for fast, accurate analysis
-   - **Enhanced Mode**: Uses 5 AI providers (Claude, GPT-4o, Gemini, Grok, Perplexity) with consensus scoring
+   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-5.2, Gemini 3 Pro, Grok 4, Perplexity Sonar) with consensus scoring
 
 3. **Run the Comparison**
    - Click "Compare Cities"
@@ -163,11 +163,15 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### Tier Limits
 
-| Tier | Comparisons | Olivia | Price |
-|------|-------------|--------|-------|
-| FREE | 1/month | 0 | $0 |
-| NAVIGATOR | 1/month | 15 min | $29/month ($249/yr) |
-| SOVEREIGN | 1/month (5 LLMs) | 60 min | $99/month ($899/yr) |
+| Feature | FREE | NAVIGATOR ($29/mo, $249/yr) | SOVEREIGN ($99/mo, $899/yr) |
+|---------|------|-------|-----------|
+| Standard Comparisons | 1/month | 1/month | 1/month |
+| Enhanced Mode (5 LLMs) | No | No | 1/month |
+| Olivia AI Minutes | 0 | 15 min | 60 min |
+| Judge Verdict Videos | No | 1/month | 1/month |
+| Gamma Reports | No | 1/month | 1/month |
+| Grok/Kling Mood Videos | No | No | 1/month |
+| Cloud Sync | No | Yes | Yes |
 
 ## Common Issues
 
@@ -215,7 +219,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 1. **Tier 1**: Email support (most issues)
 2. **Tier 2**: Technical team (bugs, errors)
-3. **Tier 3**: Management (refunds > $100, legal)
+3. **Tier 3**: Management (refunds > $50, legal)
 `,
 
   tech: `# Technical Support Manual
@@ -316,9 +320,12 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 ### Data We Collect
 - Email, name, password (hashed) - Account
 - City comparisons - Service delivery
-- Olivia/Emilia conversations - AI chat
+- Olivia conversations - AI chat (until account deletion)
+- Emilia help chat - Session-based (browser only, not stored)
 - Court Order videos - Supabase Storage (user-videos bucket)
+- App prompts - System prompt references (admin-editable, permanent)
 - Payment info - Via Stripe
+- Usage analytics - Anonymized after 30 days
 - IP address - Security (90 day retention)
 
 ### Data Subject Rights
