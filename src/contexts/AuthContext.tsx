@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile and preferences in parallel with reduced timeout/retries
       // to prevent long blocking loops when Supabase is slow or unreachable.
       // Fail fast, fail open — the app works without profile data.
-      const PROFILE_TIMEOUT_MS = 15000; // 15s — more lenient than default but won't hang forever
+      const PROFILE_TIMEOUT_MS = 24000; // 24s — give Supabase enough time on cold starts
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
