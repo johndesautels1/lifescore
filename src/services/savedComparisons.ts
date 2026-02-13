@@ -1035,14 +1035,14 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
 }
 
 /**
- * Save Gamma reports to localStorage
+ * Save Gamma reports to localStorage (uses safeLocalStorageSet for quota handling)
  */
-function saveGammaReportsLocal(reports: SavedGammaReport[]): void {
-  try {
-    localStorage.setItem(GAMMA_REPORTS_KEY, JSON.stringify(reports));
-  } catch (err) {
-    console.error('[savedComparisons] Failed to save Gamma reports to localStorage:', err);
+function saveGammaReportsLocal(reports: SavedGammaReport[]): boolean {
+  const success = safeLocalStorageSet(GAMMA_REPORTS_KEY, JSON.stringify(reports));
+  if (!success) {
+    console.error('[savedComparisons] CRITICAL: Failed to save Gamma reports to localStorage — quota exceeded even after cleanup');
   }
+  return success;
 }
 
 /**

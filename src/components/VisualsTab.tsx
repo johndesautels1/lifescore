@@ -21,6 +21,7 @@ import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
   getSavedGammaReports,
+  syncGammaReportsFromSupabase,
   deleteGammaReport,
   type SavedGammaReport,
 } from '../services/savedComparisons';
@@ -130,6 +131,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       if (e.key === 'lifescore_saved_comparisons' || e.key === 'lifescore_saved_enhanced') {
         refreshComparisons();
       }
+      if (e.key === 'lifescore_saved_gamma_reports') {
+        setReportsRefreshKey(k => k + 1);
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -176,13 +180,37 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // Report view mode: read (iframe) or presenter (Olivia video overlay)
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
 
-  // Load saved reports
+  // Load saved reports from localStorage, then sync from Supabase as fallback
   useEffect(() => {
-    setSavedReports(getSavedGammaReports());
+    const localReports = getSavedGammaReports();
+    setSavedReports(localReports);
+
+    // If localStorage is empty, try syncing from Supabase (handles lost localStorage)
+    if (localReports.length === 0) {
+      syncGammaReportsFromSupabase().then((synced) => {
+        if (synced.length > 0) {
+          console.log('[VisualsTab] Synced', synced.length, 'Gamma reports from Supabase');
+          setSavedReports(synced);
+        }
+      }).catch(err => {
+        console.error('[VisualsTab] Supabase sync failed:', err);
+      });
+    }
   }, [reportsRefreshKey, isReportSaved]);
 
   // Auto-save Gamma reports when generation completes
   useEffect(() => {
+    // Log conditions for debugging persistence issues
+    if (reportState.status === 'completed') {
+      console.log('[VisualsTab] Auto-save check:', {
+        status: reportState.status,
+        hasGammaUrl: !!reportState.gammaUrl,
+        hasGenerationId: !!reportState.generationId,
+        hasResult: !!result,
+        isReportSaved,
+      });
+    }
+
     if (
       reportState.status === 'completed' &&
       reportState.gammaUrl &&
@@ -191,9 +219,11 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       !isReportSaved
     ) {
       const effectiveComparisonId = result.comparisonId || `LIFE-${Date.now()}-${result.city1.city.slice(0, 3).toUpperCase()}`;
+      const alreadyExists = hasGammaReportForComparison(effectiveComparisonId);
 
-      // Only auto-save if not already saved for this comparison
-      if (!hasGammaReportForComparison(effectiveComparisonId)) {
+      console.log('[VisualsTab] Auto-save:', { effectiveComparisonId, alreadyExists });
+
+      if (!alreadyExists) {
         console.log('[VisualsTab] Auto-saving Gamma report for:', effectiveComparisonId);
         saveGammaReport({
           comparisonId: effectiveComparisonId,
@@ -206,6 +236,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         });
         setIsReportSaved(true);
         setReportsRefreshKey(k => k + 1);
+        console.log('[VisualsTab] Auto-save complete. Verifying localStorage:', getSavedGammaReports().length, 'reports');
+      } else {
+        // Report already exists — mark as saved so we don't keep checking
+        setIsReportSaved(true);
       }
     }
   }, [reportState.status, reportState.gammaUrl, reportState.generationId, result, isReportSaved]);
@@ -353,6 +387,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   const handleReset = useCallback(() => {
     setReportState({ status: 'idle' });
+    setIsReportSaved(false);
   }, []);
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
@@ -383,6 +418,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               // Reset report state when switching comparisons
               if (value !== selectedComparisonId) {
                 setReportState({ status: 'idle' });
+                setIsReportSaved(false);
               }
             }}
           >
