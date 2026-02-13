@@ -364,14 +364,38 @@ export default async function handler(
 
     // If still processing, check provider status
     if (video.status === 'processing' && video.prediction_id) {
+      // Auto-fail predictions stuck for too long (Kling: 8 min, Replicate: 10 min)
+      const MAX_PROCESSING_MS = video.provider === 'kling' ? 8 * 60 * 1000 : 10 * 60 * 1000;
+      const ageMs = video.created_at ? Date.now() - new Date(video.created_at).getTime() : 0;
+
+      if (ageMs > MAX_PROCESSING_MS) {
+        const stuckMinutes = Math.round(ageMs / 60000);
+        console.warn(`[GROK-STATUS] Prediction stuck for ${stuckMinutes}min (provider: ${video.provider}), auto-failing`);
+        await supabaseAdmin
+          .from('grok_videos')
+          .update({
+            status: 'failed',
+            error_message: `Generation timed out after ${stuckMinutes} minutes (${video.provider} stuck)`,
+          })
+          .eq('id', video.id);
+
+        video.status = 'failed';
+        video.error_message = `Generation timed out after ${stuckMinutes} minutes (${video.provider} stuck)`;
+      }
+
       let providerStatus: { status: string; videoUrl: string | null; error: string | null };
 
-      if (video.provider === 'kling') {
-        providerStatus = await checkKlingStatus(video.prediction_id);
-      } else if (video.provider === 'grok') {
-        providerStatus = await checkGrokStatus(video.prediction_id);
+      // Only poll provider if not already auto-failed
+      if (video.status === 'processing') {
+        if (video.provider === 'kling') {
+          providerStatus = await checkKlingStatus(video.prediction_id);
+        } else if (video.provider === 'grok') {
+          providerStatus = await checkGrokStatus(video.prediction_id);
+        } else {
+          providerStatus = await checkReplicateStatus(video.prediction_id);
+        }
       } else {
-        providerStatus = await checkReplicateStatus(video.prediction_id);
+        providerStatus = { status: video.status, videoUrl: null, error: video.error_message };
       }
 
       // Update database if completed or failed

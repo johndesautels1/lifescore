@@ -404,15 +404,27 @@ function generateKlingJWT(): string | null {
  * Generate video using Kling AI API
  * Returns task_id for polling, or null if failed
  */
-async function generateWithKling(prompt: string, durationSeconds: number = 10): Promise<{ predictionId: string; status: string } | null> {
+async function generateWithKling(prompt: string, durationSeconds: number = 10): Promise<{ predictionId: string; status: string; error?: string } | null> {
   const token = generateKlingJWT();
 
   if (!token) {
-    return null;
+    console.warn('[KLING-VIDEO] JWT generation failed — KLING_VIDEO_API_KEY or KLING_VIDEO_SECRET missing');
+    return { predictionId: '', status: 'failed', error: 'Kling JWT failed: missing KLING_VIDEO_API_KEY or KLING_VIDEO_SECRET' };
   }
 
   try {
     console.log('[KLING-VIDEO] Attempting Kling video generation...');
+    console.log('[KLING-VIDEO] Model:', KLING_MODEL, '| Duration:', durationSeconds, '| Prompt length:', prompt.length);
+
+    const requestBody = {
+      model_name: KLING_MODEL,
+      prompt: prompt.slice(0, 2500), // Max 2500 chars
+      duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
+      aspect_ratio: '16:9',
+      mode: 'std', // Standard mode (cost-effective)
+      // Note: sound requires 'pro' mode on kling-v2-6; std mode does not support sound
+      // See: Kling API error 1201 - "model/mode(kling-v2-6/std) is not supported with sound on"
+    };
 
     const response = await fetch(`${KLING_API_URL}/v1/videos/text2video`, {
       method: 'POST',
@@ -420,28 +432,22 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model_name: KLING_MODEL,
-        prompt: prompt.slice(0, 2500), // Max 2500 chars
-        duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
-        aspect_ratio: '16:9',
-        mode: 'std', // Standard mode (cost-effective)
-        // Note: sound requires 'pro' mode on kling-v2-6; std mode does not support sound
-        // See: Kling API error 1201 - "model/mode(kling-v2-6/std) is not supported with sound on"
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      const errorMsg = `Kling HTTP ${response.status}: ${errorText.slice(0, 500)}`;
       console.warn('[KLING-VIDEO] Kling API error:', response.status, errorText);
-      return null; // Fall back to Replicate
+      return { predictionId: '', status: 'failed', error: errorMsg };
     }
 
     const result = await response.json();
 
     if (result.code !== 0) {
+      const errorMsg = `Kling API error ${result.code}: ${result.message || 'unknown'}`;
       console.warn('[KLING-VIDEO] Kling API returned error:', result.code, result.message);
-      return null;
+      return { predictionId: '', status: 'failed', error: errorMsg };
     }
 
     console.log('[KLING-VIDEO] Kling generation started:', result.data.task_id);
@@ -451,8 +457,9 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
       status: result.data.task_status || 'submitted',
     };
   } catch (error) {
+    const errorMsg = `Kling exception: ${error instanceof Error ? error.message : String(error)}`;
     console.warn('[KLING-VIDEO] Kling generation failed:', error);
-    return null; // Fall back to Replicate
+    return { predictionId: '', status: 'failed', error: errorMsg };
   }
 }
 
@@ -821,6 +828,7 @@ async function generateSingleVideo(
   video: Partial<GrokVideoRecord>;
   cached: boolean;
   reused: boolean;
+  klingError?: string;
 }> {
   // Check cache first (reuse across users for same city) - skip if forcing regeneration
   if (!forceRegenerate) {
@@ -844,18 +852,22 @@ async function generateSingleVideo(
 
   // Try Kling first (high quality with sound), then Replicate fallback
   // Note: Grok video API doesn't exist publicly, so we skip it
+  let klingError: string | undefined;
   let result = await generateWithKling(prompt, durationSec);
   let provider = 'kling';
 
-  if (!result) {
-    console.log('[VIDEO] Kling unavailable (missing credentials or API error), trying Replicate...');
+  // Check if Kling returned an error (now returns error info instead of null)
+  if (!result || result.error) {
+    klingError = result?.error || 'Kling returned null';
+    console.log('[VIDEO] Kling failed:', klingError, '— trying Replicate...');
+    result = null;
 
     try {
       result = await generateWithReplicate(prompt);
       provider = 'replicate';
     } catch (replicateError) {
       console.error('[VIDEO] Replicate also failed:', replicateError);
-      throw new Error(`No video provider available. Kling: missing credentials. Replicate: ${replicateError instanceof Error ? replicateError.message : 'unknown error'}`);
+      throw new Error(`No video provider available. Kling: ${klingError}. Replicate: ${replicateError instanceof Error ? replicateError.message : 'unknown error'}`);
     }
   }
 
@@ -892,6 +904,7 @@ async function generateSingleVideo(
     },
     cached: false,
     reused: false,
+    klingError,
   };
 }
 
@@ -987,10 +1000,16 @@ export default async function handler(
         console.log('[GROK-VIDEO] No usage counted - fully cached');
       }
 
+      // Collect provider debug info for troubleshooting
+      const providerDebug: Record<string, string> = {};
+      if (winnerResult.klingError) providerDebug.winnerKlingError = winnerResult.klingError;
+      if (loserResult.klingError) providerDebug.loserKlingError = loserResult.klingError;
+
       res.status(200).json({
         success: true,
         cached: fullyFromCache,
         usageCounted: !fullyFromCache,
+        providerDebug: Object.keys(providerDebug).length > 0 ? providerDebug : undefined,
         videos: {
           winner: {
             id: winnerResult.video.id,
@@ -1065,6 +1084,7 @@ export default async function handler(
         success: true,
         cached: result.cached,
         usageCounted: !result.cached,
+        providerDebug: result.klingError ? { klingError: result.klingError } : undefined,
         video: {
           id: result.video.id,
           userId: result.video.user_id,
