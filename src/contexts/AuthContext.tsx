@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile and preferences in parallel with reduced timeout/retries
       // to prevent long blocking loops when Supabase is slow or unreachable.
       // Fail fast, fail open — the app works without profile data.
-      const PROFILE_TIMEOUT_MS = 15000; // 15s — more lenient than default but won't hang forever
+      const PROFILE_TIMEOUT_MS = 8000; // 8s — fail fast, app works without profile data
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -216,26 +216,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // SUPABASE MODE: Get initial session with timeout (45s for slow Supabase cold starts)
     const SESSION_TIMEOUT_MS = 45000;
-    let sessionHandled = false;
+    let initialLoadDone = false; // Tracks whether the first profile fetch has completed
     const sessionTimeout = setTimeout(() => {
-      if (!sessionHandled) {
+      if (!initialLoadDone) {
         console.warn("[Auth] Session check timed out after 45s");
+        initialLoadDone = true;
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }
     }, SESSION_TIMEOUT_MS);
 
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (sessionHandled) return; // Already handled by auth state change
-      sessionHandled = true;
-      clearTimeout(sessionTimeout);
+      if (initialLoadDone) return; // Already handled by timeout or auth state change
 
       if (error) {
         console.error("[Auth] getSession error:", error);
+        initialLoadDone = true;
+        clearTimeout(sessionTimeout);
         setState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
       if (session?.user) {
+        initialLoadDone = true;
+        clearTimeout(sessionTimeout);
         const { profile, preferences } = await fetchUserData(session.user.id);
         const user = normalizeUser(session.user, profile as Profile | null);
         setState({
@@ -250,6 +253,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: null,
         });
       } else {
+        initialLoadDone = true;
+        clearTimeout(sessionTimeout);
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -258,19 +263,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }).catch(err => {
       console.error("[Auth] getSession exception:", err);
-      if (!sessionHandled) {
-        sessionHandled = true;
+      if (!initialLoadDone) {
+        initialLoadDone = true;
         clearTimeout(sessionTimeout);
         setState(prev => ({ ...prev, isLoading: false }));
       }
     });
 
-    // Listen for auth changes
+    // Listen for auth changes — skip SIGNED_IN during initial load to prevent
+    // duplicate profile fetches (getSession already handles the initial session)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[Auth] State change:', event);
 
         if (event === 'SIGNED_IN' && session?.user) {
+          // If getSession already handled the initial load, skip the duplicate fetch.
+          // onAuthStateChange fires SIGNED_IN on page load AND on actual sign-in,
+          // causing two redundant profile fetches that both timeout.
+          if (initialLoadDone && state.supabaseUser?.id === session.user.id) {
+            console.log('[Auth] Skipping duplicate SIGNED_IN for same user');
+            return;
+          }
+
+          initialLoadDone = true;
+          clearTimeout(sessionTimeout);
           const { profile, preferences } = await fetchUserData(session.user.id);
           const user = normalizeUser(session.user, profile as Profile | null);
           setState({

@@ -63,6 +63,11 @@ export default defineConfig({
           if (id.includes('node_modules/stripe/')) {
             return 'stripe';
           }
+          // Shared Supabase utilities (withRetry, etc.) — own chunk so console
+          // errors don't misleadingly show as "gamma-service"
+          if (id.includes('/lib/supabase')) {
+            return 'supabase-lib';
+          }
           // App chunks — split large internal modules
           if (id.includes('/services/llmEvaluators') || id.includes('/services/opusJudge')) {
             return 'llm-evaluators';
