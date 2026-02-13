@@ -180,7 +180,7 @@
   border: 1px solid rgba(201, 162, 39, 0.15);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
@@ -238,7 +238,7 @@
   padding: 48px;
   margin-bottom: 32px;
   box-shadow: var(--ac-card-shadow);
-  transition: all var(--ac-transition);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
   position: relative;
   overflow: hidden;
   z-index: 1;
@@ -256,6 +256,11 @@
   border-color: var(--ac-glass-border-hover);
   box-shadow: var(--ac-card-shadow-hover);
   transform: translateY(-2px);
+}
+
+/* Disable lift on CTA section — it contains interactive links */
+.about-clues .ac-glass-card.ac-cta-section:hover {
+  transform: none;
 }
 
 @media (max-width: 768px) {
@@ -438,7 +443,7 @@
   border: 1px solid var(--ac-glass-border);
   border-radius: 16px;
   padding: 28px;
-  transition: all var(--ac-transition);
+  transition: border-color 0.3s ease, transform 0.3s ease;
 }
 
 .about-clues .ac-person-card:hover {
@@ -550,7 +555,7 @@
   border: 1px solid var(--ac-glass-border);
   border-radius: 12px;
   padding: 14px 16px;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease, transform 0.3s ease;
 }
 
 .about-clues .ac-module-chip:hover {
@@ -596,7 +601,7 @@
   border: 1px solid var(--ac-glass-border);
   border-radius: 16px;
   padding: 24px;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease, transform 0.3s ease;
 }
 
 .about-clues .ac-persona-row:hover {
@@ -816,7 +821,8 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
 }
 
 .about-clues .ac-cta-link.primary {
