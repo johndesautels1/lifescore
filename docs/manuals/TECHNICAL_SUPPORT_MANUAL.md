@@ -77,7 +77,7 @@ lifescore/
 │   ├── shared/             #   Shared utilities (auth, CORS, rate limiting)
 │   ├── avatar/             #   Judge avatar video generation (Simli, Wav2Lip)
 │   ├── olivia/             #   Olivia AI assistant endpoints
-│   │   └── avatar/         #     Olivia avatar streaming (WebRTC)
+│   │   └── avatar/         #     Olivia avatar streaming (WebRTC) + HeyGen video generation
 │   ├── video/              #   Grok & InVideo video generation
 │   ├── stripe/             #   Billing & subscription management
 │   ├── user/               #   User account operations (GDPR delete/export)
@@ -402,7 +402,8 @@ Group related styles with headers:
 
 | Component | What It Does |
 |-----------|-------------|
-| `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. |
+| `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. Read/Watch Presenter toggle. |
+| `ReportPresenter.tsx` | Olivia video presenter with Live (PIP avatar overlay) and Video (pre-rendered MP4) sub-modes. |
 | `NewLifeVideos.tsx` | Side-by-side winner (FREEDOM) vs loser (IMPRISONMENT) videos. Blob URL conversion for CORS-safe playback, expired URL detection, auto-reset after 3 failed loads, download with fetch→blob→ObjectURL. |
 | `AboutClues.tsx` | About Clues tab with 6 sub-tabs presenting the 18-page ecosystem document. |
 
@@ -440,7 +441,9 @@ Services contain the core business logic. They sit between components/hooks and 
 | `contrastImageService.ts` | Generates visual contrast images comparing two cities (calls Replicate). |
 | `cache.ts` | In-memory caching layer for comparison results and city data. Reduces redundant API calls. |
 | `llmEvaluators.ts` | Orchestrates multi-LLM evaluation. Sends prompts to Claude, GPT-4, Gemini, Grok, Llama and collects scored results. |
-| `oliviaService.ts` | Client-side Olivia chat integration — manages threads, sends messages, handles streaming. |
+| `oliviaService.ts` | Client-side Olivia chat integration — manages threads, sends messages, handles streaming. Also includes `generateHeyGenVideo()` and `checkHeyGenVideoStatus()` for presenter videos. |
+| `presenterService.ts` | Client-side narration script generator from comparison data. Segments: intro → winner → categories → highlights → consensus → conclusion. |
+| `presenterVideoService.ts` | HeyGen video generation orchestration + polling (5s intervals, 120 attempts, 10 min timeout). |
 | `grokVideoService.ts` | Client-side Grok video generation — triggers generation, polls status, handles downloads. |
 | `opusJudge.ts` | Claude Opus judge verdict generation — builds legal-style prompt, parses structured verdict. |
 | `judgePregenService.ts` | Pre-generates judge verdicts in the background after comparison completes. |
@@ -490,6 +493,7 @@ import type { ComparisonResult, MetricDefinition, Profile } from '@/types';
 | `enhancedComparison.ts` | `EnhancedComparisonResult`, `MetricConsensus`, `EvidenceItem` |
 | `grokVideo.ts` | `GrokVideoRequest`, `VideoStatus` |
 | `judge.ts` | `JudgeOutput`, `Verdict`, `LegalAnalysis` |
+| `presenter.ts` | `PresenterSegment`, `PresentationScript`, `PresenterState`, `ReportViewMode`, `VideoGenerationState`, `HeyGenVideoRequest/Response` |
 
 ### 2.15 Data Flow Diagrams
 
@@ -613,6 +617,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | ElevenLabs | Text-to-speech |
 | Gamma | PDF/PPTX report generation |
 | Simli | Avatar video (PRIMARY) |
+| HeyGen | Avatar streaming + pre-rendered video presenter |
 | D-ID | Avatar video (fallback) |
 
 ---
@@ -752,6 +757,27 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | /api/avatar/simli-speak | POST | Simli avatar with audio |
+
+### 4.8 Olivia Presenter Endpoints (Added 2026-02-13)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/olivia/avatar/heygen-video | POST | Generate pre-rendered HeyGen video (action: generate/status) |
+| /api/olivia/avatar/heygen-video | GET | Poll video generation status (?videoId=xxx) |
+
+**POST body (generate):**
+```typescript
+{ action: 'generate', script: string, avatarId?: string, voiceId?: string, title?: string }
+```
+**POST body (status):**
+```typescript
+{ action: 'status', videoId: string }
+```
+**GET query:**
+```
+?videoId=xxx
+```
+**Rate limit:** standard (30 req/min). Max script: 15,000 chars. Scenes split at ~1,500 chars.
 
 ---
 
@@ -1225,7 +1251,68 @@ if (!winnerDone || !loserDone) progressPct = Math.min(progressPct, 95);
 - `api/video/grok-status.ts` - HEAD validation of replicate URLs, stale detection
 - `api/video/grok-generate.ts` - Sequential generation, Kling/Replicate providers
 
-### 9.7 Court Order Video Storage (Added 2026-02-11)
+### 9.7 Olivia Video Presenter (Added 2026-02-13)
+
+The Olivia Video Presenter allows users to watch an AI avatar present their Gamma report findings instead of reading the report. Two sub-modes are available:
+
+#### Live Presenter Mode
+Real-time avatar overlay on the Gamma report iframe using HeyGen Streaming Avatar API (existing WebRTC endpoint).
+
+```
+User clicks "Watch Presenter" toggle on VisualsTab →
+→ ReportPresenter mounts as PIP overlay on iframe →
+→ presenterService.ts generates narration segments from comparison data (client-side) →
+→ Segments: intro → winner → 6 categories → highlights → consensus → conclusion →
+→ HeyGen streaming avatar speaks each segment in sequence →
+→ User controls: play/pause, next/prev segment, close
+```
+
+**Narration Generation:** Entirely client-side from `AnyComparisonResult` data. No API call needed. Duration estimated at ~150 words/minute.
+
+#### Pre-Rendered Video Mode
+Polished, downloadable MP4 via HeyGen's video generation API.
+
+```
+User clicks "Generate Video" in ReportPresenter →
+→ presenterVideoService.ts orchestrates:
+  1. Build narration script (presenterService.ts)
+  2. Submit to HeyGen via POST /api/olivia/avatar/heygen-video
+  3. Poll GET /api/olivia/avatar/heygen-video?videoId=xxx at 5s intervals
+  4. Max 120 attempts (10 min timeout)
+→ Return video URL for playback + download
+```
+
+**Scene Splitting:** Scripts are split at paragraph boundaries into scenes of ~1500 chars each to comply with HeyGen limits. Max script length: 15,000 chars.
+
+**HeyGen Video API Details:**
+- Generation: HeyGen v2 (`POST https://api.heygen.com/v2/video/generate`)
+- Status: HeyGen v1 (`GET https://api.heygen.com/v1/video_status.get?video_id=xxx`)
+- Branded dark background: `#0a1628`
+- Rate limit: standard (30 req/min)
+
+#### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/types/presenter.ts` | PresenterSegment, PresentationScript, VideoGenerationState, HeyGenVideoRequest/Response types |
+| `src/services/presenterService.ts` | Client-side narration script generator from comparison data |
+| `src/services/presenterVideoService.ts` | Video generation orchestration + polling (5s intervals, 120 max attempts) |
+| `src/services/oliviaService.ts` | Added `generateHeyGenVideo()` and `checkHeyGenVideoStatus()` client functions |
+| `api/olivia/avatar/heygen-video.ts` | Vercel serverless endpoint for HeyGen video generation and status polling |
+| `src/components/ReportPresenter.tsx` | Full presenter UI: Live/Video sub-mode tabs, PIP overlay, video player, download |
+| `src/components/ReportPresenter.css` | Styles for all presenter states (overlay, controls, video player, progress bar) |
+| `src/components/VisualsTab.tsx` | Read/Watch Presenter toggle integration |
+| `src/components/VisualsTab.css` | Toggle button styles |
+
+#### Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `HEYGEN_API_KEY` | HeyGen API authentication (existing — also used by streaming avatar) |
+| `HEYGEN_AVATAR_ID` | Avatar ID for video generation (existing) |
+| `HEYGEN_VOICE_ID` | Voice ID for video generation (existing) |
+
+### 9.8 Court Order Video Storage (Added 2026-02-11)
 
 Court Order videos can now be uploaded to Supabase Storage for permanent access:
 - **Bucket:** `user-videos` (100 MB limit, public reads)
@@ -1791,6 +1878,7 @@ All 50 system prompts used across the application are cataloged in the `app_prom
 | 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections, AI model names updated, Tavily timeout fix, 8 resolved issues |
 | 3.0 | 2026-02-12 | Claude Opus 4.6 | Integrated Coding Standards & Developer Guide as §2 (comment standards, naming conventions, component/service/hook/type guides, data flow diagrams, quick reference). Upgraded §1.3 directory tree. Renumbered §§2-18 to §§3-19. |
 | 4.0 | 2026-02-13 | Claude Opus 4.6 | Major update: 21 DB tables (was 18), 3 storage buckets, new app_prompts/invideo_overrides tables, sequential video generation, blob URL playback, expired URL detection, Promise.allSettled, progress bar fix, 12 new resolved issues, JWT auth on 8+ endpoints, admin check caching, Prompts system (§20), new env vars, deprecated VITE_* vars |
+| 4.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§9.7): HeyGen pre-rendered video pipeline + live presenter PIP overlay. New API endpoint (§4.8), new services (presenterService, presenterVideoService), new types (presenter.ts), new component (ReportPresenter), VisualsTab Read/Watch toggle |
 
 ---
 

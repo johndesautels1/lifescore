@@ -526,7 +526,7 @@ Controls access to admin documentation.
 
 ## 2. API Endpoints
 
-All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.**
+All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.**
 
 ### 2.1 Comparison & Scoring (3)
 
@@ -548,7 +548,7 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 | POST | `/api/avatar/video-webhook` | No (webhook) | Replicate webhook callback for video completion |
 | POST | `/api/judge-video` | No (rate-limited) | D-ID fallback avatar endpoint for Judge verdict |
 
-### 2.3 Avatar & Streaming (4)
+### 2.3 Avatar & Streaming (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -556,6 +556,7 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 | POST | `/api/avatar/simli-speak` | No | TTS audio in PCM Int16 format for Simli playback |
 | POST | `/api/olivia/avatar/streams` | No (rate-limited) | D-ID Streams API for WebRTC avatar |
 | POST | `/api/olivia/avatar/heygen` | No (rate-limited) | HeyGen Streaming Avatar API |
+| POST, GET | `/api/olivia/avatar/heygen-video` | No (rate-limited) | HeyGen pre-rendered video generation + status polling for Olivia presenter |
 
 ### 2.4 Olivia AI Assistant (6)
 
@@ -624,7 +625,7 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 
 ## 3. Component Architecture
 
-**45 components** in `src/components/`.
+**46 components** in `src/components/`.
 
 ### 3.1 Core Layout
 
@@ -683,7 +684,8 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 | `FreedomCategoryTabs.tsx` | 6-tab navigation for Court Order Freedom Education |
 | `FreedomHeroFooter.tsx` | AI-generated hero statement per category tab |
 | `FreedomMetricsList.tsx` | Winning metrics with scores and real-world examples |
-| `VisualsTab.tsx` | Gamma report viewer with saved reports library |
+| `VisualsTab.tsx` | Gamma report viewer with saved reports library + Read/Watch Presenter toggle |
+| `ReportPresenter.tsx` | Olivia video presenter: Live PIP avatar overlay + pre-rendered HeyGen video with download |
 
 ### 3.6 Subscription & Settings
 
@@ -748,7 +750,7 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 
 ## 5. Type Definitions
 
-**11 type files** in `src/types/`.
+**12 type files** in `src/types/`.
 
 | File | Key Types |
 |------|-----------|
@@ -762,13 +764,14 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 | `olivia.ts` | OliviaMessage, OliviaContext, OliviaResponse |
 | `freedomEducation.ts` | FreedomEducationData, CategoryTab definitions for Court Order |
 | `apiUsage.ts` | ApiUsageRecord, UsageSummary, QuotaStatus |
+| `presenter.ts` | PresenterSegment, PresentationScript, PresenterState, ReportViewMode, VideoGenerationState, HeyGenVideoRequest/Response |
 | `index.ts` | Re-exports all types from single entry point |
 
 ---
 
 ## 6. Services Layer
 
-**14 services** in `src/services/`.
+**16 services** in `src/services/`.
 
 | Service | Purpose |
 |---------|---------|
@@ -776,7 +779,9 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 | `databaseService.ts` | Unified Supabase operations for conversations, preferences, sync |
 | `gammaService.ts` | Client-side Gamma API wrapper for report generation |
 | `grokVideoService.ts` | Client-side wrapper for Grok/Kling video generation + polling |
-| `oliviaService.ts` | Client-side wrapper for Olivia chat, TTS, context |
+| `oliviaService.ts` | Client-side wrapper for Olivia chat, TTS, context, and HeyGen video generation |
+| `presenterService.ts` | Client-side narration script generator from comparison data (no API call) |
+| `presenterVideoService.ts` | HeyGen video generation orchestration with 5s polling, 10-min timeout |
 | `opusJudge.ts` | Opus Judge client helpers and utility functions |
 | `llmEvaluators.ts` | Client-side evaluation via Vercel serverless functions |
 | `enhancedComparison.ts` | API key management for enhanced comparison |
@@ -838,7 +843,7 @@ All endpoints are Vercel serverless functions in `/api/`. **43 endpoints total.*
 | **Replicate** | Video fallback + Judge avatar generation | Minimax Video-01, Wav2Lip |
 | **Simli AI** | Real-time Olivia avatar | WebRTC streaming, PCM audio |
 | **D-ID** | Fallback avatar streaming | WebRTC Streams API |
-| **HeyGen** | Alternative avatar (less used) | Streaming Avatar API |
+| **HeyGen** | Avatar streaming + pre-rendered video presenter | Streaming Avatar API, Video Generate v2, Video Status v1 |
 | **InVideo** | Admin cinematic movie overrides | Cinema-quality Court Order replacements |
 
 ### 7.3 Audio
@@ -995,7 +1000,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 
 ```
 lifescore/
-├── api/                              # Vercel serverless functions (43 endpoints)
+├── api/                              # Vercel serverless functions (44 endpoints)
 │   ├── evaluate.ts                   # Main comparison endpoint
 │   ├── judge.ts                      # Opus consensus builder
 │   ├── judge-report.ts               # Comprehensive Judge analysis
@@ -1030,6 +1035,7 @@ lifescore/
 │   │   └── avatar/                   # Avatar streaming
 │   │       ├── streams.ts            # D-ID WebRTC
 │   │       ├── heygen.ts             # HeyGen streaming
+│   │       ├── heygen-video.ts       # HeyGen pre-rendered video generation
 │   │       └── did.ts                # D-ID Agents (deprecated)
 │   │
 │   ├── emilia/                       # Emilia help assistant
@@ -1071,14 +1077,14 @@ lifescore/
 │   ├── main.tsx                      # Entry point
 │   ├── index.css                     # Global styles
 │   │
-│   ├── components/                   # React components (45)
+│   ├── components/                   # React components (46)
 │   ├── contexts/                     # React contexts (1)
 │   │   └── AuthContext.tsx
 │   ├── hooks/                        # Custom hooks (18)
-│   ├── services/                     # Business logic (14)
+│   ├── services/                     # Business logic (16)
 │   ├── lib/                          # Utility libraries (3)
 │   ├── utils/                        # Utility functions (5)
-│   ├── types/                        # TypeScript types (11)
+│   ├── types/                        # TypeScript types (12)
 │   └── data/                         # Static data (metrics.ts)
 │
 ├── supabase/                         # Database migrations (32 files)
@@ -1155,4 +1161,4 @@ LIFE SCORE evaluates cities across **100 metrics** in **6 categories**:
 - **For:** LIFE SCORE Ask Emelia Help System
 - **Last Updated:** 2026-02-13
 - **Verified Against:** 195 commits on branch claude/lifescore-debug-42MtS-29Gdh
-- **Total Codebase:** 43 API endpoints, 45 components, 18 hooks, 14 services, 21 DB tables, 61 env vars
+- **Total Codebase:** 44 API endpoints, 46 components, 18 hooks, 16 services, 12 type files, 21 DB tables, 61 env vars

@@ -106,6 +106,9 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Generate PDF/PPTX reports via Gamma
 - AI-generated "New Life" videos (Freedom vs Imprisonment)
 - Judge verdict video with Court Order option
+- **Olivia Video Presenter**: Toggle "Watch Presenter" to have Olivia narrate your report
+  - Live Presenter: Real-time avatar overlay (instant)
+  - Generate Video: Polished MP4 download (up to 10 min)
 - All saved to both browser and cloud
 
 #### Saved Comparisons
@@ -203,6 +206,12 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Scores reflect legal frameworks, not opinions
 - User can adjust Law vs Lived Reality slider
 
+### "Olivia Presenter not working"
+- Ensure a Gamma report is loaded first
+- Live Presenter needs stable internet (real-time streaming)
+- Video generation takes up to 10 minutes; click Retry on failure
+- Check ad blockers aren't blocking HeyGen API
+
 ## Refund Policy
 
 ### Eligible Refunds
@@ -254,7 +263,28 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - **Kling AI**: Primary video generation (JWT HS256 auth)
 - **Replicate**: Fallback video generation (Minimax)
 - **Simli**: Avatar video (PRIMARY - WebRTC)
+- **HeyGen**: Avatar streaming + pre-rendered video presenter
 - **Resend**: Email notifications
+
+## Olivia Video Presenter (Added 2026-02-13)
+
+### Architecture
+- **Live Presenter**: PIP avatar overlay on Gamma iframe via HeyGen Streaming API
+- **Pre-Rendered Video**: HeyGen v2 video generation → polling → MP4 download
+- Narration script generated client-side from comparison data (no API call)
+- Scene splitting at paragraph boundaries (~1500 chars per scene)
+
+### New API Endpoint
+- POST/GET /api/olivia/avatar/heygen-video (generate + poll status)
+- Rate limit: standard (30 req/min), max script: 15,000 chars
+
+### Key Files
+- api/olivia/avatar/heygen-video.ts (serverless endpoint)
+- src/services/presenterService.ts (narration script generator)
+- src/services/presenterVideoService.ts (video orchestration + polling)
+- src/types/presenter.ts (all presenter types)
+- src/components/ReportPresenter.tsx (UI: Live/Video sub-modes)
+- src/components/VisualsTab.tsx (Read/Watch toggle)
 
 ## Video System (Updated 2026-02-13)
 
@@ -400,7 +430,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 
 ---
 
-## 2. API Endpoints (43 total)
+## 2. API Endpoints (44 total)
 
 ### Core
 | Endpoint | Method | Description |
@@ -423,6 +453,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | /api/olivia/field-evidence | POST | Source evidence for specific metrics |
 | /api/olivia/gun-comparison | POST | Standalone gun rights comparison |
 | /api/olivia/contrast-images | POST | AI contrast images via Flux |
+| /api/olivia/avatar/heygen-video | POST/GET | HeyGen pre-rendered video generation + status polling |
 
 ### Emilia
 | Endpoint | Method | Description |
@@ -441,14 +472,14 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 
 ---
 
-## 3. Key Components (45 total)
+## 3. Key Components (46 total)
 
 ### Core: App, Header, Footer, LoginScreen, TabNavigation
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
 ### Video: NewLifeVideos (blob URL playback, error detection)
-### Reports: VisualsTab, AboutClues
+### Reports: VisualsTab (Read/Watch toggle), ReportPresenter (Olivia video presenter), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
 
 ---
@@ -492,7 +523,7 @@ VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_K
 ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
 
 ### Optional
-GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, KV_REST_API_URL, KV_REST_API_TOKEN
+GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_AVATAR_ID, HEYGEN_VOICE_ID, KV_REST_API_URL, KV_REST_API_TOKEN
 
 ---
 
