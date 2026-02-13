@@ -59,3 +59,48 @@ export interface PresenterState {
 // ============================================================================
 
 export type ReportViewMode = 'read' | 'presenter';
+
+// ============================================================================
+// VIDEO GENERATION (Pre-rendered HeyGen video)
+// ============================================================================
+
+export type VideoGenerationStatus =
+  | 'idle'
+  | 'generating'      // Submitted to HeyGen, waiting
+  | 'processing'      // HeyGen is rendering
+  | 'completed'       // Video ready
+  | 'failed';
+
+export interface VideoGenerationState {
+  status: VideoGenerationStatus;
+  videoId?: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  progress: number;       // 0-100 estimated
+  error?: string;
+}
+
+/**
+ * HeyGen video generate request (sent to our API proxy)
+ */
+export interface HeyGenVideoRequest {
+  action: 'generate' | 'status';
+  videoId?: string;       // For status checks
+  script?: string;        // Full narration script
+  avatarId?: string;      // Override default avatar
+  voiceId?: string;       // Override default voice
+  title?: string;         // Video title for metadata
+}
+
+/**
+ * HeyGen video generate response (from our API proxy)
+ */
+export interface HeyGenVideoResponse {
+  videoId?: string;
+  status: VideoGenerationStatus;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  error?: string;
+}

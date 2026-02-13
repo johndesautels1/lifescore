@@ -1,17 +1,21 @@
 /**
  * LIFE SCORE™ Report Presenter
- * Olivia video avatar overlaid on the Gamma report in a picture-in-picture style.
+ * Two modes for Olivia to present the Gamma report:
+ *
+ * 1. LIVE PRESENTER (existing) - Real-time streaming avatar overlay (HeyGen WebRTC / TTS)
+ * 2. VIDEO REPORT  (new)       - Pre-rendered HeyGen video, polished & downloadable
  *
  * Architecture:
- *   - HeyGen streaming avatar (primary) with TTS audio-only fallback
- *   - PIP overlay sits in bottom-right of the embedded report
- *   - Playback controls: Play/Pause, Skip Forward/Back, Close
- *   - Segments progress bar shows current position in presentation
+ *   - PIP overlay sits in bottom-right of the embedded report (live mode)
+ *   - Video player replaces the iframe (video mode)
+ *   - Playback controls: Play/Pause, Skip, Close (live); standard video controls (video)
  *
  * Integrations:
- *   - HeyGen: Real-time streaming avatar (creates session, sends text to speak)
- *   - Olivia TTS: Fallback audio narration when HeyGen unavailable
- *   - presenterService: Generates narration script from comparison data
+ *   - HeyGen Streaming API: /api/olivia/avatar/heygen (live presenter)
+ *   - HeyGen Video API:     /api/olivia/avatar/heygen-video (pre-rendered video)
+ *   - Olivia TTS:           /api/olivia/tts (audio-only fallback)
+ *   - presenterService:     Generates narration script from comparison data
+ *   - presenterVideoService: Orchestrates video generation + polling
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -19,8 +23,9 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { AnyComparisonResult } from '../services/gammaService';
-import type { PresenterState, PresenterSegment } from '../types/presenter';
+import type { PresenterState, PresenterSegment, VideoGenerationState } from '../types/presenter';
 import { generatePresentationScript, getPresenterStatusLabel } from '../services/presenterService';
+import { generatePresenterVideo } from '../services/presenterVideoService';
 import {
   createHeyGenSession,
   heygenSpeak,
@@ -41,6 +46,12 @@ interface ReportPresenterProps {
 }
 
 // ============================================================================
+// SUB-MODE WITHIN PRESENTER
+// ============================================================================
+
+type PresenterSubMode = 'live' | 'video';
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -49,7 +60,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   gammaUrl,
   onClose,
 }) => {
-  // ---- Presenter state ----
+  // ---- Sub-mode: live presenter vs pre-rendered video ----
+  const [subMode, setSubMode] = useState<PresenterSubMode>('live');
+
+  // ---- Live presenter state ----
   const [state, setState] = useState<PresenterState>({
     status: 'idle',
     currentSegmentIndex: 0,
@@ -59,7 +73,13 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     ttsOnly: false,
   });
 
-  // ---- HeyGen session ----
+  // ---- Video generation state ----
+  const [videoState, setVideoState] = useState<VideoGenerationState>({
+    status: 'idle',
+    progress: 0,
+  });
+
+  // ---- HeyGen session (live mode) ----
   const heygenSessionRef = useRef<{ sessionId: string; token: string } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -88,29 +108,22 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   }, [result]);
 
   // ============================================================================
-  // SESSION MANAGEMENT
+  // SESSION MANAGEMENT (Live Mode)
   // ============================================================================
 
   const cleanupSession = useCallback(() => {
-    // Clear timers
     if (segmentTimerRef.current) {
       clearTimeout(segmentTimerRef.current);
       segmentTimerRef.current = null;
     }
-
-    // Close HeyGen session
     if (heygenSessionRef.current) {
       closeHeyGenSession(heygenSessionRef.current.sessionId).catch(() => {});
       heygenSessionRef.current = null;
     }
-
-    // Close WebRTC peer connection
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
-
-    // Stop TTS audio
     if (ttsAudioRef.current) {
       ttsAudioRef.current.pause();
       ttsAudioRef.current = null;
@@ -121,46 +134,31 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     try {
       console.log('[ReportPresenter] Creating HeyGen session...');
       const response = await createHeyGenSession();
+      if (!response.sessionId) throw new Error('No session ID returned');
 
-      if (!response.sessionId) {
-        throw new Error('No session ID returned');
-      }
-
-      // Store session + token
       heygenSessionRef.current = {
         sessionId: response.sessionId,
         token: (response as any).token || '',
       };
 
-      // Set up WebRTC peer connection if SDP offer available
       if (response.sdpOffer && response.iceServers) {
-        const pc = new RTCPeerConnection({
-          iceServers: response.iceServers,
-        });
+        const pc = new RTCPeerConnection({ iceServers: response.iceServers });
         peerConnectionRef.current = pc;
 
-        // Handle incoming media stream
         pc.ontrack = (event) => {
           if (event.track.kind === 'video' && videoRef.current) {
-            const stream = new MediaStream([event.track]);
-            videoRef.current.srcObject = stream;
+            videoRef.current.srcObject = new MediaStream([event.track]);
           }
           if (event.track.kind === 'audio' && audioRef.current) {
-            const stream = new MediaStream([event.track]);
-            audioRef.current.srcObject = stream;
+            audioRef.current.srcObject = new MediaStream([event.track]);
           }
         };
 
-        // Set remote description (SDP offer from HeyGen)
         await pc.setRemoteDescription(response.sdpOffer);
-
-        // Create and set local answer
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-
         console.log('[ReportPresenter] WebRTC connected');
       }
-
       return true;
     } catch (err) {
       console.warn('[ReportPresenter] HeyGen connection failed:', err);
@@ -169,12 +167,11 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   }, []);
 
   // ============================================================================
-  // SPEAKING
+  // SPEAKING (Live Mode)
   // ============================================================================
 
   const speakSegment = useCallback(async (segment: PresenterSegment) => {
     if (heygenSessionRef.current && !state.ttsOnly) {
-      // Use HeyGen streaming avatar
       try {
         await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
       } catch (err) {
@@ -182,7 +179,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         await speakTTSFallback(segment.narration);
       }
     } else {
-      // TTS-only fallback
       await speakTTSFallback(segment.narration);
     }
   }, [state.ttsOnly]);
@@ -201,15 +197,13 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   }, []);
 
   // ============================================================================
-  // PLAYBACK CONTROLS
+  // LIVE PLAYBACK CONTROLS
   // ============================================================================
 
   const startPresentation = useCallback(async () => {
     if (state.segments.length === 0) return;
-
     setState((prev) => ({ ...prev, status: 'loading' }));
 
-    // Try to connect HeyGen avatar
     const avatarConnected = await connectHeyGen();
 
     setState((prev) => ({
@@ -220,137 +214,97 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
       ttsOnly: !avatarConnected,
     }));
 
-    // Start first segment
     const firstSegment = state.segments[0];
     await speakSegment(firstSegment);
-
-    // Schedule auto-advance
     scheduleNextSegment(0);
   }, [state.segments, connectHeyGen, speakSegment]);
 
   const scheduleNextSegment = useCallback((currentIndex: number) => {
-    if (segmentTimerRef.current) {
-      clearTimeout(segmentTimerRef.current);
-    }
-
+    if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
     const segment = state.segments[currentIndex];
     if (!segment) return;
 
     segmentTimerRef.current = setTimeout(() => {
       advanceToSegment(currentIndex + 1);
-    }, segment.durationEstimateMs + 1500); // +1.5s buffer between segments
+    }, segment.durationEstimateMs + 1500);
   }, [state.segments]);
 
   const advanceToSegment = useCallback(async (index: number) => {
     if (index >= state.segments.length) {
-      // Presentation complete
       setState((prev) => ({ ...prev, status: 'completed', currentSegmentIndex: prev.segments.length - 1 }));
       return;
     }
-
     setState((prev) => ({ ...prev, status: 'presenting', currentSegmentIndex: index }));
-
     const segment = state.segments[index];
     await speakSegment(segment);
     scheduleNextSegment(index);
   }, [state.segments, speakSegment, scheduleNextSegment]);
 
   const handlePause = useCallback(() => {
-    if (segmentTimerRef.current) {
-      clearTimeout(segmentTimerRef.current);
-      segmentTimerRef.current = null;
-    }
-
-    // Interrupt HeyGen speech
-    if (heygenSessionRef.current && !state.ttsOnly) {
-      heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
-    }
-
-    // Pause TTS audio
-    if (ttsAudioRef.current) {
-      ttsAudioRef.current.pause();
-    }
-
+    if (segmentTimerRef.current) { clearTimeout(segmentTimerRef.current); segmentTimerRef.current = null; }
+    if (heygenSessionRef.current && !state.ttsOnly) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    if (ttsAudioRef.current) ttsAudioRef.current.pause();
     setState((prev) => ({ ...prev, status: 'paused' }));
   }, [state.ttsOnly]);
 
   const handleResume = useCallback(async () => {
     setState((prev) => ({ ...prev, status: 'presenting' }));
-
-    // Re-speak current segment
     const segment = state.segments[state.currentSegmentIndex];
-    if (segment) {
-      await speakSegment(segment);
-      scheduleNextSegment(state.currentSegmentIndex);
-    }
+    if (segment) { await speakSegment(segment); scheduleNextSegment(state.currentSegmentIndex); }
   }, [state.segments, state.currentSegmentIndex, speakSegment, scheduleNextSegment]);
 
   const handleSkipForward = useCallback(() => {
-    if (segmentTimerRef.current) {
-      clearTimeout(segmentTimerRef.current);
-    }
-
-    // Interrupt current speech
-    if (heygenSessionRef.current && !state.ttsOnly) {
-      heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
-    }
-    if (ttsAudioRef.current) {
-      ttsAudioRef.current.pause();
-      ttsAudioRef.current = null;
-    }
-
+    if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
+    if (heygenSessionRef.current && !state.ttsOnly) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
     advanceToSegment(state.currentSegmentIndex + 1);
   }, [state.currentSegmentIndex, state.ttsOnly, advanceToSegment]);
 
   const handleSkipBack = useCallback(() => {
-    if (segmentTimerRef.current) {
-      clearTimeout(segmentTimerRef.current);
-    }
-
-    // Interrupt current speech
-    if (heygenSessionRef.current && !state.ttsOnly) {
-      heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
-    }
-    if (ttsAudioRef.current) {
-      ttsAudioRef.current.pause();
-      ttsAudioRef.current = null;
-    }
-
-    const prevIndex = Math.max(0, state.currentSegmentIndex - 1);
-    advanceToSegment(prevIndex);
+    if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
+    if (heygenSessionRef.current && !state.ttsOnly) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
+    advanceToSegment(Math.max(0, state.currentSegmentIndex - 1));
   }, [state.currentSegmentIndex, state.ttsOnly, advanceToSegment]);
 
-  const handleClose = useCallback(() => {
-    cleanupSession();
-    onClose();
-  }, [cleanupSession, onClose]);
+  const handleClose = useCallback(() => { cleanupSession(); onClose(); }, [cleanupSession, onClose]);
 
   const handleRestart = useCallback(() => {
     cleanupSession();
-    setState((prev) => ({
-      ...prev,
-      status: 'idle',
-      currentSegmentIndex: 0,
-      avatarConnected: false,
-      ttsOnly: false,
-    }));
+    setState((prev) => ({ ...prev, status: 'idle', currentSegmentIndex: 0, avatarConnected: false, ttsOnly: false }));
   }, [cleanupSession]);
+
+  // ============================================================================
+  // VIDEO GENERATION
+  // ============================================================================
+
+  const handleGenerateVideo = useCallback(async () => {
+    setVideoState({ status: 'generating', progress: 0 });
+
+    const finalState = await generatePresenterVideo(result, (progress) => {
+      setVideoState(progress);
+    });
+
+    setVideoState(finalState);
+  }, [result]);
+
+  const handleVideoReset = useCallback(() => {
+    setVideoState({ status: 'idle', progress: 0 });
+  }, []);
 
   // ============================================================================
   // DERIVED STATE
   // ============================================================================
 
   const currentSegment = state.segments[state.currentSegmentIndex] || null;
-  const progressPercent =
-    state.segments.length > 0
-      ? Math.round(((state.currentSegmentIndex + (state.status === 'completed' ? 1 : 0)) / state.segments.length) * 100)
-      : 0;
-
   const statusLabel = getPresenterStatusLabel(
     state.status,
     state.currentSegmentIndex,
     state.segments.length
   );
+
+  const isVideoGenerating = videoState.status === 'generating' || videoState.status === 'processing';
+  const isVideoReady = videoState.status === 'completed' && !!videoState.videoUrl;
 
   // ============================================================================
   // RENDER
@@ -358,154 +312,245 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   return (
     <div className="report-presenter">
-      {/* Gamma Report Iframe (background) */}
-      <div className="presenter-report-container">
-        <iframe
-          src={gammaUrl.replace('/docs/', '/embed/')}
-          className="presenter-gamma-frame"
-          title="LIFE SCORE Visual Report"
-          allowFullScreen
-        />
+      {/* Sub-mode tabs: Live Presenter vs Generate Video */}
+      <div className="presenter-mode-tabs">
+        <button
+          className={`presenter-mode-tab ${subMode === 'live' ? 'active' : ''}`}
+          onClick={() => setSubMode('live')}
+          disabled={isVideoGenerating}
+        >
+          Live Presenter
+        </button>
+        <button
+          className={`presenter-mode-tab ${subMode === 'video' ? 'active' : ''}`}
+          onClick={() => setSubMode('video')}
+          disabled={state.status === 'presenting' || state.status === 'loading'}
+        >
+          Generate Video
+        </button>
       </div>
 
-      {/* Olivia PIP Overlay */}
-      <div className={`presenter-pip ${state.status === 'presenting' ? 'pip-speaking' : ''} ${state.ttsOnly ? 'pip-tts-only' : ''}`}>
-        {/* Avatar Video (HeyGen) or Fallback Image */}
-        <div className="pip-avatar-container">
-          {!state.ttsOnly ? (
-            <>
-              <video
-                ref={videoRef}
-                className="pip-avatar-video"
-                autoPlay
-                playsInline
-                muted
-              />
-              <audio ref={audioRef} autoPlay />
-            </>
-          ) : (
-            <div className="pip-avatar-fallback">
-              <img
-                src="/images/olivia-avatar.jpg"
-                alt="Olivia"
-                className="pip-avatar-image"
-              />
-              {state.status === 'presenting' && (
-                <div className="pip-speaking-waves">
-                  <span /><span /><span /><span />
+      {/* ================================================================
+          LIVE PRESENTER MODE
+          ================================================================ */}
+      {subMode === 'live' && (
+        <>
+          {/* Gamma Report Iframe (background) */}
+          <div className="presenter-report-container">
+            <iframe
+              src={gammaUrl.replace('/docs/', '/embed/')}
+              className="presenter-gamma-frame"
+              title="LIFE SCORE Visual Report"
+              allowFullScreen
+            />
+          </div>
+
+          {/* Olivia PIP Overlay */}
+          <div className={`presenter-pip ${state.status === 'presenting' ? 'pip-speaking' : ''} ${state.ttsOnly ? 'pip-tts-only' : ''}`}>
+            <div className="pip-avatar-container">
+              {!state.ttsOnly ? (
+                <>
+                  <video ref={videoRef} className="pip-avatar-video" autoPlay playsInline muted />
+                  <audio ref={audioRef} autoPlay />
+                </>
+              ) : (
+                <div className="pip-avatar-fallback">
+                  <img src="/images/olivia-avatar.jpg" alt="Olivia" className="pip-avatar-image" />
+                  {state.status === 'presenting' && (
+                    <div className="pip-speaking-waves">
+                      <span /><span /><span /><span />
+                    </div>
+                  )}
                 </div>
+              )}
+              <div className={`pip-status-badge pip-status-${state.status}`}>
+                <span className="pip-status-dot" />
+                <span className="pip-status-text">
+                  {state.avatarConnected ? 'LIVE' : state.ttsOnly ? 'AUDIO' : 'READY'}
+                </span>
+              </div>
+            </div>
+            {currentSegment && state.status !== 'idle' && (
+              <div className="pip-segment-title">{currentSegment.title}</div>
+            )}
+          </div>
+
+          {/* Live Control Bar */}
+          <div className="presenter-controls">
+            <div className="presenter-progress">
+              <div className="presenter-progress-track">
+                {state.segments.map((seg, i) => (
+                  <div
+                    key={seg.id}
+                    className={`presenter-progress-segment ${
+                      i < state.currentSegmentIndex ? 'segment-done'
+                        : i === state.currentSegmentIndex ? 'segment-active'
+                        : 'segment-upcoming'
+                    }`}
+                    title={seg.title}
+                  />
+                ))}
+              </div>
+              <span className="presenter-progress-label">{statusLabel}</span>
+            </div>
+            <div className="presenter-buttons">
+              {state.status === 'idle' && (
+                <button className="presenter-btn presenter-btn-play" onClick={startPresentation}>
+                  ▶ Start Presentation
+                </button>
+              )}
+              {state.status === 'loading' && (
+                <button className="presenter-btn presenter-btn-loading" disabled>
+                  <span className="presenter-spinner" /> Connecting...
+                </button>
+              )}
+              {state.status === 'presenting' && (
+                <>
+                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">⏮</button>
+                  <button className="presenter-btn presenter-btn-pause" onClick={handlePause} title="Pause">⏸</button>
+                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">⏭</button>
+                </>
+              )}
+              {state.status === 'paused' && (
+                <>
+                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">⏮</button>
+                  <button className="presenter-btn presenter-btn-play" onClick={handleResume} title="Resume">▶</button>
+                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">⏭</button>
+                </>
+              )}
+              {state.status === 'completed' && (
+                <button className="presenter-btn presenter-btn-play" onClick={handleRestart}>↻ Replay</button>
+              )}
+              {state.status === 'error' && (
+                <button className="presenter-btn presenter-btn-play" onClick={handleRestart}>↻ Retry</button>
+              )}
+              <button className="presenter-btn presenter-btn-close" onClick={handleClose} title="Exit presenter">✕</button>
+            </div>
+          </div>
+
+          {state.error && <div className="presenter-error-banner">{state.error}</div>}
+        </>
+      )}
+
+      {/* ================================================================
+          VIDEO GENERATION MODE
+          ================================================================ */}
+      {subMode === 'video' && (
+        <div className="presenter-video-mode">
+          {/* Video Ready - Show Player */}
+          {isVideoReady && (
+            <div className="presenter-video-player-container">
+              <video
+                src={videoState.videoUrl}
+                className="presenter-video-player"
+                controls
+                autoPlay
+                poster={videoState.thumbnailUrl}
+              />
+              <div className="presenter-video-actions">
+                <a
+                  href={videoState.videoUrl}
+                  download={`LIFE-SCORE-${result.city1.city}-vs-${result.city2.city}.mp4`}
+                  className="presenter-btn presenter-btn-download"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Download MP4
+                </a>
+                <button className="presenter-btn presenter-btn-play" onClick={handleVideoReset}>
+                  Generate New
+                </button>
+                <button className="presenter-btn presenter-btn-close" onClick={handleClose} title="Exit presenter">
+                  ✕
+                </button>
+              </div>
+              {videoState.durationSeconds && (
+                <span className="presenter-video-duration">
+                  Duration: {Math.floor(videoState.durationSeconds / 60)}:{String(Math.round(videoState.durationSeconds % 60)).padStart(2, '0')}
+                </span>
               )}
             </div>
           )}
 
-          {/* Status Badge */}
-          <div className={`pip-status-badge pip-status-${state.status}`}>
-            <span className="pip-status-dot" />
-            <span className="pip-status-text">
-              {state.avatarConnected ? 'LIVE' : state.ttsOnly ? 'AUDIO' : 'READY'}
-            </span>
-          </div>
-        </div>
-
-        {/* Current Segment Title */}
-        {currentSegment && state.status !== 'idle' && (
-          <div className="pip-segment-title">
-            {currentSegment.title}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Control Bar */}
-      <div className="presenter-controls">
-        {/* Segment Progress Bar */}
-        <div className="presenter-progress">
-          <div className="presenter-progress-track">
-            {state.segments.map((seg, i) => (
-              <div
-                key={seg.id}
-                className={`presenter-progress-segment ${
-                  i < state.currentSegmentIndex
-                    ? 'segment-done'
-                    : i === state.currentSegmentIndex
-                    ? 'segment-active'
-                    : 'segment-upcoming'
-                }`}
-                title={seg.title}
-              />
-            ))}
-          </div>
-          <span className="presenter-progress-label">{statusLabel}</span>
-        </div>
-
-        {/* Playback Buttons */}
-        <div className="presenter-buttons">
-          {state.status === 'idle' && (
-            <button className="presenter-btn presenter-btn-play" onClick={startPresentation}>
-              ▶ Start Presentation
-            </button>
+          {/* Generating / Processing - Show Progress */}
+          {isVideoGenerating && (
+            <div className="presenter-video-generating">
+              <div className="presenter-video-generating-inner">
+                <img
+                  src="/images/olivia-avatar.jpg"
+                  alt="Olivia"
+                  className="presenter-video-avatar-preview"
+                />
+                <div className="presenter-video-progress-section">
+                  <h3 className="presenter-video-title">Generating Presenter Video</h3>
+                  <p className="presenter-video-subtitle">
+                    Olivia is being rendered presenting your {result.city1.city} vs {result.city2.city} report.
+                    This typically takes 2-5 minutes.
+                  </p>
+                  <div className="presenter-video-progress-bar">
+                    <div
+                      className="presenter-video-progress-fill"
+                      style={{ width: `${videoState.progress}%` }}
+                    />
+                  </div>
+                  <span className="presenter-video-progress-text">{videoState.progress}%</span>
+                </div>
+              </div>
+            </div>
           )}
 
-          {state.status === 'loading' && (
-            <button className="presenter-btn presenter-btn-loading" disabled>
-              <span className="presenter-spinner" /> Connecting...
-            </button>
+          {/* Failed */}
+          {videoState.status === 'failed' && (
+            <div className="presenter-video-error">
+              <div className="presenter-video-error-inner">
+                <span className="presenter-video-error-icon">!</span>
+                <p>{videoState.error || 'Video generation failed'}</p>
+                <div className="presenter-video-error-actions">
+                  <button className="presenter-btn presenter-btn-play" onClick={handleGenerateVideo}>
+                    ↻ Retry
+                  </button>
+                  <button className="presenter-btn presenter-btn-close" onClick={handleClose}>
+                    ✕ Close
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
-          {state.status === 'presenting' && (
-            <>
-              <button className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">
-                ⏮
-              </button>
-              <button className="presenter-btn presenter-btn-pause" onClick={handlePause} title="Pause">
-                ⏸
-              </button>
-              <button className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">
-                ⏭
-              </button>
-            </>
+          {/* Idle - Show Generate Button */}
+          {videoState.status === 'idle' && (
+            <div className="presenter-video-idle">
+              <div className="presenter-video-idle-inner">
+                <img
+                  src="/images/olivia-avatar.jpg"
+                  alt="Olivia"
+                  className="presenter-video-avatar-preview"
+                />
+                <div className="presenter-video-idle-content">
+                  <h3 className="presenter-video-title">Generate Video Report</h3>
+                  <p className="presenter-video-subtitle">
+                    Create a polished, downloadable video of Olivia presenting your
+                    {' '}{result.city1.city} vs {result.city2.city} LIFE SCORE findings.
+                    The video is rendered by HeyGen with Olivia's avatar synced to the narration.
+                  </p>
+                  <ul className="presenter-video-features">
+                    <li>HD 1080p video with Olivia avatar</li>
+                    <li>Full narration of all {state.segments.length} report sections</li>
+                    <li>Downloadable MP4 - share or present anywhere</li>
+                    <li>~2-5 minute rendering time</li>
+                  </ul>
+                  <div className="presenter-video-idle-actions">
+                    <button className="presenter-btn presenter-btn-play" onClick={handleGenerateVideo}>
+                      Generate Video
+                    </button>
+                    <button className="presenter-btn presenter-btn-close" onClick={handleClose}>
+                      ✕ Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
-
-          {state.status === 'paused' && (
-            <>
-              <button className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">
-                ⏮
-              </button>
-              <button className="presenter-btn presenter-btn-play" onClick={handleResume} title="Resume">
-                ▶
-              </button>
-              <button className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">
-                ⏭
-              </button>
-            </>
-          )}
-
-          {state.status === 'completed' && (
-            <button className="presenter-btn presenter-btn-play" onClick={handleRestart}>
-              ↻ Replay
-            </button>
-          )}
-
-          {state.status === 'error' && (
-            <button className="presenter-btn presenter-btn-play" onClick={handleRestart}>
-              ↻ Retry
-            </button>
-          )}
-
-          {/* Close button (always visible) */}
-          <button
-            className="presenter-btn presenter-btn-close"
-            onClick={handleClose}
-            title="Exit presenter"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-
-      {/* Error Banner */}
-      {state.error && (
-        <div className="presenter-error-banner">
-          {state.error}
         </div>
       )}
     </div>
