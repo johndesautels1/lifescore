@@ -17,8 +17,7 @@
     rgba(247, 147, 30, 0.04) 50%,
     rgba(212, 175, 55, 0.06) 100%
   );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* backdrop-filter removed for INP performance */
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.08),

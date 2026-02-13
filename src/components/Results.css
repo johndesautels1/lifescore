@@ -226,9 +226,7 @@
   justify-content: space-between;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 255, 0.9) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 255, 0.97) 100%);
   border: 1px solid rgba(0, 71, 171, 0.12);
   border-radius: 16px;
   cursor: pointer;

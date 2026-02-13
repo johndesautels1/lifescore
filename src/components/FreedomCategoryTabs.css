@@ -19,9 +19,7 @@
   justify-content: center;  /* CENTER the tabs */
   gap: 0.5rem;
   padding: 0.5rem;
-  background: rgba(13, 40, 71, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(13, 40, 71, 0.92);
   border-radius: 10px;
   border: 1px solid rgba(201, 162, 39, 0.2);
   min-width: max-content;

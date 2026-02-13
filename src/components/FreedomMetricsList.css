@@ -124,17 +124,15 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  background: rgba(13, 40, 71, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(13, 40, 71, 0.88);
   border: 1px solid rgba(201, 162, 39, 0.2);
   border-radius: 10px;
   padding: 0.85rem 1rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .freedom-metric-card:hover {
-  background: rgba(13, 40, 71, 0.7);
+  background: rgba(13, 40, 71, 0.78);
   border-color: rgba(201, 162, 39, 0.35);
   transform: translateX(3px);
 }
