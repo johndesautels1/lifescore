@@ -80,7 +80,7 @@ export interface OliviaMessage {
 export interface GammaReport {
   id: string;
   user_id: string;
-  comparison_id: string;
+  comparison_id: string | null;
   gamma_generation_id: string;
   gamma_url: string;
   pdf_url: string | null;
@@ -196,7 +196,7 @@ export interface OliviaMessageInsert {
 
 export interface GammaReportInsert {
   user_id: string;
-  comparison_id: string;
+  comparison_id: string | null;
   gamma_generation_id: string;
   gamma_url: string;
   pdf_url?: string | null;

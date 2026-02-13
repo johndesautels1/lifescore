@@ -538,12 +538,13 @@ export async function saveGammaReport(
 ): Promise<{ data: GammaReport | null; error: Error | null }> {
   requireDatabase();
 
-  // FIX: gamma_reports.comparison_id is UUID type in Postgres.
-  // Non-UUID comparison IDs (e.g. "LIFE-ENH-charlotte-cork") cause 400 errors.
-  // Generate a valid UUID when the comparison ID isn't in UUID format.
-  const safeComparisonId = isValidUUID(comparisonId) ? comparisonId : crypto.randomUUID();
-  if (safeComparisonId !== comparisonId) {
-    console.warn(`[DB] comparison_id "${comparisonId}" is not a UUID, using generated UUID: ${safeComparisonId}`);
+  // FIX: gamma_reports.comparison_id is UUID type with FK to comparisons(id).
+  // Non-UUID comparison IDs cause 400 errors, and random UUIDs cause FK violations
+  // because the UUID doesn't exist in comparisons table. Pass NULL when invalid —
+  // the column is nullable and city1/city2 + generationId are sufficient to identify.
+  const safeComparisonId = isValidUUID(comparisonId) ? comparisonId : null;
+  if (!safeComparisonId) {
+    console.warn(`[DB] comparison_id "${comparisonId}" is not a UUID — saving with NULL (FK-safe)`);
   }
 
   const insert: GammaReportInsert = {

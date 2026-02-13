@@ -998,7 +998,7 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
       // Add to local reports
       const newReport: SavedGammaReport = {
         id: `gamma_${record.id}`,
-        comparisonId: record.comparison_id,
+        comparisonId: record.comparison_id || record.id,
         city1: record.city1 || 'Unknown',
         city2: record.city2 || 'Unknown',
         gammaUrl: record.gamma_url,

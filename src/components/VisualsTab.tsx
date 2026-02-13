@@ -180,22 +180,21 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // Report view mode: read (iframe) or presenter (Olivia video overlay)
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
 
-  // Load saved reports from localStorage, then sync from Supabase as fallback
+  // Load saved reports from localStorage, then always sync from Supabase
   useEffect(() => {
     const localReports = getSavedGammaReports();
     setSavedReports(localReports);
 
-    // If localStorage is empty, try syncing from Supabase (handles lost localStorage)
-    if (localReports.length === 0) {
-      syncGammaReportsFromSupabase().then((synced) => {
-        if (synced.length > 0) {
-          console.log('[VisualsTab] Synced', synced.length, 'Gamma reports from Supabase');
-          setSavedReports(synced);
-        }
-      }).catch(err => {
-        console.error('[VisualsTab] Supabase sync failed:', err);
-      });
-    }
+    // Always sync from Supabase — merges any reports saved on other devices
+    // or reports that were lost from localStorage (browser cleanup, etc.)
+    syncGammaReportsFromSupabase().then((synced) => {
+      if (synced.length > 0) {
+        console.log('[VisualsTab] Synced', synced.length, 'Gamma reports (local + Supabase merged)');
+        setSavedReports(synced);
+      }
+    }).catch(err => {
+      console.error('[VisualsTab] Supabase sync failed:', err);
+    });
   }, [reportsRefreshKey, isReportSaved]);
 
   // Auto-save Gamma reports when generation completes
@@ -218,7 +217,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       result &&
       !isReportSaved
     ) {
-      const effectiveComparisonId = result.comparisonId || `LIFE-${Date.now()}-${result.city1.city.slice(0, 3).toUpperCase()}`;
+      const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
       const alreadyExists = hasGammaReportForComparison(effectiveComparisonId);
 
       console.log('[VisualsTab] Auto-save:', { effectiveComparisonId, alreadyExists });
@@ -274,8 +273,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       return;
     }
 
-    // FIX: Generate fallback comparisonId if missing
-    const effectiveComparisonId = result.comparisonId || `LIFE-${Date.now()}-${result.city1.city.slice(0,3).toUpperCase()}`;
+    // FIX: Generate fallback comparisonId if missing (must be UUID for Supabase FK)
+    const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
 
     console.log('[VisualsTab] Saving report:', {
       comparisonId: effectiveComparisonId,
