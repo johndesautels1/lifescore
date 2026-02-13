@@ -100,15 +100,18 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 #### Olivia AI Assistant
 - Chat with Olivia for insights about your comparison
 - Available on all pages (bottom-right bubble)
-- Voice responses available (ElevenLabs with OpenAI TTS fallback)
+- Voice responses available (ElevenLabs cloned voice with OpenAI TTS fallback)
+- **Ask Olivia Help** (chat bubble): OpenAI Assistants API brain, ElevenLabs cloned voice → OpenAI "nova" fallback
+- **Ask Olivia page** (video + chat): Same voice wiring as Help chat
 
 #### Visual Reports
 - Generate PDF/PPTX reports via Gamma
 - AI-generated "New Life" videos (Freedom vs Imprisonment)
 - Judge verdict video with Court Order option
-- **Olivia Video Presenter**: Toggle "Watch Presenter" to have Olivia narrate your report
-  - Live Presenter: Real-time avatar overlay (instant)
-  - Generate Video: Polished MP4 download (up to 10 min)
+- **Olivia Video Presenter** (HeyGen): Toggle "Watch Presenter" to have Olivia narrate your Gamma report
+  - Live Presenter: Real-time HeyGen streaming avatar overlay (instant)
+  - Generate Video: Pre-rendered HeyGen MP4 download (up to 10 min)
+  - Uses HEYGEN_OLIVIA_AVATAR_ID + HEYGEN_OLIVIA_VOICE_ID (separate from ElevenLabs/OpenAI)
 - All saved to both browser and cloud
 
 #### Saved Comparisons
@@ -208,9 +211,16 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### "Olivia Presenter not working"
 - Ensure a Gamma report is loaded first
-- Live Presenter needs stable internet (real-time streaming)
+- Live Presenter needs stable internet (real-time HeyGen streaming)
 - Video generation takes up to 10 minutes; click Retry on failure
 - Check ad blockers aren't blocking HeyGen API
+- **Note**: The presenter uses HeyGen (HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID) — this is separate from Olivia's chat voice (ElevenLabs/OpenAI). A presenter issue does NOT mean chat voice is broken.
+
+### "Olivia Voice not working" (Chat / Ask Olivia)
+- This uses ElevenLabs cloned voice → OpenAI "nova" fallback (NOT HeyGen)
+- Check ELEVENLABS_API_KEY and ELEVENLABS_OLIVIA_VOICE_ID in Vercel env
+- If ElevenLabs quota exceeded, OpenAI TTS auto-kicks in
+- HeyGen env vars are irrelevant to the chat voice
 
 ## Refund Policy
 
@@ -263,8 +273,22 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - **Kling AI**: Primary video generation (JWT HS256 auth)
 - **Replicate**: Fallback video generation (Minimax)
 - **Simli**: Avatar video (PRIMARY - WebRTC)
-- **HeyGen**: Avatar streaming + pre-rendered video presenter
+- **HeyGen**: Gamma report video presenter (streaming avatar + pre-rendered MP4)
 - **Resend**: Email notifications
+
+## CRITICAL: Olivia Voice & Avatar Wiring (Support Reference)
+
+**DO NOT confuse these three separate systems:**
+
+| Feature | Service | Env Vars | Files |
+|---------|---------|----------|-------|
+| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | OpenAI Assistants API | OPENAI_API_KEY, OPENAI_ASSISTANT_ID | api/olivia/chat.ts |
+| **Olivia Voice** (Chat TTS) | ElevenLabs → OpenAI fallback | ELEVENLABS_API_KEY, ELEVENLABS_OLIVIA_VOICE_ID | api/olivia/tts.ts |
+| **Olivia Video Presenter** (Gamma reports) | HeyGen | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen-video.ts |
+
+- The ElevenLabs voice is a **cloned voice** specific to Olivia. When ElevenLabs quota runs out, OpenAI "nova" voice kicks in automatically.
+- HeyGen has its **own separate voice** (HEYGEN_OLIVIA_VOICE_ID) used only for Gamma video presenter.
+- Changing HeyGen vars will NOT affect Ask Olivia chat or voice. Changing ElevenLabs/OpenAI vars will NOT affect the video presenter.
 
 ## Olivia Video Presenter (Added 2026-02-13)
 
@@ -373,7 +397,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 ## DPA Status
 
 Signed: Supabase, Stripe, OpenAI, Anthropic, ElevenLabs, Resend, Vercel
-Pending: Google, xAI, Perplexity, D-ID, Tavily, Gamma, Kling AI, Replicate, Simli
+Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replicate, Simli
 
 ## Annual Calendar
 
@@ -524,6 +548,12 @@ ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPL
 
 ### Optional
 GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CHRISTIAN_AVATAR_ID, HEYGEN_CHRISTIAN_VOICE_ID, KV_REST_API_URL, KV_REST_API_TOKEN
+
+### Voice & Avatar Wiring (IMPORTANT)
+- **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
+- **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Gamma report video presenter ONLY (separate system)
+- **OPENAI_ASSISTANT_ID** → Olivia chat brain (OpenAI Assistants API)
+- These are 3 independent systems. Changing one does NOT affect the others.
 
 ---
 

@@ -98,6 +98,7 @@ We must honor these GDPR rights:
 | xAI (Grok) | Grok Evaluation | PENDING | Email required |
 | Perplexity | LLM Evaluation | PENDING | Email required |
 | D-ID | Video Avatar | PENDING | Email required |
+| HeyGen | Gamma Report Video Presenter | PENDING | Email required |
 | Tavily | Web Search | PENDING | Email required |
 | ElevenLabs | Text-to-Speech | SIGNED | Via Terms |
 | Gamma | Report Generation | PENDING | Email required |

@@ -454,15 +454,19 @@ Olivia can now present Gamma report findings as an AI avatar video:
 
 **Tier Availability:** Available to all users who can generate Gamma reports (NAVIGATOR and SOVEREIGN).
 
+**Important:** The video presenter uses **HeyGen** (`HEYGEN_OLIVIA_AVATAR_ID` / `HEYGEN_OLIVIA_VOICE_ID`) — this is completely separate from Olivia's chat voice (ElevenLabs/OpenAI). A presenter issue does NOT mean the Ask Olivia chat or voice is broken, and vice versa.
+
 **Common Issues:**
 
 | Issue | Solution |
 |-------|----------|
 | Presenter toggle not showing | Ensure a Gamma report is loaded first |
-| Live avatar not speaking | Check internet connection; avatar uses real-time streaming |
+| Live avatar not speaking | Check internet connection; avatar uses real-time HeyGen streaming |
 | Video generation stuck | Allow up to 10 minutes; click Retry if it fails |
 | Video won't play | Try different browser; check ad blockers |
 | Download button not working | Wait for generation to complete (progress bar must reach 100%) |
+| Olivia chat voice broken but presenter works | Separate systems — check ElevenLabs/OpenAI keys, not HeyGen |
+| Presenter broken but chat voice works | Separate systems — check HeyGen keys, not ElevenLabs/OpenAI |
 
 ### 8.10 Cost Dashboard
 

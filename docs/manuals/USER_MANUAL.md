@@ -649,9 +649,11 @@ For Enhanced mode with your own keys:
 
 **Symptoms:** Presenter doesn't appear, video won't generate, avatar not speaking
 
+**Note:** The video presenter uses HeyGen (separate from Olivia's chat voice). A presenter issue does NOT mean the Ask Olivia chat or voice is broken.
+
 **Solutions:**
 1. Ensure a Gamma report is loaded first — the presenter needs report data
-2. For Live Presenter: check internet connection (avatar uses real-time streaming)
+2. For Live Presenter: check internet connection (avatar uses real-time HeyGen streaming)
 3. For Video Generation: allow up to 10 minutes for processing
 4. If generation fails, click **Retry** to try again
 5. Check browser supports video playback; try different browser

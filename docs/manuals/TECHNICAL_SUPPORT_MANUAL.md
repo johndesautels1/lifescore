@@ -617,8 +617,24 @@ PricingModal → POST /api/stripe/create-checkout-session
 | ElevenLabs | Text-to-speech |
 | Gamma | PDF/PPTX report generation |
 | Simli | Avatar video (PRIMARY) |
-| HeyGen | Avatar streaming + pre-rendered video presenter |
+| HeyGen | Gamma report video presenter (streaming avatar + pre-rendered MP4) |
 | D-ID | Avatar video (fallback) |
+
+---
+
+### CRITICAL: Olivia Voice & Avatar Wiring (Support Reference)
+
+**DO NOT confuse these three separate systems:**
+
+| Feature | Service | Env Vars | Files |
+|---------|---------|----------|-------|
+| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | OpenAI Assistants API | `OPENAI_API_KEY`, `OPENAI_ASSISTANT_ID` | `api/olivia/chat.ts` |
+| **Olivia Voice** (Chat TTS) | ElevenLabs → OpenAI fallback | `ELEVENLABS_API_KEY`, `ELEVENLABS_OLIVIA_VOICE_ID` | `api/olivia/tts.ts` |
+| **Olivia Video Presenter** (Gamma reports) | HeyGen | `HEYGEN_API_KEY`, `HEYGEN_OLIVIA_AVATAR_ID`, `HEYGEN_OLIVIA_VOICE_ID` | `api/olivia/avatar/heygen-video.ts` |
+
+- The ElevenLabs voice is a **cloned voice** specific to Olivia. When ElevenLabs quota runs out, OpenAI "nova" voice kicks in automatically.
+- HeyGen has its **own separate voice** (`HEYGEN_OLIVIA_VOICE_ID`) used only for Gamma video presenter.
+- Changing HeyGen vars will NOT affect Ask Olivia chat or voice. Changing ElevenLabs/OpenAI vars will NOT affect the video presenter.
 
 ---
 
@@ -1308,11 +1324,11 @@ User clicks "Generate Video" in ReportPresenter →
 
 | Variable | Purpose |
 |----------|---------|
-| `HEYGEN_API_KEY` | HeyGen API authentication (streaming avatar + video generation) |
-| `HEYGEN_OLIVIA_AVATAR_ID` | Avatar ID for Olivia (streaming + video) |
-| `HEYGEN_OLIVIA_VOICE_ID` | Voice ID for Olivia (streaming + video) |
-| `HEYGEN_CHRISTIAN_AVATAR_ID` | Avatar ID for Judge Christiano |
-| `HEYGEN_CHRISTIAN_VOICE_ID` | Voice ID for Judge Christiano |
+| `HEYGEN_API_KEY` | HeyGen API auth — Gamma report video presenter only |
+| `HEYGEN_OLIVIA_AVATAR_ID` | Olivia avatar ID — Gamma video presenter ONLY (not chat TTS) |
+| `HEYGEN_OLIVIA_VOICE_ID` | Olivia voice ID — Gamma video presenter ONLY (not ElevenLabs/OpenAI) |
+| `HEYGEN_CHRISTIAN_AVATAR_ID` | Judge Christiano avatar ID — video presenter |
+| `HEYGEN_CHRISTIAN_VOICE_ID` | Judge Christiano voice ID — video presenter |
 
 ### 9.8 Court Order Video Storage (Added 2026-02-11)
 
@@ -1498,7 +1514,9 @@ User clicks Judge tab (JudgeTab.tsx)
 - `GROK_API_KEY` - xAI Grok evaluator
 - `PERPLEXITY_API_KEY` - Perplexity evaluator
 - `DID_API_KEY` - D-ID avatar fallback
-- `HEYGEN_API_KEY` - HeyGen premium avatar (streaming + video)
+- `HEYGEN_API_KEY` - HeyGen Gamma report video presenter (streaming + pre-rendered)
+- `HEYGEN_OLIVIA_AVATAR_ID` - HeyGen Olivia avatar (Gamma video ONLY, not chat TTS)
+- `HEYGEN_OLIVIA_VOICE_ID` - HeyGen Olivia voice (Gamma video ONLY, not ElevenLabs/OpenAI)
 - `HEYGEN_CHRISTIAN_AVATAR_ID` - HeyGen Judge Christiano avatar
 - `HEYGEN_CHRISTIAN_VOICE_ID` - HeyGen Judge Christiano voice
 - `RESEND_FROM_EMAIL` - Custom sender email

@@ -71,11 +71,11 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'DID_PRESENTER_URL', description: 'D-ID Olivia avatar image URL', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_JUDGE_PRESENTER_URL', description: 'D-ID Judge Christiano avatar image URL', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_AGENT_ID', description: 'D-ID agent ID', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_API_KEY', description: 'HeyGen — Premium avatar provider', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_OLIVIA_AVATAR_ID', description: 'HeyGen avatar ID (Olivia)', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_OLIVIA_VOICE_ID', description: 'HeyGen voice ID (Olivia)', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_CHRISTIAN_AVATAR_ID', description: 'HeyGen avatar ID (Judge Christiano)', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_CHRISTIAN_VOICE_ID', description: 'HeyGen voice ID (Judge Christiano)', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_API_KEY', description: 'HeyGen API key — Gamma report video presenter + streaming avatar', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_OLIVIA_AVATAR_ID', description: 'HeyGen Olivia avatar ID — Gamma video presenter ONLY (not chat TTS)', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_OLIVIA_VOICE_ID', description: 'HeyGen Olivia voice ID — Gamma video presenter ONLY (not ElevenLabs/OpenAI)', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_CHRISTIAN_AVATAR_ID', description: 'HeyGen Judge Christiano avatar ID — video presenter', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_CHRISTIAN_VOICE_ID', description: 'HeyGen Judge Christiano voice ID — video presenter', category: 'Avatar & Video', side: 'server' },
   { name: 'CHRISTIANO_IMAGE_URL', description: 'Judge Christiano source image URL', category: 'Avatar & Video', side: 'server' },
 
   // --- Text-to-Speech (ElevenLabs) ---

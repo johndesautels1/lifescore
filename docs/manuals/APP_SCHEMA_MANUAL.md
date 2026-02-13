@@ -950,11 +950,11 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `DID_API_KEY` | D-ID fallback avatar |
 | `DID_PRESENTER_URL` | Olivia avatar image |
 | `DID_JUDGE_PRESENTER_URL` | Christiano avatar image |
-| `HEYGEN_API_KEY` | HeyGen avatar |
-| `HEYGEN_OLIVIA_AVATAR_ID` | HeyGen Olivia avatar ID |
-| `HEYGEN_OLIVIA_VOICE_ID` | HeyGen Olivia voice ID |
-| `HEYGEN_CHRISTIAN_AVATAR_ID` | HeyGen Judge Christiano avatar ID |
-| `HEYGEN_CHRISTIAN_VOICE_ID` | HeyGen Judge Christiano voice ID |
+| `HEYGEN_API_KEY` | HeyGen API — Gamma report video presenter only |
+| `HEYGEN_OLIVIA_AVATAR_ID` | HeyGen Olivia avatar — Gamma video ONLY (not chat TTS) |
+| `HEYGEN_OLIVIA_VOICE_ID` | HeyGen Olivia voice — Gamma video ONLY (not ElevenLabs/OpenAI) |
+| `HEYGEN_CHRISTIAN_AVATAR_ID` | HeyGen Judge Christiano avatar — video presenter |
+| `HEYGEN_CHRISTIAN_VOICE_ID` | HeyGen Judge Christiano voice — video presenter |
 | `CHRISTIANO_IMAGE_URL` | Judge avatar source image |
 | `REPLICATE_API_TOKEN` | Replicate (video fallback + Wav2Lip) |
 | `WEBHOOK_BASE_URL` | Video generation webhook URL |

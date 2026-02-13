@@ -25,12 +25,13 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 | `api/olivia/tts.ts` | Audio-only TTS | ElevenLabs | `W0Zh57R76zl4xEJ4vCd2` | OpenAI | `nova` | 401, 429, any error |
 | `api/avatar/simli-speak.ts` | Simli WebRTC avatar | ElevenLabs | `W0Zh57R76zl4xEJ4vCd2` | OpenAI | `nova` | No key, any error |
 | `api/olivia/avatar/streams.ts` | D-ID WebRTC avatar | Microsoft (D-ID built-in) | `en-GB-SoniaNeural` | N/A | N/A | N/A (D-ID handles) |
-| `api/olivia/avatar/heygen.ts` | HeyGen avatar | HeyGen built-in | Configurable | N/A | N/A | N/A (HeyGen handles) |
+| `api/olivia/avatar/heygen.ts` | HeyGen streaming avatar (Gamma presenter) | HeyGen built-in | `HEYGEN_OLIVIA_VOICE_ID` | N/A | N/A | N/A (HeyGen handles) |
+| `api/olivia/avatar/heygen-video.ts` | HeyGen pre-rendered video (Gamma presenter) | HeyGen built-in | `HEYGEN_OLIVIA_VOICE_ID` | N/A | N/A | N/A (HeyGen handles) |
 
 **Olivia Voice Consistency:**
-- Audio-only & Simli: ElevenLabs voice → OpenAI `nova`
+- Audio-only & Simli: ElevenLabs cloned voice → OpenAI `nova` fallback
 - D-ID Streams: Microsoft Sonia (British female)
-- HeyGen: Platform-managed voice
+- HeyGen (Gamma video presenter ONLY): Platform-managed voice via `HEYGEN_OLIVIA_VOICE_ID` — completely separate from chat TTS
 
 ---
 
@@ -212,7 +213,7 @@ CHRISTIANO_IMAGE_URL=xxx
 | **D-ID Streams** | $0.025/sec | Olivia real-time avatar (fallback) |
 | **D-ID Talks** | $0.025/sec | Judge video (fallback) |
 | **Replicate Wav2Lip** | $0.0014/sec | Judge video (primary, ~18x cheaper than D-ID) |
-| **HeyGen** | $0.032/sec | Deprecated |
+| **HeyGen** | $0.032/sec | Gamma report video presenter (streaming + pre-rendered MP4) |
 
 ---
 
@@ -226,7 +227,8 @@ CHRISTIANO_IMAGE_URL=xxx
 5. `api/avatar/generate-judge-video.ts` - Replicate Wav2Lip + TTS
 6. `api/judge-video.ts` - D-ID Talks + TTS
 7. `api/olivia/avatar/streams.ts` - D-ID Streams WebRTC
-8. `api/olivia/avatar/heygen.ts` - HeyGen (deprecated)
+8. `api/olivia/avatar/heygen.ts` - HeyGen streaming avatar (Gamma report presenter)
+9. `api/olivia/avatar/heygen-video.ts` - HeyGen pre-rendered video (Gamma report presenter)
 
 ### React Hooks (Client-Side)
 1. `src/hooks/useTTS.ts` - Generic TTS playback
