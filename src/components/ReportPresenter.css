@@ -1,0 +1,432 @@
+/**
+ * LIFE SCORE™ Report Presenter Styles
+ * PIP avatar overlay on Gamma report with playback controls
+ */
+
+/* ============================================================================
+   MAIN CONTAINER
+   ============================================================================ */
+
+.report-presenter {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #D4AF37;
+  background: #0a0a1a;
+}
+
+/* ============================================================================
+   GAMMA REPORT BACKGROUND
+   ============================================================================ */
+
+.presenter-report-container {
+  width: 100%;
+  position: relative;
+}
+
+.presenter-gamma-frame {
+  width: 100%;
+  height: 78vh;
+  min-height: 550px;
+  border: none;
+  background: #ffffff;
+  display: block;
+}
+
+/* ============================================================================
+   OLIVIA PIP OVERLAY
+   ============================================================================ */
+
+.presenter-pip {
+  position: absolute;
+  bottom: 80px; /* Above control bar */
+  right: 20px;
+  width: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 2px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+  z-index: 20;
+  background: #0d0d1a;
+}
+
+.presenter-pip:hover {
+  transform: scale(1.03);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.7),
+    0 0 0 2px rgba(212, 175, 55, 0.5);
+}
+
+.presenter-pip.pip-speaking {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 2px #D4AF37,
+    0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Avatar Container */
+.pip-avatar-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+}
+
+.pip-avatar-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fallback Static Image */
+.pip-avatar-fallback {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pip-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+/* TTS Speaking Waves */
+.pip-speaking-waves {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 20px;
+}
+
+.pip-speaking-waves span {
+  width: 3px;
+  background: #D4AF37;
+  border-radius: 2px;
+  animation: presenterWave 0.8s ease-in-out infinite;
+}
+
+.pip-speaking-waves span:nth-child(1) { height: 8px; animation-delay: 0s; }
+.pip-speaking-waves span:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+.pip-speaking-waves span:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+.pip-speaking-waves span:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+
+@keyframes presenterWave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.4); }
+}
+
+/* Status Badge */
+.pip-status-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pip-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.pip-status-presenting .pip-status-dot {
+  background: #22c55e;
+  animation: statusPulse 1.5s infinite;
+}
+
+.pip-status-paused .pip-status-dot {
+  background: #f59e0b;
+}
+
+.pip-status-completed .pip-status-dot {
+  background: #3b82f6;
+}
+
+.pip-status-error .pip-status-dot {
+  background: #ef4444;
+}
+
+.pip-status-text {
+  color: #ffffff;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Segment Title */
+.pip-segment-title {
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #D4AF37;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================================
+   BOTTOM CONTROL BAR
+   ============================================================================ */
+
+.presenter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  background: linear-gradient(180deg, rgba(13, 13, 26, 0.95) 0%, rgba(10, 10, 20, 1) 100%);
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* Segment Progress Bar */
+.presenter-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.presenter-progress-track {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  height: 6px;
+}
+
+.presenter-progress-segment {
+  flex: 1;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.segment-upcoming {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.segment-active {
+  background: #D4AF37;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+  animation: segmentGlow 1.5s ease-in-out infinite;
+}
+
+.segment-done {
+  background: rgba(212, 175, 55, 0.4);
+}
+
+@keyframes segmentGlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.presenter-progress-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 140px;
+  text-align: right;
+}
+
+/* Playback Buttons */
+.presenter-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.presenter-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.presenter-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.presenter-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.presenter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.presenter-btn-play {
+  background: linear-gradient(135deg, #D4AF37 0%, #c9a227 100%);
+  border-color: #D4AF37;
+  color: #000000;
+  font-weight: 700;
+}
+
+.presenter-btn-play:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E5C04B 0%, #D4AF37 100%);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+.presenter-btn-pause {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.presenter-btn-pause:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.presenter-btn-skip {
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+
+.presenter-btn-close {
+  margin-left: auto;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 8px 12px;
+}
+
+.presenter-btn-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.presenter-btn-loading {
+  cursor: wait;
+}
+
+.presenter-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #D4AF37;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   ERROR BANNER
+   ============================================================================ */
+
+.presenter-error-banner {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 500;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .presenter-pip {
+    width: 140px;
+    bottom: 70px;
+    right: 10px;
+  }
+
+  .pip-avatar-container {
+    width: 140px;
+    height: 140px;
+  }
+
+  .presenter-gamma-frame {
+    height: 60vh;
+    min-height: 400px;
+  }
+
+  .presenter-controls {
+    padding: 8px 10px 10px;
+  }
+
+  .presenter-progress-label {
+    min-width: auto;
+    font-size: 0.7rem;
+  }
+
+  .presenter-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .pip-segment-title {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .presenter-pip {
+    width: 110px;
+    bottom: 65px;
+    right: 8px;
+  }
+
+  .pip-avatar-container {
+    width: 110px;
+    height: 110px;
+  }
+
+  .presenter-gamma-frame {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .presenter-btn-skip {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+}

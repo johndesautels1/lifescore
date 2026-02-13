@@ -25,8 +25,10 @@ import {
   type SavedGammaReport,
 } from '../services/savedComparisons';
 import NewLifeVideos from './NewLifeVideos';
+import ReportPresenter from './ReportPresenter';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
+import type { ReportViewMode } from '../types/presenter';
 import './VisualsTab.css';
 
 // Type for judge report data (matches gammaService)
@@ -170,6 +172,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const [savedReports, setSavedReports] = useState<SavedGammaReport[]>([]);
   const [viewingReport, setViewingReport] = useState<SavedGammaReport | null>(null);
   const [reportsRefreshKey, setReportsRefreshKey] = useState(0);
+
+  // Report view mode: read (iframe) or presenter (Olivia video overlay)
+  const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
 
   // Load saved reports
   useEffect(() => {
@@ -661,6 +666,21 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 <div className="embedded-header">
                   <h3>LIFE SCORE™ Visual Report</h3>
                   <div className="embedded-actions">
+                    {/* Read / Watch Presenter Toggle */}
+                    <div className="report-view-toggle">
+                      <button
+                        className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
+                        onClick={() => setReportViewMode('read')}
+                      >
+                        📖 Read
+                      </button>
+                      <button
+                        className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
+                        onClick={() => setReportViewMode('presenter')}
+                      >
+                        🎬 Watch Presenter
+                      </button>
+                    </div>
                     <a
                       href={reportState.gammaUrl}
                       target="_blank"
@@ -671,18 +691,26 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     </a>
                     <button
                       className="close-embed-btn"
-                      onClick={() => setShowEmbedded(false)}
+                      onClick={() => { setShowEmbedded(false); setReportViewMode('read'); }}
                     >
                       ✕ Close
                     </button>
                   </div>
                 </div>
-                <iframe
-                  src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
-                  className="gamma-embed-frame"
-                  title="LIFE SCORE Visual Report"
-                  allowFullScreen
-                />
+                {reportViewMode === 'presenter' && result && reportState.gammaUrl ? (
+                  <ReportPresenter
+                    result={result}
+                    gammaUrl={reportState.gammaUrl}
+                    onClose={() => setReportViewMode('read')}
+                  />
+                ) : (
+                  <iframe
+                    src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
+                    className="gamma-embed-frame"
+                    title="LIFE SCORE Visual Report"
+                    allowFullScreen
+                  />
+                )}
               </div>
             )}
           </div>
@@ -774,6 +802,23 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           <div className="embedded-header">
             <h3>{viewingReport.city1} vs {viewingReport.city2} — Saved Report</h3>
             <div className="embedded-actions">
+              {/* Read / Watch Presenter Toggle */}
+              {result && (
+                <div className="report-view-toggle">
+                  <button
+                    className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
+                    onClick={() => setReportViewMode('read')}
+                  >
+                    📖 Read
+                  </button>
+                  <button
+                    className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
+                    onClick={() => setReportViewMode('presenter')}
+                  >
+                    🎬 Watch Presenter
+                  </button>
+                </div>
+              )}
               <a
                 href={viewingReport.gammaUrl}
                 target="_blank"
@@ -784,18 +829,26 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               </a>
               <button
                 className="close-embed-btn"
-                onClick={() => setViewingReport(null)}
+                onClick={() => { setViewingReport(null); setReportViewMode('read'); }}
               >
                 ✕ Close
               </button>
             </div>
           </div>
-          <iframe
-            src={viewingReport.gammaUrl?.replace('/docs/', '/embed/')}
-            className="gamma-embed-frame"
-            title="LIFE SCORE Saved Report"
-            allowFullScreen
-          />
+          {reportViewMode === 'presenter' && result && viewingReport.gammaUrl ? (
+            <ReportPresenter
+              result={result}
+              gammaUrl={viewingReport.gammaUrl}
+              onClose={() => setReportViewMode('read')}
+            />
+          ) : (
+            <iframe
+              src={viewingReport.gammaUrl?.replace('/docs/', '/embed/')}
+              className="gamma-embed-frame"
+              title="LIFE SCORE Saved Report"
+              allowFullScreen
+            />
+          )}
         </div>
       )}
 

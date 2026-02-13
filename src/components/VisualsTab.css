@@ -1103,3 +1103,56 @@
     justify-content: flex-start;
   }
 }
+
+/* ============================================================================
+   READ / WATCH PRESENTER TOGGLE
+   ============================================================================ */
+
+.report-view-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.view-toggle-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-toggle-btn:first-child {
+  border-right: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: rgba(212, 175, 55, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.view-toggle-btn.active {
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+  text-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+}
+
+@media (max-width: 768px) {
+  .report-view-toggle {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-toggle-btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+}
