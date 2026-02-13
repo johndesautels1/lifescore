@@ -209,7 +209,13 @@ export function useEmilia(): UseEmiliaReturn {
 
     // Remove the failed user message from the list before resending
     setMessages((prev) => {
-      const lastUserIdx = prev.findLastIndex(m => m.role === 'user' && m.content === lastMsg);
+      let lastUserIdx = -1;
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (prev[i].role === 'user' && prev[i].content === lastMsg) {
+          lastUserIdx = i;
+          break;
+        }
+      }
       if (lastUserIdx >= 0) return [...prev.slice(0, lastUserIdx), ...prev.slice(lastUserIdx + 1)];
       return prev;
     });
