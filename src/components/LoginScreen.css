@@ -58,6 +58,7 @@
   background: radial-gradient(circle, var(--ls-gold-glow) 0%, transparent 60%);
   opacity: 0.4;
   animation: float-slow 20s ease-in-out infinite;
+  will-change: transform;
 }
 
 .bg-gradient-2 {
@@ -69,6 +70,7 @@
   background: radial-gradient(circle, rgba(13, 40, 71, 0.8) 0%, transparent 60%);
   opacity: 0.6;
   animation: float-slow 25s ease-in-out infinite reverse;
+  will-change: transform;
 }
 
 @keyframes float-slow {
@@ -176,9 +178,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 .login-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(10, 22, 40, 0.92);
   border: 1px solid rgba(201, 162, 39, 0.15);
   border-radius: 20px;
   padding: 2rem;
@@ -269,7 +269,7 @@
   font-size: 0.95rem;
   color: var(--ls-white);
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .login-screen .form-group input::placeholder {
