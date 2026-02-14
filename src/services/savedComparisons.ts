@@ -1333,6 +1333,7 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
             .upsert({
               user_id: user.id,
               report_id: report.reportId,
+              // FIX 2026-02-14: Write both column name variants for migration compatibility
               city1: report.city1,
               city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
@@ -1344,6 +1345,8 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
               verdict: report.executiveSummary.recommendation,
               full_report: report,
               video_url: report.videoUrl || null,
+              // FIX 2026-02-14: Write comparison_id so Supabase lookups work
+              comparison_id: report.comparisonId || null,
             }, { onConflict: 'user_id,report_id' })
             .then(({ error }) => {
               if (error) {
@@ -1382,6 +1385,153 @@ export function deleteSavedJudgeReport(reportId: string): boolean {
  */
 export function clearAllJudgeReports(): void {
   localStorage.removeItem(JUDGE_REPORTS_KEY);
+}
+
+/**
+ * FIX 2026-02-14: Fetch Judge report from Supabase by comparisonId.
+ * Used as a fallback when localStorage has no matching report for a loaded comparison.
+ * Queries the full_report JSONB column since comparison_id isn't always written.
+ */
+export async function fetchJudgeReportByComparisonId(comparisonId: string): Promise<any | null> {
+  try {
+    if (!isSupabaseConfigured()) return null;
+
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    // Strategy 1: Query by full_report JSONB -> comparisonId
+    const { data, error } = await withTimeout(
+      supabase
+        .from('judge_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .filter('full_report->>comparisonId', 'eq', comparisonId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      15000,
+      'Fetch judge report by comparisonId'
+    );
+
+    if (error) {
+      console.warn('[savedComparisons] Judge report lookup by comparisonId failed:', error.message);
+      return null;
+    }
+
+    if (!data) return null;
+
+    // Parse full_report
+    let fullReport = data.full_report;
+    if (typeof fullReport === 'string') {
+      try { fullReport = JSON.parse(fullReport); } catch { fullReport = null; }
+    }
+
+    console.log('[savedComparisons] Found judge report in Supabase by comparisonId:', comparisonId);
+    return {
+      reportId: data.report_id,
+      comparisonId: fullReport?.comparisonId || comparisonId,
+      generatedAt: data.created_at,
+      userId: data.user_id,
+      city1: data.city1 || data.city1_name || fullReport?.city1 || 'Unknown',
+      city2: data.city2 || data.city2_name || fullReport?.city2 || 'Unknown',
+      city1Country: fullReport?.city1Country,
+      city2Country: fullReport?.city2Country,
+      videoUrl: data.video_url,
+      videoStatus: data.video_url ? 'ready' : 'none',
+      summaryOfFindings: fullReport?.summaryOfFindings || {
+        city1Score: data.city1_score || 0,
+        city1Trend: data.city1_trend || 'stable',
+        city2Score: data.city2_score || 0,
+        city2Trend: data.city2_trend || 'stable',
+        overallConfidence: 'medium',
+      },
+      categoryAnalysis: fullReport?.categoryAnalysis || data.category_analysis || [],
+      executiveSummary: fullReport?.executiveSummary || {
+        recommendation: data.verdict || 'tie',
+        rationale: '',
+        keyFactors: data.key_findings || [],
+        futureOutlook: '',
+        confidenceLevel: 'medium',
+      },
+      freedomEducation: fullReport?.freedomEducation || null,
+    };
+  } catch (error) {
+    console.error('[savedComparisons] Error fetching judge report by comparisonId:', error);
+    return null;
+  }
+}
+
+/**
+ * FIX 2026-02-14: Fetch Judge report from Supabase by city names.
+ * Last-resort fallback when comparisonId doesn't match (different session).
+ */
+export async function fetchJudgeReportByCities(city1: string, city2: string): Promise<any | null> {
+  try {
+    if (!isSupabaseConfigured()) return null;
+
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    // Try both column name variants (city1/city2 vs city1_name/city2_name)
+    const { data, error } = await withTimeout(
+      supabase
+        .from('judge_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .or(`city1.ilike.${city1},city1_name.ilike.${city1}`)
+        .or(`city2.ilike.${city2},city2_name.ilike.${city2}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      15000,
+      'Fetch judge report by cities'
+    );
+
+    if (error) {
+      console.warn('[savedComparisons] Judge report lookup by cities failed:', error.message);
+      return null;
+    }
+
+    if (!data) return null;
+
+    let fullReport = data.full_report;
+    if (typeof fullReport === 'string') {
+      try { fullReport = JSON.parse(fullReport); } catch { fullReport = null; }
+    }
+
+    console.log('[savedComparisons] Found judge report in Supabase by cities:', city1, 'vs', city2);
+    return {
+      reportId: data.report_id,
+      comparisonId: fullReport?.comparisonId || data.report_id,
+      generatedAt: data.created_at,
+      userId: data.user_id,
+      city1: data.city1 || data.city1_name || fullReport?.city1 || city1,
+      city2: data.city2 || data.city2_name || fullReport?.city2 || city2,
+      city1Country: fullReport?.city1Country,
+      city2Country: fullReport?.city2Country,
+      videoUrl: data.video_url,
+      videoStatus: data.video_url ? 'ready' : 'none',
+      summaryOfFindings: fullReport?.summaryOfFindings || {
+        city1Score: data.city1_score || 0,
+        city1Trend: data.city1_trend || 'stable',
+        city2Score: data.city2_score || 0,
+        city2Trend: data.city2_trend || 'stable',
+        overallConfidence: 'medium',
+      },
+      categoryAnalysis: fullReport?.categoryAnalysis || data.category_analysis || [],
+      executiveSummary: fullReport?.executiveSummary || {
+        recommendation: data.verdict || 'tie',
+        rationale: '',
+        keyFactors: data.key_findings || [],
+        futureOutlook: '',
+        confidenceLevel: 'medium',
+      },
+      freedomEducation: fullReport?.freedomEducation || null,
+    };
+  } catch (error) {
+    console.error('[savedComparisons] Error fetching judge report by cities:', error);
+    return null;
+  }
 }
 
 /**

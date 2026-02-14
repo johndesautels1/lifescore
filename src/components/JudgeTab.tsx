@@ -60,6 +60,8 @@ import {
   getSavedJudgeReports,
   saveJudgeReport,
   fetchFullJudgeReport,
+  fetchJudgeReportByComparisonId,
+  fetchJudgeReportByCities,
   type SavedJudgeReport,
 } from '../services/savedComparisons';
 import './JudgeTab.css';
@@ -203,6 +205,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
       if (fullReport) {
         console.log('[JudgeTab] Loaded full report from Supabase:', fullReport.reportId);
+
+        // FIX 2026-02-14: Proactive video URL expiration check
+        let videoUrl = fullReport.videoUrl;
+        let videoStatus = fullReport.videoStatus;
+        if (videoUrl && (videoUrl.includes('replicate.delivery') || videoUrl.includes('klingai.com'))) {
+          console.log('[JudgeTab] Clearing expired provider URL from Supabase report');
+          videoUrl = undefined;
+          videoStatus = 'error';
+        }
+
         // Use the complete report data from Supabase
         const loadedReport: JudgeReport = {
           reportId: fullReport.reportId,
@@ -213,8 +225,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           city2: fullReport.city2,
           city1Country: fullReport.city1Country,
           city2Country: fullReport.city2Country,
-          videoUrl: fullReport.videoUrl,
-          videoStatus: fullReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
+          videoUrl,
+          videoStatus: (videoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
             city1Score: fullReport.summaryOfFindings.city1Score,
             city1Trend: fullReport.summaryOfFindings.city1Trend || 'stable',
@@ -235,6 +247,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         setJudgeReport(loadedReport);
       } else {
         console.log('[JudgeTab] Full report not available, using summary data');
+
+        // FIX 2026-02-14: Proactive video URL expiration check
+        let fallbackVideoUrl = savedJudgeReport.videoUrl;
+        let fallbackVideoStatus = savedJudgeReport.videoStatus;
+        if (fallbackVideoUrl && (fallbackVideoUrl.includes('replicate.delivery') || fallbackVideoUrl.includes('klingai.com'))) {
+          fallbackVideoUrl = undefined;
+          fallbackVideoStatus = 'error';
+        }
+
         // Fallback: Convert SavedJudgeReport to JudgeReport format with limited data
         const loadedReport: JudgeReport = {
           reportId: savedJudgeReport.reportId,
@@ -245,8 +266,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           city2: savedJudgeReport.city2,
           city1Country: (savedJudgeReport as any).city1Country,
           city2Country: (savedJudgeReport as any).city2Country,
-          videoUrl: savedJudgeReport.videoUrl,
-          videoStatus: savedJudgeReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
+          videoUrl: fallbackVideoUrl,
+          videoStatus: (fallbackVideoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
             city1Score: savedJudgeReport.summaryOfFindings.city1Score,
             city1Trend: 'stable',
@@ -309,11 +330,21 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   computedErrorRef.current = computedError;
 
   // Sync error state via useEffect - only update if error changed
+  // FIX 2026-02-14: Also clear stale localStorage key when comparison was deleted
   const prevErrorRef = useRef<string | null>(null);
   useEffect(() => {
     if (prevErrorRef.current !== computedErrorRef.current) {
       prevErrorRef.current = computedErrorRef.current;
       setReportLoadError(computedErrorRef.current);
+
+      // If the selected comparison was deleted, clear the stale localStorage pointer
+      // so next visit doesn't try to load a dead reference
+      if (computedErrorRef.current && selectedComparisonId) {
+        try {
+          localStorage.removeItem(LAST_JUDGE_COMPARISON_KEY);
+          console.log('[JudgeTab] Cleared stale LAST_JUDGE_COMPARISON_KEY for deleted comparison');
+        } catch { /* ignore */ }
+      }
     }
   });
 
@@ -765,6 +796,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
         if (matchingReport) {
           console.log('[JudgeTab] Found cached report:', matchingReport.reportId);
+
+          // FIX 2026-02-14: Proactive video URL expiration check.
+          // Replicate delivery URLs expire after ~24h. Clear them now instead
+          // of waiting for 3 consecutive video load errors.
+          if (matchingReport.videoUrl &&
+              (matchingReport.videoUrl.includes('replicate.delivery') ||
+               matchingReport.videoUrl.includes('klingai.com'))) {
+            console.log('[JudgeTab] Clearing expired provider video URL:', matchingReport.videoUrl.substring(0, 60));
+            matchingReport.videoUrl = undefined;
+            matchingReport.videoStatus = 'error';
+            // Persist the cleanup
+            saveReportToLocalStorage(matchingReport as JudgeReport);
+          }
+
           setJudgeReport(matchingReport);
 
           // If report exists but no video, check for pre-generated video
@@ -783,11 +828,79 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             }
           }
         } else {
-          // No cached report - check if there's a pre-generated video waiting
-          console.log('[JudgeTab] No cached report, checking for pre-generated video...');
-          const existingVideo = await checkExistingVideo(currentComparisonId);
-          if (existingVideo) {
-            console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
+          // ════════════════════════════════════════════════════════════════
+          // FIX 2026-02-14: SUPABASE FALLBACK
+          // No match in localStorage — try Supabase before giving up.
+          // This is the critical fix: saved comparisons loaded from the
+          // list would show a blank judge page because the report was in
+          // Supabase but not in localStorage.
+          // ════════════════════════════════════════════════════════════════
+          console.log('[JudgeTab] No local report match. Trying Supabase fallback...');
+
+          // Strategy 1: Lookup by comparisonId in Supabase
+          let supabaseReport = await fetchJudgeReportByComparisonId(currentComparisonId);
+
+          // Strategy 2: Lookup by city names (covers different-session comparisonIds)
+          if (!supabaseReport && comparisonResult.city1?.city && comparisonResult.city2?.city) {
+            console.log('[JudgeTab] Supabase comparisonId miss. Trying city name lookup...');
+            supabaseReport = await fetchJudgeReportByCities(
+              comparisonResult.city1.city,
+              comparisonResult.city2.city
+            );
+          }
+
+          if (supabaseReport) {
+            console.log('[JudgeTab] Supabase fallback found report:', supabaseReport.reportId);
+
+            // Clear expired video URLs proactively
+            if (supabaseReport.videoUrl &&
+                (supabaseReport.videoUrl.includes('replicate.delivery') ||
+                 supabaseReport.videoUrl.includes('klingai.com'))) {
+              supabaseReport.videoUrl = undefined;
+              supabaseReport.videoStatus = 'error';
+            }
+
+            // Construct full JudgeReport from Supabase data
+            const loadedReport: JudgeReport = {
+              reportId: supabaseReport.reportId,
+              generatedAt: supabaseReport.generatedAt,
+              userId: supabaseReport.userId || userId,
+              comparisonId: currentComparisonId,
+              city1: supabaseReport.city1,
+              city2: supabaseReport.city2,
+              city1Country: supabaseReport.city1Country,
+              city2Country: supabaseReport.city2Country,
+              videoUrl: supabaseReport.videoUrl,
+              videoStatus: (supabaseReport.videoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
+              summaryOfFindings: {
+                city1Score: supabaseReport.summaryOfFindings?.city1Score || 0,
+                city1Trend: supabaseReport.summaryOfFindings?.city1Trend || 'stable',
+                city2Score: supabaseReport.summaryOfFindings?.city2Score || 0,
+                city2Trend: supabaseReport.summaryOfFindings?.city2Trend || 'stable',
+                overallConfidence: (supabaseReport.summaryOfFindings?.overallConfidence || 'medium') as 'high' | 'medium' | 'low',
+              },
+              categoryAnalysis: supabaseReport.categoryAnalysis || [],
+              executiveSummary: {
+                recommendation: (supabaseReport.executiveSummary?.recommendation || 'tie') as 'city1' | 'city2' | 'tie',
+                rationale: supabaseReport.executiveSummary?.rationale || '',
+                keyFactors: supabaseReport.executiveSummary?.keyFactors || [],
+                futureOutlook: supabaseReport.executiveSummary?.futureOutlook || '',
+                confidenceLevel: (supabaseReport.executiveSummary?.confidenceLevel || 'medium') as 'high' | 'medium' | 'low',
+              },
+              freedomEducation: supabaseReport.freedomEducation,
+            };
+
+            setJudgeReport(loadedReport);
+            // Cache to localStorage so next time it loads instantly
+            saveReportToLocalStorage(loadedReport);
+            console.log('[JudgeTab] Supabase report cached to localStorage');
+          } else {
+            // No report anywhere — check if there's a pre-generated video waiting
+            console.log('[JudgeTab] No report in localStorage or Supabase.');
+            const existingVideo = await checkExistingVideo(currentComparisonId);
+            if (existingVideo) {
+              console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
+            }
           }
         }
       } catch (error) {
@@ -865,7 +978,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               category_analysis: report.categoryAnalysis || [],
               verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl
+              video_url: report.videoUrl,
+              // FIX 2026-02-14: Write comparison_id for Supabase fallback lookups
+              comparison_id: report.comparisonId || null,
             })
             .eq('report_id', report.reportId)
         );
@@ -894,7 +1009,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               category_analysis: report.categoryAnalysis || [],
               verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl
+              video_url: report.videoUrl,
+              // FIX 2026-02-14: Write comparison_id for Supabase fallback lookups
+              comparison_id: report.comparisonId || null,
             })
         );
 
