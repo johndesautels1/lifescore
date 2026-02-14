@@ -132,7 +132,7 @@
 .pip-status-badge {
   position: absolute;
   top: 8px;
-  left: 8px;
+  right: 8px;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -172,6 +172,34 @@
 
 .pip-status-text {
   color: #ffffff;
+}
+
+/* Voice Wave — animated bars inside status badge when speaking */
+.pip-voice-wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 12px;
+  margin-left: 2px;
+}
+
+.pip-voice-wave span {
+  display: block;
+  width: 2px;
+  border-radius: 1px;
+  background: #D4AF37;
+  animation: pipVoiceBar 1s ease-in-out infinite;
+}
+
+.pip-voice-wave span:nth-child(1) { height: 4px;  animation-delay: 0s; }
+.pip-voice-wave span:nth-child(2) { height: 8px;  animation-delay: 0.12s; }
+.pip-voice-wave span:nth-child(3) { height: 12px; animation-delay: 0.24s; }
+.pip-voice-wave span:nth-child(4) { height: 8px;  animation-delay: 0.36s; }
+.pip-voice-wave span:nth-child(5) { height: 4px;  animation-delay: 0.48s; }
+
+@keyframes pipVoiceBar {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50%      { transform: scaleY(1);   opacity: 1; }
 }
 
 @keyframes statusPulse {

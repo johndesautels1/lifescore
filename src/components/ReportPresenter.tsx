@@ -368,6 +368,11 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
                 <span className="pip-status-text">
                   {state.avatarConnected ? 'LIVE' : state.ttsOnly ? 'AUDIO' : 'READY'}
                 </span>
+                {state.status === 'presenting' && (
+                  <span className="pip-voice-wave">
+                    <span /><span /><span /><span /><span />
+                  </span>
+                )}
               </div>
             </div>
             {currentSegment && state.status !== 'idle' && (
