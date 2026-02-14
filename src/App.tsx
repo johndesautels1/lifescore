@@ -63,6 +63,7 @@ import {
   type APICallCost
 } from './utils/costCalculator';
 import { saveApiCostRecord } from './services/databaseService';
+import { warmUpSupabase } from './lib/supabase';
 import './styles/globals.css';
 import './App.css';
 
@@ -321,6 +322,12 @@ const AppContent: React.FC = () => {
       (cat.successCount !== undefined && cat.successCount < cat.metricsCount * 0.5)
     );
   });
+
+  // FIX A4: Warm up Supabase connection on mount to combat cold starts.
+  // By the time the user clicks anything, PostgREST is already awake.
+  useEffect(() => {
+    warmUpSupabase();
+  }, []);
 
   // Update saved count on mount and when savedKey changes
   // FIX: Read from correct localStorage keys (was 'lifescore_comparisons' which doesn't exist)

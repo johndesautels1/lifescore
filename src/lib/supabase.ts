@@ -255,4 +255,27 @@ if (import.meta.env.DEV) {
   });
 }
 
+/**
+ * FIX A4: Warm-up ping to combat Supabase cold starts.
+ * Fires a cheap auth check on app mount so the connection is hot
+ * by the time the user actually needs data.
+ */
+export async function warmUpSupabase(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    // getSession is the cheapest Supabase call — it reads from local cache
+    // first, but still opens the HTTP connection to Supabase in the background.
+    // Follow up with a lightweight DB ping to warm the PostgREST connection.
+    await supabase.auth.getSession();
+    // Fire-and-forget: touch the DB so PostgREST connection pool is warm
+    supabase.from('judge_reports').select('report_id').limit(1).maybeSingle().then(() => {
+      console.log('[Supabase] Warm-up ping complete');
+    }).catch(() => {
+      // Warm-up failure is non-critical
+    });
+  } catch {
+    // Warm-up failure is non-critical — don't block the app
+  }
+}
+
 export default supabase;

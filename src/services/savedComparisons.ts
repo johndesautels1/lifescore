@@ -1186,7 +1186,9 @@ export function getSavedJudgeReports(): SavedJudgeReport[] {
   }
 }
 
-const MAX_JUDGE_REPORTS = 20;
+// FIX A5: Raised from 20 → 50. Supabase fallback covers anything that ages out.
+// LRU: oldest reports (by generatedAt) get evicted first when cap is hit.
+const MAX_JUDGE_REPORTS = 50;
 
 /**
  * FIX: Sync Judge reports FROM Supabase to localStorage
@@ -1312,7 +1314,8 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
     } else {
       reports.unshift(report);
     }
-    // Trim if too many
+    // LRU eviction: sort newest-first, then trim oldest when over cap
+    reports.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
     const trimmed = reports.slice(0, MAX_JUDGE_REPORTS);
     // FIX 2026-02-14: Use safeLocalStorageSet for quota handling (was raw setItem)
     const success = safeLocalStorageSet(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
@@ -1400,8 +1403,9 @@ export async function fetchJudgeReportByComparisonId(comparisonId: string): Prom
     if (!user) return null;
 
     // Strategy 1: Query by full_report JSONB -> comparisonId
+    // FIX A4: Pass factory function (not started promise) so retries create fresh requests
     const { data, error } = await withTimeout(
-      supabase
+      () => supabase
         .from('judge_reports')
         .select('*')
         .eq('user_id', user.id)
@@ -1473,8 +1477,9 @@ export async function fetchJudgeReportByCities(city1: string, city2: string): Pr
     if (!user) return null;
 
     // Try both column name variants (city1/city2 vs city1_name/city2_name)
+    // FIX A4: Pass factory function (not started promise) so retries create fresh requests
     const { data, error } = await withTimeout(
-      supabase
+      () => supabase
         .from('judge_reports')
         .select('*')
         .eq('user_id', user.id)
