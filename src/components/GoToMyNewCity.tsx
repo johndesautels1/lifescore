@@ -21,7 +21,7 @@ import { useTierAccess } from '../hooks/useTierAccess';
 import { useCristianoVideo } from '../hooks/useCristianoVideo';
 import FeatureGate from './FeatureGate';
 import { toastSuccess, toastError } from '../utils/toast';
-import { buildWinnerPackage, type WinnerPackage } from '../services/cristianoVideoService';
+import { buildWinnerPackage } from '../services/cristianoVideoService';
 import './GoToMyNewCity.css';
 
 // ============================================================================
@@ -317,7 +317,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
           {/* Stage Indicator */}
           {isGenerating && (
             <div className="stage-indicator">
-              <span className={`stage-dot ${status === 'building_storyboard' ? 'active' : (status !== 'building_storyboard' && hasStarted) ? 'complete' : ''}`} />
+              <span className={`stage-dot ${status === 'building_storyboard' ? 'active' : hasStarted ? 'complete' : ''}`} />
               <span className="stage-label">Storyboard</span>
               <span className={`stage-dot ${status === 'rendering' || status === 'processing' ? 'active' : status === 'completed' ? 'complete' : ''}`} />
               <span className="stage-label">Render</span>
