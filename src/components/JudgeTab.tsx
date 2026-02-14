@@ -50,6 +50,7 @@ async function withTimeout<T>(
 import { toastSuccess, toastError } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
+import GoToMyNewCity from './GoToMyNewCity';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
@@ -1770,6 +1771,55 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 : judgeReport.summaryOfFindings.city1Score
             }
             freedomEducation={judgeReport.freedomEducation}
+          />
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          GO TO MY NEW CITY - Cristiano's 120s Cinematic Freedom Tour
+          Sovereign plan only. Appears after Court Order.
+      ═══════════════════════════════════════════════════════════════════ */}
+      {judgeReport && (
+        <section className="new-city-section">
+          <GoToMyNewCity
+            winnerCity={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Name
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Name
+                : city1Name
+            }
+            winnerCountry={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Country
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Country
+                : city1Country
+            }
+            winnerRegion={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Region
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Region
+                : city1Region
+            }
+            winnerScore={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? judgeReport.summaryOfFindings.city1Score
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? judgeReport.summaryOfFindings.city2Score
+                : judgeReport.summaryOfFindings.city1Score
+            }
+            winnerCategories={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? (comparisonResult as any)?.city1?.categories
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? (comparisonResult as any)?.city2?.categories
+                : (comparisonResult as any)?.city1?.categories
+            }
+            executiveSummary={judgeReport.executiveSummary}
+            categoryWinners={(comparisonResult as any)?.categoryWinners}
+            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
           />
         </section>
       )}
