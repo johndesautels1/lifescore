@@ -129,7 +129,6 @@ export interface UsageTracking {
   judge_videos: number;
   gamma_reports: number;
   grok_videos: number;
-  cristiano_videos: number;
   created_at: string;
   updated_at: string;
 }
@@ -238,7 +237,6 @@ export interface UsageTrackingInsert {
   judge_videos?: number;
   gamma_reports?: number;
   grok_videos?: number;
-  cristiano_videos?: number;
 }
 
 export interface GrokVideoInsert {

@@ -54,7 +54,6 @@ export interface TierLimits {
   judgeVideos: number;
   gammaReports: number;
   grokVideos: number;
-  cristianoVideos: number;          // Cristiano "Go To My New City" HeyGen videos (Sovereign only)
   cloudSync: boolean;
   apiAccess: boolean;
 }
@@ -84,7 +83,6 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     judgeVideos: 0,                 // NO Judge videos
     gammaReports: 0,                // NO Gamma reports
     grokVideos: 0,                  // NO Grok videos
-    cristianoVideos: 0,             // NO Cristiano videos
     cloudSync: false,
     apiAccess: false,
   },
@@ -95,7 +93,6 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     judgeVideos: 1,                 // 1 Judge video/month
     gammaReports: 1,                // 1 Gamma report/month
     grokVideos: 0,                  // NO Grok videos (Sovereign only)
-    cristianoVideos: 0,             // NO Cristiano videos (Sovereign only)
     cloudSync: true,
     apiAccess: false,
   },
@@ -106,7 +103,6 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     judgeVideos: 1,                 // 1 Judge video/month
     gammaReports: 1,                // 1 Gamma report/month (with all 5 LLMs)
     grokVideos: 1,                  // 1 Grok video/month
-    cristianoVideos: 1,             // 1 Cristiano "Go To My New City" video/month
     cloudSync: true,
     apiAccess: true,
   },
@@ -122,7 +118,6 @@ const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
   judgeVideos: 'judge_videos',
   gammaReports: 'gamma_reports',
   grokVideos: 'grok_videos',
-  cristianoVideos: 'cristiano_videos',
 };
 
 // ============================================================================

@@ -50,7 +50,6 @@ async function withTimeout<T>(
 import { toastSuccess, toastError } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
-import GoToMyNewCity from './GoToMyNewCity';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
@@ -1771,47 +1770,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 : judgeReport.summaryOfFindings.city1Score
             }
             freedomEducation={judgeReport.freedomEducation}
-          />
-        </section>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          GO TO MY NEW CITY - Cristiano HeyGen Multi-Scene Video
-          Sovereign plan only. Appears after Court Order.
-      ═══════════════════════════════════════════════════════════════════ */}
-      {judgeReport && (
-        <section className="new-city-section">
-          <GoToMyNewCity
-            winnerCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Name
-                : city1Name
-            }
-            loserCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city2Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city1Name
-                : city2Name
-            }
-            winnerScore={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? judgeReport.summaryOfFindings.city1Score
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? judgeReport.summaryOfFindings.city2Score
-                : judgeReport.summaryOfFindings.city1Score
-            }
-            loserScore={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? judgeReport.summaryOfFindings.city2Score
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? judgeReport.summaryOfFindings.city1Score
-                : judgeReport.summaryOfFindings.city2Score
-            }
-            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
-            executiveSummary={judgeReport.executiveSummary}
           />
         </section>
       )}
