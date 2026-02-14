@@ -124,6 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Track if we're already fetching to prevent duplicate calls
   const fetchingRef = React.useRef<string | null>(null);
+  // FIX 2026-02-14: Cooldown after failure — prevents retry storm when Supabase is unreachable
+  const lastFailedAtRef = React.useRef<number>(0);
+  const FAILURE_COOLDOWN_MS = 60000; // 60s cooldown after a failed fetch
 
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
@@ -131,6 +134,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Prevent duplicate fetches for the same user
     if (fetchingRef.current === userId) {
       console.log("[Auth] Already fetching profile for user, skipping duplicate");
+      return { profile: null, preferences: null };
+    }
+
+    // Skip if we recently failed — prevents infinite retry storm
+    const timeSinceFailure = Date.now() - lastFailedAtRef.current;
+    if (timeSinceFailure < FAILURE_COOLDOWN_MS) {
+      console.log(`[Auth] Skipping fetch — last failure was ${Math.round(timeSinceFailure / 1000)}s ago (cooldown ${FAILURE_COOLDOWN_MS / 1000}s)`);
       return { profile: null, preferences: null };
     }
 
@@ -172,13 +182,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profile) {
         console.log('[Auth] Profile loaded:', profile.email);
+        // Success — clear cooldown so future fetches work immediately
+        lastFailedAtRef.current = 0;
       } else {
         console.log('[Auth] No profile found for user (will use defaults)');
+        // No profile = fetch worked but user has no row yet — set cooldown to prevent hammering
+        lastFailedAtRef.current = Date.now();
       }
 
       return { profile: profile || null, preferences: preferences || null };
     } catch (error) {
       console.error('[Auth] Error in fetchUserData:', error);
+      // FIX 2026-02-14: Record failure time to activate cooldown
+      lastFailedAtRef.current = Date.now();
       // Return nulls on timeout/error - app continues without DB profile
       return { profile: null, preferences: null };
     } finally {
