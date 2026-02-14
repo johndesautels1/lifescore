@@ -12,14 +12,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const GROK_API_URL = process.env.GROK_API_URL || 'https://api.x.ai/v1';
 const KLING_API_URL = 'https://api-singapore.klingai.com';
 
+// Storage bucket for persisting court order / grok videos
+const COURT_ORDER_BUCKET = 'court-order-videos';
+
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60, // Increased from 30s: DB query + provider API + persist-to-storage
 };
 
 const supabaseAdmin = createClient(
@@ -252,23 +256,38 @@ export default async function handler(
         ]);
 
         if (winnerResult.data && loserResult.data) {
-          // FIX: Validate replicate delivery URLs before serving as cache hits
+          // FIX: For cached entries with temporary provider URLs, try to migrate to permanent storage.
+          // If migration fails (URL expired), invalidate the cache entry.
           for (const entry of [winnerResult.data, loserResult.data]) {
-            if (entry.video_url?.includes('replicate.delivery')) {
-              try {
-                const headResp = await fetch(entry.video_url, { method: 'HEAD' });
-                if (!headResp.ok) {
-                  console.warn(`[GROK-STATUS] Cached replicate URL expired (${headResp.status}), invalidating video ${entry.id}`);
-                  await supabaseAdmin
-                    .from('grok_videos')
-                    .update({ status: 'failed', error_message: `Replicate URL expired (HTTP ${headResp.status})` })
-                    .eq('id', entry.id);
-                  // Cache miss — at least one URL is dead
-                  res.status(200).json({ hasCached: false });
-                  return;
-                }
-              } catch {
-                // Network error on HEAD — don't trust the cache
+            const isTemporaryUrl = entry.video_url && !entry.video_storage_path && (
+              entry.video_url.includes('replicate.delivery') ||
+              entry.video_url.includes('klingai.com')
+            );
+
+            if (isTemporaryUrl) {
+              const cacheKey = `${entry.city_name}-${entry.video_type}-${entry.id.substring(0, 8)}`;
+              const persisted = await persistVideoToStorage(
+                entry.video_url,
+                cacheKey,
+                supabaseAdmin,
+                COURT_ORDER_BUCKET
+              );
+
+              if (persisted) {
+                // Migration succeeded — update DB and use permanent URL
+                await supabaseAdmin
+                  .from('grok_videos')
+                  .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+                  .eq('id', entry.id);
+                entry.video_url = persisted.publicUrl;
+                console.log('[GROK-STATUS] Cache entry migrated to permanent storage:', entry.id);
+              } else {
+                // URL expired — invalidate this cache entry
+                console.warn(`[GROK-STATUS] Cached provider URL expired, invalidating video ${entry.id}`);
+                await supabaseAdmin
+                  .from('grok_videos')
+                  .update({ status: 'failed', error_message: 'Provider URL expired before migration' })
+                  .eq('id', entry.id);
                 res.status(200).json({ hasCached: false });
                 return;
               }
@@ -423,17 +442,40 @@ export default async function handler(
 
       // Update database if completed or failed
       if (providerStatus.status === 'completed' && providerStatus.videoUrl) {
+        // FIX: Persist provider CDN video to permanent Supabase Storage BEFORE saving URL.
+        // Provider URLs (Replicate ~1h, Kling varies) expire — this makes them permanent.
+        let finalVideoUrl = providerStatus.videoUrl;
+        let storagePath: string | null = null;
+        const cacheKey = `${video.city_name}-${video.video_type}-${video.id.substring(0, 8)}`;
+
+        const persisted = await persistVideoToStorage(
+          providerStatus.videoUrl,
+          cacheKey,
+          supabaseAdmin,
+          COURT_ORDER_BUCKET
+        );
+
+        if (persisted) {
+          finalVideoUrl = persisted.publicUrl;
+          storagePath = persisted.storagePath;
+          console.log('[GROK-STATUS] Video persisted to permanent storage:', persisted.publicUrl);
+        } else {
+          // Persist failed — still save the provider URL (better than nothing)
+          console.warn('[GROK-STATUS] Storage persist failed, saving provider URL as fallback');
+        }
+
         await supabaseAdmin
           .from('grok_videos')
           .update({
             status: 'completed',
-            video_url: providerStatus.videoUrl,
+            video_url: finalVideoUrl,
+            video_storage_path: storagePath,
             completed_at: new Date().toISOString(),
           })
           .eq('id', video.id);
 
         video.status = 'completed';
-        video.video_url = providerStatus.videoUrl;
+        video.video_url = finalVideoUrl;
         video.completed_at = new Date().toISOString();
       } else if (providerStatus.status === 'failed') {
         await supabaseAdmin
@@ -449,25 +491,41 @@ export default async function handler(
       }
     }
 
-    // FIX: Validate completed replicate.delivery URLs with a HEAD check.
-    // These URLs expire after ~24h and return 404 — mark as failed so the
-    // frontend doesn't render a broken video element.
-    if (video.status === 'completed' && video.video_url?.includes('replicate.delivery')) {
-      try {
-        const headResp = await fetch(video.video_url, { method: 'HEAD' });
-        if (!headResp.ok) {
-          console.warn(`[GROK-STATUS] Replicate delivery URL returned ${headResp.status}, marking video ${video.id} as failed`);
+    // FIX: For completed videos with temporary provider URLs (no storage path),
+    // attempt to migrate to permanent storage. If the URL has already expired, mark as failed.
+    if (video.status === 'completed' && video.video_url && !video.video_storage_path) {
+      const isTemporaryUrl = video.video_url.includes('replicate.delivery') ||
+                             video.video_url.includes('klingai.com');
+
+      if (isTemporaryUrl) {
+        console.log('[GROK-STATUS] Completed video has temporary URL, attempting migration:', video.id);
+        const cacheKey = `${video.city_name}-${video.video_type}-${video.id.substring(0, 8)}`;
+        const persisted = await persistVideoToStorage(
+          video.video_url,
+          cacheKey,
+          supabaseAdmin,
+          COURT_ORDER_BUCKET
+        );
+
+        if (persisted) {
+          // Migration succeeded — update DB with permanent URL
+          console.log('[GROK-STATUS] Migrated stale URL to permanent storage:', persisted.publicUrl);
           await supabaseAdmin
             .from('grok_videos')
-            .update({ status: 'failed', error_message: `Replicate URL expired (HTTP ${headResp.status})` })
+            .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+            .eq('id', video.id);
+          video.video_url = persisted.publicUrl;
+        } else {
+          // Migration failed — URL has expired, mark as failed
+          console.warn(`[GROK-STATUS] Provider URL expired, marking video ${video.id} as failed`);
+          await supabaseAdmin
+            .from('grok_videos')
+            .update({ status: 'failed', error_message: 'Provider URL expired before migration' })
             .eq('id', video.id);
           video.status = 'failed';
           video.video_url = null;
-          video.error_message = `Replicate URL expired (HTTP ${headResp.status})`;
+          video.error_message = 'Provider URL expired before migration';
         }
-      } catch (headErr) {
-        console.warn('[GROK-STATUS] HEAD check failed for replicate URL:', headErr);
-        // Don't fail the whole request — just return the video as-is
       }
     }
 

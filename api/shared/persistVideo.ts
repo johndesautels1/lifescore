@@ -1,12 +1,16 @@
 /**
- * LIFE SCORE - Persist Replicate Video to Supabase Storage
+ * LIFE SCORE - Persist Video to Supabase Storage
  *
- * Downloads a video from a temporary Replicate CDN URL and uploads it to
- * permanent Supabase Storage. Returns the permanent public URL.
+ * Downloads a video from a temporary provider CDN URL (Replicate, Kling, etc.)
+ * and uploads it to permanent Supabase Storage. Returns the permanent public URL.
  *
- * Replicate delivery URLs expire after ~1 hour. This function must be
- * called immediately when Replicate reports completion (via webhook or
- * polling) before the URL expires.
+ * Provider CDN URLs expire (Replicate ~1h, Kling varies). This function must be
+ * called immediately when a provider reports completion (via webhook or polling)
+ * before the URL expires.
+ *
+ * Used by:
+ *  - Judge's Verdict (avatar_videos) → 'judge-videos' bucket
+ *  - Court Order Videos (grok_videos) → 'court-order-videos' bucket
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -14,35 +18,37 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const STORAGE_BUCKET = 'judge-videos';
-const DOWNLOAD_TIMEOUT_MS = 30000; // 30s to download from Replicate
+const DEFAULT_STORAGE_BUCKET = 'judge-videos';
+const DOWNLOAD_TIMEOUT_MS = 30000; // 30s to download from provider CDN
 const UPLOAD_TIMEOUT_MS = 30000;   // 30s to upload to Supabase
 
 /**
- * Download video from Replicate CDN and upload to Supabase Storage.
+ * Download video from a provider CDN and upload to Supabase Storage.
  *
- * @param replicateUrl  Temporary Replicate delivery URL (expires ~1h)
- * @param comparisonId  Unique comparison identifier for the filename
+ * @param providerUrl   Temporary provider CDN URL (expires after hours)
+ * @param comparisonId  Unique identifier for the filename
  * @param supabaseAdmin Supabase client with service_role key
+ * @param bucket        Storage bucket name (default: 'judge-videos')
  * @returns Object with permanent public URL and storage path, or null on failure
  */
 export async function persistVideoToStorage(
-  replicateUrl: string,
+  providerUrl: string,
   comparisonId: string,
-  supabaseAdmin: ReturnType<typeof createClient>
+  supabaseAdmin: ReturnType<typeof createClient>,
+  bucket: string = DEFAULT_STORAGE_BUCKET
 ): Promise<{ publicUrl: string; storagePath: string } | null> {
   const storagePath = `${comparisonId}.mp4`;
 
   try {
-    // Step 1: Download video from Replicate CDN
-    console.log('[persistVideo] Downloading from Replicate:', replicateUrl.substring(0, 80) + '...');
+    // Step 1: Download video from provider CDN
+    console.log('[persistVideo] Downloading from provider CDN:', providerUrl.substring(0, 80) + '...', '→ bucket:', bucket);
 
     const downloadController = new AbortController();
     const downloadTimeout = setTimeout(() => downloadController.abort(), DOWNLOAD_TIMEOUT_MS);
 
     let response: Response;
     try {
-      response = await fetch(replicateUrl, { signal: downloadController.signal });
+      response = await fetch(providerUrl, { signal: downloadController.signal });
       clearTimeout(downloadTimeout);
     } catch (err) {
       clearTimeout(downloadTimeout);
@@ -74,7 +80,7 @@ export async function persistVideoToStorage(
 
     try {
       const { error: uploadError } = await supabaseAdmin.storage
-        .from(STORAGE_BUCKET)
+        .from(bucket)
         .upload(storagePath, buffer, {
           contentType: 'video/mp4',
           upsert: true, // Overwrite if exists (re-generation)
@@ -96,7 +102,7 @@ export async function persistVideoToStorage(
 
     // Step 3: Get permanent public URL
     const { data: publicUrlData } = supabaseAdmin.storage
-      .from(STORAGE_BUCKET)
+      .from(bucket)
       .getPublicUrl(storagePath);
 
     const publicUrl = publicUrlData.publicUrl;

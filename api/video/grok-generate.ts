@@ -11,7 +11,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
+
+// Storage bucket for persisting court order / grok videos
+const COURT_ORDER_BUCKET = 'court-order-videos';
 
 // ============================================================================
 // CONFIGURATION
@@ -717,19 +721,40 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
       return null;
     }
 
-    // Replicate delivery URLs expire after ~24h — only invalidate if actually old
-    if (data?.video_url?.includes('replicate.delivery') && data.created_at) {
-      const ageMs = Date.now() - new Date(data.created_at).getTime();
-      const TWENTY_HOURS_MS = 20 * 60 * 60 * 1000;
-      if (ageMs > TWENTY_HOURS_MS) {
-        console.log('[GROK-VIDEO] Cache hit has expired Replicate URL (age:', Math.round(ageMs / 3600000), 'h), marking failed');
-        await supabaseAdmin
-          .from('grok_videos')
-          .update({ status: 'failed', error_message: 'Replicate URL expired (~24h)' })
-          .eq('id', data.id);
-        return null;
+    // FIX: If cache hit has a temporary provider URL (no storage path), migrate to permanent storage.
+    // This prevents the URL-expiration problem that caused videos to be lost.
+    if (data?.video_url && !data.video_storage_path) {
+      const isTemporaryUrl = data.video_url.includes('replicate.delivery') ||
+                             data.video_url.includes('klingai.com');
+
+      if (isTemporaryUrl) {
+        console.log('[GROK-VIDEO] Cache hit has temporary provider URL, attempting migration:', data.id);
+        const persistKey = `${data.city_name}-${data.video_type}-${data.id.substring(0, 8)}`;
+        const persisted = await persistVideoToStorage(
+          data.video_url,
+          persistKey,
+          supabaseAdmin,
+          COURT_ORDER_BUCKET
+        );
+
+        if (persisted) {
+          // Migration succeeded — update DB with permanent URL
+          console.log('[GROK-VIDEO] Migrated cache hit to permanent storage:', persisted.publicUrl);
+          await supabaseAdmin
+            .from('grok_videos')
+            .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+            .eq('id', data.id);
+          data.video_url = persisted.publicUrl;
+        } else {
+          // URL already expired — mark as failed, force regeneration
+          console.warn('[GROK-VIDEO] Cache hit URL expired, marking failed:', data.id);
+          await supabaseAdmin
+            .from('grok_videos')
+            .update({ status: 'failed', error_message: 'Provider URL expired before migration' })
+            .eq('id', data.id);
+          return null;
+        }
       }
-      console.log('[GROK-VIDEO] Cache hit with fresh Replicate URL (age:', Math.round(ageMs / 3600000), 'h)');
     }
 
     // Skip cache entries with no video URL (incomplete records)
