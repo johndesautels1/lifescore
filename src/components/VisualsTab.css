@@ -1039,6 +1039,10 @@
   color: var(--text-secondary, #888);
 }
 
+[data-theme="dark"] .saved-report-item .report-date {
+  color: #ffffff;
+}
+
 .saved-report-item .report-actions {
   display: flex;
   gap: 0.4rem;
