@@ -176,39 +176,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     }
   }, [videoErrorCount, judgeReport]);
 
-  // Simulated video progress bar — runs during video generation (~90s estimated)
-  // Steps: 0-15% storyboard, 15-40% audio, 40-85% rendering, 85-95% finalizing
-  useEffect(() => {
-    const generating = isGeneratingVideo || judgeReport?.videoStatus === 'generating';
-    if (generating) {
-      setVideoProgress(0);
-      const startTime = Date.now();
-      const ESTIMATED_TOTAL_MS = 90000; // ~90 seconds typical
-      videoProgressRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const raw = (elapsed / ESTIMATED_TOTAL_MS) * 92; // Cap at 92% until done
-        setVideoProgress(Math.min(raw, 92));
-      }, 500);
-    } else {
-      if (videoProgressRef.current) {
-        clearInterval(videoProgressRef.current);
-        videoProgressRef.current = null;
-      }
-      // Snap to 100% briefly when video completes
-      if (judgeReport?.videoStatus === 'ready') {
-        setVideoProgress(100);
-      } else {
-        setVideoProgress(0);
-      }
-    }
-    return () => {
-      if (videoProgressRef.current) {
-        clearInterval(videoProgressRef.current);
-        videoProgressRef.current = null;
-      }
-    };
-  }, [isGeneratingVideo, judgeReport?.videoStatus]);
-
   // Listen for storage events to refresh when data changes in another tab/component
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
@@ -406,6 +373,38 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Legacy video generation state (for backwards compatibility)
   const [videoGenerationProgress, setVideoGenerationProgress] = useState('');
   const videoPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Simulated video progress bar — runs during video generation (~90s estimated)
+  // Steps: 0-15% storyboard, 15-40% audio, 40-85% rendering, 85-95% finalizing
+  useEffect(() => {
+    const generating = isGeneratingVideo || judgeReport?.videoStatus === 'generating';
+    if (generating) {
+      setVideoProgress(0);
+      const startTime = Date.now();
+      const ESTIMATED_TOTAL_MS = 90000; // ~90 seconds typical
+      videoProgressRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const raw = (elapsed / ESTIMATED_TOTAL_MS) * 92; // Cap at 92% until done
+        setVideoProgress(Math.min(raw, 92));
+      }, 500);
+    } else {
+      if (videoProgressRef.current) {
+        clearInterval(videoProgressRef.current);
+        videoProgressRef.current = null;
+      }
+      if (judgeReport?.videoStatus === 'ready') {
+        setVideoProgress(100);
+      } else {
+        setVideoProgress(0);
+      }
+    }
+    return () => {
+      if (videoProgressRef.current) {
+        clearInterval(videoProgressRef.current);
+        videoProgressRef.current = null;
+      }
+    };
+  }, [isGeneratingVideo, judgeReport?.videoStatus]);
 
   // Real-time clock for cockpit feel
   useEffect(() => {
