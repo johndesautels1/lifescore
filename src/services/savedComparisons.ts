@@ -99,9 +99,9 @@ export interface SavedJudgeReport {
   videoStatus: string;
   summaryOfFindings: {
     city1Score: number;
-    city1Trend?: string;
+    city1Trend?: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend?: string;
+    city2Trend?: 'improving' | 'stable' | 'declining';
     overallConfidence: string;
   };
   categoryAnalysis?: {
@@ -1285,9 +1285,9 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
         generatedAt: record.created_at,
         summaryOfFindings: {
           city1Score: record.city1_score || fullReport?.summaryOfFindings?.city1Score || 0,
-          city1Trend: fullReport?.summaryOfFindings?.city1Trend || 'stable',
+          city1Trend: (fullReport?.summaryOfFindings?.city1Trend || 'stable') as 'improving' | 'stable' | 'declining',
           city2Score: record.city2_score || fullReport?.summaryOfFindings?.city2Score || 0,
-          city2Trend: fullReport?.summaryOfFindings?.city2Trend || 'stable',
+          city2Trend: (fullReport?.summaryOfFindings?.city2Trend || 'stable') as 'improving' | 'stable' | 'declining',
           overallConfidence: fullReport?.summaryOfFindings?.overallConfidence || 'medium',
         },
         categoryAnalysis: fullReport?.categoryAnalysis || record.category_analysis || [],
