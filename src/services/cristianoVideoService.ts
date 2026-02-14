@@ -240,7 +240,11 @@ export async function submitRender(params: {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `Render submission failed: ${response.status}`);
+    // Surface validation errors so they're visible in the console
+    const detail = error.validationErrors?.length
+      ? ` [${error.validationErrors.join('; ')}]`
+      : '';
+    throw new Error((error.error || `Render submission failed: ${response.status}`) + detail);
   }
 
   const data = await response.json();
