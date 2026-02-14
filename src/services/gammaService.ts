@@ -366,6 +366,10 @@ CRITICAL INSTRUCTIONS FOR GAMMA AI - READ CAREFULLY
 This is a LIFE SCOREâ„¢ Freedom Comparison Report. This report EXCLUSIVELY
 compares LEGAL FREEDOM (written law) AND LIVED FREEDOM (enforcement reality) metrics between two cities.
 
+**TROPHY PLACEMENT RULE:**
+The 🏆 trophy emoji MUST ONLY appear next to the WINNER city (${winner}).
+NEVER place the 🏆 next to the loser (${loser}). This is critical.
+
 **DO NOT ADD:**
 - General tourism information
 - Weather or climate comparisons
@@ -394,8 +398,8 @@ LIFE SCOREâ„¢ LEGAL & LIVED FREEDOM COMPARISON REPORT
 
 | City | Total LIFE SCORE | Categories Won |
 |------|------------------|----------------|
-| **${city1Name}** | **${city1TotalScore}/100** | ${city1CatWins} of 6 |
-| **${city2Name}** | **${city2TotalScore}/100** | ${city2CatWins} of 6 |
+| **${city1Name}** ${result.winner === 'city1' ? '🏆 WINNER' : ''} | **${city1TotalScore}/100** | ${city1CatWins} of 6 |
+| **${city2Name}** ${result.winner === 'city2' ? '🏆 WINNER' : ''} | **${city2TotalScore}/100** | ${city2CatWins} of 6 |
 
 **Score Difference:** ${scoreDiff} points
 ${result.winner !== 'tie' ? `**${winner} offers ${scoreDiff} more freedom points than ${loser}**` : '**Both cities scored equally on legal & lived freedom**'}
@@ -452,7 +456,7 @@ END OF DATA - USE ONLY THE INFORMATION ABOVE
 
 **Section 1: Overview (Pages 1-4)**
 - Page 1: Title slide with winner (${winner}), both total scores, dramatic hero visual
-- Page 2: Executive summary - key findings, overall winner, score gap analysis
+- Page 2: Executive summary - key findings, score gap analysis. IMPORTANT: Place the 🏆 trophy ONLY next to the WINNER (${winner}), NOT next to ${loser}. ${winner} is the winner with ${result.winner === 'city1' ? city1TotalScore : city2TotalScore}/100. ${loser} is the loser with ${result.winner === 'city1' ? city2TotalScore : city1TotalScore}/100.
 - Page 3: LIFE SCORE methodology - what we measure, why it matters
 - Page 4: 6-category visual comparison (radar/spider chart) + biggest gaps
 
