@@ -40,6 +40,18 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
 
+// FIX 2026-02-14: Timeout wrapper for webhook DB writes — Stripe retries on failure
+const DB_TIMEOUT_MS = 15000; // 15s per operation
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`[WEBHOOK] ${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 /**
  * Map Stripe price IDs to user tiers
  */
@@ -93,10 +105,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
 
   // Update user tier in profiles
-  const { error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .update({ tier })
-    .eq('id', userId);
+  const { error: profileError } = await withTimeout(
+    supabaseAdmin.from('profiles').update({ tier }).eq('id', userId),
+    DB_TIMEOUT_MS, 'Update profile tier'
+  );
 
   if (profileError) {
     console.error('[WEBHOOK] Failed to update profile tier:', profileError);
@@ -105,18 +117,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
 
   // Create/update subscription record
-  const { error: subError } = await supabaseAdmin.from('subscriptions').upsert(
-    {
-      user_id: userId,
-      stripe_customer_id: session.customer as string,
-      stripe_subscription_id: subscriptionId,
-      stripe_price_id: priceId,
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end,
-    },
-    { onConflict: 'stripe_subscription_id' }
+  const { error: subError } = await withTimeout(
+    supabaseAdmin.from('subscriptions').upsert(
+      {
+        user_id: userId,
+        stripe_customer_id: session.customer as string,
+        stripe_subscription_id: subscriptionId,
+        stripe_price_id: priceId,
+        status: subscription.status,
+        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancel_at_period_end: subscription.cancel_at_period_end,
+      },
+      { onConflict: 'stripe_subscription_id' }
+    ),
+    DB_TIMEOUT_MS, 'Upsert subscription'
   );
 
   if (subError) {
@@ -136,9 +151,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
   const priceId = subscription.items.data[0]?.price.id;
 
   // Update subscription record
-  const { error: subError } = await supabaseAdmin
-    .from('subscriptions')
-    .update({
+  const { error: subError } = await withTimeout(
+    supabaseAdmin.from('subscriptions').update({
       status: subscription.status,
       stripe_price_id: priceId,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
@@ -147,8 +161,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
       canceled_at: subscription.canceled_at
         ? new Date(subscription.canceled_at * 1000).toISOString()
         : null,
-    })
-    .eq('stripe_subscription_id', subscription.id);
+    }).eq('stripe_subscription_id', subscription.id),
+    DB_TIMEOUT_MS, 'Update subscription'
+  );
 
   if (subError) {
     console.error('[WEBHOOK] Failed to update subscription:', subError);
@@ -158,7 +173,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
   if (subscription.status === 'active' && userId && priceId) {
     const tier = getTierFromPriceId(priceId);
     if (tier) {
-      await supabaseAdmin.from('profiles').update({ tier }).eq('id', userId);
+      await withTimeout(
+        supabaseAdmin.from('profiles').update({ tier }).eq('id', userId),
+        DB_TIMEOUT_MS, 'Update tier'
+      );
       console.log('[WEBHOOK] Updated tier to:', tier);
     }
   }
@@ -172,27 +190,28 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
 
   // Find user from subscription record
   // FIX 2026-01-29: Use maybeSingle() - subscription may not exist
-  const { data: subRecord } = await supabaseAdmin
-    .from('subscriptions')
-    .select('user_id')
-    .eq('stripe_subscription_id', subscription.id)
-    .maybeSingle();
+  const { data: subRecord } = await withTimeout(
+    supabaseAdmin.from('subscriptions').select('user_id')
+      .eq('stripe_subscription_id', subscription.id).maybeSingle(),
+    DB_TIMEOUT_MS, 'Find subscription user'
+  );
 
   if (subRecord?.user_id) {
     // Downgrade user to free tier
-    await supabaseAdmin
-      .from('profiles')
-      .update({ tier: 'free' })
-      .eq('id', subRecord.user_id);
+    await withTimeout(
+      supabaseAdmin.from('profiles').update({ tier: 'free' }).eq('id', subRecord.user_id),
+      DB_TIMEOUT_MS, 'Downgrade to free'
+    );
 
     console.log('[WEBHOOK] Downgraded user to free:', subRecord.user_id);
   }
 
   // Update subscription status
-  await supabaseAdmin
-    .from('subscriptions')
-    .update({ status: 'canceled' })
-    .eq('stripe_subscription_id', subscription.id);
+  await withTimeout(
+    supabaseAdmin.from('subscriptions').update({ status: 'canceled' })
+      .eq('stripe_subscription_id', subscription.id),
+    DB_TIMEOUT_MS, 'Cancel subscription record'
+  );
 }
 
 /**
@@ -205,10 +224,11 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
   if (!subscriptionId) return;
 
   // Update subscription status
-  await supabaseAdmin
-    .from('subscriptions')
-    .update({ status: 'past_due' })
-    .eq('stripe_subscription_id', subscriptionId);
+  await withTimeout(
+    supabaseAdmin.from('subscriptions').update({ status: 'past_due' })
+      .eq('stripe_subscription_id', subscriptionId),
+    DB_TIMEOUT_MS, 'Mark past_due'
+  );
 
   // TODO: Send email notification to user about failed payment
 }

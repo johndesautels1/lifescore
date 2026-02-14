@@ -579,9 +579,14 @@ export async function getSharedReport(
     }
 
     // Increment view count atomically (prevents race condition)
-    await supabase.rpc('increment_share_view_count', {
-      p_share_id: share.id,
-    });
+    // FIX 2026-02-14: Wrap in try/catch — a failed counter should not block the shared report view
+    try {
+      await supabase.rpc('increment_share_view_count', {
+        p_share_id: share.id,
+      });
+    } catch (rpcError) {
+      console.warn('[reportStorage] increment_share_view_count failed (non-blocking):', rpcError);
+    }
 
     // Get full report (skip access logging for shared view, we track it separately)
     const { data: report, error: reportError } = await getReportWithHtml(share.report_id, false);
@@ -667,7 +672,11 @@ export async function logReportAccess(
       share_token: shareToken || null,
     };
 
-    await supabase.from('report_access_logs').insert(insert);
+    // FIX 2026-02-14: Add 10s timeout — logging should never block the report view
+    await Promise.race([
+      supabase.from('report_access_logs').insert(insert),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Log timeout')), 10000)),
+    ]);
   } catch (error) {
     // Don't throw on logging failures
     console.warn('[ReportStorage] Failed to log access:', error);

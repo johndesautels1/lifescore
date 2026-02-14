@@ -13,6 +13,18 @@ import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 import { checkRateLimit, RATE_LIMIT_PRESETS } from '../shared/rateLimit.js';
 
+// FIX 2026-02-14: Timeout wrapper for GDPR deletes — prevents infinite hang
+const DB_TIMEOUT_MS = 15000; // 15s per table (total budget ~30s across all deletes)
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 // Vercel config
 export const config = {
   maxDuration: 30,
@@ -103,61 +115,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
 
     // 1. Delete Olivia messages (via conversation IDs)
-    const { data: conversations } = await supabase
-      .from('olivia_conversations')
-      .select('id')
-      .eq('user_id', userIdToDelete);
+    const { data: conversations } = await withTimeout(
+      supabase.from('olivia_conversations').select('id').eq('user_id', userIdToDelete),
+      DB_TIMEOUT_MS, 'Fetch conversations'
+    );
 
     if (conversations && conversations.length > 0) {
       const conversationIds = conversations.map((c: { id: string }) => c.id);
-      const { count: msgCount } = await supabase
-        .from('olivia_messages')
-        .delete()
-        .in('conversation_id', conversationIds)
-        .select('*', { count: 'exact', head: true });
+      const { count: msgCount } = await withTimeout(
+        supabase.from('olivia_messages').delete().in('conversation_id', conversationIds)
+          .select('*', { count: 'exact', head: true }),
+        DB_TIMEOUT_MS, 'Delete messages'
+      );
       deletionSummary.messages = msgCount || 0;
     }
 
     // 2. Delete Olivia conversations
-    const { count: convCount } = await supabase
-      .from('olivia_conversations')
-      .delete()
-      .eq('user_id', userIdToDelete)
-      .select('*', { count: 'exact', head: true });
+    const { count: convCount } = await withTimeout(
+      supabase.from('olivia_conversations').delete().eq('user_id', userIdToDelete)
+        .select('*', { count: 'exact', head: true }),
+      DB_TIMEOUT_MS, 'Delete conversations'
+    );
     deletionSummary.conversations = convCount || 0;
 
     // 3. Delete Gamma reports
-    const { count: reportCount } = await supabase
-      .from('gamma_reports')
-      .delete()
-      .eq('user_id', userIdToDelete)
-      .select('*', { count: 'exact', head: true });
+    const { count: reportCount } = await withTimeout(
+      supabase.from('gamma_reports').delete().eq('user_id', userIdToDelete)
+        .select('*', { count: 'exact', head: true }),
+      DB_TIMEOUT_MS, 'Delete gamma reports'
+    );
     deletionSummary.reports = reportCount || 0;
 
     // 4. Delete comparisons
-    const { count: compCount } = await supabase
-      .from('comparisons')
-      .delete()
-      .eq('user_id', userIdToDelete)
-      .select('*', { count: 'exact', head: true });
+    const { count: compCount } = await withTimeout(
+      supabase.from('comparisons').delete().eq('user_id', userIdToDelete)
+        .select('*', { count: 'exact', head: true }),
+      DB_TIMEOUT_MS, 'Delete comparisons'
+    );
     deletionSummary.comparisons = compCount || 0;
 
     // 5. Delete user preferences
-    const { count: prefCount } = await supabase
-      .from('user_preferences')
-      .delete()
-      .eq('user_id', userIdToDelete)
-      .select('*', { count: 'exact', head: true });
+    const { count: prefCount } = await withTimeout(
+      supabase.from('user_preferences').delete().eq('user_id', userIdToDelete)
+        .select('*', { count: 'exact', head: true }),
+      DB_TIMEOUT_MS, 'Delete preferences'
+    );
     deletionSummary.preferences = prefCount || 0;
 
     // 6. Delete profile
-    await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userIdToDelete);
+    await withTimeout(
+      supabase.from('profiles').delete().eq('id', userIdToDelete),
+      DB_TIMEOUT_MS, 'Delete profile'
+    );
 
     // 7. Delete the auth user (using admin API)
-    const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userIdToDelete);
+    const { error: deleteUserError } = await withTimeout(
+      supabase.auth.admin.deleteUser(userIdToDelete),
+      DB_TIMEOUT_MS, 'Delete auth user'
+    );
 
     if (deleteUserError) {
       console.error('[DELETE] Failed to delete auth user:', deleteUserError);
