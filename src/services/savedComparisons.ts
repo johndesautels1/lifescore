@@ -1401,12 +1401,16 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
       return null;
     }
 
-    const { data, error } = await supabase
-      .from('judge_reports')
-      .select('*')
-      .eq('report_id', reportId)
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('judge_reports')
+        .select('*')
+        .eq('report_id', reportId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      30000,
+      'Fetch full judge report'
+    );
 
     if (error) {
       console.error('[savedComparisons] Failed to fetch full Judge report:', error);
@@ -1415,11 +1419,6 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
 
     // No report found — valid "not yet generated" case
     if (!data) return null;
-
-    if (!data) {
-      console.log('[savedComparisons] Judge report not found:', reportId);
-      return null;
-    }
 
     // Parse full_report if it's a string
     let fullReport = data.full_report;

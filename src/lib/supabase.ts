@@ -40,9 +40,9 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Supabase query timeout in milliseconds.
- * 10s is generous for direct PostgREST calls — these are not serverless cold starts.
+ * 20s handles cold starts, slow mobile connections, and large JSONB writes.
  */
-export const SUPABASE_TIMEOUT_MS = 10000;
+export const SUPABASE_TIMEOUT_MS = 20000;
 
 /**
  * Retry configuration for Supabase queries

@@ -20,7 +20,7 @@ import { requireAuth } from '../shared/auth.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 
 export const config = {
-  maxDuration: 120,
+  maxDuration: 300,  // Vercel Pro: 5 min — LLM storyboard can retry (2×90s) + validation
 };
 
 // ============================================================================

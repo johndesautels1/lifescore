@@ -23,7 +23,7 @@ import { requireAuth } from '../shared/auth.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 
 export const config = {
-  maxDuration: 60,
+  maxDuration: 300,  // Vercel Pro: 5 min — HeyGen API submission + Supabase cache + validation
 };
 
 // ============================================================================
@@ -32,7 +32,7 @@ export const config = {
 
 const HEYGEN_VIDEO_AGENT_URL = 'https://api.heygen.com/v1/video_agent/generate';
 const HEYGEN_STATUS_URL = 'https://api.heygen.com/v1/video_status.get';
-const HEYGEN_TIMEOUT_MS = 60000;
+const HEYGEN_TIMEOUT_MS = 120000;  // 120s for HeyGen API calls (submission + status)
 
 // Cristiano avatar & voice (from env)
 const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CHRISTIAN_AVATAR_ID || '';

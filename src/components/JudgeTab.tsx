@@ -132,6 +132,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [generationProgress, setGenerationProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  // FIX: Track video errors to detect expired Replicate URLs
+  const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const MAX_VIDEO_ERRORS = 3;
+
   // Report selection state - allows user to select from saved comparisons
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
 
@@ -143,6 +147,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Memoized comparisons - only re-read when refreshKey changes
   const savedComparisons = useMemo(() => getLocalComparisons(), [comparisonsRefreshKey]);
   const savedEnhanced = useMemo(() => getLocalEnhancedComparisons(), [comparisonsRefreshKey]);
+
+  // FIX: Auto-reset video when expired URL errors exceed threshold
+  useEffect(() => {
+    if (videoErrorCount >= MAX_VIDEO_ERRORS && judgeReport) {
+      console.log('[JudgeTab] Video error threshold reached — clearing expired videoUrl');
+      setJudgeReport(prev => prev ? { ...prev, videoUrl: undefined, videoStatus: 'error' as const } : null);
+      setVideoErrorCount(0);
+    }
+  }, [videoErrorCount, judgeReport]);
 
   // Listen for storage events to refresh when data changes in another tab/component
   useEffect(() => {
@@ -1319,6 +1332,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                   onError={(e) => {
                     console.error('[JudgeTab] Video error:', e.currentTarget.error?.message);
                     console.error('[JudgeTab] Video URL was:', judgeReport.videoUrl);
+                    setVideoErrorCount(prev => prev + 1);
                   }}
                 />
               ) : (

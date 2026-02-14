@@ -19,11 +19,11 @@ import { getAuthHeaders } from '../lib/supabase';
 // CONSTANTS
 // ============================================================================
 
-const STORYBOARD_TIMEOUT_MS = 100000;  // 100s for LLM storyboard generation
-const RENDER_TIMEOUT_MS = 60000;       // 60s for render submission
-const STATUS_TIMEOUT_MS = 30000;       // 30s for status checks
+const STORYBOARD_TIMEOUT_MS = 240000;  // 240s — server may retry LLM (2×90s) + overhead
+const RENDER_TIMEOUT_MS = 120000;      // 120s — HeyGen submission + Supabase cache write
+const STATUS_TIMEOUT_MS = 30000;       // 30s for status checks (individual polls)
 const POLL_INTERVAL_MS = 5000;         // 5s between polls
-const MAX_POLL_ATTEMPTS = 180;         // 15 minutes max (Video Agent is slower)
+const MAX_POLL_ATTEMPTS = 360;         // 30 minutes max — HeyGen Video Agent can take 20+ min
 
 // ============================================================================
 // TYPES
