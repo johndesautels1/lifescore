@@ -386,6 +386,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   // Legacy video generation state (for backwards compatibility)
   const [videoGenerationProgress, setVideoGenerationProgress] = useState('');
+
+  // Collapsible panel state — defaults: media open, others collapsed
+  const [panelMediaOpen, setPanelMediaOpen] = useState(true);
+  const [panelEvidenceOpen, setPanelEvidenceOpen] = useState(false);
+  const [panelVerdictOpen, setPanelVerdictOpen] = useState(false);
   const videoPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Simulated video progress bar — runs during video generation (~90s estimated)
@@ -1488,8 +1493,24 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          VIDEO VIEWPORT - Replicate Christiano's Report
+          PANEL: JUDGE'S VIDEO & MEDIA
       ═══════════════════════════════════════════════════════════════════ */}
+      <div className={`collapsible-panel ${panelMediaOpen ? 'open' : ''}`}>
+        <button
+          className="panel-header-bar"
+          onClick={() => setPanelMediaOpen(prev => !prev)}
+        >
+          <span className="panel-icon">🎬</span>
+          <span className="panel-title">JUDGE'S VIDEO & MEDIA</span>
+          <span className="panel-summary">
+            {judgeReport?.videoStatus === 'ready' ? 'Video ready' :
+             isGeneratingVideo ? 'Generating...' :
+             judgeReport ? 'Video pending' : 'Awaiting verdict'}
+          </span>
+          <span className={`panel-chevron ${panelMediaOpen ? 'open' : ''}`}>▼</span>
+        </button>
+        <div className="panel-content" style={{ display: panelMediaOpen ? 'block' : 'none' }}>
+
       <section className="video-viewport-section">
         <div className="viewport-frame">
           <div className="viewport-bezel">
@@ -1744,6 +1765,28 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         </button>
       </section>
 
+        </div>{/* end panel-content: media */}
+      </div>{/* end collapsible-panel: media */}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          PANEL: EVIDENCE & ANALYSIS
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className={`collapsible-panel ${panelEvidenceOpen ? 'open' : ''}`}>
+        <button
+          className="panel-header-bar"
+          onClick={() => setPanelEvidenceOpen(prev => !prev)}
+        >
+          <span className="panel-icon">📊</span>
+          <span className="panel-title">EVIDENCE & ANALYSIS</span>
+          <span className="panel-summary">
+            {judgeReport
+              ? `${city1Name} ${judgeReport.summaryOfFindings.city1Score} vs ${city2Name} ${judgeReport.summaryOfFindings.city2Score}`
+              : 'Awaiting verdict'}
+          </span>
+          <span className={`panel-chevron ${panelEvidenceOpen ? 'open' : ''}`}>▼</span>
+        </button>
+        <div className="panel-content" style={{ display: panelEvidenceOpen ? 'block' : 'none' }}>
+
       {/* ═══════════════════════════════════════════════════════════════════
           SUMMARY OF FINDINGS
       ═══════════════════════════════════════════════════════════════════ */}
@@ -1874,6 +1917,30 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           })}
         </div>
       </section>
+
+        </div>{/* end panel-content: evidence */}
+      </div>{/* end collapsible-panel: evidence */}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          PANEL: VERDICT & ACTIONS
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className={`collapsible-panel ${panelVerdictOpen ? 'open' : ''}`}>
+        <button
+          className="panel-header-bar"
+          onClick={() => setPanelVerdictOpen(prev => !prev)}
+        >
+          <span className="panel-icon">⚖️</span>
+          <span className="panel-title">VERDICT & ACTIONS</span>
+          <span className="panel-summary">
+            {judgeReport?.executiveSummary
+              ? `🏆 ${judgeReport.executiveSummary.recommendation === 'city1' ? city1Name
+                  : judgeReport.executiveSummary.recommendation === 'city2' ? city2Name
+                  : 'TIE'}`
+              : 'Verdict pending'}
+          </span>
+          <span className={`panel-chevron ${panelVerdictOpen ? 'open' : ''}`}>▼</span>
+        </button>
+        <div className="panel-content" style={{ display: panelVerdictOpen ? 'block' : 'none' }}>
 
       {/* ═══════════════════════════════════════════════════════════════════
           EXECUTIVE SUMMARY & RECOMMENDATION
@@ -2031,6 +2098,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           />
         </section>
       )}
+
+        </div>{/* end panel-content: verdict */}
+      </div>{/* end collapsible-panel: verdict */}
 
       {/* ═══════════════════════════════════════════════════════════════════
           FOOTER
