@@ -23,7 +23,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, startTransition } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
@@ -244,42 +244,34 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [reportLoadError, setReportLoadError] = useState<string | null>(null);
 
   // FIX 2026-01-27: Compute comparison result without state updates during render
-  // Use a ref to track the error to update via useEffect
+  // FIX 2026-02-14: Memoize lookup to avoid .find() on every render (INP optimisation)
   const computedErrorRef = useRef<string | null>(null);
 
-  // Determine which comparison to use (no state updates here!)
-  let comparisonResult: EnhancedComparisonResult | ComparisonResult | null = null;
-  computedErrorRef.current = null;
-
-  if (selectedComparisonId) {
-    // Look up in saved standard comparisons
-    const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
-    if (savedStd?.result) {
-      if (savedStd.result.city1 && savedStd.result.city2) {
-        comparisonResult = savedStd.result;
-      } else {
-        console.error('[JudgeTab] Standard comparison missing city data:', selectedComparisonId);
-        computedErrorRef.current = 'Report data is corrupted - missing city information';
+  const { comparisonResult, computedError } = useMemo(() => {
+    if (selectedComparisonId) {
+      // Look up in saved standard comparisons
+      const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
+      if (savedStd?.result) {
+        if (savedStd.result.city1 && savedStd.result.city2) {
+          return { comparisonResult: savedStd.result as EnhancedComparisonResult | ComparisonResult, computedError: null };
+        }
+        return { comparisonResult: null, computedError: 'Report data is corrupted - missing city information' };
       }
-    } else {
       // Look up in saved enhanced comparisons
       const savedEnh = savedEnhanced.find(c => c.result?.comparisonId === selectedComparisonId);
       if (savedEnh?.result) {
         if (savedEnh.result.city1 && savedEnh.result.city2) {
-          comparisonResult = savedEnh.result;
-        } else {
-          console.error('[JudgeTab] Enhanced comparison missing city data:', selectedComparisonId);
-          computedErrorRef.current = 'Report data is corrupted - missing city information';
+          return { comparisonResult: savedEnh.result as EnhancedComparisonResult | ComparisonResult, computedError: null };
         }
-      } else {
-        console.error('[JudgeTab] Selected comparison not found in storage:', selectedComparisonId);
-        computedErrorRef.current = 'Selected report not found - it may have been deleted';
+        return { comparisonResult: null, computedError: 'Report data is corrupted - missing city information' };
       }
+      return { comparisonResult: null, computedError: 'Selected report not found - it may have been deleted' };
     }
-  } else {
     // No selection - use prop if available
-    comparisonResult = propComparisonResult || null;
-  }
+    return { comparisonResult: (propComparisonResult || null) as EnhancedComparisonResult | ComparisonResult | null, computedError: null };
+  }, [selectedComparisonId, savedComparisons, savedEnhanced, propComparisonResult]);
+
+  computedErrorRef.current = computedError;
 
   // Sync error state via useEffect - only update if error changed
   const prevErrorRef = useRef<string | null>(null);
@@ -1119,13 +1111,14 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 className="report-dropdown judge-report-dropdown"
                 value={selectedComparisonId ?? ''}
                 onChange={(e) => {
-                  // Cancel any pending video generation to prevent race condition
-                  cancelVideoGeneration();
-                  // Reset the checked comparison ref so new comparison can check for videos
-                  checkedComparisonIdRef.current = null;
-                  // FIX 7.2: Proper empty string vs null handling
                   const value = e.target.value;
+                  // Urgent: update select value immediately so the UI reflects the choice
                   setSelectedComparisonId(value === '' ? null : value);
+                  // Non-urgent: defer heavy work to avoid blocking paint (INP fix)
+                  startTransition(() => {
+                    cancelVideoGeneration();
+                    checkedComparisonIdRef.current = null;
+                  });
                 }}
               >
                 <option value="">Choose a report...</option>
@@ -1224,18 +1217,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             className="report-dropdown judge-report-dropdown"
             value={selectedComparisonId ?? ''}
             onChange={(e) => {
-              // Cancel any pending video generation to prevent race condition
-              cancelVideoGeneration();
-              // Reset the checked comparison ref so new comparison can check for videos
-              checkedComparisonIdRef.current = null;
-              // FIX 7.2: Proper empty string vs null handling
               const value = e.target.value;
+              // Urgent: update select value immediately so the UI reflects the choice
               setSelectedComparisonId(value === '' ? null : value);
-              setJudgeReport(null); // Clear existing report when switching
-              // FIX: Reset video player state when switching reports
-              setIsPlaying(false);
-              setCurrentVideoTime(0);
-              setVideoDuration(0);
+              // Non-urgent: defer heavy state updates to avoid blocking paint (INP fix)
+              startTransition(() => {
+                cancelVideoGeneration();
+                checkedComparisonIdRef.current = null;
+                setJudgeReport(null);
+                setIsPlaying(false);
+                setCurrentVideoTime(0);
+                setVideoDuration(0);
+              });
             }}
           >
             <option value="">
