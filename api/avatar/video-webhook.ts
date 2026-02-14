@@ -12,6 +12,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 
 const TIMEOUT_MS = 45000; // 45 seconds for all operations
 
@@ -99,11 +100,19 @@ export default async function handler(
 
     if (webhook.status === 'succeeded' && webhook.output) {
       // Extract video URL from output
-      const videoUrl = Array.isArray(webhook.output)
+      const providerUrl = Array.isArray(webhook.output)
         ? webhook.output[0]
         : webhook.output;
 
-      console.log('[VIDEO-WEBHOOK] Success! Video URL:', videoUrl);
+      console.log('[VIDEO-WEBHOOK] Success! Provider URL:', providerUrl);
+
+      // Persist video to Supabase Storage for permanent URL
+      // Webhook has no client waiting, so we can do this synchronously
+      const compId = video.comparison_id || video.id;
+      const filePath = `${compId}-${Date.now()}.mp4`;
+      const videoUrl = await persistVideoToStorage(providerUrl, 'judge-videos', filePath);
+
+      console.log('[VIDEO-WEBHOOK] Permanent URL:', videoUrl);
 
       // Update database with completed status (with timeout)
       const { error: updateError } = await withTimeout(

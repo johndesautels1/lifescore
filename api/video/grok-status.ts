@@ -12,6 +12,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoInBackground } from '../shared/persistVideo.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -371,17 +372,33 @@ export default async function handler(
 
       // Update database if completed or failed
       if (providerStatus.status === 'completed' && providerStatus.videoUrl) {
+        const providerUrl = providerStatus.videoUrl;
+
+        // Update database immediately with provider URL so client gets the video
         await supabaseAdmin
           .from('grok_videos')
           .update({
             status: 'completed',
-            video_url: providerStatus.videoUrl,
+            video_url: providerUrl,
             completed_at: new Date().toISOString(),
           })
           .eq('id', video.id);
 
+        // Persist to Supabase Storage in background (non-blocking)
+        const citySlug = (video.city_name || 'unknown').replace(/\s+/g, '-').toLowerCase();
+        const filePath = `${citySlug}-${video.video_type}-${Date.now()}.mp4`;
+        persistVideoInBackground(providerUrl, 'court-order-videos', filePath, async (permanentUrl) => {
+          if (permanentUrl !== providerUrl) {
+            await supabaseAdmin
+              .from('grok_videos')
+              .update({ video_url: permanentUrl })
+              .eq('id', video.id);
+            console.log('[GROK-STATUS] Updated to permanent URL:', permanentUrl);
+          }
+        });
+
         video.status = 'completed';
-        video.video_url = providerStatus.videoUrl;
+        video.video_url = providerUrl;
         video.completed_at = new Date().toISOString();
       } else if (providerStatus.status === 'failed') {
         await supabaseAdmin

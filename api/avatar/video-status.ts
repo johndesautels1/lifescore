@@ -12,9 +12,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoInBackground } from '../shared/persistVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const TIMEOUT_MS = 45000; // 45 seconds for all operations
+const TIMEOUT_MS = 15000; // 15 seconds for DB/API operations (reduced from 45s)
 
 export const config = {
   maxDuration: 30,
@@ -216,21 +217,38 @@ export default async function handler(
             const prediction = await response.json();
 
             if (prediction.status === 'succeeded' && prediction.output) {
-              // Update database with timeout
-              const videoUrl = Array.isArray(prediction.output)
+              // Extract provider URL (temporary - expires in 24-48h)
+              const providerUrl = Array.isArray(prediction.output)
                 ? prediction.output[0]
                 : prediction.output;
 
+              // Update database immediately with provider URL so client gets the video
               await withTimeout(
                 supabaseAdmin
                   .from('avatar_videos')
                   .update({
                     status: 'completed',
-                    video_url: videoUrl,
+                    video_url: providerUrl,
                     completed_at: new Date().toISOString(),
                   })
                   .eq('id', video.id)
               );
+
+              // Persist to Supabase Storage in background (non-blocking)
+              // This replaces the temporary provider URL with a permanent one
+              const compId = video.comparison_id || video.id;
+              const filePath = `${compId}-${Date.now()}.mp4`;
+              persistVideoInBackground(providerUrl, 'judge-videos', filePath, async (permanentUrl) => {
+                if (permanentUrl !== providerUrl) {
+                  await supabaseAdmin
+                    .from('avatar_videos')
+                    .update({ video_url: permanentUrl })
+                    .eq('id', video.id);
+                  console.log('[VIDEO-STATUS] Updated to permanent URL:', permanentUrl);
+                }
+              });
+
+              const videoUrl = providerUrl;
 
               // Track usage to quota system
               // Only track if video was processing (not already completed by webhook)
