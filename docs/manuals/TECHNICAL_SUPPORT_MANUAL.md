@@ -1,6 +1,6 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.2
+**Version:** 4.3
 **Last Updated:** February 14, 2026
 **Document ID:** LS-TSM-001
 
@@ -27,6 +27,9 @@
 17. [API Quota Monitoring System](#17-api-quota-monitoring-system)
 18. [TTS Fallback System](#18-tts-fallback-system)
 19. [Dual-Storage Save Architecture](#19-dual-storage-save-architecture)
+20. [App Prompts System](#20-app-prompts-system-added-2026-02-10)
+21. [Dark Mode Fixes for Saved Reports](#21-dark-mode-fixes-for-saved-reports-added-2026-02-14)
+22. [AUDIO Badge + Voice Wave Indicator](#22-audio-badge--voice-wave-indicator-added-2026-02-14)
 
 ---
 
@@ -393,7 +396,8 @@ Group related styles with headers:
 
 | Component | What It Does |
 |-----------|-------------|
-| `JudgeTab.tsx` | AI judge that renders a legal-style verdict. Generates analysis, creates avatar video, shows verdict with reasoning. |
+| `JudgeTab.tsx` | AI judge that renders a legal-style verdict. Generates analysis, creates avatar video, shows verdict with reasoning. Features 3 collapsible panels (Media, Evidence, Verdict) with live stats in headers. |
+| `GoToMyNewCity.tsx` | HeyGen multi-scene relocation video at bottom of JudgeTab. Uses HeyGen Video Generate v2 API with storyboard. Validates against 10K char limit. Poster image + CTA to Cluesnomads.com. |
 | `JudgeVideo.tsx` | Video player for pre-rendered judge avatar videos. |
 | `CourtOrderVideo.tsx` | Formatted court-order-style video report with legal styling. |
 | `GunComparisonModal.tsx` | Dedicated modal for comparing gun rights between jurisdictions. |
@@ -403,7 +407,7 @@ Group related styles with headers:
 | Component | What It Does |
 |-----------|-------------|
 | `VisualsTab.tsx` | Generates PDF/PPTX visual reports via Gamma API. Handles generation, polling, download. Read/Listen to Presenter toggle. |
-| `ReportPresenter.tsx` | Olivia video presenter with Live (PIP avatar overlay) and Video (pre-rendered MP4) sub-modes. |
+| `ReportPresenter.tsx` | Olivia video presenter with Live (PIP avatar overlay) and Video (pre-rendered MP4) sub-modes. AUDIO badge in top-right corner with animated voice wave indicator when playing. |
 | `NewLifeVideos.tsx` | Side-by-side winner (FREEDOM) vs loser (IMPRISONMENT) videos. Blob URL conversion for CORS-safe playback, expired URL detection, auto-reset after 3 failed loads, download with fetch→blob→ObjectURL. |
 | `AboutClues.tsx` | About Clues tab with 6 sub-tabs presenting the 18-page ecosystem document. |
 
@@ -412,7 +416,7 @@ Group related styles with headers:
 | Component | What It Does |
 |-----------|-------------|
 | `SettingsModal.tsx` | User preferences — theme, default view, comparison settings. |
-| `CostDashboard.tsx` | Shows API usage costs per provider (OpenAI, Tavily, Simli, etc.). |
+| `CostDashboard.tsx` | Shows API usage costs per provider (OpenAI, Tavily, Simli, etc.). Field-by-field merge of localStorage and DB records; auto-syncs patched records back to DB. |
 | `PricingModal.tsx` / `PricingPage.tsx` | Subscription tier display and Stripe checkout trigger. |
 | `FeatureGate.tsx` | Wraps features that require a specific tier. Shows upgrade prompt if locked. |
 | `CookieConsent.tsx` | GDPR cookie consent banner. |
@@ -908,7 +912,21 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
 }
 ```
 
-### 6.4 API Key Handling
+### 6.4 Auth Profile Fetch Retry Storm Fix (Added 2026-02-14)
+
+**Problem:** When a profile fetch from Supabase failed (e.g., network blip, cold start), the auth context would immediately retry, creating an exponential retry loop that could hammer Supabase Auth with hundreds of requests per second.
+
+**Fix:** Added a 60-second cooldown after a profile fetch failure. During the cooldown period, subsequent fetch attempts return the cached (possibly stale) profile data instead of making new network requests.
+
+**Behavior:**
+- First failure: Triggers cooldown timer (60 seconds)
+- During cooldown: Returns cached profile, no network requests
+- After cooldown expires: Next access attempt makes a fresh fetch
+- Successful fetch: Resets cooldown timer
+
+**Impact:** Prevents exponential retry loops from overwhelming Supabase Auth during transient failures.
+
+### 6.5 API Key Handling
 
 User-provided API keys are:
 - Passed in request body (not stored)
@@ -1047,7 +1065,24 @@ const profile = await withRetryFallback(
 - `src/hooks/useTierAccess.ts` - Tier checking
 - `src/components/JudgeTab.tsx` - Judge report operations
 
-### 7.6 LLM Evaluator Retry Logic (Added 2026-02-04)
+### 7.6 Supabase Cold Start Warm-Up + LRU Cache (Added 2026-02-14)
+
+**Warm-Up Ping:**
+On app load, a lightweight ping is sent to Supabase to "wake up" any cold-started connection pools. This prevents the first real user action from experiencing a 2-5 second cold start delay.
+
+```
+App mounts → useEffect fires warm-up ping →
+→ supabase.from('profiles').select('id').limit(1) →
+→ Response discarded (fire-and-forget)
+```
+
+**Retry Logic Fix:**
+The existing retry logic was using `.then()/.catch()` on a `PromiseLike` return from Supabase (not a real `Promise`). This caused silent failures where retries never actually executed. Fixed by properly `await`-ing the Supabase call to get a real Promise before applying retry logic.
+
+**LRU Cache Expansion:**
+Frequently accessed data (profiles, user preferences, tier status) now uses an expanded LRU (Least Recently Used) cache to reduce redundant Supabase queries during a session.
+
+### 7.7 LLM Evaluator Retry Logic (Added 2026-02-04)
 
 Both Gemini and Grok evaluators now include retry logic with exponential backoff to handle cold start timeouts and transient failures.
 
@@ -1088,7 +1123,7 @@ backoffMs = 2^(attempt-1) * 1000  // 1s, 2s, 4s delays
 - ❌ GPT-4o (uses SDK with built-in retry)
 - ❌ Perplexity (single attempt currently)
 
-### 7.7 Cost Tracking Auto-Sync (Added 2026-02-04)
+### 7.8 Cost Tracking Auto-Sync (Added 2026-02-04)
 
 API cost data is now automatically synchronized to Supabase after each comparison completes (Fix #50).
 
@@ -1113,6 +1148,33 @@ Comparison completes → finalizeCostBreakdown() →
 // or on failure:
 [App] Cost DB sync failed (non-fatal): <error message>
 ```
+
+### 7.9 Cost Dashboard $0 Fix (3 Bugs Fixed) (Added 2026-02-14)
+
+The CostDashboard was displaying $0.00 for many comparisons due to three separate bugs:
+
+**Bug 1 — DB/localStorage Merge Logic:**
+`CostDashboard.tsx` `loadCosts()` discarded localStorage records when DB records existed for the same `comparisonId`. However, the DB record was saved at comparison time BEFORE post-comparison services (Gamma, Olivia, TTS, Avatar) ran, so DB records were always missing those costs.
+
+*Fix:* Field-by-field merge taking `max(DB, localStorage)` for each individual service cost field (e.g., `tavily_cost`, `gamma_cost`, `tts_cost`).
+
+**Bug 2 — `appendServiceCost()` Never Synced to DB:**
+The `appendServiceCost()` function only wrote to localStorage and never synced the updated record back to Supabase, so DB records remained permanently stale.
+
+*Fix:* CostDashboard now auto-syncs patched (merged) records back to DB in a fire-and-forget pattern after loading and merging.
+
+**Bug 3 — Perplexity Missing `stream: false`:**
+The Perplexity API request in `evaluate.ts` was missing `stream: false` in the request body. Without this flag, Perplexity returns a streaming response that does not include `usage` data (token counts), so cost calculation returned $0.00.
+
+*Fix:* Added `stream: false` to the Perplexity request body. Added diagnostic logging of token usage. Added fallback token estimation from prompt/response length when usage data is still unavailable.
+
+### 7.10 Grok Business Category Batch Splitting (Added 2026-02-14)
+
+**Problem:** The Business & Work category contains 25 metrics — the largest of all 6 categories. Sending all 25 metrics to the Grok API in a single request caused timeouts due to the combined prompt size and search overhead (Grok includes X/Twitter search for each metric).
+
+**Fix:** The Business & Work category is now automatically split into smaller batches for Grok evaluation. Each batch is sent as a separate API call, and the results are merged on the server before returning to the client.
+
+**Applies To:** Grok 4 provider only. Other providers (Claude, GPT-4o, Gemini, Perplexity) handle 25 metrics in a single call without timeout issues.
 
 ---
 
@@ -1330,7 +1392,115 @@ User clicks "Generate Video" in ReportPresenter →
 | `HEYGEN_CHRISTIAN_AVATAR_ID` | Judge Christiano avatar ID — video presenter |
 | `HEYGEN_CHRISTIAN_VOICE_ID` | Judge Christiano voice ID — video presenter |
 
-### 9.8 Court Order Video Storage (Added 2026-02-11)
+### 9.8 Judge Page Collapsible Panels (Added 2026-02-14)
+
+The Judge page now features 3 collapsible panels to reduce visual clutter and improve navigation:
+
+| Panel | Default State | Live Stats in Header |
+|-------|--------------|---------------------|
+| Media | Open (`panelMediaOpen: true`) | Video status (ready/generating/none) |
+| Evidence | Closed (`panelEvidenceOpen: false`) | Score counts, evidence items |
+| Verdict | Closed (`panelVerdictOpen: false`) | Winner city, margin |
+
+**Implementation Details:**
+- Uses `display: none` CSS (NOT conditional React unmount) — DOM stays mounted, all refs and effects stay alive
+- 3 new `useState` hooks: `panelMediaOpen`, `panelEvidenceOpen`, `panelVerdictOpen`
+- ~102 lines of CSS added to `JudgeTab.css` for panel headers, toggle icons, and collapse animations
+- Panel headers are clickable and show live stats (video status, scores, winner) without needing to expand
+
+**Why `display: none` instead of conditional rendering:**
+Conditional unmount would destroy video elements, abort in-flight fetches, and reset internal component state. `display: none` preserves the entire DOM subtree and React fiber tree while hiding content visually.
+
+### 9.9 GoToMyNewCity Video System v2 (Added 2026-02-14)
+
+New component for HeyGen multi-scene relocation video generation.
+
+**Location:** Bottom of JudgeTab, appears when a judge report is loaded.
+
+**Flow:**
+```
+Judge report loaded → GoToMyNewCity component mounts →
+→ User clicks "Generate" →
+→ Builds multi-scene storyboard from judge verdict data →
+→ Validates script lengths against HeyGen 10,000 char limit →
+→ Submits to HeyGen Video Generate v2 API →
+→ Polls for completion →
+→ Displays video with poster image and CTA to Cluesnomads.com
+```
+
+**Key Features:**
+- HeyGen Video Generate v2 API with multi-scene storyboard
+- Script length validation against HeyGen's 10,000 character limit (error code 400175)
+- Poster image displayed before video plays
+- Call-to-action button linking to Cluesnomads.com
+- Slim storyboard schema to keep prompt under character limit
+
+### 9.10 HeyGen Timeouts + Supabase Query Reliability (Added 2026-02-14)
+
+- Added timeout handling for HeyGen video generation to prevent hanging requests
+- Fixed Supabase query reliability issues during HeyGen operations (race conditions when polling status while DB writes are in-flight)
+- Expired video URL detection and automatic re-generation logic
+
+### 9.11 Judge Page Video Persistence + Auto-Restore (Added 2026-02-14)
+
+Videos now persist when switching tabs and auto-restore on tab re-entry:
+
+**Behavior:**
+- Video URLs are saved to Supabase when generation completes
+- On tab switch away from Judge, video state is preserved in memory
+- On tab re-entry, if video state is lost (e.g., browser GC), auto-restores from Supabase
+- Eliminates the "lost video" problem where users had to re-generate after tab switching
+
+### 9.12 Expired Video URL Fixes (3 commits) (Added 2026-02-14)
+
+Three separate categories of expired video URLs were fixed:
+
+| Provider | Expiration Window | Fix Applied |
+|----------|------------------|-------------|
+| Replicate | ~24 hours | HEAD request validation + localStorage quota crash guard (`try/catch` around `setItem`) |
+| Court Order CDN | Same as Judge Verdict | URL validity check before display; same pattern as Judge fix |
+| HeyGen | Variable | Expiration-aware validation and re-fetch logic |
+
+**localStorage Quota Guard:**
+All `localStorage.setItem` calls for video URLs are now wrapped in try/catch to prevent `QuotaExceededError` from crashing the app when storage is full.
+
+### 9.13 Video URL Expiration + Industry Standard Timeouts (Added 2026-02-14)
+
+All video providers now use expiration-aware URL handling:
+- URLs are validated before display (HEAD request or metadata check)
+- Expired URLs trigger re-fetch from provider or show "expired" placeholder
+- Timeouts standardized to industry norms across all video generation endpoints
+
+### 9.14 Cristiano HeyGen Video 422 Fix (Added 2026-02-14)
+
+**Problem:** Alignment error between storyboard QA validation and HeyGen render validation. QA passed scripts that the HeyGen render endpoint rejected (HTTP 422) due to different character counting methods.
+
+**Root Cause:** The storyboard QA used JavaScript `string.length` for character counting, but HeyGen's backend counts characters differently (possibly including markup or using UTF-16 code units vs. grapheme clusters).
+
+**Fix:** Aligned the QA validation character counting method with HeyGen's counting method, ensuring scripts that pass QA also pass render validation.
+
+### 9.15 HeyGen 10K Prompt Limit Fixes (3 commits) (Added 2026-02-14)
+
+Three incremental fixes to handle HeyGen's 10,000 character prompt limit (error code 400175):
+
+1. **Database schema:** Added `comparison_id` column to `judge_reports` table to link reports to their comparison context
+2. **Slim storyboard schema:** Reduced prompt payload size by removing redundant data fields from the storyboard JSON
+3. **Prompt-size pre-check:** Added validation before sending to HeyGen API — if prompt exceeds 10,000 characters, it is trimmed or split before submission
+
+### 9.16 Storyboard QA Word Count + Progress Bar (Added 2026-02-14)
+
+- Word count validation added to storyboard QA to catch overlong scripts before they reach HeyGen
+- Video generation progress bar showing real-time status updates during HeyGen video rendering
+- Progress bar uses poll-based estimation similar to the Grok video progress formula
+
+### 9.17 Cristiano Video CTA + Poster/Logo (Added 2026-02-14)
+
+Judge verdict video (Cristiano avatar) now includes branding elements:
+- "Visit Cluesnomads.com" call-to-action displayed on video
+- Poster image shown before video playback begins
+- Logo overlay on the video player
+
+### 9.18 Court Order Video Storage (Added 2026-02-11)
 
 Court Order videos can now be uploaded to Supabase Storage for permanent access:
 - **Bucket:** `user-videos` (100 MB limit, public reads)
@@ -1338,7 +1508,7 @@ Court Order videos can now be uploaded to Supabase Storage for permanent access:
 - **Column:** `court_orders.video_storage_path`
 - RLS policies enforce user-owned uploads only
 
-### 9.6 Judge Pre-generation System
+### 9.19 Judge Pre-generation System
 
 **Added:** 2026-01-29
 
@@ -1417,7 +1587,17 @@ User clicks Judge tab (JudgeTab.tsx)
 
 **Impact:** Login input responsiveness improved from 247ms to <50ms INP. All interactive overlays now meet Core Web Vitals thresholds.
 
-### 10.3 Recommended Fixes
+### 10.3 INP Fix — Judge Report Dropdown (Applied 2026-02-14)
+
+**Problem:** Judge report dropdown selector had 354ms Interaction to Next Paint (INP), far exceeding Core Web Vitals threshold.
+
+**Root Cause:** Selecting a report from the dropdown triggered expensive DOM re-renders of the entire judge verdict panel, including re-layout of evidence sections and video elements.
+
+**Fix:** Removed the expensive DOM re-renders on judge report selection. The dropdown now updates the selected report ID in state without triggering a full re-render cascade.
+
+**Impact:** Dropdown response time reduced from 354ms to ~50ms INP.
+
+### 10.4 Recommended Fixes
 
 **Priority 1 - Quick Wins:**
 1. Reduce LLM timeout to 120s
@@ -1436,7 +1616,7 @@ User clicks Judge tab (JudgeTab.tsx)
 3. Cache write after evaluation
 4. Delta updates for stale data
 
-### 10.3 Expected Improvements
+### 10.5 Expected Improvements
 
 | Fix | Time Saved |
 |-----|------------|
@@ -1541,7 +1721,37 @@ User clicks Judge tab (JudgeTab.tsx)
 - `VITE_DEV_BYPASS_EMAILS` → Admin check now server-side via `/api/admin-check`
 - `VITE_KV_REST_API_*` → Now proxied via `/api/kv-cache`
 
-### 12.3 Build Commands
+### 12.3 Timeout Safety Nets (Added 2026-02-14)
+
+Timeouts have been added to multiple serverless endpoints to prevent hanging requests from exhausting Vercel function execution time:
+
+| Endpoint | Timeout Added | Purpose |
+|----------|--------------|---------|
+| GDPR delete (`/api/user/delete`) | Yes | Prevents hung deletion from blocking function slot |
+| Stripe webhook (`/api/stripe/webhook`) | Yes | Prevents slow Stripe processing from timing out silently |
+| Report sharing (`/api/report/share`) | Yes | Prevents large report uploads from hanging indefinitely |
+| Database operations (various) | Yes | Prevents stuck Supabase queries from consuming function time |
+
+**Pattern:** Each endpoint wraps its core logic in a `Promise.race` with a timeout promise, returning a 504 Gateway Timeout response if the operation exceeds the allowed duration.
+
+### 12.4 Upload Timeout Increases (Added 2026-02-14)
+
+Upload timeouts were increased to prevent failures on large payloads:
+
+| Upload Type | Old Timeout | New Timeout | Reason |
+|-------------|------------|-------------|--------|
+| Report HTML upload | 60s | 180s | Large HTML reports with embedded images were timing out |
+| User video upload | 120s | 240s | High-resolution court order videos exceeding previous limit |
+
+### 12.5 200MB File Size Limit on Reports Bucket (Added 2026-02-14)
+
+The `reports` Supabase Storage bucket now enforces a 200MB maximum file size:
+- Previously: No size limit enforced
+- Now: 200MB hard limit
+- Prevents accidental oversized uploads from consuming storage quota
+- Returns a clear error message when limit is exceeded
+
+### 12.6 Build Commands
 
 ```bash
 # Development
@@ -1632,6 +1842,28 @@ npm run preview
 | Gamma reports not persisting | Foreign key violation on `comparison_id` — Supabase INSERT silently failed due to fire-and-forget `.then()` pattern | 2026-02-14 |
 | backdrop-filter blur causing INP | Removed `backdrop-filter: blur()` from 8 CSS files (GPU-intensive repaints on every interaction) | 2026-02-14 |
 | Trophy 🏆 on loser in Gamma report | Added explicit TROPHY PLACEMENT RULE to Gamma prompt + winner marker in data table + explicit Page 2 instructions | 2026-02-14 |
+| CostDashboard showing $0.00 | 3-bug fix: field-by-field DB/localStorage merge, appendServiceCost DB sync, Perplexity `stream: false` | 2026-02-14 |
+| Judge report dropdown 354ms INP | Removed expensive DOM re-renders on selection; now ~50ms | 2026-02-14 |
+| Replicate video URLs expiring after 24h | HEAD request validation + localStorage quota crash guard (try/catch) | 2026-02-14 |
+| Court Order CDN URLs expiring | URL validity check before display, same pattern as Judge fix | 2026-02-14 |
+| HeyGen video URLs expiring | Expiration-aware validation and re-fetch logic | 2026-02-14 |
+| HeyGen video generation hanging | Added timeout handling + Supabase query reliability fixes | 2026-02-14 |
+| Videos lost on Judge tab switch | Videos now persist in memory + auto-restore from Supabase on re-entry | 2026-02-14 |
+| GDPR/Stripe/share endpoints hanging | Added timeout safety nets to 4 endpoint categories | 2026-02-14 |
+| Auth profile fetch retry storm | Added 60-second cooldown after profile fetch failure | 2026-02-14 |
+| Report HTML upload timing out | Timeout increased from 60s to 180s | 2026-02-14 |
+| User video upload timing out | Timeout increased from 120s to 240s | 2026-02-14 |
+| No file size limit on reports bucket | 200MB limit enforced on reports storage bucket | 2026-02-14 |
+| Cristiano HeyGen video 422 error | Aligned QA character counting with HeyGen render validation | 2026-02-14 |
+| Judge reports lost on cache clear | Supabase fallback when localStorage misses judge report data | 2026-02-14 |
+| HeyGen 10K char prompt limit (400175) | Added comparison_id column, slim storyboard schema, prompt-size pre-check | 2026-02-14 |
+| Supabase cold start delays | Added warm-up ping on app load + fixed retry logic (PromiseLike vs Promise) | 2026-02-14 |
+| No storyboard word count validation | Word count validation + video generation progress bar added | 2026-02-14 |
+| Saved judge verdicts missing 6 categories | Load function now restores all 6 freedom category analysis sections | 2026-02-14 |
+| Grok timeout on Business category (25 metrics) | Automatic batch splitting for large category payloads | 2026-02-14 |
+| Dark mode: unreadable city names in saved reports | City names now use visible color in dark mode | 2026-02-14 |
+| Dark mode: date text hard to read | Date text now uses crisp white (#FFFFFF) in dark mode | 2026-02-14 |
+| AUDIO badge hidden at bottom of PIP | Badge moved to top-right corner + animated voice wave indicator when playing | 2026-02-14 |
 
 ---
 
@@ -1853,7 +2085,26 @@ try {
 }
 ```
 
-### 19.4 Debugging Save Issues
+### 19.4 Judge Report Persistence — Supabase Fallback (Added 2026-02-14)
+
+When loading a judge report, the system now falls back to Supabase when localStorage misses the data:
+
+**Lookup Order:**
+1. Check `localStorage` key `lifescore_judge_reports` for the `comparisonId`
+2. If not found: Query `supabase.from('judge_reports')` with `user_id` and `comparison_id`
+3. If found in Supabase: Backfill into localStorage for future instant access
+
+**Impact:** Judge reports now survive browser cache clearing, incognito sessions, and cross-device access. Previously, clearing browser data meant losing all judge report state.
+
+### 19.5 Missing 6 Category Sections in Saved Judge Verdicts (Added 2026-02-14)
+
+**Problem:** Loading a saved judge verdict only restored the executive summary. The 6 freedom category analysis sections (Financial, Personal, Social, Political, Digital, Physical) were missing.
+
+**Root Cause:** The save function was only persisting the top-level verdict fields (`winner`, `margin`, `verdict`) and not the nested `category_analysis` array containing the 6 detailed sections.
+
+**Fix:** The save and load functions now correctly serialize and deserialize all 6 freedom category analysis sections alongside the executive summary.
+
+### 19.6 Debugging Save Issues
 
 | Symptom | Check |
 |---------|-------|
@@ -1862,7 +2113,7 @@ try {
 | Data missing on new device | Verify user is logged in (Supabase auth) |
 | Duplicate entries | Check upsert onConflict constraints in databaseService.ts |
 
-### 19.5 Key Files
+### 19.7 Key Files
 
 | File | Role |
 |------|------|
@@ -1915,6 +2166,38 @@ The Gamma standard report prompt (`formatComparisonForGamma()` in `gammaService.
 
 ---
 
+## 21. Dark Mode Fixes for Saved Reports (Added 2026-02-14)
+
+Two dark mode readability issues were fixed in the saved reports view:
+
+| Element | Problem | Fix |
+|---------|---------|-----|
+| City names | Unreadable dark text on dark background | City names now use a visible color that contrasts with dark mode backgrounds |
+| Date text | Low contrast gray text | Date text now uses crisp white (`#FFFFFF`) in dark mode for maximum readability |
+
+**Affected Components:** SavedComparisons display, any component rendering city names and dates from saved comparison data.
+
+---
+
+## 22. AUDIO Badge + Voice Wave Indicator (Added 2026-02-14)
+
+The PIP (Picture-in-Picture) player for the Report Presenter received two visual improvements:
+
+**Badge Relocation:**
+- Previously: AUDIO badge was at the bottom of the PIP player, often obscured by video controls
+- Now: Badge is positioned at the top-right corner of the PIP player for immediate visibility
+
+**Animated Voice Wave Indicator:**
+- When audio is actively playing, an animated voice wave (CSS animation) appears next to the AUDIO badge
+- Provides clear visual feedback that the presenter is speaking
+- Animation stops when audio pauses or ends
+
+**Files Affected:**
+- `src/components/ReportPresenter.tsx` — Badge positioning and wave indicator logic
+- `src/components/ReportPresenter.css` — Badge position styles and `@keyframes` voice wave animation
+
+---
+
 ## Document Control
 
 | Version | Date | Author | Changes |
@@ -1929,6 +2212,7 @@ The Gamma standard report prompt (`formatComparisonForGamma()` in `gammaService.
 | 4.0 | 2026-02-13 | Claude Opus 4.6 | Major update: 21 DB tables (was 18), 3 storage buckets, new app_prompts/invideo_overrides tables, sequential video generation, blob URL playback, expired URL detection, Promise.allSettled, progress bar fix, 12 new resolved issues, JWT auth on 8+ endpoints, admin check caching, Prompts system (§20), new env vars, deprecated VITE_* vars |
 | 4.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§9.7): HeyGen pre-rendered video pipeline + live presenter PIP overlay. New API endpoint (§4.8), new services (presenterService, presenterVideoService), new types (presenter.ts), new component (ReportPresenter), VisualsTab Read/Listen toggle |
 | 4.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes documented: (1) Gamma trophy placement fix — 3 safeguards added to prompt (§20.4), (2) Gamma persistence fix — foreign key violation resolved, (3) backdrop-filter blur removed from 8 CSS files for INP (§10.2), (4) Login input 247ms INP fix, (5) "Watch" → "Listen to Presenter" rename. 5 new resolved issues (§14.2). |
+| 4.3 | 2026-02-14 | Claude Opus 4.6 | Major update: 23 technical changes documented. New sections: Judge collapsible panels (§9.8), GoToMyNewCity video v2 (§9.9), HeyGen timeouts (§9.10), Judge video persistence (§9.11), expired URL fixes for 3 providers (§9.12), video URL expiration (§9.13), Cristiano 422 fix (§9.14), HeyGen 10K limit fixes (§9.15), storyboard QA (§9.16), Cristiano CTA/poster (§9.17). Performance: Judge dropdown INP 354ms→50ms (§10.3). Infrastructure: timeout safety nets (§12.3), upload timeout increases (§12.4), 200MB reports limit (§12.5). Auth: profile fetch retry storm fix (§6.4). LLM: Supabase cold start warm-up + LRU cache (§7.6), Grok batch splitting (§7.10), Cost Dashboard $0 triple-fix (§7.9). Storage: Judge report Supabase fallback (§19.4), missing 6 categories fix (§19.5). UI: dark mode saved reports (§21), AUDIO badge + voice wave (§22). 23 new resolved issues (§14.2). |
 
 ---
 

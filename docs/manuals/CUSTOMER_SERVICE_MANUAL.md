@@ -1,6 +1,6 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.2
+**Version:** 3.3
 **Last Updated:** February 14, 2026
 **Document ID:** LS-CSM-001
 
@@ -216,6 +216,40 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 **Action:** Log city request in feedback system with user details.
 
+### 4.5 "Where did the Judge page content go? It looks different."
+
+**Expected Response:**
+"We've redesigned the Judge page with collapsible panels to reduce clutter. Your content is all still there — it's organized into three panels: Media (video player), Evidence (findings and category analysis), and Verdict (executive summary and Court Order). Click any panel's header bar to expand or collapse it. The Media panel is open by default; the Evidence and Verdict panels are collapsed."
+
+**Actions:**
+1. Explain the three-panel layout (Media, Evidence, Verdict)
+2. Note that each panel header shows live summary stats
+3. Reassure user that no content was removed — it's reorganized
+
+### 4.6 "My video disappeared after I switched tabs"
+
+**Expected Response:**
+"This issue has been resolved. Videos on the Judge page now auto-restore when you return to the tab. The system retrieves your video URLs from the cloud automatically. If you're still experiencing this, try refreshing the page — the video should reload from your saved data."
+
+**Root Cause (resolved):** Video URLs were stored only in component state and lost on tab switch. Fix: auto-restore from Supabase on re-entry.
+
+### 4.7 "The Judge page only shows the executive summary, not the category breakdown"
+
+**Expected Response:**
+"This was a known issue that has been fixed. When loading saved judge verdicts, all 6 freedom category sections now appear correctly in the Evidence panel. Please refresh the page or reload your saved report. If the issue persists, try clearing your browser cache and reloading."
+
+### 4.8 "The Cost Dashboard shows $0.00 for everything"
+
+**Expected Response:**
+"This was a display issue where cost data wasn't captured for services that run after the initial comparison saves. This has been fixed — the dashboard now merges data from multiple sources and takes the highest recorded values. Please refresh the Cost Dashboard. If values still show $0.00 after a new comparison, please contact support."
+
+**Root Cause (resolved):** Database records were saved before post-comparison services (Gamma, Olivia, TTS, Avatar, Perplexity) finished running. Fix: field-by-field merge from localStorage + auto-sync back to DB.
+
+### 4.9 "I can't read city names or dates on saved reports in dark mode"
+
+**Expected Response:**
+"Thank you for reporting this. We've fixed the dark mode styling for saved reports — city names and dates now display with proper contrast. Please refresh the page to see the fix. If text is still hard to read, try toggling dark mode off and on again in Settings."
+
 ---
 
 ## 5. Troubleshooting Guide
@@ -265,6 +299,11 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Only one video plays | Both videos use independent playback — one failing won't block the other |
 | Progress bar stuck at 73% | Fixed — progress now scales smoothly to 95% during generation |
 | Download works but playback doesn't | Try clicking play again; blob URLs load asynchronously |
+| Video disappeared after tab switch | Fixed — videos now auto-restore from Supabase on tab re-entry |
+| Court Order video broken/expired | Fixed — Court Order videos no longer use expiring provider CDN URLs |
+| HeyGen presenter video expired | Fixed — HeyGen URLs now validated before display; auto re-fetched if expired |
+| Browser crashed with quota error | Fixed — localStorage quota overflow is now caught gracefully |
+| Storyboard generation fails with 422 | Fixed — storyboard QA and render validation alignment corrected |
 
 **Note (Updated 2026-02-13):** Video playback has been significantly improved:
 - Videos use secure blob URLs for cross-origin playback
@@ -272,6 +311,16 @@ Currently, LifeScore supports **200 metropolitan areas**:
 - Each video plays independently (one failing won't block the other)
 - Progress bar now smoothly tracks from 0% to 95% during generation
 - Download button works independently of playback
+
+**Note (Updated 2026-02-14):** Comprehensive video URL expiration handling added:
+- **All providers covered:** Replicate, HeyGen, and Kling video URLs are now validated before display
+- **HEAD request validation:** Cached video URLs are tested with a HEAD request before being shown to the user
+- **Auto re-fetch:** Expired URLs trigger automatic re-generation — no manual user action needed
+- **localStorage quota protection:** Large video caches no longer crash the browser; quota errors are caught gracefully
+- **Court Order videos:** Fixed issue where Court Order videos used expiring provider CDN URLs
+- **HeyGen URLs:** Fixed HeyGen video URL expiration that caused broken presenter videos
+- **Storyboard progress bar:** New real-time progress bar during video generation with word-count QA validation
+- **Cristiano video:** Added "Visit Cluesnomads.com" CTA, poster image, and logo overlay; fixed 422 storyboard/render alignment error
 
 ### 5.5 Gamma Report Issues
 
@@ -287,6 +336,33 @@ Currently, LifeScore supports **200 metropolitan areas**:
 **Note (Updated 2026-02-14):** Two Gamma report issues fixed:
 - **Persistence fix:** Reports previously failed to save to the database due to a foreign key constraint on `comparison_id`. The save was fire-and-forget so errors were silently swallowed. Now fixed with proper error handling.
 - **Trophy placement fix:** The 🏆 trophy emoji in the Executive Summary was incorrectly placed next to the losing city instead of the winner. The Gamma AI prompt now explicitly marks which city is the winner with clear trophy placement rules.
+
+### 5.6 Judge Page Issues (Added 2026-02-14)
+
+| Issue | Solution |
+|-------|----------|
+| Judge page looks different / panels collapsed | Redesigned with collapsible panels — click header bars to expand Media, Evidence, or Verdict sections |
+| Only executive summary shows, no categories | Fixed — all 6 category sections now load correctly; refresh page |
+| Videos disappeared after tab switch | Fixed — videos auto-restore from Supabase on tab re-entry |
+| Judge dropdown selector feels slow | Fixed — response time reduced from 354ms to ~50ms |
+| Judge report missing after cache clear | Fixed — system falls back to Supabase when localStorage is empty |
+| GoToMyNewCity video not appearing | Only shows when a judge report is loaded; check Verdict panel |
+
+### 5.7 Cost Dashboard Issues (Added 2026-02-14)
+
+| Issue | Solution |
+|-------|----------|
+| All costs show $0.00 | Fixed — field-by-field merge now captures post-comparison service costs; run a new comparison |
+| Perplexity cost shows $0.00 | Fixed — Perplexity API now correctly returns token usage data |
+| Historical comparisons show $0.00 | Expected for comparisons run before the fix; only new comparisons will show correct costs |
+
+### 5.8 Dark Mode Issues (Added 2026-02-14)
+
+| Issue | Solution |
+|-------|----------|
+| Saved report city names unreadable | Fixed — proper contrast applied in dark mode |
+| Saved report dates hard to read | Fixed — crisp white text now used in dark mode |
+| Other dark mode text issues | Report specific elements to support for investigation |
 
 ---
 
@@ -397,12 +473,28 @@ Olivia is an AI assistant that can:
 - Knowledge based on training data
 - May occasionally provide incorrect information
 
-### 8.3 Judge Videos
+### 8.3 Judge Page Layout (Updated 2026-02-14)
+
+The Judge page now uses a **collapsible panel layout** with three sections:
+
+| Panel | Default | Contents |
+|-------|---------|----------|
+| **Media Panel** | Open | Video viewport + action buttons |
+| **Evidence Panel** | Collapsed | Summary of Findings + all 6 category analysis sections |
+| **Verdict Panel** | Collapsed | Executive Summary + Court Order + GoToMyNewCity video |
+
+Each panel header shows live summary stats (video status, scores, winner name). Users click the header bar to expand/collapse.
+
+**Common support issue:** Users may report "content is missing" — direct them to click the collapsed panel headers to expand and see their content.
+
+### 8.4 Judge Videos (Updated 2026-02-14)
 
 Animated video summaries featuring:
 - AI judge character (Christiano)
 - Verbal explanation of winner
 - Key factors highlighted
+- **"Visit Cluesnomads.com"** call-to-action overlay
+- **Poster image** and **logo overlay** on video player
 - 30-60 second duration
 
 ### 8.4 Gamma Reports
@@ -434,22 +526,41 @@ A glass-morphic card in the results view explains the 5-stage scoring pipeline:
 
 Users can click "How is this scored?" to see this breakdown.
 
-### 8.7 Court Order Videos (Updated 2026-02-13)
+### 8.7 GoToMyNewCity Video (Added 2026-02-14)
+
+A personalized multi-scene cinematic relocation video for the winning city, displayed at the bottom of the Judge Verdict panel:
+- Generated by HeyGen with multiple storyboard scenes
+- Features intro, city showcase scenes, and call-to-action with Cluesnomads.com branding
+- Only appears when a judge report is loaded
+- SOVEREIGN tier only
+
+**Common support issues:**
+| Issue | Solution |
+|-------|----------|
+| GoToMyNewCity video not showing | Ensure a judge report is loaded first — video only appears with an active verdict |
+| Video generation stuck | Allow up to 10 minutes; HeyGen multi-scene videos take longer than single-scene |
+
+### 8.8 Court Order Videos (Updated 2026-02-14)
 
 Saved Court Order videos from the Judge's verdict:
 - Generated by Kling AI (primary) for the winning city's "perfect life" scenario
 - Saved to both localStorage and Supabase (cloud backup)
 - Videos can be uploaded to permanent cloud storage (user-videos bucket)
 - Accessible from the Visual Reports / Saved tab
+- **URL expiration fix (2026-02-14):** Court Order videos previously used expiring provider CDN URLs. Now validated with HEAD requests before display; expired URLs trigger automatic re-fetch
 - SOVEREIGN tier only
 
-### 8.8 Olivia Video Presenter (Added 2026-02-13)
+### 8.9 Olivia Video Presenter (Updated 2026-02-14)
 
 Olivia can now present Gamma report findings as an AI avatar video:
 
 **Two modes:**
 - **Live Presenter:** Real-time avatar overlay on the report — instant, no generation wait
 - **Pre-Rendered Video:** Polished MP4 video of Olivia presenting — takes up to 10 minutes to generate, downloadable
+
+**PIP Enhancements (Added 2026-02-14):**
+- **AUDIO badge** repositioned from bottom to **top-right** of PIP video player for better visibility
+- **Animated voice wave indicator** appears when audio is actively playing, providing visual feedback that the presenter is speaking
 
 **How to access:**
 1. Go to the Visuals tab
@@ -473,7 +584,7 @@ Olivia can now present Gamma report findings as an AI avatar video:
 | Olivia chat voice broken but presenter works | Separate systems — check ElevenLabs/OpenAI keys, not HeyGen |
 | Presenter broken but chat voice works | Separate systems — check HeyGen keys, not ElevenLabs/OpenAI |
 
-### 8.10 Cost Dashboard
+### 8.10 Cost Dashboard (Updated 2026-02-14)
 
 Admin panel showing real-time API quota usage across all 16 providers. Access via the 💰 icon in the header.
 
@@ -481,6 +592,10 @@ Admin panel showing real-time API quota usage across all 16 providers. Access vi
 - Color-coded quota indicators (green/yellow/orange/red)
 - Automatic fallback activation when quotas exceeded
 - Email alerts sent at warning thresholds
+
+**$0.00 Display Fix (2026-02-14):** The Cost Dashboard previously showed $0.00 for Gamma, Olivia, TTS, Avatar, and Perplexity because database records were saved before those services completed. Fix: field-by-field merge taking higher values from localStorage + auto-sync back to DB. Perplexity API now correctly returns token usage data.
+
+**If a customer reports $0.00 values:** Ask them to run a new comparison. The fix applies automatically. Historical data may still show $0.00 for comparisons run before the fix.
 
 ### 8.11 Emilia Help Assistant
 
@@ -677,6 +792,27 @@ A: Our AI analyzes current legal information from authoritative sources. Each me
 **Q: Can I compare international cities?**
 A: Currently, we support 200 cities in North America and Europe. International expansion is planned.
 
+**Q: Why did my video disappear after switching tabs?**
+A: This was a known issue that has been fixed (2026-02-14). Videos on the Judge page now auto-restore from Supabase when you return to the tab. If a customer still reports this, ask them to refresh the page.
+
+**Q: The Judge page looks different / I can't find my content**
+A: The Judge page was redesigned with collapsible panels (2026-02-14). Content is organized into Media, Evidence, and Verdict panels. The Evidence and Verdict panels are collapsed by default — click the header bar to expand. No content was removed.
+
+**Q: My Judge report only shows the executive summary, where are the categories?**
+A: This was a bug fixed on 2026-02-14. All 6 freedom category sections now load correctly when viewing saved judge verdicts. Ask the customer to refresh or reload their saved report.
+
+**Q: What is the "Go To My New City" video?**
+A: A new personalized multi-scene cinematic video (added 2026-02-14) showing the winning city as a relocation destination. It appears at the bottom of the Judge Verdict panel when a report is loaded. Features Cluesnomads.com branding. SOVEREIGN tier only.
+
+**Q: My Cost Dashboard shows $0.00 for some services**
+A: This was a display bug fixed on 2026-02-14. Costs for Gamma, Olivia, TTS, Avatar, and Perplexity were not captured because the database saved before those services ran. The fix merges data from multiple sources. Ask the customer to run a new comparison — the fix applies automatically.
+
+**Q: Saved report text is hard to read in dark mode**
+A: Fixed on 2026-02-14. City names and dates in saved reports now display with proper contrast in dark mode. Ask the customer to refresh the page.
+
+**Q: My Judge report disappeared after clearing browser cache**
+A: Fixed on 2026-02-14. Judge reports now fall back to Supabase when localStorage is empty. The report should auto-load from the cloud. If it doesn't appear, ask the customer to check their internet connection and try the saved reports dropdown.
+
 ### Technical
 
 **Q: Why do Law and Lived scores differ?**
@@ -736,6 +872,12 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **Live Presenter** | Real-time avatar overlay on Gamma report using HeyGen streaming |
 | **Pre-Rendered Video** | Polished MP4 video of Olivia presenting report, generated by HeyGen |
 | **PIP (Picture-in-Picture)** | Small avatar overlay that appears on top of the report iframe |
+| **Collapsible Panel** | Expandable/collapsible UI section on the Judge page (Media, Evidence, Verdict) |
+| **GoToMyNewCity** | Multi-scene cinematic relocation video for the winning city, shown in Judge Verdict panel |
+| **HEAD Request Validation** | Server check to verify a video URL is still valid before displaying it to the user |
+| **Voice Wave Indicator** | Animated visual feedback on PIP player showing when audio is actively playing |
+| **Storyboard QA** | Word count and content validation step before video rendering begins |
+| **Field-by-Field Merge** | Cost Dashboard technique that takes the higher value from localStorage vs database for each cost field |
 
 ---
 
@@ -753,6 +895,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.0 | 2026-02-13 | Claude Opus 4.6 | Video playback overhaul: blob URLs, sequential generation, expired URL detection, independent playback, progress bar fix (§5.4). Court Order permanent storage (§8.7). Grok Videos detail (§8.5). New glossary terms. |
 | 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8.8): live avatar + pre-rendered video mode with troubleshooting. New glossary terms (Olivia Presenter, Live Presenter, Pre-Rendered Video, PIP). Section renumbering (§8.9→8.10, §8.9→8.11). |
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Gamma trophy 🏆 now placed on winner not loser (§5.5), (2) Gamma persistence — foreign key fix (§5.5), (3) backdrop-filter blur removed from 8 CSS files for INP, (4) Login input 247ms INP delay fixed (§5.1), (5) "Watch Presenter" → "Listen to Presenter" rename. |
+| 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page update: collapsible panels (§8.3), GoToMyNewCity video (§8.7), auto-restore videos on tab switch, missing 6 category sections fix, Judge dropdown INP fix. Video URL expiration: HEAD request validation for all providers, Court Order URL fix, HeyGen URL fix, localStorage quota protection (§5.4). Cost Dashboard $0.00 fix (§8.10). Cristiano video CTA + poster (§8.4). AUDIO badge + voice wave (§8.9). Storyboard progress bar. Dark mode saved reports fix. Judge report Supabase fallback. New customer inquiries (§4.5-4.9). New FAQs (§11). New glossary terms (§12). |
 
 ---
 

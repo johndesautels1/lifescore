@@ -1,7 +1,7 @@
 # LIFE SCORE - Legal Compliance Manual
 
-**Document Version:** 1.1
-**Last Updated:** February 13, 2026
+**Document Version:** 1.2
+**Last Updated:** February 14, 2026
 **Classification:** INTERNAL - Admin Access Only
 
 ---
@@ -81,10 +81,13 @@ We must honor these GDPR rights:
 | Right | Implementation | Endpoint |
 |-------|----------------|----------|
 | **Right to Access** | User can export all data | `/api/user/export` |
-| **Right to Deletion** | User can delete account | `/api/user/delete` |
+| **Right to Deletion** | User can delete account (timeout safety net) | `/api/user/delete` |
 | **Right to Rectification** | User can update profile | Settings page |
 | **Right to Portability** | JSON export available | `/api/user/export` |
 | **Right to Object** | Can opt out of analytics | Cookie settings |
+
+**GDPR Delete Endpoint — Timeout Safety Net (2026-02-14):**
+The `/api/user/delete` GDPR Right to Erasure endpoint now includes a timeout safety net to prevent hanging requests. This ensures the deletion process completes within Vercel serverless function limits (default 10s for Hobby, 60s for Pro). If any individual deletion step (profiles, comparisons, conversations, videos, reports, storage) exceeds the timeout, the request still returns a partial-success response rather than hanging indefinitely.
 
 ### 2.3 Data Processing Agreements (DPAs)
 
@@ -299,6 +302,7 @@ London W1W 5PF
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-14 | Legal, App Schema, Judge Equations, User, CS, Tech | Comprehensive update for 40 commits — collapsible panels, cost dashboard fix, video URL expiration, GoToMyNewCity, 200MB storage limit, GDPR timeout safety, HeyGen reliability, Supabase resilience | Claude Opus 4.6 |
 | 2026-02-13 | All Manuals | Comprehensive update for ~200 commits of changes | Claude Opus 4.6 |
 | 2026-02-10 | Security | JWT auth added to 8+ API endpoints; auth bypass fixed on /api/emilia/manuals | Claude Opus 4.6 |
 | 2026-02-02 | All | Added registered address | Claude |
@@ -323,6 +327,22 @@ A `user-videos` Supabase Storage bucket was added (2026-02-11) for Court Order v
 - Public read access for sharing
 - RLS: users can only upload to their own path (`user-videos/{userId}/`)
 - This constitutes a new data processing activity that should be reflected in the Privacy Policy
+
+### 8.5 Reports Storage Bucket — 200MB File Size Limit (2026-02-14)
+
+The `reports` Supabase Storage bucket now has a **200MB file size limit** enforced:
+- Previously the `reports` bucket had no explicit file size limit
+- The 200MB limit covers enhanced HTML reports which can be large due to embedded charts and data
+- The `user-videos` bucket remains at 100MB (documented in 8.4 above)
+- The `contrast-images` bucket remains at 5MB
+
+**Summary of all storage bucket limits:**
+
+| Bucket | Max File Size | Purpose |
+|--------|--------------|---------|
+| `reports` | **200MB** | HTML reports per user folder |
+| `user-videos` | 100MB | Court Order video uploads |
+| `contrast-images` | 5MB | AI contrast image copies |
 
 ---
 
