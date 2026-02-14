@@ -250,7 +250,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         };
         setJudgeReport(loadedReport);
       } else {
-        console.log('[JudgeTab] Full report not available, using summary data');
+        console.log('[JudgeTab] Full report not available from Supabase, checking localStorage...');
+
+        // FIX 2026-02-14: Before falling back to empty data, check localStorage
+        // for a full report that may have categoryAnalysis etc. intact.
+        const localReports = getSavedJudgeReports();
+        const localMatch = localReports.find(r => r.reportId === savedJudgeReport.reportId);
 
         // FIX 2026-02-14: Proactive video URL expiration check
         let fallbackVideoUrl = savedJudgeReport.videoUrl;
@@ -260,35 +265,44 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           fallbackVideoStatus = 'error';
         }
 
-        // Fallback: Convert SavedJudgeReport to JudgeReport format with limited data
+        // Use localStorage data if it has richer content (categoryAnalysis)
+        const source = (localMatch?.categoryAnalysis && localMatch.categoryAnalysis.length > 0) ? localMatch : savedJudgeReport;
+
         const loadedReport: JudgeReport = {
-          reportId: savedJudgeReport.reportId,
-          generatedAt: savedJudgeReport.generatedAt,
+          reportId: source.reportId,
+          generatedAt: source.generatedAt,
           userId: userId,
-          comparisonId: savedJudgeReport.comparisonId,
-          city1: savedJudgeReport.city1,
-          city2: savedJudgeReport.city2,
-          city1Country: (savedJudgeReport as any).city1Country,
-          city2Country: (savedJudgeReport as any).city2Country,
+          comparisonId: source.comparisonId,
+          city1: source.city1,
+          city2: source.city2,
+          city1Country: source.city1Country,
+          city2Country: source.city2Country,
           videoUrl: fallbackVideoUrl,
           videoStatus: (fallbackVideoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
-            city1Score: savedJudgeReport.summaryOfFindings.city1Score,
-            city1Trend: 'stable',
-            city2Score: savedJudgeReport.summaryOfFindings.city2Score,
-            city2Trend: 'stable',
-            overallConfidence: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+            city1Score: source.summaryOfFindings.city1Score,
+            city1Trend: source.summaryOfFindings.city1Trend || 'stable',
+            city2Score: source.summaryOfFindings.city2Score,
+            city2Trend: source.summaryOfFindings.city2Trend || 'stable',
+            overallConfidence: source.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
           },
-          categoryAnalysis: [],
+          categoryAnalysis: source.categoryAnalysis || [],
           executiveSummary: {
-            recommendation: savedJudgeReport.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
-            rationale: savedJudgeReport.executiveSummary.rationale,
-            keyFactors: [],
-            futureOutlook: '',
-            confidenceLevel: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+            recommendation: source.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
+            rationale: source.executiveSummary.rationale,
+            keyFactors: source.executiveSummary.keyFactors || [],
+            futureOutlook: source.executiveSummary.futureOutlook || '',
+            confidenceLevel: (source.executiveSummary.confidenceLevel || source.summaryOfFindings.overallConfidence) as 'high' | 'medium' | 'low',
           },
+          freedomEducation: source.freedomEducation,
         };
         setJudgeReport(loadedReport);
+
+        if (localMatch?.categoryAnalysis && localMatch.categoryAnalysis.length > 0) {
+          console.log('[JudgeTab] Loaded full report from localStorage fallback');
+        } else {
+          console.log('[JudgeTab] Using summary-only data (no categoryAnalysis available)');
+        }
       }
 
       // Notify parent that we loaded the report

@@ -93,17 +93,32 @@ export interface SavedJudgeReport {
   comparisonId: string;
   city1: string;
   city2: string;
+  city1Country?: string;
+  city2Country?: string;
   videoUrl?: string;
   videoStatus: string;
   summaryOfFindings: {
     city1Score: number;
+    city1Trend?: string;
     city2Score: number;
+    city2Trend?: string;
     overallConfidence: string;
   };
+  categoryAnalysis?: {
+    categoryId: string;
+    categoryName: string;
+    city1Analysis: string;
+    city2Analysis: string;
+    trendNotes: string;
+  }[];
   executiveSummary: {
     recommendation: string;
     rationale: string;
+    keyFactors?: string[];
+    futureOutlook?: string;
+    confidenceLevel?: string;
   };
+  freedomEducation?: any;
 }
 
 // ============================================================================
@@ -1256,23 +1271,34 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
 
       // Build SavedJudgeReport from Supabase record
       // FIX 2026-02-10: Use correct DB column names (city1/city2, verdict, key_findings)
+      // FIX 2026-02-14: Include ALL fields from full_report (categoryAnalysis, freedomEducation, etc.)
+      // Previously only saved summary data, which caused 6 category sections to appear empty.
       const newReport: SavedJudgeReport = {
         reportId: record.report_id,
         comparisonId: fullReport?.comparisonId || record.report_id,
         city1: record.city1 || fullReport?.city1 || 'Unknown',
         city2: record.city2 || fullReport?.city2 || 'Unknown',
+        city1Country: fullReport?.city1Country,
+        city2Country: fullReport?.city2Country,
         videoUrl: record.video_url || undefined,
         videoStatus: record.video_url ? 'ready' : 'none',
         generatedAt: record.created_at,
         summaryOfFindings: {
           city1Score: record.city1_score || fullReport?.summaryOfFindings?.city1Score || 0,
+          city1Trend: fullReport?.summaryOfFindings?.city1Trend || 'stable',
           city2Score: record.city2_score || fullReport?.summaryOfFindings?.city2Score || 0,
+          city2Trend: fullReport?.summaryOfFindings?.city2Trend || 'stable',
           overallConfidence: fullReport?.summaryOfFindings?.overallConfidence || 'medium',
         },
+        categoryAnalysis: fullReport?.categoryAnalysis || record.category_analysis || [],
         executiveSummary: {
           recommendation: record.verdict || fullReport?.executiveSummary?.recommendation || 'tie',
           rationale: fullReport?.executiveSummary?.rationale || '',
+          keyFactors: fullReport?.executiveSummary?.keyFactors || [],
+          futureOutlook: fullReport?.executiveSummary?.futureOutlook || '',
+          confidenceLevel: fullReport?.executiveSummary?.confidenceLevel || 'medium',
         },
+        freedomEducation: fullReport?.freedomEducation || null,
       };
 
       localReports.push(newReport);
@@ -1556,8 +1582,9 @@ export async function fetchFullJudgeReport(reportId: string): Promise<any | null
       return null;
     }
 
+    // FIX 2026-02-14: Pass factory function (not started promise) so retries create fresh requests
     const { data, error } = await withTimeout(
-      supabase
+      () => supabase
         .from('judge_reports')
         .select('*')
         .eq('report_id', reportId)
