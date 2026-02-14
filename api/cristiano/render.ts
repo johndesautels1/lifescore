@@ -149,39 +149,52 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
 
 /**
  * Format the storyboard JSON into a comprehensive prompt for HeyGen Video Agent.
- * This is the exact template that produces the premium cinematic format.
+ * CRITICAL: HeyGen Video Agent has a 10,000 character prompt limit.
+ * Uses compact JSON and trimmed instructions to stay under the cap.
  */
 function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
-  return `Create a finished ~120-second cinematic city tour video for the CLUES Life Score app feature: "Go To My New City."
+  // Strip fields HeyGen doesn't need to reduce JSON size
+  const slim = { ...storyboard };
+  // Remove thumbnail — HeyGen doesn't generate thumbnails
+  delete slim.thumbnail;
+  // Remove overlay_system — instructions already cover it
+  delete slim.overlay_system;
+  // Remove video_meta — timing is in scenes already
+  delete slim.video_meta;
 
-CRITICAL ID LOCK:
-- Use avatar/presenter ID: ${CRISTIANO_AVATAR_ID} (Cristiano). Do not substitute.
-- Use voice ID: ${CRISTIANO_VOICE_ID}. Do not substitute.
+  // Compact JSON (no pretty-print) saves ~1,600 chars
+  const json = JSON.stringify(slim);
 
-Use the following Storyboard JSON as the authoritative plan. Follow scene timing, captions, overlays, and category highlights exactly.
+  const prompt = `Create a ~120-second cinematic city tour video for CLUES Life Score "Go To My New City."
 
-Enable captions. Keep on-screen text short (max 6 words per line, max 2 lines). Preserve lower-right safe area for CLUES logo + QR.
+AVATAR LOCK:
+- Avatar ID: ${CRISTIANO_AVATAR_ID} (Cristiano). Do not substitute.
+- Voice ID: ${CRISTIANO_VOICE_ID}. Do not substitute.
 
-Overlays required:
-- Top-left Freedom Score badge
-- Top category score strip with 6 freedom categories
-- Lower-right reserved CLUES logo + QR box area (placeholder if needed)
+Follow the Storyboard JSON exactly: scene timing, captions, overlays, categories.
 
-VISUAL STYLE:
-- Cinematic, premium, modern
-- Moving shots only, no static tripod
-- Prefer footage implying: openness, mobility, sunlight, visibility, safety, choice, access
-- Avoid: grim police visuals, protests, surveillance closeups, propaganda
+Captions ON. On-screen text: max 6 words/line, max 2 lines. Reserve lower-right 15% for logo/QR.
 
-SCENE TYPES:
-- Scenes 1 and 9: A-ROLL (Cristiano on camera, clean studio/neutral background)
-- Scenes 2-8: B-ROLL (cinematic city footage with overlays and captions)
+Overlays: top-left Freedom Score badge, top category strip (6 categories), bottom-right logo/QR box.
 
-Storyboard JSON:
-${JSON.stringify(storyboard, null, 2)}
+STYLE: Cinematic, premium, modern. Moving shots only. Imply openness, mobility, sunlight, safety, choice. Avoid grim police, protests, surveillance, propaganda.
 
-If stock media is not directly accessible, use cinematic generic city footage placeholders and keep the timing identical. Do not change structure.
-End with: "Lifestyle scoring, not legal advice."`;
+SCENES: 1 & 9 = A-ROLL (Cristiano on camera). 2-8 = B-ROLL (city footage + overlays).
+
+Storyboard:
+${json}
+
+Use generic cinematic city footage if specific stock unavailable. Keep timing identical. End with: "Lifestyle scoring, not legal advice."`;
+
+  // Safety check — log warning if approaching limit
+  if (prompt.length > 9500) {
+    console.warn(`[RENDER] Prompt is ${prompt.length} chars (limit 10000). Consider shorter voiceover.`);
+  }
+  if (prompt.length > 10000) {
+    console.error(`[RENDER] Prompt EXCEEDS 10000 char limit at ${prompt.length} chars!`);
+  }
+
+  return prompt;
 }
 
 /**
