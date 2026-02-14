@@ -1027,8 +1027,8 @@
 }
 
 .saved-report-item .report-cities {
-  font-weight: 600;
-  color: var(--text-primary, #e0e0e0);
+  font-weight: 700;
+  color: #f5a623;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
