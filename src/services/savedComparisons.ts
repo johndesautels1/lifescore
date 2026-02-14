@@ -1503,14 +1503,14 @@ export async function fetchJudgeReportByCities(city1: string, city2: string): Pr
     if (!user) return null;
 
     // Try both column name variants (city1/city2 vs city1_name/city2_name)
-    // FIX A4: Pass factory function (not started promise) so retries create fresh requests
+    // FIX 2026-02-14: Single .or() with nested and() — two .or() calls produce
+    // duplicate or= query params which PostgREST rejects with 400.
     const { data, error } = await withTimeout(
       () => supabase
         .from('judge_reports')
         .select('*')
         .eq('user_id', user.id)
-        .or(`city1.ilike.${city1},city1_name.ilike.${city1}`)
-        .or(`city2.ilike.${city2},city2_name.ilike.${city2}`)
+        .or(`and(city1.ilike.${city1},city2.ilike.${city2}),and(city1.ilike.${city1},city2_name.ilike.${city2}),and(city1_name.ilike.${city1},city2.ilike.${city2}),and(city1_name.ilike.${city1},city2_name.ilike.${city2})`)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),

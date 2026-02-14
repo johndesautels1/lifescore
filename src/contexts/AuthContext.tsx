@@ -17,6 +17,11 @@ import { supabase, isSupabaseConfigured, withRetry } from '../lib/supabase';
 import type { Profile, UserPreferences } from '../types/database';
 import { fullDatabaseSync } from '../services/savedComparisons';
 
+// FIX 2026-02-14: Module-level cooldown variable (survives ErrorBoundary remounts).
+// When React error boundary triggers, AuthProvider remounts with fresh useRefs,
+// which previously reset the cooldown to 0, causing immediate retry storms.
+let _lastProfileFetchFailedAt = 0;
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -124,8 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Track if we're already fetching to prevent duplicate calls
   const fetchingRef = React.useRef<string | null>(null);
-  // FIX 2026-02-14: Cooldown after failure — prevents retry storm when Supabase is unreachable
-  const lastFailedAtRef = React.useRef<number>(0);
+  // Cooldown uses module-level _lastProfileFetchFailedAt (not useRef) so it survives remounts
   const FAILURE_COOLDOWN_MS = 30000; // 30s cooldown after a failed fetch
 
   const fetchUserData = useCallback(async (userId: string) => {
@@ -138,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Skip if we recently failed — prevents infinite retry storm
-    const timeSinceFailure = Date.now() - lastFailedAtRef.current;
+    const timeSinceFailure = Date.now() - _lastProfileFetchFailedAt;
     if (timeSinceFailure < FAILURE_COOLDOWN_MS) {
       console.log(`[Auth] Skipping fetch — last failure was ${Math.round(timeSinceFailure / 1000)}s ago (cooldown ${FAILURE_COOLDOWN_MS / 1000}s)`);
       return { profile: null, preferences: null };
@@ -183,18 +187,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profile) {
         console.log('[Auth] Profile loaded:', profile.email);
         // Success — clear cooldown so future fetches work immediately
-        lastFailedAtRef.current = 0;
+        _lastProfileFetchFailedAt = 0;
       } else {
         console.log('[Auth] No profile found for user (will use defaults)');
         // No profile = fetch worked but user has no row yet — set cooldown to prevent hammering
-        lastFailedAtRef.current = Date.now();
+        _lastProfileFetchFailedAt = Date.now();
       }
 
       return { profile: profile || null, preferences: preferences || null };
     } catch (error) {
       console.error('[Auth] Error in fetchUserData:', error);
       // FIX 2026-02-14: Record failure time to activate cooldown
-      lastFailedAtRef.current = Date.now();
+      _lastProfileFetchFailedAt = Date.now();
       // Return nulls on timeout/error - app continues without DB profile
       return { profile: null, preferences: null };
     } finally {

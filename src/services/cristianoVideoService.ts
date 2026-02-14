@@ -395,7 +395,9 @@ export async function generateCristianoVideo(
           thumbnailUrl: status.thumbnailUrl,
           durationSeconds: status.durationSeconds,
           progress: progressPct,
-          error: status.error,
+          // FIX 2026-02-14: HeyGen may return error as an object — stringify to prevent React error #31
+          error: typeof status.error === 'string' ? status.error
+            : status.error ? JSON.stringify(status.error) : undefined,
           cityName: winnerPackage.winning_city_name,
           sceneCount: renderResult.video.sceneCount as number | undefined,
           wordCount: renderResult.video.wordCount as number | undefined,
@@ -410,10 +412,12 @@ export async function generateCristianoVideo(
 
         if (status.status === 'failed') {
           console.error('[CristianoVideo] Failed:', status.error);
+          const errMsg = typeof status.error === 'string' ? status.error
+            : status.error ? JSON.stringify(status.error) : 'Video rendering failed';
           return {
             ...state,
             status: 'failed',
-            error: status.error || 'Video rendering failed',
+            error: errMsg,
           };
         }
       } catch (err) {

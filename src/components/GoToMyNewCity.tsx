@@ -491,7 +491,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
           {error && (
             <div className="court-error">
               <span className="error-icon">!</span>
-              <span className="error-text">{error}</span>
+              <span className="error-text">{typeof error === 'string' ? error : (error as any)?.message || 'Video generation failed'}</span>
               <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); }}>
                 Retry
               </button>
