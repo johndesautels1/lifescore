@@ -74,7 +74,7 @@ interface WinnerPackage {
 }
 
 interface StoryboardScene {
-  scene: number;
+  scene?: number;             // Optional — array index implies order
   type: 'A_ROLL' | 'B_ROLL';
   duration_seconds: number;
   primary_category: string;
@@ -82,7 +82,7 @@ interface StoryboardScene {
   voiceover: string;
   on_screen_text: string[];
   stock_search_keywords: string[];
-  transition: string;
+  transition?: string;        // Optional — stripped before HeyGen, cinematic default applied
 }
 
 interface Storyboard {
@@ -105,10 +105,10 @@ interface Storyboard {
   neighborhoods: Array<{
     name: string;
     freedom_reason_one_liner: string;
-    signature_visual: string;
+    signature_visual?: string;  // Optional — stripped before HeyGen
   }>;
   ending_disclaimer: string;
-  thumbnail: {
+  thumbnail?: {                 // Optional — stripped before HeyGen
     title_text: string;
     subtitle_text: string;
     visual_concept: string;
@@ -190,6 +190,13 @@ B-ROLL VISUAL LANGUAGE (use for stock_search_keywords):
 ALWAYS prefer footage that implies: openness, mobility, sunlight, visibility, safety, choice, access
 AVOID: grim police visuals, protests as default, surveillance closeups, heavy militarized imagery, propaganda
 
+CONCISENESS RULES (critical — output is sent to HeyGen which has a 10,000 char limit):
+- visual_direction: 1 brief sentence max (~80-120 chars). Describe the shot, not a paragraph.
+- stock_search_keywords: max 5 keywords per scene
+- on_screen_text: max 2 items per scene
+- Do NOT include "transition" — cinematic transitions are applied automatically
+- Do NOT include "thumbnail" — thumbnails are generated separately
+
 JSON SCHEMA TO FOLLOW:
 {
   "video_meta": {
@@ -213,26 +220,19 @@ JSON SCHEMA TO FOLLOW:
   },
   "scenes": [
     {
-      "scene": 1,
       "type": "A_ROLL",
       "duration_seconds": 12,
       "primary_category": "Personal Autonomy",
-      "visual_direction": "Cristiano on camera, clean studio/neutral background, subtle city silhouette or abstract lines. Title card animates in.",
+      "visual_direction": "Cristiano on camera, studio background, city silhouette. Title card animates in.",
       "voiceover": "...",
       "on_screen_text": ["Freedom Tour:", "[CITY]"],
-      "stock_search_keywords": [],
-      "transition": "cinematic_fade"
+      "stock_search_keywords": ["city skyline", "freedom", "modern"]
     }
   ],
   "neighborhoods": [
-    { "name": "[NEIGHBORHOOD]", "freedom_reason_one_liner": "...", "signature_visual": "..." }
+    { "name": "[NEIGHBORHOOD]", "freedom_reason_one_liner": "..." }
   ],
-  "ending_disclaimer": "Lifestyle scoring, not legal advice.",
-  "thumbnail": {
-    "title_text": "Go To My New City",
-    "subtitle_text": "[CITY] Freedom Tour",
-    "visual_concept": "Cristiano portrait + faint skyline + Freedom Score badge"
-  }
+  "ending_disclaimer": "Lifestyle scoring, not legal advice."
 }`;
 }
 

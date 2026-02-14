@@ -145,6 +145,18 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
     errors.push('Missing or incorrect ending disclaimer');
   }
 
+  // FIX 2026-02-14: Estimate HeyGen prompt size before spending credits.
+  // buildVideoAgentPrompt strips fields + adds ~750 chars of instructions.
+  // Catch oversized storyboards here with a clear error instead of a 400 from HeyGen.
+  const estimatedJsonSize = JSON.stringify(storyboard).length;
+  // After stripping (thumbnail, overlay_system, video_meta, ending_disclaimer,
+  // per-scene: scene/primary_category/transition, neighborhood: signature_visual)
+  // rough estimate: stripped JSON ≈ 60-70% of full JSON
+  const estimatedPromptSize = Math.round(estimatedJsonSize * 0.65) + 750;
+  if (estimatedPromptSize > 10000) {
+    errors.push(`Estimated HeyGen prompt ~${estimatedPromptSize} chars exceeds 10,000 limit. Storyboard JSON is too large (${estimatedJsonSize} chars raw). Reduce visual_direction length or voiceover word count.`);
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
