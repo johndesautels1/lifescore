@@ -65,6 +65,11 @@ import {
 import './JudgeTab.css';
 
 // ============================================================================
+// PERSISTENCE KEY — survives tab switches
+// ============================================================================
+const LAST_JUDGE_COMPARISON_KEY = 'lifescore_last_judge_comparison';
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -137,7 +142,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const MAX_VIDEO_ERRORS = 3;
 
   // Report selection state - allows user to select from saved comparisons
-  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
+  // FIX: Restore from localStorage when prop is null (tab switch persistence)
+  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(() => {
+    if (!propComparisonResult) {
+      try {
+        return localStorage.getItem(LAST_JUDGE_COMPARISON_KEY) || null;
+      } catch { return null; }
+    }
+    return null;
+  });
 
   // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
   // This prevents stale reads while allowing refresh when data changes
@@ -167,6 +180,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [refreshComparisons]);
+
+  // FIX 2026-02-14: Persist selectedComparisonId so it survives tab switches
+  useEffect(() => {
+    try {
+      if (selectedComparisonId) {
+        localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, selectedComparisonId);
+      }
+    } catch { /* ignore */ }
+  }, [selectedComparisonId]);
 
   // FIX 2026-02-08: Load saved Judge report when passed from SavedComparisons
   // Fetches full report from Supabase to get complete data (categoryAnalysis, etc.)
@@ -707,6 +729,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Save report to localStorage via centralized service
   const saveReportToLocalStorage = (report: JudgeReport) => {
     saveJudgeReport(report);
+    // FIX 2026-02-14: Also persist the comparisonId for tab-switch restoration
+    try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, report.comparisonId); } catch { /* ignore */ }
     console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
   };
 

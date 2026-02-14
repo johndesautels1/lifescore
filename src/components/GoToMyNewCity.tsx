@@ -22,6 +22,7 @@ import { useCristianoVideo } from '../hooks/useCristianoVideo';
 import FeatureGate from './FeatureGate';
 import { toastSuccess, toastError } from '../utils/toast';
 import { buildWinnerPackage } from '../services/cristianoVideoService';
+import { supabase } from '../lib/supabase';
 import './GoToMyNewCity.css';
 
 // ============================================================================
@@ -126,6 +127,46 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   // Error tracking for expired URLs
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
+
+  // FIX 2026-02-14: Auto-restore cached Cristiano city video on mount
+  // When JudgeTab remounts after a tab switch, useCristianoVideo starts idle.
+  // Query cristiano_city_videos for a completed video so we don't lose it.
+  const [cachedVideoUrl, setCachedVideoUrl] = useState<string | null>(null);
+  const [cachedThumbnailUrl, setCachedThumbnailUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkCachedVideo() {
+      try {
+        const { data } = await supabase
+          .from('cristiano_city_videos')
+          .select('video_url, thumbnail_url')
+          .ilike('city_name', winnerCity.trim())
+          .eq('status', 'completed')
+          .not('video_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!cancelled && data?.video_url) {
+          setCachedVideoUrl(data.video_url);
+          setCachedThumbnailUrl(data.thumbnail_url || null);
+          console.log('[GoToMyNewCity] Restored cached video:', data.video_url.substring(0, 60) + '...');
+        }
+      } catch (err) {
+        console.warn('[GoToMyNewCity] Cache check failed:', err);
+      }
+    }
+
+    checkCachedVideo();
+    return () => { cancelled = true; };
+  }, [winnerCity]);
+
+  // Effective video URL: hook result > cached from DB
+  const effectiveVideoUrl = videoUrl || cachedVideoUrl;
+  const effectiveThumbnailUrl = thumbnailUrl || cachedThumbnailUrl;
+  const hasVideo = (isReady && videoUrl) || !!cachedVideoUrl;
 
   // Handle video generation
   const handleGenerate = async () => {
@@ -252,10 +293,10 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
   // Download video
   const handleDownload = async () => {
-    if (!videoUrl) return;
+    if (!effectiveVideoUrl) return;
     const filename = `go-to-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-freedom-tour.mp4`;
     try {
-      const response = await fetch(videoUrl);
+      const response = await fetch(effectiveVideoUrl);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -273,22 +314,22 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
   // Share video
   const handleShare = async () => {
-    if (!videoUrl) return;
+    if (!effectiveVideoUrl) return;
     const shareData = {
       title: `LIFE SCORE - Go To ${winnerCity}`,
       text: `Cristiano's Freedom Tour: ${winnerCity} scored ${winnerScore.toFixed(1)} on the LIFE SCORE Freedom Index!`,
-      url: videoUrl,
+      url: effectiveVideoUrl,
     };
     try {
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(videoUrl);
+        await navigator.clipboard.writeText(effectiveVideoUrl);
         toastSuccess('Video URL copied to clipboard!');
       }
     } catch {
       try {
-        await navigator.clipboard.writeText(videoUrl);
+        await navigator.clipboard.writeText(effectiveVideoUrl);
         toastSuccess('Video URL copied to clipboard!');
       } catch {
         toastError('Unable to share video');
@@ -330,11 +371,11 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
           <div className="lcd-screen">
             <div className="lcd-bezel">
               <div className="lcd-display">
-                {isReady && videoUrl ? (
+                {hasVideo ? (
                   <video
                     ref={videoRef}
-                    src={videoUrl}
-                    poster={thumbnailUrl || undefined}
+                    src={effectiveVideoUrl!}
+                    poster={effectiveThumbnailUrl || undefined}
                     className="court-video"
                     onEnded={handleVideoEnded}
                     onTimeUpdate={handleTimeUpdate}
@@ -381,7 +422,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
               </div>
 
               {/* Video Controls */}
-              {isReady && videoUrl && (
+              {hasVideo && (
                 <div className="lcd-controls">
                   <button
                     className="control-btn play-btn"
@@ -438,7 +479,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
           {/* Action Buttons */}
           <div className="court-actions">
-            {!hasStarted && !isReady && (
+            {!hasStarted && !isReady && !hasVideo && (
               <button
                 className="new-city-generate-btn"
                 onClick={handleGenerate}
@@ -449,7 +490,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
               </button>
             )}
 
-            {isReady && !isPlaying && (
+            {hasVideo && !isPlaying && (
               <button
                 className="watch-future-btn"
                 onClick={handlePlayPause}
@@ -461,7 +502,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
           </div>
 
           {/* Action Buttons - Download, Share */}
-          {isReady && videoUrl && (
+          {hasVideo && (
             <div className="court-order-action-buttons">
               <button
                 className="court-action-btn download-btn"

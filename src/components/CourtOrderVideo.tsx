@@ -129,10 +129,49 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     return () => { cancelled = true; };
   }, [comparisonId, winnerCity]);
 
-  // The effective video URL: User upload > InVideo override > Kling-generated
+  // FIX 2026-02-14: Auto-restore cached court order video on mount
+  // When JudgeTab remounts after a tab switch, useGrokVideo starts at idle.
+  // Query grok_videos for a completed court order so we don't lose the video.
+  const [cachedVideoUrl, setCachedVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkCachedCourtOrder() {
+      try {
+        const { data } = await supabase
+          .from('grok_videos')
+          .select('video_url, video_storage_path')
+          .ilike('city_name', winnerCity.trim())
+          .eq('video_type', 'perfect_life')
+          .eq('status', 'completed')
+          .not('video_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!cancelled && data?.video_url) {
+          // Prefer permanent storage path URL over expired provider URL
+          const url = data.video_url;
+          const isExpiredProviderUrl = url.includes('replicate.delivery') || url.includes('klingai.com');
+          if (!isExpiredProviderUrl || !data.video_storage_path) {
+            setCachedVideoUrl(url);
+            console.log('[CourtOrderVideo] Restored cached video:', url.substring(0, 60) + '...');
+          }
+        }
+      } catch (err) {
+        console.warn('[CourtOrderVideo] Cache check failed:', err);
+      }
+    }
+
+    checkCachedCourtOrder();
+    return () => { cancelled = true; };
+  }, [winnerCity]);
+
+  // The effective video URL: User upload > InVideo override > Kling-generated > Cached from DB
   // FIX: Skip expired Replicate URLs (they expire after ~24h)
   const generatedVideoUrl = video?.videoUrl && !video.videoUrl.includes('replicate.delivery') ? video.videoUrl : null;
-  const effectiveVideoUrl = userVideoUrl || invideoOverride?.video_url || generatedVideoUrl;
+  const effectiveVideoUrl = userVideoUrl || invideoOverride?.video_url || generatedVideoUrl || cachedVideoUrl;
 
   // Admin: Submit InVideo URL override
   const handleSubmitOverride = async () => {
