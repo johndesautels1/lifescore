@@ -116,7 +116,7 @@ export async function uploadUserVideo(
         upsert: false,
       }),
     {
-      timeoutMs: 120000, // 2 minutes for large videos
+      timeoutMs: 240000, // 4 minutes for large videos (up to 100MB)
       operationName: 'Upload user video',
       maxRetries: 2,
     }

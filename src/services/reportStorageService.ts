@@ -104,7 +104,7 @@ export async function saveReport(
           cacheControl: '3600',
           upsert: false
         }),
-      60000, // 60 second timeout for upload
+      180000, // 180 second timeout for upload (reports can be 10-50MB)
       'Upload report HTML'
     );
 
@@ -228,7 +228,7 @@ export async function completeReport(
           cacheControl: '3600',
           upsert: true
         }),
-      60000,
+      180000, // 180 second timeout for upload (reports can be 10-50MB)
       'Upload report HTML'
     );
 
