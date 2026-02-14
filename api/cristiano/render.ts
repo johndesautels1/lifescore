@@ -151,20 +151,53 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
 /**
  * Format the storyboard JSON into a comprehensive prompt for HeyGen Video Agent.
  * CRITICAL: HeyGen Video Agent has a 10,000 character prompt limit.
- * Uses compact JSON and trimmed instructions to stay under the cap.
+ * Strips fields HeyGen doesn't need and uses compact JSON to stay under the cap.
  */
 function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
-  // Strip fields HeyGen doesn't need to reduce JSON size
+  // Strip top-level fields HeyGen doesn't need
   const slim = { ...storyboard };
-  // Remove thumbnail — HeyGen doesn't generate thumbnails
-  delete slim.thumbnail;
-  // Remove overlay_system — instructions already cover it
-  delete slim.overlay_system;
-  // Remove video_meta — timing is in scenes already
-  delete slim.video_meta;
+  delete slim.thumbnail;         // HeyGen doesn't generate thumbnails
+  delete slim.overlay_system;    // Instructions already cover overlay layout
+  delete slim.video_meta;        // Timing is in individual scenes
+  delete slim.ending_disclaimer; // Already stated verbatim in fixed instructions below
 
-  // Compact JSON (no pretty-print) saves ~1,600 chars
-  const json = JSON.stringify(slim);
+  // Strip per-scene fields that are redundant or internal-only
+  // - scene: array index implies order
+  // - primary_category: our internal scoring label, visual_direction already conveys theme
+  // - transition: fixed instructions already specify cinematic transitions
+  if (Array.isArray(slim.scenes)) {
+    slim.scenes = (slim.scenes as Array<Record<string, unknown>>).map(s => {
+      const { scene, primary_category, transition, ...keep } = s;
+      return keep;
+    });
+  }
+
+  // Strip signature_visual from neighborhoods — HeyGen infers from keywords/voiceover
+  if (Array.isArray(slim.neighborhoods)) {
+    slim.neighborhoods = (slim.neighborhoods as Array<Record<string, unknown>>).map(n => {
+      const { signature_visual, ...keep } = n;
+      return keep;
+    });
+  }
+
+  // Compact JSON (no pretty-print)
+  let json = JSON.stringify(slim);
+
+  // Safety net: if JSON is still too large, progressively truncate visual_direction
+  const PROMPT_OVERHEAD = 750; // chars for the fixed instruction text around the JSON
+  const MAX_JSON_LENGTH = 10000 - PROMPT_OVERHEAD;
+  if (json.length > MAX_JSON_LENGTH && Array.isArray(slim.scenes)) {
+    console.warn(`[RENDER] JSON is ${json.length} chars (budget ${MAX_JSON_LENGTH}), truncating visual_direction`);
+    const MAX_VD = 120; // truncate visual_direction to 120 chars per scene
+    slim.scenes = (slim.scenes as Array<Record<string, unknown>>).map(s => {
+      const vd = String(s.visual_direction || '');
+      if (vd.length > MAX_VD) {
+        return { ...s, visual_direction: vd.slice(0, MAX_VD) + '...' };
+      }
+      return s;
+    });
+    json = JSON.stringify(slim);
+  }
 
   const prompt = `Create a ~120-second cinematic city tour video for CLUES Life Score "Go To My New City."
 
@@ -172,7 +205,7 @@ AVATAR LOCK:
 - Avatar ID: ${CRISTIANO_AVATAR_ID} (Cristiano). Do not substitute.
 - Voice ID: ${CRISTIANO_VOICE_ID}. Do not substitute.
 
-Follow the Storyboard JSON exactly: scene timing, captions, overlays, categories.
+Follow the Storyboard JSON exactly: scene timing, captions, overlays.
 
 Captions ON. On-screen text: max 6 words/line, max 2 lines. Reserve lower-right 15% for logo/QR.
 
@@ -180,19 +213,19 @@ Overlays: top-left Freedom Score badge, top category strip (6 categories), botto
 
 STYLE: Cinematic, premium, modern. Moving shots only. Imply openness, mobility, sunlight, safety, choice. Avoid grim police, protests, surveillance, propaganda.
 
-SCENES: 1 & 9 = A-ROLL (Cristiano on camera). 2-8 = B-ROLL (city footage + overlays).
+SCENES: 1 & 9 = A-ROLL (Cristiano on camera). 2-8 = B-ROLL (city footage + overlays). Cinematic transitions between scenes.
 
 Storyboard:
 ${json}
 
 Use generic cinematic city footage if specific stock unavailable. Keep timing identical. End with: "Lifestyle scoring, not legal advice."
 
-MANDATORY CTA: Cristiano must say verbatim in Scene 9: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
-On-screen text: "Cluesnomads.com". Do NOT use any other website URL.`;
+MANDATORY CTA in Scene 9: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
+On-screen: "Cluesnomads.com". No other URL.`;
 
-  // Safety check — log warning if approaching limit
+  console.log(`[RENDER] Prompt length: ${prompt.length} chars (limit 10000)`);
   if (prompt.length > 9500) {
-    console.warn(`[RENDER] Prompt is ${prompt.length} chars (limit 10000). Consider shorter voiceover.`);
+    console.warn(`[RENDER] Prompt approaching limit at ${prompt.length} chars`);
   }
   if (prompt.length > 10000) {
     console.error(`[RENDER] Prompt EXCEEDS 10000 char limit at ${prompt.length} chars!`);
