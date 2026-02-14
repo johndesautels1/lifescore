@@ -1,7 +1,7 @@
 # LIFE SCORE - GAMMA Prompt Templates
 
-**Version:** 4.0
-**Last Updated:** 2026-02-11
+**Version:** 4.1
+**Last Updated:** 2026-02-14
 **Access:** Admin Only
 
 ---
@@ -92,6 +92,18 @@ The prompt includes Gamma-specific layout directives:
 - **Loser:** Sapphire Blue (#0F4C81)
 - **Legal Scores:** Purple (#8B5CF6)
 - **Enforcement Scores:** Teal (#14B8A6)
+
+---
+
+## Trophy Placement Rule (Added 2026-02-14)
+
+The Gamma AI was incorrectly placing the 🏆 trophy emoji next to the **losing** city instead of the winner in the Executive Summary page. This was fixed by adding three explicit safeguards to the standard report prompt (`formatComparisonForGamma()` in gammaService.ts):
+
+1. **TROPHY PLACEMENT RULE** — Added to the "CRITICAL INSTRUCTIONS FOR GAMMA AI" header section. Explicitly states: "The 🏆 trophy emoji MUST ONLY appear next to the WINNER city. NEVER place the 🏆 next to the loser."
+2. **Winner marker in data table** — The winner's row in the city scores table now includes `🏆 WINNER` text so Gamma can clearly see which city won.
+3. **Explicit Page 2 instruction** — The report structure instruction for Page 2 (Executive Summary) now names both the winner and loser with their scores and directs trophy placement.
+
+**Root cause:** The original prompt provided the data table without marking the winner, and the page structure instructions simply said "executive summary" without specifying trophy placement. Gamma AI was left to interpret on its own and often placed the trophy next to the wrong city.
 
 ---
 

@@ -127,6 +127,17 @@ AI MODELS USED:
 Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
 
 ================================================================================
+TROPHY PLACEMENT RULE (Added 2026-02-14):
+================================================================================
+
+The 🏆 trophy emoji MUST ONLY appear next to the WINNER city.
+NEVER place the 🏆 next to the loser. The prompt dynamically inserts:
+1. TROPHY PLACEMENT RULE in the critical instructions header
+2. 🏆 WINNER marker in the winner''s data table row
+3. Explicit winner/loser identification in the Page 2 instruction
+This prevents the Gamma AI from misplacing the trophy on the wrong city.
+
+================================================================================
 CRITICAL PRODUCTION RULES:
 ================================================================================
 
@@ -139,7 +150,8 @@ CRITICAL PRODUCTION RULES:
 7. Heat maps use solidBoxes (NOT circleStats)
 8. Confidence column shows full words (NOT abbreviated)
 9. All URLs are clickable markdown hyperlinks
-10. Make this feel like a PREMIUM deliverable, not just a data dump',
+10. Make this feel like a PREMIUM deliverable, not just a data dump
+11. 🏆 trophy ONLY on the WINNER city — NEVER on the loser',
   'system'
 )
 ON CONFLICT (category, prompt_key) DO UPDATE SET

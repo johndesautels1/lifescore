@@ -308,7 +308,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - src/services/presenterVideoService.ts (video orchestration + polling)
 - src/types/presenter.ts (all presenter types)
 - src/components/ReportPresenter.tsx (UI: Live/Video sub-modes)
-- src/components/VisualsTab.tsx (Read/Watch toggle)
+- src/components/VisualsTab.tsx (Read/Listen toggle)
 
 ## Video System (Updated 2026-02-13)
 
@@ -503,7 +503,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
 ### Video: NewLifeVideos (blob URL playback, error detection)
-### Reports: VisualsTab (Read/Watch toggle), ReportPresenter (Olivia video presenter), AboutClues
+### Reports: VisualsTab (Read/Listen toggle), ReportPresenter (Olivia video presenter), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
 
 ---

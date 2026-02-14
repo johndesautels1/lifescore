@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.0
-**Last Updated:** February 13, 2026
+**Version:** 3.2
+**Last Updated:** February 14, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -228,6 +228,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | "Email not verified" | Check spam folder; resend verification email |
 | "Account locked" | Wait 30 minutes or contact support for unlock |
 | Google/GitHub SSO failure | Clear cookies; try incognito mode |
+| Login feels slow/unresponsive | Fixed 2026-02-14 — removed backdrop-filter blur that caused 247ms input delay |
 
 ### 5.2 Comparison Failures
 
@@ -282,6 +283,10 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Report shows wrong data | Regenerate from fresh comparison |
 
 **Note (Updated 2026-02-05):** The "Generation ID missing" error has been resolved. Gamma reports and Judge reports are now also saved to Supabase (cloud backup) and visible in the Visual Reports / Saved tab.
+
+**Note (Updated 2026-02-14):** Two Gamma report issues fixed:
+- **Persistence fix:** Reports previously failed to save to the database due to a foreign key constraint on `comparison_id`. The save was fire-and-forget so errors were silently swallowed. Now fixed with proper error handling.
+- **Trophy placement fix:** The 🏆 trophy emoji in the Executive Summary was incorrectly placed next to the losing city instead of the winner. The Gamma AI prompt now explicitly marks which city is the winner with clear trophy placement rules.
 
 ---
 
@@ -747,6 +752,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 2.5 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-storage save system, Tavily timeout fix, Gamma generationId fix, Score Methodology (§8.6), Court Orders (§8.7), updated AI model names, new glossary entries |
 | 3.0 | 2026-02-13 | Claude Opus 4.6 | Video playback overhaul: blob URLs, sequential generation, expired URL detection, independent playback, progress bar fix (§5.4). Court Order permanent storage (§8.7). Grok Videos detail (§8.5). New glossary terms. |
 | 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8.8): live avatar + pre-rendered video mode with troubleshooting. New glossary terms (Olivia Presenter, Live Presenter, Pre-Rendered Video, PIP). Section renumbering (§8.9→8.10, §8.9→8.11). |
+| 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Gamma trophy 🏆 now placed on winner not loser (§5.5), (2) Gamma persistence — foreign key fix (§5.5), (3) backdrop-filter blur removed from 8 CSS files for INP, (4) Login input 247ms INP delay fixed (§5.1), (5) "Watch Presenter" → "Listen to Presenter" rename. |
 
 ---
 

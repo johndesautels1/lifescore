@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.0
-**Last Updated:** February 13, 2026
+**Version:** 4.2
+**Last Updated:** February 14, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -1406,7 +1406,18 @@ User clicks Judge tab (JudgeTab.tsx)
 | 240s timeout | Slow failures | evaluate.ts:15 |
 | Large component (2265 lines) | Slow initial load | EnhancedComparison.tsx |
 
-### 10.2 Recommended Fixes
+### 10.2 INP (Interaction to Next Paint) Fixes (Applied 2026-02-14)
+
+**Backdrop-Filter Blur Removal:**
+`backdrop-filter: blur()` was identified as a high-severity INP performance issue. It was removed from 8 CSS files:
+- Causes GPU-intensive repaints on every interaction
+- Login email input had 247ms INP delay caused by blur on the login overlay
+- All decorative blur effects replaced with solid/semi-transparent backgrounds
+- Files affected: LoginScreen.css, HelpModal.css, and 6 other component CSS files
+
+**Impact:** Login input responsiveness improved from 247ms to <50ms INP. All interactive overlays now meet Core Web Vitals thresholds.
+
+### 10.3 Recommended Fixes
 
 **Priority 1 - Quick Wins:**
 1. Reduce LLM timeout to 120s
@@ -1616,6 +1627,11 @@ npm run preview
 | Blob fetch creating garbage blobs | Content-type check before creating blob; dead URLs tracked in state Set | 2026-02-13 |
 | grok_videos UNIQUE constraint | UNIQUE constraint now includes status column (database hardening) | 2026-02-10 |
 | Parallel video generation timeout | Sequential generation (loser first, then winner); timeout doubled to 240s | 2026-02-13 |
+| "Watch Presenter" label incorrect | Renamed to "Listen to Presenter" — voice-only mode, not video watching | 2026-02-14 |
+| Login email input 247ms INP delay | Removed backdrop-filter blur from LoginScreen overlay | 2026-02-14 |
+| Gamma reports not persisting | Foreign key violation on `comparison_id` — Supabase INSERT silently failed due to fire-and-forget `.then()` pattern | 2026-02-14 |
+| backdrop-filter blur causing INP | Removed `backdrop-filter: blur()` from 8 CSS files (GPU-intensive repaints on every interaction) | 2026-02-14 |
+| Trophy 🏆 on loser in Gamma report | Added explicit TROPHY PLACEMENT RULE to Gamma prompt + winner marker in data table + explicit Page 2 instructions | 2026-02-14 |
 
 ---
 
@@ -1886,6 +1902,17 @@ All 50 system prompts used across the application are cataloged in the `app_prom
 
 **Note:** Most prompts are dynamically generated in TypeScript code at runtime. The database entries are read-only references that admins can view and customize.
 
+### 20.4 Gamma Standard Report Prompt — Trophy Placement Rule (Added 2026-02-14)
+
+The Gamma standard report prompt (`formatComparisonForGamma()` in `gammaService.ts`) includes explicit trophy placement logic to prevent the Gamma AI from incorrectly placing the 🏆 next to the losing city.
+
+**Three safeguards:**
+1. **TROPHY PLACEMENT RULE** in the critical instructions header — tells Gamma to ONLY place 🏆 next to the winner by name
+2. **🏆 WINNER marker** in the data table — the winning city's row includes `🏆 WINNER` text
+3. **Explicit Page 2 instruction** — the report structure section names the winner and loser with their scores, directing trophy placement
+
+**Root cause:** Gamma AI was interpreting the data table (which listed both cities without markers) and independently deciding where to place the trophy, often incorrectly placing it next to the second city regardless of scores.
+
 ---
 
 ## Document Control
@@ -1900,7 +1927,8 @@ All 50 system prompts used across the application are cataloged in the `app_prom
 | 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections, AI model names updated, Tavily timeout fix, 8 resolved issues |
 | 3.0 | 2026-02-12 | Claude Opus 4.6 | Integrated Coding Standards & Developer Guide as §2 (comment standards, naming conventions, component/service/hook/type guides, data flow diagrams, quick reference). Upgraded §1.3 directory tree. Renumbered §§2-18 to §§3-19. |
 | 4.0 | 2026-02-13 | Claude Opus 4.6 | Major update: 21 DB tables (was 18), 3 storage buckets, new app_prompts/invideo_overrides tables, sequential video generation, blob URL playback, expired URL detection, Promise.allSettled, progress bar fix, 12 new resolved issues, JWT auth on 8+ endpoints, admin check caching, Prompts system (§20), new env vars, deprecated VITE_* vars |
-| 4.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§9.7): HeyGen pre-rendered video pipeline + live presenter PIP overlay. New API endpoint (§4.8), new services (presenterService, presenterVideoService), new types (presenter.ts), new component (ReportPresenter), VisualsTab Read/Watch toggle |
+| 4.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§9.7): HeyGen pre-rendered video pipeline + live presenter PIP overlay. New API endpoint (§4.8), new services (presenterService, presenterVideoService), new types (presenter.ts), new component (ReportPresenter), VisualsTab Read/Listen toggle |
+| 4.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes documented: (1) Gamma trophy placement fix — 3 safeguards added to prompt (§20.4), (2) Gamma persistence fix — foreign key violation resolved, (3) backdrop-filter blur removed from 8 CSS files for INP (§10.2), (4) Login input 247ms INP fix, (5) "Watch" → "Listen to Presenter" rename. 5 new resolved issues (§14.2). |
 
 ---
 

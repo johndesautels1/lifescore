@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 3.0
-**Last Updated:** February 13, 2026
+**Version:** 3.2
+**Last Updated:** February 14, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -322,6 +322,10 @@ Judge reports are automatically saved to both your browser (localStorage) and th
 - View all saved Judge reports in the **Visual Reports / Saved** tab
 - Tie results are now handled correctly — no more "winner is TIE" text
 
+### Saving Gamma Reports (Updated 2026-02-14)
+
+Gamma reports now reliably persist between sessions. Previously, reports could silently fail to save due to a database foreign key constraint. This has been fixed — all Gamma reports are now correctly saved to both localStorage and Supabase for cross-device access.
+
 ---
 
 ## 8. Visuals & Videos
@@ -405,12 +409,14 @@ Generate professional presentation-style reports:
 
 ### Report Contents
 
-- Executive summary
-- City overview
+- Executive summary with winner trophy designation
+- City overview with scores and category wins
 - Category-by-category breakdown
 - Visual charts and graphs
 - Source citations
 - Recommendations
+
+**Trophy Placement (Fixed 2026-02-14):** The 🏆 trophy in Gamma reports now correctly appears next to the **winning** city only. Previously, the trophy could appear next to the losing city due to a prompt formatting issue.
 
 ### Saving Comparisons
 
@@ -857,4 +863,5 @@ The Emilia help system includes multiple tabs for different types of information
 | 2.4 | 2026-02-02 | Claude Opus 4.5 | Added comprehensive feature tables: 8 categories, 30+ features with detailed tier breakdown |
 | 2.5 | 2026-02-05 | Claude Opus 4.5 | Session 9: Score Methodology explainer (§5), Judge report cloud save (§7), dual-storage data sync (§9, §11), video auto-reset troubleshooting (§12), updated AI model names (§14), retry/timeout notes |
 | 3.0 | 2026-02-13 | Claude Opus 4.6 | Court Order videos (§7), blob URL video playback, video troubleshooting rewrite (§12), city selector with country badges (§4), Emilia help tabs detail (§16), Prompts tab documentation, Judge tie handling fix |
-| 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8): Read/Watch toggle, Live PIP avatar presenter, pre-rendered HeyGen video with download. Presenter troubleshooting (§12). |
+| 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8): Read/Listen toggle, Live PIP avatar presenter, pre-rendered HeyGen video with download. Presenter troubleshooting (§12). |
+| 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Trophy 🏆 now correctly placed on winner not loser in Gamma reports (§9), (2) Gamma reports persistence fix — foreign key constraint resolved (§7, §9), (3) backdrop-filter blur removed from 8 CSS files for INP performance, (4) 247ms INP fix on login email input, (5) "Watch Presenter" renamed to "Listen to Presenter" (§8). |
