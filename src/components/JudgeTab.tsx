@@ -143,6 +143,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
+  // Video generation progress simulation (Replicate doesn't return %)
+  const [videoProgress, setVideoProgress] = useState(0);
+  const videoProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Report selection state - allows user to select from saved comparisons
   // FIX: Restore from localStorage when prop is null (tab switch persistence)
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(() => {
@@ -171,6 +175,39 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       setVideoErrorCount(0);
     }
   }, [videoErrorCount, judgeReport]);
+
+  // Simulated video progress bar — runs during video generation (~90s estimated)
+  // Steps: 0-15% storyboard, 15-40% audio, 40-85% rendering, 85-95% finalizing
+  useEffect(() => {
+    const generating = isGeneratingVideo || judgeReport?.videoStatus === 'generating';
+    if (generating) {
+      setVideoProgress(0);
+      const startTime = Date.now();
+      const ESTIMATED_TOTAL_MS = 90000; // ~90 seconds typical
+      videoProgressRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const raw = (elapsed / ESTIMATED_TOTAL_MS) * 92; // Cap at 92% until done
+        setVideoProgress(Math.min(raw, 92));
+      }, 500);
+    } else {
+      if (videoProgressRef.current) {
+        clearInterval(videoProgressRef.current);
+        videoProgressRef.current = null;
+      }
+      // Snap to 100% briefly when video completes
+      if (judgeReport?.videoStatus === 'ready') {
+        setVideoProgress(100);
+      } else {
+        setVideoProgress(0);
+      }
+    }
+    return () => {
+      if (videoProgressRef.current) {
+        clearInterval(videoProgressRef.current);
+        videoProgressRef.current = null;
+      }
+    };
+  }, [isGeneratingVideo, judgeReport?.videoStatus]);
 
   // Listen for storage events to refresh when data changes in another tab/component
   useEffect(() => {
@@ -1502,12 +1539,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="generating-ring video-ring delay-2"></div>
                       <div className="generating-text">GENERATING VIDEO</div>
                       <div className="generating-subtext">
-                        {videoGenerationProgress || 'Christiano is preparing your video report...'}
+                        {videoGenerationProgress || (
+                          videoProgress < 15 ? 'Building storyboard...' :
+                          videoProgress < 40 ? 'Generating audio narration...' :
+                          videoProgress < 85 ? 'Rendering Christiano video...' :
+                          'Finalizing and uploading...'
+                        )}
                       </div>
-                      <div className="video-status-indicator">
-                        <span className="status-dot pulsing"></span>
-                        <span className="status-text">Replicate Processing</span>
+                      <div className="progress-bar-container">
+                        <div
+                          className="progress-bar-fill video-progress"
+                          style={{ width: `${videoProgress}%` }}
+                        ></div>
                       </div>
+                      <div className="progress-text">{Math.round(videoProgress)}% Complete</div>
                       <button
                         className="cancel-video-btn"
                         onClick={() => cancelVideoGeneration()}

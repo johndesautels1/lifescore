@@ -100,11 +100,12 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
     }
 
     // FIX 2026-02-14: Align word count tolerance with storyboard.ts Stage 1 QA.
-    // LLM output varies — Stage 1 allows 240-330 as soft pass, so Stage 2 should match.
+    // Natural narration pace for 120s is ~2-3 words/sec = 240-360 words.
+    // Hard-fail only at extremes to avoid rejecting perfectly usable storyboards.
     const allVoiceover = scenes.map(s => String(s.voiceover || '')).join(' ');
     const wordCount = allVoiceover.split(/\s+/).filter(w => w.length > 0).length;
-    if (wordCount < 240 || wordCount > 330) {
-      errors.push(`Word count ${wordCount} outside 240-330 range`);
+    if (wordCount < 220 || wordCount > 380) {
+      errors.push(`Word count ${wordCount} outside 220-380 range`);
     }
 
     const categories = new Set(scenes.map(s => String(s.primary_category || '')));

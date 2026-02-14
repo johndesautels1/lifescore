@@ -612,8 +612,13 @@
   height: 100%;
   background: var(--gradient-gold);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.5s ease;
   box-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+}
+
+.progress-bar-fill.video-progress {
+  background: linear-gradient(90deg, var(--verdict-green), #4ade80);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
 }
 
 .progress-text {

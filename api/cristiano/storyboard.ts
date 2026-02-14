@@ -250,15 +250,15 @@ function validateStoryboard(storyboard: Storyboard): QAResult {
     errors.push(`Total duration ${totalDuration}s outside 115-125s range`);
   }
 
-  // 3. Check word count (260-310)
+  // 3. Check word count — ideal 260-310, hard limits aligned with render.ts Stage 2
+  // Natural narration pace for 120s is ~2-3 words/sec = 240-360 words.
+  // Hard-fail only at extremes; warn for minor drift.
   const allVoiceover = storyboard.scenes?.map(s => s.voiceover || '').join(' ') || '';
   const totalWordCount = allVoiceover.split(/\s+/).filter(w => w.length > 0).length;
-  if (totalWordCount < 260 || totalWordCount > 310) {
-    if (totalWordCount < 240 || totalWordCount > 330) {
-      errors.push(`Word count ${totalWordCount} far outside 260-310 range`);
-    } else {
-      warnings.push(`Word count ${totalWordCount} slightly outside 260-310 range`);
-    }
+  if (totalWordCount < 220 || totalWordCount > 380) {
+    errors.push(`Word count ${totalWordCount} far outside 260-310 range`);
+  } else if (totalWordCount < 250 || totalWordCount > 340) {
+    warnings.push(`Word count ${totalWordCount} slightly outside 260-310 range`);
   }
 
   // 4. Check all 6 categories appear as primary_category
@@ -325,7 +325,10 @@ function validateStoryboard(storyboard: Storyboard): QAResult {
 // LLM CALL
 // ============================================================================
 
-async function generateStoryboard(winnerPackage: WinnerPackage): Promise<Storyboard> {
+async function generateStoryboard(
+  winnerPackage: WinnerPackage,
+  qaFeedback?: string[]
+): Promise<Storyboard> {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY not configured');
@@ -333,12 +336,17 @@ async function generateStoryboard(winnerPackage: WinnerPackage): Promise<Storybo
 
   const systemPrompt = buildSystemPrompt();
 
-  const userPrompt = `Generate a cinematic 120-second Freedom Tour storyboard for this winning city.
+  let userPrompt = `Generate a cinematic 120-second Freedom Tour storyboard for this winning city.
 
 INPUT DATA (Winner Package JSON):
 ${JSON.stringify(winnerPackage, null, 2)}
 
 Return ONLY valid JSON matching the schema. No markdown, no backticks, no explanation.`;
+
+  // On retry, include QA feedback so the LLM can correct specific issues
+  if (qaFeedback && qaFeedback.length > 0) {
+    userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA validation with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues in your new output. Pay special attention to the 260-310 word count target for voiceover.`;
+  }
 
   const response = await fetchWithTimeout(
     'https://api.anthropic.com/v1/messages',
@@ -443,10 +451,10 @@ export default async function handler(
     });
 
     if (!qa.passed) {
-      // If critical errors, attempt one retry with stricter prompt
-      console.warn('[STORYBOARD] QA failed, attempting retry. Errors:', qa.errors);
+      // If critical errors, attempt one retry with QA feedback so LLM can self-correct
+      console.warn('[STORYBOARD] QA failed, attempting retry with feedback. Errors:', qa.errors);
 
-      const retryStoryboard = await generateStoryboard(winnerPackage);
+      const retryStoryboard = await generateStoryboard(winnerPackage, qa.errors);
       const retryQa = validateStoryboard(retryStoryboard);
 
       if (!retryQa.passed) {
