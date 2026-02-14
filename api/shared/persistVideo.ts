@@ -1,5 +1,6 @@
 /**
  * LIFE SCORE - Persist Video to Supabase Storage
+ * Supports judge-videos and court-order-videos buckets
  *
  * Downloads a video from a temporary provider CDN URL (Replicate, Kling, etc.)
  * and uploads it to permanent Supabase Storage. Returns the permanent public URL.
