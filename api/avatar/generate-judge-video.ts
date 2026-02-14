@@ -14,6 +14,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -279,6 +280,28 @@ export default async function handler(
 
     // Cache hit - return existing video
     if (cached) {
+      let videoUrl = cached.video_url;
+
+      // Auto-migrate: if cached URL is a temporary Replicate CDN URL, persist to storage
+      if (videoUrl && videoUrl.includes('replicate.delivery') && !cached.video_storage_path) {
+        console.log('[JUDGE-VIDEO] Cache hit has stale Replicate URL, migrating to storage...');
+        const persisted = await persistVideoToStorage(videoUrl, cached.comparison_id, supabaseAdmin);
+        if (persisted) {
+          videoUrl = persisted.publicUrl;
+          // Update DB in background (don't block the response)
+          supabaseAdmin
+            .from('avatar_videos')
+            .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+            .eq('id', cached.id)
+            .then(({ error: migErr }) => {
+              if (migErr) console.warn('[JUDGE-VIDEO] Migration update failed:', migErr.message);
+              else console.log('[JUDGE-VIDEO] Migrated cached video to permanent storage');
+            });
+        } else {
+          console.warn('[JUDGE-VIDEO] Migration failed (Replicate URL may have expired), returning stale URL');
+        }
+      }
+
       console.log('[JUDGE-VIDEO] Cache hit:', comparisonId);
       res.status(200).json({
         success: true,
@@ -287,7 +310,7 @@ export default async function handler(
           id: cached.id,
           comparisonId: cached.comparison_id,
           status: 'completed',
-          videoUrl: cached.video_url,
+          videoUrl,
           script: cached.script,
           durationSeconds: cached.duration_seconds,
           createdAt: cached.created_at,

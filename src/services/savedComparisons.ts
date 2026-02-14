@@ -1284,11 +1284,7 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
 
       // Trim and save back to localStorage
       const trimmed = localReports.slice(0, MAX_JUDGE_REPORTS);
-      try {
-        localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
-      } catch (err) {
-        console.error('[savedComparisons] Failed to save synced Judge reports:', err);
-      }
+      safeLocalStorageSet(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
 
       console.log('[savedComparisons] ✓ Synced', newReportsAdded, 'new Judge reports from Supabase');
       return trimmed;
@@ -1318,7 +1314,11 @@ export function saveJudgeReport(report: SavedJudgeReport): void {
     }
     // Trim if too many
     const trimmed = reports.slice(0, MAX_JUDGE_REPORTS);
-    localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
+    // FIX 2026-02-14: Use safeLocalStorageSet for quota handling (was raw setItem)
+    const success = safeLocalStorageSet(JUDGE_REPORTS_KEY, JSON.stringify(trimmed));
+    if (!success) {
+      console.error('[savedComparisons] CRITICAL: Failed to save judge report to localStorage — quota exceeded even after cleanup');
+    }
   } catch (error) {
     console.error('[savedComparisons] Failed to save judge report:', error);
   }
@@ -1373,11 +1373,7 @@ export function deleteSavedJudgeReport(reportId: string): boolean {
     return false;
   }
 
-  try {
-    localStorage.setItem(JUDGE_REPORTS_KEY, JSON.stringify(filtered));
-  } catch (err) {
-    console.error('[savedComparisons] Failed to delete Judge report from localStorage:', err);
-  }
+  safeLocalStorageSet(JUDGE_REPORTS_KEY, JSON.stringify(filtered));
   return true;
 }
 
