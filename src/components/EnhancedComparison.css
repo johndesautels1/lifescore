@@ -5918,6 +5918,12 @@
     font-size: 1.5rem;
   }
 
+  /* Mobile dark mode: bright yellow-orange for Consensus Life Score label */
+  [data-theme="dark"] .enhanced-winner-hero .winner-label {
+    color: #FFB627;
+    opacity: 1;
+  }
+
   /* Mobile: Action buttons */
   .result-actions {
     flex-wrap: wrap;
