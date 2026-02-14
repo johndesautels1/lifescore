@@ -268,11 +268,14 @@ export async function warmUpSupabase(): Promise<void> {
     // Follow up with a lightweight DB ping to warm the PostgREST connection.
     await supabase.auth.getSession();
     // Fire-and-forget: touch the DB so PostgREST connection pool is warm
-    Promise.resolve(supabase.from('judge_reports').select('report_id').limit(1).maybeSingle()).then(() => {
-      console.log('[Supabase] Warm-up ping complete');
-    }).catch(() => {
-      // Warm-up failure is non-critical
-    });
+    (async () => {
+      try {
+        await supabase.from('judge_reports').select('report_id').limit(1).maybeSingle();
+        console.log('[Supabase] Warm-up ping complete');
+      } catch {
+        // Warm-up failure is non-critical
+      }
+    })();
   } catch {
     // Warm-up failure is non-critical — don't block the app
   }
