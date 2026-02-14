@@ -44,7 +44,7 @@ async function withTimeout<T>(
   return withRetry(() => promise, {
     timeoutMs: ms,
     operationName,
-    maxRetries: 3,
+    maxRetries: 1,
   });
 }
 import { toastSuccess, toastError } from '../utils/toast';
@@ -983,7 +983,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     try {
 
-      // Check if report already exists (with 45s timeout)
+      // Check if report already exists (with timeout)
       // FIX 2026-01-29: Use maybeSingle() - report may not exist yet
       const { data: existing } = await withTimeout(
         supabase
@@ -994,7 +994,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       );
 
       if (existing) {
-        // Update existing report (with 45s timeout)
+        // Update existing report (with timeout)
         // FIX 2026-02-08: Include city names in UPDATE to prevent metadata/content mismatch
         const { error } = await withTimeout(
           supabase
@@ -1014,8 +1014,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               category_analysis: report.categoryAnalysis || [],
               verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl,
-              // FIX 2026-02-14: Write comparison_id for Supabase fallback lookups
+              // Only save permanent URLs — skip stale provider CDN URLs
+              video_url: report.videoUrl && !report.videoUrl.includes('replicate.delivery') && !report.videoUrl.includes('klingai.com')
+                ? report.videoUrl : null,
               comparison_id: report.comparisonId || null,
             })
             .eq('report_id', report.reportId)
@@ -1024,7 +1025,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         if (error) throw error;
         console.log('[JudgeTab] Report updated in Supabase:', report.reportId);
       } else {
-        // Insert new report (with 45s timeout)
+        // Insert new report (with timeout)
         const { error } = await withTimeout(
           supabase
             .from('judge_reports')
@@ -1045,8 +1046,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               category_analysis: report.categoryAnalysis || [],
               verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl,
-              // FIX 2026-02-14: Write comparison_id for Supabase fallback lookups
+              // Only save permanent URLs — skip stale provider CDN URLs
+              video_url: report.videoUrl && !report.videoUrl.includes('replicate.delivery') && !report.videoUrl.includes('klingai.com')
+                ? report.videoUrl : null,
               comparison_id: report.comparisonId || null,
             })
         );

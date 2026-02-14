@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchingRef = React.useRef<string | null>(null);
   // FIX 2026-02-14: Cooldown after failure — prevents retry storm when Supabase is unreachable
   const lastFailedAtRef = React.useRef<number>(0);
-  const FAILURE_COOLDOWN_MS = 60000; // 60s cooldown after a failed fetch
+  const FAILURE_COOLDOWN_MS = 30000; // 30s cooldown after a failed fetch
 
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile and preferences in parallel with reduced timeout/retries
       // to prevent long blocking loops when Supabase is slow or unreachable.
       // Fail fast, fail open — the app works without profile data.
-      const PROFILE_TIMEOUT_MS = 24000; // 24s — give Supabase enough time on cold starts
+      const PROFILE_TIMEOUT_MS = 5000; // 5s — PostgREST is always-on, not serverless
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -230,13 +230,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // SUPABASE MODE: Get initial session with timeout (45s for slow Supabase cold starts)
-    const SESSION_TIMEOUT_MS = 45000;
+    // SUPABASE MODE: Get initial session with timeout
+    const SESSION_TIMEOUT_MS = 10000; // 10s — session check hits local cache first
     let initialLoadDone = false; // Tracks whether the first profile fetch has completed
     let initialUserId: string | null = null; // Track which user getSession already loaded
     const sessionTimeout = setTimeout(() => {
       if (!initialLoadDone) {
-        console.warn("[Auth] Session check timed out after 45s");
+        console.warn("[Auth] Session check timed out after 10s");
         initialLoadDone = true;
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }

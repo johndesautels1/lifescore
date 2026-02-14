@@ -261,7 +261,7 @@ export default async function handler(
       ]);
     };
 
-    const DB_TIMEOUT_MS = 45000; // 45 second timeout for DB queries
+    const DB_TIMEOUT_MS = 8000; // 8s timeout for DB queries (PostgREST is always-on)
 
     // Check cache first (with timeout - don't let DB issues block video generation)
     // Using maybeSingle() instead of single() to avoid error when no rows exist

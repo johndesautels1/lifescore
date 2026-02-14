@@ -15,7 +15,7 @@ import { handleCors } from '../shared/cors.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const TIMEOUT_MS = 45000; // 45 seconds for all operations
+const TIMEOUT_MS = 10000; // 10s for DB + Replicate status check + optional persist
 
 export const config = {
   maxDuration: 60, // Increased from 30s to allow video download+upload to Supabase Storage
@@ -293,6 +293,44 @@ export default async function handler(
         } catch (replicateErr) {
           console.warn('[VIDEO-STATUS] Replicate check failed:', replicateErr);
           // Continue with existing video data
+        }
+      }
+    }
+
+    // FIX: For completed videos with temporary provider URLs (no storage path),
+    // attempt to migrate to permanent Supabase Storage. If URL expired, mark as failed.
+    if (video.status === 'completed' && video.video_url && !video.video_storage_path) {
+      const isTemporaryUrl = video.video_url.includes('replicate.delivery') ||
+                             video.video_url.includes('klingai.com');
+
+      if (isTemporaryUrl) {
+        console.log('[VIDEO-STATUS] Completed video has temporary URL, attempting migration:', video.id);
+        const persisted = await persistVideoToStorage(
+          video.video_url,
+          video.comparison_id,
+          supabaseAdmin
+        );
+
+        if (persisted) {
+          console.log('[VIDEO-STATUS] Migrated stale URL to permanent storage:', persisted.publicUrl);
+          await withTimeout(
+            supabaseAdmin
+              .from('avatar_videos')
+              .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+              .eq('id', video.id)
+          );
+          video.video_url = persisted.publicUrl;
+        } else {
+          console.warn(`[VIDEO-STATUS] Provider URL expired, marking video ${video.id} as failed`);
+          await withTimeout(
+            supabaseAdmin
+              .from('avatar_videos')
+              .update({ status: 'failed', error: 'Provider URL expired before migration' })
+              .eq('id', video.id)
+          );
+          video.status = 'failed';
+          video.video_url = null;
+          video.error = 'Provider URL expired — please regenerate';
         }
       }
     }
