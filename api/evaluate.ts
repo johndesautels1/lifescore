@@ -1300,6 +1300,39 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 
   const startTime = Date.now();
 
+  // FIX: Batch split for large categories (Business & Work = 25 metrics) to prevent timeouts
+  // Matches existing pattern used by Claude (line ~698), Gemini (~1117), Perplexity (~1479)
+  const BATCH_THRESHOLD = 12;
+  if (metrics.length > BATCH_THRESHOLD) {
+    console.log(`[GROK] Large category (${metrics.length} metrics), splitting into batches`);
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+    console.log(`[GROK] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    const [result1, result2] = await Promise.all([
+      evaluateWithGrok(city1, city2, batch1),
+      evaluateWithGrok(city1, city2, batch2)
+    ]);
+
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedSuccess = result1.success && result2.success;
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[GROK] Batched: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+    return {
+      provider: 'grok-4',
+      success: combinedSuccess || combinedScores.length > 0,
+      scores: combinedScores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
+
   // GROK-SPECIFIC ADDENDUM (optimized per Grok's own recommendations 2026-01-21)
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const currentYear = new Date().getFullYear();
