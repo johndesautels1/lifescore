@@ -964,6 +964,15 @@
   white-space: nowrap;
 }
 
+/* Desktop: show full labels, hide short labels */
+.judge-tab .action-btn .btn-text-short {
+  display: none;
+}
+
+.judge-tab .action-btn .btn-text-full {
+  display: inline;
+}
+
 .judge-tab .action-btn:hover:not(:disabled) {
   background: rgba(201, 162, 39, 0.2);
   border-color: var(--brushed-gold);
@@ -1737,6 +1746,15 @@
     color: #ffffff;
   }
 
+  /* Mobile: show short labels, hide full labels */
+  .judge-tab .action-btn .btn-text-full {
+    display: none;
+  }
+
+  .judge-tab .action-btn .btn-text-short {
+    display: inline;
+  }
+
   /* Fix: Verdict winner badge centering on mobile */
   .verdict-banner {
     padding: 1.25rem 1rem;
@@ -1848,6 +1866,15 @@
     font-size: 0.85rem;
     white-space: nowrap;
     color: #ffffff;
+  }
+
+  /* Small mobile: ensure short labels shown, full labels hidden */
+  .judge-tab .action-btn .btn-text-full {
+    display: none;
+  }
+
+  .judge-tab .action-btn .btn-text-short {
+    display: inline;
   }
 
   /* Fix: Verdict winner badge centering on small phones */

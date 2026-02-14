@@ -1737,7 +1737,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport}
         >
           <span className="btn-icon">💾</span>
-          <span className="btn-text">SAVE REPORT</span>
+          <span className="btn-text btn-text-full">SAVE REPORT</span>
+          <span className="btn-text btn-text-short">SAVE</span>
         </button>
         <button
           className="action-btn download-btn"
@@ -1745,7 +1746,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport}
         >
           <span className="btn-icon">📄</span>
-          <span className="btn-text">DOWNLOAD PDF</span>
+          <span className="btn-text btn-text-full">DOWNLOAD PDF</span>
+          <span className="btn-text btn-text-short">PDF</span>
         </button>
         <button
           className="action-btn download-btn"
@@ -1753,7 +1755,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport?.videoUrl}
         >
           <span className="btn-icon">🎬</span>
-          <span className="btn-text">DOWNLOAD VIDEO</span>
+          <span className="btn-text btn-text-full">DOWNLOAD VIDEO</span>
+          <span className="btn-text btn-text-short">VIDEO</span>
         </button>
         <button
           className="action-btn forward-btn"
@@ -1761,7 +1764,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport}
         >
           <span className="btn-icon">📤</span>
-          <span className="btn-text">FORWARD</span>
+          <span className="btn-text btn-text-full">FORWARD</span>
+          <span className="btn-text btn-text-short">SHARE</span>
         </button>
       </section>
 
