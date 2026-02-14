@@ -135,13 +135,72 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
           setDataSource('database');
           setLastSaved(new Date(data[0].created_at));
 
-          // Merge: DB records as primary, supplement with local-only records
+          // Merge: DB records as primary, but recover post-comparison service
+          // costs from localStorage that appendServiceCost() wrote after the
+          // initial DB snapshot was saved (FIX: service costs showing $0.00)
           const dbBreakdowns = data.map(dbRecordToBreakdown);
           const dbComparisonIds = new Set(data.map(r => r.comparison_id));
+          const localByCompId = new Map(localCosts.map(c => [c.comparisonId, c]));
           const localOnly = localCosts.filter(c => !dbComparisonIds.has(c.comparisonId));
-          const merged = [...dbBreakdowns, ...localOnly];
+
+          const mergedDb = dbBreakdowns.map(db => {
+            const local = localByCompId.get(db.comparisonId);
+            if (!local) return db;
+            // For each service cost field, take the higher value — localStorage
+            // has post-comparison costs that the DB snapshot missed
+            const patched = { ...db };
+            if ((local.gammaTotal || 0) > (db.gammaTotal || 0)) {
+              patched.gamma = local.gamma;
+              patched.gammaTotal = local.gammaTotal;
+            }
+            if ((local.oliviaTotal || 0) > (db.oliviaTotal || 0)) {
+              patched.olivia = local.olivia;
+              patched.oliviaTotal = local.oliviaTotal;
+            }
+            if ((local.ttsTotal || 0) > (db.ttsTotal || 0)) {
+              patched.tts = local.tts;
+              patched.ttsTotal = local.ttsTotal;
+            }
+            if ((local.avatarTotal || 0) > (db.avatarTotal || 0)) {
+              patched.avatar = local.avatar;
+              patched.avatarTotal = local.avatarTotal;
+            }
+            if ((local.klingTotal || 0) > (db.klingTotal || 0)) {
+              patched.kling = local.kling;
+              patched.klingTotal = local.klingTotal;
+            }
+            // Also recover Perplexity if local has data DB missed
+            if (local.perplexity.reduce((s, c) => s + c.totalCost, 0) >
+                db.perplexity.reduce((s, c) => s + c.totalCost, 0)) {
+              patched.perplexity = local.perplexity;
+              patched.evaluatorTotal = local.evaluatorTotal;
+            }
+            // Recalculate grand total from patched fields
+            patched.grandTotal =
+              (patched.tavilyTotal || 0) +
+              (patched.evaluatorTotal || 0) +
+              (patched.judgeTotal || 0) +
+              (patched.gammaTotal || 0) +
+              (patched.oliviaTotal || 0) +
+              (patched.ttsTotal || 0) +
+              (patched.avatarTotal || 0) +
+              (patched.klingTotal || 0);
+            return patched;
+          });
+
+          const merged = [...mergedDb, ...localOnly];
           setCosts(merged);
           setSummary(buildSummary(merged));
+
+          // Auto-sync: re-save patched records to DB so service costs persist
+          // (fire-and-forget, non-blocking)
+          for (const patched of mergedDb) {
+            const dbVersion = dbBreakdowns.find(d => d.comparisonId === patched.comparisonId);
+            if (dbVersion && patched.grandTotal > (dbVersion.grandTotal || 0)) {
+              const record = toApiCostRecordInsert(patched, user.id);
+              saveApiCostRecord(record).catch(() => {});
+            }
+          }
         } else {
           // No DB data — use local
           setCosts(localCosts);

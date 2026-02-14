@@ -1706,6 +1706,7 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
             max_tokens: 32768,
             temperature: 0.3,
             return_citations: true,
+            stream: false,  // FIX: Explicit non-streaming ensures usage data is returned
           })
         },
         LLM_TIMEOUT_MS
@@ -1809,10 +1810,23 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
       }
 
       // Extract token usage from Perplexity response (same format as OpenAI)
+      // FIX: Log when usage is missing so we can diagnose $0.00 cost tracking
+      if (!data?.usage) {
+        console.warn('[PERPLEXITY] API response missing usage data. Keys:', Object.keys(data));
+      } else {
+        console.log(`[PERPLEXITY] Usage: ${data.usage.prompt_tokens} prompt / ${data.usage.completion_tokens} completion tokens`);
+      }
       const usage: TokenUsage = {
         inputTokens: data?.usage?.prompt_tokens || 0,
         outputTokens: data?.usage?.completion_tokens || 0
       };
+      // FIX: If API returned no usage, estimate from prompt + response length
+      // so costs aren't silently lost (~4 chars per token)
+      if (usage.inputTokens === 0 && usage.outputTokens === 0 && rawText.length > 0) {
+        usage.inputTokens = Math.ceil(prompt.length / 4);
+        usage.outputTokens = Math.ceil(rawText.length / 4);
+        console.warn(`[PERPLEXITY] Estimated tokens from text: ${usage.inputTokens} in / ${usage.outputTokens} out`);
+      }
 
       return {
         provider: 'perplexity',
