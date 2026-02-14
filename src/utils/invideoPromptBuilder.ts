@@ -436,7 +436,7 @@ ${userName ? `Voiceover: "${userName}, welcome to your new life. A life of freed
 Text overlay fades in:
   "${nameGreeting} new life. Scored by data. Chosen with confidence."
   "LIFE SCORE™ — 100 Freedom Metrics. Your Future, Quantified."
-  "Clues Intelligence — clueslifescore.com"
+  "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
 
 --- END (EXACTLY 10:00) ---
 
@@ -549,7 +549,7 @@ The following fields should be passed as structured data:
   "branding": {
     "company": "Clues Intelligence LTD",
     "product": "LIFE SCORE",
-    "website": "clueslifescore.com",
+    "website": "Cluesnomads.com",
     "accent_color": "#D4AF37"
   }
 }

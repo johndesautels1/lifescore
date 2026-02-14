@@ -371,19 +371,40 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
           <div className="lcd-screen">
             <div className="lcd-bezel">
               <div className="lcd-display">
+                {/* Clues Logo Overlay - always visible in corner */}
+                <img
+                  src="/logo-transparent.png"
+                  alt="CLUES"
+                  className="video-logo-overlay"
+                />
                 {hasVideo ? (
-                  <video
-                    ref={videoRef}
-                    src={effectiveVideoUrl!}
-                    poster={effectiveThumbnailUrl || undefined}
-                    className="court-video"
-                    onEnded={handleVideoEnded}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onError={handleVideoError}
-                    playsInline
-                    crossOrigin="anonymous"
-                  />
+                  <>
+                    {/* Intro poster image - shows before video plays */}
+                    {!isPlaying && currentTime === 0 && (
+                      <div className="video-poster-overlay" onClick={handlePlayPause}>
+                        <img
+                          src="/logo-transparent.png"
+                          alt="CLUES"
+                          className="poster-logo"
+                        />
+                        <div className="poster-title">CLUES FREEDOM TOUR</div>
+                        <div className="poster-city">{winnerCity}</div>
+                        <div className="poster-cta">TAP TO PLAY</div>
+                      </div>
+                    )}
+                    <video
+                      ref={videoRef}
+                      src={effectiveVideoUrl!}
+                      poster={effectiveThumbnailUrl || undefined}
+                      className="court-video"
+                      onEnded={handleVideoEnded}
+                      onTimeUpdate={handleTimeUpdate}
+                      onLoadedMetadata={handleLoadedMetadata}
+                      onError={handleVideoError}
+                      playsInline
+                      crossOrigin="anonymous"
+                    />
+                  </>
                 ) : (
                   <div className="lcd-placeholder">
                     {isGenerating ? (

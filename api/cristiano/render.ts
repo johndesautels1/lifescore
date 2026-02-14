@@ -185,7 +185,10 @@ SCENES: 1 & 9 = A-ROLL (Cristiano on camera). 2-8 = B-ROLL (city footage + overl
 Storyboard:
 ${json}
 
-Use generic cinematic city footage if specific stock unavailable. Keep timing identical. End with: "Lifestyle scoring, not legal advice."`;
+Use generic cinematic city footage if specific stock unavailable. Keep timing identical. End with: "Lifestyle scoring, not legal advice."
+
+MANDATORY CTA: Cristiano must say verbatim in Scene 9: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
+On-screen text: "Cluesnomads.com". Do NOT use any other website URL.`;
 
   // Safety check — log warning if approaching limit
   if (prompt.length > 9500) {

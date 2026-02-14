@@ -165,6 +165,7 @@ SCENE TIMING TEMPLATE (follow exactly):
 7. 14s Policing/courts/enforcement (predictability + civic trust)
 8. 14s MAP + 3–4 neighborhoods "Freedom Hotspots"
 9. 10s A-roll verdict + "Cristiano's Orders" list + CTA + disclaimer
+     Cristiano MUST end with: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
 
 SCENE 9 ON-SCREEN HEADER: "Cristiano's Orders" with 3–5 bullets max, mapped to winning city's strongest categories:
 - "Move freely." (Transportation & Daily Movement)
@@ -172,6 +173,11 @@ SCENE 9 ON-SCREEN HEADER: "Cristiano's Orders" with 3–5 bullets max, mapped to
 - "Own with clarity." (Housing/Property/HOA)
 - "Work without friction." (Business & Work)
 - "Choose autonomy daily." (Personal Autonomy)
+
+SCENE 9 CLOSING CTA (MANDATORY — Cristiano must say this verbatim):
+"For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
+On-screen text: "Cluesnomads.com"
+Do NOT substitute any other website URL. The ONLY website mentioned must be Cluesnomads.com.
 
 B-ROLL VISUAL LANGUAGE (use for stock_search_keywords):
 - Personal Autonomy: diverse people, street life, open-air markets, parks, self-expression, wellness
