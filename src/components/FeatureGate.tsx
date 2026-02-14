@@ -74,6 +74,10 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: str
     title: 'City Life Videos',
     description: 'AI-generated videos showing freedom vs imprisonment (Sovereign only).',
   },
+  cristianoVideos: {
+    title: 'Go To My New City',
+    description: 'Cristiano\'s cinematic multi-scene city tour video (Sovereign only, 1/month).',
+  },
   cloudSync: {
     title: 'Cloud Sync',
     description: 'Save and sync your comparisons across all your devices.',
