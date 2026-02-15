@@ -2185,7 +2185,7 @@
   background: white;
   border-radius: 12px;
   border: 2px solid rgba(212, 175, 55, 0.3);
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 4px 20px rgba(30, 30, 58, 0.1);
 }
 
@@ -2262,7 +2262,6 @@
   gap: 0.5rem;
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
 }
 
 .metric-name {
@@ -2375,6 +2374,12 @@
   animation: tooltipSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Click-to-toggle: works on both desktop and mobile */
+.metric-tooltip.tooltip-active .tooltip-content {
+  display: block;
+  animation: tooltipSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @keyframes tooltipSlideIn {
   from {
     opacity: 0;
@@ -2383,6 +2388,33 @@
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* Mobile tooltip: fixed-position centered overlay so it escapes all clipping */
+@media (max-width: 768px) {
+  .metric-tooltip.tooltip-active .tooltip-content {
+    position: fixed;
+    left: 50%;
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 2rem);
+    max-width: 340px;
+    z-index: 10000;
+  }
+
+  .metric-tooltip.tooltip-active .tooltip-content::after {
+    display: none;
+  }
+
+  /* Semi-transparent backdrop behind tooltip */
+  .metric-tooltip.tooltip-active::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
   }
 }
 
@@ -2613,7 +2645,6 @@
   gap: 0.35rem;
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
 }
 
 .metric-row-expandable .metric-name {

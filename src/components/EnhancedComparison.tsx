@@ -1319,6 +1319,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const [expandedDifference, setExpandedDifference] = useState<string | null>(null);
   const [showGunComparison, setShowGunComparison] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
@@ -1396,6 +1397,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   useEffect(() => {
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
   }, [result.comparisonId]);
+
+  // Close tooltip on outside tap or scroll (mobile fix)
+  useEffect(() => {
+    if (!activeTooltip) return;
+    const close = () => setActiveTooltip(null);
+    document.addEventListener('scroll', close, true);
+    return () => document.removeEventListener('scroll', close, true);
+  }, [activeTooltip]);
 
   // FIXED 2026-01-25: Added loading state for better UX feedback
   const handleSave = async () => {
@@ -2126,7 +2135,10 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                             <div className="metric-name-container">
                               <span className="metric-name">{metric.shortName}</span>
                               {tooltip && (
-                                <div className="metric-tooltip" onClick={(e) => e.stopPropagation()}>
+                                <div className={`metric-tooltip ${activeTooltip === metric.id ? 'tooltip-active' : ''}`} onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveTooltip(activeTooltip === metric.id ? null : metric.id);
+                                }}>
                                   <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
                                   <div className="tooltip-content">
                                     <strong>Why This Matters:</strong>
