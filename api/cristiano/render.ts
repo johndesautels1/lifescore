@@ -549,19 +549,15 @@ export default async function handler(
         console.log('[RENDER] Prompt length:', videoAgentPrompt.length, 'chars');
 
         // Submit to HeyGen Video Agent
-        // avatar_id and look_id go in config; voice_id is NOT accepted by Video Agent V2
-        // (causes 400: "Extra inputs are not permitted"). Voice is set via the avatar's
-        // default in HeyGen dashboard (ElevenLabs DzUwifXFzrD4THQLxNun). It's also
-        // embedded in the prompt text as a hint.
-        // IMPORTANT: These must be inside `config`, NOT top-level (causes 400).
+        // Video Agent V2 config only accepts: avatar_id, duration_sec, orientation.
+        // voice_id and look_id are NOT accepted (400: "Extra inputs are not permitted").
+        // Voice is set via the avatar's default in HeyGen dashboard.
+        // look_id is embedded in the prompt text as a hint instead.
         const configObj: Record<string, unknown> = {
           avatar_id: CRISTIANO_AVATAR_ID,
           duration_sec: 120,
           orientation: 'landscape',
         };
-        if (AVATAR_LOOK_ID) {
-          configObj.look_id = AVATAR_LOOK_ID;
-        }
 
         console.log('[RENDER] Config:', JSON.stringify(configObj));
 
