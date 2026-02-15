@@ -4,7 +4,7 @@
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useTransition } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
@@ -179,6 +179,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   // Report view mode: read (iframe) or presenter (Olivia video overlay)
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
+  // INP fix: mark presenter mount/unmount as a non-urgent transition
+  const [isPending, startTransition] = useTransition();
 
   // Load saved reports from localStorage, then always sync from Supabase
   useEffect(() => {
@@ -705,15 +707,15 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     <div className="report-view-toggle">
                       <button
                         className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
-                        onClick={() => setReportViewMode('read')}
+                        onClick={() => startTransition(() => setReportViewMode('read'))}
                       >
                         📖 Read
                       </button>
                       <button
-                        className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
-                        onClick={() => setReportViewMode('presenter')}
+                        className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''} ${isPending ? 'loading' : ''}`}
+                        onClick={() => startTransition(() => setReportViewMode('presenter'))}
                       >
-                        🎧 Listen to Presenter
+                        {isPending ? '⏳ Loading...' : '🎧 Listen to Presenter'}
                       </button>
                     </div>
                     <a
@@ -726,7 +728,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     </a>
                     <button
                       className="close-embed-btn"
-                      onClick={() => { setShowEmbedded(false); setReportViewMode('read'); }}
+                      onClick={() => { setShowEmbedded(false); startTransition(() => setReportViewMode('read')); }}
                     >
                       ✕ Close
                     </button>
@@ -736,7 +738,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                   <ReportPresenter
                     result={result}
                     gammaUrl={reportState.gammaUrl}
-                    onClose={() => setReportViewMode('read')}
+                    onClose={() => startTransition(() => setReportViewMode('read'))}
                   />
                 ) : (
                   <iframe
@@ -842,15 +844,15 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 <div className="report-view-toggle">
                   <button
                     className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
-                    onClick={() => setReportViewMode('read')}
+                    onClick={() => startTransition(() => setReportViewMode('read'))}
                   >
                     📖 Read
                   </button>
                   <button
-                    className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
-                    onClick={() => setReportViewMode('presenter')}
+                    className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''} ${isPending ? 'loading' : ''}`}
+                    onClick={() => startTransition(() => setReportViewMode('presenter'))}
                   >
-                    🎧 Listen to Presenter
+                    {isPending ? '⏳ Loading...' : '🎧 Listen to Presenter'}
                   </button>
                 </div>
               )}
@@ -864,7 +866,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               </a>
               <button
                 className="close-embed-btn"
-                onClick={() => { setViewingReport(null); setReportViewMode('read'); }}
+                onClick={() => { setViewingReport(null); startTransition(() => setReportViewMode('read')); }}
               >
                 ✕ Close
               </button>
@@ -874,7 +876,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             <ReportPresenter
               result={result}
               gammaUrl={viewingReport.gammaUrl}
-              onClose={() => setReportViewMode('read')}
+              onClose={() => startTransition(() => setReportViewMode('read'))}
             />
           ) : (
             <iframe
