@@ -36,7 +36,7 @@ const HEYGEN_TIMEOUT_MS = 120000;  // 120s for HeyGen API calls (submission + st
 
 // Cristiano avatar, voice & look (from env)
 const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CRISTIANO_AVATAR_ID || '';
-const CRISTIANO_VOICE_ID = process.env.HEYGEN_CRISTIANO_VOICE_ID || '';
+const CRISTIANO_VOICE_ID = process.env.HEYGEN_CRISTIANO_VOICE_ID || 'DzUwifXFzrD4THQLxNun';
 const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
 
 // Supabase admin client
