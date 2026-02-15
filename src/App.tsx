@@ -9,6 +9,7 @@
 import React, { useState, useCallback, useEffect, useReducer, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
+import ResetPasswordScreen from './components/ResetPasswordScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import PricingModal from './components/PricingModal';
@@ -252,7 +253,7 @@ function enhancedReducer(state: EnhancedState, action: EnhancedAction): Enhanced
 
 // Main app content (requires auth)
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading, user, session } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [savedKey, setSavedKey] = useState(0);
@@ -590,6 +591,11 @@ const AppContent: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Show password reset screen when user clicked a reset link
+  if (isPasswordRecovery) {
+    return <ResetPasswordScreen updatePassword={updatePassword} clearPasswordRecovery={clearPasswordRecovery} />;
   }
 
   // Show login screen if not authenticated
