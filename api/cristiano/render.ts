@@ -35,7 +35,7 @@ const HEYGEN_STATUS_URL = 'https://api.heygen.com/v1/video_status.get';
 const HEYGEN_TIMEOUT_MS = 120000;  // 120s for HeyGen API calls (submission + status)
 
 // Cristiano avatar, voice & look (from env — rotate API key if changed)
-const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CRISTIANO_AVATAR_ID || '';
+const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CRISTIANO_AVATAR_ID || '7a0ee88ad6814ed9af896f9164407c41';
 const CRISTIANO_VOICE_ID = process.env.HEYGEN_CRISTIANO_VOICE_ID || 'DzUwifXFzrD4THQLxNun';
 const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
 

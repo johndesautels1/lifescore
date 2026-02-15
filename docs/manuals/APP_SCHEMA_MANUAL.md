@@ -956,7 +956,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `HEYGEN_API_KEY` | HeyGen API — Gamma report video presenter only |
 | `HEYGEN_OLIVIA_AVATAR_ID` | HeyGen Olivia avatar — Gamma video ONLY (not chat TTS) |
 | `HEYGEN_OLIVIA_VOICE_ID` | HeyGen Olivia voice — Gamma video ONLY (not ElevenLabs/OpenAI) |
-| `HEYGEN_CRISTIANO_AVATAR_ID` | HeyGen Judge Cristiano avatar — video presenter |
+| `HEYGEN_CRISTIANO_AVATAR_ID` | HeyGen Judge Cristiano avatar — `7a0ee88ad6814ed9af896f9164407c41` |
 | `HEYGEN_CRISTIANO_VOICE_ID` | HeyGen Judge Cristiano voice — video presenter |
 | `CRISTIANO_IMAGE_URL` | Judge avatar source image |
 | `REPLICATE_API_TOKEN` | Replicate (video fallback + Wav2Lip) |

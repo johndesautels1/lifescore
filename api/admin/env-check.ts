@@ -74,7 +74,7 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'HEYGEN_API_KEY', description: 'HeyGen API key — Gamma report video presenter + streaming avatar', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_OLIVIA_AVATAR_ID', description: 'HeyGen Olivia avatar ID — Gamma video presenter ONLY (not chat TTS)', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_OLIVIA_VOICE_ID', description: 'HeyGen Olivia voice ID — Gamma video presenter ONLY (not ElevenLabs/OpenAI)', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_CRISTIANO_AVATAR_ID', description: 'HeyGen Judge Cristiano avatar ID — video presenter', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_CRISTIANO_AVATAR_ID', description: 'HeyGen Judge Cristiano avatar ID — 7a0ee88ad6814ed9af896f9164407c41', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_CRISTIANO_VOICE_ID', description: 'HeyGen Judge Cristiano voice ID — ElevenLabs default (DzUwifXFzrD4THQLxNun)', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_AVATAR_LOOK_ID', description: 'HeyGen avatar look/appearance ID — physical appearance variant for avatar rendering', category: 'Avatar & Video', side: 'server' },
   { name: 'CRISTIANO_IMAGE_URL', description: 'Judge Cristiano source image URL', category: 'Avatar & Video', side: 'server' },

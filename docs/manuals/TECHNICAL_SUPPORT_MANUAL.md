@@ -1390,7 +1390,7 @@ User clicks "Generate Video" in ReportPresenter →
 | `HEYGEN_API_KEY` | HeyGen API auth — Gamma report video presenter only |
 | `HEYGEN_OLIVIA_AVATAR_ID` | Olivia avatar ID — Gamma video presenter ONLY (not chat TTS) |
 | `HEYGEN_OLIVIA_VOICE_ID` | Olivia voice ID — Gamma video presenter ONLY (not ElevenLabs/OpenAI) |
-| `HEYGEN_CRISTIANO_AVATAR_ID` | Judge Cristiano avatar ID — video presenter |
+| `HEYGEN_CRISTIANO_AVATAR_ID` | Judge Cristiano avatar ID — `7a0ee88ad6814ed9af896f9164407c41` |
 | `HEYGEN_CRISTIANO_VOICE_ID` | Judge Cristiano voice ID — video presenter |
 
 ### 9.8 Judge Page Collapsible Panels (Added 2026-02-14)
@@ -1709,7 +1709,7 @@ User clicks Judge tab (JudgeTab.tsx)
 - `HEYGEN_API_KEY` - HeyGen Gamma report video presenter (streaming + pre-rendered)
 - `HEYGEN_OLIVIA_AVATAR_ID` - HeyGen Olivia avatar (Gamma video ONLY, not chat TTS)
 - `HEYGEN_OLIVIA_VOICE_ID` - HeyGen Olivia voice (Gamma video ONLY, not ElevenLabs/OpenAI)
-- `HEYGEN_CRISTIANO_AVATAR_ID` - HeyGen Judge Cristiano avatar
+- `HEYGEN_CRISTIANO_AVATAR_ID` - HeyGen Judge Cristiano avatar (`7a0ee88ad6814ed9af896f9164407c41`)
 - `HEYGEN_CRISTIANO_VOICE_ID` - HeyGen Judge Cristiano voice
 - `RESEND_FROM_EMAIL` - Custom sender email
 - `XAI_API_KEY` - Alias for GROK_API_KEY

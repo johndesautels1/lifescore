@@ -291,7 +291,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - The ElevenLabs voice is a **cloned voice** specific to Olivia. When ElevenLabs quota runs out, OpenAI "nova" voice kicks in automatically.
 - HeyGen has its **own separate voice** (HEYGEN_OLIVIA_VOICE_ID) used for both Live Presenter and Video Presenter.
 - D-ID cockpit avatar uses Microsoft Sonia voice (en-GB-SoniaNeural) built into D-ID — no ElevenLabs needed.
-- **Cristiano** has his own HeyGen pipeline (HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID) — completely separate from Olivia's HeyGen vars.
+- **Cristiano** has his own HeyGen pipeline (HEYGEN_CRISTIANO_AVATAR_ID=\`7a0ee88ad6814ed9af896f9164407c41\`, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID) — completely separate from Olivia's HeyGen vars.
 - Changing HeyGen vars will NOT affect Ask Olivia chat or voice. Changing ElevenLabs/OpenAI vars will NOT affect the video presenter.
 
 ## CRITICAL: Cristiano "Go To My New City" HeyGen Video Wiring (Added 2026-02-15)
@@ -617,7 +617,7 @@ GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, H
 - **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
 - **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Olivia Live Presenter (streaming) + Video Presenter (pre-rendered MP4)
 - **DID_API_KEY / DID_PRESENTER_URL** → Olivia cockpit avatar on Ask Olivia page (D-ID Streams, Microsoft Sonia voice)
-- **HEYGEN_CRISTIANO_AVATAR_ID / HEYGEN_CRISTIANO_VOICE_ID / HEYGEN_AVATAR_LOOK_ID** → Cristiano "Go To My New City" cinematic video (Video Agent V2)
+- **HEYGEN_CRISTIANO_AVATAR_ID** → \`7a0ee88ad6814ed9af896f9164407c41\` — Cristiano "Go To My New City" cinematic video (Video Agent V2), paired with HEYGEN_CRISTIANO_VOICE_ID + HEYGEN_AVATAR_LOOK_ID
 - **OPENAI_ASSISTANT_ID** → Olivia chat brain (OpenAI Assistants API)
 - These are 5 independent systems. Changing one does NOT affect the others.
 
