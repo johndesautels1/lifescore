@@ -592,7 +592,7 @@
 }
 
 .new-life-videos .info-text {
-  color: var(--text-secondary, #a0a0c0);
+  color: #FF8C00;
   font-size: 0.85rem;
   margin: 0;
   line-height: 1.5;

@@ -292,6 +292,11 @@
   letter-spacing: -0.01em;
 }
 
+/* Light mode: sunshine yellow-orange for category headers */
+:root:not([data-theme="dark"]) .results .category-name {
+  color: #F7931E;
+}
+
 .category-weight {
   font-weight: 600;
   font-size: 0.75rem;

@@ -1173,14 +1173,14 @@ const LLMAgreementSection: React.FC<LLMAgreementSectionProps> = ({ result, city1
                     {/* Both Cities Scores */}
                     <div className="agreed-scores">
                       <div className="city-score-box">
-                        <span className="city-name">{city1Name}</span>
+                        <span className={`city-name ${metric.city1Score > metric.city2Score ? 'winner' : 'loser'}`}>{city1Name}</span>
                         <span className={`city-score ${metric.city1Score > metric.city2Score ? 'winner' : ''}`}>
                           {Math.round(metric.city1Score)}
                         </span>
                       </div>
                       <div className="score-vs">vs</div>
                       <div className="city-score-box">
-                        <span className="city-name">{city2Name}</span>
+                        <span className={`city-name ${metric.city2Score > metric.city1Score ? 'winner' : 'loser'}`}>{city2Name}</span>
                         <span className={`city-score ${metric.city2Score > metric.city1Score ? 'winner' : ''}`}>
                           {Math.round(metric.city2Score)}
                         </span>

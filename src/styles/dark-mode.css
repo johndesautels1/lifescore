@@ -125,8 +125,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: white;
-  transition: all 200ms ease;
-  backdrop-filter: blur(10px);
+  transition: background 200ms ease, border-color 200ms ease;
 }
 
 .theme-toggle:hover {

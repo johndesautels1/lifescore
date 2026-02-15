@@ -960,10 +960,11 @@
 
 .enhanced-winner-hero .winner-label {
   font-size: 0.9rem;
-  opacity: 0.9;
+  opacity: 1;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 0.5rem;
+  color: #000000;
 }
 
 .enhanced-winner-hero .winner-difference {
@@ -2132,6 +2133,11 @@
   letter-spacing: -0.01em;
 }
 
+/* Light mode: sunshine yellow-orange for category headers */
+:root:not([data-theme="dark"]) .enhanced-category .category-name {
+  color: #F7931E;
+}
+
 .enhanced-category .category-weight {
   color: #6b7280;
   font-size: 0.9rem;
@@ -3033,7 +3039,8 @@
 
 .stat-label {
   font-size: 0.85rem;
-  color: var(--gray-500);
+  color: #000000;
+  font-weight: 700;
 }
 
 .stat-value {
@@ -4991,6 +4998,17 @@
 
 .city-score-box .city-score.winner {
   color: #059669;
+}
+
+/* Light mode only: winner city name = bold green, loser = bold red */
+:root:not([data-theme="dark"]) .city-score-box .city-name.winner {
+  color: #059669;
+  font-weight: 800;
+}
+
+:root:not([data-theme="dark"]) .city-score-box .city-name.loser {
+  color: #DC2626;
+  font-weight: 800;
 }
 
 .score-vs {

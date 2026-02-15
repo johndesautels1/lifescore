@@ -128,7 +128,7 @@
 
 .gun-loading-sub {
   font-size: 0.8rem !important;
-  color: #9ca3af;
+  color: #FF8C00;
   margin-top: 0.25rem !important;
 }
 
@@ -265,7 +265,7 @@
 .gun-modal-footer p {
   margin: 0;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #FF8C00;
   text-align: center;
   font-style: italic;
 }
