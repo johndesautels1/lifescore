@@ -97,6 +97,25 @@
   }
 }
 
+/* Gamma Report Selector - distinct styling */
+.gamma-report-selector {
+  margin-top: 0.5rem;
+  border-color: rgba(201, 162, 39, 0.3);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(10, 22, 40, 0.95));
+}
+
+.gamma-report-selector .report-selector-label {
+  color: #c9a227;
+}
+
+.no-saved-reports-msg {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
 /* ============================================================================
    GAMMA SECTION
    ============================================================================ */
@@ -114,15 +133,15 @@
   gap: 0.5rem;
   font-size: 1.25rem;
   margin: 0 0 0.5rem 0;
-  color: var(--text-primary, #ffffff);
+  color: #f59e0b;
 }
 
-.section-icon {
+.visuals-tab .section-icon {
   font-size: 1.5rem;
 }
 
-.section-description {
-  color: #ffffff !important;
+.visuals-tab .section-description {
+  color: rgba(255, 255, 255, 0.85);
   margin: 0 0 1.5rem 0;
 }
 
@@ -153,17 +172,17 @@
 
 .format-btn {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color, #2a2a4a);
+  border: 1px solid #2a2a4a;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-secondary, #a0a0c0);
+  color: #a0a0c0;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .format-btn:hover {
-  border-color: var(--accent-color, #D4AF37);
-  color: var(--text-primary, #ffffff);
+  border-color: #D4AF37;
+  color: #ffffff;
 }
 
 .format-btn.active {
@@ -173,7 +192,7 @@
   font-weight: 600;
 }
 
-.generate-btn {
+.visuals-tab .generate-btn {
   padding: 0.75rem 2rem;
   border: none;
   border-radius: 8px;
@@ -183,17 +202,17 @@
   transition: all 0.2s ease;
 }
 
-.primary-btn {
+.visuals-tab .primary-btn {
   background: var(--accent-color, #D4AF37);
   color: #000000;
 }
 
-.primary-btn:hover {
+.visuals-tab .primary-btn:hover {
   background: var(--accent-hover, #E5C04B);
   transform: translateY(-1px);
 }
 
-.secondary-btn {
+.visuals-tab .secondary-btn {
   background: transparent;
   border: 2px solid #D4AF37;
   color: #D4AF37;
@@ -201,14 +220,14 @@
   transition: all 0.2s ease;
 }
 
-.secondary-btn:hover {
+.visuals-tab .secondary-btn:hover {
   background: rgba(212, 175, 55, 0.15);
   border-color: #E5C04B;
   color: #E5C04B;
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
 }
 
-.secondary-btn:active {
+.visuals-tab .secondary-btn:active {
   background: rgba(212, 175, 55, 0.25);
   border-color: #F5D05B;
   color: #F5D05B;
@@ -217,7 +236,7 @@
 }
 
 /* Progress State */
-.generating-state {
+.visuals-tab .generating-state {
   text-align: center;
   padding: 1.5rem;
 }
@@ -231,7 +250,7 @@
   margin-bottom: 1rem;
 }
 
-.spinner {
+.visuals-tab .spinner {
   width: 32px;
   height: 32px;
   border: 3px solid rgba(212, 175, 55, 0.3);
@@ -252,7 +271,7 @@
   color: #D4AF37;
 }
 
-.progress-bar {
+.visuals-tab .progress-bar {
   height: 10px;
   background: rgba(42, 42, 74, 0.8);
   border-radius: 5px;
@@ -261,7 +280,7 @@
   border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
-.progress-fill {
+.visuals-tab .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #D4AF37, #E5C04B);
   border-radius: 5px;
@@ -269,7 +288,7 @@
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
-.status-message {
+.visuals-tab .status-message {
   color: #ffffff;
   font-size: 1rem;
   font-weight: 500;
@@ -420,7 +439,7 @@
   color: #000000;
 }
 
-.reset-btn {
+.visuals-tab .reset-btn {
   margin-top: 0.5rem;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -434,7 +453,7 @@
   gap: 1rem;
 }
 
-.error-message {
+.visuals-tab .error-message {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -442,7 +461,7 @@
   font-weight: 500;
 }
 
-.error-icon {
+.visuals-tab .error-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,7 +474,7 @@
   font-weight: bold;
 }
 
-.retry-btn {
+.visuals-tab .retry-btn {
   padding: 0.5rem 1rem;
 }
 
@@ -809,5 +828,335 @@
 
   .type-btn {
     text-align: center;
+  }
+}
+
+/* 480px breakpoint for small mobile */
+@media (max-width: 480px) {
+  .gamma-section,
+  .in-app-visuals {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .gamma-section .section-title,
+  .in-app-visuals .section-title {
+    font-size: 1.05rem;
+  }
+
+  .visuals-tab .section-description {
+    font-size: 0.85rem;
+  }
+
+  .visuals-tab .generate-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+    min-height: 48px;
+  }
+
+  .format-btn {
+    padding: 0.625rem 0.75rem;
+    min-height: 44px;
+  }
+
+  .type-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    min-height: 48px;
+  }
+
+  .report-links {
+    gap: 0.5rem;
+  }
+
+  .report-link {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .embedded-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .gamma-embed-frame {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .gun-rights-option {
+    padding: 0.75rem;
+  }
+
+  .save-report-btn {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+/* ============================================================================
+   EXISTING REPORT BANNER (View Existing Report)
+   ============================================================================ */
+
+.existing-report-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 8px;
+}
+
+.existing-report-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.existing-report-icon {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.existing-report-text {
+  font-size: 0.85rem;
+  color: var(--text-primary, #e0e0e0);
+  font-weight: 500;
+}
+
+.existing-report-date {
+  color: var(--text-secondary, #888);
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.existing-report-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.existing-report-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.existing-report-btn.view {
+  background: rgba(201, 162, 39, 0.15);
+  border-color: rgba(201, 162, 39, 0.5);
+  color: #d4af37;
+}
+
+.existing-report-btn.view:hover {
+  background: rgba(201, 162, 39, 0.25);
+  border-color: rgba(201, 162, 39, 0.7);
+  color: #e0bc3f;
+}
+
+.existing-report-btn.download {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary, #aaa);
+}
+
+.existing-report-btn.download:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #fff);
+}
+
+@media (max-width: 640px) {
+  .existing-report-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .existing-report-actions {
+    width: 100%;
+  }
+
+  .existing-report-btn.view {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* ============================================================================
+   SAVED REPORTS LIBRARY
+   ============================================================================ */
+
+.saved-reports-section {
+  padding: 1.25rem;
+}
+
+.saved-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.saved-report-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--card-background, rgba(26, 26, 46, 0.6));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.saved-report-item .report-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-report-item .report-cities {
+  font-weight: 700;
+  color: #f5a623;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-report-item .report-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #888);
+}
+
+[data-theme="dark"] .saved-report-item .report-date {
+  color: #ffffff;
+}
+
+.saved-report-item .report-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.report-action-btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #aaa);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.report-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #fff);
+}
+
+.report-action-btn.view {
+  color: var(--accent-color, #d4af37);
+  border-color: var(--accent-color, rgba(212, 175, 55, 0.3));
+}
+
+.report-action-btn.view:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.report-action-btn.delete {
+  color: #e74c3c;
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.report-action-btn.delete:hover {
+  background: rgba(231, 76, 60, 0.15);
+}
+
+.saved-report-viewer {
+  padding: 1rem;
+}
+
+.saved-report-viewer .gamma-embed-frame {
+  width: 100%;
+  height: 70vh;
+  border: none;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .saved-report-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .saved-report-item .report-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ============================================================================
+   READ / WATCH PRESENTER TOGGLE
+   ============================================================================ */
+
+.report-view-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.view-toggle-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-toggle-btn:first-child {
+  border-right: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: rgba(212, 175, 55, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.view-toggle-btn.active {
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+  text-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+}
+
+@media (max-width: 768px) {
+  .report-view-toggle {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-toggle-btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 0.85rem;
   }
 }

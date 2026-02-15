@@ -36,11 +36,12 @@ const DEFAULT_MAX_VIEWS = 100;
 // ============================================================================
 
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Report query'
 ): Promise<T> {
-  return withRetry(() => promise, {
+  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 3,
@@ -95,7 +96,7 @@ export async function saveReport(
 
   try {
     // 1. Upload HTML to storage
-    const { error: storageError } = await withTimeout(
+    const { error: storageError } = await withTimeout(() =>
       supabase.storage
         .from(STORAGE_BUCKET)
         .upload(fileName, htmlContent, {
@@ -103,7 +104,7 @@ export async function saveReport(
           cacheControl: '3600',
           upsert: false
         }),
-      60000, // 60 second timeout for upload
+      180000, // 180 second timeout for upload (reports can be 10-50MB)
       'Upload report HTML'
     );
 
@@ -136,7 +137,7 @@ export async function saveReport(
       llm_consensus_confidence: reportData.confidence || null,
     };
 
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout(() =>
       supabase
         .from('reports')
         .insert(insert)
@@ -189,7 +190,7 @@ export async function createPendingReport(
     status: 'generating',
   };
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('reports')
       .insert(insert)
@@ -219,7 +220,7 @@ export async function completeReport(
 
   try {
     // Upload HTML
-    const { error: storageError } = await withTimeout(
+    const { error: storageError } = await withTimeout(() =>
       supabase.storage
         .from(STORAGE_BUCKET)
         .upload(fileName, htmlContent, {
@@ -227,7 +228,7 @@ export async function completeReport(
           cacheControl: '3600',
           upsert: true
         }),
-      60000,
+      180000, // 180 second timeout for upload (reports can be 10-50MB)
       'Upload report HTML'
     );
 
@@ -242,7 +243,7 @@ export async function completeReport(
       page_count: pageCount,
     };
 
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout(() =>
       supabase
         .from('reports')
         .update(update)
@@ -271,7 +272,7 @@ export async function failReport(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('reports')
       .update({ status: 'failed' })
@@ -293,7 +294,7 @@ export async function getReport(
 ): Promise<{ data: Report | null; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('reports')
       .select('*')
@@ -319,7 +320,7 @@ export async function getReportWithHtml(
 
   try {
     // Get metadata
-    const { data: report, error: reportError } = await withTimeout(
+    const { data: report, error: reportError } = await withTimeout(() =>
       supabase
         .from('reports')
         .select('*')
@@ -342,7 +343,7 @@ export async function getReportWithHtml(
       };
     }
 
-    const { data: htmlData, error: storageError } = await withTimeout(
+    const { data: htmlData, error: storageError } = await withTimeout(() =>
       supabase.storage
         .from(STORAGE_BUCKET)
         .download(report.html_storage_path),
@@ -407,7 +408,7 @@ export async function getUserReports(
     query = query.range(options.offset, options.offset + (options.limit || 50) - 1);
   }
 
-  const { data, error } = await withTimeout(query);
+  const { data, error } = await withTimeout(() => query);
 
   return {
     data: (data as Report[]) || [],
@@ -424,7 +425,7 @@ export async function getUserReportSummaries(
 ): Promise<{ data: ReportSummary[]; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('reports')
       .select('id, report_type, city1_name, city2_name, winner, winner_score, loser_score, page_count, created_at, status')
@@ -462,7 +463,7 @@ export async function deleteReport(
   }
 
   // Delete from database (cascades to access_logs and shares)
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('reports')
       .delete()
@@ -511,7 +512,7 @@ export async function shareReport(
     allowed_emails: options.allowedEmails || null,
   };
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('report_shares')
       .insert(insert)
@@ -545,11 +546,11 @@ export async function getSharedReport(
   requireDatabase();
 
   try {
-    // Get share record
-    const { data: share, error: shareError } = await withTimeout(
+    // Get share record via public view (excludes password_hash for safety)
+    const { data: share, error: shareError } = await withTimeout(() =>
       supabase
-        .from('report_shares')
-        .select('*')
+        .from('report_shares_public' as any)
+        .select('id, report_id, share_token, expires_at, max_views, view_count, requires_email, allowed_emails, created_at, last_accessed_at')
         .eq('share_token', shareToken)
         .single()
     );
@@ -577,14 +578,15 @@ export async function getSharedReport(
       };
     }
 
-    // Increment view count and update last accessed
-    await supabase
-      .from('report_shares')
-      .update({
-        view_count: share.view_count + 1,
-        last_accessed_at: new Date().toISOString()
-      })
-      .eq('id', share.id);
+    // Increment view count atomically (prevents race condition)
+    // FIX 2026-02-14: Wrap in try/catch — a failed counter should not block the shared report view
+    try {
+      await supabase.rpc('increment_share_view_count', {
+        p_share_id: share.id,
+      });
+    } catch (rpcError) {
+      console.warn('[reportStorage] increment_share_view_count failed (non-blocking):', rpcError);
+    }
 
     // Get full report (skip access logging for shared view, we track it separately)
     const { data: report, error: reportError } = await getReportWithHtml(share.report_id, false);
@@ -617,7 +619,7 @@ export async function getReportShares(
 ): Promise<{ data: ReportShare[]; error: Error | null }> {
   requireDatabase();
 
-  const { data, error } = await withTimeout(
+  const { data, error } = await withTimeout(() =>
     supabase
       .from('report_shares')
       .select('*')
@@ -639,7 +641,7 @@ export async function deleteShare(
 ): Promise<{ error: Error | null }> {
   requireDatabase();
 
-  const { error } = await withTimeout(
+  const { error } = await withTimeout(() =>
     supabase
       .from('report_shares')
       .delete()
@@ -670,7 +672,11 @@ export async function logReportAccess(
       share_token: shareToken || null,
     };
 
-    await supabase.from('report_access_logs').insert(insert);
+    // FIX 2026-02-14: Add 10s timeout — logging should never block the report view
+    await Promise.race([
+      supabase.from('report_access_logs').insert(insert),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Log timeout')), 10000)),
+    ]);
   } catch (error) {
     // Don't throw on logging failures
     console.warn('[ReportStorage] Failed to log access:', error);
@@ -695,12 +701,13 @@ export async function getReportAnalytics(
   requireDatabase();
 
   try {
-    const { data: logs, error } = await withTimeout(
+    const { data: logs, error } = await withTimeout(() =>
       supabase
         .from('report_access_logs')
         .select('*')
         .eq('report_id', reportId)
         .order('accessed_at', { ascending: false })
+        .limit(100)
     );
 
     if (error) throw error;

@@ -67,6 +67,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
+  // Blob URLs for CORS-safe video playback (Kling CDN may not send CORS headers)
+  const [winnerBlobUrl, setWinnerBlobUrl] = useState<string | null>(null);
+  const [loserBlobUrl, setLoserBlobUrl] = useState<string | null>(null);
+
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3; // Reset state after 3 failed load attempts
@@ -78,19 +82,30 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const winnerScore = winner === 'city1' ? result.city1.totalConsensusScore : result.city2.totalConsensusScore;
   const loserScore = winner === 'city1' ? result.city2.totalConsensusScore : result.city1.totalConsensusScore;
 
-  // Handle video generation
-  const handleGenerateVideos = async () => {
+  // Local error state for usage/auth failures (separate from video generation errors)
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  // Handle video generation (forceRegenerate bypasses "already processing" block on backend)
+  const handleGenerateVideos = async (forceRegenerate: boolean = false) => {
+    setLocalError(null);
+
     if (!user?.id) {
       console.warn('[NewLifeVideos] No user ID available');
+      setLocalError('Please sign in to generate videos.');
       return;
     }
 
     // ADMIN BYPASS: Skip usage checks for admin users
-    if (!isAdmin) {
-      // Check usage limits before generating Grok videos
+    if (!isAdmin && !forceRegenerate) {
+      // Check usage limits before generating Grok videos (skip on force regen — already counted)
       const usageResult = await checkUsage('grokVideos');
       if (!usageResult.allowed) {
-        console.log('[NewLifeVideos] Grok video limit reached:', usageResult);
+        console.warn('[NewLifeVideos] Grok video limit reached:', usageResult);
+        if (usageResult.upgradeRequired) {
+          setLocalError('Upgrade to Sovereign to unlock City Life Videos.');
+        } else {
+          setLocalError('Monthly video limit reached. Resets on the 1st.');
+        }
         return;
       }
 
@@ -106,56 +121,67 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
       comparisonId: result.comparisonId,
       winnerCity,
       loserCity,
+      forceRegenerate,
     });
   };
 
   // Handle play both videos simultaneously
+  // FIX: Use allSettled so one broken video doesn't prevent the other from playing.
+  // Do NOT gate on readyState — .play() returns a promise that resolves once the
+  // browser has buffered enough data. Pre-checking readyState races the blob load.
   const handlePlayVideos = async () => {
-    if (winnerVideoRef.current && loserVideoRef.current) {
-      if (isPlaying) {
-        winnerVideoRef.current.pause();
-        loserVideoRef.current.pause();
-        setIsPlaying(false);
+    const winner = winnerVideoRef.current;
+    const loser = loserVideoRef.current;
+
+    if (!winner && !loser) return;
+
+    if (isPlaying) {
+      loser?.pause();
+      winner?.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    // Reset playback position
+    if (loser) loser.currentTime = 0;
+    if (winner) winner.currentTime = 0;
+
+    // Collect play() promises for every mounted video element
+    const playPromises: Promise<void>[] = [];
+    if (winner) playPromises.push(winner.play());
+    if (loser) playPromises.push(loser.play());
+
+    if (playPromises.length === 0) return;
+
+    try {
+      const results = await Promise.allSettled(playPromises);
+      const anyPlayed = results.some(r => r.status === 'fulfilled');
+
+      if (anyPlayed) {
+        setIsPlaying(true);
       } else {
-        // Sync start both videos
-        winnerVideoRef.current.currentTime = 0;
-        loserVideoRef.current.currentTime = 0;
+        // All failed with sound — try muted (mobile autoplay requirement)
+        console.warn('[NewLifeVideos] Play with sound failed, trying muted');
+        if (winner) winner.muted = true;
+        if (loser) loser.muted = true;
 
-        try {
-          // MOBILE FIX: Try to play with sound first
-          await Promise.all([
-            winnerVideoRef.current.play(),
-            loserVideoRef.current.play(),
-          ]);
+        const mutedPromises: Promise<void>[] = [];
+        if (winner) mutedPromises.push(winner.play());
+        if (loser) mutedPromises.push(loser.play());
+
+        const mutedResults = await Promise.allSettled(mutedPromises);
+        if (mutedResults.some(r => r.status === 'fulfilled')) {
+          setTimeout(() => {
+            if (winnerVideoRef.current) winnerVideoRef.current.muted = false;
+            if (loserVideoRef.current) loserVideoRef.current.muted = false;
+          }, 100);
           setIsPlaying(true);
-        } catch (err) {
-          console.warn('[NewLifeVideos] Play with sound failed, trying muted:', err);
-
-          // MOBILE FALLBACK: Play muted first (mobile autoplay requirement)
-          try {
-            winnerVideoRef.current.muted = true;
-            loserVideoRef.current.muted = true;
-
-            await Promise.all([
-              winnerVideoRef.current.play(),
-              loserVideoRef.current.play(),
-            ]);
-
-            // Unmute after successful play start
-            setTimeout(() => {
-              if (winnerVideoRef.current) winnerVideoRef.current.muted = false;
-              if (loserVideoRef.current) loserVideoRef.current.muted = false;
-            }, 100);
-
-            setIsPlaying(true);
-          } catch (mutedErr) {
-            console.error('[NewLifeVideos] Even muted play failed:', mutedErr);
-            // Last resort: try loading videos first
-            winnerVideoRef.current.load();
-            loserVideoRef.current.load();
-          }
+        } else {
+          console.error('[NewLifeVideos] Even muted play failed');
         }
       }
+    } catch (err) {
+      console.error('[NewLifeVideos] Unexpected play error:', err);
     }
   };
 
@@ -213,12 +239,77 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     }
   }, [videoErrorCount, reset]);
 
+  // Auto-regeneration is handled by the error count threshold (handleVideoError).
+  // When a video element fails to load (truly expired URL), the error count
+  // reaches MAX_VIDEO_ERRORS and resets the state so the user can regenerate.
+  const hasTriggeredRegenRef = useRef(false);
+
+  // Track which video URLs are known dead (404/expired) so we don't render broken video elements
+  const [deadUrls, setDeadUrls] = useState<Set<string>>(new Set());
+
+  // Fetch videos as blob URLs to bypass CORS restrictions on Kling/Replicate CDN
+  // Same technique as the download handler — fetch → blob → createObjectURL
+  // FIX: Properly detect 404/expired URLs and mark them dead instead of creating garbage blobs
+  useEffect(() => {
+    if (!isReady || !videoPair) return;
+
+    let cancelled = false;
+
+    const fetchBlob = async (url: string | undefined | null): Promise<string | null> => {
+      if (!url || !url.startsWith('http')) return null;
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          console.warn(`[NewLifeVideos] Video URL returned ${resp.status}:`, url.substring(0, 80));
+          // Mark this URL as dead so we show "expired" instead of broken video element
+          if (!cancelled) setDeadUrls(prev => new Set(prev).add(url));
+          return null;
+        }
+        // Verify we actually got video content, not an error page
+        const contentType = resp.headers.get('content-type') || '';
+        if (!contentType.startsWith('video/') && !contentType.startsWith('application/octet-stream')) {
+          console.warn(`[NewLifeVideos] Video URL returned non-video content-type:`, contentType);
+          if (!cancelled) setDeadUrls(prev => new Set(prev).add(url));
+          return null;
+        }
+        const blob = await resp.blob();
+        if (cancelled) return null;
+        return URL.createObjectURL(blob);
+      } catch {
+        if (!cancelled) setDeadUrls(prev => new Set(prev).add(url));
+        return null;
+      }
+    };
+
+    Promise.all([
+      fetchBlob(videoPair.winner?.videoUrl),
+      fetchBlob(videoPair.loser?.videoUrl),
+    ]).then(([wBlob, lBlob]) => {
+      if (cancelled) {
+        if (wBlob) URL.revokeObjectURL(wBlob);
+        if (lBlob) URL.revokeObjectURL(lBlob);
+        return;
+      }
+      setWinnerBlobUrl(wBlob);
+      setLoserBlobUrl(lBlob);
+    });
+
+    return () => {
+      cancelled = true;
+      setWinnerBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+      setLoserBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    };
+  }, [isReady, videoPair?.winner?.videoUrl, videoPair?.loser?.videoUrl]);
+
   // Reset when result changes
   useEffect(() => {
     reset();
     setHasStarted(false);
     setIsPlaying(false);
     setVideoErrorCount(0);
+    setLocalError(null);
+    setDeadUrls(new Set());
+    hasTriggeredRegenRef.current = false;
   }, [result.comparisonId]);
 
   return (
@@ -253,10 +344,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="score-badge">{winnerScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
-              {isReady && videoPair?.winner?.videoUrl && videoPair.winner.videoUrl.startsWith('http') ? (
+              {isReady && videoPair?.winner?.videoUrl && videoPair.winner.videoUrl.startsWith('http') && !deadUrls.has(videoPair.winner.videoUrl) ? (
                 <video
                   ref={winnerVideoRef}
-                  src={videoPair.winner.videoUrl}
+                  src={winnerBlobUrl || videoPair.winner.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
                   onError={(e) => handleVideoError('winner', e)}
@@ -268,7 +359,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 <div className="video-placeholder winner-placeholder">
                   <div className="placeholder-icon">🌟</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : 'Freedom awaits'}
+                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : deadUrls.has(videoPair?.winner?.videoUrl || '') ? 'Video expired — regenerate' : 'Freedom awaits'}
                   </div>
                 </div>
               )}
@@ -301,10 +392,10 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
               <span className="score-badge">{loserScore.toFixed(1)}</span>
             </div>
             <div className="video-viewport">
-              {isReady && videoPair?.loser?.videoUrl && videoPair.loser.videoUrl.startsWith('http') ? (
+              {isReady && videoPair?.loser?.videoUrl && videoPair.loser.videoUrl.startsWith('http') && !deadUrls.has(videoPair.loser.videoUrl) ? (
                 <video
                   ref={loserVideoRef}
-                  src={videoPair.loser.videoUrl}
+                  src={loserBlobUrl || videoPair.loser.videoUrl}
                   className="city-video"
                   onEnded={handleVideoEnded}
                   onError={(e) => handleVideoError('loser', e)}
@@ -316,7 +407,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
                 <div className="video-placeholder loser-placeholder">
                   <div className="placeholder-icon">⛓️</div>
                   <div className="placeholder-text">
-                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : 'Oppression looms'}
+                    {isGenerating ? 'Generating...' : error ? 'Video unavailable' : deadUrls.has(videoPair?.loser?.videoUrl || '') ? 'Video expired — regenerate' : 'Oppression looms'}
                   </div>
                 </div>
               )}
@@ -342,11 +433,11 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
         )}
 
         {/* Error Display */}
-        {error && (
+        {(error || localError) && (
           <div className="video-error">
             <span className="error-icon">!</span>
-            <span className="error-text">{error}</span>
-            <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); }}>
+            <span className="error-text">{error || localError}</span>
+            <button className="retry-btn" onClick={() => { reset(); setHasStarted(false); setLocalError(null); handleGenerateVideos(true); }}>
               Try Again
             </button>
           </div>
@@ -359,7 +450,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             user?.id ? (
               <button
                 className="generate-btn primary-btn"
-                onClick={handleGenerateVideos}
+                onClick={() => handleGenerateVideos()}
                 disabled={isGenerating}
               >
                 <span className="btn-icon">👁️</span>

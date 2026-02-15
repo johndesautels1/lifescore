@@ -3,8 +3,12 @@
 -- Migration: 003_avatar_videos.sql
 -- Date: 2026-01-24
 --
--- Caches generated Christiano judge videos to avoid regenerating.
+-- Caches generated Cristiano judge videos to avoid regenerating.
 -- Videos are cached by comparison_id (hash of cities + verdict).
+--
+-- NOTE: This table is also defined in 20260125_create_judge_tables.sql.
+-- Both use CREATE TABLE IF NOT EXISTS so only the first one applied matters.
+-- RLS policies are now managed by 20260210_cleanup_duplicate_policies.sql.
 --
 -- Clues Intelligence LTD
 -- © 2025-2026 All Rights Reserved
@@ -105,7 +109,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- COMMENTS
 -- ============================================================================
 
-COMMENT ON TABLE public.avatar_videos IS 'Cached Christiano judge videos generated via Replicate';
+COMMENT ON TABLE public.avatar_videos IS 'Cached Cristiano judge videos generated via Replicate';
 COMMENT ON COLUMN public.avatar_videos.comparison_id IS 'Hash of city pair + verdict for cache lookup';
 COMMENT ON COLUMN public.avatar_videos.expires_at IS 'Videos expire after 30 days to manage storage';
 COMMENT ON FUNCTION cleanup_expired_videos IS 'Deletes videos past their expiration date';

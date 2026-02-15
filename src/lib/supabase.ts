@@ -40,17 +40,19 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Supabase query timeout in milliseconds.
- * 45s to handle cold starts and slow connections.
+ * PostgREST is always-on (not serverless) — queries should respond in <1s.
+ * 5s is generous and covers slow mobile connections + large JSONB writes.
  */
-export const SUPABASE_TIMEOUT_MS = 45000;
+export const SUPABASE_TIMEOUT_MS = 5000;
 
 /**
- * Retry configuration for Supabase queries
+ * Retry configuration for Supabase queries.
+ * Fail fast: 1 retry (2 attempts total), 500ms initial delay.
  */
 export const RETRY_CONFIG = {
-  maxRetries: 3,
-  initialDelayMs: 1000,  // 1 second
-  maxDelayMs: 10000,     // 10 seconds max
+  maxRetries: 1,
+  initialDelayMs: 500,   // 500ms
+  maxDelayMs: 3000,      // 3 seconds max
   backoffMultiplier: 2,  // Double delay each retry
 };
 
@@ -68,7 +70,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns Query result or throws after all retries exhausted
  */
 export async function withRetry<T>(
-  queryFn: () => PromiseLike<T>,
+  queryFn: (signal?: AbortSignal) => PromiseLike<T>,
   options: {
     maxRetries?: number;
     initialDelayMs?: number;
@@ -76,6 +78,7 @@ export async function withRetry<T>(
     backoffMultiplier?: number;
     timeoutMs?: number;
     operationName?: string;
+    signal?: AbortSignal;
   } = {}
 ): Promise<T> {
   const {
@@ -85,22 +88,35 @@ export async function withRetry<T>(
     backoffMultiplier = RETRY_CONFIG.backoffMultiplier,
     timeoutMs = SUPABASE_TIMEOUT_MS,
     operationName = 'Supabase query',
+    signal: externalSignal,
   } = options;
 
   let lastError: Error | null = null;
   let delay = initialDelayMs;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // D8: AbortController for hung connections — abort per-attempt
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    // Link external signal if provided
+    const onExternalAbort = () => controller.abort();
+    externalSignal?.addEventListener('abort', onExternalAbort);
+
     try {
-      // Wrap query with timeout
+      if (externalSignal?.aborted) {
+        throw new DOMException('Query aborted by caller', 'AbortError');
+      }
+
       const result = await Promise.race([
-        Promise.resolve(queryFn()),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`${operationName} timed out after ${timeoutMs}ms`)), timeoutMs)
-        ),
+        Promise.resolve(queryFn(controller.signal)),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error(`${operationName} timed out after ${timeoutMs}ms`));
+          });
+        }),
       ]);
 
-      // Success - log if it was a retry
       if (attempt > 0) {
         console.log(`[Supabase] ${operationName} succeeded on attempt ${attempt + 1}`);
       }
@@ -109,29 +125,30 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Check if this is a retryable error
+      // If externally aborted, don't retry
+      if (externalSignal?.aborted || lastError.name === 'AbortError') {
+        console.warn(`[Supabase] ${operationName} aborted`);
+        throw lastError;
+      }
+
       const isTimeout = lastError.message.includes('timed out');
       const isNetworkError = lastError.message.includes('network') || lastError.message.includes('fetch');
       const isRetryable = isTimeout || isNetworkError;
 
       if (!isRetryable || attempt === maxRetries) {
-        // Non-retryable error or exhausted retries
         console.error(`[Supabase] ${operationName} failed after ${attempt + 1} attempts:`, lastError.message);
         throw lastError;
       }
 
-      // Log retry attempt
       console.warn(`[Supabase] ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`);
-
-      // Wait before retry
       await sleep(delay);
-
-      // Increase delay for next retry (exponential backoff with cap)
       delay = Math.min(delay * backoffMultiplier, maxDelayMs);
+    } finally {
+      clearTimeout(timeoutId);
+      externalSignal?.removeEventListener('abort', onExternalAbort);
     }
   }
 
-  // Should never reach here, but TypeScript needs it
   throw lastError || new Error(`${operationName} failed`);
 }
 
@@ -222,10 +239,48 @@ export async function getCurrentSession() {
   return session;
 }
 
+/**
+ * Get Authorization headers for API calls.
+ * Returns { Authorization: 'Bearer <token>' } if user is logged in, empty object otherwise.
+ */
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  const session = await getCurrentSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return {};
+}
+
 if (import.meta.env.DEV) {
   supabase.auth.onAuthStateChange((event, session) => {
     console.log('[Supabase Auth]', event, session?.user?.email || 'no user');
   });
+}
+
+/**
+ * FIX A4: Warm-up ping to combat Supabase cold starts.
+ * Fires a cheap auth check on app mount so the connection is hot
+ * by the time the user actually needs data.
+ */
+export async function warmUpSupabase(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    // getSession is the cheapest Supabase call — it reads from local cache
+    // first, but still opens the HTTP connection to Supabase in the background.
+    // Follow up with a lightweight DB ping to warm the PostgREST connection.
+    await supabase.auth.getSession();
+    // Fire-and-forget: touch the DB so PostgREST connection pool is warm
+    (async () => {
+      try {
+        await supabase.from('judge_reports').select('report_id').limit(1).maybeSingle();
+        console.log('[Supabase] Warm-up ping complete');
+      } catch {
+        // Warm-up failure is non-critical
+      }
+    })();
+  } catch {
+    // Warm-up failure is non-critical — don't block the app
+  }
 }
 
 export default supabase;

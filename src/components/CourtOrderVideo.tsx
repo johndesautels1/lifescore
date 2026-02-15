@@ -15,6 +15,9 @@ import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { saveCourtOrder } from '../services/savedComparisons';
+import { toastSuccess, toastError } from '../utils/toast';
+import { supabase } from '../lib/supabase';
+import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
 import FreedomCategoryTabs from './FreedomCategoryTabs';
 import FreedomMetricsList from './FreedomMetricsList';
 import FreedomHeroFooter from './FreedomHeroFooter';
@@ -25,6 +28,15 @@ import './CourtOrderVideo.css';
 // ============================================================================
 // TYPES
 // ============================================================================
+
+interface InVideoOverride {
+  id: string;
+  video_url: string;
+  video_title: string | null;
+  duration_seconds: number | null;
+  thumbnail_url: string | null;
+  source: 'manual' | 'api';
+}
 
 interface CourtOrderVideoProps {
   comparisonId: string;
@@ -40,11 +52,16 @@ interface CourtOrderVideoProps {
 
 const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   comparisonId,
-  winnerCity,
-  loserCity: _loserCity, // Reserved for future use
+  winnerCity: propWinnerCity,
+  loserCity: propLoserCity = 'City B',
   winnerScore,
   freedomEducation,
 }) => {
+  // CRITICAL: Use freedomEducation's own city labels if available.
+  // The props may come from the overall verdict, but freedomEducation metrics
+  // are validated against actual per-metric scores on the server side.
+  const winnerCity = freedomEducation?.winnerCity || propWinnerCity;
+  const loserCity = freedomEducation?.loserCity || propLoserCity;
   const { user } = useAuth();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const {
@@ -59,6 +76,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
 
   // Video ref for playback control
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -66,9 +84,176 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
+  // User video upload state
+  const [userVideoUrl, setUserVideoUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
+
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // INVIDEO OVERRIDE STATE
+  // ══════════════════════════════════════════════════════════════════════════
+  const [invideoOverride, setInvideoOverride] = useState<InVideoOverride | null>(null);
+  const [isLoadingOverride, setIsLoadingOverride] = useState(true);
+  const [showAdminUpload, setShowAdminUpload] = useState(false);
+  const [adminVideoUrl, setAdminVideoUrl] = useState('');
+  const [adminVideoTitle, setAdminVideoTitle] = useState('');
+  const [isSubmittingOverride, setIsSubmittingOverride] = useState(false);
+
+  // Check for InVideo override on mount / when comparison changes
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkOverride() {
+      setIsLoadingOverride(true);
+      try {
+        const response = await fetch(
+          `/api/video/invideo-override?comparisonId=${encodeURIComponent(comparisonId)}&city=${encodeURIComponent(winnerCity)}`
+        );
+        if (!cancelled && response.ok) {
+          const data = await response.json();
+          setInvideoOverride(data.override || null);
+        }
+      } catch (err) {
+        console.warn('[CourtOrderVideo] InVideo override check failed:', err);
+      } finally {
+        if (!cancelled) setIsLoadingOverride(false);
+      }
+    }
+
+    checkOverride();
+    return () => { cancelled = true; };
+  }, [comparisonId, winnerCity]);
+
+  // FIX 2026-02-14: Auto-restore cached court order video on mount
+  // When JudgeTab remounts after a tab switch, useGrokVideo starts at idle.
+  // Query grok_videos for a completed court order so we don't lose the video.
+  const [cachedVideoUrl, setCachedVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkCachedCourtOrder() {
+      try {
+        const { data } = await supabase
+          .from('grok_videos')
+          .select('video_url, video_storage_path')
+          .ilike('city_name', winnerCity.trim())
+          .eq('video_type', 'perfect_life')
+          .eq('status', 'completed')
+          .not('video_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!cancelled && data?.video_url) {
+          // Prefer permanent storage path URL over expired provider URL
+          const url = data.video_url;
+          const isExpiredProviderUrl = url.includes('replicate.delivery') || url.includes('klingai.com');
+          if (!isExpiredProviderUrl || !data.video_storage_path) {
+            setCachedVideoUrl(url);
+            console.log('[CourtOrderVideo] Restored cached video:', url.substring(0, 60) + '...');
+          }
+        }
+      } catch (err) {
+        console.warn('[CourtOrderVideo] Cache check failed:', err);
+      }
+    }
+
+    checkCachedCourtOrder();
+    return () => { cancelled = true; };
+  }, [winnerCity]);
+
+  // The effective video URL: User upload > InVideo override > Kling-generated > Cached from DB
+  // FIX: Skip expired Replicate URLs (they expire after ~24h)
+  const generatedVideoUrl = video?.videoUrl && !video.videoUrl.includes('replicate.delivery') ? video.videoUrl : null;
+  const effectiveVideoUrl = userVideoUrl || invideoOverride?.video_url || generatedVideoUrl || cachedVideoUrl;
+
+  // Admin: Submit InVideo URL override
+  const handleSubmitOverride = async () => {
+    if (!adminVideoUrl.trim()) return;
+
+    try {
+      new URL(adminVideoUrl);
+    } catch {
+      toastError('Please enter a valid video URL');
+      return;
+    }
+
+    setIsSubmittingOverride(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toastError('You must be logged in');
+        return;
+      }
+
+      const response = await fetch('/api/video/invideo-override', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          comparisonId,
+          cityName: winnerCity,
+          videoUrl: adminVideoUrl.trim(),
+          videoTitle: adminVideoTitle.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to save');
+      }
+
+      const result = await response.json();
+      setInvideoOverride({
+        id: result.override.id,
+        video_url: result.override.video_url,
+        video_title: result.override.video_title,
+        duration_seconds: result.override.duration_seconds,
+        thumbnail_url: result.override.thumbnail_url,
+        source: result.override.source,
+      });
+      setShowAdminUpload(false);
+      setAdminVideoUrl('');
+      setAdminVideoTitle('');
+      toastSuccess('InVideo override saved! VIP video will now play.');
+    } catch (err) {
+      console.error('[CourtOrderVideo] Override submit error:', err);
+      toastError(err instanceof Error ? err.message : 'Failed to save override');
+    } finally {
+      setIsSubmittingOverride(false);
+    }
+  };
+
+  // Admin: Remove InVideo override
+  const handleRemoveOverride = async () => {
+    if (!invideoOverride) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch(`/api/video/invideo-override?id=${invideoOverride.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+
+      if (response.ok) {
+        setInvideoOverride(null);
+        toastSuccess('InVideo override removed. Default video will play.');
+      }
+    } catch (err) {
+      console.error('[CourtOrderVideo] Override remove error:', err);
+      toastError('Failed to remove override');
+    }
+  };
 
   // Freedom Education tab state
   const [activeCategory, setActiveCategory] = useState<CategoryId>('personal_freedom');
@@ -132,8 +317,12 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           setIsPlaying(true);
         }).catch(err => {
           console.error('[CourtOrderVideo] Play error:', err);
+          toastError('Video failed to play. It may still be loading.');
         });
       }
+    } else {
+      console.warn('[CourtOrderVideo] Play pressed but video element not ready');
+      toastError('Video is not loaded yet. Please wait a moment.');
     }
   };
 
@@ -169,6 +358,70 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     }
   };
 
+  // Handle user video file upload: instant blob preview + background Supabase upload
+  const handleUserVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so re-selecting the same file triggers onChange again
+    e.target.value = '';
+
+    // Validate with the storage service validator (checks type + size)
+    const validation = validateVideoFile(file);
+    if (!validation.valid) {
+      toastError(validation.error || 'Invalid video file');
+      return;
+    }
+
+    // Revoke previous blob URL to prevent memory leak
+    if (userVideoUrl && userVideoUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(userVideoUrl);
+    }
+
+    // 1. Instant preview via blob URL
+    const blobUrl = URL.createObjectURL(file);
+    setUserVideoUrl(blobUrl);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    // 2. Background upload to Supabase (if user is logged in)
+    if (user?.id) {
+      setIsUploading(true);
+      setUploadStatus('Saving to cloud...');
+      try {
+        const result = await uploadUserVideo(
+          user.id,
+          comparisonId,
+          file,
+          (progress) => setUploadStatus(progress.message)
+        );
+
+        // Swap blob URL with permanent Supabase URL
+        URL.revokeObjectURL(blobUrl);
+        setUserVideoUrl(result.publicUrl);
+        setUploadStatus(null);
+        toastSuccess('Video saved to cloud!');
+        console.log('[CourtOrderVideo] Video uploaded to Supabase:', result.publicUrl);
+      } catch (err) {
+        // Upload failed — keep the blob URL so video still plays locally
+        console.error('[CourtOrderVideo] Supabase upload failed:', err);
+        setUploadStatus(null);
+        toastError('Cloud save failed — video plays locally only');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  // Clean up blob URL on unmount (only revoke blob: URLs, not Supabase URLs)
+  useEffect(() => {
+    return () => {
+      if (userVideoUrl && userVideoUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(userVideoUrl);
+      }
+    };
+  }, [userVideoUrl]);
+
   // Format time
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -190,12 +443,17 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
       console.log('[CourtOrderVideo] Video error threshold reached - resetting to allow regeneration');
+      // Clear broken InVideo override so we fall back to Kling generation
+      if (invideoOverride) {
+        console.warn('[CourtOrderVideo] Clearing broken InVideo override, falling back to Kling');
+        setInvideoOverride(null);
+      }
       reset();
       setHasStarted(false);
       setIsPlaying(false);
       setVideoErrorCount(0);
     }
-  }, [videoErrorCount, reset]);
+  }, [videoErrorCount, reset, invideoOverride]);
 
   // Reset when comparisonId changes
   useEffect(() => {
@@ -205,6 +463,12 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     setCurrentTime(0);
     setDuration(0);
     setVideoErrorCount(0);
+    if (userVideoUrl && userVideoUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(userVideoUrl);
+    }
+    setUserVideoUrl(null);
+    setIsUploading(false);
+    setUploadStatus(null);
   }, [comparisonId]);
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -212,62 +476,84 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   // ══════════════════════════════════════════════════════════════════════════
 
   // Save Court Order via centralized service (localStorage + Supabase database)
+  // Deferred to avoid blocking UI (INP fix: was blocking 3.5s with sync alert + localStorage)
   const handleSaveCourtOrder = () => {
-    if (!video?.videoUrl) return;
+    const videoUrl = effectiveVideoUrl;
+    if (!videoUrl) return;
 
-    try {
-      saveCourtOrder({
-        comparisonId,
-        winnerCity,
-        winnerScore,
-        videoUrl: video.videoUrl,
-        savedAt: new Date().toISOString(),
-      });
-      console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
-      alert('Court Order saved successfully!');
-    } catch (error) {
-      console.error('[CourtOrderVideo] Failed to save Court Order:', error);
-      alert('Failed to save Court Order. Please try again.');
+    // Don't save blob URLs to database — they're ephemeral
+    if (videoUrl.startsWith('blob:')) {
+      toastError('Video is still uploading. Please wait for cloud save to complete.');
+      return;
     }
+
+    // Defer heavy work so the browser can paint the button press immediately
+    setTimeout(() => {
+      try {
+        saveCourtOrder({
+          comparisonId,
+          winnerCity,
+          winnerScore,
+          videoUrl,
+          savedAt: new Date().toISOString(),
+        });
+        console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
+        toastSuccess('Court Order saved successfully!');
+      } catch (error) {
+        console.error('[CourtOrderVideo] Failed to save Court Order:', error);
+        toastError('Failed to save Court Order. Please try again.');
+      }
+    }, 0);
   };
 
   // Download Court Order video
   const handleDownloadCourtOrder = async () => {
-    if (!video?.videoUrl) return;
+    const videoUrl = effectiveVideoUrl;
+    if (!videoUrl) return;
+
+    const filename = `court-order-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
 
     try {
-      console.log('[CourtOrderVideo] Downloading video:', video.videoUrl);
+      console.log('[CourtOrderVideo] Downloading video:', videoUrl);
 
-      // Fetch the video
-      const response = await fetch(video.videoUrl);
-      const blob = await response.blob();
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `court-order-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      // For blob URLs (user uploads), use the URL directly as download href
+      if (videoUrl.startsWith('blob:')) {
+        const a = document.createElement('a');
+        a.href = videoUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // For remote URLs, fetch first then download as blob
+        const response = await fetch(videoUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
 
       console.log('[CourtOrderVideo] Download initiated');
     } catch (err) {
       console.error('[CourtOrderVideo] Download error:', err);
-      // Fallback: open in new tab
-      window.open(video.videoUrl, '_blank');
+      toastError('Failed to download video. Please try again.');
     }
   };
 
   // Share/Forward Court Order
   const handleShareCourtOrder = async () => {
-    if (!video?.videoUrl) return;
+    const videoUrl = effectiveVideoUrl;
+    if (!videoUrl) return;
 
     const shareData = {
       title: `LIFE SCORE Court Order - ${winnerCity}`,
       text: `Check out my perfect life in ${winnerCity} with a LIFE SCORE of ${winnerScore.toFixed(1)}!`,
-      url: video.videoUrl,
+      url: videoUrl,
     };
 
     try {
@@ -276,18 +562,18 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         console.log('[CourtOrderVideo] Shared successfully');
       } else {
         // Fallback: copy to clipboard
-        await navigator.clipboard.writeText(video.videoUrl);
-        alert('Video URL copied to clipboard!');
+        await navigator.clipboard.writeText(videoUrl);
+        toastSuccess('Video URL copied to clipboard!');
         console.log('[CourtOrderVideo] URL copied to clipboard');
       }
     } catch (err) {
       console.error('[CourtOrderVideo] Share error:', err);
       // Fallback: copy to clipboard
       try {
-        await navigator.clipboard.writeText(video.videoUrl);
-        alert('Video URL copied to clipboard!');
+        await navigator.clipboard.writeText(videoUrl);
+        toastSuccess('Video URL copied to clipboard!');
       } catch {
-        alert('Unable to share. Video URL: ' + video.videoUrl);
+        toastError('Unable to share video');
       }
     }
   };
@@ -324,6 +610,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                 <FreedomMetricsList
                   metrics={currentCategoryData.winningMetrics}
                   winnerCity={winnerCity}
+                  loserCity={loserCity}
+                  categoryName={currentCategoryData.categoryName}
                 />
 
                 {/* Hero Statement Footer */}
@@ -343,16 +631,17 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         <div className="lcd-screen">
           <div className="lcd-bezel">
             <div className="lcd-display">
-              {isReady && video?.videoUrl ? (
+              {(userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride)) && effectiveVideoUrl ? (
                 <video
                   ref={videoRef}
-                  src={video.videoUrl}
+                  src={effectiveVideoUrl}
                   className="court-video"
                   onEnded={handleVideoEnded}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleLoadedMetadata}
                   onError={handleVideoError}
                   playsInline
+                  crossOrigin="anonymous"
                 />
               ) : (
                 <div className="lcd-placeholder">
@@ -382,8 +671,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
               )}
             </div>
 
-            {/* Video Controls - Only show when video is ready */}
-            {isReady && video?.videoUrl && (
+            {/* Video Controls - Show when video is ready, InVideo override, or user upload */}
+            {(userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride)) && (
               <div className="lcd-controls">
                 <button
                   className="control-btn play-btn"
@@ -414,6 +703,14 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           <div className="lcd-reflection"></div>
         </div>
 
+        {/* Upload Progress Indicator */}
+        {isUploading && uploadStatus && (
+          <div className="upload-progress-bar">
+            <div className="lcd-spinner" style={{ width: 16, height: 16, borderWidth: 2 }}></div>
+            <span className="upload-status-text">{uploadStatus}</span>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="court-error">
@@ -425,9 +722,41 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           </div>
         )}
 
-        {/* Action Button */}
+        {/* Hidden file input for user video upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="video/*"
+          onChange={handleUserVideoUpload}
+          style={{ display: 'none' }}
+        />
+
+        {/* Action Buttons */}
         <div className="court-actions">
-          {!hasStarted && !isReady && (
+          {/* User uploaded video: play button */}
+          {userVideoUrl && !isPlaying && (
+            <button
+              className="watch-future-btn"
+              onClick={handlePlayPause}
+            >
+              <span className="btn-icon">▶</span>
+              <span className="btn-text">PLAY YOUR VIDEO</span>
+            </button>
+          )}
+
+          {/* InVideo override: skip generation, go straight to play */}
+          {!userVideoUrl && invideoOverride && !isPlaying && (
+            <button
+              className="watch-future-btn"
+              onClick={handlePlayPause}
+            >
+              <span className="btn-icon">▶</span>
+              <span className="btn-text">WATCH YOUR MOVING MOVIE</span>
+            </button>
+          )}
+
+          {/* No override, no user upload: normal generation flow */}
+          {!userVideoUrl && !invideoOverride && !hasStarted && !isReady && (
             <button
               className="see-court-order-btn"
               onClick={handleGenerateVideo}
@@ -438,7 +767,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             </button>
           )}
 
-          {isReady && !isPlaying && (
+          {!userVideoUrl && !invideoOverride && isReady && !isPlaying && (
             <button
               className="watch-future-btn"
               onClick={handlePlayPause}
@@ -447,12 +776,102 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
               <span className="btn-text">WATCH YOUR FUTURE</span>
             </button>
           )}
+
+          {/* Upload your own video button - always visible when no user video loaded */}
+          {!userVideoUrl && (
+            <button
+              className="upload-video-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <span className="btn-icon">🎥</span>
+              <span className="btn-text">UPLOAD YOUR VIDEO</span>
+            </button>
+          )}
+
+          {/* Replace uploaded video */}
+          {userVideoUrl && (
+            <button
+              className="upload-video-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <span className="btn-icon">🔄</span>
+              <span className="btn-text">{isUploading ? 'UPLOADING...' : 'CHANGE VIDEO'}</span>
+            </button>
+          )}
         </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            ADMIN: InVideo Override Upload Panel
+        ════════════════════════════════════════════════════════════════ */}
+        {isAdmin && (
+          <div className="invideo-admin-panel">
+            {invideoOverride ? (
+              <div className="invideo-active-override">
+                <span className="override-badge">VIP VIDEO ACTIVE</span>
+                <span className="override-title">
+                  {invideoOverride.video_title || 'InVideo Override'}
+                </span>
+                <div className="override-actions">
+                  <button
+                    className="override-btn replace-btn"
+                    onClick={() => setShowAdminUpload(true)}
+                  >
+                    Replace
+                  </button>
+                  <button
+                    className="override-btn remove-btn"
+                    onClick={handleRemoveOverride}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="invideo-upload-trigger"
+                onClick={() => setShowAdminUpload(!showAdminUpload)}
+              >
+                <span className="btn-icon">🎬</span>
+                <span className="btn-text">
+                  {showAdminUpload ? 'Cancel' : 'Upload InVideo Movie (Admin)'}
+                </span>
+              </button>
+            )}
+
+            {showAdminUpload && (
+              <div className="invideo-upload-form">
+                <input
+                  type="url"
+                  className="invideo-input"
+                  placeholder="Paste InVideo video URL..."
+                  value={adminVideoUrl}
+                  onChange={e => setAdminVideoUrl(e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="invideo-input"
+                  placeholder="Video title (optional)"
+                  value={adminVideoTitle}
+                  onChange={e => setAdminVideoTitle(e.target.value)}
+                />
+                <button
+                  className="invideo-submit-btn"
+                  onClick={handleSubmitOverride}
+                  disabled={!adminVideoUrl.trim() || isSubmittingOverride}
+                >
+                  {isSubmittingOverride ? 'Saving...' : 'Save VIP Video'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ════════════════════════════════════════════════════════════════
             COURT ORDER ACTION BUTTONS - Save, Download, Share/Forward
         ════════════════════════════════════════════════════════════════ */}
-        {isReady && video?.videoUrl && (
+        {(userVideoUrl || (isReady && effectiveVideoUrl) || invideoOverride) && (
           <div className="court-order-action-buttons">
             <button
               className="court-action-btn save-btn"

@@ -79,7 +79,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    CLOSE BUTTON
    ═══════════════════════════════════════════════════════════════════════════ */
-.modal-close-btn {
+.pricing-modal-overlay .modal-close-btn {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -97,19 +97,19 @@
   z-index: 10;
 }
 
-.modal-close-btn:hover {
+.pricing-modal-overlay .modal-close-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   color: white;
   transform: rotate(90deg);
 }
 
-[data-theme="light"] .modal-close-btn {
+[data-theme="light"] .pricing-modal-overlay .modal-close-btn {
   background: rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 0, 0, 0.1);
   color: rgba(0, 0, 0, 0.5);
 }
 
-[data-theme="light"] .modal-close-btn:hover {
+[data-theme="light"] .pricing-modal-overlay .modal-close-btn:hover {
   background: rgba(0, 0, 0, 0.1);
   color: rgba(0, 0, 0, 0.8);
 }
@@ -117,7 +117,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    HEADER
    ═══════════════════════════════════════════════════════════════════════════ */
-.modal-header {
+.pricing-modal-overlay .modal-header {
   text-align: center;
   padding: 2.5rem 2rem 1.5rem;
 }
@@ -138,7 +138,7 @@
   color: #0a1628;
 }
 
-.modal-title {
+.pricing-modal-overlay .modal-title {
   font-size: 1.75rem;
   font-weight: 800;
   color: white;
@@ -146,17 +146,17 @@
   letter-spacing: 0.02em;
 }
 
-[data-theme="light"] .modal-title {
+[data-theme="light"] .pricing-modal-overlay .modal-title {
   color: #0a1628;
 }
 
-.modal-subtitle {
+.pricing-modal-overlay .modal-subtitle {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
 
-[data-theme="light"] .modal-subtitle {
+[data-theme="light"] .pricing-modal-overlay .modal-subtitle {
   color: rgba(10, 22, 40, 0.6);
 }
 
@@ -171,7 +171,7 @@
   margin-bottom: 2rem;
 }
 
-.toggle-option {
+.pricing-modal-overlay .toggle-option {
   position: relative;
   padding: 0.75rem 1.5rem;
   background: rgba(255, 255, 255, 0.05);
@@ -184,30 +184,30 @@
   transition: all 0.2s ease;
 }
 
-.toggle-option:hover {
+.pricing-modal-overlay .toggle-option:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
-.toggle-option.active {
+.pricing-modal-overlay .toggle-option.active {
   background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
   border-color: transparent;
   color: #0a1628;
   box-shadow: 0 4px 16px rgba(201, 162, 39, 0.4);
 }
 
-[data-theme="light"] .toggle-option {
+[data-theme="light"] .pricing-modal-overlay .toggle-option {
   background: rgba(0, 0, 0, 0.03);
   border-color: rgba(0, 0, 0, 0.1);
   color: rgba(0, 0, 0, 0.5);
 }
 
-[data-theme="light"] .toggle-option:hover {
+[data-theme="light"] .pricing-modal-overlay .toggle-option:hover {
   background: rgba(0, 0, 0, 0.05);
   color: rgba(0, 0, 0, 0.8);
 }
 
-[data-theme="light"] .toggle-option.active {
+[data-theme="light"] .pricing-modal-overlay .toggle-option.active {
   color: #0a1628;
 }
 
@@ -340,7 +340,7 @@
 .tier-price .currency {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #c9a227;
+  color: #e6b800;
   vertical-align: top;
 }
 
@@ -427,7 +427,7 @@
 .tier-btn.secondary {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(201, 162, 39, 0.5);
-  color: #c9a227;
+  color: #e6b800;
 }
 
 .tier-btn.secondary:hover:not(:disabled) {
@@ -457,12 +457,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    FOOTER
    ═══════════════════════════════════════════════════════════════════════════ */
-.modal-footer {
+.pricing-modal-overlay .modal-footer {
   padding: 1.5rem 2rem 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-[data-theme="light"] .modal-footer {
+[data-theme="light"] .pricing-modal-overlay .modal-footer {
   border-color: rgba(0, 0, 0, 0.05);
 }
 
@@ -508,4 +508,36 @@
 
 .pricing-modal::-webkit-scrollbar-thumb:hover {
   background: rgba(201, 162, 39, 0.5);
+}
+
+/* FIX: Ensure content is reachable on short phones */
+@media (max-height: 700px) {
+  .pricing-modal {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .pricing-modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .modal-pricing-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pricing-modal {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .modal-pricing-card {
+    padding: 1.25rem;
+  }
+
+  .tier-price .amount {
+    font-size: 2rem;
+  }
 }

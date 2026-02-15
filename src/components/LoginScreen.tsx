@@ -5,11 +5,42 @@
  * Clean, professional design.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './LoginScreen.css';
 
 type AuthMode = 'signin' | 'signup' | 'forgot';
+
+// ============================================================================
+// REMEMBER ME — localStorage helpers
+// ============================================================================
+const REMEMBER_KEY = 'lifescore_remember_me';
+
+function loadSavedCredentials(): { email: string; password: string } | null {
+  try {
+    const raw = localStorage.getItem(REMEMBER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed.e || !parsed.p) return null;
+    return { email: atob(parsed.e), password: atob(parsed.p) };
+  } catch {
+    return null;
+  }
+}
+
+function saveCredentials(email: string, password: string): void {
+  try {
+    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ e: btoa(email), p: btoa(password) }));
+  } catch { /* ignore quota errors */ }
+}
+
+function clearSavedCredentials(): void {
+  try { localStorage.removeItem(REMEMBER_KEY); } catch { /* ignore */ }
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
 
 const LoginScreen: React.FC = () => {
   const { signInWithEmail, signInWithGoogle, signInWithGitHub, signUp, resetPassword, isLoading, error, isConfigured } = useAuth();
@@ -23,6 +54,32 @@ const LoginScreen: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Load saved credentials on mount — auto-sign-in if Remember Me was checked
+  const autoSignInAttempted = useRef(false);
+  useEffect(() => {
+    const saved = loadSavedCredentials();
+    if (saved) {
+      setEmail(saved.email);
+      setPassword(saved.password);
+      setRememberMe(true);
+
+      // Auto-sign-in: if we have saved credentials, sign in automatically
+      // This runs once on mount — prevents repeated attempts on failure
+      if (!autoSignInAttempted.current) {
+        autoSignInAttempted.current = true;
+        signInWithEmail(saved.email, saved.password).then(({ error: signInError }) => {
+          if (signInError) {
+            // Credentials are stale/invalid — clear them so user isn't stuck in a loop
+            console.warn('[Remember Me] Auto-sign-in failed, clearing saved credentials');
+            clearSavedCredentials();
+            setRememberMe(false);
+          }
+        });
+      }
+    }
+  }, [signInWithEmail]);
 
   const resetForm = useCallback(() => {
     setEmail('');
@@ -64,8 +121,15 @@ const LoginScreen: React.FC = () => {
         errorMessage = 'Please verify your email before signing in. Check your inbox (and spam folder) for the verification link.';
       }
       setLocalError(errorMessage);
+    } else {
+      // Save or clear credentials based on Remember Me
+      if (rememberMe) {
+        saveCredentials(email, password);
+      } else {
+        clearSavedCredentials();
+      }
     }
-  }, [email, password, signInWithEmail]);
+  }, [email, password, rememberMe, signInWithEmail]);
 
   const handleSignUp = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,6 +305,9 @@ const LoginScreen: React.FC = () => {
                     placeholder="you@example.com"
                     autoComplete="email"
                     disabled={isLoading}
+                    aria-required="true"
+                    aria-invalid={!!displayError}
+                    aria-describedby={displayError ? 'auth-error' : undefined}
                   />
                 </div>
               </div>
@@ -261,6 +328,9 @@ const LoginScreen: React.FC = () => {
                     placeholder="Enter your password"
                     autoComplete="current-password"
                     disabled={isLoading}
+                    aria-required="true"
+                    aria-invalid={!!displayError}
+                    aria-describedby={displayError ? 'auth-error' : undefined}
                   />
                   <button
                     type="button"
@@ -273,17 +343,29 @@ const LoginScreen: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="forgot-password-link"
-                onClick={() => handleModeChange('forgot')}
-              >
-                Forgot your password?
-              </button>
+              <div className="remember-forgot-row">
+                <label className="remember-me-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="remember-me-checkbox"
+                  />
+                  <span className="remember-me-checkmark"></span>
+                  <span className="remember-me-text">Remember me</span>
+                </label>
+                <button
+                  type="button"
+                  className="forgot-password-link"
+                  onClick={() => handleModeChange('forgot')}
+                >
+                  Forgot your password?
+                </button>
+              </div>
 
               {displayError && (
-                <div className="form-error">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                <div className="form-error" id="auth-error" role="alert">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                   <span>{displayError}</span>
@@ -451,8 +533,8 @@ const LoginScreen: React.FC = () => {
               </div>
 
               {displayError && (
-                <div className="form-error">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                <div className="form-error" id="auth-error" role="alert">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                   <span>{displayError}</span>
@@ -561,8 +643,8 @@ const LoginScreen: React.FC = () => {
               </div>
 
               {displayError && (
-                <div className="form-error">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                <div className="form-error" id="auth-error" role="alert">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                   <span>{displayError}</span>

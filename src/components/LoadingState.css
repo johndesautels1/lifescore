@@ -56,14 +56,14 @@
   color: var(--sapphire);
 }
 
-.progress-bar {
+.loading-state .progress-bar {
   height: 12px;
   background: var(--gray-200);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
-.progress-fill {
+.loading-state .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--sapphire), var(--orange));
   border-radius: var(--radius-full);
@@ -81,7 +81,7 @@
   color: var(--sapphire);
 }
 
-.category-icon {
+.loading-state .category-icon {
   font-size: 1.25rem;
 }
 
@@ -128,8 +128,8 @@
 
 .category-pill.current {
   background: rgba(201, 162, 39, 0.15);
-  border-color: #c9a227;
-  color: #c9a227;
+  border-color: #e6b800;
+  color: #e6b800;
   animation: currentPulse 1.5s ease-in-out infinite;
 }
 
@@ -187,5 +187,35 @@
     padding: 0.75rem 1rem;
     font-size: 0.85rem;
     min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-state {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .loading-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .loading-header p {
+    font-size: 0.85rem;
+  }
+
+  .progress-section {
+    max-width: 100%;
+  }
+
+  .current-category {
+    font-size: 1rem;
+  }
+
+  .loading-disclaimer {
+    padding: 0.75rem;
+  }
+
+  .loading-disclaimer p {
+    font-size: 0.8rem;
   }
 }

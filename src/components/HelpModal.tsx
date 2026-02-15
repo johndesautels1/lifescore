@@ -2,7 +2,7 @@
  * LIFE SCORE™ Help Modal
  *
  * Modal container with documentation tabs and Emilia AI chat.
- * Tabs: User Manual | Customer Service | Tech Support | Legal | App Schema | Judge Equations
+ * Tabs: User Manual | Customer Service | Tech Support | Legal | App Schema | Judge Equations | Prompts | APIs
  *
  * Access Control:
  * - User Manual: All authenticated users
@@ -16,11 +16,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import ManualViewer from './ManualViewer';
+import PromptsManager from './PromptsManager';
+import EnvConfigPanel from './EnvConfigPanel';
 import EmiliaChat from './EmiliaChat';
 import { useAuth } from '../contexts/AuthContext';
 import './HelpModal.css';
 
-export type ManualTabType = 'csm' | 'tech' | 'user' | 'legal' | 'schema' | 'equations';
+export type ManualTabType = 'csm' | 'tech' | 'user' | 'legal' | 'schema' | 'equations' | 'prompts' | 'apis';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -35,6 +37,8 @@ const ALL_TABS: { id: ManualTabType; label: string; icon: string; adminOnly: boo
   { id: 'legal', label: 'Legal', icon: '⚖️', adminOnly: true },
   { id: 'schema', label: 'App Schema', icon: '🗄️', adminOnly: true },
   { id: 'equations', label: 'Judge Equations', icon: '🧮', adminOnly: true },
+  { id: 'prompts', label: 'Prompts', icon: '📝', adminOnly: true },
+  { id: 'apis', label: 'APIs', icon: '🔑', adminOnly: true },
 ];
 
 // Admin emails that can access restricted manuals
@@ -97,6 +101,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     <div
       className={`help-modal-overlay ${isClosing ? 'closing' : ''}`}
       onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Help"
     >
       <div className="help-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
@@ -152,7 +159,13 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             <EmiliaChat onBack={handleBackToManuals} />
           ) : (
             <>
-              <ManualViewer type={activeTab} userEmail={userEmail} />
+              {activeTab === 'prompts' ? (
+                <PromptsManager />
+              ) : activeTab === 'apis' ? (
+                <EnvConfigPanel />
+              ) : (
+                <ManualViewer type={activeTab} userEmail={userEmail} />
+              )}
 
               {/* Ask Emilia CTA */}
               <div className="ask-emilia-cta">

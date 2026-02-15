@@ -37,7 +37,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
         <p>Using Multiple LLMs with proprietary weighted average LIFE score technology</p>
       </div>
       
-      <div className="progress-section">
+      <div className="progress-section" aria-live="polite" aria-atomic="true">
         <div className="progress-stats">
           <span className="progress-count">
             {metricsProcessed} of {totalMetrics} metrics
@@ -45,9 +45,16 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           <span className="progress-percent">{progressPercent}%</span>
         </div>
         
-        <div className="progress-bar">
-          <div 
-            className="progress-fill" 
+        <div
+          className="progress-bar"
+          role="progressbar"
+          aria-valuenow={progressPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Analysis progress: ${metricsProcessed} of ${totalMetrics} metrics (${progressPercent}%)`}
+        >
+          <div
+            className="progress-fill"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

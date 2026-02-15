@@ -44,14 +44,22 @@
       "includeFiles": "api/shared/**"
     },
     "api/avatar/video-status.ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "includeFiles": "api/shared/**"
     },
     "api/avatar/video-webhook.ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "includeFiles": "api/shared/**"
     },
     "api/olivia/gun-comparison.ts": {
+      "maxDuration": 60,
+      "includeFiles": "api/shared/**"
+    },
+    "api/video/grok-generate.ts": {
+      "maxDuration": 240,
+      "includeFiles": "api/shared/**"
+    },
+    "api/video/grok-status.ts": {
       "maxDuration": 60,
       "includeFiles": "api/shared/**"
     }

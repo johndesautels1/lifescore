@@ -20,10 +20,16 @@ import {
   hasGammaReportForComparison,
   getLocalComparisons,
   getLocalEnhancedComparisons,
+  getSavedGammaReports,
+  syncGammaReportsFromSupabase,
+  deleteGammaReport,
+  type SavedGammaReport,
 } from '../services/savedComparisons';
 import NewLifeVideos from './NewLifeVideos';
+import ReportPresenter from './ReportPresenter';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
+import type { ReportViewMode } from '../types/presenter';
 import './VisualsTab.css';
 
 // Type for judge report data (matches gammaService)
@@ -61,9 +67,9 @@ interface JudgeReportData {
   };
   summaryOfFindings?: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
 }
@@ -125,6 +131,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       if (e.key === 'lifescore_saved_comparisons' || e.key === 'lifescore_saved_enhanced') {
         refreshComparisons();
       }
+      if (e.key === 'lifescore_saved_gamma_reports') {
+        setReportsRefreshKey(k => k + 1);
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -163,9 +172,85 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const [isReportSaved, setIsReportSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
+  // Saved reports library state
+  const [savedReports, setSavedReports] = useState<SavedGammaReport[]>([]);
+  const [viewingReport, setViewingReport] = useState<SavedGammaReport | null>(null);
+  const [reportsRefreshKey, setReportsRefreshKey] = useState(0);
+
+  // Report view mode: read (iframe) or presenter (Olivia video overlay)
+  const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
+
+  // Load saved reports from localStorage, then always sync from Supabase
+  useEffect(() => {
+    const localReports = getSavedGammaReports();
+    setSavedReports(localReports);
+
+    // Always sync from Supabase — merges any reports saved on other devices
+    // or reports that were lost from localStorage (browser cleanup, etc.)
+    syncGammaReportsFromSupabase().then((synced) => {
+      if (synced.length > 0) {
+        console.log('[VisualsTab] Synced', synced.length, 'Gamma reports (local + Supabase merged)');
+        setSavedReports(synced);
+      }
+    }).catch(err => {
+      console.error('[VisualsTab] Supabase sync failed:', err);
+    });
+  }, [reportsRefreshKey, isReportSaved]);
+
+  // Auto-save Gamma reports when generation completes
+  useEffect(() => {
+    // Log conditions for debugging persistence issues
+    if (reportState.status === 'completed') {
+      console.log('[VisualsTab] Auto-save check:', {
+        status: reportState.status,
+        hasGammaUrl: !!reportState.gammaUrl,
+        hasGenerationId: !!reportState.generationId,
+        hasResult: !!result,
+        isReportSaved,
+      });
+    }
+
+    if (
+      reportState.status === 'completed' &&
+      reportState.gammaUrl &&
+      reportState.generationId &&
+      result &&
+      !isReportSaved
+    ) {
+      const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
+      const alreadyExists = hasGammaReportForComparison(effectiveComparisonId);
+
+      console.log('[VisualsTab] Auto-save:', { effectiveComparisonId, alreadyExists });
+
+      if (!alreadyExists) {
+        console.log('[VisualsTab] Auto-saving Gamma report for:', effectiveComparisonId);
+        saveGammaReport({
+          comparisonId: effectiveComparisonId,
+          city1: result.city1.city,
+          city2: result.city2.city,
+          gammaUrl: reportState.gammaUrl,
+          pdfUrl: reportState.pdfUrl,
+          pptxUrl: reportState.pptxUrl,
+          generationId: reportState.generationId,
+        });
+        setIsReportSaved(true);
+        setReportsRefreshKey(k => k + 1);
+        console.log('[VisualsTab] Auto-save complete. Verifying localStorage:', getSavedGammaReports().length, 'reports');
+      } else {
+        // Report already exists — mark as saved so we don't keep checking
+        setIsReportSaved(true);
+      }
+    }
+  }, [reportState.status, reportState.gammaUrl, reportState.generationId, result, isReportSaved]);
+
   // Check if report is already saved when component mounts or report changes
   const comparisonId = result?.comparisonId || '';
   const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
+
+  // Find the matching saved report for current comparison (for "View Existing Report")
+  const existingReport = isAlreadySaved
+    ? savedReports.find(r => r.comparisonId === comparisonId) || null
+    : null;
 
   const handleSaveReport = useCallback(() => {
     if (!result) {
@@ -188,8 +273,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       return;
     }
 
-    // FIX: Generate fallback comparisonId if missing
-    const effectiveComparisonId = result.comparisonId || `LIFE-${Date.now()}-${result.city1.city.slice(0,3).toUpperCase()}`;
+    // FIX: Generate fallback comparisonId if missing (must be UUID for Supabase FK)
+    const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
 
     console.log('[VisualsTab] Saving report:', {
       comparisonId: effectiveComparisonId,
@@ -301,11 +386,12 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   const handleReset = useCallback(() => {
     setReportState({ status: 'idle' });
+    setIsReportSaved(false);
   }, []);
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
 
-  if (!result && !hasSavedComparisons) {
+  if (!result && !hasSavedComparisons && savedReports.length === 0) {
     return (
       <div className="visuals-tab">
         <div className="no-results-message card">
@@ -331,6 +417,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               // Reset report state when switching comparisons
               if (value !== selectedComparisonId) {
                 setReportState({ status: 'idle' });
+                setIsReportSaved(false);
               }
             }}
           >
@@ -363,11 +450,41 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         </div>
       )}
 
+      {/* Choose Existing Gamma Report Dropdown - ALWAYS visible */}
+      <div className="report-selector-section gamma-report-selector">
+        <label className="report-selector-label">View Existing Gamma Report:</label>
+        {savedReports.length > 0 ? (
+          <select
+            className="report-selector-dropdown"
+            value=""
+            onChange={(e) => {
+              const reportId = e.target.value;
+              if (!reportId) return;
+              const report = savedReports.find(r => r.id === reportId);
+              if (report) {
+                setViewingReport(report);
+              }
+            }}
+          >
+            <option value="">Select a report to view ({savedReports.length} saved)...</option>
+            {savedReports.map((report) => (
+              <option key={report.id} value={report.id}>
+                {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="no-saved-reports-msg">
+            No saved Gamma reports yet. Reports are auto-saved when generated.
+          </div>
+        )}
+      </div>
+
       {/* No result selected message */}
-      {!result && (
+      {!result && !viewingReport && (
         <div className="no-results-message card">
           <h3>Select a Report</h3>
-          <p>Choose a saved comparison from the dropdown above to generate visualizations.</p>
+          <p>Choose a saved comparison from the dropdown above to generate visualizations, or select an existing Gamma report.</p>
         </div>
       )}
 
@@ -381,6 +498,49 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         <p className="section-description">
           Create a professional presentation of your {result.city1.city} vs {result.city2.city} comparison.
         </p>
+
+        {/* Existing Report Banner — shown when a saved report matches this comparison */}
+        {reportState.status === 'idle' && existingReport && (
+          <div className="existing-report-banner">
+            <div className="existing-report-info">
+              <span className="existing-report-icon">✓</span>
+              <span className="existing-report-text">
+                You already have a report for this comparison
+                <span className="existing-report-date">
+                  (saved {new Date(existingReport.savedAt).toLocaleDateString()})
+                </span>
+              </span>
+            </div>
+            <div className="existing-report-actions">
+              <button
+                className="existing-report-btn view"
+                onClick={() => setViewingReport(existingReport)}
+              >
+                View Existing Report
+              </button>
+              {existingReport.pdfUrl && (
+                <a
+                  href={existingReport.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="existing-report-btn download"
+                >
+                  PDF
+                </a>
+              )}
+              {existingReport.pptxUrl && (
+                <a
+                  href={existingReport.pptxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="existing-report-btn download"
+                >
+                  PPTX
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {reportState.status === 'idle' && (
           <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
@@ -541,6 +701,21 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 <div className="embedded-header">
                   <h3>LIFE SCORE™ Visual Report</h3>
                   <div className="embedded-actions">
+                    {/* Read / Listen to Presenter Toggle */}
+                    <div className="report-view-toggle">
+                      <button
+                        className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
+                        onClick={() => setReportViewMode('read')}
+                      >
+                        📖 Read
+                      </button>
+                      <button
+                        className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
+                        onClick={() => setReportViewMode('presenter')}
+                      >
+                        🎧 Listen to Presenter
+                      </button>
+                    </div>
                     <a
                       href={reportState.gammaUrl}
                       target="_blank"
@@ -551,18 +726,26 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     </a>
                     <button
                       className="close-embed-btn"
-                      onClick={() => setShowEmbedded(false)}
+                      onClick={() => { setShowEmbedded(false); setReportViewMode('read'); }}
                     >
                       ✕ Close
                     </button>
                   </div>
                 </div>
-                <iframe
-                  src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
-                  className="gamma-embed-frame"
-                  title="LIFE SCORE Visual Report"
-                  allowFullScreen
-                />
+                {reportViewMode === 'presenter' && result && reportState.gammaUrl ? (
+                  <ReportPresenter
+                    result={result}
+                    gammaUrl={reportState.gammaUrl}
+                    onClose={() => setReportViewMode('read')}
+                  />
+                ) : (
+                  <iframe
+                    src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
+                    className="gamma-embed-frame"
+                    title="LIFE SCORE Visual Report"
+                    allowFullScreen
+                  />
+                )}
               </div>
             )}
           </div>
@@ -583,6 +766,125 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
         )}
       </div>
+      )}
+
+      {/* Saved Reports Library */}
+      {savedReports.length > 0 && !viewingReport && (
+        <div className="saved-reports-section card">
+          <h3 className="section-title">
+            <span className="section-icon">📁</span>
+            Saved Reports ({savedReports.length})
+          </h3>
+          <div className="saved-reports-list">
+            {savedReports.map((report) => (
+              <div key={report.id} className="saved-report-item">
+                <div className="report-info">
+                  <span className="report-cities">{report.city1} vs {report.city2}</span>
+                  <span className="report-date">{new Date(report.savedAt).toLocaleDateString()}</span>
+                </div>
+                <div className="report-actions">
+                  <button
+                    className="report-action-btn view"
+                    onClick={() => setViewingReport(report)}
+                    title="View report"
+                  >
+                    View
+                  </button>
+                  {report.pdfUrl && (
+                    <a
+                      href={report.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="report-action-btn download"
+                      title="Download PDF"
+                    >
+                      PDF
+                    </a>
+                  )}
+                  {report.pptxUrl && (
+                    <a
+                      href={report.pptxUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="report-action-btn download"
+                      title="Download PowerPoint"
+                    >
+                      PPTX
+                    </a>
+                  )}
+                  <button
+                    className="report-action-btn delete"
+                    onClick={() => {
+                      if (window.confirm(`Delete report for ${report.city1} vs ${report.city2}?`)) {
+                        deleteGammaReport(report.id);
+                        setReportsRefreshKey(k => k + 1);
+                      }
+                    }}
+                    title="Delete report"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Viewing a saved report */}
+      {viewingReport && (
+        <div className="saved-report-viewer card">
+          <div className="embedded-header">
+            <h3>{viewingReport.city1} vs {viewingReport.city2} — Saved Report</h3>
+            <div className="embedded-actions">
+              {/* Read / Listen to Presenter Toggle */}
+              {result && (
+                <div className="report-view-toggle">
+                  <button
+                    className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
+                    onClick={() => setReportViewMode('read')}
+                  >
+                    📖 Read
+                  </button>
+                  <button
+                    className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''}`}
+                    onClick={() => setReportViewMode('presenter')}
+                  >
+                    🎧 Listen to Presenter
+                  </button>
+                </div>
+              )}
+              <a
+                href={viewingReport.gammaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="external-link-btn"
+              >
+                Open External ↗
+              </a>
+              <button
+                className="close-embed-btn"
+                onClick={() => { setViewingReport(null); setReportViewMode('read'); }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+          {reportViewMode === 'presenter' && result && viewingReport.gammaUrl ? (
+            <ReportPresenter
+              result={result}
+              gammaUrl={viewingReport.gammaUrl}
+              onClose={() => setReportViewMode('read')}
+            />
+          ) : (
+            <iframe
+              src={viewingReport.gammaUrl?.replace('/docs/', '/embed/')}
+              className="gamma-embed-frame"
+              title="LIFE SCORE Saved Report"
+              allowFullScreen
+            />
+          )}
+        </div>
       )}
 
       {/* In-App Visualizations - Only for Enhanced mode */}

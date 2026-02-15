@@ -158,7 +158,7 @@ CREATE TABLE public.judge_reports (
 ## Phase C: HeyGen Video Integration
 
 ### Tasks
-1. Configure "Christian" avatar in HeyGen
+1. Configure "Cristiano" avatar in HeyGen
 2. Create video script generator from JudgeReport
 3. Implement `/api/judge-video` endpoint
 4. Call HeyGen API to generate video
@@ -186,7 +186,7 @@ The verdict is: {winner} with {confidence} confidence.
 
 {future_outlook_summary}
 
-This has been Christian, your Judge. Thank you for using LIFE SCORE."
+This has been Cristiano, your Judge. Thank you for using LIFE SCORE."
 ```
 
 ---
@@ -201,7 +201,7 @@ Repo: D:\LifeScore
 
 Read: D:\LifeScore\docs\handoffs\HANDOFF_JUDGE_TAB_PHASE_B_20260124.md
 
-TASK: HeyGen video integration for Christian avatar
+TASK: HeyGen video integration for Cristiano avatar
 - Create api/judge-video.ts endpoint
 - Generate video script from JudgeReport
 - Implement HeyGen video generation
@@ -240,7 +240,7 @@ TASK: HeyGen video integration for Christian avatar
 ## Notes for Phase C
 
 1. **HeyGen API key required** - Set `HEYGEN_API_KEY` env var
-2. **Christian avatar ID required** - Configure in HeyGen dashboard
+2. **Cristiano avatar ID required** - Configure in HeyGen dashboard
 3. **Video generation is async** - May take 30-60 seconds
 4. **Consider streaming** - HeyGen supports WebRTC streaming
 5. **Storage for videos** - May need Supabase storage bucket

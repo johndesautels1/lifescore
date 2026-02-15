@@ -11,6 +11,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateTTSCost } from '../utils/costCalculator';
+import { toastSuccess } from '../utils/toast';
+import { getAuthHeaders } from '../lib/supabase';
 
 export interface EmiliaMessage {
   id: string;
@@ -26,6 +28,8 @@ interface UseEmiliaReturn {
   isInitializing: boolean;
   error: string | null;
   sendMessage: (text: string) => Promise<void>;
+  retryLastMessage: () => Promise<void>;
+  dismissError: () => void;
   clearConversation: () => void;
   downloadConversation: (format: 'json' | 'txt') => void;
   printConversation: () => void;
@@ -53,6 +57,8 @@ export function useEmilia(): UseEmiliaReturn {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const lastFailedMessageRef = useRef<string | null>(null);
+  const lastSendTimestampRef = useRef<number>(0);
 
   // Load saved messages from session storage
   useEffect(() => {
@@ -101,9 +107,10 @@ export function useEmilia(): UseEmiliaReturn {
         }
 
         // Create new thread
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/thread', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
         });
 
         if (!response.ok) {
@@ -131,15 +138,23 @@ export function useEmilia(): UseEmiliaReturn {
     initThread();
   }, []); // Empty deps - only run once on mount
 
-  // Send message to Emilia
+  // Send message to Emilia (with rate limiting: 1 msg per 500ms)
   const sendMessage = useCallback(
     async (text: string) => {
       if (!threadId || !text.trim()) return;
 
+      // Rate limit: prevent rapid-fire sends
+      const now = Date.now();
+      if (now - lastSendTimestampRef.current < 500) return;
+      lastSendTimestampRef.current = now;
+
+      const trimmed = text.trim();
+      lastFailedMessageRef.current = null;
+
       const userMessage: EmiliaMessage = {
         id: `user-${Date.now()}`,
         role: 'user',
-        content: text.trim(),
+        content: trimmed,
         timestamp: new Date(),
       };
 
@@ -148,12 +163,13 @@ export function useEmilia(): UseEmiliaReturn {
       setError(null);
 
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/message', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
             threadId,
-            message: text.trim(),
+            message: trimmed,
           }),
         });
 
@@ -177,6 +193,7 @@ export function useEmilia(): UseEmiliaReturn {
         }
       } catch (err) {
         console.error('[useEmilia] Send error:', err);
+        lastFailedMessageRef.current = trimmed;
         setError(err instanceof Error ? err.message : 'Failed to send message');
       } finally {
         setIsLoading(false);
@@ -184,6 +201,35 @@ export function useEmilia(): UseEmiliaReturn {
     },
     [threadId]
   );
+
+  // Retry last failed message
+  const retryLastMessage = useCallback(async () => {
+    const lastMsg = lastFailedMessageRef.current;
+    if (!lastMsg) return;
+
+    // Remove the failed user message from the list before resending
+    setMessages((prev) => {
+      let lastUserIdx = -1;
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (prev[i].role === 'user' && prev[i].content === lastMsg) {
+          lastUserIdx = i;
+          break;
+        }
+      }
+      if (lastUserIdx >= 0) return [...prev.slice(0, lastUserIdx), ...prev.slice(lastUserIdx + 1)];
+      return prev;
+    });
+
+    lastFailedMessageRef.current = null;
+    setError(null);
+    await sendMessage(lastMsg);
+  }, [sendMessage]);
+
+  // Dismiss error without retrying
+  const dismissError = useCallback(() => {
+    setError(null);
+    lastFailedMessageRef.current = null;
+  }, []);
 
   // Clear conversation
   const clearConversation = useCallback(() => {
@@ -198,9 +244,10 @@ export function useEmilia(): UseEmiliaReturn {
     const reinit = async () => {
       setIsInitializing(true);
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/thread', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
         });
         const data = await response.json();
         if (data.success && data.threadId) {
@@ -337,7 +384,7 @@ export function useEmilia(): UseEmiliaReturn {
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(shareData.text);
-        alert('Conversation copied to clipboard!');
+        toastSuccess('Conversation copied to clipboard!');
       }
     } catch (err) {
       // User cancelled or error - silently fail
@@ -401,9 +448,10 @@ export function useEmilia(): UseEmiliaReturn {
 
       try {
         // Try ElevenLabs TTS first
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/emilia/speak', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({ text: content }),
         });
 
@@ -502,6 +550,8 @@ export function useEmilia(): UseEmiliaReturn {
     isInitializing,
     error,
     sendMessage,
+    retryLastMessage,
+    dismissError,
     clearConversation,
     downloadConversation,
     printConversation,

@@ -57,7 +57,7 @@ The Cost Dashboard shows real-time API usage across all providers. Access it by 
 ### Quota Alerts
 
 When quotas reach warning levels, you'll receive email alerts at:
-- support@clueslifescore.com (your registered email)
+- cluesnomads@gmail.com (your registered email)
 
 ### Fallback Behavior
 

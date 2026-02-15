@@ -49,7 +49,7 @@ Free Speech, Press Freedom, Internet Freedom, Hate Speech Laws, Protest Rights, 
 ### 6 LLM Providers (Configured)
 | Provider | Model | Role | Web Search |
 |----------|-------|------|------------|
-| OpenAI | GPT-5.2 | Evaluator | Yes |
+| OpenAI | GPT-4o | Evaluator | Yes |
 | Google | Gemini 3 Pro | Evaluator | Yes |
 | xAI | Grok 4 | Evaluator | Yes (X/Twitter) |
 | Anthropic | Claude Sonnet 4.5 | Evaluator | Yes |

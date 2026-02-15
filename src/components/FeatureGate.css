@@ -290,6 +290,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES — usage meter text visibility
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root:not([data-theme="dark"]) .meter-feature {
+  color: #1e293b;
+}
+
+:root:not([data-theme="dark"]) .meter-count {
+  color: #334155;
+}
+
+:root:not([data-theme="dark"]) .meter-info-icon {
+  color: #475569;
+  background: rgba(71, 85, 105, 0.12);
+}
+
+:root:not([data-theme="dark"]) .meter-bar {
+  background: rgba(100, 116, 139, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {

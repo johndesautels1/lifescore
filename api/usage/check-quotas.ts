@@ -20,7 +20,7 @@ const ALERT_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com'];
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'alerts@clueslifescore.com';
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'cluesnomads@gmail.com';
 
 // ============================================================================
 // TYPES
@@ -210,7 +210,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   try {
     const supabase = getSupabaseAdmin();

@@ -12,12 +12,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const TIMEOUT_MS = 45000; // 45 seconds for all operations
+const TIMEOUT_MS = 10000; // 10s for DB + Replicate status check + optional persist
 
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60, // Increased from 30s to allow video download+upload to Supabase Storage
 };
 
 const supabaseAdmin = createClient(
@@ -68,7 +69,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -216,19 +217,39 @@ export default async function handler(
             const prediction = await response.json();
 
             if (prediction.status === 'succeeded' && prediction.output) {
-              // Update database with timeout
-              const videoUrl = Array.isArray(prediction.output)
+              // Extract temporary Replicate URL (expires ~1h)
+              const replicateUrl = Array.isArray(prediction.output)
                 ? prediction.output[0]
                 : prediction.output;
+
+              // Persist video to Supabase Storage (permanent URL)
+              const persisted = await persistVideoToStorage(
+                replicateUrl,
+                video.comparison_id,
+                supabaseAdmin
+              );
+
+              const videoUrl = persisted?.publicUrl || replicateUrl;
+              const storagePath = persisted?.storagePath || null;
+
+              if (!persisted) {
+                console.warn('[VIDEO-STATUS] Failed to persist video to storage, using Replicate URL as fallback');
+              }
+
+              // Update database with timeout
+              const updatePayload: Record<string, unknown> = {
+                status: 'completed',
+                video_url: videoUrl,
+                completed_at: new Date().toISOString(),
+              };
+              if (storagePath) {
+                updatePayload.video_storage_path = storagePath;
+              }
 
               await withTimeout(
                 supabaseAdmin
                   .from('avatar_videos')
-                  .update({
-                    status: 'completed',
-                    video_url: videoUrl,
-                    completed_at: new Date().toISOString(),
-                  })
+                  .update(updatePayload)
                   .eq('id', video.id)
               );
 
@@ -272,6 +293,44 @@ export default async function handler(
         } catch (replicateErr) {
           console.warn('[VIDEO-STATUS] Replicate check failed:', replicateErr);
           // Continue with existing video data
+        }
+      }
+    }
+
+    // FIX: For completed videos with temporary provider URLs (no storage path),
+    // attempt to migrate to permanent Supabase Storage. If URL expired, mark as failed.
+    if (video.status === 'completed' && video.video_url && !video.video_storage_path) {
+      const isTemporaryUrl = video.video_url.includes('replicate.delivery') ||
+                             video.video_url.includes('klingai.com');
+
+      if (isTemporaryUrl) {
+        console.log('[VIDEO-STATUS] Completed video has temporary URL, attempting migration:', video.id);
+        const persisted = await persistVideoToStorage(
+          video.video_url,
+          video.comparison_id,
+          supabaseAdmin
+        );
+
+        if (persisted) {
+          console.log('[VIDEO-STATUS] Migrated stale URL to permanent storage:', persisted.publicUrl);
+          await withTimeout(
+            supabaseAdmin
+              .from('avatar_videos')
+              .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+              .eq('id', video.id)
+          );
+          video.video_url = persisted.publicUrl;
+        } else {
+          console.warn(`[VIDEO-STATUS] Provider URL expired, marking video ${video.id} as failed`);
+          await withTimeout(
+            supabaseAdmin
+              .from('avatar_videos')
+              .update({ status: 'failed', error: 'Provider URL expired before migration' })
+              .eq('id', video.id)
+          );
+          video.status = 'failed';
+          video.video_url = null;
+          video.error = 'Provider URL expired — please regenerate';
         }
       }
     }

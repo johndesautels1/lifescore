@@ -12,11 +12,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 
-const TIMEOUT_MS = 45000; // 45 seconds for all operations
+const TIMEOUT_MS = 10000; // 10s for DB + persist operations
 
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60, // Increased from 30s to allow video download+upload to Supabase Storage
 };
 
 const supabaseAdmin = createClient(
@@ -58,7 +59,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -98,22 +99,43 @@ export default async function handler(
     }
 
     if (webhook.status === 'succeeded' && webhook.output) {
-      // Extract video URL from output
-      const videoUrl = Array.isArray(webhook.output)
+      // Extract video URL from Replicate output (temporary CDN URL, expires ~1h)
+      const replicateUrl = Array.isArray(webhook.output)
         ? webhook.output[0]
         : webhook.output;
 
-      console.log('[VIDEO-WEBHOOK] Success! Video URL:', videoUrl);
+      console.log('[VIDEO-WEBHOOK] Success! Replicate URL:', replicateUrl);
+
+      // Persist video to Supabase Storage (permanent URL)
+      // Must happen immediately — Replicate URLs expire after ~1 hour
+      const persisted = await persistVideoToStorage(
+        replicateUrl,
+        video.comparison_id,
+        supabaseAdmin
+      );
+
+      // Use permanent URL if persistence succeeded, fall back to Replicate URL
+      const videoUrl = persisted?.publicUrl || replicateUrl;
+      const storagePath = persisted?.storagePath || null;
+
+      if (!persisted) {
+        console.warn('[VIDEO-WEBHOOK] Failed to persist video to storage, using Replicate URL as fallback');
+      }
 
       // Update database with completed status (with timeout)
+      const updatePayload: Record<string, unknown> = {
+        status: 'completed',
+        video_url: videoUrl,
+        completed_at: webhook.completed_at || new Date().toISOString(),
+      };
+      if (storagePath) {
+        updatePayload.video_storage_path = storagePath;
+      }
+
       const { error: updateError } = await withTimeout(
         supabaseAdmin
           .from('avatar_videos')
-          .update({
-            status: 'completed',
-            video_url: videoUrl,
-            completed_at: webhook.completed_at || new Date().toISOString(),
-          })
+          .update(updatePayload)
           .eq('id', video.id)
       );
 
@@ -144,6 +166,7 @@ export default async function handler(
         success: true,
         videoId: video.id,
         videoUrl,
+        persisted: !!persisted,
       });
     } else if (webhook.status === 'failed' || webhook.status === 'canceled') {
       console.error('[VIDEO-WEBHOOK] Generation failed:', webhook.error);

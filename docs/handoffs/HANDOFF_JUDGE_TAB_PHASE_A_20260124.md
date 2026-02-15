@@ -32,7 +32,7 @@ Claude Opus 4.5 serves as THE JUDGE - providing:
 - Personalized to user values
 
 ### Output Format
-- **HeyGen Video Report** - Pre-recorded by "Christian" (male humanoid avatar)
+- **HeyGen Video Report** - Pre-recorded by "Cristiano" (male humanoid avatar)
 - **Written Sections**: Summary, Detailed Analysis, Executive Summary
 - **Branding**: Personalized to user ID + comparison ID
 - **Actions**: Save, Download (PDF/Video), Forward
@@ -180,7 +180,7 @@ interface JudgeReport {
 
 ### Tasks
 1. Set up HeyGen API integration
-2. Create "Christian" avatar configuration
+2. Create "Cristiano" avatar configuration
 3. Build video script generator from JudgeReport
 4. Implement real-time streaming (or async generation)
 5. Handle video playback in viewport
@@ -188,7 +188,7 @@ interface JudgeReport {
 
 ### HeyGen Considerations
 - API endpoint for video generation
-- Avatar ID for Christian
+- Avatar ID for Cristiano
 - Script formatting for natural speech
 - Video storage (Supabase storage bucket)
 - Streaming vs completed video delivery

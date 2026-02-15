@@ -61,7 +61,7 @@
 | # | Item | Details | Status |
 |---|------|---------|--------|
 | 5 | Judge Video welcome screen | Added mobile CSS scaling (768px/480px breakpoints) | DONE (2/3) |
-| 6 | Judge Video - Christiano animation | Wav2Lip: wider pads, 30fps, 720p (works but slow - revisit later) | DONE (2/3) |
+| 6 | Judge Video - Cristiano animation | Wav2Lip: wider pads, 30fps, 720p (works but slow - revisit later) | DONE (2/3) |
 | 7 | Results Report section scroll | Fixed: scrollIntoView block:'start' scrolls to TOP of section, not bottom | DONE (2/3, b29d000) |
 | 8 | Post-search flow redesign | Show success status buttons first, user clicks "View Results" manually - do NOT auto-open LLM data page | DONE (merged with #55) |
 | 51 | Header bar mobile size reduction | Reduce top-right header bar by 15% on mobile (85% of current size) | DONE (80c5eb1) |

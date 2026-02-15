@@ -3,7 +3,7 @@
  * Multi-LLM consensus UI
  */
 
-import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
@@ -19,6 +19,15 @@ import { GunComparisonModal } from './GunComparisonModal';
 import EvidencePanel from './EvidencePanel';
 import ScoreMethodology from './ScoreMethodology';
 import './EnhancedComparison.css';
+
+// Helper: compute median of a sorted number array
+function computeMedian(sorted: number[]): number {
+  if (sorted.length === 0) return 0;
+  if (sorted.length % 2 === 0) {
+    return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+  }
+  return sorted[Math.floor(sorted.length / 2)];
+}
 
 // Metric icons mapping - matches exact shortNames from metrics.ts
 const METRIC_ICONS: Record<string, string> = {
@@ -602,14 +611,12 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
 interface EnhancedModeToggleProps {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
-  onConfigureKeys: () => void;
   availableLLMs: LLMProvider[];
 }
 
 export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
   enabled,
   onToggle,
-  onConfigureKeys,
   availableLLMs
 }) => {
   return (
@@ -627,9 +634,6 @@ export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
             Enhanced Mode
           </span>
         </label>
-        <button className="configure-btn" onClick={onConfigureKeys} title="Configure API Keys">
-          ⚙️
-        </button>
       </div>
 
       {enabled && (
@@ -649,6 +653,9 @@ export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
                 </span>
               );
             })}
+            <span className="llm-badge llm-badge-judge" title="Final consensus judge">
+              {LLM_CONFIGS['claude-opus'].icon} Judge
+            </span>
           </div>
         </div>
       )}
@@ -867,10 +874,10 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
               ) : (
                 <p className="disagreement-intro">All metrics showed strong LLM agreement. Scores are highly reliable.</p>
               )}
-              <span className="summary-detail">
-                Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
-              </span>
             </div>
+            <span className="summary-detail">
+              Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
+            </span>
           </div>
 
           {/* LLM Panel - Show who evaluated */}
@@ -1312,19 +1319,31 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const [expandedDifference, setExpandedDifference] = useState<string | null>(null);
   const [showGunComparison, setShowGunComparison] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
   const isTie = result.winner === 'tie';
 
-  // Calculate top 5 differences for the summary
-  const topDifferences = calculateTopDifferences(result, 5);
+  // Memoize expensive calculations to avoid re-running on every render
+  const topDifferences = useMemo(() => calculateTopDifferences(result, 5), [result]);
 
-  // Check for dealbreaker failures
-  const city1AllMetrics = result.city1.categories.flatMap(c => c.metrics);
-  const city2AllMetrics = result.city2.categories.flatMap(c => c.metrics);
-  const city1FailedDealbreakers = checkDealbreakers(dealbreakers, city1AllMetrics);
-  const city2FailedDealbreakers = checkDealbreakers(dealbreakers, city2AllMetrics);
+  const { city1AllMetrics, city2AllMetrics } = useMemo(() => ({
+    city1AllMetrics: result.city1.categories.flatMap(c => c.metrics),
+    city2AllMetrics: result.city2.categories.flatMap(c => c.metrics),
+  }), [result]);
+
+  const city1FailedDealbreakers = useMemo(() => checkDealbreakers(dealbreakers, city1AllMetrics), [dealbreakers, city1AllMetrics]);
+  const city2FailedDealbreakers = useMemo(() => checkDealbreakers(dealbreakers, city2AllMetrics), [dealbreakers, city2AllMetrics]);
+
+  // Pre-build metric lookup maps indexed by metricId for O(1) access in the render loop
+  const metricLookupMaps = useMemo(() => {
+    const city1Map = new Map<string, typeof city1AllMetrics[0]>();
+    const city2Map = new Map<string, typeof city2AllMetrics[0]>();
+    for (const m of city1AllMetrics) city1Map.set(m.metricId, m);
+    for (const m of city2AllMetrics) city2Map.set(m.metricId, m);
+    return { city1Map, city2Map };
+  }, [city1AllMetrics, city2AllMetrics]);
 
   // Generate winner explanation narrative
   const generateExplanation = (): string => {
@@ -1378,6 +1397,14 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
   useEffect(() => {
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
   }, [result.comparisonId]);
+
+  // Close tooltip on outside tap or scroll (mobile fix)
+  useEffect(() => {
+    if (!activeTooltip) return;
+    const close = () => setActiveTooltip(null);
+    document.addEventListener('scroll', close, true);
+    return () => document.removeEventListener('scroll', close, true);
+  }, [activeTooltip]);
 
   // FIXED 2026-01-25: Added loading state for better UX feedback
   const handleSave = async () => {
@@ -1444,6 +1471,25 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         </span>
       </div>
 
+      {/* FIX: Show warning banner for partial LLM results */}
+      {(result as any).warning && (
+        <div className="partial-results-warning" style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '8px',
+          padding: '10px 16px',
+          margin: '0 0 12px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '0.85rem',
+          color: '#f59e0b'
+        }}>
+          <span>⚠️</span>
+          <span>{(result as any).warning}</span>
+        </div>
+      )}
+
       {/* Winner Hero */}
       <div className={`enhanced-winner-hero ${isTie ? 'tie' : ''}`}>
         <div className="consensus-badge">
@@ -1457,7 +1503,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
         {!isTie ? (
           <>
             <div className="winner-trophy">🏆</div>
-            <h2 className="winner-city">{winner.city}, {winner.country}</h2>
+            <h2 className="winner-city">{winner.city}{winner.region ? `, ${winner.region}` : ''}, {winner.country}</h2>
             <div className="winner-score">{winner.totalConsensusScore}</div>
             <p className="winner-label">CONSENSUS LIFE SCORE™</p>
 
@@ -1538,32 +1584,48 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       {/* Score Comparison */}
       <div className="enhanced-score-grid card">
         <div className={`score-box ${result.winner === 'city1' ? 'winner' : ''}`}>
-          <h3>{result.city1.city}, {result.city1.country}</h3>
+          <h3>{result.city1.city}{result.city1.region ? `, ${result.city1.region}` : ''}, {result.city1.country}</h3>
           <div className="consensus-score">{result.city1.totalConsensusScore}</div>
           <div className="agreement-meter">
-            <span className="agreement-label">{result.llmsUsed.length > 1 ? 'LLM Agreement:' : 'Confidence:'}</span>
-            <div className="agreement-bar">
-              <div
-                className="agreement-fill"
-                style={{ width: `${result.city1.overallAgreement}%` }}
-              />
-            </div>
-            <span className="agreement-value">{result.city1.overallAgreement}%</span>
+            {result.llmsUsed.length > 1 ? (
+              <>
+                <span className="agreement-label">LLM Agreement:</span>
+                <div className="agreement-bar">
+                  <div
+                    className="agreement-fill"
+                    style={{ width: `${result.city1.overallAgreement}%` }}
+                  />
+                </div>
+                <span className="agreement-value">{result.city1.overallAgreement}%</span>
+              </>
+            ) : (
+              <span className="agreement-label single-llm-note">
+                1 of 5 AI models evaluated — add more for consensus scoring
+              </span>
+            )}
           </div>
         </div>
 
         <div className={`score-box ${result.winner === 'city2' ? 'winner' : ''}`}>
-          <h3>{result.city2.city}, {result.city2.country}</h3>
+          <h3>{result.city2.city}{result.city2.region ? `, ${result.city2.region}` : ''}, {result.city2.country}</h3>
           <div className="consensus-score">{result.city2.totalConsensusScore}</div>
           <div className="agreement-meter">
-            <span className="agreement-label">{result.llmsUsed.length > 1 ? 'LLM Agreement:' : 'Confidence:'}</span>
-            <div className="agreement-bar">
-              <div
-                className="agreement-fill"
-                style={{ width: `${result.city2.overallAgreement}%` }}
-              />
-            </div>
-            <span className="agreement-value">{result.city2.overallAgreement}%</span>
+            {result.llmsUsed.length > 1 ? (
+              <>
+                <span className="agreement-label">LLM Agreement:</span>
+                <div className="agreement-bar">
+                  <div
+                    className="agreement-fill"
+                    style={{ width: `${result.city2.overallAgreement}%` }}
+                  />
+                </div>
+                <span className="agreement-value">{result.city2.overallAgreement}%</span>
+              </>
+            ) : (
+              <span className="agreement-label single-llm-note">
+                1 of 5 AI models evaluated — add more for consensus scoring
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -1685,46 +1747,64 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                           </>
                         )}
 
-                        {/* Bug G fix: Calculation Verification */}
+                        {/* Bug G fix: Calculation Verification - Premium card layout */}
                         {(diff.city1LlmScores?.length || diff.city2LlmScores?.length) && (
                           <div className="diff-calculation-verification">
                             <h4 className="verification-header">🔢 Score Calculation</h4>
-                            {diff.city1LlmScores && diff.city1LlmScores.length > 0 && (() => {
-                              const scores = diff.city1LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
-                              if (scores.length === 0) return null;
-                              const mid = Math.floor(scores.length / 2);
-                              const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
-                              const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city1Score);
-                              return (
-                                <div className="diff-verification-row">
-                                  <span className="diff-verification-label">{result.city1.city}:</span>
-                                  <span className="diff-verification-calc">
-                                    Median of [{scores.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(calculatedMedian)}</strong>
+                            <div className="verification-grid">
+                              {diff.city1LlmScores && diff.city1LlmScores.length > 0 && (() => {
+                                const scores = diff.city1LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
+                                if (scores.length === 0) return null;
+                                const mid = Math.floor(scores.length / 2);
+                                const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
+                                const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city1Score);
+                                return (
+                                  <div className="verification-card">
+                                    <div className="verification-city-name">{result.city1.city}</div>
+                                    <div className="verification-scores-row">
+                                      {scores.map((s, i) => (
+                                        <span key={i} className="verification-score-chip">{Math.round(s)}</span>
+                                      ))}
+                                    </div>
+                                    <div className="verification-median">
+                                      Median = <strong>{Math.round(calculatedMedian)}</strong>
+                                    </div>
                                     {isAdjusted && (
-                                      <span className="diff-opus-adjusted"> → {Math.round(diff.city1Score)} (Opus adjusted)</span>
+                                      <div className="verification-opus-badge">
+                                        → {Math.round(diff.city1Score)}
+                                        <span className="opus-label">Opus adjusted</span>
+                                      </div>
                                     )}
-                                  </span>
-                                </div>
-                              );
-                            })()}
-                            {diff.city2LlmScores && diff.city2LlmScores.length > 0 && (() => {
-                              const scores = diff.city2LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
-                              if (scores.length === 0) return null;
-                              const mid = Math.floor(scores.length / 2);
-                              const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
-                              const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city2Score);
-                              return (
-                                <div className="diff-verification-row">
-                                  <span className="diff-verification-label">{result.city2.city}:</span>
-                                  <span className="diff-verification-calc">
-                                    Median of [{scores.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(calculatedMedian)}</strong>
+                                  </div>
+                                );
+                              })()}
+                              {diff.city2LlmScores && diff.city2LlmScores.length > 0 && (() => {
+                                const scores = diff.city2LlmScores.map(s => s.normalizedScore ?? 0).filter(s => s !== null).sort((a, b) => a - b);
+                                if (scores.length === 0) return null;
+                                const mid = Math.floor(scores.length / 2);
+                                const calculatedMedian = scores.length % 2 ? scores[mid] : (scores[mid - 1] + scores[mid]) / 2;
+                                const isAdjusted = Math.round(calculatedMedian) !== Math.round(diff.city2Score);
+                                return (
+                                  <div className="verification-card">
+                                    <div className="verification-city-name">{result.city2.city}</div>
+                                    <div className="verification-scores-row">
+                                      {scores.map((s, i) => (
+                                        <span key={i} className="verification-score-chip">{Math.round(s)}</span>
+                                      ))}
+                                    </div>
+                                    <div className="verification-median">
+                                      Median = <strong>{Math.round(calculatedMedian)}</strong>
+                                    </div>
                                     {isAdjusted && (
-                                      <span className="diff-opus-adjusted"> → {Math.round(diff.city2Score)} (Opus adjusted)</span>
+                                      <div className="verification-opus-badge">
+                                        → {Math.round(diff.city2Score)}
+                                        <span className="opus-label">Opus adjusted</span>
+                                      </div>
                                     )}
-                                  </span>
-                                </div>
-                              );
-                            })()}
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </div>
                         )}
 
@@ -2004,8 +2084,8 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                   )}
 
                   {categoryMetrics.map(metric => {
-                    const city1Metric = city1Cat.metrics.find(m => m.metricId === metric.id);
-                    const city2Metric = city2Cat.metrics.find(m => m.metricId === metric.id);
+                    const city1Metric = metricLookupMaps.city1Map.get(metric.id);
+                    const city2Metric = metricLookupMaps.city2Map.get(metric.id);
                     const score1: number = city1Metric?.consensusScore ?? 0;
                     const score2: number = city2Metric?.consensusScore ?? 0;
                     const tooltip = getMetricTooltip(metric.shortName);
@@ -2037,20 +2117,10 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                     const city2LLMScoresMap = new Map(city2Metric?.llmScores?.map(s => [s.llmProvider, s]) || []);
 
                     // Calculate median verification - filter out null scores
-                    const city1Scores: number[] = (city1Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null)) || [];
-                    const city2Scores: number[] = (city2Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null)) || [];
-                    const sortedCity1 = [...city1Scores].sort((a, b) => a - b);
-                    const sortedCity2 = [...city2Scores].sort((a, b) => a - b);
-                    const medianCity1: number = sortedCity1.length > 0
-                      ? sortedCity1.length % 2 === 0
-                        ? (sortedCity1[sortedCity1.length/2 - 1] + sortedCity1[sortedCity1.length/2]) / 2
-                        : sortedCity1[Math.floor(sortedCity1.length/2)]
-                      : 0;
-                    const medianCity2: number = sortedCity2.length > 0
-                      ? sortedCity2.length % 2 === 0
-                        ? (sortedCity2[sortedCity2.length/2 - 1] + sortedCity2[sortedCity2.length/2]) / 2
-                        : sortedCity2[Math.floor(sortedCity2.length/2)]
-                      : 0;
+                    const sortedCity1 = (city1Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null) || []).sort((a, b) => a - b);
+                    const sortedCity2 = (city2Metric?.llmScores?.map(s => s.normalizedScore).filter((s): s is number => s !== null) || []).sort((a, b) => a - b);
+                    const medianCity1 = computeMedian(sortedCity1);
+                    const medianCity2 = computeMedian(sortedCity2);
 
                     return (
                       <div key={metric.id} className={`metric-row-wrapper ${isRowExpanded ? 'expanded' : ''}`}>
@@ -2065,7 +2135,10 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                             <div className="metric-name-container">
                               <span className="metric-name">{metric.shortName}</span>
                               {tooltip && (
-                                <div className="metric-tooltip" onClick={(e) => e.stopPropagation()}>
+                                <div className={`metric-tooltip ${activeTooltip === metric.id ? 'tooltip-active' : ''}`} onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveTooltip(activeTooltip === metric.id ? null : metric.id);
+                                }}>
                                   <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
                                   <div className="tooltip-content">
                                     <strong>Why This Matters:</strong>
@@ -2182,25 +2255,44 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                               </table>
                             </div>
 
-                            {/* Calculation Verification */}
+                            {/* Calculation Verification — Premium Card Layout */}
                             <div className="calculation-verification">
-                              <div className="verification-row">
-                                <span className="verification-label">{result.city1.city}:</span>
-                                <span className="verification-calc">
-                                  Median of [{sortedCity1.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(medianCity1)}</strong>
+                              <h4 className="calc-verify-header">🔢 Score Calculation</h4>
+                              <div className="calc-verify-grid">
+                                <div className="calc-verify-card">
+                                  <div className="calc-verify-city">{result.city1.city}</div>
+                                  <div className="calc-verify-chips">
+                                    {sortedCity1.map((s, i) => (
+                                      <span key={i} className="calc-verify-chip">{Math.round(s)}</span>
+                                    ))}
+                                  </div>
+                                  <div className="calc-verify-median">
+                                    Median = <strong>{Math.round(medianCity1)}</strong>
+                                  </div>
                                   {Math.round(medianCity1) !== Math.round(score1) && (
-                                    <span className="opus-adjusted" title="Adjusted by Opus Judge"> → {Math.round(score1)} (Opus adjusted)</span>
+                                    <div className="calc-verify-opus">
+                                      → {Math.round(score1)}
+                                      <span className="opus-label">Opus adjusted</span>
+                                    </div>
                                   )}
-                                </span>
-                              </div>
-                              <div className="verification-row">
-                                <span className="verification-label">{result.city2.city}:</span>
-                                <span className="verification-calc">
-                                  Median of [{sortedCity2.map(s => Math.round(s)).join(', ')}] = <strong>{Math.round(medianCity2)}</strong>
+                                </div>
+                                <div className="calc-verify-card">
+                                  <div className="calc-verify-city">{result.city2.city}</div>
+                                  <div className="calc-verify-chips">
+                                    {sortedCity2.map((s, i) => (
+                                      <span key={i} className="calc-verify-chip">{Math.round(s)}</span>
+                                    ))}
+                                  </div>
+                                  <div className="calc-verify-median">
+                                    Median = <strong>{Math.round(medianCity2)}</strong>
+                                  </div>
                                   {Math.round(medianCity2) !== Math.round(score2) && (
-                                    <span className="opus-adjusted" title="Adjusted by Opus Judge"> → {Math.round(score2)} (Opus adjusted)</span>
+                                    <div className="calc-verify-opus">
+                                      → {Math.round(score2)}
+                                      <span className="opus-label">Opus adjusted</span>
+                                    </div>
                                   )}
-                                </span>
+                                </div>
                               </div>
                             </div>
 

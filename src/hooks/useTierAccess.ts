@@ -13,8 +13,9 @@
  * © 2025-2026 All Rights Reserved
  */
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
 import type { UserTier, UsageTracking } from '../types/database';
 
 // ============================================================================
@@ -26,11 +27,12 @@ import type { UserTier, UsageTracking } from '../types/database';
  * Uses exponential backoff on timeout/network errors.
  */
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Tier access query'
 ): Promise<T> {
-  return withRetry(() => promise, {
+  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 3,
@@ -52,6 +54,7 @@ export interface TierLimits {
   judgeVideos: number;
   gammaReports: number;
   grokVideos: number;
+  cristianoVideos: number;          // Cristiano "Go To My New City" HeyGen videos (Sovereign only)
   cloudSync: boolean;
   apiAccess: boolean;
 }
@@ -81,6 +84,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     judgeVideos: 0,                 // NO Judge videos
     gammaReports: 0,                // NO Gamma reports
     grokVideos: 0,                  // NO Grok videos
+    cristianoVideos: 0,             // NO Cristiano videos
     cloudSync: false,
     apiAccess: false,
   },
@@ -91,6 +95,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     judgeVideos: 1,                 // 1 Judge video/month
     gammaReports: 1,                // 1 Gamma report/month
     grokVideos: 0,                  // NO Grok videos (Sovereign only)
+    cristianoVideos: 0,             // NO Cristiano videos (Sovereign only)
     cloudSync: true,
     apiAccess: false,
   },
@@ -101,6 +106,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
     judgeVideos: 1,                 // 1 Judge video/month
     gammaReports: 1,                // 1 Gamma report/month (with all 5 LLMs)
     grokVideos: 1,                  // 1 Grok video/month
+    cristianoVideos: 1,             // 1 Cristiano "Go To My New City" video/month
     cloudSync: true,
     apiAccess: true,
   },
@@ -112,10 +118,11 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
 const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
   standardComparisons: 'standard_comparisons',
   enhancedComparisons: 'enhanced_comparisons',
-  oliviaMinutesPerMonth: 'olivia_minutes',
+  oliviaMinutesPerMonth: 'olivia_messages',
   judgeVideos: 'judge_videos',
   gammaReports: 'gamma_reports',
   grokVideos: 'grok_videos',
+  cristianoVideos: 'cristiano_videos',
 };
 
 // ============================================================================
@@ -185,68 +192,166 @@ function getCurrentPeriodStart(): string {
 // HOOK
 // ============================================================================
 
-// Developer bypass emails - comma separated in env var
-// IMPORTANT: This grants SOVEREIGN (enterprise) access to admin/dev emails
-const DEV_BYPASS_EMAILS = (import.meta.env.VITE_DEV_BYPASS_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+// Admin status cache key — server-side /api/admin-check result cached in localStorage
+const ADMIN_CACHE_KEY = 'lifescore_admin_status';
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+// Grace period: if cache expired but server check fails, trust the old value for 1 hour
+const ADMIN_CACHE_GRACE_MS = 60 * 60 * 1000;
 
-// Hardcoded fallback in case env var isn't read properly
-// CRITICAL: These emails ALWAYS get enterprise tier, even if Supabase is down
-const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com'];
+// Tier cache — survives Supabase outages so users aren't demoted to free
+const TIER_CACHE_KEY = 'lifescore_user_tier';
 
-// Cache admin status in localStorage for reliability when Supabase is slow
-const ADMIN_CACHE_KEY = 'lifescore_admin_bypass';
-
-function checkAndCacheAdminStatus(email: string): boolean {
-  if (!email) return false;
-
-  const normalizedEmail = email.toLowerCase().trim();
-  const isAdmin = DEV_BYPASS_EMAILS.includes(normalizedEmail) ||
-                  HARDCODED_BYPASS_EMAILS.includes(normalizedEmail);
-
-  if (isAdmin) {
-    // Cache admin status so it persists even if Supabase times out
-    try {
-      localStorage.setItem(ADMIN_CACHE_KEY, normalizedEmail);
-    } catch { /* localStorage not available */ }
-  }
-
-  return isAdmin;
+interface AdminCache {
+  isAdmin: boolean;
+  timestamp: number;
 }
 
-function getCachedAdminStatus(): boolean {
+/**
+ * Read cached admin status from localStorage.
+ * Returns null if cache is missing or expired beyond grace period.
+ * If within grace period (expired but recent), still returns the value
+ * so the user isn't locked out while we try to reach the server.
+ */
+function getCachedAdminStatus(graceMode = false): boolean | null {
   try {
-    const cached = localStorage.getItem(ADMIN_CACHE_KEY);
-    if (cached) {
-      return HARDCODED_BYPASS_EMAILS.includes(cached) || DEV_BYPASS_EMAILS.includes(cached);
-    }
+    const raw = localStorage.getItem(ADMIN_CACHE_KEY);
+    if (!raw) return null;
+    const parsed: AdminCache = JSON.parse(raw);
+    const age = Date.now() - parsed.timestamp;
+    // Fresh cache — always trust
+    if (age <= ADMIN_CACHE_TTL_MS) return parsed.isAdmin;
+    // Grace mode — trust the old value if within grace period
+    if (graceMode && age <= ADMIN_CACHE_GRACE_MS) return parsed.isAdmin;
+    // Truly expired — remove
+    localStorage.removeItem(ADMIN_CACHE_KEY);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cache admin status in localStorage.
+ */
+function setCachedAdminStatus(isAdmin: boolean): void {
+  try {
+    const entry: AdminCache = { isAdmin, timestamp: Date.now() };
+    localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(entry));
   } catch { /* localStorage not available */ }
-  return false;
+}
+
+function getCachedTier(): UserTier | null {
+  try {
+    const cached = localStorage.getItem(TIER_CACHE_KEY);
+    if (cached === 'free' || cached === 'pro' || cached === 'enterprise') {
+      return cached;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedTier(tier: UserTier): void {
+  try {
+    localStorage.setItem(TIER_CACHE_KEY, tier);
+  } catch { /* localStorage not available */ }
+}
+
+function clearCachedTier(): void {
+  try {
+    localStorage.removeItem(TIER_CACHE_KEY);
+  } catch { /* localStorage not available */ }
 }
 
 export function useTierAccess(): TierAccessHook {
   const { profile, user, isLoading: authLoading } = useAuth();
 
-  // Developer bypass - grant enterprise access to specified emails
-  // Check: 1) Current user email, 2) Cached admin status from previous session
-  const userEmail = user?.email?.toLowerCase() || '';
-  const isDeveloper = checkAndCacheAdminStatus(userEmail) || getCachedAdminStatus();
+  // Admin status — fetched from server-side /api/admin-check (no emails in client bundle)
+  const [isDeveloper, setIsDeveloper] = useState<boolean>(() => {
+    // Initialize from cache for instant rendering (avoids flash of wrong tier)
+    const cached = getCachedAdminStatus();
+    return cached ?? false;
+  });
 
-  // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet
-  // Also: if user is authenticated but profile failed to load, don't punish them with free tier
+  useEffect(() => {
+    if (!user?.id) {
+      setIsDeveloper(false);
+      return;
+    }
+
+    // Check fresh cache first (within 5-min TTL)
+    const cached = getCachedAdminStatus();
+    if (cached !== null) {
+      setIsDeveloper(cached);
+      return;
+    }
+
+    // Cache expired — fetch from server, but use grace period as fallback
+    const graceValue = getCachedAdminStatus(true); // trust old value for up to 1 hour
+    if (graceValue === true) {
+      // Keep them as admin while we verify in background
+      setIsDeveloper(true);
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders.Authorization) {
+          // Supabase session unavailable — trust grace value, don't lock out
+          // Will retry on next render when auth recovers
+          return;
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const res = await fetch('/api/admin-check', {
+          headers: authHeaders,
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const isAdmin = data.isAdmin === true;
+        setCachedAdminStatus(isAdmin);
+        if (!cancelled) setIsDeveloper(isAdmin);
+      } catch {
+        // On network/timeout error: trust grace value, don't lock out
+        // Only set false if there was never a cached true value
+        if (!cancelled && graceValue !== true) {
+          setIsDeveloper(false);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet.
+  // Everyone else: use cached tier when profile unavailable (Supabase timeout resilience).
+  // Only fall back to 'free' for truly new/unknown users (no cache, no profile).
   const profileTier = profile?.tier;
+  const cachedTier = user?.id ? getCachedTier() : null; // Only use cache for authenticated users
   const tier: UserTier = isDeveloper
     ? 'enterprise'
     : profileTier
       ? profileTier
-      : (user ? 'enterprise' : 'free'); // If logged in but no profile, assume enterprise (fail open)
+      : cachedTier || 'free'; // Use cached tier if profile unavailable, then free as last resort
 
-  if (isDeveloper) {
-    console.log('[useTierAccess] 🔓 ADMIN BYPASS ACTIVE for:', userEmail || 'cached', '→ SOVEREIGN tier');
-  } else if (user && !profileTier) {
-    console.log('[useTierAccess] ⚠️ Profile not loaded, failing open to SOVEREIGN for authenticated user');
-  } else if (authLoading) {
-    console.log('[useTierAccess] Auth loading, defaulting to:', tier);
-  }
+  // Cache the tier whenever we get it from the profile (so it survives Supabase outages)
+  useEffect(() => {
+    if (profileTier) {
+      setCachedTier(profileTier);
+    }
+  }, [profileTier]);
+
+  // Clear tier cache on sign-out (no user = no cached tier)
+  useEffect(() => {
+    if (!user?.id) {
+      clearCachedTier();
+    }
+  }, [user?.id]);
+
   const tierName = TIER_NAMES[tier];
   const limits = TIER_LIMITS[tier];
 
@@ -319,13 +424,16 @@ export function useTierAccess(): TierAccessHook {
     }
 
     // Check actual usage from database
-    if (!isSupabaseConfigured() || !profile?.id) {
-      // Fail open - allow if we can't check
+    // Use user.id (from auth session) instead of profile.id — auth session survives
+    // even when profile fetch times out due to Supabase connectivity issues
+    const userId = profile?.id || user?.id;
+    if (!isSupabaseConfigured() || !userId) {
+      // Fail-closed: deny if we can't verify usage AND have no user ID at all
       return {
-        allowed: true,
+        allowed: false,
         used: 0,
         limit,
-        remaining: limit,
+        remaining: 0,
         upgradeRequired: false,
         requiredTier: tier,
       };
@@ -347,11 +455,11 @@ export function useTierAccess(): TierAccessHook {
         };
       }
 
-      const { data, error } = await withTimeout(
+      const { data, error } = await withTimeout(() =>
         supabase
           .from('usage_tracking')
           .select('*')
-          .eq('user_id', profile.id)
+          .eq('user_id', userId)
           .eq('period_start', periodStart)
           .maybeSingle()
       );
@@ -377,12 +485,12 @@ export function useTierAccess(): TierAccessHook {
       };
     } catch (error) {
       console.error('[useTierAccess] Usage check error:', error);
-      // Fail open
+      // Fail-closed: deny on error to prevent unlimited free access when DB is down
       return {
-        allowed: true,
+        allowed: false,
         used: 0,
         limit,
-        remaining: limit,
+        remaining: 0,
         upgradeRequired: false,
         requiredTier: tier,
       };
@@ -400,8 +508,11 @@ export function useTierAccess(): TierAccessHook {
       return false;
     }
 
+    // Use user.id (auth session) as fallback when profile hasn't loaded
+    const userId = profile?.id || user?.id;
+
     // If unlimited or Supabase not configured, just return true
-    if (usageCheck.limit === -1 || !isSupabaseConfigured() || !profile?.id) {
+    if (usageCheck.limit === -1 || !isSupabaseConfigured() || !userId) {
       return true;
     }
 
@@ -418,9 +529,9 @@ export function useTierAccess(): TierAccessHook {
       }
 
       // Upsert usage record (with 45s timeout)
-      const { error } = await withTimeout(
+      const { error } = await withTimeout(() =>
         supabase.rpc('increment_usage', {
-          p_user_id: profile.id,
+          p_user_id: userId,
           p_feature: column,
           p_amount: 1,
         })
@@ -430,11 +541,11 @@ export function useTierAccess(): TierAccessHook {
         // Fallback: try direct upsert
         console.warn('[useTierAccess] RPC failed, trying direct upsert:', error);
 
-        const { data: existing } = await withTimeout(
+        const { data: existing } = await withTimeout(() =>
           supabase
             .from('usage_tracking')
             .select('*')
-            .eq('user_id', profile.id)
+            .eq('user_id', userId)
             .eq('period_start', periodStart)
             .maybeSingle()
         );
@@ -443,7 +554,7 @@ export function useTierAccess(): TierAccessHook {
           // Update existing record
           const existingData = existing as Record<string, unknown>;
           const currentValue = (existingData[column] as number) || 0;
-          await withTimeout(
+          await withTimeout(() =>
             supabase
               .from('usage_tracking')
               .update({ [column]: currentValue + 1 })
@@ -451,9 +562,9 @@ export function useTierAccess(): TierAccessHook {
           );
         } else {
           // Insert new record
-          await withTimeout(
+          await withTimeout(() =>
             supabase.from('usage_tracking').insert({
-              user_id: profile.id,
+              user_id: userId,
               period_start: periodStart,
               period_end: periodEnd,
               [column]: 1,

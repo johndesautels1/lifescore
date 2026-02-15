@@ -11,22 +11,31 @@ export default defineConfig({
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo-512.png'],
       manifest: false, // Use our custom manifest.json in public folder
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Pre-cache only the app shell: index.html, core CSS, and critical vendor chunks.
+        // Lazy-loaded tab chunks (Results, JudgeTab, AskOlivia, etc.) are cached on first
+        // use via runtimeCaching below — NOT pre-cached on install.
+        globPatterns: ['**/*.html', '**/index-*.js', '**/index-*.css', '**/react-vendor-*.js', '**/supabase-*.js', '**/app-data-*.js', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
         runtimeCaching: [
+          {
+            // Lazy-loaded JS/CSS chunks: cache on first use (StaleWhileRevalidate)
+            // so second visit loads instantly, but first visit only fetches what's needed.
+            urlPattern: /\/assets\/.*\.(js|css)$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'lazy-chunks',
+              expiration: { maxEntries: 50, maxAgeSeconds: 7 * 24 * 60 * 60 },
+            },
+          },
           {
             urlPattern: /^https:\/\/api\.openai\.com\/.*/i,
             handler: 'NetworkOnly',
           },
           {
+            // Supabase: never cache authenticated responses in service worker.
+            // All Supabase data is user-specific; caching risks leaking data
+            // between users on shared devices.
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
-              },
-            },
+            handler: 'NetworkOnly',
           },
         ],
       },
@@ -36,15 +45,39 @@ export default defineConfig({
     }),
   ],
   build: {
-    // Phase 1 Performance Optimization (2026-02-02)
-    // Removed chunkSizeWarningLimit to expose true bundle warnings
-    // Added manualChunks for vendor code splitting
+    // Performance: dynamic chunk splitting to reduce bundle warnings
+    // index.js was 708KB, AskOlivia.js was 541KB
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks - external dependencies (safe to split)
-          'react-vendor': ['react', 'react-dom'],
-          'supabase': ['@supabase/supabase-js'],
+        manualChunks(id) {
+          // Vendor chunks — split large external dependencies
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/@supabase/')) {
+            return 'supabase';
+          }
+          if (id.includes('node_modules/simli-client/')) {
+            return 'simli';
+          }
+          if (id.includes('node_modules/stripe/')) {
+            return 'stripe';
+          }
+          // Shared Supabase utilities (withRetry, etc.) — own chunk so console
+          // errors don't misleadingly show as "gamma-service"
+          if (id.includes('/lib/supabase')) {
+            return 'supabase-lib';
+          }
+          // App chunks — split large internal modules
+          if (id.includes('/services/llmEvaluators') || id.includes('/services/opusJudge')) {
+            return 'llm-evaluators';
+          }
+          if (id.includes('/services/gammaService')) {
+            return 'gamma-service';
+          }
+          if (id.includes('/data/') || id.includes('/shared/metrics')) {
+            return 'app-data';
+          }
         }
       }
     }

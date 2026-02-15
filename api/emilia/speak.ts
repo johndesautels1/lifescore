@@ -10,6 +10,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 
 // ============================================================================
 // CONSTANTS
@@ -92,13 +93,17 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // CORS
-  if (handleCors(req, res, 'open', { methods: 'POST, OPTIONS' })) return;
+  if (handleCors(req, res, 'same-app', { methods: 'POST, OPTIONS' })) return;
 
   // Method check
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // JWT auth — reject unauthenticated requests
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   const { text, voiceId } = req.body as SpeakRequest;
 

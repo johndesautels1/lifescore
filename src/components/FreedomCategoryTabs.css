@@ -19,9 +19,7 @@
   justify-content: center;  /* CENTER the tabs */
   gap: 0.5rem;
   padding: 0.5rem;
-  background: rgba(13, 40, 71, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(13, 40, 71, 0.92);
   border-radius: 10px;
   border: 1px solid rgba(201, 162, 39, 0.2);
   min-width: max-content;
@@ -85,12 +83,12 @@
    TAB CONTENT
    ============================================================================ */
 
-.tab-icon {
+.freedom-tabs-container .tab-icon {
   font-size: 1.25rem;
   line-height: 1;
 }
 
-.tab-name {
+.freedom-tabs-container .tab-name {
   font-size: 0.85rem;  /* FIX #69: Reduced slightly for better balance */
   font-weight: 700;  /* FIX #69: Bolder weight */
   color: rgba(255, 255, 255, 0.9);  /* FIX #69: Brighter text */
@@ -104,7 +102,7 @@
   color: #d4af37;
 }
 
-.tab-count {
+.freedom-tabs-container .tab-count {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,15 +140,15 @@
     min-width: 60px;
   }
 
-  .tab-icon {
+  .freedom-tabs-container .tab-icon {
     font-size: 1.1rem;
   }
 
-  .tab-name {
+  .freedom-tabs-container .tab-name {
     font-size: 0.75rem;  /* FIX #69: Scaled for mobile */
   }
 
-  .tab-count {
+  .freedom-tabs-container .tab-count {
     min-width: 16px;
     height: 16px;
     font-size: 0.6rem;
@@ -163,11 +161,11 @@
     min-width: 52px;
   }
 
-  .tab-icon {
+  .freedom-tabs-container .tab-icon {
     font-size: 1rem;
   }
 
-  .tab-name {
+  .freedom-tabs-container .tab-name {
     font-size: 0.7rem;  /* Scaled for small mobile */
   }
 }

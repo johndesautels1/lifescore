@@ -52,8 +52,8 @@
    - Removed 3 section headers (SUMMARY OF FINDINGS, DETAILED ANALYSIS, EXECUTIVE SUMMARY)
    - Removed THE JUDGE wordmark and tagline
    - Enlarged download buttons
-   - Updated Christiano voice ID: `ZpwpoMoU84OhcbA2YBBV`
-   - Updated Christiano image: `Cristiano.mp4` from Replicate
+   - Updated Cristiano voice ID: `ZpwpoMoU84OhcbA2YBBV`
+   - Updated Cristiano image: `Cristiano.mp4` from Replicate
    - Cleared `avatar_videos` cache table in Supabase
 
 2. **Saved comparisons fix:**
@@ -85,9 +85,9 @@
 # Olivia
 ELEVENLABS_OLIVIA_VOICE_ID=W0Zh57R76zl4xEJ4vCd2
 
-# Christiano (Judge)
-ELEVENLABS_CHRISTIANO_VOICE_ID=ZpwpoMoU84OhcbA2YBBV
-CHRISTIANO_IMAGE_URL=https://replicate.delivery/pbxt/OU2q0kEZmrGm3EB3eWU8AQ5MvYtoL4qu3sezEwj8P5FKix3o/Cristiano.mp4
+# Cristiano (Judge)
+ELEVENLABS_CRISTIANO_VOICE_ID=ZpwpoMoU84OhcbA2YBBV
+CRISTIANO_IMAGE_URL=https://replicate.delivery/pbxt/OU2q0kEZmrGm3EB3eWU8AQ5MvYtoL4qu3sezEwj8P5FKix3o/Cristiano.mp4
 
 # APIs
 OPENAI_API_KEY=

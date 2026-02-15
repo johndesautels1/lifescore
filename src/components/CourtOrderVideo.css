@@ -159,7 +159,7 @@
 }
 
 /* Generating State */
-.generating-state {
+.court-order-wrapper .generating-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -254,7 +254,7 @@
   border: none;
 }
 
-.time-display {
+.court-order-wrapper .time-display {
   font-size: 0.75rem;
   color: var(--text-secondary, #a0a0c0);
   text-align: right;
@@ -277,6 +277,28 @@
   );
   border-radius: 6px 6px 0 0;
   pointer-events: none;
+}
+
+/* ============================================================================
+   UPLOAD PROGRESS
+   ============================================================================ */
+
+.upload-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.upload-status-text {
+  color: var(--accent-color, #D4AF37);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 /* ============================================================================
@@ -336,10 +358,13 @@
 .court-actions {
   display: flex;
   justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .see-court-order-btn,
-.watch-future-btn {
+.watch-future-btn,
+.upload-video-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -358,19 +383,21 @@
 }
 
 .see-court-order-btn:hover:not(:disabled),
-.watch-future-btn:hover:not(:disabled) {
+.watch-future-btn:hover:not(:disabled),
+.upload-video-btn:hover:not(:disabled) {
   background: #e5c04a;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
 }
 
-.see-court-order-btn:disabled {
+.see-court-order-btn:disabled,
+.upload-video-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-icon {
+.court-order-wrapper .btn-icon {
   font-size: 1.1rem;
 }
 
@@ -419,6 +446,173 @@
 }
 
 /* ============================================================================
+   ADMIN: INVIDEO OVERRIDE PANEL
+   ============================================================================ */
+
+.invideo-admin-panel {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+}
+
+.invideo-active-override {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.override-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.override-title {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.override-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.override-btn {
+  padding: 0.3rem 0.7rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.override-btn.replace-btn {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.override-btn.replace-btn:hover {
+  background: rgba(139, 92, 246, 0.3);
+}
+
+.override-btn.remove-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.override-btn.remove-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.invideo-upload-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.invideo-upload-trigger:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.invideo-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.invideo-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.invideo-input:focus {
+  border-color: #8b5cf6;
+}
+
+.invideo-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.invideo-submit-btn {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.invideo-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.invideo-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Light mode overrides for admin panel */
+:root:not([data-theme="dark"]) .invideo-admin-panel {
+  background: rgba(139, 92, 246, 0.05);
+}
+
+:root:not([data-theme="dark"]) .override-title {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+:root:not([data-theme="dark"]) .invideo-input {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a2e;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+:root:not([data-theme="dark"]) .invideo-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
    RESPONSIVE
    ============================================================================ */
 
@@ -440,7 +634,8 @@
   }
 
   .see-court-order-btn,
-  .watch-future-btn {
+  .watch-future-btn,
+  .upload-video-btn {
     padding: 0.75rem 1.5rem;
     font-size: 0.9rem;
   }
@@ -461,5 +656,16 @@
 
   .court-action-btn .btn-text {
     font-size: 0.7rem;
+  }
+
+  /* Admin InVideo panel - mobile */
+  .invideo-active-override {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .override-actions {
+    justify-content: center;
   }
 }

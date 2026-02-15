@@ -11,6 +11,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -27,6 +28,7 @@ const MANUAL_FILES: Record<string, string> = {
   legal: 'LEGAL_COMPLIANCE_MANUAL.md',
   schema: 'APP_SCHEMA_MANUAL.md',
   equations: 'JUDGE_EQUATIONS_MANUAL.md',
+  prompts: 'GAMMA_PROMPTS_MANUAL.md',
 };
 
 // Manual titles
@@ -37,10 +39,11 @@ const MANUAL_TITLES: Record<string, string> = {
   legal: 'Legal Compliance',
   schema: 'App Schema & Database',
   equations: 'Judge Mathematical Equations',
+  prompts: 'GAMMA Prompt Templates',
 };
 
 // Manuals that require admin authorization
-const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations'];
+const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations', 'prompts'];
 
 // Hardcoded admin emails (fallback if table doesn't exist yet)
 const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
@@ -53,6 +56,8 @@ const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
+**Version:** 3.0 | **Updated:** 2026-02-13
+
 ## Getting Started
 
 ### What is LifeScore?
@@ -61,13 +66,13 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 ### How to Run a Comparison
 
 1. **Select Your Cities**
-   - Choose your first city from the left dropdown
+   - Choose your first city from the left dropdown (with flag emojis and orange country badges)
    - Choose your second city from the right dropdown
-   - You can search by city name or country
+   - Search highlighting helps you find cities as you type
 
 2. **Choose Comparison Mode**
    - **Standard Mode**: Uses Claude Sonnet for fast, accurate analysis
-   - **Enhanced Mode**: Uses 5 AI providers (Claude, GPT-4o, Gemini, Grok, Perplexity) with consensus scoring
+   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity Sonar) with consensus scoring
 
 3. **Run the Comparison**
    - Click "Compare Cities"
@@ -80,6 +85,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Each metric is scored 0-100
 - Higher scores = more freedom/favorable conditions
 - Scores are based on laws, regulations, and real-world enforcement
+- Click "How is this scored?" for the 5-stage scoring pipeline explainer
 
 #### Categories
 - **Personal Autonomy** (15 metrics): Vice laws, substance policies
@@ -94,78 +100,84 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 #### Olivia AI Assistant
 - Chat with Olivia for insights about your comparison
 - Available on all pages (bottom-right bubble)
-- Voice responses available
+- Voice responses available (ElevenLabs cloned voice with OpenAI TTS fallback)
+- **Ask Olivia Help** (chat bubble): OpenAI Assistants API brain, ElevenLabs cloned voice → OpenAI "nova" fallback
+- **Ask Olivia page** (video + chat): Same voice wiring as Help chat
 
 #### Visual Reports
 - Generate PDF/PPTX reports via Gamma
-- AI-generated videos showing city contrasts
-- Judge video with final verdict
+- AI-generated "New Life" videos (Freedom vs Imprisonment)
+- Judge verdict video with Court Order option
+- **Olivia Video Presenter** (HeyGen): Toggle "Listen to Presenter" to have Olivia narrate your Gamma report
+  - Live Presenter: Real-time HeyGen streaming avatar overlay (instant)
+  - Generate Video: Pre-rendered HeyGen MP4 download (up to 10 min)
+  - Uses HEYGEN_OLIVIA_AVATAR_ID + HEYGEN_OLIVIA_VOICE_ID (separate from ElevenLabs/OpenAI)
+- All saved to both browser and cloud
 
 #### Saved Comparisons
-- Comparisons auto-save to your account
+- Comparisons auto-save to both localStorage and Supabase (dual-storage)
 - Access from the "Saved" tab
 - Export as PDF or share
+- Syncs across devices when logged in
 
 ## Troubleshooting
 
 ### Comparison Taking Too Long
 - Enhanced mode uses multiple AI providers and may take up to 10 minutes
-- The system automatically retries failed provider calls up to 3 times (Fix #49)
+- The system automatically retries failed provider calls up to 3 times
 - If stuck beyond 10 minutes, refresh and try again
 - Try Standard mode for faster results
 
-### No Results Showing
-- Check your internet connection
-- Clear browser cache and refresh
-- Contact support if issue persists
+### Video Not Playing
+- Videos use secure blob URLs for reliable cross-origin playback
+- Expired video URLs are auto-detected after 3 failed loads
+- Click "SEE YOUR NEW LIFE!" to regenerate fresh videos
+- Download button works independently of playback
+- Each video plays independently (one failing won't block the other)
 
 ### Voice Not Working
 - Ensure browser permissions allow audio
 - Check volume settings
 - Try a different browser
 
-### Video Not Playing
-- Videos automatically reset after 3 failed load attempts (Fix #48)
-- Click "SEE YOUR NEW LIFE!" button to regenerate expired videos
-- Try a different browser if issues persist
-
 ## Account Management
 
 ### Subscription Tiers
 - **FREE**: 1 comparison/month (1 LLM)
-- **NAVIGATOR ($29/mo)**: 1 comparison/month, 15min Olivia, 1 Judge, 1 Gamma
-- **SOVEREIGN ($99/mo)**: 1 comparison/month (5 LLMs), 60min Olivia, Enhanced Mode
+- **NAVIGATOR ($29/mo or $249/yr)**: 1 comparison/month, 15min Olivia, 1 Judge, 1 Gamma
+- **SOVEREIGN ($99/mo or $899/yr)**: 1 comparison/month (5 LLMs), 60min Olivia, Enhanced Mode, Grok Videos
 
 ### Upgrading
 - Click "Upgrade" in the header
 - Select your desired tier
 - Payment processed via Stripe
 
-### Cancellation
-- Go to Account Settings
-- Click "Manage Subscription"
-- Select "Cancel Plan"
-
 ## Contact Support
-- Email: support@cluesintelligence.com
+- Email: cluesnomads@gmail.com
 - Response time: 24-48 hours
 `,
 
   csm: `# Customer Service Manual
 
+**Version:** 3.0 | **Updated:** 2026-02-13
+
 ## Support Overview
 
 ### Contact Methods
-- **Email**: support@cluesintelligence.com
+- **Email**: cluesnomads@gmail.com
 - **Response Time**: 24-48 hours (business days)
 
 ### Tier Limits
 
-| Tier | Comparisons | Olivia | Price |
-|------|-------------|--------|-------|
-| FREE | 1/month | 0 | $0 |
-| NAVIGATOR | 1/month | 15 min | $29/month |
-| SOVEREIGN | 1/month (5 LLMs) | 60 min | $99/month |
+| Feature | FREE | NAVIGATOR ($29/mo, $249/yr) | SOVEREIGN ($99/mo, $899/yr) |
+|---------|------|-------|-----------|
+| Standard Comparisons | 1/month | 1/month | 1/month |
+| Enhanced Mode (5 LLMs) | No | No | 1/month |
+| Olivia AI Minutes | 0 | 15 min | 60 min |
+| Judge Verdict Videos | No | 1/month | 1/month |
+| Gamma Reports | No | 1/month | 1/month |
+| Grok/Kling Mood Videos | No | No | 1/month |
+| Cloud Sync | No | Yes | Yes |
 
 ## Common Issues
 
@@ -179,22 +191,36 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - System auto-retries failed provider calls 3 times with exponential backoff
 - Refresh page and check Saved tab (may have completed)
 - Try Standard mode for faster results
-- Cost data is automatically synced to database (Fix #50)
+
+### "Videos won't play"
+- Videos use secure blob URLs for reliable playback
+- Expired URLs auto-detected after 3 failed loads
+- Click "SEE YOUR NEW LIFE!" to regenerate
+- Download button works independently
+- Each video plays independently (one failing won't block other)
 
 ### "I was charged incorrectly"
 - Verify transaction in Stripe dashboard
 - Check subscription start date
 - Issue refund if billing error confirmed
 
-### "Voice/audio isn't working"
-- Check browser audio permissions
-- Verify volume isn't muted
-- Try different browser
-
 ### "Results seem wrong"
 - All results are AI-generated with sources
 - Scores reflect legal frameworks, not opinions
 - User can adjust Law vs Lived Reality slider
+
+### "Olivia Presenter not working"
+- Ensure a Gamma report is loaded first
+- Live Presenter needs stable internet (real-time HeyGen streaming)
+- Video generation takes up to 10 minutes; click Retry on failure
+- Check ad blockers aren't blocking HeyGen API
+- **Note**: The presenter uses HeyGen (HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID) — this is separate from Olivia's chat voice (ElevenLabs/OpenAI). A presenter issue does NOT mean chat voice is broken.
+
+### "Olivia Voice not working" (Chat / Ask Olivia)
+- This uses ElevenLabs cloned voice → OpenAI "nova" fallback (NOT HeyGen)
+- Check ELEVENLABS_API_KEY and ELEVENLABS_OLIVIA_VOICE_ID in Vercel env
+- If ElevenLabs quota exceeded, OpenAI TTS auto-kicks in
+- HeyGen env vars are irrelevant to the chat voice
 
 ## Refund Policy
 
@@ -208,20 +234,16 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Partial month after cancellation
 - Disagreement with AI results
 
-### Processing Refunds
-1. Verify claim in Stripe
-2. Confirm eligibility
-3. Process via Stripe dashboard
-4. Notify user via email
-
 ## Escalation Path
 
 1. **Tier 1**: Email support (most issues)
 2. **Tier 2**: Technical team (bugs, errors)
-3. **Tier 3**: Management (refunds > $100, legal)
+3. **Tier 3**: Management (refunds > $50, legal)
 `,
 
   tech: `# Technical Support Manual
+
+**Version:** 4.4 | **Updated:** 2026-02-15
 
 ## System Architecture
 
@@ -231,153 +253,189 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - **Styling**: CSS with custom design system
 
 ### Backend
-- **Platform**: Vercel Serverless Functions (Node.js)
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
+- **Platform**: Vercel Serverless Functions (Node.js 20)
+- **Database**: Supabase (PostgreSQL) - 23 tables, 3 storage buckets
+- **Auth**: Supabase Auth with JWT verification
 
 ### AI Providers
 - **Claude Sonnet 4.5**: Primary evaluator
 - **GPT-4o**: Enhanced mode evaluator
 - **Gemini 3 Pro**: Enhanced mode evaluator
 - **Grok 4**: Enhanced mode evaluator
-- **Perplexity**: Enhanced mode evaluator
+- **Perplexity Sonar**: Enhanced mode evaluator
 - **Claude Opus 4.5**: Judge (consensus)
-- **Tavily**: Web research
+- **Tavily**: Web research (45s timeout)
 
 ### External Services
 - **Stripe**: Payments
-- **ElevenLabs**: Text-to-speech
+- **ElevenLabs**: Text-to-speech (with OpenAI TTS fallback)
 - **Gamma**: Report generation
-- **Kling/Minimax**: Video generation
+- **Kling AI**: Primary video generation (JWT HS256 auth)
+- **Replicate**: Fallback video generation (Minimax)
+- **Simli**: Avatar video (PRIMARY - WebRTC)
+- **HeyGen**: Gamma report video presenter (Olivia streaming + MP4) AND Cristiano "Go To My New City" cinematic video (Video Agent V2)
+- **Resend**: Email notifications
 
-## API Endpoints
+## CRITICAL: Olivia Voice & Avatar Wiring (Support Reference)
 
-### Evaluation
-- \`POST /api/evaluate\`: Run city evaluation
-- \`POST /api/judge\`: Run Opus consensus
+**DO NOT confuse these five separate Olivia systems:**
 
-### Olivia (AI Assistant)
-- \`POST /api/olivia/chat\`: Chat with Olivia
-- \`POST /api/olivia/tts\`: Generate voice
+| Feature | Service | Env Vars | Files |
+|---------|---------|----------|-------|
+| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | OpenAI Assistants API | OPENAI_API_KEY, OPENAI_ASSISTANT_ID | api/olivia/chat.ts |
+| **Olivia Voice** (Chat TTS) | ElevenLabs → OpenAI fallback | ELEVENLABS_API_KEY, ELEVENLABS_OLIVIA_VOICE_ID | api/olivia/tts.ts |
+| **Olivia Live Presenter** (Gamma streaming overlay) | HeyGen Streaming API v1 | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen.ts |
+| **Olivia Video Presenter** (Gamma pre-rendered MP4) | HeyGen Video API v2 | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen-video.ts |
+| **Olivia Cockpit Avatar** (Ask Olivia page TV viewport) | D-ID Streams API | DID_API_KEY, DID_PRESENTER_URL | api/olivia/avatar/streams.ts |
 
-### Emilia (Help)
-- \`POST /api/emilia/thread\`: Create chat thread
-- \`POST /api/emilia/message\`: Send message
-- \`POST /api/emilia/speak\`: Generate TTS
-- \`GET /api/emilia/manuals\`: Get documentation
+- The ElevenLabs voice is a **cloned voice** specific to Olivia. When ElevenLabs quota runs out, OpenAI "nova" voice kicks in automatically.
+- HeyGen has its **own separate voice** (HEYGEN_OLIVIA_VOICE_ID) used for both Live Presenter and Video Presenter.
+- D-ID cockpit avatar uses Microsoft Sonia voice (en-GB-SoniaNeural) built into D-ID — no ElevenLabs needed.
+- **Cristiano** has his own HeyGen pipeline (HEYGEN_CRISTIANO_AVATAR_ID=\`7a0ee88ad6814ed9af896f9164407c41\`, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID) — completely separate from Olivia's HeyGen vars.
+- Changing HeyGen vars will NOT affect Ask Olivia chat or voice. Changing ElevenLabs/OpenAI vars will NOT affect the video presenter.
 
-### User
-- \`POST /api/user/delete\`: Delete account
-- \`GET /api/user/export\`: Export data
+## CRITICAL: Cristiano "Go To My New City" HeyGen Video Wiring (Added 2026-02-15)
 
-## Retry Logic (Fix #49 - 2026-02-04)
+**Separate from ALL Olivia systems and from the old ElevenLabs/D-ID Judge pipeline.**
 
-Gemini and Grok providers now have automatic retry:
-- Max attempts: 3
-- Backoff: 1s → 2s → 4s (exponential)
-- Retries on: 5xx errors, empty responses, JSON parse failures
-- No retry on: 4xx client errors
+| Feature | Service | Env Vars | Files |
+|---------|---------|----------|-------|
+| **Cristiano City Tour Video** | HeyGen Video Agent V2 | HEYGEN_API_KEY, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID | api/cristiano/render.ts |
+| **Storyboard Generation** | Claude Sonnet | ANTHROPIC_API_KEY | api/cristiano/storyboard.ts |
 
-## Cost Tracking Auto-Sync (Fix #50 - 2026-02-04)
+- **2-Stage Pipeline**: Stage 1 (storyboard.ts) generates a 7-scene cinematic storyboard via Claude. Stage 2 (render.ts) submits it to HeyGen Video Agent V2 for rendering with B-roll, overlays, and transitions.
+- **HEYGEN_AVATAR_LOOK_ID** controls Cristiano's physical appearance variant (suit, setting). This is NOT used by Olivia.
+- **Pre-render validation** checks all 3 env vars (avatar ID, voice ID, look ID) before spending HeyGen credits.
+- Results cached in Supabase. Status polling via same endpoint (action: 'status').
 
-Cost data now auto-syncs to Supabase:
-- Flow: storeCostBreakdown() → toApiCostRecordInsert() → saveApiCostRecord()
-- Non-blocking (failures don't affect comparison)
-- Uses UPSERT to handle duplicates
+### Cristiano API Endpoints
+- POST /api/cristiano/storyboard — Generate 7-scene storyboard JSON (Stage 1)
+- POST /api/cristiano/render — Submit to HeyGen Video Agent + poll status (Stage 2)
 
-## Video Error Handling (Fix #48 - 2026-02-04)
+## Olivia Video Presenter (Updated 2026-02-15)
 
-NewLifeVideos now handles expired URLs:
-- Tracks load errors per video element
-- Auto-resets after 3 failed loads
-- Users can regenerate videos cleanly
+### Architecture
+- **Live Presenter**: Real-time PIP avatar overlay on Gamma iframe via HeyGen Streaming API v1 (WebRTC)
+- **Pre-Rendered Video**: HeyGen v2 video/generate → polling → MP4 download
+- **Cockpit Avatar**: D-ID Streams API WebRTC avatar on Ask Olivia page TV viewport (Microsoft Sonia voice, no ElevenLabs)
+- Narration script generated client-side from comparison data (no API call)
+- Scene splitting at paragraph boundaries (~1500 chars per scene)
+
+### Olivia HeyGen API Endpoints
+- POST /api/olivia/avatar/heygen — Live Presenter streaming (actions: create, speak, interrupt, close)
+- POST/GET /api/olivia/avatar/heygen-video — Pre-rendered video (actions: generate, status)
+- POST /api/olivia/avatar/streams — D-ID cockpit avatar (actions: create, speak, destroy, ice-candidate)
+- Rate limit: standard (30 req/min), max script: 15,000 chars
+
+### Video Output Specs
+- Resolution: 1920×1080 (16:9)
+- Background: #0a1628 (dark branded LIFE SCORE theme)
+- Multi-scene: script auto-split at ~1500 char paragraph boundaries
+
+### Key Files
+- api/olivia/avatar/heygen.ts (HeyGen streaming avatar endpoint)
+- api/olivia/avatar/heygen-video.ts (HeyGen pre-rendered video endpoint)
+- api/olivia/avatar/streams.ts (D-ID cockpit avatar endpoint)
+- api/olivia/avatar/did.ts (DEPRECATED — D-ID Agents API, not used)
+- src/services/presenterService.ts (narration script generator)
+- src/services/presenterVideoService.ts (video orchestration + polling)
+- src/types/presenter.ts (all presenter types)
+- src/components/ReportPresenter.tsx (UI: Live/Video sub-modes)
+- src/components/VisualsTab.tsx (Read/Listen toggle)
+
+## Video System (Updated 2026-02-13)
+
+### Generation Flow
+- Two actions: new_life_videos (pair) and court_order_video (single)
+- Sequential generation: loser first, then winner (NOT parallel)
+- Kling AI primary → Replicate Minimax fallback
+- Timeout: 240 seconds
+
+### Playback
+- Blob URL conversion for CORS-safe playback
+- Promise.allSettled for independent play (one failing won't block other)
+- Expired replicate URLs auto-detected via HEAD check
+- Dead URLs tracked in state; shows regenerate placeholder
+- Progress bar: scales smoothly to 95% during generation
+
+### Video Caching
+- HEAD validation on replicate.delivery URLs (expire ~24h)
+- Auto-marks expired URLs as 'failed' in grok_videos table
+- Stale processing records auto-failed after 3 minutes
+
+## Security (Updated 2026-02-10)
+
+- JWT auth required on 8+ previously unprotected endpoints
+- Auth bypass fixed on /api/emilia/manuals (was using unverified email param)
+- Admin check caching: 5-min TTL + 1-hour grace period
+- Database hardening: RLS policies strengthened
+
+## Codebase Statistics (2026-02-15)
+
+| Metric | Count |
+|--------|-------|
+| **Source lines of code** | **~117,429** |
+| **Total files** | **443** |
+| **Total folders** | **41** |
+| **Database tables** | **23** |
+
+| Layer | Lines | % |
+|-------|-------|---|
+| Frontend (src/) | 86,752 | 73.9% |
+| Backend (api/) | 21,044 | 17.9% |
+| Database (supabase/) | 5,555 | 4.7% |
+| Scripts / Config / Other | 4,078 | 3.5% |
+
+- **48** React components, **46** CSS files
+- **55** serverless API functions
+- **19** custom hooks, **17** service modules
+- **176** TypeScript files (76,284 lines)
+- **50** CSS files (35,502 lines)
+- **38** SQL migrations (5,555 lines)
 
 ## Common Errors
 
-### "OPENAI_API_KEY not configured"
-- Check Vercel environment variables
-- Ensure key is valid and has credits
-
-### "Rate limit exceeded"
-- Check Supabase rate limiting
-- May need to increase limits
-
 ### "Comparison timeout" / "Failed after 3 attempts"
-- Default timeout is 240 seconds
-- System now auto-retries 3 times with exponential backoff
-- If all retries fail, check AI provider status
-- Monitor Vercel function logs for [GEMINI] or [GROK] retry messages
+- System auto-retries 3 times with exponential backoff (1s, 2s, 4s)
+- Tavily timeout reduced to 45s for faster failure recovery
 
-### "Database connection error"
-- Check Supabase status page
-- Verify connection string in env vars
-- Check connection pool limits
+### Video not playing
+- Blob URLs load asynchronously; readyState gate removed
+- Expired URLs auto-detected and reset after 3 failed loads
+
+### Judge "winner is TIE"
+- Fixed: tie handling corrected in judge-report.ts
+- Trend values standardized to 'improving' for DB constraint
 
 ## Debugging
-
-### View Logs
 - Vercel Dashboard > Deployments > Functions
 - Supabase Dashboard > Logs
-
-### Test Endpoints
-- Use Postman or curl
-- Check response codes and bodies
-- Verify request headers
-
-### Monitor Performance
-- Vercel Analytics
-- Supabase Dashboard
-- AI provider dashboards
-
-## Environment Variables
-
-### Required
-- \`OPENAI_API_KEY\`: OpenAI API access
-- \`ANTHROPIC_API_KEY\`: Claude access
-- \`SUPABASE_URL\`: Database URL
-- \`SUPABASE_ANON_KEY\`: Public key
-- \`SUPABASE_SERVICE_ROLE_KEY\`: Admin key
-
-### Optional
-- \`ELEVENLABS_API_KEY\`: TTS
-- \`GAMMA_API_KEY\`: Reports
-- \`KLING_API_KEY\`: Videos
-- \`EMILIA_ASSISTANT_ID\`: Emilia assistant
-- \`ELEVENLABS_EMILIA_VOICE_ID\`: Emilia voice
+- Console: look for [NewLifeVideos], [GEMINI], [GROK] prefixes
 `,
 
   legal: `# Legal Compliance Manual
+
+**Version:** 1.1 | **Updated:** 2026-02-13
 
 ## Company Information
 
 **Company Name:** Clues Intelligence LTD
 **Registered Address:**
-167-169 Great Portland Street
-5th Floor
-London W1W 5PF
-United Kingdom
+167-169 Great Portland Street, 5th Floor, London W1W 5PF, United Kingdom
 
 **Admin Contact:** cluesnomads@gmail.com
-
-## Regulatory Status
-
-### ICO Registration (UK)
-- **Required:** YES (UK company processing personal data)
-- **Status:** Complete before launch
-- **URL:** https://ico.org.uk/for-organisations/register/
-
-### EU Representative
-- **Required:** NO (UK company post-Brexit)
-
-### DUNS Number
-- **Required:** NO (only for US govt contracts)
 
 ## GDPR Compliance
 
 ### Data We Collect
 - Email, name, password (hashed) - Account
 - City comparisons - Service delivery
+- Olivia conversations - AI chat (until account deletion)
+- Emilia help chat - Session-based (browser only, not stored)
+- Court Order videos - Supabase Storage (user-videos bucket)
+- App prompts - System prompt references (admin-editable, permanent)
 - Payment info - Via Stripe
+- Usage analytics - Anonymized after 30 days
 - IP address - Security (90 day retention)
 
 ### Data Subject Rights
@@ -385,17 +443,19 @@ United Kingdom
 - Right to Deletion: /api/user/delete
 - Right to Rectification: Settings page
 
-## US State Compliance
+## Security Improvements (2026-02-10)
 
-Currently DEFERRED - below all thresholds.
-Review at 10K users or $1M ARR.
+- JWT auth required on 8+ API endpoints (emilia, avatar, judge)
+- Auth bypass fixed on /api/emilia/manuals
+- Database RLS hardening on reports
+- Admin check caching with grace period
 
-## Data Protection Officer
+## DPA Status
 
-Formal DPO NOT required for LIFE SCORE.
-Privacy Contact: cluesnomads@gmail.com
+Signed: Supabase, Stripe, OpenAI, Anthropic, ElevenLabs, Resend, Vercel
+Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replicate, Simli
 
-## Annual Compliance Calendar
+## Annual Calendar
 
 - January: DPA Review, Privacy Policy Review
 - April: ICO Fee Renewal
@@ -403,274 +463,163 @@ Privacy Contact: cluesnomads@gmail.com
 - October: Cookie Audit
 - December: Data Retention Cleanup
 
-## Authorized Access
-
-This manual is restricted to authorized administrators only.
-
 ---
 *For full details, see docs/manuals/LEGAL_COMPLIANCE_MANUAL.md*
 `,
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 1.0.0 | **Updated:** 2026-02-03
+**Version:** 2.0.0 | **Updated:** 2026-02-13
 
 ---
 
 ## 1. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with 17+ tables.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buckets**.
 
-### 1.1 Core Tables
+### 1.1 All Tables
 
-#### profiles
-User profiles linked to Supabase Auth.
+| Table | Purpose |
+|-------|---------|
+| profiles | User accounts (id, email, tier: free/pro/enterprise) |
+| comparisons | Saved comparison results (NOT saved_comparisons) |
+| subscriptions | Stripe billing records |
+| olivia_conversations | Olivia chat threads |
+| olivia_messages | Olivia chat messages |
+| gamma_reports | Report URLs (with city1, city2 columns) |
+| user_preferences | Single-row-per-user settings (JSONB columns) |
+| usage_tracking | Monthly usage limits |
+| consent_logs | GDPR consent records |
+| judge_reports | Judge verdicts (unique on user_id, report_id) |
+| avatar_videos | Judge video cache |
+| api_cost_records | Cost tracking per provider |
+| grok_videos | Grok/Kling video cache |
+| contrast_image_cache | Olivia contrast images |
+| api_quota_settings | Admin quota limits (16 providers) |
+| api_quota_alert_log | Email alert history |
+| authorized_manual_access | Manual access control |
+| court_orders | Court Order video saves (with video_storage_path) |
+| app_prompts | 50 system prompts (6 categories) |
+| invideo_overrides | Admin cinematic prompt overrides |
+| report_shares | Shared report links |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | PK, FK(auth.users) |
-| email | TEXT | User email |
-| full_name | TEXT | Display name |
-| tier | TEXT | 'free', 'pro', 'enterprise' |
-| avatar_url | TEXT | Profile picture |
-| created_at | TIMESTAMPTZ | Account creation |
-
-#### subscriptions
-Stripe subscription records.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | PK |
-| user_id | UUID | FK(profiles) |
-| stripe_customer_id | TEXT | Stripe customer ID |
-| stripe_subscription_id | TEXT | Stripe sub ID |
-| status | TEXT | active, canceled, past_due |
-| current_period_end | TIMESTAMPTZ | Billing period end |
-
-#### saved_comparisons
-Stored city comparison results.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | PK |
-| user_id | UUID | FK(profiles) |
-| comparison_id | TEXT | LIFE-CITY1-CITY2-TIMESTAMP |
-| city1_name | TEXT | First city |
-| city2_name | TEXT | Second city |
-| city1_score | NUMERIC | Total score city 1 |
-| city2_score | NUMERIC | Total score city 2 |
-| winner | TEXT | 'city1', 'city2', 'tie' |
-| full_result | JSONB | Complete data |
-| is_enhanced | BOOLEAN | Multi-LLM mode |
-
-#### judge_reports
-THE JUDGE's comprehensive verdicts.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | PK |
-| user_id | UUID | FK(profiles) |
-| comparison_id | TEXT | Source comparison |
-| report_id | TEXT | LIFE-JDG-DATE-USER-HASH |
-| summary_of_findings | JSONB | Scores and trends |
-| executive_summary | JSONB | Recommendation |
-| video_status | TEXT | pending/generating/ready/error |
+### 1.2 Storage Buckets
+- **avatars** (5 MB) - User profile pictures
+- **judge-videos** (50 MB) - Judge avatar video cache
+- **user-videos** (100 MB) - Court Order video uploads
 
 ---
 
-## 2. API Endpoints
+## 2. API Endpoints (49 total)
 
-### Comparison Endpoints
-
+### Core
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/evaluate | POST | Generate comparison |
+| /api/evaluate | POST | Run city evaluation (Tavily + LLM) |
 | /api/judge-report | POST | Generate Judge analysis |
 
-### Olivia Chat Endpoints
-
+### Video
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/olivia/chat | POST | Main chat |
-| /api/olivia/context | POST | Build context |
-| /api/olivia/field-evidence | POST | Get evidence |
+| /api/video/grok-generate | POST | Start video generation (Kling/Replicate) |
+| /api/video/grok-status | GET | Check video status |
 
-### Emilia Help Endpoints
-
+### Olivia
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/emilia/create-thread | POST | Create thread |
+| /api/olivia/chat | POST | Main chat (OpenAI Assistants API) |
+| /api/olivia/context | POST | Transform comparison data into Olivia context |
+| /api/olivia/tts | POST | ElevenLabs TTS with OpenAI fallback |
+| /api/olivia/field-evidence | POST | Source evidence for specific metrics |
+| /api/olivia/gun-comparison | POST | Standalone gun rights comparison |
+| /api/olivia/contrast-images | POST | AI contrast images via Flux |
+| /api/olivia/avatar/heygen | POST | HeyGen Live Presenter streaming avatar (create, speak, interrupt, close) |
+| /api/olivia/avatar/heygen-video | POST/GET | HeyGen pre-rendered video generation + status polling |
+| /api/olivia/avatar/streams | POST | D-ID cockpit avatar for Ask Olivia page (create, speak, destroy) |
+
+### Cristiano
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/cristiano/storyboard | POST | Generate 7-scene cinematic storyboard (Claude) |
+| /api/cristiano/render | POST | Submit storyboard to HeyGen Video Agent V2 + poll status |
+
+### Emilia
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/emilia/thread | POST | Create thread (JWT auth) |
 | /api/emilia/message | POST | Send message |
-| /api/emilia/manuals | GET | Get docs |
+| /api/emilia/speak | POST | Emilia TTS (ElevenLabs + OpenAI fallback) |
+| /api/emilia/manuals | GET | Get docs (JWT auth) |
 
-### Other Endpoints
-
+### Other
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | /api/gamma | POST/GET | Visual reports |
+| /api/prompts | GET/POST/PUT | System prompts (admin) |
 | /api/stripe/webhook | POST | Stripe events |
-| /api/stripe/create-checkout | POST | Checkout session |
 
 ---
 
-## 3. Component Architecture
+## 3. Key Components (46 total)
 
-### Core Components
-- App.tsx - Main container
-- Header.tsx - Navigation
-- CitySelector.tsx - City input
-- Results.tsx - Comparison display
-
-### AI Assistant Components
-- AskOlivia.tsx - Olivia chat
-- EmiliaChat.tsx - Emilia help
-- OliviaAvatar.tsx - Avatar display
-
-### Judge & Video
-- JudgeTab.tsx - Judge container
-- JudgeVideo.tsx - Video player
-
-### Subscription
-- PricingPage.tsx - Pricing
-- FeatureGate.tsx - Tier locking
+### Core: App, Header, Footer, LoginScreen, TabNavigation
+### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
+### AI: AskOlivia, EmiliaChat, OliviaAvatar
+### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
+### Video: NewLifeVideos (blob URL playback, error detection)
+### Reports: VisualsTab (Read/Listen toggle), ReportPresenter (Olivia video presenter), AboutClues
+### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
 
 ---
 
-## 4. State Management
-
-### AuthContext
-Provides authentication state.
-
-\`\`\`typescript
-interface AuthState {
-  user: User | null;
-  profile: Profile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
-\`\`\`
-
-### Custom Hooks
+## 4. Hooks (18 total)
 
 | Hook | Purpose |
 |------|---------|
 | useTierAccess | Tier limits (SOURCE OF TRUTH) |
-| useComparison | Comparison state |
+| useComparison | Comparison state machine |
+| useGrokVideo | Video generation with poll loop |
 | useOliviaChat | Olivia conversation |
-| useEmilia | Emilia help |
-
-### localStorage Keys
-
-| Key | Purpose |
-|-----|---------|
-| lifescore_user | Demo mode user |
-| lifescore_saved_comparisons | Offline cache |
-| lifescore_theme | Theme preference |
-| lifescore_olivia_thread | Olivia thread ID |
+| useSimli | WebRTC avatar session |
+| useTTS | Text-to-speech |
+| useEmilia | Emilia help widget |
 
 ---
 
-## 5. Type Definitions
-
-### Core Types
-
-\`\`\`typescript
-type UserTier = 'free' | 'pro' | 'enterprise';
-
-type CategoryId =
-  | 'personal_freedom'
-  | 'housing_property'
-  | 'business_work'
-  | 'transportation'
-  | 'policing_legal'
-  | 'speech_lifestyle';
-
-interface ComparisonResult {
-  comparisonId: string;
-  city1: CityScore;
-  city2: CityScore;
-  winner: 'city1' | 'city2' | 'tie';
-  scoreDifference: number;
-  generatedAt: string;
-}
-\`\`\`
-
----
-
-## 6. External Integrations
-
-### AI/LLM Providers
-- **OpenAI**: Olivia, Emilia, evaluation
-- **Anthropic**: THE JUDGE (Opus 4.5)
-- **Perplexity**: Evidence search
-- **Google**: Gemini for consensus
-- **xAI**: Grok videos
-
-### Video Services
-- **HeyGen**: Talking head videos
-- **D-ID**: Real-time streaming
-- **ElevenLabs**: TTS for Olivia
-
-### Other
-- **Gamma**: PDF/PPTX reports
-- **Stripe**: Payments
-- **Supabase**: Database, Auth
-
----
-
-## 7. Tier System
+## 5. Tier System
 
 **SOURCE OF TRUTH:** src/hooks/useTierAccess.ts
 
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|------|-----------|-----------|
-| Comparisons/day | 3 | 20 | Unlimited |
-| Enhanced mode | No | Yes | Yes |
-| Judge reports | No | 5/month | Unlimited |
-| Olivia chats/day | 10 | 50 | Unlimited |
-| Gamma reports | No | 3/month | 10/month |
-| HeyGen videos | No | No | 5/month |
+| Feature | FREE | NAVIGATOR ($29) | SOVEREIGN ($99) |
+|---------|------|-----------------|-----------------|
+| Standard Comparisons | 1/mo | 1/mo | 1/mo |
+| Enhanced Mode (5 LLMs) | No | No | 1/mo |
+| Olivia Minutes | 0 | 15/mo | 60/mo |
+| Judge Videos | 0 | 1/mo | 1/mo |
+| Gamma Reports | 0 | 1/mo | 1/mo |
+| Grok Videos | 0 | 0 | 1/mo |
+| Cloud Sync | No | Yes | Yes |
 
 ---
 
-## 8. Environment Variables
+## 6. Environment Variables (61 total)
 
-### Required
-\`\`\`
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_KEY
-OPENAI_API_KEY
-ANTHROPIC_API_KEY
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-\`\`\`
+### Required (Production)
+VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
+
+### Required (Features)
+ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
 
 ### Optional
-\`\`\`
-PERPLEXITY_API_KEY
-HEYGEN_API_KEY
-DID_API_KEY
-ELEVENLABS_API_KEY
-GAMMA_API_KEY
-GROQ_API_KEY
-GOOGLE_API_KEY
-\`\`\`
+GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, KV_REST_API_URL, KV_REST_API_TOKEN
 
----
-
-## 9. Metrics Summary
-
-**100 metrics** across **6 categories**:
-
-| Category | Metrics | Weight |
-|----------|--------:|-------:|
-| Personal Autonomy | 15 | 20% |
-| Housing & Property | 20 | 20% |
-| Business & Work | 25 | 20% |
-| Transportation | 15 | 15% |
-| Legal System | 15 | 15% |
-| Speech & Lifestyle | 10 | 10% |
+### Voice & Avatar Wiring (IMPORTANT)
+- **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
+- **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Olivia Live Presenter (streaming) + Video Presenter (pre-rendered MP4)
+- **DID_API_KEY / DID_PRESENTER_URL** → Olivia cockpit avatar on Ask Olivia page (D-ID Streams, Microsoft Sonia voice)
+- **HEYGEN_CRISTIANO_AVATAR_ID** → \`7a0ee88ad6814ed9af896f9164407c41\` — Cristiano "Go To My New City" cinematic video (Video Agent V2), paired with HEYGEN_CRISTIANO_VOICE_ID + HEYGEN_AVATAR_LOOK_ID
+- **OPENAI_ASSISTANT_ID** → Olivia chat brain (OpenAI Assistants API)
+- These are 5 independent systems. Changing one does NOT affect the others.
 
 ---
 
@@ -679,7 +628,7 @@ GOOGLE_API_KEY
 
   equations: `# LIFE SCORE - Mathematical Equations & Scoring Manual
 
-**Version:** 1.0.0 | **Updated:** 2026-02-03
+**Version:** 1.1.0 | **Updated:** 2026-02-13
 
 ---
 
@@ -713,18 +662,17 @@ Each metric produces **4 raw scores**:
 - city2LegalScore (0-100)
 - city2EnforcementScore (0-100)
 
-### Normalized Score Calculation
-
-**Standard Mode:**
+### Normalized Score
 \`\`\`
 normalizedScore = (legalScore × lawWeight + enforcementScore × livedWeight) / 100
 Default: lawWeight = 50, livedWeight = 50
 \`\`\`
 
-**Conservative Mode:**
+### Conservative Mode (Worst-Case)
 \`\`\`
 normalizedScore = MIN(legalScore, enforcementScore)
 \`\`\`
+Uses the **lower** of law vs lived reality — worst-case scenario. Overrides the weighted average when enabled.
 
 ---
 
@@ -738,121 +686,44 @@ normalizedScore = MIN(legalScore, enforcementScore)
 | Transportation | 15 | 15% |
 | Legal System | 15 | 15% |
 | Speech & Lifestyle | 10 | 10% |
-| **TOTAL** | **100** | **100%** |
 
 ---
 
 ## 4. Score Aggregation
 
-### Category Score
 \`\`\`
 categoryScore = Σ(metricScore × metricWeight) / Σ(metricWeight)
-categoryContribution = categoryScore × (categoryWeight / 100)
+totalScore = Σ(categoryScore × categoryWeight) + winBonus + spreadBonus
+Capped at 100
 \`\`\`
 
-### Total Score
-\`\`\`
-totalScore = Σ(categoryContribution) for all 6 categories
-\`\`\`
+## 5. Differentiation: winBonus = categoryWins × 2, spreadBonus = maxSpread × 0.5 (winner only)
+
+## 6. Confidence: unanimous (<5 σ), strong (5-11), moderate (12-19), split (≥20)
+
+## 7. Enhanced Mode: 5 LLMs → consensusScore = MEAN(validScores)
+
+## 8. Winner: tie if diff < 1, else higher score wins
 
 ---
 
-## 5. Score Differentiation
-
-### Category Win Bonus
-\`\`\`
-CATEGORY_WIN_BONUS = 2 points per category won
-Win threshold: lead by >5 points in category
-\`\`\`
-
-### Max Spread Bonus
-\`\`\`
-MAX_SPREAD_MULTIPLIER = 0.5
-Winner gets: maxCategorySpread × 0.5
-\`\`\`
-
-### Final Score
-\`\`\`
-finalScore = MIN(100, baseScore + winBonus + spreadBonus)
-\`\`\`
-
----
-
-## 6. Confidence Levels
-
-Based on LLM score standard deviation:
-
-| Level | StdDev | Meaning |
-|-------|--------|---------|
-| unanimous | < 5 | All LLMs agree |
-| strong | 5-11 | High agreement |
-| moderate | 12-19 | Some disagreement |
-| split | >= 20 | Significant disagreement |
-
-### Standard Deviation
-\`\`\`
-σ = √(Σ(score - mean)² / n)
-\`\`\`
-
-### Agreement Percentage
-\`\`\`
-agreementPct = MAX(0, 100 - σ × 2)
-\`\`\`
-
----
-
-## 7. Enhanced Mode (5 LLMs)
-
-**Providers:**
-1. Claude Sonnet 4.5
-2. GPT-4o
-3. Gemini 3 Pro
-4. Grok 4
-5. Perplexity Sonar
-
-### Consensus Score
-\`\`\`
-consensusScore = MEAN(validScores from all LLMs)
-\`\`\`
-
----
-
-## 8. Winner Determination
-
-\`\`\`
-scoreDiff = |city1Score - city2Score|
-
-if scoreDiff < 1: winner = 'tie'
-else if city1Score > city2Score: winner = 'city1'
-else: winner = 'city2'
-\`\`\`
-
-### Category Winner
-\`\`\`
-if |cat1 - cat2| < 2: 'tie'
-else: higher score wins
-\`\`\`
-
----
-
-## 9. THE JUDGE Analysis
+## 9. THE JUDGE Analysis (Updated 2026-02-13)
 
 Claude Opus 4.5 provides:
-- **Trend Analysis**: rising, stable, declining
+- **Trend Analysis**: values normalized to 'improving' (not 'rising') for DB constraint
+- **Score Passing**: Judge receives actual scores in both standard and enhanced mode (fixed)
+- **Tie Handling**: No more "winner is TIE" in video scripts (fixed)
 - **Category Analysis**: Per-category breakdown
-- **Executive Summary**: Final recommendation
 - **Override Capability**: Can override scores based on trends
 
----
-
-## 10. Master Formula
+## 10. Video Progress Formula (Added 2026-02-13)
 
 \`\`\`
-TOTAL_SCORE = Σ [
-  (Σ [metricScore × metricWeight] / Σ [metricWeight]) × categoryWeight
-] + winBonus + spreadBonus
-
-Capped at 100
+completedPct = (winnerDone ? 50 : 0) + (loserDone ? 50 : 0)
+remainingPct = 100 - completedPct
+pollFraction = min(pollAttempts / 120, 0.9)
+progressPct = completedPct + (remainingPct × pollFraction)
+Cap at 95% while generating
 \`\`\`
 
 ---
@@ -920,7 +791,7 @@ export default async function handler(
     return;
   }
 
-  const { type, email } = req.query;
+  const { type } = req.query;
 
   if (!type || typeof type !== 'string' || !MANUAL_FILES[type]) {
     res.status(400).json({
@@ -930,10 +801,13 @@ export default async function handler(
     return;
   }
 
-  // Check authorization for restricted manuals
+  // Check authorization for restricted manuals — use JWT, not query param email
   if (RESTRICTED_MANUALS.includes(type)) {
-    const userEmail = typeof email === 'string' ? email : null;
-    const isAuthorized = await isUserAuthorized(userEmail);
+    const auth = await requireAuth(req, res);
+    if (!auth) return; // 401 already sent
+
+    // Verify the authenticated user's email is authorized
+    const isAuthorized = await isUserAuthorized(auth.email);
 
     if (!isAuthorized) {
       res.status(403).json({

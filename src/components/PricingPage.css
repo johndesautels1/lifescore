@@ -136,7 +136,7 @@
   border: 1px solid rgba(201, 162, 39, 0.1);
 }
 
-.toggle-btn {
+.pricing-page .toggle-btn {
   position: relative;
   padding: 0.75rem 1.5rem;
   border: none;
@@ -149,13 +149,13 @@
   color: var(--ls-steel);
 }
 
-.toggle-btn.active {
+.pricing-page .toggle-btn.active {
   background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
   color: var(--ls-midnight);
   box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
 }
 
-.toggle-btn:not(.active):hover {
+.pricing-page .toggle-btn:not(.active):hover {
   color: var(--ls-platinum);
 }
 
@@ -252,7 +252,7 @@
 }
 
 /* Card Header */
-.card-header {
+.pricing-page .card-header {
   text-align: center;
   margin-bottom: 1.5rem;
   padding-top: 0.5rem;
@@ -274,7 +274,7 @@
 }
 
 /* Card Price */
-.card-price {
+.pricing-page .card-price {
   text-align: center;
   margin-bottom: 2rem;
   padding: 1rem 0;
@@ -321,7 +321,7 @@
 }
 
 /* Card Features */
-.card-features {
+.pricing-page .card-features {
   list-style: none;
   padding: 0;
   margin: 0 0 2rem;
@@ -361,11 +361,11 @@
 }
 
 /* Card Action */
-.card-action {
+.pricing-page .card-action {
   margin-top: auto;
 }
 
-.action-btn {
+.pricing-page .action-btn {
   width: 100%;
   padding: 1rem;
   border: none;
@@ -377,47 +377,47 @@
   transition: all 0.2s ease;
 }
 
-.action-btn.primary {
+.pricing-page .action-btn.primary {
   background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
   color: var(--ls-midnight);
   box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
 }
 
-.action-btn.primary:hover:not(:disabled) {
+.pricing-page .action-btn.primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(201, 162, 39, 0.4);
 }
 
-.action-btn.enterprise {
+.pricing-page .action-btn.enterprise {
   background: linear-gradient(135deg, var(--ls-navy-light) 0%, var(--ls-navy) 100%);
   color: var(--ls-gold);
   border: 2px solid var(--ls-gold);
 }
 
-.action-btn.enterprise:hover:not(:disabled) {
+.pricing-page .action-btn.enterprise:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
   color: var(--ls-midnight);
 }
 
-.action-btn.manage {
+.pricing-page .action-btn.manage {
   background: transparent;
   color: var(--ls-success);
   border: 2px solid var(--ls-success);
 }
 
-.action-btn.manage:hover:not(:disabled) {
+.pricing-page .action-btn.manage:hover:not(:disabled) {
   background: var(--ls-success);
   color: white;
 }
 
-.action-btn.current,
-.action-btn.downgrade {
+.pricing-page .action-btn.current,
+.pricing-page .action-btn.downgrade {
   background: rgba(100, 116, 139, 0.2);
   color: var(--ls-steel);
   cursor: default;
 }
 
-.action-btn:disabled {
+.pricing-page .action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

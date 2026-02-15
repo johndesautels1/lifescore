@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node node_modules/typescript/bin/tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -14,6 +14,7 @@
     "@vercel/og": "^0.8.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-hot-toast": "^2.6.0",
     "simli-client": "^2.0.0",
     "stripe": "^20.2.0"
   },
@@ -36,5 +37,9 @@
   },
   "description": "LIFE SCORE - Legal Independence & Freedom Evaluation. Compare cities across 100 freedom metrics.",
   "author": "John E. Desautels & Associates",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "overrides": {
+    "path-to-regexp": "6.3.0",
+    "undici": "7.21.0"
+  }
 }

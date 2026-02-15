@@ -13,7 +13,7 @@
  * - Error: Graceful error state
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import type { ContrastImageResult } from '../services/contrastImageService';
 import type { ContrastImageStatus } from '../hooks/useContrastImages';
 import './ContrastDisplays.css';
@@ -39,6 +39,23 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
   onRetry,
   onSaveImages,
 }) => {
+  // When an image URL is dead (expired Replicate URL or storage error),
+  // hide the broken <img> and show the error state instead
+  const handleImgError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const container = img.closest('.screen-content');
+    if (container) {
+      // Hide the image container
+      const imgContainer = img.closest('.screen-image-container');
+      if (imgContainer) (imgContainer as HTMLElement).style.display = 'none';
+      // Show a fallback message
+      const fallback = document.createElement('div');
+      fallback.className = 'screen-error';
+      fallback.innerHTML = '<span class="error-icon">⚠</span><span class="error-text">Image expired</span>';
+      container.appendChild(fallback);
+    }
+  }, []);
+
   // Don't render anything if idle and no images
   if (status === 'idle' && !images) {
     return null;
@@ -80,7 +97,8 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
                     src={images.cityAImage.url}
                     alt={images.cityAImage.caption}
                     className="screen-image"
-                    loading="eager"
+                    loading="lazy"
+                    onError={handleImgError}
                   />
                   <div className="image-vignette"></div>
                 </div>
@@ -148,7 +166,8 @@ export const ContrastDisplays: React.FC<ContrastDisplaysProps> = ({
                     src={images.cityBImage.url}
                     alt={images.cityBImage.caption}
                     className="screen-image"
-                    loading="eager"
+                    loading="lazy"
+                    onError={handleImgError}
                   />
                   <div className="image-vignette"></div>
                 </div>

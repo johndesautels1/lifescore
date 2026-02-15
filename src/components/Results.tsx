@@ -29,20 +29,20 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
   const confidence = (result.city1 as any).overallConfidence || (result as any).overallConsensusConfidence || 'medium';
 
   return (
-    <div className={`winner-hero ${isTie ? 'tie' : ''}`}>
+    <div className={`winner-hero ${isTie ? 'tie' : ''}`} aria-live="polite" aria-atomic="true">
       {!isTie ? (
         <>
-          <div className="winner-trophy">🏆</div>
+          <div className="winner-trophy" aria-hidden="true">🏆</div>
           <h2 className="winner-city">{winner.city}, {winner.country}</h2>
           <div className="winner-score">{Math.round(getScore(winner))}</div>
-          <p className="winner-label">LIFE SCORE™</p>
+          <p className="winner-label">LIFE SCORE™ — Winner</p>
           <p className="winner-difference">
             {result.scoreDifference} points more freedom than {loser.city}, {loser.country}
           </p>
         </>
       ) : (
         <>
-          <div className="winner-trophy">⚖️</div>
+          <div className="winner-trophy" aria-hidden="true">⚖️</div>
           <h2 className="winner-city">It's a Tie!</h2>
           <div className="winner-score">{Math.round(getScore(result.city1))}</div>
           <p className="winner-label">Both cities scored equally</p>
@@ -76,13 +76,13 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({ result }) => {
   return (
     <div className="score-grid card">
       <div className={`score-box ${city1Wins ? 'winner' : ''}`}>
-        <h3>{result.city1.city}, {result.city1.country}</h3>
+        <h3>{result.city1.city}{result.city1.region ? `, ${result.city1.region}` : ''}, {result.city1.country}</h3>
         <div className="score">{Math.round(getScore(result.city1))}</div>
         <p className="score-label">Total LIFE SCORE™</p>
       </div>
 
       <div className={`score-box ${city2Wins ? 'winner' : ''}`}>
-        <h3>{result.city2.city}, {result.city2.country}</h3>
+        <h3>{result.city2.city}{result.city2.region ? `, ${result.city2.region}` : ''}, {result.city2.country}</h3>
         <div className="score">{Math.round(getScore(result.city2))}</div>
         <p className="score-label">Total LIFE SCORE™</p>
       </div>
@@ -159,25 +159,27 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result, cu
                   <span className="bar-city">{result.city1.city}</span>
                   <span className={`bar-score ${city1Wins ? 'winning' : ''}`}>
                     {Math.round(city1Score)}%
+                    {city1Wins && <span className="winner-indicator" aria-label="Winner"> ✓</span>}
                   </span>
                 </div>
                 <div className="bar-bg">
-                  <div 
+                  <div
                     className={`bar-fill city1 ${city1Wins ? 'winning' : ''}`}
                     style={{ width: `${city1Score}%` }}
                   />
                 </div>
               </div>
-              
+
               <div className="bar-container">
                 <div className="bar-header">
                   <span className="bar-city">{result.city2.city}</span>
                   <span className={`bar-score ${city2Wins ? 'winning' : ''}`}>
                     {Math.round(city2Score)}%
+                    {city2Wins && <span className="winner-indicator" aria-label="Winner"> ✓</span>}
                   </span>
                 </div>
                 <div className="bar-bg">
-                  <div 
+                  <div
                     className={`bar-fill city2 ${city2Wins ? 'winning' : ''}`}
                     style={{ width: `${city2Score}%` }}
                   />
@@ -186,16 +188,9 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ result, cu
             </div>
             
             {isExpanded && (!city1Cat || !city2Cat) && (
-              <div className="metric-details-missing" style={{
-                background: '#fef3c7',
-                border: '1px solid #f59e0b',
-                borderRadius: '8px',
-                padding: '16px',
-                margin: '12px 0',
-                textAlign: 'center'
-              }}>
-                <span style={{ fontSize: '1.5em', marginRight: '8px' }}>⚠️</span>
-                <span style={{ color: '#92400e' }}>
+              <div className="metric-details-missing">
+                <span className="missing-icon" aria-hidden="true">⚠️</span>
+                <span className="missing-text">
                   <strong>Partial Data:</strong> {!city1Cat && !city2Cat ? 'Both cities' : !city1Cat ? result.city1.city : result.city2.city}
                   {' '}missing data for {category.name}. The LLM may have failed to return this category.
                 </span>
@@ -261,7 +256,6 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
             <div
               className={`metric-row ${hasNotes ? 'clickable' : ''}`}
               onClick={() => hasNotes && setExpandedMetric(isExpanded ? null : metric.id)}
-              style={{ cursor: hasNotes ? 'pointer' : 'default' }}
             >
               <div className="metric-info">
                 <span className="metric-name" title={metric.description}>
@@ -291,29 +285,20 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
             </div>
 
             {isExpanded && hasNotes && (
-              <div className="metric-reasoning" style={{
-                backgroundColor: '#f8f9fa',
-                padding: '12px 16px',
-                marginTop: '4px',
-                borderRadius: '6px',
-                fontSize: '0.9em',
-                lineHeight: '1.5',
-                borderLeft: '3px solid #4a90d9'
-              }}>
-                <strong style={{ display: 'block', marginBottom: '8px', color: '#333' }}>
+              <div className="metric-reasoning">
+                <strong className="reasoning-title">
                   LLM Analysis:
                 </strong>
-                <p style={{ margin: 0, color: '#555' }}>
+                <p className="reasoning-text">
                   {city1Score?.notes || city2Score?.notes}
                 </p>
                 {city1Score?.source && (
-                  <p style={{ margin: '8px 0 0', fontSize: '0.85em', color: '#777' }}>
+                  <p className="reasoning-source">
                     Source: {city1Score.sourceUrl ? (
                       <a
                         href={city1Score.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: '#4a90d9', textDecoration: 'underline' }}
                       >
                         {city1Score.source}
                       </a>
@@ -338,7 +323,7 @@ const MetricDetails: React.FC<MetricDetailsProps> = ({
           const s2 = city2Metrics.metrics.find(x => x.metricId === m.id);
           return s1?.notes || s2?.notes;
         }) && (
-          <p style={{ fontSize: '0.85em', color: '#FFFFFF', marginTop: '8px', fontWeight: 600, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+          <p className="metric-click-hint">
             Click any metric with ▶ to see detailed LLM analysis
           </p>
         )}
@@ -418,15 +403,9 @@ export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights
       </div>
 
       {result.warning && (
-        <div className="results-warning card" style={{
-          backgroundColor: '#fff3cd',
-          border: '1px solid #ffc107',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          marginBottom: '16px'
-        }}>
-          <strong style={{ color: '#856404' }}>Note:</strong>{' '}
-          <span style={{ color: '#856404' }}>{result.warning}</span>
+        <div className="results-warning card">
+          <strong>Note:</strong>{' '}
+          <span>{result.warning}</span>
         </div>
       )}
 

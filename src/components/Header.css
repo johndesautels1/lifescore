@@ -152,16 +152,29 @@
 }
 
 /* Header Right (User Account, Tier Badge, Money) */
-/* FIX: Reduced by 25% per user request */
+/* FIX: Use smaller sizes instead of scale() to preserve 44px touch targets */
 .header-right {
   position: absolute;
   top: 1rem;
   right: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  transform: scale(0.75);
-  transform-origin: top right;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.header-right button,
+.header-right a {
+  min-height: 36px;
+  min-width: 36px;
+}
+
+@media (max-width: 768px) {
+  .header-right button,
+  .header-right a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 .header {
@@ -276,7 +289,7 @@
 .settings-btn:hover {
   background: rgba(201, 162, 39, 0.2);
   border-color: rgba(201, 162, 39, 0.5);
-  color: #c9a227;
+  color: #e6b800;
   transform: scale(1.03);
 }
 
@@ -454,5 +467,69 @@
   .logout-btn svg {
     width: 14px;
     height: 14px;
+  }
+}
+
+/* Very small phones — prevent header overlap */
+@media (max-width: 360px) {
+  .header-left,
+  .header-right {
+    position: static;
+    transform: none;
+  }
+
+  .header-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+  }
+
+  .header-left {
+    order: 1;
+  }
+
+  .header-right {
+    order: 2;
+    transform: scale(0.7);
+    transform-origin: center right;
+    max-width: none;
+  }
+
+  .company-name,
+  .clues-branding,
+  .life-score-title {
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Extremely small phones (320px and below) — stack everything vertically */
+@media (max-width: 320px) {
+  .header-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .header-left,
+  .header-right {
+    position: static;
+    transform: none;
+    order: unset;
+  }
+
+  .header-right {
+    transform: scale(0.65);
+    transform-origin: center;
+  }
+
+  .company-name,
+  .clues-branding,
+  .life-score-title {
+    font-size: 0.85rem;
   }
 }

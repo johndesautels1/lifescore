@@ -1,11 +1,11 @@
 /**
  * LIFE SCORE - Judge Video API (D-ID Fallback)
- * D-ID Talks API for Christiano avatar delivering the Judge's verdict
+ * D-ID Talks API for Cristiano avatar delivering the Judge's verdict
  *
  * Updated 2026-01-30: Added OpenAI TTS fallback when ElevenLabs fails
  *
  * Voice Priority:
- * 1. ElevenLabs Christiano (ZpwpoMoU84OhcbA2YBBV)
+ * 1. ElevenLabs Cristiano (ZpwpoMoU84OhcbA2YBBV)
  * 2. OpenAI TTS 'onyx' voice (deep, authoritative male)
  *
  * Primary: Replicate Wav2Lip + ElevenLabs (api/avatar/generate-judge-video.ts)
@@ -34,8 +34,8 @@ const DID_TIMEOUT_MS = 60000;
 // JUDGE-SPECIFIC config (completely separate from Olivia)
 const JUDGE_PRESENTER_URL = process.env.DID_JUDGE_PRESENTER_URL || '';
 
-// ElevenLabs Christiano voice - same as Replicate implementation for consistency
-const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV';
+// ElevenLabs Cristiano voice - same as Replicate implementation for consistency
+const CRISTIANO_VOICE_ID = process.env.ELEVENLABS_CRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV';
 
 // ============================================================================
 // ELEVENLABS TTS (for voice consistency with Replicate)
@@ -61,7 +61,7 @@ async function generateOpenAIAudio(script: string): Promise<string> {
     },
     body: JSON.stringify({
       model: 'tts-1',
-      voice: 'onyx', // Deep, authoritative male voice for Judge Christiano
+      voice: 'onyx', // Deep, authoritative male voice for Judge Cristiano
       input: script,
       response_format: 'mp3',
     }),
@@ -81,7 +81,7 @@ async function generateOpenAIAudio(script: string): Promise<string> {
 }
 
 /**
- * Generate TTS audio using ElevenLabs with Christiano's voice
+ * Generate TTS audio using ElevenLabs with Cristiano's voice
  * Falls back to OpenAI 'onyx' voice if ElevenLabs fails
  * Returns base64 audio for D-ID consumption
  */
@@ -98,7 +98,7 @@ async function generateElevenLabsAudio(script: string): Promise<string> {
 
   try {
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${CRISTIANO_VOICE_ID}`,
       {
         method: 'POST',
         headers: {
@@ -157,9 +157,9 @@ interface JudgeReport {
   videoStatus: 'pending' | 'generating' | 'ready' | 'error';
   summaryOfFindings: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
+    city2Trend: 'improving' | 'stable' | 'declining';
     overallConfidence: 'high' | 'medium' | 'low';
   };
   categoryAnalysis: {
@@ -203,7 +203,7 @@ interface DIDTalkResponse {
 
 /**
  * Generate a compelling video script from the JudgeReport
- * Designed for Christian avatar to deliver as a 60-90 second verdict
+ * Designed for Cristiano avatar to deliver as a 60-90 second verdict
  */
 function generateVideoScript(report: JudgeReport): string {
   const { city1, city2, summaryOfFindings, executiveSummary } = report;
@@ -219,9 +219,9 @@ function generateVideoScript(report: JudgeReport): string {
   }
 
   // Trend descriptions
-  const getTrendDescription = (trend: 'rising' | 'stable' | 'declining'): string => {
+  const getTrendDescription = (trend: 'improving' | 'stable' | 'declining'): string => {
     switch (trend) {
-      case 'rising': return 'on an upward trajectory';
+      case 'improving': return 'on an upward trajectory';
       case 'declining': return 'showing signs of decline';
       case 'stable': return 'holding steady';
     }
@@ -240,7 +240,7 @@ function generateVideoScript(report: JudgeReport): string {
   const script = `
 Welcome to the LIFE SCORE Judge's Verdict.
 
-I'm Christian, and I've conducted a comprehensive analysis comparing ${city1} and ${city2} across multiple dimensions of freedom and quality of life.
+I'm Cristiano, and I've conducted a comprehensive analysis comparing ${city1} and ${city2} across multiple dimensions of freedom and quality of life.
 
 ${city1} achieved a score of ${summaryOfFindings.city1Score.toFixed(1)}, and is ${getTrendDescription(summaryOfFindings.city1Trend)}.
 
@@ -281,7 +281,7 @@ function getDIDAuthHeader(): string {
 
 /**
  * Create a talk (video) using D-ID Talks API
- * Uses ElevenLabs audio for Christiano voice consistency
+ * Uses ElevenLabs audio for Cristiano voice consistency
  */
 async function createTalk(
   authHeader: string,
@@ -291,7 +291,7 @@ async function createTalk(
 ): Promise<string> {
   console.log('[JUDGE-VIDEO-DID] Creating talk with D-ID + ElevenLabs audio');
   console.log('[JUDGE-VIDEO-DID] Using presenter:', presenterUrl.slice(0, 50) + '...');
-  console.log('[JUDGE-VIDEO-DID] Using Christiano voice:', CHRISTIANO_VOICE_ID);
+  console.log('[JUDGE-VIDEO-DID] Using Cristiano voice:', CRISTIANO_VOICE_ID);
 
   // Use audio type with base64 ElevenLabs audio instead of D-ID's built-in TTS
   const requestBody = {
@@ -431,7 +431,7 @@ export default async function handler(
         if (!JUDGE_PRESENTER_URL) {
           res.status(400).json({
             error: 'DID_JUDGE_PRESENTER_URL not configured',
-            hint: 'Set DID_JUDGE_PRESENTER_URL in Vercel with Christiano avatar image URL',
+            hint: 'Set DID_JUDGE_PRESENTER_URL in Vercel with Cristiano avatar image URL',
           });
           return;
         }
@@ -440,7 +440,7 @@ export default async function handler(
         const script = generateVideoScript(body.report);
         console.log('[JUDGE-VIDEO-DID] Generated script:', script.slice(0, 100) + '...');
 
-        // Step 1: Generate ElevenLabs audio with Christiano voice
+        // Step 1: Generate ElevenLabs audio with Cristiano voice
         const audioBase64 = await generateElevenLabsAudio(script);
 
         // Step 2: Call D-ID with the ElevenLabs audio
@@ -455,9 +455,9 @@ export default async function handler(
           success: true,
           talkId,
           status: 'pending',
-          message: 'Video generation started with ElevenLabs Christiano voice. Poll /api/judge-video with action=status to check progress.',
+          message: 'Video generation started with ElevenLabs Cristiano voice. Poll /api/judge-video with action=status to check progress.',
           script,
-          voice: CHRISTIANO_VOICE_ID,
+          voice: CRISTIANO_VOICE_ID,
         });
         return;
       }

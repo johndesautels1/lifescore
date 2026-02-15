@@ -13,9 +13,14 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withRetry } from '../lib/supabase';
 import type { Profile, UserPreferences } from '../types/database';
 import { fullDatabaseSync } from '../services/savedComparisons';
+
+// FIX 2026-02-14: Module-level cooldown variable (survives ErrorBoundary remounts).
+// When React error boundary triggers, AuthProvider remounts with fresh useRefs,
+// which previously reset the cooldown to 0, causing immediate retry storms.
+let _lastProfileFetchFailedAt = 0;
 
 // ============================================================================
 // TYPES
@@ -75,14 +80,11 @@ interface AuthContextValue extends AuthState {
 }
 
 // ============================================================================
-// DEMO CREDENTIALS (when Supabase not configured)
+// DEMO MODE (when Supabase not configured)
+// Demo is disabled unless VITE_DEMO_ENABLED=true is set in environment.
 // ============================================================================
 
-const DEMO_CREDENTIALS = [
-  { email: 'demo@lifescore.com', password: 'demo123', name: 'Demo User' },
-  { email: 'admin@clues.com', password: 'admin123', name: 'Admin' },
-  { email: 'john@clues.com', password: 'clues2026', name: 'John D.' },
-];
+const DEMO_ENABLED = import.meta.env.VITE_DEMO_ENABLED === 'true';
 
 // ============================================================================
 // CONTEXT
@@ -127,6 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Track if we're already fetching to prevent duplicate calls
   const fetchingRef = React.useRef<string | null>(null);
+  // Cooldown uses module-level _lastProfileFetchFailedAt (not useRef) so it survives remounts
+  const FAILURE_COOLDOWN_MS = 30000; // 30s cooldown after a failed fetch
 
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
@@ -137,11 +141,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { profile: null, preferences: null };
     }
 
+    // Skip if we recently failed — prevents infinite retry storm
+    const timeSinceFailure = Date.now() - _lastProfileFetchFailedAt;
+    if (timeSinceFailure < FAILURE_COOLDOWN_MS) {
+      console.log(`[Auth] Skipping fetch — last failure was ${Math.round(timeSinceFailure / 1000)}s ago (cooldown ${FAILURE_COOLDOWN_MS / 1000}s)`);
+      return { profile: null, preferences: null };
+    }
+
     fetchingRef.current = userId;
     console.log("[Auth] Fetching profile for user:", userId);
 
     try {
-      // Fetch profile and preferences in parallel with retry + exponential backoff
+      // Fetch profile and preferences in parallel with reduced timeout/retries
+      // to prevent long blocking loops when Supabase is slow or unreachable.
+      // Fail fast, fail open — the app works without profile data.
+      const PROFILE_TIMEOUT_MS = 5000; // 5s — PostgREST is always-on, not serverless
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -149,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select('id, email, full_name, tier, avatar_url, created_at')
             .eq('id', userId)
             .maybeSingle(),
-          { operationName: 'Profile fetch', timeoutMs: SUPABASE_TIMEOUT_MS }
+          { operationName: 'Profile fetch', timeoutMs: PROFILE_TIMEOUT_MS, maxRetries: 1 }
         ).catch(err => {
           console.error('[Auth] Profile fetch failed after retries:', err.message);
           return { data: null, error: err };
@@ -160,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select('*')
             .eq('user_id', userId)
             .maybeSingle(),
-          { operationName: 'Preferences fetch', timeoutMs: SUPABASE_TIMEOUT_MS }
+          { operationName: 'Preferences fetch', timeoutMs: PROFILE_TIMEOUT_MS, maxRetries: 1 }
         ).catch(err => {
           console.error('[Auth] Preferences fetch failed after retries:', err.message);
           return { data: null, error: err };
@@ -172,17 +186,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profile) {
         console.log('[Auth] Profile loaded:', profile.email);
+        // Success — clear cooldown so future fetches work immediately
+        _lastProfileFetchFailedAt = 0;
       } else {
         console.log('[Auth] No profile found for user (will use defaults)');
+        // No profile = fetch worked but user has no row yet — set cooldown to prevent hammering
+        _lastProfileFetchFailedAt = Date.now();
       }
 
-      fetchingRef.current = null;
       return { profile: profile || null, preferences: preferences || null };
     } catch (error) {
       console.error('[Auth] Error in fetchUserData:', error);
-      fetchingRef.current = null;
+      // FIX 2026-02-14: Record failure time to activate cooldown
+      _lastProfileFetchFailedAt = Date.now();
       // Return nulls on timeout/error - app continues without DB profile
       return { profile: null, preferences: null };
+    } finally {
+      // Always reset fetchingRef — prevents permanent deadlock if fetch hangs or throws
+      fetchingRef.current = null;
     }
   }, [state.isConfigured]);
 
@@ -213,28 +234,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // SUPABASE MODE: Get initial session with timeout (45s for slow Supabase cold starts)
-    const SESSION_TIMEOUT_MS = 45000;
-    let sessionHandled = false;
+    // SUPABASE MODE: Get initial session with timeout
+    const SESSION_TIMEOUT_MS = 10000; // 10s — session check hits local cache first
+    let initialLoadDone = false; // Tracks whether the first profile fetch has completed
+    let initialUserId: string | null = null; // Track which user getSession already loaded
     const sessionTimeout = setTimeout(() => {
-      if (!sessionHandled) {
-        console.warn("[Auth] Session check timed out after 45s");
+      if (!initialLoadDone) {
+        console.warn("[Auth] Session check timed out after 10s");
+        initialLoadDone = true;
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }
     }, SESSION_TIMEOUT_MS);
 
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (sessionHandled) return; // Already handled by auth state change
-      sessionHandled = true;
-      clearTimeout(sessionTimeout);
+      if (initialLoadDone) return; // Already handled by timeout or auth state change
 
       if (error) {
         console.error("[Auth] getSession error:", error);
+        initialLoadDone = true;
+        clearTimeout(sessionTimeout);
         setState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
       if (session?.user) {
+        initialLoadDone = true;
+        initialUserId = session.user.id;
+        clearTimeout(sessionTimeout);
         const { profile, preferences } = await fetchUserData(session.user.id);
         const user = normalizeUser(session.user, profile as Profile | null);
         setState({
@@ -249,6 +275,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: null,
         });
       } else {
+        initialLoadDone = true;
+        clearTimeout(sessionTimeout);
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -257,19 +285,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }).catch(err => {
       console.error("[Auth] getSession exception:", err);
-      if (!sessionHandled) {
-        sessionHandled = true;
+      if (!initialLoadDone) {
+        initialLoadDone = true;
         clearTimeout(sessionTimeout);
         setState(prev => ({ ...prev, isLoading: false }));
       }
     });
 
-    // Listen for auth changes
+    // Listen for auth changes — skip SIGNED_IN during initial load to prevent
+    // duplicate profile fetches (getSession already handles the initial session)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[Auth] State change:', event);
 
         if (event === 'SIGNED_IN' && session?.user) {
+          // If getSession already handled the initial load, skip the duplicate fetch.
+          // onAuthStateChange fires SIGNED_IN on page load AND on actual sign-in,
+          // causing two redundant profile fetches that both timeout.
+          if (initialLoadDone && initialUserId === session.user.id) {
+            console.log('[Auth] Skipping duplicate SIGNED_IN for same user');
+            return;
+          }
+
+          initialLoadDone = true;
+          clearTimeout(sessionTimeout);
           const { profile, preferences } = await fetchUserData(session.user.id);
           const user = normalizeUser(session.user, profile as Profile | null);
           setState({
@@ -321,40 +360,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-    // DEMO MODE
+    // DEMO MODE — only active when Supabase is not configured AND demo is explicitly enabled
     if (!state.isConfigured) {
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate delay
-
-      const match = DEMO_CREDENTIALS.find(
-        cred => cred.email.toLowerCase() === email.toLowerCase() && cred.password === password
-      );
-
-      // Also accept any email with password "lifescore"
-      if (match || password === 'lifescore') {
-        const name = match?.name || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const user: User = {
-          id: crypto.randomUUID(),
-          email: email.toLowerCase(),
-          name: name || 'User',
-        };
-
-        localStorage.setItem('lifescore_user', JSON.stringify(user));
+      if (!DEMO_ENABLED) {
         setState(prev => ({
           ...prev,
-          user,
-          isAuthenticated: true,
           isLoading: false,
-          error: null,
+          error: 'Authentication service is not configured. Please contact support.',
         }));
-        return { error: null };
+        return { error: new Error('Auth not configured') };
       }
 
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Generic demo user — no hardcoded credentials in client code
+      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const user: User = {
+        id: crypto.randomUUID(),
+        email: email.toLowerCase(),
+        name: name || 'Demo User',
+      };
+
+      localStorage.setItem('lifescore_user', JSON.stringify(user));
       setState(prev => ({
         ...prev,
+        user,
+        isAuthenticated: true,
         isLoading: false,
-        error: 'Invalid email or password. Try password: lifescore',
+        error: null,
       }));
-      return { error: new Error('Invalid credentials') };
+      return { error: null };
     }
 
     // SUPABASE MODE

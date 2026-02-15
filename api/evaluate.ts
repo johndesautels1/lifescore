@@ -25,6 +25,26 @@ interface CachedResearch {
 }
 const tavilyResearchCache = new Map<string, CachedResearch>();
 const RESEARCH_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes (within single comparison session)
+const RESEARCH_CACHE_MAX_ENTRIES = 50; // Cap to prevent unbounded memory growth
+
+function pruneResearchCache(): void {
+  if (tavilyResearchCache.size <= RESEARCH_CACHE_MAX_ENTRIES) return;
+  const now = Date.now();
+  // Remove expired entries first
+  for (const [key, entry] of tavilyResearchCache) {
+    if (now - entry.timestamp >= RESEARCH_CACHE_TTL_MS) {
+      tavilyResearchCache.delete(key);
+    }
+  }
+  // If still over limit, remove oldest entries
+  if (tavilyResearchCache.size > RESEARCH_CACHE_MAX_ENTRIES) {
+    const sorted = [...tavilyResearchCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = sorted.length - RESEARCH_CACHE_MAX_ENTRIES;
+    for (let i = 0; i < toRemove; i++) {
+      tavilyResearchCache.delete(sorted[i][0]);
+    }
+  }
+}
 
 // Stats tracking for logging
 const tavilyStats = {
@@ -250,6 +270,7 @@ interface EvaluationResponse {
   scores: MetricScore[];
   latencyMs: number;
   error?: string;
+  warnings?: string[];
   // Cost tracking data
   usage?: {
     tokens: TokenUsage;
@@ -523,38 +544,54 @@ const getTavilyHeaders = (apiKey: string) => ({
 });
 
 // Tavily Research API - Comprehensive baseline report for city comparison
+// FIX: Added retry logic (1 retry with 2s backoff) for transient failures
 async function tavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) return null;
 
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.tavily.com/research',
-      {
-        method: 'POST',
-        headers: getTavilyHeaders(apiKey),
-        body: JSON.stringify({
-          // api_key removed - now using Bearer auth in header per Tavily docs
-          input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
-          model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
-          citation_format: 'numbered'
-        })
-      },
-      TAVILY_TIMEOUT_MS
-    );
+  const MAX_RETRIES = 2;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[TAVILY RESEARCH] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
+      const response = await fetchWithTimeout(
+        'https://api.tavily.com/research',
+        {
+          method: 'POST',
+          headers: getTavilyHeaders(apiKey),
+          body: JSON.stringify({
+            // api_key removed - now using Bearer auth in header per Tavily docs
+            input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
+            model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
+            citation_format: 'numbered'
+          })
+        },
+        TAVILY_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unable to read error');
-      console.error(`[TAVILY RESEARCH] Error ${response.status}: ${errorText.slice(0, 500)}`);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unable to read error');
+        console.error(`[TAVILY RESEARCH] Attempt ${attempt} error ${response.status}: ${errorText.slice(0, 500)}`);
+        // Don't retry on 4xx
+        if (response.status >= 400 && response.status < 500) return null;
+        if (attempt < MAX_RETRIES) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        }
+        return null;
+      }
+      const data = await response.json();
+      console.log(`[TAVILY RESEARCH] Success on attempt ${attempt} - report length: ${data.report?.length || 0}, sources: ${data.sources?.length || 0}`);
+      return { report: data.report || '', sources: data.sources || [] };
+    } catch (error) {
+      console.error(`[TAVILY RESEARCH] Attempt ${attempt} exception:`, error instanceof Error ? error.message : error);
+      if (attempt < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
       return null;
     }
-    const data = await response.json();
-    console.log(`[TAVILY RESEARCH] Success - report length: ${data.report?.length || 0}, sources: ${data.sources?.length || 0}`);
-    return { report: data.report || '', sources: data.sources || [] };
-  } catch (error) {
-    console.error(`[TAVILY RESEARCH] Exception:`, error instanceof Error ? error.message : error);
-    return null;
   }
+  return null;
 }
 
 // Cached wrapper for tavilyResearch - checks in-memory cache first
@@ -580,11 +617,12 @@ async function getCachedTavilyResearch(city1: string, city2: string): Promise<Ta
 
   // Store in cache if successful
   if (result) {
+    pruneResearchCache();
     tavilyResearchCache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
-    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min)`);
+    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min, cache size: ${tavilyResearchCache.size})`);
   }
 
   return result;
@@ -655,6 +693,38 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
   }
 
   const startTime = Date.now();
+
+  // FIX: Batch split for large categories (Housing = 20 metrics) to prevent timeouts
+  const BATCH_THRESHOLD = 12;
+  if (metrics.length > BATCH_THRESHOLD) {
+    console.log(`[CLAUDE] Large category (${metrics.length} metrics), splitting into batches`);
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+    console.log(`[CLAUDE] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    const [result1, result2] = await Promise.all([
+      evaluateWithClaude(city1, city2, batch1),
+      evaluateWithClaude(city1, city2, batch2)
+    ]);
+
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedSuccess = result1.success && result2.success;
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[CLAUDE] Batched: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+    return {
+      provider: 'claude-sonnet',
+      success: combinedSuccess || combinedScores.length > 0,
+      scores: combinedScores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
   let tavilyContext = '';
@@ -733,55 +803,103 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
   console.log(`[EVALUATE] USE_CATEGORY_SCORING=${USE_CATEGORY_SCORING}`);
 
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.anthropic.com/v1/messages',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
+  // FIX: Retry logic with exponential backoff (matches Gemini/Grok pattern)
+  const MAX_RETRIES = 3;
+  let lastError = '';
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[CLAUDE] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
+
+      const response = await fetchWithTimeout(
+        'https://api.anthropic.com/v1/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-5-20250929',
+            max_tokens: 16384,
+            messages: [{ role: 'user', content: prompt }]
+          })
         },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5-20250929',
-          max_tokens: 16384,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+      if (!response.ok) {
+        const errorText = await response.text();
+        lastError = `API error: ${response.status} - ${errorText}`;
+        console.error(`[CLAUDE] Attempt ${attempt} failed: ${lastError}`);
+        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
+        if (response.status >= 400 && response.status < 500) {
+          return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
+        }
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.log(`[CLAUDE] Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const data = await response.json();
+      // FIX #8: Defensive parsing - handle missing/malformed response
+      const content = data?.content?.[0]?.text;
+      if (!content) {
+        lastError = 'Empty or malformed response from Claude';
+        console.error(`[CLAUDE] Attempt ${attempt}: ${lastError}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const scores = parseResponse(content, 'claude-sonnet');
+
+      if (scores.length === 0) {
+        lastError = 'Invalid JSON or no evaluations parsed from Claude response';
+        console.error(`[CLAUDE] Attempt ${attempt}: ${lastError}. Content preview: ${content.substring(0, 200)}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      // Extract token usage from Claude response
+      const usage: TokenUsage = {
+        inputTokens: data?.usage?.input_tokens || 0,
+        outputTokens: data?.usage?.output_tokens || 0
+      };
+
+      console.log(`[CLAUDE] Success on attempt ${attempt}: ${scores.length} scores returned`);
+      return {
+        provider: 'claude-sonnet',
+        success: true,
+        scores,
+        latencyMs: Date.now() - startTime,
+        usage: { tokens: usage }
+      };
+
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
+      console.error(`[CLAUDE] Attempt ${attempt} exception: ${lastError}`);
+
+      if (attempt < MAX_RETRIES) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[CLAUDE] Retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
     }
-
-    const data = await response.json();
-    // FIX #8: Defensive parsing - handle missing/malformed response
-    const content = data?.content?.[0]?.text;
-    if (!content) {
-      return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from Claude' };
-    }
-    const scores = parseResponse(content, 'claude-sonnet');
-
-    // Extract token usage from Claude response
-    const usage: TokenUsage = {
-      inputTokens: data?.usage?.input_tokens || 0,
-      outputTokens: data?.usage?.output_tokens || 0
-    };
-
-    return {
-      provider: 'claude-sonnet',
-      success: scores.length > 0,
-      scores,
-      latencyMs: Date.now() - startTime,
-      usage: { tokens: usage }
-    };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
-    return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
+
+  // All retries exhausted
+  console.error(`[CLAUDE] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
+  return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
 // GPT-4o evaluation (with Tavily web search - same pattern as Claude Sonnet)
@@ -872,21 +990,28 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     : buildBasePrompt(city1, city2, metrics);
   const prompt = tavilyContext + basePrompt + gptAddendum;
 
-  try {
-    // GPT-4o uses standard chat completions API
-    const response = await fetchWithTimeout(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
-            { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
+  // FIX: Retry logic with exponential backoff (matches Gemini/Grok pattern)
+  const MAX_RETRIES = 3;
+  let lastError = '';
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[GPT-4o] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
+
+      // GPT-4o uses standard chat completions API
+      const response = await fetchWithTimeout(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
+              { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
 Use the Tavily research data provided in the user message to evaluate laws and regulations.
 
 ## IMPORTANT
@@ -897,45 +1022,86 @@ Use the Tavily research data provided in the user message to evaluate laws and r
 - If the research doesn't cover a metric, use your knowledge but set confidence="low"
 - Return JSON exactly matching the format requested
 - You MUST evaluate ALL metrics provided` },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 16384,
-          temperature: 0.3
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 16384,
+            temperature: 0.3
+          })
+        },
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+      if (!response.ok) {
+        const errorText = await response.text();
+        lastError = `API error: ${response.status} - ${errorText}`;
+        console.error(`[GPT-4o] Attempt ${attempt} failed: ${lastError}`);
+        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
+        if (response.status >= 400 && response.status < 500) {
+          return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
+        }
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.log(`[GPT-4o] Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const data = await response.json();
+      // FIX #8: Defensive parsing - handle missing/malformed response
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) {
+        lastError = 'Empty or malformed response from GPT-4o';
+        console.error(`[GPT-4o] Attempt ${attempt}: ${lastError}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      const scores = parseResponse(content, 'gpt-4o');
+
+      if (scores.length === 0) {
+        lastError = 'Invalid JSON or no evaluations parsed from GPT-4o response';
+        console.error(`[GPT-4o] Attempt ${attempt}: ${lastError}. Content preview: ${content.substring(0, 200)}`);
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        continue;
+      }
+
+      // Extract token usage from OpenAI response
+      const usage: TokenUsage = {
+        inputTokens: data?.usage?.prompt_tokens || 0,
+        outputTokens: data?.usage?.completion_tokens || 0
+      };
+
+      console.log(`[GPT-4o] Success on attempt ${attempt}: ${scores.length} scores returned`);
+      return {
+        provider: 'gpt-4o',
+        success: true,
+        scores,
+        latencyMs: Date.now() - startTime,
+        usage: { tokens: usage }
+      };
+
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
+      console.error(`[GPT-4o] Attempt ${attempt} exception: ${lastError}`);
+
+      if (attempt < MAX_RETRIES) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[GPT-4o] Retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
     }
-
-    const data = await response.json();
-    // FIX #8: Defensive parsing - handle missing/malformed response
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) {
-      return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty or malformed response from GPT-4o' };
-    }
-    const scores = parseResponse(content, 'gpt-4o');
-
-    // Extract token usage from OpenAI response
-    const usage: TokenUsage = {
-      inputTokens: data?.usage?.prompt_tokens || 0,
-      outputTokens: data?.usage?.completion_tokens || 0
-    };
-
-    return {
-      provider: 'gpt-4o',
-      success: scores.length > 0,
-      scores,
-      latencyMs: Date.now() - startTime,
-      usage: { tokens: usage }
-    };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
-    return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
+
+  // All retries exhausted
+  console.error(`[GPT-4o] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
+  return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
 // Gemini 3 Pro evaluation (with Google Search grounding)
@@ -947,10 +1113,42 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 
   const startTime = Date.now();
 
+  // FIX: Batch split for large categories (Housing = 20, Policing = 15) to prevent timeouts
+  const BATCH_THRESHOLD = 12;
+  if (metrics.length >= BATCH_THRESHOLD) {
+    console.log(`[GEMINI] Large category (${metrics.length} metrics), splitting into batches`);
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+    console.log(`[GEMINI] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    const [result1, result2] = await Promise.all([
+      evaluateWithGemini(city1, city2, batch1),
+      evaluateWithGemini(city1, city2, batch2)
+    ]);
+
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedSuccess = result1.success && result2.success;
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[GEMINI] Batched: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+    return {
+      provider: 'gemini-3-pro',
+      success: combinedSuccess || combinedScores.length > 0,
+      scores: combinedScores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
+
   // GEMINI-SPECIFIC ADDENDUM (optimized for Reasoning-over-Grounding)
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
-  // UPDATED 2026-01-24: Added conciseness requirements to stay within 8192 token output limit
-  const isLargeCategory = metrics.length >= 20;
+  // FIX: Lowered threshold from 20 to 12 to also cover Policing (15 metrics) timeouts
+  const isLargeCategory = metrics.length >= 12;
   const geminiAddendum = `
 ## GEMINI-SPECIFIC INSTRUCTIONS
 - Use Google Search grounding to verify current ${new Date().getFullYear()} legal status for both cities
@@ -960,12 +1158,12 @@ async function evaluateWithGemini(city1: string, city2: string, metrics: Evaluat
 - You have the full context window - maintain consistency across all ${metrics.length} metrics
 - You MUST evaluate ALL ${metrics.length} metrics - do not skip any
 ${isLargeCategory ? `
-## CRITICAL: CONCISENESS REQUIRED (Large category with ${metrics.length} metrics)
+## CRITICAL: CONCISENESS REQUIRED (${metrics.length} metrics)
 - Keep "reasoning" to 1 sentence only (under 25 words)
 - Include only 1 source per metric (most authoritative only)
 - Include only 1 evidence item per city per metric
 - Omit verbose explanations - scores and brief justification are sufficient
-- This is required to fit within 8192 token output limit
+- This is required to fit within the output token limit
 ` : ''}`;
 
   // Gemini system instruction
@@ -1101,6 +1299,39 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
   }
 
   const startTime = Date.now();
+
+  // FIX: Batch split for large categories (Business & Work = 25 metrics) to prevent timeouts
+  // Matches existing pattern used by Claude (line ~698), Gemini (~1117), Perplexity (~1479)
+  const BATCH_THRESHOLD = 12;
+  if (metrics.length > BATCH_THRESHOLD) {
+    console.log(`[GROK] Large category (${metrics.length} metrics), splitting into batches`);
+    const midpoint = Math.ceil(metrics.length / 2);
+    const batch1 = metrics.slice(0, midpoint);
+    const batch2 = metrics.slice(midpoint);
+    console.log(`[GROK] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
+
+    const [result1, result2] = await Promise.all([
+      evaluateWithGrok(city1, city2, batch1),
+      evaluateWithGrok(city1, city2, batch2)
+    ]);
+
+    const combinedScores = [...result1.scores, ...result2.scores];
+    const combinedSuccess = result1.success && result2.success;
+    const combinedUsage: TokenUsage = {
+      inputTokens: (result1.usage?.tokens?.inputTokens || 0) + (result2.usage?.tokens?.inputTokens || 0),
+      outputTokens: (result1.usage?.tokens?.outputTokens || 0) + (result2.usage?.tokens?.outputTokens || 0)
+    };
+
+    console.log(`[GROK] Batched: ${combinedScores.length}/${metrics.length} scores, success=${combinedSuccess}`);
+    return {
+      provider: 'grok-4',
+      success: combinedSuccess || combinedScores.length > 0,
+      scores: combinedScores,
+      latencyMs: Date.now() - startTime,
+      usage: { tokens: combinedUsage },
+      error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
+    };
+  }
 
   // GROK-SPECIFIC ADDENDUM (optimized per Grok's own recommendations 2026-01-21)
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
@@ -1288,9 +1519,11 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
 
     console.log(`[PERPLEXITY] Batch 1: ${batch1.length} metrics, Batch 2: ${batch2.length} metrics`);
 
-    // Run batches sequentially to avoid rate limits
-    const result1 = await evaluateWithPerplexity(city1, city2, batch1);
-    const result2 = await evaluateWithPerplexity(city1, city2, batch2);
+    // Run batches in parallel — each batch is a separate API call with different metrics
+    const [result1, result2] = await Promise.all([
+      evaluateWithPerplexity(city1, city2, batch1),
+      evaluateWithPerplexity(city1, city2, batch2),
+    ]);
 
     // Merge results
     const combinedScores = [...result1.scores, ...result2.scores];
@@ -1408,22 +1641,26 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     : buildBasePrompt(city1, city2, metrics);
   const prompt = tavilyContext + basePrompt + perplexityAddendum;
 
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.perplexity.ai/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'sonar-reasoning-pro',
-          messages: [
-            {
-              role: 'system',
-              // UPDATED 2026-02-03: Optimized per Perplexity suggestions - clearer structure, evidence limits, confidence rules
-              content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
+  // Retry loop (3 attempts with exponential backoff, matching Gemini/Grok pattern)
+  const MAX_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[PERPLEXITY] Attempt ${attempt}/${MAX_RETRIES} for ${metrics.length} metrics`);
+
+      const response = await fetchWithTimeout(
+        'https://api.perplexity.ai/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'sonar-reasoning-pro',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
 
 ## SCORING RULES
 - Follow the scoring scale in the user message (0-100 with 5 anchor bands)
@@ -1434,6 +1671,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 - "sources": Include 2-3 URLs for reliability and verification
 - "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
 - Keep reasoning brief (1-2 sentences max)
+- IMPORTANT: Minimize your <think> reasoning to conserve output tokens for the JSON response
 
 ## CONFIDENCE RULES
 - "high": Clear, current data from official sources
@@ -1451,8 +1689,8 @@ Return ONLY valid JSON (no markdown, no explanation):
       "city2Legal": 60,
       "city2Enforcement": 55,
       "confidence": "high",
-      "reasoning": "Brief 1-2 sentence explanation",
-      "sources": ["url1", "url2", "url3"],
+      "reasoning": "Brief explanation",
+      "sources": ["url1", "url2"],
       "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
       "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
     }
@@ -1460,111 +1698,157 @@ Return ONLY valid JSON (no markdown, no explanation):
 }
 
 You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
-            },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 16384,
-          temperature: 0.3,
-          return_citations: true,  // FIX: Request citations from Perplexity API
-          // NOTE: Removed strict json_schema - conflicts with sonar-reasoning-pro thinking output
-        })
-      },
-      LLM_TIMEOUT_MS
-    );
+              },
+              { role: 'user', content: prompt }
+            ],
+            // FIX: Increased from 16384 to 32768 — sonar-reasoning-pro <think> tokens
+            // consume part of max_tokens budget, causing JSON output truncation
+            max_tokens: 32768,
+            temperature: 0.3,
+            return_citations: true,
+            stream: false,  // FIX: Explicit non-streaming ensures usage data is returned
+          })
+        },
+        LLM_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
-    }
-
-    const data = await response.json();
-
-    // Perplexity API response format detection (handles multiple formats)
-    let rawText = '';
-
-    // Format 1: New 'output' array format
-    if (data.output?.length) {
-      const last = data.output[data.output.length - 1];
-      const contentArr = last?.content ?? [];
-      const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
-      rawText = textPart?.text ?? '';
-    }
-
-    // Format 2: Legacy 'choices' format (OpenAI-compatible)
-    if (!rawText && data.choices?.[0]?.message?.content) {
-      rawText = data.choices[0].message.content;
-    }
-
-    // Format 3: Direct 'content' field
-    if (!rawText && typeof data.content === 'string') {
-      rawText = data.content;
-    }
-
-    // Format 4: Direct 'text' field
-    if (!rawText && typeof data.text === 'string') {
-      rawText = data.text;
-    }
-
-    if (!rawText) {
-      console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
-      console.error('[PERPLEXITY] Full response:', JSON.stringify(data).slice(0, 1000));
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity - no output or choices' };
-    }
-
-    // Strip <think>...</think> blocks from reasoning models
-    rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-
-    // Check for JSON in code blocks first
-    const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
-    let candidate = codeMatch ? codeMatch[1].trim() : rawText;
-
-    // Extract JSON object - try multiple patterns
-    let jsonMatch = candidate.match(/\{[\s\S]*\}/);
-
-    // If no match, try to find JSON that starts with {"evaluations"
-    if (!jsonMatch) {
-      const evalMatch = candidate.match(/\{"evaluations"[\s\S]*\}/);
-      if (evalMatch) jsonMatch = evalMatch;
-    }
-
-    // If still no match, try to extract from raw text (ignoring code blocks)
-    if (!jsonMatch && !codeMatch) {
-      // Try finding JSON anywhere in the response
-      const jsonStart = rawText.indexOf('{"evaluations"');
-      if (jsonStart !== -1) {
-        const jsonSubstr = rawText.substring(jsonStart);
-        jsonMatch = jsonSubstr.match(/\{[\s\S]*\}/);
+      if (!response.ok) {
+        const errorText = await response.text();
+        // Don't retry 4xx errors (bad request, auth issues)
+        if (response.status >= 400 && response.status < 500) {
+          return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+        }
+        // Retry 5xx errors with backoff
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] ${response.status} error, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error after ${MAX_RETRIES} retries: ${response.status} - ${errorText}` };
       }
+
+      const data = await response.json();
+
+      // Perplexity uses OpenAI-compatible format: choices[0].message.content
+      let rawText = '';
+
+      // Primary format: OpenAI-compatible choices array
+      if (data.choices?.[0]?.message?.content) {
+        rawText = data.choices[0].message.content;
+      }
+
+      // Fallback: output array format
+      if (!rawText && data.output?.length) {
+        const last = data.output[data.output.length - 1];
+        const contentArr = last?.content ?? [];
+        const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
+        rawText = textPart?.text ?? '';
+      }
+
+      // Fallback: Direct content/text fields
+      if (!rawText && typeof data.content === 'string') rawText = data.content;
+      if (!rawText && typeof data.text === 'string') rawText = data.text;
+
+      if (!rawText) {
+        console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
+        console.error('[PERPLEXITY] Full response:', JSON.stringify(data).slice(0, 1000));
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] Empty response, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity after retries' };
+      }
+
+      // Strip <think>...</think> blocks from reasoning models
+      rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+      // Check for JSON in code blocks first
+      const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
+      let candidate = codeMatch ? codeMatch[1].trim() : rawText;
+
+      // Extract JSON object - try multiple patterns
+      let jsonMatch = candidate.match(/\{[\s\S]*\}/);
+
+      // If no match, try to find JSON that starts with {"evaluations"
+      if (!jsonMatch) {
+        const evalMatch = candidate.match(/\{"evaluations"[\s\S]*\}/);
+        if (evalMatch) jsonMatch = evalMatch;
+      }
+
+      // If still no match, try to extract from raw text
+      if (!jsonMatch && !codeMatch) {
+        const jsonStart = rawText.indexOf('{"evaluations"');
+        if (jsonStart !== -1) {
+          const jsonSubstr = rawText.substring(jsonStart);
+          jsonMatch = jsonSubstr.match(/\{[\s\S]*\}/);
+        }
+      }
+
+      if (!jsonMatch) {
+        console.error('[PERPLEXITY] No JSON found. Preview:', rawText.slice(0, 500));
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] No JSON in response, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output after retries' };
+      }
+
+      const scores = parseResponse(jsonMatch[0], 'perplexity');
+      if (scores.length === 0) {
+        console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', jsonMatch[0].slice(0, 300));
+        if (attempt < MAX_RETRIES) {
+          const backoffMs = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[PERPLEXITY] 0 scores parsed, retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+      }
+
+      // Extract token usage from Perplexity response (same format as OpenAI)
+      // FIX: Log when usage is missing so we can diagnose $0.00 cost tracking
+      if (!data?.usage) {
+        console.warn('[PERPLEXITY] API response missing usage data. Keys:', Object.keys(data));
+      } else {
+        console.log(`[PERPLEXITY] Usage: ${data.usage.prompt_tokens} prompt / ${data.usage.completion_tokens} completion tokens`);
+      }
+      const usage: TokenUsage = {
+        inputTokens: data?.usage?.prompt_tokens || 0,
+        outputTokens: data?.usage?.completion_tokens || 0
+      };
+      // FIX: If API returned no usage, estimate from prompt + response length
+      // so costs aren't silently lost (~4 chars per token)
+      if (usage.inputTokens === 0 && usage.outputTokens === 0 && rawText.length > 0) {
+        usage.inputTokens = Math.ceil(prompt.length / 4);
+        usage.outputTokens = Math.ceil(rawText.length / 4);
+        console.warn(`[PERPLEXITY] Estimated tokens from text: ${usage.inputTokens} in / ${usage.outputTokens} out`);
+      }
+
+      return {
+        provider: 'perplexity',
+        success: scores.length > 0,
+        scores,
+        latencyMs: Date.now() - startTime,
+        usage: { tokens: usage }
+      };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
+      if (attempt < MAX_RETRIES) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.warn(`[PERPLEXITY] Exception on attempt ${attempt}: ${errorMsg}, retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
     }
-
-    if (!jsonMatch) {
-      console.error('[PERPLEXITY] No JSON object found. Text preview:', rawText.slice(0, 500));
-      console.error('[PERPLEXITY] Candidate preview:', candidate.slice(0, 500));
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output' };
-    }
-
-    const scores = parseResponse(jsonMatch[0], 'perplexity');
-    if (scores.length === 0) {
-      console.error('[PERPLEXITY] parseResponse returned 0 scores. JSON preview:', jsonMatch[0].slice(0, 300));
-    }
-
-    // Extract token usage from Perplexity response (same format as OpenAI)
-    const usage: TokenUsage = {
-      inputTokens: data?.usage?.prompt_tokens || 0,
-      outputTokens: data?.usage?.completion_tokens || 0
-    };
-
-    return {
-      provider: 'perplexity',
-      success: scores.length > 0,
-      scores,
-      latencyMs: Date.now() - startTime,
-      usage: { tokens: usage }
-    };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key and network');
-    return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
   }
+
+  // Should never reach here, but TypeScript safety
+  return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Unexpected end of retry loop' };
 }
 
 // Main handler
@@ -1630,6 +1914,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log Tavily usage stats for this evaluation
     tavilyStats.log(`${provider} - ${city1} vs ${city2}`);
+
+    // Surface warnings for partial failures
+    const warnings: string[] = result.warnings || [];
+    if (result.success && result.scores.length < metrics.length) {
+      warnings.push(`Only ${result.scores.length} of ${metrics.length} metrics were scored`);
+    }
+    if (tavilyStats.researchCacheMisses > 0 && tavilyStats.researchCacheHits === 0 && !result.usage?.tavily) {
+      warnings.push('Web research data was unavailable — scores may be less accurate');
+    }
+    if (warnings.length > 0) {
+      result.warnings = warnings;
+    }
 
     return res.status(200).json(result);
   } catch (error) {

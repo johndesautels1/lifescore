@@ -12,6 +12,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { SimliClient } from 'simli-client';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // TYPES
@@ -44,10 +45,13 @@ export interface UseSimliReturn {
   status: SimliSessionStatus;
   isConnected: boolean;
   isSpeaking: boolean;
+  isPaused: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   speak: (text: string, options?: Partial<SimliSpeakRequest>) => Promise<void>;
   interrupt: () => void;
+  pause: () => void;
+  resume: () => void;
   error: string | null;
 }
 
@@ -74,6 +78,8 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   const simliClientRef = useRef<SimliClient | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const interruptedRef = useRef<boolean>(false); // Flag to stop audio chunk sending
+  const pausedRef = useRef<boolean>(false); // Flag to pause/resume chunk sending
+  const [isPaused, setIsPaused] = useState(false);
 
   // Callback refs - prevent re-renders from causing reconnections
   const onConnectedRef = useRef(onConnected);
@@ -103,22 +109,18 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     setError(null);
 
     try {
-      // Get credentials from Vite environment
-      const apiKey = import.meta.env.VITE_SIMLI_API_KEY;
-      const faceId = import.meta.env.VITE_SIMLI_FACE_ID;
-
-      // Validate credentials
-      if (!apiKey || !faceId) {
-        const missing = [];
-        if (!apiKey) missing.push('VITE_SIMLI_API_KEY');
-        if (!faceId) missing.push('VITE_SIMLI_FACE_ID');
-        const errorMsg = `Simli not configured. Missing: ${missing.join(', ')}. Add these to Vercel environment variables.`;
+      // Fetch credentials from server (keeps API key out of static JS bundle)
+      const authHeaders = await getAuthHeaders();
+      const configRes = await fetch('/api/simli-config', { headers: authHeaders });
+      if (!configRes.ok) {
+        const errorMsg = 'Simli not configured or auth failed.';
         console.error('[useSimli]', errorMsg);
         setError(errorMsg);
         setStatus('error');
         onErrorRef.current?.(errorMsg);
         return;
       }
+      const { apiKey, faceId } = await configRes.json();
 
       // Validate refs
       if (!videoRef?.current) {
@@ -160,6 +162,9 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         retryDelay_ms: 2000,
         videoReceivedTimeout: 15000,
         enableSFU: true,
+        // Leave empty to use SDK default ('fasttalk')
+        // 'fasttalk' = server-side buffering (Trinity + legacy)
+        // 'artalk' = client-side pacing required (tested: worse on legacy)
         model: '' as const,
         enableConsoleLogs: true,
       };
@@ -255,9 +260,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       console.log('[useSimli] Calling simli-speak API...');
 
       // Call server-side API to generate TTS audio
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/avatar/simli-speak', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           sessionId: session?.sessionId,
           text,
@@ -297,11 +303,16 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
           videoRef.current.play().catch(() => {});
         }
 
-        // Send audio chunks to Simli - let Simli handle buffering
+        // Send audio chunks to Simli with FASTER-than-realtime pacing
         // Chunk size: 6000 bytes (Simli recommended per docs.simli.com)
-        // Pacing: 0ms - Simli handles internal buffering and playback timing
+        // Pacing: ~115ms per chunk — well ahead of the 187.5ms of audio per chunk
+        //   PCM16 @ 16kHz mono = 32000 bytes/sec → 6000 bytes = 187.5ms
+        //   150ms was still 25% too fast on lips. Lower = more buffer = slower lips.
+        //   115ms delivers ~63% ahead of real-time, giving Simli ample buffer
+        //   to pace lip animation at natural speech speed.
+        //   Tuning history: 0→180→205(worse)→150(25% fast)→115
         const chunkSize = 6000;
-        const pacingMs = 0;
+        const pacingMs = 115;
 
         // Split into chunks
         const chunks: Uint8Array[] = [];
@@ -309,12 +320,17 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
           chunks.push(audioBytes.slice(i, Math.min(i + chunkSize, audioBytes.length)));
         }
 
-        // Send chunks with pacing - stops if interrupted
+        // Send chunks with pacing - stops if interrupted, waits if paused
         let chunkIndex = 0;
         const sendNextChunk = () => {
           // Check if interrupted before sending next chunk
           if (interruptedRef.current) {
             console.log('[useSimli] Audio sending interrupted at chunk', chunkIndex, 'of', chunks.length);
+            return;
+          }
+          // If paused, wait and retry without advancing
+          if (pausedRef.current) {
+            setTimeout(sendNextChunk, 50);
             return;
           }
           if (chunkIndex < chunks.length && simliClientRef.current) {
@@ -355,9 +371,47 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   }, [isConnected, session, status, audioRef, videoRef]);
 
   /**
+   * Pause current speech - freezes chunk sending and pauses audio/video
+   * Can be resumed with resume()
+   */
+  const pause = useCallback(() => {
+    if (pausedRef.current) return; // Already paused
+    console.log('[useSimli] ⏸ PAUSE - Freezing audio/video');
+    pausedRef.current = true;
+    setIsPaused(true);
+
+    if (audioRef?.current) {
+      audioRef.current.pause();
+    }
+    if (videoRef?.current) {
+      videoRef.current.pause();
+    }
+  }, [audioRef, videoRef]);
+
+  /**
+   * Resume from pause - resumes chunk sending and plays audio/video
+   */
+  const resume = useCallback(() => {
+    if (!pausedRef.current) return; // Not paused
+    console.log('[useSimli] ▶ RESUME - Unfreezing audio/video');
+    pausedRef.current = false;
+    setIsPaused(false);
+
+    if (audioRef?.current) {
+      audioRef.current.play().catch(() => {});
+    }
+    if (videoRef?.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [audioRef, videoRef]);
+
+  /**
    * Interrupt current speech - aggressively stop all audio
    */
   const interrupt = useCallback(() => {
+    // Also clear pause state on interrupt
+    pausedRef.current = false;
+    setIsPaused(false);
     console.log('[useSimli] 🛑 INTERRUPT - Stopping all audio');
 
     // CRITICAL: Set interrupt flag to stop audio chunk loop
@@ -369,12 +423,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       speakingTimeoutRef.current = null;
     }
 
-    // Send empty audio to clear Simli buffer (multiple times to ensure it's cleared)
+    // Use SDK ClearBuffer to flush server-side audio queue
+    // (avoids sending silence data that could accumulate and desync lip timing)
     if (simliClientRef.current) {
-      const silence = new Uint8Array(6000);
-      simliClientRef.current.sendAudioData(silence);
-      simliClientRef.current.sendAudioData(silence);
-      simliClientRef.current.sendAudioData(silence);
+      simliClientRef.current.ClearBuffer();
     }
 
     // AGGRESSIVE: Directly pause and mute the audio element
@@ -418,10 +470,13 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     status,
     isConnected,
     isSpeaking,
+    isPaused,
     connect,
     disconnect,
     speak,
     interrupt,
+    pause,
+    resume,
     error,
   };
 }

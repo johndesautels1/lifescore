@@ -43,7 +43,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -101,7 +101,7 @@ export default async function handler(
                 similarity_boost: emotionSettings.similarity_boost,
                 style: emotionSettings.style,
                 use_speaker_boost: true,
-                speed: 1.0,
+                speed: body.speed || 1.0,
               },
             }),
             signal: controller.signal,

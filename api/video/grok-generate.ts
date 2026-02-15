@@ -11,14 +11,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
+
+// Storage bucket for persisting court order / grok videos
+const COURT_ORDER_BUCKET = 'court-order-videos';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 export const config = {
-  maxDuration: 120, // 2 minutes for video generation submission
+  maxDuration: 240, // 4 minutes for sequential video generation (loser + winner)
 };
 
 // Grok API configuration
@@ -64,6 +68,7 @@ interface NewLifeVideosRequest {
   loserCity: string;
   winnerCityType?: CityType;
   loserCityType?: CityType;
+  forceRegenerate?: boolean;
 }
 
 interface CourtOrderVideoRequest {
@@ -403,15 +408,27 @@ function generateKlingJWT(): string | null {
  * Generate video using Kling AI API
  * Returns task_id for polling, or null if failed
  */
-async function generateWithKling(prompt: string, durationSeconds: number = 10): Promise<{ predictionId: string; status: string } | null> {
+async function generateWithKling(prompt: string, durationSeconds: number = 10): Promise<{ predictionId: string; status: string; error?: string } | null> {
   const token = generateKlingJWT();
 
   if (!token) {
-    return null;
+    console.warn('[KLING-VIDEO] JWT generation failed — KLING_VIDEO_API_KEY or KLING_VIDEO_SECRET missing');
+    return { predictionId: '', status: 'failed', error: 'Kling JWT failed: missing KLING_VIDEO_API_KEY or KLING_VIDEO_SECRET' };
   }
 
   try {
     console.log('[KLING-VIDEO] Attempting Kling video generation...');
+    console.log('[KLING-VIDEO] Model:', KLING_MODEL, '| Duration:', durationSeconds, '| Prompt length:', prompt.length);
+
+    const requestBody = {
+      model_name: KLING_MODEL,
+      prompt: prompt.slice(0, 2500), // Max 2500 chars
+      duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
+      aspect_ratio: '16:9',
+      mode: 'std', // Standard mode (cost-effective)
+      // Note: sound requires 'pro' mode on kling-v2-6; std mode does not support sound
+      // See: Kling API error 1201 - "model/mode(kling-v2-6/std) is not supported with sound on"
+    };
 
     const response = await fetch(`${KLING_API_URL}/v1/videos/text2video`, {
       method: 'POST',
@@ -419,27 +436,22 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model_name: KLING_MODEL,
-        prompt: prompt.slice(0, 2500), // Max 2500 chars
-        duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
-        aspect_ratio: '16:9',
-        mode: 'std', // Standard mode (cost-effective)
-        sound: 'on', // Enable audio (v2.6 feature)
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      const errorMsg = `Kling HTTP ${response.status}: ${errorText.slice(0, 500)}`;
       console.warn('[KLING-VIDEO] Kling API error:', response.status, errorText);
-      return null; // Fall back to Replicate
+      return { predictionId: '', status: 'failed', error: errorMsg };
     }
 
     const result = await response.json();
 
     if (result.code !== 0) {
+      const errorMsg = `Kling API error ${result.code}: ${result.message || 'unknown'}`;
       console.warn('[KLING-VIDEO] Kling API returned error:', result.code, result.message);
-      return null;
+      return { predictionId: '', status: 'failed', error: errorMsg };
     }
 
     console.log('[KLING-VIDEO] Kling generation started:', result.data.task_id);
@@ -449,8 +461,9 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
       status: result.data.task_status || 'submitted',
     };
   } catch (error) {
+    const errorMsg = `Kling exception: ${error instanceof Error ? error.message : String(error)}`;
     console.warn('[KLING-VIDEO] Kling generation failed:', error);
-    return null; // Fall back to Replicate
+    return { predictionId: '', status: 'failed', error: errorMsg };
   }
 }
 
@@ -472,7 +485,7 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
   const response = await fetch(`${REPLICATE_API_URL}/models/${REPLICATE_VIDEO_MODEL}/predictions`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${replicateToken}`,
+      'Authorization': `Token ${replicateToken}`,
       'Content-Type': 'application/json',
       'Prefer': 'wait=5', // Wait up to 5 seconds for fast responses
     },
@@ -708,6 +721,48 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
       return null;
     }
 
+    // FIX: If cache hit has a temporary provider URL (no storage path), migrate to permanent storage.
+    // This prevents the URL-expiration problem that caused videos to be lost.
+    if (data?.video_url && !data.video_storage_path) {
+      const isTemporaryUrl = data.video_url.includes('replicate.delivery') ||
+                             data.video_url.includes('klingai.com');
+
+      if (isTemporaryUrl) {
+        console.log('[GROK-VIDEO] Cache hit has temporary provider URL, attempting migration:', data.id);
+        const persistKey = `${data.city_name}-${data.video_type}-${data.id.substring(0, 8)}`;
+        const persisted = await persistVideoToStorage(
+          data.video_url,
+          persistKey,
+          supabaseAdmin,
+          COURT_ORDER_BUCKET
+        );
+
+        if (persisted) {
+          // Migration succeeded — update DB with permanent URL
+          console.log('[GROK-VIDEO] Migrated cache hit to permanent storage:', persisted.publicUrl);
+          await supabaseAdmin
+            .from('grok_videos')
+            .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+            .eq('id', data.id);
+          data.video_url = persisted.publicUrl;
+        } else {
+          // URL already expired — mark as failed, force regeneration
+          console.warn('[GROK-VIDEO] Cache hit URL expired, marking failed:', data.id);
+          await supabaseAdmin
+            .from('grok_videos')
+            .update({ status: 'failed', error_message: 'Provider URL expired before migration' })
+            .eq('id', data.id);
+          return null;
+        }
+      }
+    }
+
+    // Skip cache entries with no video URL (incomplete records)
+    if (data && !data.video_url) {
+      console.log('[GROK-VIDEO] Cache hit has no video URL, forcing regeneration');
+      return null;
+    }
+
     return data;
   } catch (err) {
     console.warn('[GROK-VIDEO] Cache check failed:', err);
@@ -715,7 +770,7 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
   }
 }
 
-async function checkProcessing(userId: string, comparisonId: string, videoType: VideoType): Promise<GrokVideoRecord | null> {
+async function checkProcessing(userId: string, comparisonId: string, videoType: VideoType, forceRegenerate: boolean = false): Promise<GrokVideoRecord | null> {
   try {
     const { data, error } = await supabaseAdmin
       .from('grok_videos')
@@ -729,6 +784,31 @@ async function checkProcessing(userId: string, comparisonId: string, videoType: 
     if (error) {
       console.warn('[GROK-VIDEO] Processing check error:', error.message);
       return null;
+    }
+
+    if (!data) return null;
+
+    // FIX: If force regenerate requested, mark any existing processing record as failed
+    if (forceRegenerate) {
+      console.log('[GROK-VIDEO] Force regenerate requested, marking existing record as failed:', data.id);
+      await supabaseAdmin
+        .from('grok_videos')
+        .update({ status: 'failed', error_message: 'Superseded by force regeneration' })
+        .eq('id', data.id);
+      return null;
+    }
+
+    // FIX: Reduced stale timeout from 10 min to 3 min (dead generations)
+    if (data.created_at) {
+      const ageMs = Date.now() - new Date(data.created_at).getTime();
+      if (ageMs > 3 * 60 * 1000) {
+        console.log('[GROK-VIDEO] Stale processing record (', Math.round(ageMs / 60000), 'min old), marking failed');
+        await supabaseAdmin
+          .from('grok_videos')
+          .update({ status: 'failed', error_message: 'Generation timed out (stale)' })
+          .eq('id', data.id);
+        return null;
+      }
     }
 
     return data;
@@ -767,21 +847,25 @@ async function generateSingleVideo(
   comparisonId: string,
   cityName: string,
   videoType: VideoType,
-  cityType: CityType
+  cityType: CityType,
+  forceRegenerate: boolean = false
 ): Promise<{
   video: Partial<GrokVideoRecord>;
   cached: boolean;
   reused: boolean;
+  klingError?: string;
 }> {
-  // Check cache first (reuse across users for same city)
-  const cached = await checkCache(cityName, videoType);
-  if (cached) {
-    console.log('[GROK-VIDEO] Cache hit for:', cityName, videoType);
-    return { video: cached, cached: true, reused: cached.user_id !== userId };
+  // Check cache first (reuse across users for same city) - skip if forcing regeneration
+  if (!forceRegenerate) {
+    const cached = await checkCache(cityName, videoType);
+    if (cached) {
+      console.log('[GROK-VIDEO] Cache hit for:', cityName, videoType);
+      return { video: cached, cached: true, reused: cached.user_id !== userId };
+    }
   }
 
-  // Check if already processing for this user
-  const processing = await checkProcessing(userId, comparisonId, videoType);
+  // Check if already processing for this user (force flag will clear stale records)
+  const processing = await checkProcessing(userId, comparisonId, videoType, forceRegenerate);
   if (processing) {
     console.log('[GROK-VIDEO] Already processing for:', cityName, videoType);
     return { video: processing, cached: false, reused: false };
@@ -793,18 +877,22 @@ async function generateSingleVideo(
 
   // Try Kling first (high quality with sound), then Replicate fallback
   // Note: Grok video API doesn't exist publicly, so we skip it
+  let klingError: string | undefined;
   let result = await generateWithKling(prompt, durationSec);
   let provider = 'kling';
 
-  if (!result) {
-    console.log('[VIDEO] Kling unavailable (missing credentials or API error), trying Replicate...');
+  // Check if Kling returned an error (now returns error info instead of null)
+  if (!result || result.error) {
+    klingError = result?.error || 'Kling returned null';
+    console.log('[VIDEO] Kling failed:', klingError, '— trying Replicate...');
+    result = null;
 
     try {
       result = await generateWithReplicate(prompt);
       provider = 'replicate';
     } catch (replicateError) {
       console.error('[VIDEO] Replicate also failed:', replicateError);
-      throw new Error(`No video provider available. Kling: missing credentials. Replicate: ${replicateError instanceof Error ? replicateError.message : 'unknown error'}`);
+      throw new Error(`No video provider available. Kling: ${klingError}. Replicate: ${replicateError instanceof Error ? replicateError.message : 'unknown error'}`);
     }
   }
 
@@ -841,6 +929,7 @@ async function generateSingleVideo(
     },
     cached: false,
     reused: false,
+    klingError,
   };
 }
 
@@ -852,7 +941,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -895,7 +984,7 @@ export default async function handler(
     // NEW LIFE VIDEOS (Winner + Loser pair)
     // ========================================================================
     if (body.action === 'new_life_videos') {
-      const { winnerCity, loserCity, winnerCityType, loserCityType } = body as NewLifeVideosRequest;
+      const { winnerCity, loserCity, winnerCityType, loserCityType, forceRegenerate } = body as NewLifeVideosRequest;
 
       if (!winnerCity || !loserCity) {
         res.status(400).json({
@@ -905,25 +994,27 @@ export default async function handler(
         return;
       }
 
-      console.log('[GROK-VIDEO] Generating New Life videos:', winnerCity, 'vs', loserCity);
+      console.log('[GROK-VIDEO] Generating New Life videos:', winnerCity, 'vs', loserCity, forceRegenerate ? '(FORCE REGEN)' : '');
 
-      // Generate both videos in parallel
-      const [winnerResult, loserResult] = await Promise.all([
-        generateSingleVideo(
-          body.userId,
-          body.comparisonId,
-          winnerCity,
-          'winner_mood',
-          winnerCityType || detectCityType(winnerCity)
-        ),
-        generateSingleVideo(
-          body.userId,
-          body.comparisonId,
-          loserCity,
-          'loser_mood',
-          loserCityType || detectCityType(loserCity)
-        ),
-      ]);
+      // Generate videos sequentially (loser first, then winner) to prevent Vercel 120s timeout
+      // Parallel Promise.all was causing both Kling submissions to race the clock and timeout at ~73%
+      const loserResult = await generateSingleVideo(
+        body.userId,
+        body.comparisonId,
+        loserCity,
+        'loser_mood',
+        loserCityType || detectCityType(loserCity),
+        !!forceRegenerate
+      );
+
+      const winnerResult = await generateSingleVideo(
+        body.userId,
+        body.comparisonId,
+        winnerCity,
+        'winner_mood',
+        winnerCityType || detectCityType(winnerCity),
+        !!forceRegenerate
+      );
 
       // Increment usage: count 1 for the winner+loser pair (only if NOT fully cached)
       const fullyFromCache = winnerResult.cached && loserResult.cached;
@@ -934,10 +1025,16 @@ export default async function handler(
         console.log('[GROK-VIDEO] No usage counted - fully cached');
       }
 
+      // Collect provider debug info for troubleshooting
+      const providerDebug: Record<string, string> = {};
+      if (winnerResult.klingError) providerDebug.winnerKlingError = winnerResult.klingError;
+      if (loserResult.klingError) providerDebug.loserKlingError = loserResult.klingError;
+
       res.status(200).json({
         success: true,
         cached: fullyFromCache,
         usageCounted: !fullyFromCache,
+        providerDebug: Object.keys(providerDebug).length > 0 ? providerDebug : undefined,
         videos: {
           winner: {
             id: winnerResult.video.id,
@@ -1012,6 +1109,7 @@ export default async function handler(
         success: true,
         cached: result.cached,
         usageCounted: !result.cached,
+        providerDebug: result.klingError ? { klingError: result.klingError } : undefined,
         video: {
           id: result.video.id,
           userId: result.video.user_id,

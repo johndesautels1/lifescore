@@ -73,7 +73,7 @@ Then proceed with HIGH priority items #51-56 and text color fixes #57-67.
 | # | Item | Details | Status |
 |---|------|---------|--------|
 | 5 | Judge Video welcome screen | Added mobile CSS scaling (768px/480px breakpoints) | ✅ DONE (2/3) |
-| 6 | Judge Video - Christiano animation | Wav2Lip: wider pads, 30fps, 720p (works but slow - revisit later) | ✅ DONE (2/3) |
+| 6 | Judge Video - Cristiano animation | Wav2Lip: wider pads, 30fps, 720p (works but slow - revisit later) | ✅ DONE (2/3) |
 | 7 | Results Report section scroll | Fixed: scrollIntoView block:'start' scrolls to TOP of section, not bottom | ✅ DONE (2/3, b29d000) |
 | 8 | Post-search flow redesign | Show success status buttons first, user clicks "View Results" manually - do NOT auto-open LLM data page | ✅ DONE (merged with #55) |
 | 51 | **Header bar mobile size reduction** | Reduce top-right header bar (tier badge, API monitoring, login) by 15% on mobile (85% of current size) | 🔴 ACTIVE |
@@ -364,7 +364,7 @@ Then proceed with HIGH priority items #51-56 and text color fixes #57-67.
 # KNOWN ISSUES
 
 1. **Supabase Slow/Timeout** (#38) - Profile fetch taking 45+ seconds. Supabase project may be paused/cold starting. Partially mitigated with fail-open.
-2. **Christiano Animation Quality** - Wav2Lip works but animation is stiff. Long-term: consider alternative lip-sync models.
+2. **Cristiano Animation Quality** - Wav2Lip works but animation is stiff. Long-term: consider alternative lip-sync models.
 3. **NewLifeVideos Instability** (#48) - Videos render with expired cached URLs, causing console spam before eventually loading.
 4. **API Cost Data Not Persisting** (#50) - Cost tracking data only stored in localStorage, not syncing to Supabase database.
 5. **API Quota Inconsistency** (#73) - ElevenLabs shows 100% quota usage but $0.00 in cost tracking - impossible state.

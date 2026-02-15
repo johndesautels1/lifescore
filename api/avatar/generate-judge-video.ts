@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE - Judge Video Generation API
  *
- * Generates Christiano judge videos using Replicate Wav2Lip.
+ * Generates Cristiano judge videos using Replicate Wav2Lip.
  * Flow: Script → TTS Audio → Upload to Storage → Wav2Lip → Video
  *
  * Uses Wav2Lip: ~6 seconds, $0.005/video, reliable
@@ -13,6 +13,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
+import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -21,13 +23,13 @@ const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 // ~6 seconds generation time, $0.005 per run on L40S GPU
 const WAV2LIP_VERSION = 'skytells-research/wav2lip:22b1ecf6252b8adcaeadde30bb672b199c125b7d3c98607db70b66eea21d75ae';
 
-// Christiano judge avatar image (PNG/JPG for Wav2Lip)
-const CHRISTIANO_IMAGE_URL = process.env.CHRISTIANO_IMAGE_URL ||
+// Cristiano judge avatar image (PNG/JPG for Wav2Lip)
+const CRISTIANO_IMAGE_URL = process.env.CRISTIANO_IMAGE_URL ||
   'https://replicate.delivery/pbxt/OUrlfPYTJP3dttVkSYXUps6yUmzZbLTdVdrut77q48Tx7GfI/enhanced_avatar_max.png';
 
-// ElevenLabs voice for Christiano (authoritative male voice)
-// Updated 2026-01-27: Custom Christiano voice via Simli
-const CHRISTIANO_VOICE_ID = process.env.ELEVENLABS_CHRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV'; // Christiano Judge voice
+// ElevenLabs voice for Cristiano (authoritative male voice)
+// Updated 2026-01-27: Custom Cristiano voice via Simli
+const CRISTIANO_VOICE_ID = process.env.ELEVENLABS_CRISTIANO_VOICE_ID || 'ZpwpoMoU84OhcbA2YBBV'; // Cristiano Judge voice
 
 export const config = {
   maxDuration: 120, // 2 minutes for TTS + Replicate submission
@@ -70,7 +72,7 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
   console.log('[JUDGE-VIDEO] Generating TTS audio, script length:', script.length);
   console.log('[JUDGE-VIDEO] ElevenLabs key exists:', !!elevenLabsKey, 'length:', elevenLabsKey?.length || 0);
-  console.log('[JUDGE-VIDEO] Voice ID:', CHRISTIANO_VOICE_ID);
+  console.log('[JUDGE-VIDEO] Voice ID:', CRISTIANO_VOICE_ID);
 
   // Try ElevenLabs first, fallback to OpenAI if it fails (quota exceeded, etc)
   if (elevenLabsKey) {
@@ -79,7 +81,7 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
     try {
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${CHRISTIANO_VOICE_ID}`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${CRISTIANO_VOICE_ID}`,
         {
           method: 'POST',
           headers: {
@@ -217,12 +219,16 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  if (handleCors(req, res, 'open')) return;
+  if (handleCors(req, res, 'same-app')) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // JWT auth — reject unauthenticated requests
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   const replicateToken = process.env.REPLICATE_API_TOKEN;
   if (!replicateToken) {
@@ -255,7 +261,7 @@ export default async function handler(
       ]);
     };
 
-    const DB_TIMEOUT_MS = 45000; // 45 second timeout for DB queries
+    const DB_TIMEOUT_MS = 8000; // 8s timeout for DB queries (PostgREST is always-on)
 
     // Check cache first (with timeout - don't let DB issues block video generation)
     // Using maybeSingle() instead of single() to avoid error when no rows exist
@@ -274,6 +280,28 @@ export default async function handler(
 
     // Cache hit - return existing video
     if (cached) {
+      let videoUrl = cached.video_url;
+
+      // Auto-migrate: if cached URL is a temporary Replicate CDN URL, persist to storage
+      if (videoUrl && videoUrl.includes('replicate.delivery') && !cached.video_storage_path) {
+        console.log('[JUDGE-VIDEO] Cache hit has stale Replicate URL, migrating to storage...');
+        const persisted = await persistVideoToStorage(videoUrl, cached.comparison_id, supabaseAdmin);
+        if (persisted) {
+          videoUrl = persisted.publicUrl;
+          // Update DB in background (don't block the response)
+          supabaseAdmin
+            .from('avatar_videos')
+            .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
+            .eq('id', cached.id)
+            .then(({ error: migErr }) => {
+              if (migErr) console.warn('[JUDGE-VIDEO] Migration update failed:', migErr.message);
+              else console.log('[JUDGE-VIDEO] Migrated cached video to permanent storage');
+            });
+        } else {
+          console.warn('[JUDGE-VIDEO] Migration failed (Replicate URL may have expired), returning stale URL');
+        }
+      }
+
       console.log('[JUDGE-VIDEO] Cache hit:', comparisonId);
       res.status(200).json({
         success: true,
@@ -282,7 +310,7 @@ export default async function handler(
           id: cached.id,
           comparisonId: cached.comparison_id,
           status: 'completed',
-          videoUrl: cached.video_url,
+          videoUrl,
           script: cached.script,
           durationSeconds: cached.duration_seconds,
           createdAt: cached.created_at,
@@ -355,7 +383,7 @@ export default async function handler(
     // - Higher resolution (720p)
     // NOTE: resize_factor removed - not supported by this Wav2Lip version
     const replicateInput = {
-      face: CHRISTIANO_IMAGE_URL,
+      face: CRISTIANO_IMAGE_URL,
       audio: audioUrl,
       pads: '0 15 5 5',       // Wider capture area (top, bottom, left, right)
       smooth: true,

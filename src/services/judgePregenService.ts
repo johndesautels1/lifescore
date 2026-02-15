@@ -18,7 +18,8 @@
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { JudgeReport } from '../components/JudgeTab';
-import { getSavedJudgeReports } from './savedComparisons';
+import { getAuthHeaders } from '../lib/supabase';
+import { getSavedJudgeReports, type SavedJudgeReport } from './savedComparisons';
 
 // ============================================================================
 // TYPES
@@ -26,6 +27,7 @@ import { getSavedJudgeReports } from './savedComparisons';
 
 interface PregenOptions {
   userId: string;
+  accessToken?: string;
   skipIfExists?: boolean;
 }
 
@@ -42,7 +44,7 @@ export function startBackgroundReportGeneration(
   comparisonResult: EnhancedComparisonResult | ComparisonResult,
   options: PregenOptions
 ): void {
-  const { userId } = options;
+  const { userId, accessToken } = options;
 
   console.log('[JudgePregen] Starting background report generation for:', {
     comparisonId: comparisonResult.comparisonId,
@@ -54,7 +56,10 @@ export function startBackgroundReportGeneration(
   // Fire and forget - don't await
   fetch('/api/judge-report', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+    },
     body: JSON.stringify({
       comparisonResult,
       userId,
@@ -90,7 +95,7 @@ export function startBackgroundReportGeneration(
  * Video will be stored in avatar_videos table when complete.
  */
 export function startBackgroundVideoGeneration(report: JudgeReport): void {
-  // Build script for Christiano
+  // Build script for Cristiano
   const winner =
     report.executiveSummary.recommendation === 'city1'
       ? report.city1
@@ -108,7 +113,7 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
       ? report.summaryOfFindings.city2Score
       : report.summaryOfFindings.city1Score;
 
-  const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+  const script = `Good day. I'm Cristiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
 
   console.log('[JudgePregen] Starting background video generation for:', {
     reportId: report.reportId,
@@ -117,9 +122,10 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
   });
 
   // Fire and forget - don't await
+  getAuthHeaders().then(authHeaders => {
   fetch('/api/avatar/generate-judge-video', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({
       comparisonId: report.comparisonId,
       script,
@@ -149,6 +155,7 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
     .catch((error) => {
       console.error('[JudgePregen] Video generation error:', error);
     });
+  }); // close getAuthHeaders().then
 }
 
 // ============================================================================
@@ -161,10 +168,11 @@ export function startBackgroundVideoGeneration(report: JudgeReport): void {
  */
 export async function checkExistingReport(
   comparisonId: string
-): Promise<JudgeReport | null> {
+): Promise<SavedJudgeReport | null> {
   try {
     // Check localStorage first (faster) via centralized service
-    const existingReports = getSavedJudgeReports() as JudgeReport[];
+    // SavedJudgeReport is a subset of JudgeReport — safe for comparisonId lookup
+    const existingReports = getSavedJudgeReports();
 
     const localReport = existingReports.find(
       (r) => r.comparisonId === comparisonId
@@ -236,7 +244,8 @@ export async function checkExistingVideo(
  */
 export function startJudgePregeneration(
   comparisonResult: EnhancedComparisonResult | ComparisonResult,
-  userId: string
+  userId: string,
+  accessToken?: string
 ): void {
   // Validate we have the required data
   if (!comparisonResult?.comparisonId) {
@@ -252,7 +261,7 @@ export function startJudgePregeneration(
   console.log('[JudgePregen] Initiating background pre-generation...');
 
   // Start report generation (which will chain to video generation)
-  startBackgroundReportGeneration(comparisonResult, { userId });
+  startBackgroundReportGeneration(comparisonResult, { userId, accessToken });
 }
 
 export default {

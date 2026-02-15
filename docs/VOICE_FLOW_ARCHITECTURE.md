@@ -10,7 +10,7 @@
 The LIFE SCORE app uses a multi-character voice system with 3 AI personas:
 - **Olivia** - Primary AI advisor (warm, conversational female)
 - **Emilia** - Secondary AI advisor (soft, expressive female)
-- **Christiano** - Judge avatar (deep, authoritative male)
+- **Cristiano** - Judge avatar (deep, authoritative male)
 
 Each character has redundant TTS providers with automatic fallback to ensure voice never fails.
 
@@ -25,12 +25,13 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 | `api/olivia/tts.ts` | Audio-only TTS | ElevenLabs | `W0Zh57R76zl4xEJ4vCd2` | OpenAI | `nova` | 401, 429, any error |
 | `api/avatar/simli-speak.ts` | Simli WebRTC avatar | ElevenLabs | `W0Zh57R76zl4xEJ4vCd2` | OpenAI | `nova` | No key, any error |
 | `api/olivia/avatar/streams.ts` | D-ID WebRTC avatar | Microsoft (D-ID built-in) | `en-GB-SoniaNeural` | N/A | N/A | N/A (D-ID handles) |
-| `api/olivia/avatar/heygen.ts` | HeyGen avatar | HeyGen built-in | Configurable | N/A | N/A | N/A (HeyGen handles) |
+| `api/olivia/avatar/heygen.ts` | HeyGen streaming avatar (Gamma presenter) | HeyGen built-in | `HEYGEN_OLIVIA_VOICE_ID` | N/A | N/A | N/A (HeyGen handles) |
+| `api/olivia/avatar/heygen-video.ts` | HeyGen pre-rendered video (Gamma presenter) | HeyGen built-in | `HEYGEN_OLIVIA_VOICE_ID` | N/A | N/A | N/A (HeyGen handles) |
 
 **Olivia Voice Consistency:**
-- Audio-only & Simli: ElevenLabs voice → OpenAI `nova`
+- Audio-only & Simli: ElevenLabs cloned voice → OpenAI `nova` fallback
 - D-ID Streams: Microsoft Sonia (British female)
-- HeyGen: Platform-managed voice
+- HeyGen (Gamma video presenter ONLY): Platform-managed voice via `HEYGEN_OLIVIA_VOICE_ID` — completely separate from chat TTS
 
 ---
 
@@ -45,16 +46,16 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 
 ---
 
-### Character: CHRISTIANO (Judge)
+### Character: CRISTIANO (Judge)
 
 | Endpoint | Purpose | Primary TTS | Primary Voice | Fallback TTS | Fallback Voice | Fallback Triggers |
 |----------|---------|-------------|---------------|--------------|----------------|-------------------|
 | `api/avatar/generate-judge-video.ts` | Replicate Wav2Lip video | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, any error |
 | `api/judge-video.ts` | D-ID Talks video (fallback) | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, no key |
 
-**Christiano Voice Consistency:**
+**Cristiano Voice Consistency:**
 - Always deep, authoritative male
-- ElevenLabs Christiano → OpenAI `onyx`
+- ElevenLabs Cristiano → OpenAI `onyx`
 
 ---
 
@@ -64,7 +65,7 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 |-----------|---------------------|--------------|------------|
 | Olivia | `W0Zh57R76zl4xEJ4vCd2` | `nova` | Warm, conversational female |
 | Emilia | `21m00Tcm4TlvDq8ikWAM` (Rachel) | `shimmer` | Soft, expressive female |
-| Christiano | `ZpwpoMoU84OhcbA2YBBV` | `onyx` | Deep, authoritative male |
+| Cristiano | `ZpwpoMoU84OhcbA2YBBV` | `onyx` | Deep, authoritative male |
 
 ---
 
@@ -75,7 +76,7 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 ELEVENLABS_API_KEY=xxx
 ELEVENLABS_OLIVIA_VOICE_ID=W0Zh57R76zl4xEJ4vCd2
 ELEVENLABS_EMILIA_VOICE_ID=21m00Tcm4TlvDq8ikWAM
-ELEVENLABS_CHRISTIANO_VOICE_ID=ZpwpoMoU84OhcbA2YBBV
+ELEVENLABS_CRISTIANO_VOICE_ID=ZpwpoMoU84OhcbA2YBBV
 ```
 
 ### OpenAI (Fallback)
@@ -97,16 +98,18 @@ DID_API_KEY=xxx
 DID_PRESENTER_URL=xxx
 DID_JUDGE_PRESENTER_URL=xxx
 
-# HeyGen (deprecated)
+# HeyGen (Olivia streaming avatar + video, Cristiano avatar)
 HEYGEN_API_KEY=xxx
-HEYGEN_AVATAR_ID=xxx
-HEYGEN_VOICE_ID=xxx
+HEYGEN_OLIVIA_AVATAR_ID=xxx
+HEYGEN_OLIVIA_VOICE_ID=xxx
+HEYGEN_CRISTIANO_AVATAR_ID=7a0ee88ad6814ed9af896f9164407c41
+HEYGEN_CRISTIANO_VOICE_ID=xxx
 
 # Replicate (Judge video)
 REPLICATE_API_TOKEN=xxx
 REPLICATE_DEPLOYMENT_OWNER=xxx
 REPLICATE_DEPLOYMENT_NAME=xxx
-CHRISTIANO_IMAGE_URL=xxx
+CRISTIANO_IMAGE_URL=xxx
 ```
 
 ---
@@ -161,7 +164,7 @@ CHRISTIANO_IMAGE_URL=xxx
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CHRISTIANO (JUDGE) VOICE FLOW                         │
+│                        CRISTIANO (JUDGE) VOICE FLOW                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────────┐    ┌──────────────────┐                              │
@@ -196,7 +199,7 @@ CHRISTIANO_IMAGE_URL=xxx
 
 ## Pricing Comparison
 
-| Provider | Cost Model | Olivia | Emilia | Christiano |
+| Provider | Cost Model | Olivia | Emilia | Cristiano |
 |----------|------------|--------|--------|------------|
 | **ElevenLabs** | $0.18/1K chars | Primary | Primary | Primary |
 | **OpenAI TTS** | $0.015/1K chars | Fallback (12x cheaper) | Fallback | Fallback |
@@ -210,7 +213,7 @@ CHRISTIANO_IMAGE_URL=xxx
 | **D-ID Streams** | $0.025/sec | Olivia real-time avatar (fallback) |
 | **D-ID Talks** | $0.025/sec | Judge video (fallback) |
 | **Replicate Wav2Lip** | $0.0014/sec | Judge video (primary, ~18x cheaper than D-ID) |
-| **HeyGen** | $0.032/sec | Deprecated |
+| **HeyGen** | $0.032/sec | Gamma report video presenter (streaming + pre-rendered MP4) |
 
 ---
 
@@ -224,7 +227,8 @@ CHRISTIANO_IMAGE_URL=xxx
 5. `api/avatar/generate-judge-video.ts` - Replicate Wav2Lip + TTS
 6. `api/judge-video.ts` - D-ID Talks + TTS
 7. `api/olivia/avatar/streams.ts` - D-ID Streams WebRTC
-8. `api/olivia/avatar/heygen.ts` - HeyGen (deprecated)
+8. `api/olivia/avatar/heygen.ts` - HeyGen streaming avatar (Gamma report presenter)
+9. `api/olivia/avatar/heygen-video.ts` - HeyGen pre-rendered video (Gamma report presenter)
 
 ### React Hooks (Client-Side)
 1. `src/hooks/useTTS.ts` - Generic TTS playback

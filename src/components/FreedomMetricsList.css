@@ -11,10 +11,90 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 280px;
+  max-height: 320px;
   overflow-y: auto;
   padding-right: 0.5rem;
   margin-bottom: 1rem;
+}
+
+/* ============================================================================
+   SECTION HEADER - City Winner Label
+   ============================================================================ */
+
+.freedom-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.section-winner-label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #d4af37;
+  letter-spacing: -0.01em;
+}
+
+.section-category-context {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: lowercase;
+}
+
+/* Light mode */
+[data-theme="light"] .section-winner-label,
+:root:not([data-theme="dark"]) .section-winner-label {
+  color: #92710a;
+}
+
+[data-theme="light"] .section-category-context,
+:root:not([data-theme="dark"]) .section-category-context {
+  color: #4b5563;
+}
+
+/* Score Legend - City Names Above Scores */
+.freedom-score-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legend-winner {
+  color: #d4af37;
+}
+
+.legend-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.6rem;
+}
+
+.legend-loser {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Light mode legend */
+[data-theme="light"] .legend-winner,
+:root:not([data-theme="dark"]) .legend-winner {
+  color: #92710a;
+}
+
+[data-theme="light"] .legend-separator,
+:root:not([data-theme="dark"]) .legend-separator {
+  color: #9ca3af;
+}
+
+[data-theme="light"] .legend-loser,
+:root:not([data-theme="dark"]) .legend-loser {
+  color: #6b7280;
 }
 
 /* Custom scrollbar */
@@ -41,18 +121,18 @@
    ============================================================================ */
 
 .freedom-metric-card {
-  position: relative;
-  background: rgba(13, 40, 71, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: rgba(13, 40, 71, 0.88);
   border: 1px solid rgba(201, 162, 39, 0.2);
   border-radius: 10px;
-  padding: 1.6rem 1rem 0.85rem 1rem;  /* Extra top padding for space below advantage badge */
-  transition: all 0.2s ease;
+  padding: 0.85rem 1rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .freedom-metric-card:hover {
-  background: rgba(13, 40, 71, 0.7);
+  background: rgba(13, 40, 71, 0.78);
   border-color: rgba(201, 162, 39, 0.35);
   transform: translateX(3px);
 }
@@ -83,9 +163,36 @@
 
 .metric-scores {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.35rem;
-  font-size: 0.85rem;  /* Slightly smaller overall */
+  font-size: 0.85rem;
+}
+
+.score-city-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.score-city-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-city-group.winner .score-city-label {
+  color: #d4af37;
+}
+
+.score-city-group.loser .score-city-label {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .winner-score {
@@ -95,13 +202,15 @@
 }
 
 .score-separator {
-  color: rgba(255, 255, 255, 0.75);  /* Brighter vs text */
-  font-size: 0.8rem;  /* Larger vs */
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
   font-weight: 500;
+  align-self: flex-end;
+  padding-bottom: 0.05rem;
 }
 
 .loser-score {
-  color: rgba(255, 255, 255, 0.6);  /* Slightly brighter */
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
   font-size: 0.85rem;
 }
@@ -137,10 +246,9 @@
    ============================================================================ */
 
 .metric-advantage {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  padding: 0.2rem 0.5rem;
+  align-self: center;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.6rem;
   font-size: 0.65rem;
   font-weight: 700;
   color: #0a1628;
@@ -148,6 +256,62 @@
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* ============================================================================
+   LIGHT MODE - METRIC CARDS
+   ============================================================================ */
+
+[data-theme="light"] .freedom-metric-card,
+:root:not([data-theme="dark"]) .freedom-metric-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(146, 113, 10, 0.2);
+}
+
+[data-theme="light"] .freedom-metric-card:hover,
+:root:not([data-theme="dark"]) .freedom-metric-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(146, 113, 10, 0.4);
+}
+
+[data-theme="light"] .metric-name,
+:root:not([data-theme="dark"]) .metric-name {
+  color: #1a202c;
+}
+
+[data-theme="light"] .score-city-group.winner .score-city-label,
+:root:not([data-theme="dark"]) .score-city-group.winner .score-city-label {
+  color: #92710a;
+}
+
+[data-theme="light"] .score-city-group.loser .score-city-label,
+:root:not([data-theme="dark"]) .score-city-group.loser .score-city-label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .winner-score,
+:root:not([data-theme="dark"]) .winner-score {
+  color: #92710a;
+}
+
+[data-theme="light"] .score-separator,
+:root:not([data-theme="dark"]) .score-separator {
+  color: #9ca3af;
+}
+
+[data-theme="light"] .loser-score,
+:root:not([data-theme="dark"]) .loser-score {
+  color: #6b7280;
+}
+
+[data-theme="light"] .example-text,
+:root:not([data-theme="dark"]) .example-text {
+  color: #374151;
+}
+
+[data-theme="light"] .freedom-metrics-empty,
+:root:not([data-theme="dark"]) .freedom-metrics-empty {
+  color: #6b7280;
 }
 
 /* ============================================================================
@@ -181,9 +345,26 @@
 
 @media (max-width: 768px) {
   .freedom-metrics-list {
-    max-height: 220px;
+    max-height: 260px;
     gap: 0.6rem;
     padding-right: 0.25rem;
+  }
+
+  .freedom-section-header {
+    padding: 0.35rem 0.5rem;
+  }
+
+  .section-winner-label {
+    font-size: 0.9rem;
+  }
+
+  .section-category-context {
+    font-size: 0.7rem;
+  }
+
+  .freedom-score-legend {
+    font-size: 0.6rem;
+    padding: 0 0.5rem;
   }
 
   .freedom-metric-card {
@@ -203,6 +384,11 @@
     font-size: 0.7rem;
   }
 
+  .score-city-label {
+    font-size: 0.55rem;
+    max-width: 4rem;
+  }
+
   .example-text {
     font-size: 0.7rem;
   }
@@ -215,7 +401,7 @@
 
 @media (max-width: 480px) {
   .freedom-metrics-list {
-    max-height: 180px;
+    max-height: 250px; /* FIX: Was 180px, too short to show meaningful content */
   }
 
   .freedom-metric-card {

@@ -38,7 +38,7 @@ The application had **FeatureGate** components that visually blocked access to f
 | `standardComparisons` | Single-LLM city comparisons | `standard_comparisons` |
 | `enhancedComparisons` | 5-LLM enhanced comparisons (Sovereign only) | `enhanced_comparisons` |
 | `oliviaMinutesPerMonth` | Olivia AI voice assistant minutes | `olivia_minutes` |
-| `judgeVideos` | Christiano Judge video reports | `judge_videos` |
+| `judgeVideos` | Cristiano Judge video reports | `judge_videos` |
 | `gammaReports` | Gamma visual presentation reports | `gamma_reports` |
 | `grokVideos` | "New Life" and "Court Order" videos | `grok_videos` |
 

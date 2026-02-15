@@ -5,7 +5,7 @@
  * future trend forecasting, and executive recommendations.
  *
  * Features:
- * - Replicate video report by "Christiano" (photorealistic avatar via Wav2Lip)
+ * - Replicate video report by "Cristiano" (photorealistic avatar via Wav2Lip)
  * - Summary of findings with trend indicators
  * - Detailed category-by-category analysis
  * - Executive summary with final recommendation
@@ -23,11 +23,13 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, startTransition } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { ALL_METROS } from '../data/metros';
+import { getFlagUrl } from '../utils/countryFlags';
+import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -42,11 +44,13 @@ async function withTimeout<T>(
   return withRetry(() => promise, {
     timeoutMs: ms,
     operationName,
-    maxRetries: 3,
+    maxRetries: 1,
   });
 }
+import { toastSuccess, toastError } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
+import GoToMyNewCity from './GoToMyNewCity';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
@@ -56,9 +60,16 @@ import {
   getSavedJudgeReports,
   saveJudgeReport,
   fetchFullJudgeReport,
+  fetchJudgeReportByComparisonId,
+  fetchJudgeReportByCities,
   type SavedJudgeReport,
 } from '../services/savedComparisons';
 import './JudgeTab.css';
+
+// ============================================================================
+// PERSISTENCE KEY — survives tab switches
+// ============================================================================
+const LAST_JUDGE_COMPARISON_KEY = 'lifescore_last_judge_comparison';
 
 // ============================================================================
 // TYPES
@@ -70,20 +81,22 @@ import type { FreedomEducationData } from '../types/freedomEducation';
 export interface JudgeReport {
   reportId: string;
   generatedAt: string;
-  userId: string;
+  userId?: string;
   comparisonId: string;
   city1: string;
   city2: string;
+  city1Country?: string;
+  city2Country?: string;
   videoUrl?: string;
-  videoStatus: 'pending' | 'generating' | 'ready' | 'error';
+  videoStatus: 'pending' | 'generating' | 'ready' | 'error' | string;
   summaryOfFindings: {
     city1Score: number;
-    city1Trend: 'rising' | 'stable' | 'declining';
+    city1Trend?: 'improving' | 'stable' | 'declining';
     city2Score: number;
-    city2Trend: 'rising' | 'stable' | 'declining';
-    overallConfidence: 'high' | 'medium' | 'low';
+    city2Trend?: 'improving' | 'stable' | 'declining';
+    overallConfidence: 'high' | 'medium' | 'low' | string;
   };
-  categoryAnalysis: {
+  categoryAnalysis?: {
     categoryId: string;
     categoryName: string;
     city1Analysis: string;
@@ -91,11 +104,11 @@ export interface JudgeReport {
     trendNotes: string;
   }[];
   executiveSummary: {
-    recommendation: 'city1' | 'city2' | 'tie';
+    recommendation: 'city1' | 'city2' | 'tie' | string;
     rationale: string;
-    keyFactors: string[];
-    futureOutlook: string;
-    confidenceLevel: 'high' | 'medium' | 'low';
+    keyFactors?: string[];
+    futureOutlook?: string;
+    confidenceLevel?: 'high' | 'medium' | 'low' | string;
   };
   freedomEducation?: FreedomEducationData;
 }
@@ -118,7 +131,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   savedJudgeReport,
   onSavedReportLoaded
 }) => {
-  const { supabaseUser, isAuthenticated } = useAuth();
+  const { supabaseUser, isAuthenticated, session } = useAuth();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
@@ -126,8 +139,24 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [generationProgress, setGenerationProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  // FIX: Track video errors to detect expired Replicate URLs
+  const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const MAX_VIDEO_ERRORS = 3;
+
+  // Video generation progress simulation (Replicate doesn't return %)
+  const [videoProgress, setVideoProgress] = useState(0);
+  const videoProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Report selection state - allows user to select from saved comparisons
-  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
+  // FIX: Restore from localStorage when prop is null (tab switch persistence)
+  const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(() => {
+    if (!propComparisonResult) {
+      try {
+        return localStorage.getItem(LAST_JUDGE_COMPARISON_KEY) || null;
+      } catch { return null; }
+    }
+    return null;
+  });
 
   // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
   // This prevents stale reads while allowing refresh when data changes
@@ -137,6 +166,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Memoized comparisons - only re-read when refreshKey changes
   const savedComparisons = useMemo(() => getLocalComparisons(), [comparisonsRefreshKey]);
   const savedEnhanced = useMemo(() => getLocalEnhancedComparisons(), [comparisonsRefreshKey]);
+
+  // FIX: Auto-reset video when expired URL errors exceed threshold
+  useEffect(() => {
+    if (videoErrorCount >= MAX_VIDEO_ERRORS && judgeReport) {
+      console.log('[JudgeTab] Video error threshold reached — clearing expired videoUrl');
+      setJudgeReport(prev => prev ? { ...prev, videoUrl: undefined, videoStatus: 'error' as const } : null);
+      setVideoErrorCount(0);
+    }
+  }, [videoErrorCount, judgeReport]);
 
   // Listen for storage events to refresh when data changes in another tab/component
   useEffect(() => {
@@ -148,6 +186,15 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [refreshComparisons]);
+
+  // FIX 2026-02-14: Persist selectedComparisonId so it survives tab switches
+  useEffect(() => {
+    try {
+      if (selectedComparisonId) {
+        localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, selectedComparisonId);
+      }
+    } catch { /* ignore */ }
+  }, [selectedComparisonId]);
 
   // FIX 2026-02-08: Load saved Judge report when passed from SavedComparisons
   // Fetches full report from Supabase to get complete data (categoryAnalysis, etc.)
@@ -162,6 +209,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
       if (fullReport) {
         console.log('[JudgeTab] Loaded full report from Supabase:', fullReport.reportId);
+
+        // FIX 2026-02-14: Proactive video URL expiration check
+        let videoUrl = fullReport.videoUrl;
+        let videoStatus = fullReport.videoStatus;
+        if (videoUrl && (videoUrl.includes('replicate.delivery') || videoUrl.includes('klingai.com'))) {
+          console.log('[JudgeTab] Clearing expired provider URL from Supabase report');
+          videoUrl = undefined;
+          videoStatus = 'error';
+        }
+
         // Use the complete report data from Supabase
         const loadedReport: JudgeReport = {
           reportId: fullReport.reportId,
@@ -170,8 +227,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           comparisonId: fullReport.comparisonId,
           city1: fullReport.city1,
           city2: fullReport.city2,
-          videoUrl: fullReport.videoUrl,
-          videoStatus: fullReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
+          city1Country: fullReport.city1Country,
+          city2Country: fullReport.city2Country,
+          videoUrl,
+          videoStatus: (videoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
             city1Score: fullReport.summaryOfFindings.city1Score,
             city1Trend: fullReport.summaryOfFindings.city1Trend || 'stable',
@@ -191,34 +250,59 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         };
         setJudgeReport(loadedReport);
       } else {
-        console.log('[JudgeTab] Full report not available, using summary data');
-        // Fallback: Convert SavedJudgeReport to JudgeReport format with limited data
+        console.log('[JudgeTab] Full report not available from Supabase, checking localStorage...');
+
+        // FIX 2026-02-14: Before falling back to empty data, check localStorage
+        // for a full report that may have categoryAnalysis etc. intact.
+        const localReports = getSavedJudgeReports();
+        const localMatch = localReports.find(r => r.reportId === savedJudgeReport.reportId);
+
+        // FIX 2026-02-14: Proactive video URL expiration check
+        let fallbackVideoUrl = savedJudgeReport.videoUrl;
+        let fallbackVideoStatus = savedJudgeReport.videoStatus;
+        if (fallbackVideoUrl && (fallbackVideoUrl.includes('replicate.delivery') || fallbackVideoUrl.includes('klingai.com'))) {
+          fallbackVideoUrl = undefined;
+          fallbackVideoStatus = 'error';
+        }
+
+        // Use localStorage data if it has richer content (categoryAnalysis)
+        const source = (localMatch?.categoryAnalysis && localMatch.categoryAnalysis.length > 0) ? localMatch : savedJudgeReport;
+
         const loadedReport: JudgeReport = {
-          reportId: savedJudgeReport.reportId,
-          generatedAt: savedJudgeReport.generatedAt,
+          reportId: source.reportId,
+          generatedAt: source.generatedAt,
           userId: userId,
-          comparisonId: savedJudgeReport.comparisonId,
-          city1: savedJudgeReport.city1,
-          city2: savedJudgeReport.city2,
-          videoUrl: savedJudgeReport.videoUrl,
-          videoStatus: savedJudgeReport.videoStatus as 'pending' | 'generating' | 'ready' | 'error',
+          comparisonId: source.comparisonId,
+          city1: source.city1,
+          city2: source.city2,
+          city1Country: source.city1Country,
+          city2Country: source.city2Country,
+          videoUrl: fallbackVideoUrl,
+          videoStatus: (fallbackVideoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
           summaryOfFindings: {
-            city1Score: savedJudgeReport.summaryOfFindings.city1Score,
-            city1Trend: 'stable',
-            city2Score: savedJudgeReport.summaryOfFindings.city2Score,
-            city2Trend: 'stable',
-            overallConfidence: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+            city1Score: source.summaryOfFindings.city1Score,
+            city1Trend: source.summaryOfFindings.city1Trend || 'stable',
+            city2Score: source.summaryOfFindings.city2Score,
+            city2Trend: source.summaryOfFindings.city2Trend || 'stable',
+            overallConfidence: source.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
           },
-          categoryAnalysis: [],
+          categoryAnalysis: source.categoryAnalysis || [],
           executiveSummary: {
-            recommendation: savedJudgeReport.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
-            rationale: savedJudgeReport.executiveSummary.rationale,
-            keyFactors: [],
-            futureOutlook: '',
-            confidenceLevel: savedJudgeReport.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+            recommendation: source.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
+            rationale: source.executiveSummary.rationale,
+            keyFactors: source.executiveSummary.keyFactors || [],
+            futureOutlook: source.executiveSummary.futureOutlook || '',
+            confidenceLevel: (source.executiveSummary.confidenceLevel || source.summaryOfFindings.overallConfidence) as 'high' | 'medium' | 'low',
           },
+          freedomEducation: source.freedomEducation,
         };
         setJudgeReport(loadedReport);
+
+        if (localMatch?.categoryAnalysis && localMatch.categoryAnalysis.length > 0) {
+          console.log('[JudgeTab] Loaded full report from localStorage fallback');
+        } else {
+          console.log('[JudgeTab] Using summary-only data (no categoryAnalysis available)');
+        }
       }
 
       // Notify parent that we loaded the report
@@ -234,49 +318,51 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [reportLoadError, setReportLoadError] = useState<string | null>(null);
 
   // FIX 2026-01-27: Compute comparison result without state updates during render
-  // Use a ref to track the error to update via useEffect
+  // FIX 2026-02-14: Memoize lookup to avoid .find() on every render (INP optimisation)
   const computedErrorRef = useRef<string | null>(null);
 
-  // Determine which comparison to use (no state updates here!)
-  let comparisonResult: EnhancedComparisonResult | ComparisonResult | null = null;
-  computedErrorRef.current = null;
-
-  if (selectedComparisonId) {
-    // Look up in saved standard comparisons
-    const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
-    if (savedStd?.result) {
-      if (savedStd.result.city1 && savedStd.result.city2) {
-        comparisonResult = savedStd.result;
-      } else {
-        console.error('[JudgeTab] Standard comparison missing city data:', selectedComparisonId);
-        computedErrorRef.current = 'Report data is corrupted - missing city information';
+  const { comparisonResult, computedError } = useMemo(() => {
+    if (selectedComparisonId) {
+      // Look up in saved standard comparisons
+      const savedStd = savedComparisons.find(c => c.result?.comparisonId === selectedComparisonId);
+      if (savedStd?.result) {
+        if (savedStd.result.city1 && savedStd.result.city2) {
+          return { comparisonResult: savedStd.result as EnhancedComparisonResult | ComparisonResult, computedError: null };
+        }
+        return { comparisonResult: null, computedError: 'Report data is corrupted - missing city information' };
       }
-    } else {
       // Look up in saved enhanced comparisons
       const savedEnh = savedEnhanced.find(c => c.result?.comparisonId === selectedComparisonId);
       if (savedEnh?.result) {
         if (savedEnh.result.city1 && savedEnh.result.city2) {
-          comparisonResult = savedEnh.result;
-        } else {
-          console.error('[JudgeTab] Enhanced comparison missing city data:', selectedComparisonId);
-          computedErrorRef.current = 'Report data is corrupted - missing city information';
+          return { comparisonResult: savedEnh.result as EnhancedComparisonResult | ComparisonResult, computedError: null };
         }
-      } else {
-        console.error('[JudgeTab] Selected comparison not found in storage:', selectedComparisonId);
-        computedErrorRef.current = 'Selected report not found - it may have been deleted';
+        return { comparisonResult: null, computedError: 'Report data is corrupted - missing city information' };
       }
+      return { comparisonResult: null, computedError: 'Selected report not found - it may have been deleted' };
     }
-  } else {
     // No selection - use prop if available
-    comparisonResult = propComparisonResult || null;
-  }
+    return { comparisonResult: (propComparisonResult || null) as EnhancedComparisonResult | ComparisonResult | null, computedError: null };
+  }, [selectedComparisonId, savedComparisons, savedEnhanced, propComparisonResult]);
+
+  computedErrorRef.current = computedError;
 
   // Sync error state via useEffect - only update if error changed
+  // FIX 2026-02-14: Also clear stale localStorage key when comparison was deleted
   const prevErrorRef = useRef<string | null>(null);
   useEffect(() => {
     if (prevErrorRef.current !== computedErrorRef.current) {
       prevErrorRef.current = computedErrorRef.current;
       setReportLoadError(computedErrorRef.current);
+
+      // If the selected comparison was deleted, clear the stale localStorage pointer
+      // so next visit doesn't try to load a dead reference
+      if (computedErrorRef.current && selectedComparisonId) {
+        try {
+          localStorage.removeItem(LAST_JUDGE_COMPARISON_KEY);
+          console.log('[JudgeTab] Cleared stale LAST_JUDGE_COMPARISON_KEY for deleted comparison');
+        } catch { /* ignore */ }
+      }
     }
   });
 
@@ -300,7 +386,44 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   // Legacy video generation state (for backwards compatibility)
   const [videoGenerationProgress, setVideoGenerationProgress] = useState('');
+
+  // Collapsible panel state — defaults: media open, others collapsed
+  const [panelMediaOpen, setPanelMediaOpen] = useState(true);
+  const [panelEvidenceOpen, setPanelEvidenceOpen] = useState(false);
+  const [panelVerdictOpen, setPanelVerdictOpen] = useState(false);
   const videoPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Simulated video progress bar — runs during video generation (~90s estimated)
+  // Steps: 0-15% storyboard, 15-40% audio, 40-85% rendering, 85-95% finalizing
+  useEffect(() => {
+    const generating = isGeneratingVideo || judgeReport?.videoStatus === 'generating';
+    if (generating) {
+      setVideoProgress(0);
+      const startTime = Date.now();
+      const ESTIMATED_TOTAL_MS = 90000; // ~90 seconds typical
+      videoProgressRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const raw = (elapsed / ESTIMATED_TOTAL_MS) * 92; // Cap at 92% until done
+        setVideoProgress(Math.min(raw, 92));
+      }, 500);
+    } else {
+      if (videoProgressRef.current) {
+        clearInterval(videoProgressRef.current);
+        videoProgressRef.current = null;
+      }
+      if (judgeReport?.videoStatus === 'ready') {
+        setVideoProgress(100);
+      } else {
+        setVideoProgress(0);
+      }
+    }
+    return () => {
+      if (videoProgressRef.current) {
+        clearInterval(videoProgressRef.current);
+        videoProgressRef.current = null;
+      }
+    };
+  }, [isGeneratingVideo, judgeReport?.videoStatus]);
 
   // Real-time clock for cockpit feel
   useEffect(() => {
@@ -404,7 +527,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Poll for video status until ready or error (legacy D-ID polling, kept for reference)
   const _pollVideoStatus = async (talkId: string, report: JudgeReport) => {
     console.log('[JudgeTab] Starting video status polling for:', talkId);
-    setVideoGenerationProgress('Christiano is preparing your video report...');
+    setVideoGenerationProgress('Cristiano is preparing your video report...');
 
     // Clear any existing polling
     if (videoPollingRef.current) {
@@ -413,9 +536,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     const poll = async () => {
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/judge-video', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({ action: 'status', talkId })
         });
 
@@ -462,7 +586,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           // Still generating
           setVideoGenerationProgress(
             data.status === 'generating'
-              ? 'Christian is recording your verdict...'
+              ? 'Cristiano is recording your verdict...'
               : 'Preparing video generation...'
           );
         }
@@ -506,17 +630,22 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');
 
-    // Build script for Christiano to speak
-    const winner = report.executiveSummary.recommendation === 'city1' ? report.city1 :
-      report.executiveSummary.recommendation === 'city2' ? report.city2 : 'TIE';
-    const winnerScore = report.executiveSummary.recommendation === 'city1'
-      ? report.summaryOfFindings.city1Score
-      : report.summaryOfFindings.city2Score;
-    const loserScore = report.executiveSummary.recommendation === 'city1'
-      ? report.summaryOfFindings.city2Score
-      : report.summaryOfFindings.city1Score;
+    // Build script for Cristiano to speak
+    const rec = report.executiveSummary.recommendation;
+    const isTie = rec === 'tie' ||
+      Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score) < 0.5;
 
-    const script = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a score of ${winnerScore}. ${report.executiveSummary.rationale} Key factors include: ${report.executiveSummary.keyFactors.slice(0, 3).join(', ')}. For the future outlook: ${report.executiveSummary.futureOutlook.slice(0, 200)}. This concludes my verdict.`;
+    // On tie: display city1 as slight leader (matches API behavior)
+    const winner = isTie ? report.city1 :
+      rec === 'city1' ? report.city1 : report.city2;
+    const winnerScore = isTie ? report.summaryOfFindings.city1Score :
+      rec === 'city1' ? report.summaryOfFindings.city1Score : report.summaryOfFindings.city2Score;
+    const loserScore = isTie ? report.summaryOfFindings.city2Score :
+      rec === 'city1' ? report.summaryOfFindings.city2Score : report.summaryOfFindings.city1Score;
+
+    const tieScript = `Good day. I'm Cristiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, I find this an exceptionally close case — both cities scored nearly identically at ${report.summaryOfFindings.city1Score} and ${report.summaryOfFindings.city2Score} respectively. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
+    const winnerScript = `Good day. I'm Cristiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a freedom score of ${winnerScore} out of 100. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
+    const script = isTie ? tieScript : winnerScript;
 
     const request: GenerateJudgeVideoRequest = {
       script,
@@ -631,6 +760,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify({
           comparisonResult,
@@ -685,6 +815,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Save report to localStorage via centralized service
   const saveReportToLocalStorage = (report: JudgeReport) => {
     saveJudgeReport(report);
+    // FIX 2026-02-14: Also persist the comparisonId for tab-switch restoration
+    try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, report.comparisonId); } catch { /* ignore */ }
     console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
   };
 
@@ -708,7 +840,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     const loadCachedData = async () => {
       try {
-        const existingReports = getSavedJudgeReports() as JudgeReport[];
+        const existingReports = getSavedJudgeReports();
 
         // Find a report matching this comparison
         // FIX 2026-02-08: ONLY match by comparisonId, NOT by city names
@@ -719,6 +851,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
         if (matchingReport) {
           console.log('[JudgeTab] Found cached report:', matchingReport.reportId);
+
+          // FIX 2026-02-14: Proactive video URL expiration check.
+          // Replicate delivery URLs expire after ~24h. Clear them now instead
+          // of waiting for 3 consecutive video load errors.
+          if (matchingReport.videoUrl &&
+              (matchingReport.videoUrl.includes('replicate.delivery') ||
+               matchingReport.videoUrl.includes('klingai.com'))) {
+            console.log('[JudgeTab] Clearing expired provider video URL:', matchingReport.videoUrl.substring(0, 60));
+            matchingReport.videoUrl = undefined;
+            matchingReport.videoStatus = 'error';
+            // Persist the cleanup
+            saveReportToLocalStorage(matchingReport as JudgeReport);
+          }
+
           setJudgeReport(matchingReport);
 
           // If report exists but no video, check for pre-generated video
@@ -737,11 +883,79 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             }
           }
         } else {
-          // No cached report - check if there's a pre-generated video waiting
-          console.log('[JudgeTab] No cached report, checking for pre-generated video...');
-          const existingVideo = await checkExistingVideo(currentComparisonId);
-          if (existingVideo) {
-            console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
+          // ════════════════════════════════════════════════════════════════
+          // FIX 2026-02-14: SUPABASE FALLBACK
+          // No match in localStorage — try Supabase before giving up.
+          // This is the critical fix: saved comparisons loaded from the
+          // list would show a blank judge page because the report was in
+          // Supabase but not in localStorage.
+          // ════════════════════════════════════════════════════════════════
+          console.log('[JudgeTab] No local report match. Trying Supabase fallback...');
+
+          // Strategy 1: Lookup by comparisonId in Supabase
+          let supabaseReport = await fetchJudgeReportByComparisonId(currentComparisonId);
+
+          // Strategy 2: Lookup by city names (covers different-session comparisonIds)
+          if (!supabaseReport && comparisonResult.city1?.city && comparisonResult.city2?.city) {
+            console.log('[JudgeTab] Supabase comparisonId miss. Trying city name lookup...');
+            supabaseReport = await fetchJudgeReportByCities(
+              comparisonResult.city1.city,
+              comparisonResult.city2.city
+            );
+          }
+
+          if (supabaseReport) {
+            console.log('[JudgeTab] Supabase fallback found report:', supabaseReport.reportId);
+
+            // Clear expired video URLs proactively
+            if (supabaseReport.videoUrl &&
+                (supabaseReport.videoUrl.includes('replicate.delivery') ||
+                 supabaseReport.videoUrl.includes('klingai.com'))) {
+              supabaseReport.videoUrl = undefined;
+              supabaseReport.videoStatus = 'error';
+            }
+
+            // Construct full JudgeReport from Supabase data
+            const loadedReport: JudgeReport = {
+              reportId: supabaseReport.reportId,
+              generatedAt: supabaseReport.generatedAt,
+              userId: supabaseReport.userId || userId,
+              comparisonId: currentComparisonId,
+              city1: supabaseReport.city1,
+              city2: supabaseReport.city2,
+              city1Country: supabaseReport.city1Country,
+              city2Country: supabaseReport.city2Country,
+              videoUrl: supabaseReport.videoUrl,
+              videoStatus: (supabaseReport.videoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
+              summaryOfFindings: {
+                city1Score: supabaseReport.summaryOfFindings?.city1Score || 0,
+                city1Trend: supabaseReport.summaryOfFindings?.city1Trend || 'stable',
+                city2Score: supabaseReport.summaryOfFindings?.city2Score || 0,
+                city2Trend: supabaseReport.summaryOfFindings?.city2Trend || 'stable',
+                overallConfidence: (supabaseReport.summaryOfFindings?.overallConfidence || 'medium') as 'high' | 'medium' | 'low',
+              },
+              categoryAnalysis: supabaseReport.categoryAnalysis || [],
+              executiveSummary: {
+                recommendation: (supabaseReport.executiveSummary?.recommendation || 'tie') as 'city1' | 'city2' | 'tie',
+                rationale: supabaseReport.executiveSummary?.rationale || '',
+                keyFactors: supabaseReport.executiveSummary?.keyFactors || [],
+                futureOutlook: supabaseReport.executiveSummary?.futureOutlook || '',
+                confidenceLevel: (supabaseReport.executiveSummary?.confidenceLevel || 'medium') as 'high' | 'medium' | 'low',
+              },
+              freedomEducation: supabaseReport.freedomEducation,
+            };
+
+            setJudgeReport(loadedReport);
+            // Cache to localStorage so next time it loads instantly
+            saveReportToLocalStorage(loadedReport);
+            console.log('[JudgeTab] Supabase report cached to localStorage');
+          } else {
+            // No report anywhere — check if there's a pre-generated video waiting
+            console.log('[JudgeTab] No report in localStorage or Supabase.');
+            const existingVideo = await checkExistingVideo(currentComparisonId);
+            if (existingVideo) {
+              console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
+            }
           }
         }
       } catch (error) {
@@ -751,6 +965,25 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     loadCachedData();
   }, [currentComparisonId]); // FIX: Only depend on the ID string, not full object or callback
+
+  // FIX: Auto-play video when a cached report with video loads
+  useEffect(() => {
+    if (judgeReport?.videoUrl && judgeReport.videoStatus === 'ready' && videoRef.current) {
+      // Small delay to ensure the <video> element has mounted and src is set
+      const timer = setTimeout(() => {
+        if (videoRef.current && videoRef.current.readyState >= 1) {
+          videoRef.current.play().then(() => {
+            setIsPlaying(true);
+            console.log('[JudgeTab] Auto-playing cached video');
+          }).catch((err) => {
+            // Browser may block autoplay - that's OK, user can click play
+            console.log('[JudgeTab] Autoplay blocked by browser:', err.message);
+          });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [judgeReport?.videoUrl, judgeReport?.videoStatus]);
 
   // Save report to Supabase (for authenticated users)
   const saveReportToSupabase = async (report: JudgeReport): Promise<boolean> => {
@@ -769,7 +1002,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     try {
 
-      // Check if report already exists (with 45s timeout)
+      // Check if report already exists (with timeout)
       // FIX 2026-01-29: Use maybeSingle() - report may not exist yet
       const { data: existing } = await withTimeout(
         supabase
@@ -780,29 +1013,30 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       );
 
       if (existing) {
-        // Update existing report (with 45s timeout)
+        // Update existing report (with timeout)
         // FIX 2026-02-08: Include city names in UPDATE to prevent metadata/content mismatch
         const { error } = await withTimeout(
           supabase
             .from('judge_reports')
             .update({
-              city1_name: report.city1,
-              city2_name: report.city2,
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
-              city1_trend: report.summaryOfFindings.city1Trend,
+              city1_trend: report.summaryOfFindings.city1Trend || null,
               city2_score: report.summaryOfFindings.city2Score,
-              city2_trend: report.summaryOfFindings.city2Trend,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
-              key_factors: report.executiveSummary.keyFactors,
-              future_outlook: report.executiveSummary.futureOutlook,
-              confidence_level: report.executiveSummary.confidenceLevel,
-              category_analysis: report.categoryAnalysis,
+              city2_trend: report.summaryOfFindings.city2Trend || null,
+              winner: report.executiveSummary.recommendation === 'city1' ? report.city1
+                : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
+              winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
+              margin: Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score),
+              key_findings: report.executiveSummary.keyFactors || [],
+              category_analysis: report.categoryAnalysis || [],
+              verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl,
-              video_status: report.videoStatus,
-              updated_at: new Date().toISOString()
+              // Only save permanent URLs — skip stale provider CDN URLs
+              video_url: report.videoUrl && !report.videoUrl.includes('replicate.delivery') && !report.videoUrl.includes('klingai.com')
+                ? report.videoUrl : null,
+              comparison_id: report.comparisonId || null,
             })
             .eq('report_id', report.reportId)
         );
@@ -810,30 +1044,31 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         if (error) throw error;
         console.log('[JudgeTab] Report updated in Supabase:', report.reportId);
       } else {
-        // Insert new report (with 45s timeout)
+        // Insert new report (with timeout)
         const { error } = await withTimeout(
           supabase
             .from('judge_reports')
             .insert({
               user_id: user.id,
               report_id: report.reportId,
-              comparison_id: report.comparisonId,
-              city1_name: report.city1,
-              city2_name: report.city2,
+              city1: report.city1,
+              city2: report.city2,
               city1_score: report.summaryOfFindings.city1Score,
-              city1_trend: report.summaryOfFindings.city1Trend,
+              city1_trend: report.summaryOfFindings.city1Trend || null,
               city2_score: report.summaryOfFindings.city2Score,
-              city2_trend: report.summaryOfFindings.city2Trend,
-              overall_confidence: report.summaryOfFindings.overallConfidence,
-              recommendation: report.executiveSummary.recommendation,
-              rationale: report.executiveSummary.rationale,
-              key_factors: report.executiveSummary.keyFactors,
-              future_outlook: report.executiveSummary.futureOutlook,
-              confidence_level: report.executiveSummary.confidenceLevel,
-              category_analysis: report.categoryAnalysis,
+              city2_trend: report.summaryOfFindings.city2Trend || null,
+              winner: report.executiveSummary.recommendation === 'city1' ? report.city1
+                : report.executiveSummary.recommendation === 'city2' ? report.city2 : 'tie',
+              winner_score: Math.max(report.summaryOfFindings.city1Score, report.summaryOfFindings.city2Score),
+              margin: Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score),
+              key_findings: report.executiveSummary.keyFactors || [],
+              category_analysis: report.categoryAnalysis || [],
+              verdict: report.executiveSummary.recommendation,
               full_report: report,
-              video_url: report.videoUrl,
-              video_status: report.videoStatus
+              // Only save permanent URLs — skip stale provider CDN URLs
+              video_url: report.videoUrl && !report.videoUrl.includes('replicate.delivery') && !report.videoUrl.includes('klingai.com')
+                ? report.videoUrl : null,
+              comparison_id: report.comparisonId || null,
             })
         );
 
@@ -854,16 +1089,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     console.log('[JudgeTab] Save report requested:', judgeReport.reportId);
 
-    // Save to localStorage
+    // Save to localStorage (deferred to avoid blocking UI)
     saveReportToLocalStorage(judgeReport);
 
     // Save to Supabase for authenticated users
     const savedToCloud = await saveReportToSupabase(judgeReport);
 
     if (savedToCloud) {
-      alert(`Report ${judgeReport.reportId} saved to your account!`);
+      toastSuccess(`Report ${judgeReport.reportId} saved to your account!`);
     } else {
-      alert(`Report ${judgeReport.reportId} saved locally. Sign in to save to cloud.`);
+      toastSuccess(`Report ${judgeReport.reportId} saved locally. Sign in to save to cloud.`);
     }
   };
 
@@ -890,7 +1125,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       console.log('[JudgeTab] PDF downloaded:', judgeReport.reportId);
     } else if (format === 'video') {
       if (!judgeReport.videoUrl) {
-        alert('Video not yet available. Generate video report first.');
+        toastError('Video not yet available. Generate video report first.');
         return;
       }
       // Download video URL
@@ -913,7 +1148,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       `${judgeReport.city1} vs ${judgeReport.city2}\n\n` +
       `Winner: ${judgeReport.executiveSummary.recommendation === 'city1' ? judgeReport.city1 :
         judgeReport.executiveSummary.recommendation === 'city2' ? judgeReport.city2 : 'TIE'}\n` +
-      `Confidence: ${judgeReport.executiveSummary.confidenceLevel.toUpperCase()}\n\n` +
+      `Confidence: ${(judgeReport.executiveSummary.confidenceLevel || 'medium').toUpperCase()}\n\n` +
       `Rationale: ${judgeReport.executiveSummary.rationale.slice(0, 200)}...\n\n` +
       `Report ID: ${judgeReport.reportId}\n` +
       `Generated: ${new Date(judgeReport.generatedAt).toLocaleDateString()}`;
@@ -926,9 +1161,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       }).catch(console.error);
     } else {
       navigator.clipboard.writeText(summary).then(() => {
-        alert('Report summary copied to clipboard!');
+        toastSuccess('Report summary copied to clipboard!');
       }).catch(() => {
-        alert('Unable to copy to clipboard.');
+        toastError('Unable to copy to clipboard.');
       });
     }
   };
@@ -952,7 +1187,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     .verdict h2 { color: #d4af37; margin: 0; font-size: 2em; }
     .score-card { display: inline-block; padding: 15px 25px; margin: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; }
     .score-value { font-size: 2.5em; font-weight: bold; color: #10b981; }
-    .trend-rising { color: #22c55e; }
+    .trend-improving { color: #22c55e; }
     .trend-declining { color: #ef4444; }
     .trend-stable { color: #f59e0b; }
     .category { background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #c9a227; }
@@ -964,12 +1199,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   <h1>⚖️ LIFE SCORE™ Judge's Report</h1>
   <p><strong>Report ID:</strong> ${report.reportId}<br>
   <strong>Generated:</strong> ${new Date(report.generatedAt).toLocaleString()}<br>
-  <strong>User ID:</strong> ${report.userId}</p>
+  <strong>User ID:</strong> ${report.userId || 'N/A'}</p>
 
   <div class="verdict">
     <h3>THE JUDGE'S VERDICT</h3>
     <h2>🏆 ${winner}</h2>
-    <p>Confidence: <strong>${report.executiveSummary.confidenceLevel.toUpperCase()}</strong></p>
+    <p>Confidence: <strong>${(report.executiveSummary.confidenceLevel || 'medium').toUpperCase()}</strong></p>
   </div>
 
   <h2>📊 Summary of Findings</h2>
@@ -978,7 +1213,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       <h3>${report.city1}</h3>
       <div class="score-value">${report.summaryOfFindings.city1Score}</div>
       <div class="trend-${report.summaryOfFindings.city1Trend}">
-        ${report.summaryOfFindings.city1Trend === 'rising' ? '↗️ Rising' :
+        ${report.summaryOfFindings.city1Trend === 'improving' ? '↗️ Improving' :
           report.summaryOfFindings.city1Trend === 'declining' ? '↘️ Declining' : '→ Stable'}
       </div>
     </div>
@@ -986,14 +1221,14 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       <h3>${report.city2}</h3>
       <div class="score-value">${report.summaryOfFindings.city2Score}</div>
       <div class="trend-${report.summaryOfFindings.city2Trend}">
-        ${report.summaryOfFindings.city2Trend === 'rising' ? '↗️ Rising' :
+        ${report.summaryOfFindings.city2Trend === 'improving' ? '↗️ Improving' :
           report.summaryOfFindings.city2Trend === 'declining' ? '↘️ Declining' : '→ Stable'}
       </div>
     </div>
   </div>
 
   <h2>📖 Detailed Category Analysis</h2>
-  ${report.categoryAnalysis.map(cat => `
+  ${(report.categoryAnalysis || []).map(cat => `
     <div class="category">
       <h3>${cat.categoryName}</h3>
       <p><strong>${report.city1}:</strong> ${cat.city1Analysis}</p>
@@ -1006,10 +1241,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   <p>${report.executiveSummary.rationale}</p>
 
   <h3>Key Factors</h3>
-  ${report.executiveSummary.keyFactors.map(f => `<div class="key-factor">◈ ${f}</div>`).join('')}
+  ${(report.executiveSummary.keyFactors || []).map(f => `<div class="key-factor">◈ ${f}</div>`).join('')}
 
   <h3>Future Outlook</h3>
-  <p>${report.executiveSummary.futureOutlook}</p>
+  <p>${report.executiveSummary.futureOutlook || ''}</p>
 
   <div class="footer">
     <p>LIFE SCORE™ - The Judge's Verdict<br>
@@ -1021,24 +1256,38 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   };
 
   // Trend icon helper
-  const getTrendIcon = (trend: 'rising' | 'stable' | 'declining') => {
+  const getTrendIcon = (trend: 'improving' | 'stable' | 'declining') => {
     switch (trend) {
-      case 'rising': return '↗️';
+      case 'improving': return '↗️';
       case 'stable': return '→';
       case 'declining': return '↘️';
     }
   };
 
-  const getTrendClass = (trend: 'rising' | 'stable' | 'declining') => {
+  const getTrendClass = (trend: 'improving' | 'stable' | 'declining') => {
     switch (trend) {
-      case 'rising': return 'trend-rising';
+      case 'improving': return 'trend-improving';
       case 'stable': return 'trend-stable';
       case 'declining': return 'trend-declining';
     }
   };
 
+  // Saved report is loading from Supabase — show brief loading state
+  if (!comparisonResult && !judgeReport && savedJudgeReport) {
+    return (
+      <div className="judge-tab">
+        <div className="judge-no-data">
+          <div className="no-data-icon">⚖️</div>
+          <h3>Loading Judge Report...</h3>
+          <p>{savedJudgeReport.city1} vs {savedJudgeReport.city2}</p>
+        </div>
+      </div>
+    );
+  }
+
   // No comparison data state - show report selector dropdown
-  if (!comparisonResult) {
+  // Skip this gate when a saved Judge report has been loaded into state.
+  if (!comparisonResult && !judgeReport) {
     const hasSavedReports = savedComparisons.length > 0 || savedEnhanced.length > 0;
 
     return (
@@ -1073,13 +1322,14 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 className="report-dropdown judge-report-dropdown"
                 value={selectedComparisonId ?? ''}
                 onChange={(e) => {
-                  // Cancel any pending video generation to prevent race condition
-                  cancelVideoGeneration();
-                  // Reset the checked comparison ref so new comparison can check for videos
-                  checkedComparisonIdRef.current = null;
-                  // FIX 7.2: Proper empty string vs null handling
                   const value = e.target.value;
+                  // Urgent: update select value immediately so the UI reflects the choice
                   setSelectedComparisonId(value === '' ? null : value);
+                  // Non-urgent: defer heavy work to avoid blocking paint (INP fix)
+                  startTransition(() => {
+                    cancelVideoGeneration();
+                    checkedComparisonIdRef.current = null;
+                  });
                 }}
               >
                 <option value="">Choose a report...</option>
@@ -1115,6 +1365,23 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // This prevents showing wrong cities (e.g., Bern/Mesa for Baltimore/Bratislava)
   const city1Name = judgeReport?.city1 || comparisonResult?.city1?.city || 'City 1';
   const city2Name = judgeReport?.city2 || comparisonResult?.city2?.city || 'City 2';
+  // FIX 2026-02-10: Country must come from the SAME source as the city name.
+  // Priority: judgeReport's own country > matching comparisonResult > ALL_METROS lookup
+  const city1Country = judgeReport?.city1Country
+    || (comparisonResult?.city1?.city === city1Name ? comparisonResult.city1.country : '')
+    || ALL_METROS.find(m => m.city === city1Name)?.country
+    || '';
+  const city2Country = judgeReport?.city2Country
+    || (comparisonResult?.city2?.city === city2Name ? comparisonResult.city2.country : '')
+    || ALL_METROS.find(m => m.city === city2Name)?.country
+    || '';
+  // Region (state/province) from metro data
+  const city1Region = ALL_METROS.find(m => m.city === city1Name && m.country === city1Country)?.region
+    || ALL_METROS.find(m => m.city === city1Name)?.region
+    || '';
+  const city2Region = ALL_METROS.find(m => m.city === city2Name && m.country === city2Country)?.region
+    || ALL_METROS.find(m => m.city === city2Name)?.region
+    || '';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
   return (
@@ -1161,14 +1428,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             className="report-dropdown judge-report-dropdown"
             value={selectedComparisonId ?? ''}
             onChange={(e) => {
-              // Cancel any pending video generation to prevent race condition
-              cancelVideoGeneration();
-              // Reset the checked comparison ref so new comparison can check for videos
-              checkedComparisonIdRef.current = null;
-              // FIX 7.2: Proper empty string vs null handling
               const value = e.target.value;
+              // Urgent: update select value immediately so the UI reflects the choice
               setSelectedComparisonId(value === '' ? null : value);
-              setJudgeReport(null); // Clear existing report when switching
+              // Non-urgent: defer heavy state updates to avoid blocking paint (INP fix)
+              startTransition(() => {
+                cancelVideoGeneration();
+                checkedComparisonIdRef.current = null;
+                setJudgeReport(null);
+                setIsPlaying(false);
+                setCurrentVideoTime(0);
+                setVideoDuration(0);
+              });
             }}
           >
             <option value="">
@@ -1222,8 +1493,24 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          VIDEO VIEWPORT - Replicate Christiano's Report
+          PANEL: JUDGE'S VIDEO & MEDIA
       ═══════════════════════════════════════════════════════════════════ */}
+      <div className={`collapsible-panel ${panelMediaOpen ? 'open' : ''}`}>
+        <button
+          className="panel-header-bar"
+          onClick={() => setPanelMediaOpen(prev => !prev)}
+        >
+          <span className="panel-icon">🎬</span>
+          <span className="panel-title">JUDGE'S VIDEO & MEDIA</span>
+          <span className="panel-summary">
+            {judgeReport?.videoStatus === 'ready' ? 'Video ready' :
+             isGeneratingVideo ? 'Generating...' :
+             judgeReport ? 'Video pending' : 'Awaiting verdict'}
+          </span>
+          <span className={`panel-chevron ${panelMediaOpen ? 'open' : ''}`}>▼</span>
+        </button>
+        <div className="panel-content" style={{ display: panelMediaOpen ? 'block' : 'none' }}>
+
       <section className="video-viewport-section">
         <div className="viewport-frame">
           <div className="viewport-bezel">
@@ -1239,17 +1526,28 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                   src={judgeReport.videoUrl}
                   className="judge-video"
                   playsInline
+                  autoPlay
                   onTimeUpdate={() => setCurrentVideoTime(videoRef.current?.currentTime || 0)}
                   onLoadedMetadata={() => {
                     setVideoDuration(videoRef.current?.duration || 0);
                     console.log('[JudgeTab] Video loaded, duration:', videoRef.current?.duration);
                   }}
+                  onCanPlay={() => {
+                    // FIX: Auto-play when video is ready (e.g. loaded from cache)
+                    if (videoRef.current && videoRef.current.paused) {
+                      videoRef.current.play().then(() => {
+                        setIsPlaying(true);
+                      }).catch(() => {
+                        // Autoplay blocked - user can click play
+                      });
+                    }
+                  }}
                   onEnded={() => setIsPlaying(false)}
                   onError={(e) => {
                     console.error('[JudgeTab] Video error:', e.currentTarget.error?.message);
                     console.error('[JudgeTab] Video URL was:', judgeReport.videoUrl);
+                    setVideoErrorCount(prev => prev + 1);
                   }}
-                  onCanPlay={() => console.log('[JudgeTab] Video can play')}
                 />
               ) : (
                 <div className="video-placeholder">
@@ -1277,12 +1575,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="generating-ring video-ring delay-2"></div>
                       <div className="generating-text">GENERATING VIDEO</div>
                       <div className="generating-subtext">
-                        {videoGenerationProgress || 'Christiano is preparing your video report...'}
+                        {videoGenerationProgress || (
+                          videoProgress < 15 ? 'Building storyboard...' :
+                          videoProgress < 40 ? 'Generating audio narration...' :
+                          videoProgress < 85 ? 'Rendering Cristiano video...' :
+                          'Finalizing and uploading...'
+                        )}
                       </div>
-                      <div className="video-status-indicator">
-                        <span className="status-dot pulsing"></span>
-                        <span className="status-text">Replicate Processing</span>
+                      <div className="progress-bar-container">
+                        <div
+                          className="progress-bar-fill video-progress"
+                          style={{ width: `${videoProgress}%` }}
+                        ></div>
                       </div>
+                      <div className="progress-text">{Math.round(videoProgress)}% Complete</div>
                       <button
                         className="cancel-video-btn"
                         onClick={() => cancelVideoGeneration()}
@@ -1328,7 +1634,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="avatar-silhouette">
                         <span className="silhouette-icon">⚖️</span>
                       </div>
-                      <div className="awaiting-text">CHRISTIANO</div>
+                      <div className="awaiting-text">CRISTIANO</div>
                       <div className="awaiting-subtext">Judge's Video Report</div>
                       <button
                         className="generate-report-btn"
@@ -1431,7 +1737,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport}
         >
           <span className="btn-icon">💾</span>
-          <span className="btn-text">SAVE REPORT</span>
+          <span className="btn-text btn-text-full">SAVE REPORT</span>
+          <span className="btn-text btn-text-short">SAVE</span>
         </button>
         <button
           className="action-btn download-btn"
@@ -1439,7 +1746,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport}
         >
           <span className="btn-icon">📄</span>
-          <span className="btn-text">DOWNLOAD PDF</span>
+          <span className="btn-text btn-text-full">DOWNLOAD PDF</span>
+          <span className="btn-text btn-text-short">PDF</span>
         </button>
         <button
           className="action-btn download-btn"
@@ -1447,7 +1755,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport?.videoUrl}
         >
           <span className="btn-icon">🎬</span>
-          <span className="btn-text">DOWNLOAD VIDEO</span>
+          <span className="btn-text btn-text-full">DOWNLOAD VIDEO</span>
+          <span className="btn-text btn-text-short">VIDEO</span>
         </button>
         <button
           className="action-btn forward-btn"
@@ -1455,9 +1764,32 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           disabled={!judgeReport}
         >
           <span className="btn-icon">📤</span>
-          <span className="btn-text">FORWARD</span>
+          <span className="btn-text btn-text-full">FORWARD</span>
+          <span className="btn-text btn-text-short">SHARE</span>
         </button>
       </section>
+
+        </div>{/* end panel-content: media */}
+      </div>{/* end collapsible-panel: media */}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          PANEL: EVIDENCE & ANALYSIS
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className={`collapsible-panel ${panelEvidenceOpen ? 'open' : ''}`}>
+        <button
+          className="panel-header-bar"
+          onClick={() => setPanelEvidenceOpen(prev => !prev)}
+        >
+          <span className="panel-icon">📊</span>
+          <span className="panel-title">EVIDENCE & ANALYSIS</span>
+          <span className="panel-summary">
+            {judgeReport
+              ? `${city1Name} ${judgeReport.summaryOfFindings.city1Score} vs ${city2Name} ${judgeReport.summaryOfFindings.city2Score}`
+              : 'Awaiting verdict'}
+          </span>
+          <span className={`panel-chevron ${panelEvidenceOpen ? 'open' : ''}`}>▼</span>
+        </button>
+        <div className="panel-content" style={{ display: panelEvidenceOpen ? 'block' : 'none' }}>
 
       {/* ═══════════════════════════════════════════════════════════════════
           SUMMARY OF FINDINGS
@@ -1468,20 +1800,26 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city1">
             <div className="card-header">
               <span className="city-name">{city1Name}</span>
-              <span className="city-country">{comparisonResult?.city1?.country || ''}</span>
+              {city1Region && <span className="city-region">{city1Region}</span>}
+              <span className="city-country">
+                {city1Country && (
+                  <img className="city-flag-img" src={getFlagUrl(city1Country)} alt={city1Country} width={20} height={15} loading="lazy" />
+                )}
+                {city1Country}
+              </span>
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1 && 'totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult?.city1 && 'totalScore' in comparisonResult.city1 ? comparisonResult.city1.totalScore : 0))}
+                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1?.city === city1Name ? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult.city1 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
-            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city1Trend) : ''}`}>
+            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city1Trend || 'stable') : ''}`}>
               <span className="trend-icon">
-                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city1Trend) : '—'}
+                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city1Trend || 'stable') : '—'}
               </span>
               <span className="trend-label">
-                {judgeReport?.summaryOfFindings.city1Trend.toUpperCase() ?? 'PENDING ANALYSIS'}
+                {judgeReport?.summaryOfFindings.city1Trend?.toUpperCase() ?? 'PENDING ANALYSIS'}
               </span>
             </div>
           </div>
@@ -1499,20 +1837,26 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <div className="finding-card city2">
             <div className="card-header">
               <span className="city-name">{city2Name}</span>
-              <span className="city-country">{comparisonResult?.city2?.country || ''}</span>
+              {city2Region && <span className="city-region">{city2Region}</span>}
+              <span className="city-country">
+                {city2Country && (
+                  <img className="city-flag-img" src={getFlagUrl(city2Country)} alt={city2Country} width={20} height={15} loading="lazy" />
+                )}
+                {city2Country}
+              </span>
             </div>
             <div className="card-score">
               <span className="score-value">
-                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2 && 'totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult?.city2 && 'totalScore' in comparisonResult.city2 ? comparisonResult.city2.totalScore : 0))}
+                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2?.city === city2Name ? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult.city2 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
             </div>
-            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city2Trend) : ''}`}>
+            <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city2Trend || 'stable') : ''}`}>
               <span className="trend-icon">
-                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city2Trend) : '—'}
+                {judgeReport ? getTrendIcon(judgeReport.summaryOfFindings.city2Trend || 'stable') : '—'}
               </span>
               <span className="trend-label">
-                {judgeReport?.summaryOfFindings.city2Trend.toUpperCase() ?? 'PENDING ANALYSIS'}
+                {judgeReport?.summaryOfFindings.city2Trend?.toUpperCase() ?? 'PENDING ANALYSIS'}
               </span>
             </div>
           </div>
@@ -1527,7 +1871,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         <div className="category-analysis-list">
           {CATEGORIES.map((category) => {
             const isExpanded = expandedCategories.has(category.id);
-            const analysis = judgeReport?.categoryAnalysis.find(a => a.categoryId === category.id);
+            const analysis = judgeReport?.categoryAnalysis?.find(a => a.categoryId === category.id);
 
             return (
               <div
@@ -1578,6 +1922,30 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         </div>
       </section>
 
+        </div>{/* end panel-content: evidence */}
+      </div>{/* end collapsible-panel: evidence */}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          PANEL: VERDICT & ACTIONS
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className={`collapsible-panel ${panelVerdictOpen ? 'open' : ''}`}>
+        <button
+          className="panel-header-bar"
+          onClick={() => setPanelVerdictOpen(prev => !prev)}
+        >
+          <span className="panel-icon">⚖️</span>
+          <span className="panel-title">VERDICT & ACTIONS</span>
+          <span className="panel-summary">
+            {judgeReport?.executiveSummary
+              ? `🏆 ${judgeReport.executiveSummary.recommendation === 'city1' ? city1Name
+                  : judgeReport.executiveSummary.recommendation === 'city2' ? city2Name
+                  : 'TIE'}`
+              : 'Verdict pending'}
+          </span>
+          <span className={`panel-chevron ${panelVerdictOpen ? 'open' : ''}`}>▼</span>
+        </button>
+        <div className="panel-content" style={{ display: panelVerdictOpen ? 'block' : 'none' }}>
+
       {/* ═══════════════════════════════════════════════════════════════════
           EXECUTIVE SUMMARY & RECOMMENDATION
       ═══════════════════════════════════════════════════════════════════ */}
@@ -1595,8 +1963,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                     ? city2Name
                     : 'TIE'}
                 </span>
-                <span className={`verdict-confidence ${judgeReport.executiveSummary.confidenceLevel}`}>
-                  {judgeReport.executiveSummary.confidenceLevel.toUpperCase()} CONFIDENCE
+                <span className={`verdict-confidence ${judgeReport.executiveSummary.confidenceLevel || 'medium'}`}>
+                  {(judgeReport.executiveSummary.confidenceLevel || 'medium').toUpperCase()} CONFIDENCE
                 </span>
               </div>
 
@@ -1608,7 +1976,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               <div className="key-factors-section">
                 <h3 className="factors-header">Key Factors</h3>
                 <ul className="factors-list">
-                  {judgeReport.executiveSummary.keyFactors.map((factor, idx) => (
+                  {(judgeReport.executiveSummary.keyFactors || []).map((factor, idx) => (
                     <li key={idx} className="factor-item">
                       <span className="factor-bullet">◈</span>
                       <span className="factor-text">{factor}</span>
@@ -1619,7 +1987,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
               <div className="outlook-section">
                 <h3 className="outlook-header">Future Outlook</h3>
-                <p className="outlook-text">{judgeReport.executiveSummary.futureOutlook}</p>
+                <p className="outlook-text">{judgeReport.executiveSummary.futureOutlook || ''}</p>
               </div>
             </>
           ) : (
@@ -1645,7 +2013,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 </div>
                 <div className="feature-item">
                   <span className="feature-icon">🎬</span>
-                  <span className="feature-text">Video Report by Christian</span>
+                  <span className="feature-text">Video Report by Cristiano</span>
                 </div>
               </div>
             </div>
@@ -1685,6 +2053,58 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           />
         </section>
       )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          GO TO MY NEW CITY - Cristiano's Cinematic Freedom Tour
+          Sovereign plan only. Appears after Court Order.
+      ═══════════════════════════════════════════════════════════════════ */}
+      {judgeReport && (
+        <section className="new-city-section">
+          <GoToMyNewCity
+            winnerCity={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Name
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Name
+                : city1Name
+            }
+            winnerCountry={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Country
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Country
+                : city1Country
+            }
+            winnerRegion={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? city1Region
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? city2Region
+                : city1Region
+            }
+            winnerScore={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? judgeReport.summaryOfFindings.city1Score
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? judgeReport.summaryOfFindings.city2Score
+                : judgeReport.summaryOfFindings.city1Score
+            }
+            winnerCategories={
+              judgeReport.executiveSummary.recommendation === 'city1'
+                ? (comparisonResult as any)?.city1?.categories
+                : judgeReport.executiveSummary.recommendation === 'city2'
+                ? (comparisonResult as any)?.city2?.categories
+                : (comparisonResult as any)?.city1?.categories
+            }
+            executiveSummary={judgeReport.executiveSummary}
+            categoryWinners={(comparisonResult as any)?.categoryWinners}
+            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
+          />
+        </section>
+      )}
+
+        </div>{/* end panel-content: verdict */}
+      </div>{/* end collapsible-panel: verdict */}
 
       {/* ═══════════════════════════════════════════════════════════════════
           FOOTER

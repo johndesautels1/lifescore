@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE - Avatar System Types
  *
- * Types for Simli AI (Olivia) and Replicate (Christiano) integration.
+ * Types for Simli AI (Olivia) and Replicate (Cristiano) integration.
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -60,7 +60,7 @@ export interface CreateSimliSessionResponse {
 }
 
 // ============================================================================
-// REPLICATE TYPES (Christiano Judge Videos)
+// REPLICATE TYPES (Cristiano Judge Videos)
 // ============================================================================
 
 export type JudgeVideoStatus =
@@ -126,7 +126,7 @@ export interface ReplicatePrediction {
 
 /** @deprecated Use Wav2LipInput instead */
 export interface MuseTalkInput {
-  source_image: string;  // URL to Christiano image
+  source_image: string;  // URL to Cristiano image
   driven_audio: string;  // URL to TTS audio
   bbox_shift?: number;   // Face bounding box adjustment
 }
@@ -147,11 +147,20 @@ export interface Wav2LipInput {
 export interface AvatarVideoRecord {
   id: string;
   comparison_id: string;
-  video_url: string;
+  city1: string;
+  city2: string;
+  winner: string;
+  winner_score?: number;
+  loser_score?: number;
   script: string;
+  video_url: string;
+  audio_url?: string;
   duration_seconds?: number;
+  replicate_prediction_id?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
   created_at: string;
-  expires_at?: string;
+  completed_at?: string;
 }
 
 // ============================================================================

@@ -1,6 +1,6 @@
 /**
  * Judge Video Styles
- * Replicate integration styling for Christiano
+ * Replicate integration styling for Cristiano
  */
 
 .judge-video {
@@ -41,7 +41,7 @@
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
 }
 
-.play-btn {
+.judge-video .play-btn {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -56,12 +56,12 @@
   justify-content: center;
 }
 
-.play-btn:hover {
+.judge-video .play-btn:hover {
   transform: scale(1.1);
   background: #d4af37;
 }
 
-.time-display {
+.judge-video .time-display {
   font-size: 0.8rem;
   font-family: 'SF Mono', 'Consolas', monospace;
   color: #e2e8f0;
@@ -223,7 +223,7 @@
   to { transform: rotate(360deg); }
 }
 
-.status-message {
+.judge-video .status-message {
   color: #e2e8f0;
   font-size: 1rem;
   margin-bottom: 0.5rem;
@@ -234,20 +234,20 @@
   font-size: 0.8rem;
 }
 
-.error-icon {
+.judge-video .error-icon {
   font-size: 2rem;
   display: block;
   margin-bottom: 0.5rem;
 }
 
-.error-message {
+.judge-video .error-message {
   color: #f87171;
   font-size: 0.9rem;
   margin-bottom: 1rem;
 }
 
-.retry-btn,
-.generate-btn {
+.judge-video .retry-btn,
+.judge-video .generate-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -264,13 +264,13 @@
   box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
 }
 
-.retry-btn:hover,
-.generate-btn:hover {
+.judge-video .retry-btn:hover,
+.judge-video .generate-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(201, 162, 39, 0.4);
 }
 
-.btn-icon {
+.judge-video .btn-icon {
   font-size: 1.1rem;
 }
 
@@ -321,12 +321,12 @@
     gap: 8px;
   }
 
-  .play-btn {
+  .judge-video .play-btn {
     width: 36px;
     height: 36px;
   }
 
-  .time-display {
+  .judge-video .time-display {
     font-size: 0.7rem;
     min-width: 60px;
   }

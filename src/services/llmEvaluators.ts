@@ -16,7 +16,13 @@ import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 // TIMEOUT CONSTANTS
 // ============================================================================
 
-const CLIENT_TIMEOUT_MS = 240000; // 240 seconds for client-side fetch (must exceed server 180s)
+const CLIENT_BASE_TIMEOUT_MS = 120000; // 120 seconds base timeout
+const CLIENT_PER_METRIC_MS = 5000; // 5 seconds per metric for dynamic scaling
+
+// FIX: Dynamic timeout based on batch size — small categories don't wait 240s for failures
+function getClientTimeout(metricsCount: number): number {
+  return Math.min(CLIENT_BASE_TIMEOUT_MS + (metricsCount * CLIENT_PER_METRIC_MS), 300000);
+}
 
 // ============================================================================
 // TYPES
@@ -99,9 +105,10 @@ async function evaluateCategoryBatch(
 
   console.log(`[CLIENT] Starting ${provider} evaluation for category ${categoryId}, ${metrics.length} metrics`);
 
-  // Client-side timeout - 240s per category (must exceed server 180s timeout)
+  // FIX: Dynamic client timeout based on batch size
+  const dynamicTimeout = getClientTimeout(metrics.length);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 
   try {
     // Call Vercel serverless function which has access to env vars
@@ -142,8 +149,14 @@ async function evaluateCategoryBatch(
       success: boolean;
       scores: APIMetricScore[];
       error?: string;
+      warnings?: string[];
       usage?: { tokens: TokenUsage; tavily?: TavilyUsage };
     };
+
+    // Log any warnings from the API
+    if (result.warnings?.length) {
+      console.warn(`[CLIENT] ${provider}/${categoryId} warnings:`, result.warnings.join('; '));
+    }
 
     console.log(`[CLIENT] ${provider}/${categoryId} result: success=${result.success}, scores=${result.scores?.length || 0}, error=${result.error || 'none'}`);
 
@@ -219,7 +232,7 @@ async function evaluateCategoryBatch(
     // Provide clearer error message for timeout
     const isTimeout = error instanceof Error && error.name === 'AbortError';
     const errorMsg = isTimeout
-      ? `Request timed out after ${CLIENT_TIMEOUT_MS / 1000} seconds for ${provider}/${categoryId}`
+      ? `Request timed out for ${provider}/${categoryId}`
       : (error instanceof Error ? error.message : 'Unknown error');
 
     console.error(`[CLIENT] ${provider}/${categoryId} fetch error:`, errorMsg);
@@ -290,10 +303,11 @@ export async function runSingleEvaluatorBatched(
     // Retry loop for network failures
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
+      const categoryTimeout = getClientTimeout(metrics.length);
       result = await withTimeout(
         evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
-        CLIENT_TIMEOUT_MS,
-        { success: false, scores: [], latencyMs: CLIENT_TIMEOUT_MS, error: `Timeout for ${categoryId}` }
+        categoryTimeout,
+        { success: false, scores: [], latencyMs: categoryTimeout, error: `Timeout for ${categoryId}` }
       );
 
       // If successful or non-retryable error, break

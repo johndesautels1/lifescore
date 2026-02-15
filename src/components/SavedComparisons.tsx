@@ -8,6 +8,7 @@ import type { ComparisonResult } from '../types/metrics';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
+  getAllEnhancedComparisons,
   deleteComparisonLocal,
   deleteEnhancedComparisonLocal,
   updateNicknameLocal,
@@ -16,6 +17,7 @@ import {
   syncToGitHub,
   pullFromGitHub,
   getSyncStatus,
+  getGitHubConfig,
   exportToJSON,
   importFromJSON,
   clearAllLocal,
@@ -32,6 +34,7 @@ import {
   type SavedGammaReport,
   type SavedJudgeReport
 } from '../services/savedComparisons';
+import { toastConfirm } from '../utils/toast';
 import './SavedComparisons.css';
 
 interface SavedComparisonsProps {
@@ -68,105 +71,134 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   // FIX 2026-02-08: State for embedded Gamma report viewer
   const [embeddedGammaReport, setEmbeddedGammaReport] = useState<SavedGammaReport | null>(null);
 
-  // Load comparisons on mount - sync from Supabase first
+  // Load comparisons on mount — show cached data immediately, sync in background
   useEffect(() => {
-    syncAndLoadComparisons();
+    loadComparisons();
+    syncAndLoadComparisons().catch(console.error);
   }, []);
 
-  // FIX: Sync reports AND comparisons from Supabase to ensure cross-device consistency
+  // Sync reports AND comparisons from Supabase to ensure cross-device consistency
+  // Max 20 seconds — if Supabase is slow, show cached data and stop spinner
   const syncAndLoadComparisons = async () => {
     setIsSyncing(true);
-    console.log('[SavedComparisons] Starting full sync from Supabase...');
+
+    const SYNC_TIMEOUT_MS = 20000; // 20 seconds max for entire sync
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Sync timed out')), SYNC_TIMEOUT_MS)
+    );
 
     try {
-      // FIX Session-19: FIRST sync actual comparisons (including Enhanced) from Supabase
-      // This was missing before - Enhanced comparisons from other devices weren't being pulled!
-      const dbSyncResult = await fullDatabaseSync();
-      console.log('[SavedComparisons] Database sync result:', dbSyncResult);
+      const syncWork = async () => {
+        const dbSyncResult = await fullDatabaseSync();
 
-      // Then sync Gamma and Judge reports in parallel
-      const [gammaFromDb, judgeFromDb] = await Promise.all([
-        syncGammaReportsFromSupabase(),
-        syncJudgeReportsFromSupabase()
+        // Sync Gamma and Judge reports in parallel
+        const [gammaFromDb, judgeFromDb] = await Promise.all([
+          syncGammaReportsFromSupabase(),
+          syncJudgeReportsFromSupabase()
+        ]);
+
+        return { dbSyncResult, gammaFromDb, judgeFromDb };
+      };
+
+      const { dbSyncResult, gammaFromDb, judgeFromDb } = await Promise.race([
+        syncWork(),
+        timeoutPromise
       ]);
 
-      // Load comparisons from localStorage (which fullDatabaseSync just updated)
+      // Reload from localStorage (which fullDatabaseSync just updated)
       loadComparisons();
 
-      // Use the synced data directly for reports
       setGammaReports(gammaFromDb);
       setJudgeReports(judgeFromDb);
 
       const totalReports = gammaFromDb.length + judgeFromDb.length;
       const totalComparisons = dbSyncResult.pulled + dbSyncResult.pushed;
-      console.log('[SavedComparisons] ✓ Full sync complete:',
-        dbSyncResult.pulled, 'comparisons pulled,',
-        dbSyncResult.pushed, 'pushed,',
-        gammaFromDb.length, 'gamma,',
-        judgeFromDb.length, 'judge reports');
 
       if (totalComparisons > 0 || totalReports > 0) {
         showMessage('success', `Synced ${dbSyncResult.pulled} comparisons + ${totalReports} reports`);
-      } else {
-        showMessage('error', 'No data found - are you logged in?');
       }
     } catch (err) {
       console.error('[SavedComparisons] Sync error:', err);
-      showMessage('error', 'Sync failed - check connection');
-      // Fall back to localStorage only
-      loadComparisons();
+      loadComparisons(); // Still show cached data
+      const msg = err instanceof Error && err.message === 'Sync timed out'
+        ? 'Sync timed out — showing cached data'
+        : 'Sync failed — showing cached data';
+      showMessage('error', msg);
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const loadComparisons = () => {
-    // FIX 2026-01-26: Load BOTH standard and enhanced comparisons
+  const loadComparisons = async () => {
+    // Step 1: Show localStorage data instantly (no waiting)
     const standardComparisons = getLocalComparisons().map(c => ({ ...c, isEnhanced: false }));
-
-    // Enhanced comparisons - already validated by getLocalEnhancedComparisons
-    const enhancedComparisons = getLocalEnhancedComparisons()
+    const localEnhanced = getLocalEnhancedComparisons()
       .map(c => ({
         ...c,
         result: c.result as unknown as ComparisonResult,
         isEnhanced: true
       }));
 
-    // Merge and sort by savedAt date (newest first)
-    const allComparisons = [...standardComparisons, ...enhancedComparisons]
+    const localAll = [...standardComparisons, ...localEnhanced]
       .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 
-    console.log('[SavedComparisons] Loaded', standardComparisons.length, 'standard +', enhancedComparisons.length, 'enhanced comparisons');
-
-    setComparisons(allComparisons);
+    setComparisons(localAll);
     setGammaReports(getSavedGammaReports());
     setJudgeReports(getSavedJudgeReports());
-    setSyncStatus(getSyncStatus());
+
+    // INP fix: compute sync status from already-loaded data instead of calling
+    // getSyncStatus() which re-parses getLocalComparisons() from localStorage
+    // a second time (~800ms duplicate JSON.parse that was causing 2.4s INP block)
+    const config = getGitHubConfig();
+    const hasPendingChanges = standardComparisons.some(c => !c.synced);
+    setSyncStatus({
+      connected: !!config?.accessToken,
+      hasPendingChanges,
+      gistId: config?.gistId,
+    });
+
+    // Step 2: Fetch older comparisons from Supabase in background (non-blocking)
+    try {
+      const allEnhanced = await getAllEnhancedComparisons();
+      if (allEnhanced.length > localEnhanced.length) {
+        const enhancedComparisons = allEnhanced.map(c => ({
+          ...c,
+          result: c.result as unknown as ComparisonResult,
+          isEnhanced: true
+        }));
+        const merged = [...standardComparisons, ...enhancedComparisons]
+          .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+        setComparisons(merged);
+        console.log('[SavedComparisons] Loaded', standardComparisons.length, 'standard +', allEnhanced.length, 'enhanced (local + Supabase)');
+      }
+    } catch {
+      // Supabase unavailable — local data already shown
+    }
   };
 
   const handleDeleteGammaReport = (id: string) => {
-    if (window.confirm('Delete this saved report?')) {
+    toastConfirm('Delete this saved report?', () => {
       deleteGammaReport(id);
       loadComparisons();
       showMessage('success', 'Report deleted');
-    }
+    });
   };
 
   const handleDeleteJudgeReport = (reportId: string) => {
-    if (window.confirm('Delete this saved report?')) {
+    toastConfirm('Delete this saved report?', () => {
       deleteSavedJudgeReport(reportId);
       loadComparisons();
       showMessage('success', 'Report deleted');
-    }
+    });
   };
 
   const handleClearAllGammaReports = () => {
-    if (window.confirm('Delete ALL saved visual reports? This cannot be undone.')) {
+    toastConfirm('Delete ALL saved visual reports? This cannot be undone.', () => {
       clearAllGammaReports();
       clearAllJudgeReports();
       loadComparisons();
       showMessage('success', 'All reports cleared');
-    }
+    });
   };
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -174,8 +206,8 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
-  const handleDelete = async (id: string, isEnhanced?: boolean) => {
-    if (window.confirm('Delete this saved comparison?')) {
+  const handleDelete = (id: string, isEnhanced?: boolean) => {
+    toastConfirm('Delete this saved comparison?', async () => {
       // FIX 2026-01-26: Delete from correct storage based on comparison type
       // FIX 2026-01-26: Await async delete operations before reloading
       if (isEnhanced) {
@@ -185,7 +217,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
       }
       loadComparisons();
       showMessage('success', 'Comparison deleted');
-    }
+    });
   };
 
   const handleLoad = (comparison: DisplayComparison) => {
@@ -274,13 +306,13 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     }
   };
 
-  const handleDisconnectGitHub = async () => {
-    if (window.confirm('Disconnect from GitHub? Your local comparisons will be kept.')) {
+  const handleDisconnectGitHub = () => {
+    toastConfirm('Disconnect from GitHub? Your local comparisons will be kept.', async () => {
       await disconnectGitHub(false);
       setGitHubUsername(null);
       loadComparisons();
       showMessage('success', 'Disconnected from GitHub');
-    }
+    });
   };
 
   const handleSync = async () => {
@@ -325,11 +357,11 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Delete ALL saved comparisons? This cannot be undone.')) {
+    toastConfirm('Delete ALL saved comparisons? This cannot be undone.', () => {
       clearAllLocal();
       loadComparisons();
       showMessage('success', 'All comparisons cleared');
-    }
+    });
   };
 
   const formatDate = (dateStr: string) => {
@@ -407,7 +439,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
               >
                 {isSyncing ? '⟳ Syncing...' : '☁️ Sync Cloud'}
               </button>
-              {syncStatus.connected ? (
+              {syncStatus.connected && (
                 <>
                   <button className="toolbar-btn sync-btn" onClick={handleSync} title="Sync to GitHub">
                     ⬆ Push
@@ -419,12 +451,15 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                     Disconnect
                   </button>
                 </>
-              ) : (
+              )}
+            </div>
+            {!syncStatus.connected && (
+              <div className="toolbar-center">
                 <button className="toolbar-btn github-connect-btn" onClick={() => setShowGitHubModal(true)}>
                   <span className="github-icon">⬡</span> Connect GitHub
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             <div className="toolbar-right">
               <button className="toolbar-btn" onClick={handleExport} title="Export to file">
                 📤 Export
@@ -670,16 +705,14 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                             👁️
                           </button>
                         )}
-                        {report.videoUrl && report.videoStatus === 'ready' && (
-                          <a
-                            href={report.videoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        {report.videoUrl && report.videoStatus === 'ready' && onViewJudgeReport && (
+                          <button
                             className="action-btn view-btn"
+                            onClick={() => onViewJudgeReport(report)}
                             title="Watch Video"
                           >
                             🎬
-                          </a>
+                          </button>
                         )}
                         <button
                           className="action-btn delete-btn"
@@ -700,7 +733,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
       {/* GitHub Connect Modal */}
       {showGitHubModal && (
-        <div className="modal-overlay" onClick={() => setShowGitHubModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowGitHubModal(false)} role="dialog" aria-modal="true" aria-label="Connect to GitHub">
           <div className="github-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Connect to GitHub</h3>
             <p className="modal-description">
@@ -742,7 +775,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
       {/* FIX 2026-02-08: Embedded Gamma Report Viewer Modal */}
       {embeddedGammaReport && (
-        <div className="modal-overlay gamma-embed-overlay" onClick={() => setEmbeddedGammaReport(null)}>
+        <div className="modal-overlay gamma-embed-overlay" onClick={() => setEmbeddedGammaReport(null)} role="dialog" aria-modal="true" aria-label="Visual Report">
           <div className="gamma-embed-modal" onClick={(e) => e.stopPropagation()}>
             <div className="gamma-embed-header">
               <h3>{embeddedGammaReport.city1} vs {embeddedGammaReport.city2}</h3>

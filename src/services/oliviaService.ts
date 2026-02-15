@@ -3,6 +3,7 @@
  * Client-side API wrapper for Olivia AI assistant
  */
 
+import { getAuthHeaders } from '../lib/supabase';
 import type {
   OliviaChatRequest,
   OliviaChatResponse,
@@ -75,11 +76,12 @@ export async function sendMessage(
     generateAudio: options.generateAudio,
   };
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/olivia/chat',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify(request),
     },
     90000 // 90 second timeout - server may retry on active runs
@@ -119,11 +121,12 @@ export async function generateTTS(
   text: string,
   options: { voiceId?: string } = {}
 ): Promise<TTSResponse> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/olivia/tts',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         text,
         voiceId: options.voiceId,
@@ -389,6 +392,70 @@ export async function sendMessageWithAudio(
     console.warn('[OliviaService] TTS generation failed:', error);
     return { response };
   }
+}
+
+// ============================================================================
+// HEYGEN VIDEO GENERATION API (Pre-rendered)
+// ============================================================================
+
+/**
+ * Submit a video generation request to HeyGen.
+ * Returns a videoId for polling status.
+ */
+export async function generateHeyGenVideo(
+  script: string,
+  options: { title?: string; avatarId?: string; voiceId?: string } = {}
+): Promise<{ videoId: string }> {
+  const response = await fetchWithTimeout(
+    '/api/olivia/avatar/heygen-video',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'generate',
+        script,
+        title: options.title,
+        avatarId: options.avatarId,
+        voiceId: options.voiceId,
+      }),
+    },
+    60000 // 60 second timeout for video submission
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
+    throw new Error(error.error || `HeyGen video generation failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Check HeyGen video generation status.
+ * Uses GET endpoint for simple polling.
+ */
+export async function checkHeyGenVideoStatus(
+  videoId: string
+): Promise<{
+  videoId: string;
+  status: 'generating' | 'processing' | 'completed' | 'failed';
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  error?: string;
+}> {
+  const response = await fetchWithTimeout(
+    `/api/olivia/avatar/heygen-video?videoId=${encodeURIComponent(videoId)}`,
+    { method: 'GET' },
+    30000 // 30 second timeout for status check
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
+    throw new Error(error.error || `HeyGen video status check failed: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 // ============================================================================

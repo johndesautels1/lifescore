@@ -49,6 +49,7 @@ export interface UseAvatarProviderReturn {
   error: string | null;
   isConnected: boolean;
   isSpeaking: boolean;
+  isPaused: boolean;
 
   // Provider info
   activeProvider: AvatarProvider;
@@ -60,6 +61,8 @@ export interface UseAvatarProviderReturn {
   speak: (text: string, options?: { emotion?: string; speed?: number }) => Promise<void>;
   disconnect: () => void;
   interrupt: () => void;
+  pause: () => void;
+  resume: () => void;
 
   // Provider control
   switchProvider: (provider: AvatarProvider) => void;
@@ -281,6 +284,40 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     onSpeakingEndRef.current?.();
   }, [activeProvider, simli, did, autoFallback, triggerFallback]);
 
+  const [didPaused, setDidPaused] = useState(false);
+
+  const pause = useCallback(() => {
+    if (activeProvider === 'simli') {
+      simli.pause();
+    } else {
+      // D-ID doesn't support native pause - pause the video/audio elements directly
+      if (effectiveVideoRef?.current) {
+        effectiveVideoRef.current.pause();
+      }
+      if (effectiveAudioRef?.current) {
+        effectiveAudioRef.current.pause();
+      }
+      setDidPaused(true);
+      console.log('[useAvatarProvider] D-ID paused via video/audio element');
+    }
+  }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
+
+  const resume = useCallback(() => {
+    if (activeProvider === 'simli') {
+      simli.resume();
+    } else {
+      // D-ID: resume video/audio elements
+      if (effectiveVideoRef?.current) {
+        effectiveVideoRef.current.play().catch(() => {});
+      }
+      if (effectiveAudioRef?.current) {
+        effectiveAudioRef.current.play().catch(() => {});
+      }
+      setDidPaused(false);
+      console.log('[useAvatarProvider] D-ID resumed via video/audio element');
+    }
+  }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
+
   const disconnect = useCallback(() => {
     if (activeProvider === 'simli') {
       simli.disconnect();
@@ -318,8 +355,9 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
       console.log('[useAvatarProvider] Browser speech synthesis cancelled');
     }
 
-    // Reset speaking state in facade
+    // Reset speaking and pause state in facade
     setFacadeStatus('connected');
+    setDidPaused(false);
   }, [activeProvider, simli, effectiveVideoRef, effectiveAudioRef]);
 
   // ============================================================================
@@ -379,6 +417,7 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     error: facadeError,
     isConnected: currentProviderState.isConnected,
     isSpeaking: currentProviderState.isSpeaking,
+    isPaused: activeProvider === 'simli' ? simli.isPaused : didPaused,
 
     // Provider info
     activeProvider,
@@ -390,6 +429,8 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     speak,
     disconnect,
     interrupt,
+    pause,
+    resume,
 
     // Provider control
     switchProvider,

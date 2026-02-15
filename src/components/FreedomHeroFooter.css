@@ -13,11 +13,9 @@
   padding: 1rem 1.25rem;
   background: linear-gradient(
     135deg,
-    rgba(13, 40, 71, 0.7) 0%,
-    rgba(10, 22, 40, 0.8) 100%
+    rgba(13, 40, 71, 0.95) 0%,
+    rgba(10, 22, 40, 0.97) 100%
   );
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 12px;
   overflow: hidden;

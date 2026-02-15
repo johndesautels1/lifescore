@@ -1,7 +1,7 @@
 # LIFE SCORE - Mathematical Equations & Scoring Manual
 
-**Version:** 1.0.0
-**Generated:** 2026-02-03
+**Version:** 1.2.0
+**Generated:** 2026-02-14
 **Purpose:** Complete technical reference for all scoring algorithms, equations, and mathematical logic
 
 ---
@@ -517,11 +517,34 @@ THE JUDGE (Claude Opus 4.5) provides final analysis beyond raw scores:
 
 For each city, THE JUDGE assesses freedom trajectory:
 
-| Trend | Meaning |
-|-------|---------|
-| **rising** | Recent reforms expanding freedom |
-| **stable** | No significant changes expected |
-| **declining** | Recent restrictions reducing freedom |
+| Trend | Meaning | DB Value |
+|-------|---------|----------|
+| **rising/improving** | Recent reforms expanding freedom | `improving` |
+| **stable** | No significant changes expected | `stable` |
+| **declining** | Recent restrictions reducing freedom | `declining` |
+
+**Important (Fixed 2026-02-10):** Trend values are normalized to match the database CHECK constraint. All trend values are standardized to `'improving'` (not `'rising'`) before storage to prevent constraint violations.
+
+### Score Passing in Standard Mode (Fixed 2026-02-10)
+
+In standard mode (single LLM), the Judge now receives actual city scores — not just consensus scores. This fix ensures the Judge's winner/loser determination matches the displayed results.
+
+```javascript
+// Previously: Judge only received consensus scores (undefined in standard mode)
+// Now: Judge receives actual comparison scores in all modes
+const judgeInput = {
+  city1Scores: comparisonResult.city1Scores,
+  city2Scores: comparisonResult.city2Scores,
+  // ...
+};
+```
+
+### Tie Handling (Fixed 2026-02-10)
+
+When the comparison results in a tie (score difference < 1 point):
+- The Judge no longer says "winner is TIE" in video scripts
+- Tie verdicts generate a balanced analysis of both cities
+- Video scripts properly reference both cities without declaring a winner
 
 ### Category Analysis
 
@@ -529,6 +552,9 @@ For each of 6 categories:
 - City 1 analysis (2-3 sentences)
 - City 2 analysis (2-3 sentences)
 - Trend notes
+
+**Category Analysis Deserialization Fix (2026-02-14):**
+Previously, when loading saved judge verdicts, the `category_analysis` JSONB field was not being correctly restored into the component state. This caused the 6 freedom category sections to be missing from the displayed verdict when loading from localStorage or Supabase. The fix ensures proper deserialization of saved `category_analysis` data so that all 6 category breakdowns are displayed correctly on reload.
 
 ### Executive Summary
 
@@ -546,6 +572,29 @@ THE JUDGE can **override** raw score winners if trend analysis suggests:
 - The "losing" city is improving rapidly
 - The "winning" city is declining
 - Political/cultural shifts will change the landscape
+
+### Cost Tracking Fix (2026-02-14)
+
+Accurate cost tracking for comparison evaluations:
+
+**Perplexity API — Token Data Fix:**
+- Added `stream: false` to Perplexity API calls to ensure `usage`/token data is returned in the response
+- Without this flag, streaming mode does not return token counts, making cost calculation impossible
+
+**Fallback Token Estimation:**
+When token usage data is unavailable from any provider, the following estimation formula is used:
+```
+inputTokens = Math.ceil(promptLength / 4)
+outputTokens = Math.ceil(responseLength / 4)
+```
+
+**Cost Dashboard Field-by-Field Merge:**
+The cost dashboard now performs a field-by-field merge when reconciling DB and localStorage records:
+```
+For each service cost field:
+  mergedValue = Math.max(dbValue, localStorageValue)
+```
+If the patched record has a higher `grandTotal` than the DB record, it is automatically re-saved to Supabase.
 
 ---
 
@@ -769,14 +818,120 @@ def compare_cities(city1, city2, options):
 
 ---
 
+## Appendix C: Video Generation Progress Formula (Added 2026-02-13)
+
+The video progress bar in `useGrokVideo.ts` uses a formula that smoothly scales from 0% to 95%:
+
+```javascript
+// Each completed video contributes 50% (winner + loser = 100%)
+const completedPct = (winnerDone ? 50 : 0) + (loserDone ? 50 : 0);
+
+// Remaining percentage to fill with poll progress
+const remainingPct = 100 - completedPct;
+
+// Poll fraction: how far through the max poll attempts (capped at 90%)
+const pollFraction = Math.min(pollAttempts / MAX_POLL_ATTEMPTS, 0.9);
+
+// Progress = completed base + (remaining × poll fraction)
+let progressPct = completedPct + (remainingPct * pollFraction);
+
+// Never exceed 95% while videos are still generating
+if (!winnerDone || !loserDone) {
+  progressPct = Math.min(progressPct, 95);
+}
+```
+
+**Previous formula (broken, capped at 73%):**
+```
+progressPct = 50 + min(pollAttempts * 2, 45) / 2
+// Max: 50 + 45/2 = 72.5%
+```
+
+**Constants:**
+- `MAX_POLL_ATTEMPTS = 120` (6 minutes at 3-second intervals)
+- Poll interval: 3 seconds
+
+---
+
+## Appendix D: Storyboard QA Word Count Validation (Added 2026-02-14)
+
+Storyboard QA now validates word count per scene before submission to HeyGen:
+
+### HeyGen API Character Limit
+
+```
+MAX_TOTAL_CHARACTERS = 10,000 (per HeyGen API requirement)
+```
+
+### Per-Scene Validation
+
+Each scene script is checked against HeyGen's API limits before render submission:
+
+```javascript
+function validateSceneWordCount(scene) {
+  const charCount = scene.script.length;
+  const wordCount = scene.script.split(/\s+/).length;
+
+  // HeyGen rejects scripts that are too long per scene
+  // QA validation now aligned with render validation
+  return charCount <= MAX_SCENE_CHARS;
+}
+```
+
+### QA-Render Alignment
+
+Previously, QA validation and render validation used different thresholds, causing:
+- Storyboards that passed QA would fail at render time with 422 errors from HeyGen
+- Fix: QA validation now uses the same character count limits as the render step
+
+---
+
+## Appendix E: GoToMyNewCity Multi-Scene Storyboard Structure (Added 2026-02-14)
+
+The `GoToMyNewCity` component generates a HeyGen multi-scene relocation video displayed at the bottom of the Judge page.
+
+### Storyboard Structure
+
+| Scene | Content | Purpose |
+|-------|---------|---------|
+| Scene 1 | Introduction / Welcome | Greet viewer, introduce the relocation comparison |
+| Scenes 2-N | Winning city feature highlights | Each scene covers a key advantage of the winning city |
+| Final Scene | CTA with Cluesnomads.com branding | Call-to-action directing viewer to Cluesnomads.com |
+
+### Validation Pipeline
+
+```
+1. Generate storyboard from comparison data
+2. Validate each scene's character count against HeyGen limits
+3. Trim or split scenes that exceed per-scene character limit
+4. Submit validated storyboard to HeyGen Video Generate v2 API
+5. Poll for completion (5s intervals, 10-min timeout)
+```
+
+### Scene Character Validation
+
+Each scene is validated before submission:
+```
+For each scene in storyboard:
+  if scene.script.length > MAX_SCENE_CHARS:
+    trim or split scene
+  total_chars += scene.script.length
+
+if total_chars > 10,000:
+  reject storyboard (HeyGen API limit)
+```
+
+---
+
 ## Document Info
 
-- **Generated by:** Claude Opus 4.5
+- **Generated by:** Claude Opus 4.6
 - **For:** LIFE SCORE Emilia Help System
 - **Source Files:**
   - `api/evaluate.ts`
   - `api/judge-report.ts`
   - `src/hooks/useComparison.ts`
+  - `src/hooks/useGrokVideo.ts`
   - `src/data/metrics.ts`
   - `src/constants/scoringThresholds.ts`
-- **Last Updated:** 2026-02-03
+- **Last Updated:** 2026-02-14

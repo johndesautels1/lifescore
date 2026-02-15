@@ -18,7 +18,37 @@ import { parseURLParams, updateURL } from '../hooks/useURLParams';
 import { DealbreakersPanel } from './DealbreakersPanel';
 import { WeightPresets, type CategoryWeights } from './WeightPresets';
 import type { LawLivedRatio, CategoryId } from '../types/metrics';
+import { getFlagUrl } from '../utils/countryFlags';
 import './CitySelector.css';
+
+// Country → short code for badges
+const COUNTRY_CODES: Record<string, string> = {
+  'USA': 'US', 'Canada': 'CA',
+  'UK': 'UK', 'France': 'FR', 'Germany': 'DE', 'Italy': 'IT', 'Spain': 'ES',
+  'Netherlands': 'NL', 'Belgium': 'BE', 'Austria': 'AT', 'Switzerland': 'CH',
+  'Sweden': 'SE', 'Norway': 'NO', 'Denmark': 'DK', 'Finland': 'FI', 'Iceland': 'IS',
+  'Ireland': 'IE', 'Portugal': 'PT', 'Greece': 'GR', 'Poland': 'PL',
+  'Czech Republic': 'CZ', 'Hungary': 'HU', 'Romania': 'RO', 'Bulgaria': 'BG',
+  'Croatia': 'HR', 'Slovakia': 'SK', 'Slovenia': 'SI', 'Estonia': 'EE',
+  'Latvia': 'LV', 'Lithuania': 'LT', 'Luxembourg': 'LU', 'Malta': 'MT',
+  'Cyprus': 'CY', 'Monaco': 'MC',
+};
+
+const getCountryCode = (country: string): string => COUNTRY_CODES[country] || country.slice(0, 2).toUpperCase();
+
+// Highlight matching text in search results
+const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query }) => {
+  if (!query) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="search-highlight">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+};
 
 // Helper to find metro by formatted string (e.g., "Tampa, Florida, USA")
 const findMetroByFormatted = (formatted: string): Metro | undefined => {
@@ -77,8 +107,10 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'na' | 'eu'>('all');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -113,14 +145,66 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
     onChange(metro);
     setIsOpen(false);
     setSearchQuery('');
+    setHighlightedIndex(-1);
   };
 
-  const handleOpen = () => {
+  const handleToggle = () => {
     if (!disabled) {
-      setIsOpen(true);
-      setTimeout(() => inputRef.current?.focus(), 0);
+      if (isOpen) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      } else {
+        setIsOpen(true);
+        setHighlightedIndex(-1);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
     }
   };
+
+  // Keyboard navigation for dropdown
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) return;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev < filteredMetros.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev > 0 ? prev - 1 : filteredMetros.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < filteredMetros.length) {
+          handleSelect(filteredMetros[highlightedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+        break;
+    }
+  };
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const items = listRef.current.querySelectorAll('.metro-option');
+      if (items[highlightedIndex]) {
+        items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex]);
+
+  // Reset highlighted index when search changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchQuery, activeTab]);
 
   return (
     <div className="metro-dropdown" ref={dropdownRef}>
@@ -128,11 +212,17 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
       <button
         type="button"
         className={`metro-select-btn ${isOpen ? 'open' : ''}`}
-        onClick={handleOpen}
+        onClick={handleToggle}
         disabled={disabled}
       >
         <span className="metro-select-value">
-          {value ? formatMetro(value) : 'Select a city...'}
+          {value ? (
+            <>
+              <img className="metro-flag-img" src={getFlagUrl(value.country)} alt={value.country} width={20} height={15} />
+              <span className="metro-country-badge">{getCountryCode(value.country)}</span>
+              {' '}{formatMetro(value)}
+            </>
+          ) : 'Select a city...'}
         </span>
         <span className="metro-select-arrow">{isOpen ? '▲' : '▼'}</span>
       </button>
@@ -146,7 +236,13 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
               placeholder="Search cities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="metro-search-input"
+              role="combobox"
+              aria-expanded={isOpen}
+              aria-autocomplete="list"
+              aria-controls={`${id}-listbox`}
+              aria-activedescendant={highlightedIndex >= 0 ? `${id}-option-${highlightedIndex}` : undefined}
             />
           </div>
 
@@ -156,39 +252,61 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
               className={`metro-tab ${activeTab === 'all' ? 'active' : ''}`}
               onClick={() => setActiveTab('all')}
             >
-              All (200)
+              🌎 All ({searchQuery ? filteredMetros.length : 200})
             </button>
             <button
               type="button"
               className={`metro-tab ${activeTab === 'na' ? 'active' : ''}`}
               onClick={() => setActiveTab('na')}
             >
-              N. America (100)
+              🇺🇸 N. America
             </button>
             <button
               type="button"
               className={`metro-tab ${activeTab === 'eu' ? 'active' : ''}`}
               onClick={() => setActiveTab('eu')}
             >
-              Europe (100)
+              🇪🇺 Europe
             </button>
           </div>
 
-          <div className="metro-list">
+          {searchQuery && (
+            <div className="metro-search-count">
+              {filteredMetros.length} {filteredMetros.length === 1 ? 'city' : 'cities'} found
+            </div>
+          )}
+
+          <div className="metro-list" ref={listRef} role="listbox" id={`${id}-listbox`}>
             {filteredMetros.length === 0 ? (
-              <div className="metro-no-results">No cities found</div>
+              <div className="metro-no-results">No cities match "{searchQuery}"</div>
             ) : (
               filteredMetros.map((metro, index) => (
                 <button
                   key={`${metro.city}-${metro.country}-${index}`}
+                  id={`${id}-option-${index}`}
                   type="button"
-                  className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''}`}
+                  role="option"
+                  aria-selected={value?.city === metro.city && value?.country === metro.country}
+                  className={`metro-option ${value?.city === metro.city && value?.country === metro.country ? 'selected' : ''} ${highlightedIndex === index ? 'highlighted' : ''}`}
                   onClick={() => handleSelect(metro)}
                 >
-                  <span className="metro-city">{metro.city}</span>
-                  <span className="metro-location">
-                    {metro.region ? `${metro.region}, ${metro.country}` : metro.country}
-                  </span>
+                  <div className="metro-details">
+                    <span className="metro-city">
+                      <HighlightMatch text={metro.city} query={searchQuery} />
+                    </span>
+                    {metro.region && (
+                      <span className="metro-region">{metro.region}</span>
+                    )}
+                  </div>
+                  <img
+                    className="metro-flag-img"
+                    src={getFlagUrl(metro.country)}
+                    alt={metro.country}
+                    width={20}
+                    height={15}
+                    loading="lazy"
+                  />
+                  <span className="metro-country-badge">{getCountryCode(metro.country)}</span>
                 </button>
               ))
             )}
