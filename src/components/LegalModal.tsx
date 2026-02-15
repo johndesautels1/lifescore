@@ -29,7 +29,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
       <div className="legal-modal" onClick={(e) => e.stopPropagation()}>
         <div className="legal-modal-header">
           <h2>{titles[page]}</h2>
-          <button className="legal-modal-close" onClick={onClose}>
+          <button className="legal-modal-close" onClick={onClose} aria-label="Close">
             &times;
           </button>
         </div>

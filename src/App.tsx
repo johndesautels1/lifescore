@@ -584,7 +584,7 @@ const AppContent: React.FC = () => {
   if (authLoading) {
     return (
       <div className="app auth-loading">
-        <div className="auth-loading-spinner">
+        <div className="auth-loading-spinner" role="status" aria-label="Loading application">
           <div className="spinner-ring"></div>
           <span>Loading...</span>
         </div>
@@ -621,7 +621,7 @@ const AppContent: React.FC = () => {
       <main className="main-content" id="main-content">
         <div className="container">
           {/* Live Badge - Always visible */}
-          <div className="live-badge">
+          <div className="live-badge" role="status">
             ⚡ LIVE - 100 Freedom Metrics | Real-Time LLM Evaluation
           </div>
 
@@ -980,7 +980,7 @@ const AppContent: React.FC = () => {
 
               {/* Category Failures Warning - Require acknowledgment before showing results */}
               {enhancedMode && enhancedStatus === 'complete' && hasCategoryFailures && !failuresAcknowledged && (
-                <div className="category-failures-warning">
+                <div className="category-failures-warning" role="alert">
                   <div className="warning-icon">⚠️</div>
                   <h3>Some Data May Be Incomplete</h3>
                   <p>
@@ -1024,7 +1024,7 @@ const AppContent: React.FC = () => {
 
               {/* Error State */}
               {state.status === 'error' && (
-                <div className="error-card card">
+                <div className="error-card card" role="alert">
                   <div className="error-icon">❌</div>
                   <h3>Analysis Failed</h3>
                   <p>{state.error}</p>
@@ -1208,19 +1208,23 @@ const AppContent: React.FC = () => {
           {activeTab === 'about' && (
             <div className="about-tab-wrapper">
               {/* Top-level About sub-tab navigation */}
-              <div className="about-top-tabs">
+              <div className="about-top-tabs" role="tablist" aria-label="About sections">
                 <button
                   className={`about-top-tab ${activeAboutTab === 'lifescore' ? 'active' : ''}`}
                   onClick={() => dispatchModal({ type: 'SET_ABOUT_TAB', tab: 'lifescore' })}
+                  role="tab"
+                  aria-selected={activeAboutTab === 'lifescore'}
                 >
-                  <span className="about-top-tab-icon">⚖️</span>
+                  <span className="about-top-tab-icon" aria-hidden="true">⚖️</span>
                   <span>About LifeScore</span>
                 </button>
                 <button
                   className={`about-top-tab ${activeAboutTab === 'clues' ? 'active' : ''}`}
                   onClick={() => dispatchModal({ type: 'SET_ABOUT_TAB', tab: 'clues' })}
+                  role="tab"
+                  aria-selected={activeAboutTab === 'clues'}
                 >
-                  <span className="about-top-tab-icon">🌍</span>
+                  <span className="about-top-tab-icon" aria-hidden="true">🌍</span>
                   <span>About Clues</span>
                 </button>
               </div>
@@ -1231,9 +1235,10 @@ const AppContent: React.FC = () => {
                   <button
                     className="section-toggle"
                     onClick={() => dispatchModal({ type: 'TOGGLE_ABOUT' })}
+                    aria-expanded={showAboutSection}
                   >
                     <h3 className="section-title">About LIFE SCORE™</h3>
-                    <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`}>▼</span>
+                    <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`} aria-hidden="true">▼</span>
                   </button>
 
                   {showAboutSection && (

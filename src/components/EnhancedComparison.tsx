@@ -501,7 +501,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Configure LLM API Keys">
       <div className="api-key-modal" onClick={e => e.stopPropagation()}>
         <h3>Configure LLM API Keys</h3>
         <p className="modal-description">

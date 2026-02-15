@@ -214,6 +214,8 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
         className={`metro-select-btn ${isOpen ? 'open' : ''}`}
         onClick={handleToggle}
         disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
       >
         <span className="metro-select-value">
           {value ? (
@@ -469,6 +471,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
           className="btn btn-share"
           onClick={handleCopyShareLink}
           title="Copy shareable link"
+          aria-label="Copy shareable link"
         >
           {showShareCopied ? '✓ Copied!' : '🔗 Share Link'}
         </button>
