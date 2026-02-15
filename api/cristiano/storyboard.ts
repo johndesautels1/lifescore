@@ -3,8 +3,8 @@
  * Stage 1 of the 2-stage video pipeline.
  *
  * Takes a Winner Package JSON (freedom scores, categories, city data)
- * and calls an LLM to generate a 9-scene Storyboard JSON following
- * the locked format template (120s, 260-310 words, all 6 categories).
+ * and calls an LLM to generate a 7-scene Storyboard JSON following
+ * the locked format template (105-120s, 220-270 words, all 6 categories).
  *
  * The storyboard is validated against hard requirements before returning.
  * Stage 2 (render.ts) takes this storyboard and sends it to HeyGen Video Agent.
@@ -29,7 +29,7 @@ export const config = {
 
 const LLM_TIMEOUT_MS = 90000; // 90 seconds for storyboard generation
 
-// The 6 freedom categories (must all appear as primary_category across 9 scenes)
+// The 6 freedom categories (must all appear as primary_category across 7 scenes)
 const REQUIRED_CATEGORIES = [
   'Personal Autonomy',
   'Housing, Property & HOA Control',
@@ -78,6 +78,7 @@ interface StoryboardScene {
   type: 'A_ROLL' | 'B_ROLL';
   duration_seconds: number;
   primary_category: string;
+  overlay: string;            // Per-scene overlay text e.g. "Freedom Score: 82%" or "Personal Autonomy: 78%"
   visual_direction: string;
   voiceover: string;
   on_screen_text: string[];
@@ -93,13 +94,13 @@ interface Storyboard {
     target_word_count: number;
     music_mood: string;
     font_style: string;
-    safe_area_note: string;
+    safe_area_note?: string;    // Removed from schema — overlay instructions handle this
   };
-  overlay_system: {
-    freedom_score_badge: { text: string; position: string };
-    category_strip: { position: string; categories: string[]; scores_placeholder: string };
-    logo_qr_reserved_box: { position: string; note: string };
-    caption_style: { enabled: boolean; max_words_per_line: number; max_lines: number };
+  overlay_system?: {           // Deprecated — per-scene overlay field replaces this
+    freedom_score_badge?: { text: string; position: string };
+    category_strip?: { position: string; categories: string[]; scores_placeholder: string };
+    logo_qr_reserved_box?: { position: string; note: string };
+    caption_style?: { enabled: boolean; max_words_per_line: number; max_lines: number };
   };
   scenes: StoryboardScene[];
   neighborhoods: Array<{
@@ -353,7 +354,7 @@ async function generateStoryboard(
 
   const systemPrompt = buildSystemPrompt();
 
-  let userPrompt = `Generate a cinematic 120-second Freedom Tour storyboard for this winning city.
+  let userPrompt = `Generate a cinematic 105-120 second Freedom Tour storyboard for this winning city.
 
 INPUT DATA (Winner Package JSON):
 ${JSON.stringify(winnerPackage, null, 2)}
@@ -362,7 +363,7 @@ Return ONLY valid JSON matching the schema. No markdown, no backticks, no explan
 
   // On retry, include QA feedback so the LLM can correct specific issues
   if (qaFeedback && qaFeedback.length > 0) {
-    userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA validation with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues in your new output. Pay special attention to the 260-310 word count target for voiceover.`;
+    userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA validation with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues in your new output. Pay special attention to the 220-270 word count target for voiceover.`;
   }
 
   const response = await fetchWithTimeout(

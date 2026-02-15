@@ -76,7 +76,7 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: str
   },
   cristianoVideos: {
     title: 'Go To My New City',
-    description: 'Cristiano\'s cinematic 120-second Freedom Tour video (Sovereign only, 1/month).',
+    description: 'Cristiano\'s cinematic Freedom Tour video (Sovereign only, 1/month).',
   },
   cloudSync: {
     title: 'Cloud Sync',

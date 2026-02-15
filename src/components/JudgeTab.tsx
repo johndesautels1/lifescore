@@ -2055,7 +2055,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          GO TO MY NEW CITY - Cristiano's 120s Cinematic Freedom Tour
+          GO TO MY NEW CITY - Cristiano's Cinematic Freedom Tour
           Sovereign plan only. Appears after Court Order.
       ═══════════════════════════════════════════════════════════════════ */}
       {judgeReport && (

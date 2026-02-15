@@ -1,11 +1,11 @@
 /**
  * LIFE SCORE - Go To My New City Component
  *
- * The final celebration: Cristiano's cinematic 120-second Freedom Tour
+ * The final celebration: Cristiano's cinematic 105-120 second Freedom Tour
  * of the winning city. Uses the same LCD display style as CourtOrderVideo.
  *
  * 2-stage pipeline:
- *   Stage 1: LLM builds a 9-scene storyboard from the Winner Package
+ *   Stage 1: LLM builds a 7-scene storyboard from the Winner Package
  *   Stage 2: HeyGen Video Agent renders the cinematic video with B-roll
  *
  * Sovereign plan only, 1 video/month per user.
@@ -74,9 +74,9 @@ function getStatusMessage(status: string, progress: number): string {
 function getSubstatusMessage(status: string): string {
   switch (status) {
     case 'building_storyboard':
-      return '9-scene cinematic storyboard via AI';
+      return '7-scene cinematic storyboard via AI';
     case 'rendering':
-      return '120-second Freedom Tour with B-roll';
+      return '105-120s Freedom Tour with B-roll';
     case 'processing':
       return 'HeyGen Video Agent assembling your video';
     default:
@@ -430,11 +430,11 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                           <span className="preview-score">Freedom Score: {winnerScore.toFixed(1)}</span>
                         </div>
                         <div className="preview-text">
-                          Cristiano's 120-second cinematic Freedom Tour
+                          Cristiano's cinematic Freedom Tour
                         </div>
                         <div className="preview-badge">
                           <span className="badge-icon">{'\u2696\uFE0F'}</span>
-                          <span className="badge-text">9-SCENE CINEMATIC VIDEO</span>
+                          <span className="badge-text">7-SCENE CINEMATIC VIDEO</span>
                         </div>
                       </div>
                     )}

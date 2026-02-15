@@ -2,7 +2,7 @@
  * LIFE SCORE - Cristiano "Go To My New City" HeyGen Render Orchestrator
  * Stage 2 of the 2-stage video pipeline.
  *
- * Takes the validated 9-scene Storyboard JSON from Stage 1 (storyboard.ts),
+ * Takes the validated 7-scene Storyboard JSON from Stage 1 (storyboard.ts),
  * formats it into a comprehensive prompt for the HeyGen Video Agent V2,
  * and submits for rendering. Supports status polling and Supabase caching.
  *
@@ -586,7 +586,7 @@ export default async function handler(
           heygenVideoId,
           storyboard: body.storyboard,
           winnerPackage: body.winnerPackage,
-          sceneCount: scenes?.length || 9,
+          sceneCount: scenes?.length || 7,
           wordCount,
           freedomScore: body.freedomScore,
           userId: auth.userId,
@@ -600,7 +600,7 @@ export default async function handler(
             cityName: body.winnerCity,
             heygenVideoId,
             status: 'rendering',
-            sceneCount: scenes?.length || 9,
+            sceneCount: scenes?.length || 7,
             wordCount,
             createdAt: new Date().toISOString(),
           },
