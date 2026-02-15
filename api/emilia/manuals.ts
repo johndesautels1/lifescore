@@ -278,16 +278,19 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ## CRITICAL: Olivia Voice & Avatar Wiring (Support Reference)
 
-**DO NOT confuse these three separate systems:**
+**DO NOT confuse these five separate Olivia systems:**
 
 | Feature | Service | Env Vars | Files |
 |---------|---------|----------|-------|
 | **Ask Olivia Chat** (Help bubble + Ask Olivia page) | OpenAI Assistants API | OPENAI_API_KEY, OPENAI_ASSISTANT_ID | api/olivia/chat.ts |
 | **Olivia Voice** (Chat TTS) | ElevenLabs → OpenAI fallback | ELEVENLABS_API_KEY, ELEVENLABS_OLIVIA_VOICE_ID | api/olivia/tts.ts |
-| **Olivia Video Presenter** (Gamma reports) | HeyGen | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen-video.ts |
+| **Olivia Live Presenter** (Gamma streaming overlay) | HeyGen Streaming API v1 | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen.ts |
+| **Olivia Video Presenter** (Gamma pre-rendered MP4) | HeyGen Video API v2 | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen-video.ts |
+| **Olivia Cockpit Avatar** (Ask Olivia page TV viewport) | D-ID Streams API | DID_API_KEY, DID_PRESENTER_URL | api/olivia/avatar/streams.ts |
 
 - The ElevenLabs voice is a **cloned voice** specific to Olivia. When ElevenLabs quota runs out, OpenAI "nova" voice kicks in automatically.
-- HeyGen has its **own separate voice** (HEYGEN_OLIVIA_VOICE_ID) used only for Gamma video presenter.
+- HeyGen has its **own separate voice** (HEYGEN_OLIVIA_VOICE_ID) used for both Live Presenter and Video Presenter.
+- D-ID cockpit avatar uses Microsoft Sonia voice (en-GB-SoniaNeural) built into D-ID — no ElevenLabs needed.
 - **Cristiano** has his own HeyGen pipeline (HEYGEN_CHRISTIAN_AVATAR_ID, HEYGEN_CHRISTIAN_VOICE_ID, HEYGEN_AVATAR_LOOK_ID) — completely separate from Olivia's HeyGen vars.
 - Changing HeyGen vars will NOT affect Ask Olivia chat or voice. Changing ElevenLabs/OpenAI vars will NOT affect the video presenter.
 
@@ -309,20 +312,31 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - POST /api/cristiano/storyboard — Generate 7-scene storyboard JSON (Stage 1)
 - POST /api/cristiano/render — Submit to HeyGen Video Agent + poll status (Stage 2)
 
-## Olivia Video Presenter (Added 2026-02-13)
+## Olivia Video Presenter (Updated 2026-02-15)
 
 ### Architecture
-- **Live Presenter**: PIP avatar overlay on Gamma iframe via HeyGen Streaming API
-- **Pre-Rendered Video**: HeyGen v2 video generation → polling → MP4 download
+- **Live Presenter**: Real-time PIP avatar overlay on Gamma iframe via HeyGen Streaming API v1 (WebRTC)
+- **Pre-Rendered Video**: HeyGen v2 video/generate → polling → MP4 download
+- **Cockpit Avatar**: D-ID Streams API WebRTC avatar on Ask Olivia page TV viewport (Microsoft Sonia voice, no ElevenLabs)
 - Narration script generated client-side from comparison data (no API call)
 - Scene splitting at paragraph boundaries (~1500 chars per scene)
 
-### New API Endpoint
-- POST/GET /api/olivia/avatar/heygen-video (generate + poll status)
+### Olivia HeyGen API Endpoints
+- POST /api/olivia/avatar/heygen — Live Presenter streaming (actions: create, speak, interrupt, close)
+- POST/GET /api/olivia/avatar/heygen-video — Pre-rendered video (actions: generate, status)
+- POST /api/olivia/avatar/streams — D-ID cockpit avatar (actions: create, speak, destroy, ice-candidate)
 - Rate limit: standard (30 req/min), max script: 15,000 chars
 
+### Video Output Specs
+- Resolution: 1920×1080 (16:9)
+- Background: #0a1628 (dark branded LIFE SCORE theme)
+- Multi-scene: script auto-split at ~1500 char paragraph boundaries
+
 ### Key Files
-- api/olivia/avatar/heygen-video.ts (serverless endpoint)
+- api/olivia/avatar/heygen.ts (HeyGen streaming avatar endpoint)
+- api/olivia/avatar/heygen-video.ts (HeyGen pre-rendered video endpoint)
+- api/olivia/avatar/streams.ts (D-ID cockpit avatar endpoint)
+- api/olivia/avatar/did.ts (DEPRECATED — D-ID Agents API, not used)
 - src/services/presenterService.ts (narration script generator)
 - src/services/presenterVideoService.ts (video orchestration + polling)
 - src/types/presenter.ts (all presenter types)
@@ -496,7 +510,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 
 ---
 
-## 2. API Endpoints (44 total)
+## 2. API Endpoints (49 total)
 
 ### Core
 | Endpoint | Method | Description |
@@ -519,7 +533,9 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | /api/olivia/field-evidence | POST | Source evidence for specific metrics |
 | /api/olivia/gun-comparison | POST | Standalone gun rights comparison |
 | /api/olivia/contrast-images | POST | AI contrast images via Flux |
+| /api/olivia/avatar/heygen | POST | HeyGen Live Presenter streaming avatar (create, speak, interrupt, close) |
 | /api/olivia/avatar/heygen-video | POST/GET | HeyGen pre-rendered video generation + status polling |
+| /api/olivia/avatar/streams | POST | D-ID cockpit avatar for Ask Olivia page (create, speak, destroy) |
 
 ### Cristiano
 | Endpoint | Method | Description |
@@ -599,10 +615,11 @@ GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, H
 
 ### Voice & Avatar Wiring (IMPORTANT)
 - **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
-- **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Gamma report video presenter ONLY (separate system)
+- **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Olivia Live Presenter (streaming) + Video Presenter (pre-rendered MP4)
+- **DID_API_KEY / DID_PRESENTER_URL** → Olivia cockpit avatar on Ask Olivia page (D-ID Streams, Microsoft Sonia voice)
 - **HEYGEN_CHRISTIAN_AVATAR_ID / HEYGEN_CHRISTIAN_VOICE_ID / HEYGEN_AVATAR_LOOK_ID** → Cristiano "Go To My New City" cinematic video (Video Agent V2)
 - **OPENAI_ASSISTANT_ID** → Olivia chat brain (OpenAI Assistants API)
-- These are 4 independent systems. Changing one does NOT affect the others.
+- These are 5 independent systems. Changing one does NOT affect the others.
 
 ---
 
