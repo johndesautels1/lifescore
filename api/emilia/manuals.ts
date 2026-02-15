@@ -243,7 +243,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
   tech: `# Technical Support Manual
 
-**Version:** 4.0 | **Updated:** 2026-02-13
+**Version:** 4.4 | **Updated:** 2026-02-15
 
 ## System Architecture
 
@@ -254,7 +254,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### Backend
 - **Platform**: Vercel Serverless Functions (Node.js 20)
-- **Database**: Supabase (PostgreSQL) - 21 tables, 3 storage buckets
+- **Database**: Supabase (PostgreSQL) - 23 tables, 3 storage buckets
 - **Auth**: Supabase Auth with JWT verification
 
 ### AI Providers
@@ -336,6 +336,29 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Auth bypass fixed on /api/emilia/manuals (was using unverified email param)
 - Admin check caching: 5-min TTL + 1-hour grace period
 - Database hardening: RLS policies strengthened
+
+## Codebase Statistics (2026-02-15)
+
+| Metric | Count |
+|--------|-------|
+| **Source lines of code** | **~117,429** |
+| **Total files** | **443** |
+| **Total folders** | **41** |
+| **Database tables** | **23** |
+
+| Layer | Lines | % |
+|-------|-------|---|
+| Frontend (src/) | 86,752 | 73.9% |
+| Backend (api/) | 21,044 | 17.9% |
+| Database (supabase/) | 5,555 | 4.7% |
+| Scripts / Config / Other | 4,078 | 3.5% |
+
+- **48** React components, **46** CSS files
+- **55** serverless API functions
+- **19** custom hooks, **17** service modules
+- **176** TypeScript files (76,284 lines)
+- **50** CSS files (35,502 lines)
+- **38** SQL migrations (5,555 lines)
 
 ## Common Errors
 

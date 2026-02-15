@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.3
-**Last Updated:** February 14, 2026
+**Version:** 4.4
+**Last Updated:** February 15, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -30,6 +30,7 @@
 20. [App Prompts System](#20-app-prompts-system-added-2026-02-10)
 21. [Dark Mode Fixes for Saved Reports](#21-dark-mode-fixes-for-saved-reports-added-2026-02-14)
 22. [AUDIO Badge + Voice Wave Indicator](#22-audio-badge--voice-wave-indicator-added-2026-02-14)
+23. [Codebase Statistics](#23-codebase-statistics-added-2026-02-15)
 
 ---
 
@@ -2198,6 +2199,124 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 
 ---
 
+## 23. Codebase Statistics (Added 2026-02-15)
+
+<!-- CODEBASE_STATS_START — regenerate with: claude "run codebase stats" -->
+
+**Snapshot Date:** 2026-02-15
+
+### 23.1 Grand Totals
+
+| Metric | Count |
+|--------|-------|
+| **Source lines of code** | **~117,429** |
+| **Total files** (excl. node_modules, .git) | **443** |
+| **Total folders** | **41** |
+| **Database tables** | **23** |
+| **Storage buckets** | **3** |
+
+### 23.2 Lines of Code by File Type
+
+| File Type | Files | Lines |
+|-----------|-------|-------|
+| TypeScript / TSX | 176 | 76,284 |
+| CSS | 50 | 35,502 |
+| SQL (migrations) | 38 | 5,555 |
+| JavaScript | 2 | 88 |
+| Markdown (docs) | 132 | ~47,000 |
+| JSON config | 9 | 301 |
+
+### 23.3 Frontend Breakdown (`src/`)
+
+| Area | Files | Lines |
+|------|-------|-------|
+| Components (`.tsx` + `.css`) | 94 | 55,675 |
+| Services | 17 | 12,214 |
+| Hooks | 19 | 5,875 |
+| Data (static datasets) | 5 | 5,016 |
+| Types | 12 | 3,050 |
+| Utils | 6 | 2,016 |
+| App root (`App.tsx`, `App.css`, `main.tsx`, `index.css`) | 4 | 2,361 |
+| Lib / Shared / Contexts / Constants | 7 | 1,512 |
+| Styles (`globals.css`, `dark-mode.css`) | 2 | 893 |
+| **Frontend total** | **168** | **~86,752** |
+
+### 23.4 Backend Breakdown (`api/`)
+
+| Subdirectory | Files | Lines | Purpose |
+|--------------|-------|-------|---------|
+| `api/` (root) | 11 | 4,659 | Core endpoints (evaluate, judge, gamma, health) |
+| `api/olivia/` | 10 | 4,720 | Olivia AI assistant (chat, TTS, avatars, evidence) |
+| `api/shared/` | 8 | 3,393 | Auth, CORS, metrics, rate limiting, types |
+| `api/video/` | 3 | 1,932 | Grok video generate/status, InVideo override |
+| `api/emilia/` | 4 | 1,358 | Emilia help assistant (message, speak, thread, manuals) |
+| `api/avatar/` | 5 | 1,348 | Avatar video generation (Simli, judge video) |
+| `api/cristiano/` | 2 | 1,158 | Cristiano video presenter (render, storyboard) |
+| `api/stripe/` | 4 | 832 | Payments (checkout, portal, subscription, webhook) |
+| `api/admin/` | 3 | 613 | Admin tools (env-check, knowledge sync) |
+| `api/usage/` | 2 | 461 | Usage monitoring (quotas, ElevenLabs) |
+| `api/user/` | 2 | 415 | User management (GDPR delete, export) |
+| `api/consent/` | 1 | 155 | GDPR consent logging |
+| **Backend total** | **55** | **~21,044** | |
+
+### 23.5 Database Tables (Supabase PostgreSQL)
+
+23 unique tables across 38 migration files:
+
+| # | Table | Purpose |
+|---|-------|---------|
+| 1 | `profiles` | User profiles |
+| 2 | `subscriptions` | Stripe subscription state |
+| 3 | `comparisons` | City comparison results |
+| 4 | `reports` | Saved report metadata |
+| 5 | `judge_reports` | Judge consensus reports |
+| 6 | `gamma_reports` | Gamma-generated PDF reports |
+| 7 | `olivia_conversations` | Olivia chat threads |
+| 8 | `olivia_messages` | Olivia chat messages |
+| 9 | `avatar_videos` | Avatar video records |
+| 10 | `grok_videos` | Grok-generated city videos |
+| 11 | `cristiano_city_videos` | Cristiano presenter videos |
+| 12 | `invideo_overrides` | InVideo manual URL overrides |
+| 13 | `contrast_image_cache` | Cached contrast images |
+| 14 | `usage_tracking` | Per-user usage counters |
+| 15 | `api_cost_records` | API call cost tracking |
+| 16 | `api_quota_settings` | Per-provider quota thresholds |
+| 17 | `api_quota_alert_log` | Quota alert history |
+| 18 | `consent_logs` | GDPR consent records |
+| 19 | `report_shares` | Shared report links |
+| 20 | `report_access_logs` | Report view audit trail |
+| 21 | `app_prompts` | Editable LLM prompts |
+| 22 | `authorized_manual_access` | Per-user manual permissions |
+| 23 | `user_preferences` | User settings (theme, etc.) |
+
+**Storage Buckets:** `avatars`, `judge-videos`, `user-videos`
+
+### 23.6 Source Distribution
+
+| Layer | Lines | % |
+|-------|-------|---|
+| Frontend (`src/`) | 86,752 | 73.9% |
+| Backend (`api/`) | 21,044 | 17.9% |
+| Database (`supabase/`) | 5,555 | 4.7% |
+| Scripts / Config / Other | 4,078 | 3.5% |
+
+### 23.7 Key Component Counts
+
+- **48** React components
+- **46** component CSS files
+- **55** serverless API functions
+- **19** custom React hooks
+- **17** service modules
+- **12** TypeScript type definition files
+- **38** SQL migration files
+- **132** documentation files
+
+<!-- CODEBASE_STATS_END -->
+
+> **Keeping this current:** The stats between the `CODEBASE_STATS_START` / `CODEBASE_STATS_END` markers can be regenerated by running a codebase audit. Update the snapshot date and version in Document Control when refreshing.
+
+---
+
 ## Document Control
 
 | Version | Date | Author | Changes |
@@ -2213,6 +2332,7 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 | 4.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§9.7): HeyGen pre-rendered video pipeline + live presenter PIP overlay. New API endpoint (§4.8), new services (presenterService, presenterVideoService), new types (presenter.ts), new component (ReportPresenter), VisualsTab Read/Listen toggle |
 | 4.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes documented: (1) Gamma trophy placement fix — 3 safeguards added to prompt (§20.4), (2) Gamma persistence fix — foreign key violation resolved, (3) backdrop-filter blur removed from 8 CSS files for INP (§10.2), (4) Login input 247ms INP fix, (5) "Watch" → "Listen to Presenter" rename. 5 new resolved issues (§14.2). |
 | 4.3 | 2026-02-14 | Claude Opus 4.6 | Major update: 23 technical changes documented. New sections: Judge collapsible panels (§9.8), GoToMyNewCity video v2 (§9.9), HeyGen timeouts (§9.10), Judge video persistence (§9.11), expired URL fixes for 3 providers (§9.12), video URL expiration (§9.13), Cristiano 422 fix (§9.14), HeyGen 10K limit fixes (§9.15), storyboard QA (§9.16), Cristiano CTA/poster (§9.17). Performance: Judge dropdown INP 354ms→50ms (§10.3). Infrastructure: timeout safety nets (§12.3), upload timeout increases (§12.4), 200MB reports limit (§12.5). Auth: profile fetch retry storm fix (§6.4). LLM: Supabase cold start warm-up + LRU cache (§7.6), Grok batch splitting (§7.10), Cost Dashboard $0 triple-fix (§7.9). Storage: Judge report Supabase fallback (§19.4), missing 6 categories fix (§19.5). UI: dark mode saved reports (§21), AUDIO badge + voice wave (§22). 23 new resolved issues (§14.2). |
+| 4.4 | 2026-02-15 | Claude Opus 4.6 | Added Codebase Statistics (§23): full LOC breakdown (~117K source lines), file/folder inventory, frontend/backend/database splits, all 23 table names, component counts. Delimited with CODEBASE_STATS markers for easy re-generation. |
 
 ---
 
