@@ -35,8 +35,8 @@ const HEYGEN_STATUS_URL = 'https://api.heygen.com/v1/video_status.get';
 const HEYGEN_TIMEOUT_MS = 120000;  // 120s for HeyGen API calls (submission + status)
 
 // Cristiano avatar, voice & look (from env)
-const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CHRISTIAN_AVATAR_ID || '';
-const CRISTIANO_VOICE_ID = process.env.HEYGEN_CHRISTIAN_VOICE_ID || '';
+const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CRISTIANO_AVATAR_ID || '';
+const CRISTIANO_VOICE_ID = process.env.HEYGEN_CRISTIANO_VOICE_ID || '';
 const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
 
 // Supabase admin client
@@ -83,10 +83,10 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
   const errors: string[] = [];
 
   if (!CRISTIANO_AVATAR_ID) {
-    errors.push('HEYGEN_CHRISTIAN_AVATAR_ID not configured in environment');
+    errors.push('HEYGEN_CRISTIANO_AVATAR_ID not configured in environment');
   }
   if (!CRISTIANO_VOICE_ID) {
-    errors.push('HEYGEN_CHRISTIAN_VOICE_ID not configured in environment');
+    errors.push('HEYGEN_CRISTIANO_VOICE_ID not configured in environment');
   }
 
   const scenes = storyboard.scenes as Array<Record<string, unknown>> | undefined;

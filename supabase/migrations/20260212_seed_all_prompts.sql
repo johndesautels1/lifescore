@@ -393,11 +393,11 @@ INSERT INTO public.app_prompts (category, prompt_key, display_name, description,
 VALUES (
   'judge',
   'judge_video_script',
-  'Judge Christiano — Video Verdict Script',
-  'Template for the 60-90 second video narrated by Judge Christiano avatar. Delivered via ElevenLabs TTS + Replicate Wav2Lip. Source: api/judge-video.ts generateVideoScript()',
+  'Judge Cristiano — Video Verdict Script',
+  'Template for the 60-90 second video narrated by Judge Cristiano avatar. Delivered via ElevenLabs TTS + Replicate Wav2Lip. Source: api/judge-video.ts generateVideoScript()',
   'Welcome to the LIFE SCORE Judge Verdict.
 
-I am Christian, and I have conducted a comprehensive analysis comparing {{CITY1}} and {{CITY2}} across multiple dimensions of freedom and quality of life.
+I am Cristiano, and I have conducted a comprehensive analysis comparing {{CITY1}} and {{CITY2}} across multiple dimensions of freedom and quality of life.
 
 {{CITY1}} achieved a score of {{CITY1_SCORE}}, and is {{CITY1_TREND}}.
 

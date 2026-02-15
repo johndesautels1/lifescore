@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE™ Judge Video Component
  *
- * Displays Christiano judge videos generated via Replicate.
+ * Displays Cristiano judge videos generated via Replicate.
  * Shows generation progress and cached videos.
  *
  * Clues Intelligence LTD
@@ -179,7 +179,7 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
   const getProgressMessage = () => {
     switch (status) {
       case 'pending': return 'Preparing video generation...';
-      case 'processing': return 'Christiano is recording your verdict...';
+      case 'processing': return 'Cristiano is recording your verdict...';
       case 'completed': return 'Video ready!';
       case 'failed': return 'Generation failed';
       default: return 'Ready to generate';
@@ -235,11 +235,11 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
             </div>
           </div>
 
-          {/* Video Overlay - Christiano Info */}
+          {/* Video Overlay - Cristiano Info */}
           <div className="video-overlay">
             <div className="presenter-badge">
               <span className="presenter-icon">⚖️</span>
-              <span className="presenter-name">CHRISTIANO</span>
+              <span className="presenter-name">CRISTIANO</span>
               <span className="presenter-title">THE JUDGE</span>
             </div>
           </div>
@@ -247,11 +247,11 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
       ) : (
         /* Generation State */
         <div className="generation-container">
-          {/* Christiano Placeholder */}
+          {/* Cristiano Placeholder */}
           <div className="placeholder-avatar">
             <img
-              src="/images/christiano-judge.jpg"
-              alt="Christiano - The Judge"
+              src="/images/cristiano-judge.jpg"
+              alt="Cristiano - The Judge"
               className="judge-image"
             />
             <div className="judge-title-overlay">

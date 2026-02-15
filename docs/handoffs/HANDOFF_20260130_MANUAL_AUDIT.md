@@ -36,7 +36,7 @@
 | 124-134 | §4 Comparison Mode | INCOMPLETE | Lists "up to 5" providers | List all 5: Claude, GPT-4o, Gemini, Grok, Perplexity | Medium |
 | 206-240 | §6 Olivia | MISSING | No voice fallback info | Add: "If ElevenLabs unavailable, OpenAI TTS (nova voice) is used" | Medium |
 | 243-248 | §6 Usage Limits | VERIFY | Tier limits table | Verify against current pricing | High |
-| 250-292 | §7 Judge | MISSING | No Judge character name | Add: "Judge Christiano" | Low |
+| 250-292 | §7 Judge | MISSING | No Judge character name | Add: "Judge Cristiano" | Low |
 | 287-290 | §7 Judge Video | VAGUE | "2-5 minutes" | "90-180 seconds typical" | Low |
 | 294-328 | §8 Visuals | MISSING | No mention of Kling AI | Add Kling AI as video provider | Medium |
 | 321-327 | §8 Video Availability | INCOMPLETE | Basic table | Add columns: Generation time, Fallback behavior | Medium |
@@ -87,7 +87,7 @@
 | 277-328 | §8 Features | MISSING | No Cost Dashboard section | Add: §8.6 Cost Dashboard (quota monitoring) | High |
 | 293-305 | §8 Olivia | MISSING | No voice fallback info | Add: Fallback to OpenAI TTS (nova voice) | Medium |
 | 306-313 | §8 Judge Videos | INCOMPLETE | Basic description | Add: Generation time (90-180s), fallback behavior | Medium |
-| 309 | §8 Judge Videos | CORRECT | "Christiano" | Verified correct | - |
+| 309 | §8 Judge Videos | CORRECT | "Cristiano" | Verified correct | - |
 | 322-328 | §8 Grok Videos | MISSING | No Kling AI mention | Add: Uses Kling AI primary, Replicate fallback | Medium |
 | 331-375 | §9 Escalation | MISSING | No quota alert escalation | Add: L2 for quota/billing issues | Medium |
 | 378-467 | §10 Templates | MISSING | No quota warning template | Add: Template for quota threshold email | Medium |
@@ -149,7 +149,7 @@
 | Comparison limits | "1/month" all tiers (L416) | "1/month" all tiers (L84) | Not specified | Verify actual limits |
 | LLM providers | "up to 5" (L130) | "up to 5" (L99) | Lists 5 correctly (§2.3) | Standardize: 5 providers |
 | Video generation time | "2-5 minutes" (L288) | Not specified | "90+ seconds" (L559) | Use: "90-180 seconds" |
-| Avatar provider | Not mentioned | "Christiano" avatar | Simli primary, D-ID fallback | Update all to match |
+| Avatar provider | Not mentioned | "Cristiano" avatar | Simli primary, D-ID fallback | Update all to match |
 
 ---
 
@@ -220,7 +220,7 @@ These items were verified as accurate and need NO changes:
 
 | Manual | Line | Item | Status |
 |--------|------|------|--------|
-| CSM | 309 | Judge character "Christiano" | CORRECT |
+| CSM | 309 | Judge character "Cristiano" | CORRECT |
 | CSM | 489-490 | 5 AI providers listed | CORRECT |
 | TSM | 117-123 | AI providers table | CORRECT |
 | TSM | 380-387 | Token pricing table | CORRECT |

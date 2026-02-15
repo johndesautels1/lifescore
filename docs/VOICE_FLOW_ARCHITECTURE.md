@@ -10,7 +10,7 @@
 The LIFE SCORE app uses a multi-character voice system with 3 AI personas:
 - **Olivia** - Primary AI advisor (warm, conversational female)
 - **Emilia** - Secondary AI advisor (soft, expressive female)
-- **Christiano** - Judge avatar (deep, authoritative male)
+- **Cristiano** - Judge avatar (deep, authoritative male)
 
 Each character has redundant TTS providers with automatic fallback to ensure voice never fails.
 
@@ -46,16 +46,16 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 
 ---
 
-### Character: CHRISTIANO (Judge)
+### Character: CRISTIANO (Judge)
 
 | Endpoint | Purpose | Primary TTS | Primary Voice | Fallback TTS | Fallback Voice | Fallback Triggers |
 |----------|---------|-------------|---------------|--------------|----------------|-------------------|
 | `api/avatar/generate-judge-video.ts` | Replicate Wav2Lip video | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, any error |
 | `api/judge-video.ts` | D-ID Talks video (fallback) | ElevenLabs | `ZpwpoMoU84OhcbA2YBBV` | OpenAI | `onyx` | 401, 429, no key |
 
-**Christiano Voice Consistency:**
+**Cristiano Voice Consistency:**
 - Always deep, authoritative male
-- ElevenLabs Christiano → OpenAI `onyx`
+- ElevenLabs Cristiano → OpenAI `onyx`
 
 ---
 
@@ -65,7 +65,7 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 |-----------|---------------------|--------------|------------|
 | Olivia | `W0Zh57R76zl4xEJ4vCd2` | `nova` | Warm, conversational female |
 | Emilia | `21m00Tcm4TlvDq8ikWAM` (Rachel) | `shimmer` | Soft, expressive female |
-| Christiano | `ZpwpoMoU84OhcbA2YBBV` | `onyx` | Deep, authoritative male |
+| Cristiano | `ZpwpoMoU84OhcbA2YBBV` | `onyx` | Deep, authoritative male |
 
 ---
 
@@ -76,7 +76,7 @@ Each character has redundant TTS providers with automatic fallback to ensure voi
 ELEVENLABS_API_KEY=xxx
 ELEVENLABS_OLIVIA_VOICE_ID=W0Zh57R76zl4xEJ4vCd2
 ELEVENLABS_EMILIA_VOICE_ID=21m00Tcm4TlvDq8ikWAM
-ELEVENLABS_CHRISTIANO_VOICE_ID=ZpwpoMoU84OhcbA2YBBV
+ELEVENLABS_CRISTIANO_VOICE_ID=ZpwpoMoU84OhcbA2YBBV
 ```
 
 ### OpenAI (Fallback)
@@ -98,18 +98,18 @@ DID_API_KEY=xxx
 DID_PRESENTER_URL=xxx
 DID_JUDGE_PRESENTER_URL=xxx
 
-# HeyGen (Olivia streaming avatar + video, Christiano avatar)
+# HeyGen (Olivia streaming avatar + video, Cristiano avatar)
 HEYGEN_API_KEY=xxx
 HEYGEN_OLIVIA_AVATAR_ID=xxx
 HEYGEN_OLIVIA_VOICE_ID=xxx
-HEYGEN_CHRISTIAN_AVATAR_ID=xxx
-HEYGEN_CHRISTIAN_VOICE_ID=xxx
+HEYGEN_CRISTIANO_AVATAR_ID=xxx
+HEYGEN_CRISTIANO_VOICE_ID=xxx
 
 # Replicate (Judge video)
 REPLICATE_API_TOKEN=xxx
 REPLICATE_DEPLOYMENT_OWNER=xxx
 REPLICATE_DEPLOYMENT_NAME=xxx
-CHRISTIANO_IMAGE_URL=xxx
+CRISTIANO_IMAGE_URL=xxx
 ```
 
 ---
@@ -164,7 +164,7 @@ CHRISTIANO_IMAGE_URL=xxx
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CHRISTIANO (JUDGE) VOICE FLOW                         │
+│                        CRISTIANO (JUDGE) VOICE FLOW                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────────┐    ┌──────────────────┐                              │
@@ -199,7 +199,7 @@ CHRISTIANO_IMAGE_URL=xxx
 
 ## Pricing Comparison
 
-| Provider | Cost Model | Olivia | Emilia | Christiano |
+| Provider | Cost Model | Olivia | Emilia | Cristiano |
 |----------|------------|--------|--------|------------|
 | **ElevenLabs** | $0.18/1K chars | Primary | Primary | Primary |
 | **OpenAI TTS** | $0.015/1K chars | Fallback (12x cheaper) | Fallback | Fallback |

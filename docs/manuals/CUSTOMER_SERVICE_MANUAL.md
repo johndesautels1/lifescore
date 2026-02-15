@@ -490,7 +490,7 @@ Each panel header shows live summary stats (video status, scores, winner name). 
 ### 8.4 Judge Videos (Updated 2026-02-14)
 
 Animated video summaries featuring:
-- AI judge character (Christiano)
+- AI judge character (Cristiano)
 - Verbal explanation of winner
 - Key factors highlighted
 - **"Visit Cluesnomads.com"** call-to-action overlay

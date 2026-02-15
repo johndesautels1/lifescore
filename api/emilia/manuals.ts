@@ -291,7 +291,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - The ElevenLabs voice is a **cloned voice** specific to Olivia. When ElevenLabs quota runs out, OpenAI "nova" voice kicks in automatically.
 - HeyGen has its **own separate voice** (HEYGEN_OLIVIA_VOICE_ID) used for both Live Presenter and Video Presenter.
 - D-ID cockpit avatar uses Microsoft Sonia voice (en-GB-SoniaNeural) built into D-ID — no ElevenLabs needed.
-- **Cristiano** has his own HeyGen pipeline (HEYGEN_CHRISTIAN_AVATAR_ID, HEYGEN_CHRISTIAN_VOICE_ID, HEYGEN_AVATAR_LOOK_ID) — completely separate from Olivia's HeyGen vars.
+- **Cristiano** has his own HeyGen pipeline (HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID) — completely separate from Olivia's HeyGen vars.
 - Changing HeyGen vars will NOT affect Ask Olivia chat or voice. Changing ElevenLabs/OpenAI vars will NOT affect the video presenter.
 
 ## CRITICAL: Cristiano "Go To My New City" HeyGen Video Wiring (Added 2026-02-15)
@@ -300,7 +300,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 | Feature | Service | Env Vars | Files |
 |---------|---------|----------|-------|
-| **Cristiano City Tour Video** | HeyGen Video Agent V2 | HEYGEN_API_KEY, HEYGEN_CHRISTIAN_AVATAR_ID, HEYGEN_CHRISTIAN_VOICE_ID, HEYGEN_AVATAR_LOOK_ID | api/cristiano/render.ts |
+| **Cristiano City Tour Video** | HeyGen Video Agent V2 | HEYGEN_API_KEY, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID | api/cristiano/render.ts |
 | **Storyboard Generation** | Claude Sonnet | ANTHROPIC_API_KEY | api/cristiano/storyboard.ts |
 
 - **2-Stage Pipeline**: Stage 1 (storyboard.ts) generates a 7-scene cinematic storyboard via Claude. Stage 2 (render.ts) submits it to HeyGen Video Agent V2 for rendering with B-roll, overlays, and transitions.
@@ -611,13 +611,13 @@ VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_K
 ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
 
 ### Optional
-GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CHRISTIAN_AVATAR_ID, HEYGEN_CHRISTIAN_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, KV_REST_API_URL, KV_REST_API_TOKEN
+GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, KV_REST_API_URL, KV_REST_API_TOKEN
 
 ### Voice & Avatar Wiring (IMPORTANT)
 - **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
 - **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Olivia Live Presenter (streaming) + Video Presenter (pre-rendered MP4)
 - **DID_API_KEY / DID_PRESENTER_URL** → Olivia cockpit avatar on Ask Olivia page (D-ID Streams, Microsoft Sonia voice)
-- **HEYGEN_CHRISTIAN_AVATAR_ID / HEYGEN_CHRISTIAN_VOICE_ID / HEYGEN_AVATAR_LOOK_ID** → Cristiano "Go To My New City" cinematic video (Video Agent V2)
+- **HEYGEN_CRISTIANO_AVATAR_ID / HEYGEN_CRISTIANO_VOICE_ID / HEYGEN_AVATAR_LOOK_ID** → Cristiano "Go To My New City" cinematic video (Video Agent V2)
 - **OPENAI_ASSISTANT_ID** → Olivia chat brain (OpenAI Assistants API)
 - These are 5 independent systems. Changing one does NOT affect the others.
 

@@ -88,7 +88,7 @@ When loading a SAVED comparison (single search / standard mode), the tier-check/
 - `SUPABASE_SERVICE_KEY` - Set (Production only)
 - `VITE_SUPABASE_URL` - Set
 - `VITE_SUPABASE_ANON_KEY` - Set
-- `CHRISTIANO_IMAGE_URL` - `https://replicate.delivery/pbxt/OUrlfPYTJP3dttVkSYXUps6yUmzZbLTdVdrut77q48Tx7GfI/enhanced_avatar_max.png`
+- `CRISTIANO_IMAGE_URL` - `https://replicate.delivery/pbxt/OUrlfPYTJP3dttVkSYXUps6yUmzZbLTdVdrut77q48Tx7GfI/enhanced_avatar_max.png`
 
 ---
 

@@ -6157,7 +6157,7 @@ Users may receive email alerts at warning thresholds.
 **TTS Voice Assignments:**
 - Olivia: Nova voice (warm, conversational)
 - Emilia: Shimmer voice (softer)
-- Christiano (Judge): Onyx voice (authoritative)
+- Cristiano (Judge): Onyx voice (authoritative)
 
 **TTS Fallback:** When ElevenLabs quota is exceeded, the system automatically switches to OpenAI TTS. Users may notice slightly different voice quality but full functionality is maintained.
 

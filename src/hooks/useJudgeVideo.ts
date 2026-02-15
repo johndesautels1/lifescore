@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE - useJudgeVideo Hook
  *
- * React hook for generating and managing Christiano judge videos.
+ * React hook for generating and managing Cristiano judge videos.
  * Uses Replicate Wav2Lip for video generation with caching.
  *
  * Clues Intelligence LTD

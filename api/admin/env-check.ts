@@ -69,21 +69,21 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'SIMLI_FACE_ID', description: 'Simli face/avatar ID', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_API_KEY', description: 'D-ID — Fallback avatar provider', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_PRESENTER_URL', description: 'D-ID Olivia avatar image URL', category: 'Avatar & Video', side: 'server' },
-  { name: 'DID_JUDGE_PRESENTER_URL', description: 'D-ID Judge Christiano avatar image URL', category: 'Avatar & Video', side: 'server' },
+  { name: 'DID_JUDGE_PRESENTER_URL', description: 'D-ID Judge Cristiano avatar image URL', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_AGENT_ID', description: 'D-ID agent ID', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_API_KEY', description: 'HeyGen API key — Gamma report video presenter + streaming avatar', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_OLIVIA_AVATAR_ID', description: 'HeyGen Olivia avatar ID — Gamma video presenter ONLY (not chat TTS)', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_OLIVIA_VOICE_ID', description: 'HeyGen Olivia voice ID — Gamma video presenter ONLY (not ElevenLabs/OpenAI)', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_CHRISTIAN_AVATAR_ID', description: 'HeyGen Judge Christiano avatar ID — video presenter', category: 'Avatar & Video', side: 'server' },
-  { name: 'HEYGEN_CHRISTIAN_VOICE_ID', description: 'HeyGen Judge Christiano voice ID — video presenter', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_CRISTIANO_AVATAR_ID', description: 'HeyGen Judge Cristiano avatar ID — video presenter', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_CRISTIANO_VOICE_ID', description: 'HeyGen Judge Cristiano voice ID — video presenter', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_AVATAR_LOOK_ID', description: 'HeyGen avatar look/appearance ID — physical appearance variant for avatar rendering', category: 'Avatar & Video', side: 'server' },
-  { name: 'CHRISTIANO_IMAGE_URL', description: 'Judge Christiano source image URL', category: 'Avatar & Video', side: 'server' },
+  { name: 'CRISTIANO_IMAGE_URL', description: 'Judge Cristiano source image URL', category: 'Avatar & Video', side: 'server' },
 
   // --- Text-to-Speech (ElevenLabs) ---
   { name: 'ELEVENLABS_API_KEY', description: 'ElevenLabs TTS API key', category: 'Text-to-Speech', side: 'server' },
   { name: 'ELEVENLABS_VOICE_ID', description: 'Default voice ID', category: 'Text-to-Speech', side: 'server' },
   { name: 'ELEVENLABS_OLIVIA_VOICE_ID', description: 'Olivia\'s voice ID', category: 'Text-to-Speech', side: 'server' },
-  { name: 'ELEVENLABS_CHRISTIANO_VOICE_ID', description: 'Judge Christiano\'s voice ID', category: 'Text-to-Speech', side: 'server' },
+  { name: 'ELEVENLABS_CRISTIANO_VOICE_ID', description: 'Judge Cristiano\'s voice ID', category: 'Text-to-Speech', side: 'server' },
   { name: 'ELEVENLABS_EMILIA_VOICE_ID', description: 'Emilia help widget voice ID', category: 'Text-to-Speech', side: 'server' },
 
   // --- Video Generation ---

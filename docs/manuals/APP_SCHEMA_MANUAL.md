@@ -545,7 +545,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/video/grok-generate` | No | Generate videos via Kling AI (primary) with Replicate fallback |
 | GET, POST | `/api/video/grok-status` | No | Check video generation status; POST supports cache checking |
 | GET, POST, DELETE | `/api/video/invideo-override` | Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
-| POST | `/api/avatar/generate-judge-video` | Yes | Generate Christiano judge videos via Replicate Wav2Lip |
+| POST | `/api/avatar/generate-judge-video` | Yes | Generate Cristiano judge videos via Replicate Wav2Lip |
 | GET | `/api/avatar/video-status` | No | Check judge video generation status |
 | POST | `/api/avatar/video-webhook` | No (webhook) | Replicate webhook callback for video completion |
 | POST | `/api/judge-video` | No (rate-limited) | D-ID fallback avatar endpoint for Judge verdict |
@@ -681,7 +681,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 |-----------|---------|
 | `JudgeTab.tsx` | THE JUDGE tab with Claude Opus analysis, video, recommendations — 3 collapsible panels: Media, Evidence, Verdict |
 | `GoToMyNewCity.tsx` | HeyGen multi-scene relocation video at bottom of Judge page (storyboard-based, validated per-scene) |
-| `JudgeVideo.tsx` | Christiano judge video player with Replicate progress tracking |
+| `JudgeVideo.tsx` | Cristiano judge video player with Replicate progress tracking |
 | `CourtOrderVideo.tsx` | Court Order LCD player with InVideo override + user upload |
 | `NewLifeVideos.tsx` | Side-by-side winner/loser videos with blob URL CORS bypass |
 | `FreedomCategoryTabs.tsx` | 6-tab navigation for Court Order Freedom Education |
@@ -853,7 +853,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 | Service | Purpose |
 |---------|---------|
-| **ElevenLabs** | Primary TTS for Olivia, Emilia, Christiano voices |
+| **ElevenLabs** | Primary TTS for Olivia, Emilia, Cristiano voices |
 | **OpenAI TTS** | Fallback TTS when ElevenLabs unavailable |
 | **Web Speech API** | Browser-native voice input |
 
@@ -952,13 +952,13 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `SIMLI_FACE_ID` | Simli face/avatar ID |
 | `DID_API_KEY` | D-ID fallback avatar |
 | `DID_PRESENTER_URL` | Olivia avatar image |
-| `DID_JUDGE_PRESENTER_URL` | Christiano avatar image |
+| `DID_JUDGE_PRESENTER_URL` | Cristiano avatar image |
 | `HEYGEN_API_KEY` | HeyGen API — Gamma report video presenter only |
 | `HEYGEN_OLIVIA_AVATAR_ID` | HeyGen Olivia avatar — Gamma video ONLY (not chat TTS) |
 | `HEYGEN_OLIVIA_VOICE_ID` | HeyGen Olivia voice — Gamma video ONLY (not ElevenLabs/OpenAI) |
-| `HEYGEN_CHRISTIAN_AVATAR_ID` | HeyGen Judge Christiano avatar — video presenter |
-| `HEYGEN_CHRISTIAN_VOICE_ID` | HeyGen Judge Christiano voice — video presenter |
-| `CHRISTIANO_IMAGE_URL` | Judge avatar source image |
+| `HEYGEN_CRISTIANO_AVATAR_ID` | HeyGen Judge Cristiano avatar — video presenter |
+| `HEYGEN_CRISTIANO_VOICE_ID` | HeyGen Judge Cristiano voice — video presenter |
+| `CRISTIANO_IMAGE_URL` | Judge avatar source image |
 | `REPLICATE_API_TOKEN` | Replicate (video fallback + Wav2Lip) |
 | `WEBHOOK_BASE_URL` | Video generation webhook URL |
 
@@ -969,7 +969,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `ELEVENLABS_API_KEY` | ElevenLabs TTS |
 | `ELEVENLABS_VOICE_ID` | Default voice |
 | `ELEVENLABS_OLIVIA_VOICE_ID` | Olivia voice |
-| `ELEVENLABS_CHRISTIANO_VOICE_ID` | Judge Christiano voice |
+| `ELEVENLABS_CRISTIANO_VOICE_ID` | Judge Cristiano voice |
 | `ELEVENLABS_EMILIA_VOICE_ID` | Emilia help voice |
 
 ### 9.6 Server-Side — Gamma, Stripe, Email

@@ -5,7 +5,7 @@
  * future trend forecasting, and executive recommendations.
  *
  * Features:
- * - Replicate video report by "Christiano" (photorealistic avatar via Wav2Lip)
+ * - Replicate video report by "Cristiano" (photorealistic avatar via Wav2Lip)
  * - Summary of findings with trend indicators
  * - Detailed category-by-category analysis
  * - Executive summary with final recommendation
@@ -527,7 +527,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Poll for video status until ready or error (legacy D-ID polling, kept for reference)
   const _pollVideoStatus = async (talkId: string, report: JudgeReport) => {
     console.log('[JudgeTab] Starting video status polling for:', talkId);
-    setVideoGenerationProgress('Christiano is preparing your video report...');
+    setVideoGenerationProgress('Cristiano is preparing your video report...');
 
     // Clear any existing polling
     if (videoPollingRef.current) {
@@ -586,7 +586,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           // Still generating
           setVideoGenerationProgress(
             data.status === 'generating'
-              ? 'Christian is recording your verdict...'
+              ? 'Cristiano is recording your verdict...'
               : 'Preparing video generation...'
           );
         }
@@ -630,7 +630,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');
 
-    // Build script for Christiano to speak
+    // Build script for Cristiano to speak
     const rec = report.executiveSummary.recommendation;
     const isTie = rec === 'tie' ||
       Math.abs(report.summaryOfFindings.city1Score - report.summaryOfFindings.city2Score) < 0.5;
@@ -643,8 +643,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     const loserScore = isTie ? report.summaryOfFindings.city2Score :
       rec === 'city1' ? report.summaryOfFindings.city2Score : report.summaryOfFindings.city1Score;
 
-    const tieScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, I find this an exceptionally close case — both cities scored nearly identically at ${report.summaryOfFindings.city1Score} and ${report.summaryOfFindings.city2Score} respectively. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
-    const winnerScript = `Good day. I'm Christiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a freedom score of ${winnerScore} out of 100. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
+    const tieScript = `Good day. I'm Cristiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, I find this an exceptionally close case — both cities scored nearly identically at ${report.summaryOfFindings.city1Score} and ${report.summaryOfFindings.city2Score} respectively. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
+    const winnerScript = `Good day. I'm Cristiano, your LIFE SCORE Judge. After careful analysis of ${report.city1} versus ${report.city2}, my verdict is clear. The winner is ${winner} with a freedom score of ${winnerScore} out of 100. ${report.executiveSummary.rationale} Key factors include: ${(report.executiveSummary.keyFactors || []).slice(0, 3).join(', ')}. For the future outlook: ${(report.executiveSummary.futureOutlook || '').slice(0, 200)}. This concludes my verdict.`;
     const script = isTie ? tieScript : winnerScript;
 
     const request: GenerateJudgeVideoRequest = {
@@ -1578,7 +1578,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                         {videoGenerationProgress || (
                           videoProgress < 15 ? 'Building storyboard...' :
                           videoProgress < 40 ? 'Generating audio narration...' :
-                          videoProgress < 85 ? 'Rendering Christiano video...' :
+                          videoProgress < 85 ? 'Rendering Cristiano video...' :
                           'Finalizing and uploading...'
                         )}
                       </div>
@@ -1634,7 +1634,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="avatar-silhouette">
                         <span className="silhouette-icon">⚖️</span>
                       </div>
-                      <div className="awaiting-text">CHRISTIANO</div>
+                      <div className="awaiting-text">CRISTIANO</div>
                       <div className="awaiting-subtext">Judge's Video Report</div>
                       <button
                         className="generate-report-btn"
@@ -2013,7 +2013,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 </div>
                 <div className="feature-item">
                   <span className="feature-icon">🎬</span>
-                  <span className="feature-text">Video Report by Christian</span>
+                  <span className="feature-text">Video Report by Cristiano</span>
                 </div>
               </div>
             </div>

@@ -60,7 +60,7 @@ Read D:\lifescore\docs\PRICING_TIER_AUDIT.md
 
 Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
 - **Olivia (Interactive Chat):** Simli AI - Real-time photorealistic streaming avatar
-- **Christiano (Judge Videos):** Replicate Wav2Lip - Fast lip-sync video generation (~6 sec)
+- **Cristiano (Judge Videos):** Replicate Wav2Lip - Fast lip-sync video generation (~6 sec)
 
 **Monthly Cost: ~$50-55 (vs $500+ previously) = 90% savings**
 
@@ -79,11 +79,11 @@ Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│                 CHRISTIANO (Judge Video Reports)                    │
+│                 CRISTIANO (Judge Video Reports)                    │
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │  Judge verdict → Replicate Wav2Lip → MP4 video               │  │
 │  │  • Fast video generation (~6 seconds)                        │  │
-│  │  • Your Christiano photo → professional presenter            │  │
+│  │  • Your Cristiano photo → professional presenter            │  │
 │  │  • Cached results (same comparison = same video)             │  │
 │  │  • Cost: ~$0.005 per video                                   │  │
 │  └───────────────────────────────────────────────────────────────┘  │
@@ -97,12 +97,12 @@ Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
 SIMLI_API_KEY=simli_xxxxxxxx
 SIMLI_FACE_ID=olivia-face-id        # Created after uploading Olivia image
 
-# Replicate (Christiano judge videos)
+# Replicate (Cristiano judge videos)
 REPLICATE_API_TOKEN=r8_xxxxxxxx
 
-# ElevenLabs (TTS for Christiano - optional, can use free browser TTS)
+# ElevenLabs (TTS for Cristiano - optional, can use free browser TTS)
 ELEVENLABS_API_KEY=xi_xxxxxxxx       # Optional
-ELEVENLABS_VOICE_ID=christiano-voice # Optional
+ELEVENLABS_VOICE_ID=cristiano-voice # Optional
 ```
 
 ### API Endpoints
@@ -111,7 +111,7 @@ ELEVENLABS_VOICE_ID=christiano-voice # Optional
 |----------|--------|---------|
 | `/api/avatar/simli-session` | POST | Create Simli streaming session for Olivia |
 | `/api/avatar/simli-speak` | POST | Send text for Olivia to speak |
-| `/api/avatar/generate-judge-video` | POST | Generate Christiano video via Replicate |
+| `/api/avatar/generate-judge-video` | POST | Generate Cristiano video via Replicate |
 | `/api/avatar/video-status` | GET | Check video generation status |
 
 ### Database Schema
@@ -169,7 +169,7 @@ interface JudgeVideo {
 
 ### Cost Comparison
 
-| Solution | Olivia (Chat) | Christiano (Videos) | Total/Month |
+| Solution | Olivia (Chat) | Cristiano (Videos) | Total/Month |
 |----------|---------------|---------------------|-------------|
 | **D-ID (old)** | N/A | $2,700+ | $2,700+ |
 | **HeyGen (old)** | N/A | $500+ | $500+ |
@@ -195,7 +195,7 @@ interface JudgeVideo {
 
 4. **Test:**
    - Olivia: Open Ask Olivia tab, should see streaming avatar
-   - Christiano: Generate judge report, video should appear
+   - Cristiano: Generate judge report, video should appear
 
 ### Files Created This Session
 
@@ -206,7 +206,7 @@ api/avatar/generate-judge-video.ts # Replicate video generation
 api/avatar/video-status.ts       # Check generation status
 src/components/OliviaAvatar.tsx  # Olivia streaming component
 src/components/OliviaAvatar.css  # Styling
-src/components/JudgeVideo.tsx    # Christiano video component
+src/components/JudgeVideo.tsx    # Cristiano video component
 src/components/JudgeVideo.css    # Styling
 src/hooks/useSimli.ts            # Simli hook
 src/hooks/useJudgeVideo.ts       # Video generation hook

@@ -18,7 +18,7 @@
 
 | # | Status | Item | Details |
 |---|--------|------|---------|
-| A1 | ❌ | Judge Video - Christiano animation | Face and body too rigid, needs animation tweaks to look more natural |
+| A1 | ❌ | Judge Video - Cristiano animation | Face and body too rigid, needs animation tweaks to look more natural |
 | A2 | ❌ | Freedom Cards text size | City text too big, reduce font size |
 | A3 | ❌ | Results Report section scroll | When user expands a section, doesn't auto-scroll to beginning of that section |
 | A4 | ❌ | Judge Tab mobile buttons | Save/Download/Forward buttons need centered on mobile (desktop OK) |
@@ -149,7 +149,7 @@
 
 ### HIGH
 5. **C3/C4** - Perplexity & Gemini prompt fixes
-6. **A1** - Christiano animation tweaks
+6. **A1** - Cristiano animation tweaks
 7. **A3** - Results section auto-scroll
 8. **E5** - Gamma prompt update
 
