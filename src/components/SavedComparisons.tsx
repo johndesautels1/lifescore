@@ -78,11 +78,11 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   }, []);
 
   // Sync reports AND comparisons from Supabase to ensure cross-device consistency
-  // Max 20 seconds — if Supabase is slow, show cached data and stop spinner
+  // Max 15 seconds — if Supabase is slow, show cached data and stop spinner
   const syncAndLoadComparisons = async () => {
     setIsSyncing(true);
 
-    const SYNC_TIMEOUT_MS = 20000; // 20 seconds max for entire sync
+    const SYNC_TIMEOUT_MS = 15000; // 15s — aligned with new 12s SUPABASE_TIMEOUT_MS + overhead
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Sync timed out')), SYNC_TIMEOUT_MS)
     );
