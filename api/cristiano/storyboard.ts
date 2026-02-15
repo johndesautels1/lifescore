@@ -152,8 +152,9 @@ HARD RULES:
 - End with: "Lifestyle scoring, not legal advice."
 
 OVERLAY STRATEGY (keep simple — ONE key visual per scene):
-- A-ROLL scenes (1 & 7): Show "Freedom Score: [OVERALL]%" badge centered on screen
-- B-ROLL scenes (2–6): Show the active category name + score as a subtle lower-third caption
+- Each scene MUST include an "overlay" field with the exact text to display.
+- A-ROLL scenes (1 & 7): overlay = "Freedom Score: [OVERALL]%" (use the actual score)
+- B-ROLL scenes (2–6): overlay = "[Category Name]: [SCORE]%" (the active category for that scene)
 - Do NOT stack multiple overlays. One overlay per scene maximum.
 - Reserve lower-right 15% for CLUES logo + QR box (always visible).
 
@@ -220,10 +221,21 @@ JSON SCHEMA TO FOLLOW:
       "type": "A_ROLL",
       "duration_seconds": 12,
       "primary_category": "Personal Autonomy",
+      "overlay": "Freedom Score: 82%",
       "visual_direction": "Cristiano on camera, city silhouette background. Freedom Score badge animates in.",
       "voiceover": "...",
-      "on_screen_text": ["Freedom Score: [OVERALL]%", "[CITY]"],
+      "on_screen_text": ["Freedom Score: 82%", "[CITY]"],
       "stock_search_keywords": ["skyline [city]", "aerial downtown [city]"]
+    },
+    {
+      "type": "B_ROLL",
+      "duration_seconds": 18,
+      "primary_category": "Personal Autonomy",
+      "overlay": "Personal Autonomy: 78%",
+      "visual_direction": "Aerial sweep of [city] downtown, sunlit streets.",
+      "voiceover": "...",
+      "on_screen_text": ["Personal Autonomy", "78%"],
+      "stock_search_keywords": ["aerial downtown [city]", "sunny public park [city]"]
     }
   ],
   "neighborhoods": [

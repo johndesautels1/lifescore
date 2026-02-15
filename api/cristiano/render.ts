@@ -176,6 +176,7 @@ function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
   // - scene: array index implies order
   // - primary_category: our internal scoring label, visual_direction already conveys theme
   // - transition: fixed instructions already specify cinematic transitions
+  // KEEP: overlay — HeyGen needs this for per-scene dynamic overlay text
   if (Array.isArray(slim.scenes)) {
     slim.scenes = (slim.scenes as Array<Record<string, unknown>>).map(s => {
       const { scene, primary_category, transition, ...keep } = s;
