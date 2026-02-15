@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Track if we're already fetching to prevent duplicate calls
   const fetchingRef = React.useRef<string | null>(null);
   // Cooldown uses module-level _lastProfileFetchFailedAt (not useRef) so it survives remounts
-  const FAILURE_COOLDOWN_MS = 60000; // 60s cooldown after a failed fetch
+  const FAILURE_COOLDOWN_MS = 60000; // 60s circuit breaker — prevents retry storms after ErrorBoundary remounts
 
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile and preferences in parallel with reduced timeout/retries
       // to prevent long blocking loops when Supabase is slow or unreachable.
       // Fail fast, fail open — the app works without profile data.
-      const PROFILE_TIMEOUT_MS = 24000; // 24s — generous timeout for profile fetch
+      const PROFILE_TIMEOUT_MS = 15000; // 15s — covers mobile latency for 2 parallel SELECTs (profile + prefs)
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -235,12 +235,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // SUPABASE MODE: Get initial session with timeout
-    const SESSION_TIMEOUT_MS = 45000; // 45s — generous timeout for session check
+    const SESSION_TIMEOUT_MS = 20000; // 20s — getSession reads local cache first, then validates token
     let initialLoadDone = false; // Tracks whether the first profile fetch has completed
     let initialUserId: string | null = null; // Track which user getSession already loaded
     const sessionTimeout = setTimeout(() => {
       if (!initialLoadDone) {
-        console.warn("[Auth] Session check timed out after 10s");
+        console.warn(`[Auth] Session check timed out after ${SESSION_TIMEOUT_MS / 1000}s`);
         initialLoadDone = true;
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }

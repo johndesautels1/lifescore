@@ -40,19 +40,21 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Supabase query timeout in milliseconds.
- * 20s generous timeout covers slow mobile connections + large JSONB writes.
+ * 12s balances mobile latency (3G can be 2-5s) with reasonable UX wait.
+ * Industry standard for Supabase client calls is 10-15s.
  */
-export const SUPABASE_TIMEOUT_MS = 20000;
+export const SUPABASE_TIMEOUT_MS = 12000;
 
 /**
  * Retry configuration for Supabase queries.
  * 2 retries (3 attempts total), 1s initial delay with exponential backoff.
+ * Only retries on transient errors (timeout, network). Auth/validation errors fail immediately.
  */
 export const RETRY_CONFIG = {
-  maxRetries: 2,
-  initialDelayMs: 1000,  // 1 second
-  maxDelayMs: 5000,      // 5 seconds max
-  backoffMultiplier: 2,  // Double delay each retry
+  maxRetries: 2,          // 3 total attempts — handles one bad cell tower blip
+  initialDelayMs: 1000,   // 1 second (Supabase standard)
+  maxDelayMs: 5000,       // 5 seconds max
+  backoffMultiplier: 2,   // Double delay each retry
 };
 
 /**
