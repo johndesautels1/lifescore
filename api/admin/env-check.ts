@@ -29,7 +29,7 @@ function getAdminEmails(): string[] {
     .split(',')
     .map(e => e.trim().toLowerCase())
     .filter(Boolean);
-  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com'];
+  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
   return [...new Set([...envEmails, ...fallbackEmails])];
 }
 

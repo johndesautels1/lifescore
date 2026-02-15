@@ -51,7 +51,7 @@ const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
   .filter(Boolean);
 
 // Hardcoded fallback for developer bypass (in case env var not set in Vercel)
-const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com'];
+const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com', 'jdes7@aol.com'];
 
 // ============================================================================
 // TYPES

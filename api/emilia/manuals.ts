@@ -46,7 +46,7 @@ const MANUAL_TITLES: Record<string, string> = {
 const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations', 'prompts'];
 
 // Hardcoded admin emails (fallback if table doesn't exist yet)
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
+const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
 
 // ============================================================================
 // EMBEDDED CONTENT (Fallback)

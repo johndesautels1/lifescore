@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 // CONFIGURATION
 // ============================================================================
 
-const ALERT_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com'];
+const ALERT_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
