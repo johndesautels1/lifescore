@@ -628,6 +628,42 @@
     flex-direction: column;
     text-align: center;
   }
+
+  /* FIX #9 2026-02-15: CONNECTED button scrolling outside container on mobile vertical */
+  .connected-account {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .account-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .account-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .account-name {
+    font-size: 0.8rem;
+  }
+
+  .account-value {
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-status {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

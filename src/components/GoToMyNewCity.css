@@ -564,7 +564,8 @@
 }
 
 .new-city-wrapper .badge-role {
-  color: var(--text-secondary, #a0a0c0);
+  color: #ffffff;
+  font-weight: 700;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -626,4 +627,54 @@
   color: var(--text-secondary, #a0a0c0);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* ============================================================================
+   FIX #8 2026-02-15: MOBILE VERTICAL — Sovereign badge + footer overflow
+   ============================================================================ */
+@media (max-width: 480px) {
+  .new-city-wrapper {
+    padding: 0.75rem;
+  }
+
+  .new-city-container {
+    padding: 1rem;
+  }
+
+  .new-city-wrapper .cristiano-footer {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .new-city-wrapper .cristiano-badge {
+    font-size: 0.65rem;
+    gap: 0.25rem;
+  }
+
+  .new-city-wrapper .cristiano-badge .badge-icon {
+    font-size: 0.85rem;
+  }
+
+  .new-city-wrapper .badge-name {
+    font-size: 0.65rem;
+  }
+
+  .new-city-wrapper .badge-role {
+    font-size: 0.6rem;
+  }
+
+  .new-city-wrapper .sovereign-badge {
+    padding: 0.1rem 0.4rem;
+    gap: 0.2rem;
+  }
+
+  .new-city-wrapper .sovereign-icon {
+    font-size: 0.6rem;
+  }
+
+  .new-city-wrapper .sovereign-text {
+    font-size: 0.5rem;
+    letter-spacing: 0.04em;
+  }
 }

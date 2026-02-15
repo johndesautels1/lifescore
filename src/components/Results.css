@@ -145,6 +145,8 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   padding: 1.5rem;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .results .score-box {
@@ -191,6 +193,8 @@
 /* Category Breakdown */
 .category-breakdown {
   padding: 2rem;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* P14: CSS containment for offscreen category sections */
@@ -597,6 +601,71 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
+  }
+}
+
+/* FIX 2026-02-15: Mobile vertical — score cards + category cards overflow */
+@media (max-width: 480px) {
+  /* Fix #1: Score grid cards spilling right */
+  .score-grid {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .results .score-box {
+    padding: 1rem;
+  }
+
+  .results .score-box h3 {
+    font-size: 1rem;
+  }
+
+  .results .score-box .score {
+    font-size: 2.25rem;
+  }
+
+  /* Fix #2: Category header button overflow — weight badge + expand icon */
+  .category-breakdown {
+    padding: 1rem;
+  }
+
+  .category-header-btn {
+    padding: 0.65rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .category-header {
+    gap: 0.4rem;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .results .category-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .results .category-name {
+    font-size: 0.8rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-weight {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .results .expand-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 1rem;
+    border-radius: 8px;
+    flex-shrink: 0;
   }
 }
 

@@ -891,6 +891,48 @@
     width: 100%;
     min-height: 48px;
   }
+
+  /* FIX #6 2026-02-15: Read/Listen/Open External/Close buttons overflow on mobile vertical.
+     Reduce all buttons to approximately half height and width */
+  .embedded-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+  }
+
+  .embedded-header h3 {
+    font-size: 0.85rem;
+  }
+
+  .embedded-actions {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .external-link-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6rem;
+    border-radius: 4px;
+  }
+
+  .close-embed-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6rem;
+    border-radius: 4px;
+  }
+
+  .report-view-toggle {
+    width: 100%;
+  }
+
+  .view-toggle-btn {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    flex: 1;
+  }
 }
 
 /* ============================================================================

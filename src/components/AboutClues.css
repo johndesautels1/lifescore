@@ -896,6 +896,32 @@
     padding: 0.4rem 0.7rem;
     font-size: 0.75rem;
   }
+
+  /* FIX #3 2026-02-15: Services table overflows right on mobile vertical */
+  .about-clues .ac-services-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+  }
+
+  .about-clues .ac-services-table thead th {
+    padding: 8px 10px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .about-clues .ac-services-table tbody td {
+    padding: 8px 10px;
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  .about-clues .ac-service-flag {
+    padding: 1px 4px;
+    font-size: 9px;
+    margin-left: 2px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -905,5 +931,46 @@
   }
   .about-clues .ac-subtab-icon {
     font-size: 0.85rem;
+  }
+
+  /* FIX #3 2026-02-15: Services table — even tighter on very small screens */
+  .about-clues .ac-services-table thead th {
+    padding: 6px 6px;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+  }
+
+  .about-clues .ac-services-table tbody td {
+    padding: 6px 6px;
+    font-size: 11px;
+  }
+
+  /* FIX #4 2026-02-15: Step 3 specialty modules cut off at screen right */
+  .about-clues .ac-module-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .about-clues .ac-module-chip {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .about-clues .ac-module-num {
+    min-width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+
+  .about-clues .ac-module-name {
+    font-size: 11px;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  /* Ensure glass cards don't cause horizontal overflow */
+  .about-clues .ac-glass-card {
+    padding: 20px 14px;
+    overflow: hidden;
   }
 }

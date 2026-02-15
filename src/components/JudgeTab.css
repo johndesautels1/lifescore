@@ -1779,35 +1779,36 @@
     justify-content: center;
   }
 
-  /* Judge Welcome Screen - Scale down for mobile viewport fit */
+  /* FIX #7 2026-02-15: Judge Welcome Screen — reduce yellow triangle + retry button
+     by one-third so they don't overflow the video display top/bottom on mobile */
   .avatar-silhouette {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 0.5rem;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 0.4rem;
   }
 
   .silhouette-icon {
-    font-size: 2rem;
+    font-size: 1.4rem;
   }
 
   .awaiting-text {
-    font-size: 1rem;
-    margin-bottom: 0.15rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.1rem;
   }
 
   .awaiting-subtext {
-    font-size: 0.7rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.6rem;
+    margin-bottom: 0.5rem;
   }
 
   .generate-report-btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.7rem;
-    gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.6rem;
+    gap: 0.35rem;
   }
 
   .generate-report-btn .btn-icon {
-    font-size: 1rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -1886,35 +1887,60 @@
     grid-template-columns: 1fr;
   }
 
-  /* Judge Welcome Screen - Even smaller for tiny phones */
+  /* FIX #7 2026-02-15: Judge Welcome Screen — further reduce for small phones
+     Yellow triangle + retry button must fit inside video display without overflow */
   .avatar-silhouette {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 0.4rem;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 0.3rem;
   }
 
   .silhouette-icon {
-    font-size: 1.5rem;
+    font-size: 1rem;
   }
 
   .awaiting-text {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     margin-bottom: 0.1rem;
+    letter-spacing: 0.08em;
   }
 
   .awaiting-subtext {
-    font-size: 0.6rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.5rem;
+    margin-bottom: 0.35rem;
   }
 
   .generate-report-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.6rem;
-    gap: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.5rem;
+    gap: 0.3rem;
   }
 
   .generate-report-btn .btn-icon {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
+  }
+
+  /* FIX 2026-02-15: Judge category accordion buttons overflow on small phones */
+  .judge-tab .category-header-btn {
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .judge-tab .category-icon {
+    font-size: 1.1rem;
+  }
+
+  .judge-tab .category-name {
+    font-size: 0.75rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .judge-tab .category-weight {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.35rem;
+    white-space: nowrap;
   }
 }
 
