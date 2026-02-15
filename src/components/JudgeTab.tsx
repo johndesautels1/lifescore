@@ -44,7 +44,7 @@ async function withTimeout<T>(
   return withRetry(() => promise, {
     timeoutMs: ms,
     operationName,
-    maxRetries: 1,
+    maxRetries: 3,
   });
 }
 import { toastSuccess, toastError } from '../utils/toast';

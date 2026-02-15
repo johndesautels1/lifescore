@@ -15,7 +15,7 @@ import { handleCors } from '../shared/cors.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const TIMEOUT_MS = 10000; // 10s for DB + Replicate status check + optional persist
+const TIMEOUT_MS = 45000; // 45s for DB + Replicate status check + optional persist
 
 export const config = {
   maxDuration: 60, // Increased from 30s to allow video download+upload to Supabase Storage

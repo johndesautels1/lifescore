@@ -40,19 +40,18 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Supabase query timeout in milliseconds.
- * PostgREST is always-on (not serverless) — queries should respond in <1s.
- * 5s is generous and covers slow mobile connections + large JSONB writes.
+ * 20s generous timeout covers slow mobile connections + large JSONB writes.
  */
-export const SUPABASE_TIMEOUT_MS = 5000;
+export const SUPABASE_TIMEOUT_MS = 20000;
 
 /**
  * Retry configuration for Supabase queries.
- * Fail fast: 1 retry (2 attempts total), 500ms initial delay.
+ * 2 retries (3 attempts total), 1s initial delay with exponential backoff.
  */
 export const RETRY_CONFIG = {
-  maxRetries: 1,
-  initialDelayMs: 500,   // 500ms
-  maxDelayMs: 3000,      // 3 seconds max
+  maxRetries: 2,
+  initialDelayMs: 1000,  // 1 second
+  maxDelayMs: 5000,      // 5 seconds max
   backoffMultiplier: 2,  // Double delay each retry
 };
 

@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Track if we're already fetching to prevent duplicate calls
   const fetchingRef = React.useRef<string | null>(null);
   // Cooldown uses module-level _lastProfileFetchFailedAt (not useRef) so it survives remounts
-  const FAILURE_COOLDOWN_MS = 30000; // 30s cooldown after a failed fetch
+  const FAILURE_COOLDOWN_MS = 60000; // 60s cooldown after a failed fetch
 
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile and preferences in parallel with reduced timeout/retries
       // to prevent long blocking loops when Supabase is slow or unreachable.
       // Fail fast, fail open — the app works without profile data.
-      const PROFILE_TIMEOUT_MS = 5000; // 5s — PostgREST is always-on, not serverless
+      const PROFILE_TIMEOUT_MS = 24000; // 24s — generous timeout for profile fetch
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // SUPABASE MODE: Get initial session with timeout
-    const SESSION_TIMEOUT_MS = 10000; // 10s — session check hits local cache first
+    const SESSION_TIMEOUT_MS = 45000; // 45s — generous timeout for session check
     let initialLoadDone = false; // Tracks whether the first profile fetch has completed
     let initialUserId: string | null = null; // Track which user getSession already loaded
     const sessionTimeout = setTimeout(() => {
