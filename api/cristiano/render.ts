@@ -85,12 +85,9 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
   if (!CRISTIANO_AVATAR_ID) {
     errors.push('HEYGEN_CHRISTIAN_AVATAR_ID not configured in environment');
   }
-  if (!CRISTIANO_VOICE_ID) {
-    errors.push('HEYGEN_CHRISTIAN_VOICE_ID not configured in environment');
-  }
-  if (!AVATAR_LOOK_ID) {
-    errors.push('HEYGEN_AVATAR_LOOK_ID not configured in environment');
-  }
+  // Note: voice_id and look_id are NOT sent to Video Agent API.
+  // The agent selects voice automatically. These are kept for future
+  // use if we switch to the standard v2/video/generate endpoint.
 
   const scenes = storyboard.scenes as Array<Record<string, unknown>> | undefined;
   if (!scenes || scenes.length !== 7) {
@@ -545,6 +542,9 @@ export default async function handler(
         console.log('[RENDER] Prompt length:', videoAgentPrompt.length, 'chars');
 
         // Submit to HeyGen Video Agent
+        // IMPORTANT: Video Agent API accepts avatar_id inside a `config` object,
+        // NOT as top-level fields. voice_id and look_id are NOT supported —
+        // the agent selects voice automatically from the prompt context.
         const renderResponse = await fetchWithTimeout(
           HEYGEN_VIDEO_AGENT_URL,
           {
@@ -555,9 +555,11 @@ export default async function handler(
             },
             body: JSON.stringify({
               prompt: videoAgentPrompt,
-              avatar_id: CRISTIANO_AVATAR_ID,
-              voice_id: CRISTIANO_VOICE_ID,
-              look_id: AVATAR_LOOK_ID,
+              config: {
+                avatar_id: CRISTIANO_AVATAR_ID,
+                duration_sec: 120,
+                orientation: 'landscape',
+              },
             }),
           },
           HEYGEN_TIMEOUT_MS
