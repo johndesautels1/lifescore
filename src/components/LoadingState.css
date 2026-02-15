@@ -144,6 +144,16 @@
   color: #10b981;
 }
 
+/* Light mode: bright yellow text on completed category pills */
+:root:not([data-theme="dark"]) .category-pill.complete {
+  color: #FFD700;
+  border-color: #e6b800;
+}
+
+:root:not([data-theme="dark"]) .category-pill.complete .pill-check {
+  color: #FFD700;
+}
+
 .pill-icon {
   font-size: 1.1rem;
 }
