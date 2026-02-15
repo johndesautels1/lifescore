@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.3
-**Last Updated:** February 14, 2026
+**Version:** 3.4
+**Last Updated:** February 15, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -363,6 +363,23 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Saved report city names unreadable | Fixed — proper contrast applied in dark mode |
 | Saved report dates hard to read | Fixed — crisp white text now used in dark mode |
 | Other dark mode text issues | Report specific elements to support for investigation |
+
+### 5.9 Mobile Display Issues (Added 2026-02-15)
+
+| Issue | Solution |
+|-------|----------|
+| Content cut off on right side of phone | Fixed — 9 mobile overflow issues resolved on 2026-02-15 |
+| Buttons pushed off-screen on mobile | Fixed — all interactive elements now fit within mobile viewports |
+| Score cards too wide on phone | Fixed — Results page cards resize for small screens |
+| Category % badges cut off | Fixed — badges and labels now truncate gracefully |
+| Services table overflows on phone | Fixed — table scrolls horizontally on narrow screens |
+| Olivia buttons blocking response area | Fixed — READY/STOP buttons repositioned and shrunk |
+| Gamma report buttons overflowing | Fixed — buttons wrap to multiple rows on mobile |
+| Judge page elements too large | Fixed — doormat, retry button, and Sovereign badge reduced for mobile |
+| CONNECTED button off-screen in Settings | Fixed — account status wraps properly on narrow screens |
+
+**Response template:**
+"Thank you for reporting the mobile display issue. We deployed fixes for 9 mobile layout problems on February 15, 2026. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
 
 ---
 
@@ -896,6 +913,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8.8): live avatar + pre-rendered video mode with troubleshooting. New glossary terms (Olivia Presenter, Live Presenter, Pre-Rendered Video, PIP). Section renumbering (§8.9→8.10, §8.9→8.11). |
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Gamma trophy 🏆 now placed on winner not loser (§5.5), (2) Gamma persistence — foreign key fix (§5.5), (3) backdrop-filter blur removed from 8 CSS files for INP, (4) Login input 247ms INP delay fixed (§5.1), (5) "Watch Presenter" → "Listen to Presenter" rename. |
 | 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page update: collapsible panels (§8.3), GoToMyNewCity video (§8.7), auto-restore videos on tab switch, missing 6 category sections fix, Judge dropdown INP fix. Video URL expiration: HEAD request validation for all providers, Court Order URL fix, HeyGen URL fix, localStorage quota protection (§5.4). Cost Dashboard $0.00 fix (§8.10). Cristiano video CTA + poster (§8.4). AUDIO badge + voice wave (§8.9). Storyboard progress bar. Dark mode saved reports fix. Judge report Supabase fallback. New customer inquiries (§4.5-4.9). New FAQs (§11). New glossary terms (§12). |
+| 3.4 | 2026-02-15 | Claude Opus 4.6 | New §5.9 Mobile Display Issues: 9 mobile vertical overflow fixes documented with response template. Affected areas: Results score cards, category badges, About services table, How It Works modules, Olivia buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. |
 
 ---
 
