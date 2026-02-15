@@ -288,7 +288,7 @@ export default async function handler(
           return;
         }
 
-        console.log('[HEYGEN-VIDEO] Using avatar:', effectiveAvatarId, 'voice:', effectiveVoiceId);
+        console.log('[HEYGEN-VIDEO] Using avatar:', effectiveAvatarId, 'voice:', effectiveVoiceId, 'scenes:', splitScriptIntoScenes(script).length);
 
         const generatedVideoId = await generateVideo(
           apiKey,
