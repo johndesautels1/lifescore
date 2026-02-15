@@ -602,6 +602,32 @@ VALUES (
   'system-seed'
 ) ON CONFLICT (category, prompt_key) DO NOTHING;
 
+-- Cristiano "Go To My New City" storyboard prompt (added 2026-02-15)
+INSERT INTO public.app_prompts (category, prompt_key, display_name, description, prompt_text, last_edited_by)
+VALUES (
+  'video',
+  'cristiano_storyboard',
+  'Cristiano — Go To My New City Storyboard Builder',
+  'System prompt for the 7-scene cinematic storyboard (105-120s). Sent to Claude to generate scene-by-scene JSON for HeyGen Video Agent. Source: api/cristiano/storyboard.ts buildSystemPrompt()',
+  'You are the CLUES "Go To My New City" Storyboard Builder.
+Generate a premium cinematic 105–120 second video plan led by an avatar judge narrator named Cristiano.
+Theme: FREEDOM. 7 scenes, 220–270 words. A-ROLL scenes 1 & 7, B-ROLL scenes 2–6.
+One overlay per scene max. See api/cristiano/storyboard.ts for full prompt.',
+  'system-seed'
+) ON CONFLICT (category, prompt_key) DO NOTHING;
+
+-- Cristiano HeyGen render prompt (added 2026-02-15)
+INSERT INTO public.app_prompts (category, prompt_key, display_name, description, prompt_text, last_edited_by)
+VALUES (
+  'video',
+  'cristiano_heygen_render',
+  'Cristiano — HeyGen Render Prompt',
+  'Fixed instruction text wrapped around storyboard JSON for HeyGen Video Agent v2. Source: api/cristiano/render.ts buildVideoAgentPrompt()',
+  'Create a 105–120 second cinematic city tour for CLUES Life Score "Go To My New City."
+Avatar/Voice locked via Picker. 7 scenes. One overlay per scene. See api/cristiano/render.ts for full prompt.',
+  'system-seed'
+) ON CONFLICT (category, prompt_key) DO NOTHING;
+
 -- ============================================================================
 -- INVIDEO SUBTAB (3 prompts — screenplay already seeded in earlier migration)
 -- Source: src/utils/invideoPromptBuilder.ts
@@ -656,8 +682,8 @@ GENERAL: gray skies, monotonous suburbs, chain restaurants, empty parking lots, 
 ) ON CONFLICT (category, prompt_key) DO NOTHING;
 
 -- ============================================================================
--- Done. 28 new prompts seeded (11 evaluate + 3 judge + 4 olivia + 9 video + 2 invideo).
--- Combined with 2 existing (1 invideo + 1 gamma) = 30 total in app_prompts.
+-- Done. 30 new prompts seeded (11 evaluate + 3 judge + 4 olivia + 11 video + 2 invideo).
+-- Combined with 2 existing (1 invideo + 1 gamma) = 32 total in app_prompts.
 -- Remaining 20 (Gamma image prompts) are dynamic templates in gammaService.ts
 -- and documented in the existing Gamma reference entry.
 -- ============================================================================
