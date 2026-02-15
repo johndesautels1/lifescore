@@ -197,7 +197,7 @@ function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
   let json = JSON.stringify(slim);
 
   // Safety net: if JSON is still too large, progressively truncate visual_direction
-  const PROMPT_OVERHEAD = 750; // chars for the fixed instruction text around the JSON
+  const PROMPT_OVERHEAD = 950; // chars for fixed instruction text + avatar/voice/look ID lines
   const MAX_JSON_LENGTH = 10000 - PROMPT_OVERHEAD;
   if (json.length > MAX_JSON_LENGTH && Array.isArray(slim.scenes)) {
     console.warn(`[RENDER] JSON is ${json.length} chars (budget ${MAX_JSON_LENGTH}), truncating visual_direction`);
@@ -212,7 +212,14 @@ function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
     json = JSON.stringify(slim);
   }
 
+  // Belt-and-suspenders: embed avatar/voice/look IDs directly in the prompt
+  // so HeyGen picks them up regardless of whether it reads them from config.
+  const avatarLine = CRISTIANO_AVATAR_ID ? `\nAVATAR: Use avatar_id "${CRISTIANO_AVATAR_ID}".` : '';
+  const voiceLine = CRISTIANO_VOICE_ID ? ` Use voice_id "${CRISTIANO_VOICE_ID}".` : '';
+  const lookLine = AVATAR_LOOK_ID ? ` Use look_id "${AVATAR_LOOK_ID}".` : '';
+
   const prompt = `Create a 105–120 second cinematic city tour video for CLUES Life Score "Go To My New City."
+${avatarLine}${voiceLine}${lookLine}
 
 Follow the Storyboard JSON exactly: scene order, timing, captions.
 
@@ -542,8 +549,22 @@ export default async function handler(
         console.log('[RENDER] Prompt length:', videoAgentPrompt.length, 'chars');
 
         // Submit to HeyGen Video Agent
-        // IMPORTANT: Video Agent API accepts config fields inside a `config` object,
-        // NOT as top-level fields. Top-level extras cause 400 "Extra inputs not permitted".
+        // Belt-and-suspenders: avatar_id, voice_id, look_id are sent BOTH in the
+        // config object AND embedded in the prompt text. If HeyGen reads one source
+        // but ignores the other, we're covered either way. One won't hurt the other.
+        // IMPORTANT: These must be inside `config`, NOT top-level (causes 400).
+        const configObj: Record<string, unknown> = {
+          avatar_id: CRISTIANO_AVATAR_ID,
+          voice_id: CRISTIANO_VOICE_ID,
+          duration_sec: 120,
+          orientation: 'landscape',
+        };
+        if (AVATAR_LOOK_ID) {
+          configObj.look_id = AVATAR_LOOK_ID;
+        }
+
+        console.log('[RENDER] Config:', JSON.stringify(configObj));
+
         const renderResponse = await fetchWithTimeout(
           HEYGEN_VIDEO_AGENT_URL,
           {
@@ -554,12 +575,7 @@ export default async function handler(
             },
             body: JSON.stringify({
               prompt: videoAgentPrompt,
-              config: {
-                avatar_id: CRISTIANO_AVATAR_ID,
-                voice_id: CRISTIANO_VOICE_ID,
-                duration_sec: 120,
-                orientation: 'landscape',
-              },
+              config: configObj,
             }),
           },
           HEYGEN_TIMEOUT_MS
