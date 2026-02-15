@@ -1017,23 +1017,22 @@ All Supabase queries use automatic retry with exponential backoff to handle tran
 **Configuration (`src/lib/supabase.ts`):**
 ```typescript
 RETRY_CONFIG = {
-  maxRetries: 3,           // Up to 3 retry attempts
+  maxRetries: 2,           // 2 retries = 3 total attempts
   initialDelayMs: 1000,    // Start with 1 second delay
-  maxDelayMs: 10000,       // Cap at 10 seconds
+  maxDelayMs: 5000,        // Cap at 5 seconds
   backoffMultiplier: 2,    // Double delay each retry
 }
-SUPABASE_TIMEOUT_MS = 45000  // 45 second timeout per attempt
+SUPABASE_TIMEOUT_MS = 12000  // 12 second timeout per attempt
 ```
 
 **Retry Behavior:**
 - Attempt 1: Immediate
 - Attempt 2: Wait 1s, then retry
-- Attempt 3: Wait 2s, then retry
-- Attempt 4: Wait 4s, then retry (final)
-- Total max wait: ~7 seconds + query time
+- Attempt 3: Wait 2s, then retry (final)
+- Total max wait: ~3 seconds + query time
 
 **Retryable Errors:**
-- Timeout errors (query took > 45s)
+- Timeout errors (query took > 12s)
 - Network errors (fetch failed)
 
 **Non-Retryable Errors:**
@@ -1889,6 +1888,7 @@ npm run preview
 | Mobile: Judge doormat triangle + retry button overflow | Reduced silhouette dimensions (80px→40px), icon size, and button padding at 480px/768px breakpoints in JudgeTab.css | 2026-02-15 |
 | Mobile: GoToMyNewCity Sovereign badge overflow | Added first-ever `@media (max-width: 480px)` block to GoToMyNewCity.css — footer `flex-wrap`, badge padding/font-size reduction | 2026-02-15 |
 | Mobile: Settings CONNECTED button off-screen | Added `flex-wrap: wrap`, `min-width: 0`, `text-overflow: ellipsis` to `.connected-account` in SettingsModal.css | 2026-02-15 |
+| Supabase timeout/retry values bloated by rogue agent | Reverted SUPABASE_TIMEOUT_MS from 20s→12s, maxRetries from 3→2 across 11 files. Aligned all withTimeout wrappers (databaseService, reportStorageService, savedComparisons, useTierAccess, JudgeTab). Reduced AuthContext PROFILE_TIMEOUT_MS 24s→15s, SESSION_TIMEOUT_MS 45s→20s. Reduced SavedComparisons SYNC_TIMEOUT_MS 20s→15s. Reduced generate-judge-video DB_TIMEOUT_MS 45s→15s. | 2026-02-15 |
 
 ---
 
@@ -2359,6 +2359,7 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 | 4.4 | 2026-02-15 | Claude Opus 4.6 | Added Codebase Statistics (§23): full LOC breakdown (~117K source lines), file/folder inventory, frontend/backend/database splits, all 23 table names, component counts. Delimited with CODEBASE_STATS markers for easy re-generation. |
 | 4.5 | 2026-02-15 | Claude Opus 4.6 | Cristiano B-roll 6-second clip limit (§9.17a): HeyGen was rendering 16-18s B-roll as single static clips. Added explicit 6s max per clip in both Stage 1 (storyboard prompt) and Stage 2 (render prompt). Supabase app_prompts updated to match. |
 | 4.6 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§14.2): WCAG accessibility updates introduced flex overflow on narrow viewports (≤480px). Fixed across 8 CSS files: Results.css (score cards + category badges), AboutClues.css (services table + module chips), AskOlivia.css (READY/STOP buttons), VisualsTab.css (Read/Listen/Open/Close buttons), JudgeTab.css (doormat triangle + category accordion), GoToMyNewCity.css (Sovereign badge — first-ever mobile rules), SettingsModal.css (CONNECTED button), EnhancedComparison.css (consistency fix). Pattern: `min-width: 0` + `flex-shrink: 0` + `text-overflow: ellipsis` + `flex-wrap: wrap` at mobile breakpoints. |
+| 4.7 | 2026-02-15 | Claude Opus 4.6 | Supabase timeout/retry remediation: Reverted rogue agent's bloated values across 11 source files. SUPABASE_TIMEOUT_MS 20s→12s, maxRetries 3→2 (3 total attempts). Updated §7.5 Supabase Retry Logic with correct config. New resolved issue (§14.2). Updated App Schema Manual §6.1 to match. |
 
 ---
 
