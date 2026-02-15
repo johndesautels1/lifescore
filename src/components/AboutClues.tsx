@@ -478,13 +478,13 @@ const AboutClues: React.FC = () => {
                 </div>
               </div>
               <div className="ac-persona-row">
-                <div className="ac-persona-avatar emeilia">&#9672;</div>
+                <div className="ac-persona-avatar emilia">&#9672;</div>
                 <div className="ac-persona-info">
-                  <div className="ac-persona-name-title">Emeilia</div>
+                  <div className="ac-persona-name-title">Emilia</div>
                   <div className="ac-persona-subtitle">Technical Support Specialist</div>
                   <div className="ac-persona-desc">
                     Your behind-the-scenes technical expert. Available within your dashboard and module applications via
-                    voice and text, Emeilia ensures you never feel lost as you work through the system — brilliant,
+                    voice and text, Emilia ensures you never feel lost as you work through the system — brilliant,
                     personable, and always ready to help.
                   </div>
                 </div>
