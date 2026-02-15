@@ -96,13 +96,8 @@ VALUES (
   'video',
   'cristiano_heygen_render',
   'Cristiano — HeyGen Render Prompt',
-  'Fixed instruction text wrapped around the storyboard JSON when submitting to HeyGen Video Agent v2. Source: api/cristiano/render.ts buildVideoAgentPrompt()',
+  'Fixed instruction text wrapped around the storyboard JSON when submitting to HeyGen Video Agent v2. Avatar/voice/look IDs are passed as structured API parameters (not in prompt text). Source: api/cristiano/render.ts buildVideoAgentPrompt()',
   'Create a 105–120 second cinematic city tour video for CLUES Life Score "Go To My New City."
-
-AVATAR LOCK:
-- Avatar ID: [CRISTIANO_AVATAR_ID] (Cristiano). Do not substitute.
-- Voice ID: [CRISTIANO_VOICE_ID]. Do not substitute.
-Use the Avatar Picker / Voice Picker in the UI to lock these IDs directly.
 
 Follow the Storyboard JSON exactly: scene order, timing, captions.
 

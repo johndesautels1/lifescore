@@ -622,9 +622,9 @@ VALUES (
   'video',
   'cristiano_heygen_render',
   'Cristiano — HeyGen Render Prompt',
-  'Fixed instruction text wrapped around storyboard JSON for HeyGen Video Agent v2. Source: api/cristiano/render.ts buildVideoAgentPrompt()',
+  'Fixed instruction text wrapped around storyboard JSON for HeyGen Video Agent v2. Avatar/voice/look IDs passed as API params. Source: api/cristiano/render.ts buildVideoAgentPrompt()',
   'Create a 105–120 second cinematic city tour for CLUES Life Score "Go To My New City."
-Avatar/Voice locked via Picker. 7 scenes. One overlay per scene. See api/cristiano/render.ts for full prompt.',
+7 scenes. One overlay per scene. Avatar/voice/look config via env vars, not prompt text. See api/cristiano/render.ts for full prompt.',
   'system-seed'
 ) ON CONFLICT (category, prompt_key) DO NOTHING;
 

@@ -76,6 +76,7 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'HEYGEN_OLIVIA_VOICE_ID', description: 'HeyGen Olivia voice ID — Gamma video presenter ONLY (not ElevenLabs/OpenAI)', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_CHRISTIAN_AVATAR_ID', description: 'HeyGen Judge Christiano avatar ID — video presenter', category: 'Avatar & Video', side: 'server' },
   { name: 'HEYGEN_CHRISTIAN_VOICE_ID', description: 'HeyGen Judge Christiano voice ID — video presenter', category: 'Avatar & Video', side: 'server' },
+  { name: 'HEYGEN_AVATAR_LOOK_ID', description: 'HeyGen avatar look/appearance ID — physical appearance variant for avatar rendering', category: 'Avatar & Video', side: 'server' },
   { name: 'CHRISTIANO_IMAGE_URL', description: 'Judge Christiano source image URL', category: 'Avatar & Video', side: 'server' },
 
   // --- Text-to-Speech (ElevenLabs) ---

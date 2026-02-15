@@ -28,9 +28,10 @@ const HEYGEN_API_V2 = 'https://api.heygen.com/v2';
 const HEYGEN_API_V1 = 'https://api.heygen.com/v1';
 const HEYGEN_TIMEOUT_MS = 60000;
 
-// Olivia avatar & voice defaults
+// Olivia avatar, voice & look defaults
 const DEFAULT_AVATAR_ID = process.env.HEYGEN_OLIVIA_AVATAR_ID || '';
 const DEFAULT_VOICE_ID = process.env.HEYGEN_OLIVIA_VOICE_ID || '';
+const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
 
 // Max script length (HeyGen limit ~5000 chars per scene for reliable generation)
 const MAX_SCRIPT_LENGTH = 15000;
@@ -122,6 +123,7 @@ async function generateVideo(
       type: 'avatar',
       avatar_id: avatarId,
       avatar_style: 'normal',
+      ...(AVATAR_LOOK_ID ? { look_id: AVATAR_LOOK_ID } : {}),
     },
     voice: {
       type: 'text',

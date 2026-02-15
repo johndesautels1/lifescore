@@ -34,9 +34,10 @@ const HEYGEN_VIDEO_AGENT_URL = 'https://api.heygen.com/v1/video_agent/generate';
 const HEYGEN_STATUS_URL = 'https://api.heygen.com/v1/video_status.get';
 const HEYGEN_TIMEOUT_MS = 120000;  // 120s for HeyGen API calls (submission + status)
 
-// Cristiano avatar & voice (from env)
+// Cristiano avatar, voice & look (from env)
 const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CHRISTIAN_AVATAR_ID || '';
 const CRISTIANO_VOICE_ID = process.env.HEYGEN_CHRISTIAN_VOICE_ID || '';
+const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
 
 // Supabase admin client
 const supabaseAdmin = createClient(
@@ -86,6 +87,9 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
   }
   if (!CRISTIANO_VOICE_ID) {
     errors.push('HEYGEN_CHRISTIAN_VOICE_ID not configured in environment');
+  }
+  if (!AVATAR_LOOK_ID) {
+    errors.push('HEYGEN_AVATAR_LOOK_ID not configured in environment');
   }
 
   const scenes = storyboard.scenes as Array<Record<string, unknown>> | undefined;
@@ -212,11 +216,6 @@ function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
   }
 
   const prompt = `Create a 105–120 second cinematic city tour video for CLUES Life Score "Go To My New City."
-
-AVATAR LOCK:
-- Avatar ID: ${CRISTIANO_AVATAR_ID} (Cristiano). Do not substitute.
-- Voice ID: ${CRISTIANO_VOICE_ID}. Do not substitute.
-Use the Avatar Picker / Voice Picker in the UI to lock these IDs directly.
 
 Follow the Storyboard JSON exactly: scene order, timing, captions.
 
@@ -554,7 +553,12 @@ export default async function handler(
               'Content-Type': 'application/json',
               'X-Api-Key': apiKey,
             },
-            body: JSON.stringify({ prompt: videoAgentPrompt }),
+            body: JSON.stringify({
+              prompt: videoAgentPrompt,
+              avatar_id: CRISTIANO_AVATAR_ID,
+              voice_id: CRISTIANO_VOICE_ID,
+              look_id: AVATAR_LOOK_ID,
+            }),
           },
           HEYGEN_TIMEOUT_MS
         );
