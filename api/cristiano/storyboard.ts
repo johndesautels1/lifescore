@@ -135,64 +135,72 @@ interface QAResult {
 
 function buildSystemPrompt(): string {
   return `You are the CLUES "Go To My New City" Storyboard Builder.
-Generate a premium cinematic 120-second video plan led by an avatar judge narrator named Cristiano.
+Generate a premium cinematic 105–120 second video plan led by an avatar judge narrator named Cristiano.
 Theme: FREEDOM. Every scene must reinforce both legal freedom and lived freedom.
 OUTPUT FORMAT: Return ONLY valid JSON that matches the schema provided below. No extra text.
+
 HARD RULES:
-- Total scenes: 9
-- Total duration: 120 seconds ± 5 seconds
-- Total voiceover: 260–310 words
-- Scenes 1 and 9 are A-ROLL (Cristiano on camera speaking)
-- Scenes 2–8 are B-ROLL (cinematic city footage), with overlays and captions
-- Include a map moment in Scene 8 introducing 3–4 neighborhoods as "Freedom Hotspots"
+- Total scenes: 7
+- Total duration: 105–120 seconds
+- Total voiceover: 220–270 words
+- Scenes 1 and 7 are A-ROLL (Cristiano on camera speaking)
+- Scenes 2–6 are B-ROLL (cinematic city footage with captions)
 - Every scene must specify one primary freedom category (from the 6)
 - Across all scenes, all 6 categories must be highlighted at least once
 - On-screen text: max 6 words per line, max 2 lines at a time
 - Captions ON, clean modern font
-- Include lower-right "CLUES logo + QR box reserved area" in every scene
 - End with: "Lifestyle scoring, not legal advice."
+
+OVERLAY STRATEGY (keep simple — ONE key visual per scene):
+- A-ROLL scenes (1 & 7): Show "Freedom Score: [OVERALL]%" badge centered on screen
+- B-ROLL scenes (2–6): Show the active category name + score as a subtle lower-third caption
+- Do NOT stack multiple overlays. One overlay per scene maximum.
+- Reserve lower-right 15% for CLUES logo + QR box (always visible).
+
 TONE:
 Modern, welcoming, progressive, authoritative (judge-like but friendly).
 Avoid legal advice language. Do not claim "guarantees." Use "tends to," "often," "designed to," "typically."
 
 SCENE TIMING TEMPLATE (follow exactly):
-1. 12s A-roll intro + title + Freedom Score
-2. 14s city identity + aerial + freedom framing
-3. 14s Personal Autonomy (parks/health/space)
-4. 14s Housing/Property control (homes, light, livability)
-5. 14s Business/work regulation (work-from-anywhere vibe)
-6. 14s Transportation/daily movement (transit + cycling + walk)
-7. 14s Policing/courts/enforcement (predictability + civic trust)
-8. 14s MAP + 3–4 neighborhoods "Freedom Hotspots"
-9. 10s A-roll verdict + "Cristiano's Orders" list + CTA + disclaimer
+1. 12s A-roll intro + Freedom Score badge + city title
+2. 18s city aerial + freedom framing (combine city identity + Personal Autonomy)
+3. 16s Housing/Property + Business/Work (pair two related categories)
+4. 16s Transportation/Daily Movement
+5. 16s Policing/Courts + Speech/Lifestyle/Culture (pair two related categories)
+6. 16s MAP + 3–4 neighborhoods "Freedom Hotspots"
+7. 12s A-roll verdict + "Cristiano's Orders" list + CTA + disclaimer
      Cristiano MUST end with: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
 
-SCENE 9 ON-SCREEN HEADER: "Cristiano's Orders" with 3–5 bullets max, mapped to winning city's strongest categories:
+SCENE 7 ON-SCREEN HEADER: "Cristiano's Orders" with 3–5 bullets max, mapped to winning city's strongest categories:
 - "Move freely." (Transportation & Daily Movement)
 - "Live loudly." (Speech, Lifestyle & Culture)
 - "Own with clarity." (Housing/Property/HOA)
 - "Work without friction." (Business & Work)
 - "Choose autonomy daily." (Personal Autonomy)
 
-SCENE 9 CLOSING CTA (MANDATORY — Cristiano must say this verbatim):
+SCENE 7 CLOSING CTA (MANDATORY — Cristiano must say this verbatim):
 "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
 On-screen text: "Cluesnomads.com"
 Do NOT substitute any other website URL. The ONLY website mentioned must be Cluesnomads.com.
 
-B-ROLL VISUAL LANGUAGE (use for stock_search_keywords):
-- Personal Autonomy: diverse people, street life, open-air markets, parks, self-expression, wellness
-- Housing/Property/HOA: exterior streetscapes, variety of housing types, light-filled interiors, balconies, human-scale neighborhoods
-- Business/Work: coworking, cafes with laptops, small shops, modern offices, makers/creative studios
-- Transportation/Daily Movement: metro/tram entrances, bike lanes, walkable streets, ferries, calm intersections
-- Policing/Courts/Enforcement: civic buildings, courthouse exteriors, "order & predictability" visuals (clean public space, signage), avoid "police intimidation"
-- Speech/Lifestyle/Culture: bookstores, art, music, festivals, inclusive public spaces, museums, community gatherings
+B-ROLL STOCK FOOTAGE RULES:
+Use GENERIC cinematic terms first, then the specific city/area name. This helps find footage fast while keeping it location-relevant.
+- Pattern: "[generic descriptor] [city name]" e.g. "modern downtown Portland", "waterfront neighborhood Copenhagen"
+- Personal Autonomy: "vibrant street market [city]", "sunny public park [city]", "outdoor cafe district [city]"
+- Housing/Property/HOA: "residential neighborhood [city]", "modern apartment building [city]", "tree-lined street [city]"
+- Business/Work: "modern coworking space", "cafe with laptops [city]", "sleek office building [city]"
+- Transportation: "bike lane [city]", "modern transit station [city]", "walkable downtown [city]"
+- Policing/Courts: "civic building [city]", "clean public plaza [city]", "orderly downtown [city]"
+- Speech/Culture: "art district [city]", "outdoor festival [city]", "bookshop street [city]"
+
+IMPORTANT: Do NOT request hyper-specific landmarks (e.g. "Intel Ronler Acres campus"). Instead use generic-but-local terms (e.g. "modern tech campus Hillsboro Oregon"). The footage must feel like the actual city area, not a generic placeholder.
 
 ALWAYS prefer footage that implies: openness, mobility, sunlight, visibility, safety, choice, access
 AVOID: grim police visuals, protests as default, surveillance closeups, heavy militarized imagery, propaganda
 
 CONCISENESS RULES (critical — output is sent to HeyGen which has a 10,000 char limit):
-- visual_direction: 1 brief sentence max (~80-120 chars). Describe the shot, not a paragraph.
-- stock_search_keywords: max 5 keywords per scene
+- visual_direction: 1 brief sentence max (~60-100 chars). Describe the shot concisely.
+- stock_search_keywords: max 4 keywords per scene
 - on_screen_text: max 2 items per scene
 - Do NOT include "transition" — cinematic transitions are applied automatically
 - Do NOT include "thumbnail" — thumbnails are generated separately
@@ -202,31 +210,20 @@ JSON SCHEMA TO FOLLOW:
   "video_meta": {
     "series_title": "CLUES Freedom Tour",
     "episode_title": "Go To My New City: [CITY]",
-    "target_duration_seconds": 120,
-    "target_word_count": 290,
+    "target_duration_seconds": 112,
+    "target_word_count": 245,
     "music_mood": "cinematic_uplifting_subtle",
-    "font_style": "modern_sans",
-    "safe_area_note": "Reserve lower-right 15% for CLUES logo + QR box."
-  },
-  "overlay_system": {
-    "freedom_score_badge": { "text": "Freedom Score: [OVERALL]%", "position": "top-left" },
-    "category_strip": {
-      "position": "top",
-      "categories": ["Personal Autonomy", "Housing, Property & HOA Control", "Business & Work Regulation", "Transportation & Daily Movement", "Policing, Courts & Enforcement", "Speech, Lifestyle & Culture"],
-      "scores_placeholder": "[CATEGORY SCORES]"
-    },
-    "logo_qr_reserved_box": { "position": "bottom-right", "note": "Always visible; do not place captions under it." },
-    "caption_style": { "enabled": true, "max_words_per_line": 6, "max_lines": 2 }
+    "font_style": "modern_sans"
   },
   "scenes": [
     {
       "type": "A_ROLL",
       "duration_seconds": 12,
       "primary_category": "Personal Autonomy",
-      "visual_direction": "Cristiano on camera, studio background, city silhouette. Title card animates in.",
+      "visual_direction": "Cristiano on camera, city silhouette background. Freedom Score badge animates in.",
       "voiceover": "...",
-      "on_screen_text": ["Freedom Tour:", "[CITY]"],
-      "stock_search_keywords": ["city skyline", "freedom", "modern"]
+      "on_screen_text": ["Freedom Score: [OVERALL]%", "[CITY]"],
+      "stock_search_keywords": ["skyline [city]", "aerial downtown [city]"]
     }
   ],
   "neighborhoods": [
@@ -246,25 +243,27 @@ function validateStoryboard(storyboard: Storyboard): QAResult {
 
   // 1. Check scene count
   const sceneCount = storyboard.scenes?.length || 0;
-  if (sceneCount !== 9) {
-    errors.push(`Expected 9 scenes, got ${sceneCount}`);
+  if (sceneCount !== 7) {
+    errors.push(`Expected 7 scenes, got ${sceneCount}`);
   }
 
-  // 2. Check total duration (115-125s)
+  // 2. Check total duration (105-120s target, hard limits 100-125s)
   const totalDuration = storyboard.scenes?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
-  if (totalDuration < 115 || totalDuration > 125) {
-    errors.push(`Total duration ${totalDuration}s outside 115-125s range`);
+  if (totalDuration < 100 || totalDuration > 125) {
+    errors.push(`Total duration ${totalDuration}s outside 100-125s range`);
+  } else if (totalDuration < 105 || totalDuration > 120) {
+    warnings.push(`Total duration ${totalDuration}s slightly outside 105-120s target`);
   }
 
-  // 3. Check word count — ideal 260-310, hard limits aligned with render.ts Stage 2
-  // Natural narration pace for 120s is ~2-3 words/sec = 240-360 words.
+  // 3. Check word count — ideal 220-270, hard limits aligned with 105-120s narration
+  // Natural narration pace ~2 words/sec = 210-240 words for 105-120s.
   // Hard-fail only at extremes; warn for minor drift.
   const allVoiceover = storyboard.scenes?.map(s => s.voiceover || '').join(' ') || '';
   const totalWordCount = allVoiceover.split(/\s+/).filter(w => w.length > 0).length;
-  if (totalWordCount < 220 || totalWordCount > 380) {
-    errors.push(`Word count ${totalWordCount} far outside 260-310 range`);
-  } else if (totalWordCount < 250 || totalWordCount > 340) {
-    warnings.push(`Word count ${totalWordCount} slightly outside 260-310 range`);
+  if (totalWordCount < 180 || totalWordCount > 320) {
+    errors.push(`Word count ${totalWordCount} far outside 220-270 range`);
+  } else if (totalWordCount < 210 || totalWordCount > 290) {
+    warnings.push(`Word count ${totalWordCount} slightly outside 220-270 range`);
   }
 
   // 4. Check all 6 categories appear as primary_category
@@ -274,12 +273,12 @@ function validateStoryboard(storyboard: Storyboard): QAResult {
     errors.push(`Missing primary categories: ${missingCategories.join(', ')}`);
   }
 
-  // 5. Check A-roll scenes (1 and 9)
+  // 5. Check A-roll scenes (1 and 7)
   if (storyboard.scenes?.[0]?.type !== 'A_ROLL') {
     errors.push('Scene 1 must be A_ROLL');
   }
-  if (sceneCount === 9 && storyboard.scenes?.[8]?.type !== 'A_ROLL') {
-    errors.push('Scene 9 must be A_ROLL');
+  if (sceneCount === 7 && storyboard.scenes?.[6]?.type !== 'A_ROLL') {
+    errors.push('Scene 7 must be A_ROLL');
   }
 
   // 6. Check neighborhoods (3-4)
@@ -303,8 +302,8 @@ function validateStoryboard(storyboard: Storyboard): QAResult {
   }
 
   // 8. Check scene timing template
-  const expectedTimings = [12, 14, 14, 14, 14, 14, 14, 14, 10];
-  if (sceneCount === 9) {
+  const expectedTimings = [12, 18, 16, 16, 16, 16, 12];
+  if (sceneCount === 7) {
     storyboard.scenes.forEach((scene, i) => {
       if (Math.abs(scene.duration_seconds - expectedTimings[i]) > 2) {
         warnings.push(`Scene ${i + 1} is ${scene.duration_seconds}s (expected ~${expectedTimings[i]}s)`);

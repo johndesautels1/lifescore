@@ -89,23 +89,22 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
   }
 
   const scenes = storyboard.scenes as Array<Record<string, unknown>> | undefined;
-  if (!scenes || scenes.length !== 9) {
-    errors.push(`Expected 9 scenes, got ${scenes?.length || 0}`);
+  if (!scenes || scenes.length !== 7) {
+    errors.push(`Expected 7 scenes, got ${scenes?.length || 0}`);
   }
 
   if (scenes) {
     const totalDuration = scenes.reduce((sum, s) => sum + (Number(s.duration_seconds) || 0), 0);
-    if (totalDuration < 110 || totalDuration > 130) {
-      errors.push(`Total duration ${totalDuration}s outside 110-130s range`);
+    if (totalDuration < 100 || totalDuration > 125) {
+      errors.push(`Total duration ${totalDuration}s outside 100-125s range`);
     }
 
-    // FIX 2026-02-14: Align word count tolerance with storyboard.ts Stage 1 QA.
-    // Natural narration pace for 120s is ~2-3 words/sec = 240-360 words.
-    // Hard-fail only at extremes to avoid rejecting perfectly usable storyboards.
+    // Word count for 105-120s narration at ~2 words/sec = 210-240 ideal.
+    // Hard-fail at extremes; allow some flex for natural pacing.
     const allVoiceover = scenes.map(s => String(s.voiceover || '')).join(' ');
     const wordCount = allVoiceover.split(/\s+/).filter(w => w.length > 0).length;
-    if (wordCount < 220 || wordCount > 380) {
-      errors.push(`Word count ${wordCount} outside 220-380 range`);
+    if (wordCount < 180 || wordCount > 320) {
+      errors.push(`Word count ${wordCount} outside 180-320 range`);
     }
 
     const categories = new Set(scenes.map(s => String(s.primary_category || '')));
@@ -123,7 +122,7 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
     }
 
     if (scenes[0]?.type !== 'A_ROLL') errors.push('Scene 1 must be A_ROLL');
-    if (scenes[8]?.type !== 'A_ROLL') errors.push('Scene 9 must be A_ROLL');
+    if (scenes[6]?.type !== 'A_ROLL') errors.push('Scene 7 must be A_ROLL');
   }
 
   // FIX 2026-02-14: Align neighborhood tolerance with storyboard.ts Stage 1 QA (2-5 allowed).
@@ -211,28 +210,35 @@ function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
     json = JSON.stringify(slim);
   }
 
-  const prompt = `Create a ~120-second cinematic city tour video for CLUES Life Score "Go To My New City."
+  const prompt = `Create a 105–120 second cinematic city tour video for CLUES Life Score "Go To My New City."
 
 AVATAR LOCK:
 - Avatar ID: ${CRISTIANO_AVATAR_ID} (Cristiano). Do not substitute.
 - Voice ID: ${CRISTIANO_VOICE_ID}. Do not substitute.
+Use the Avatar Picker / Voice Picker in the UI to lock these IDs directly.
 
-Follow the Storyboard JSON exactly: scene timing, captions, overlays.
+Follow the Storyboard JSON exactly: scene order, timing, captions.
 
-Captions ON. On-screen text: max 6 words/line, max 2 lines. Reserve lower-right 15% for logo/QR.
+Captions ON. On-screen text: max 6 words/line, max 2 lines.
 
-Overlays: top-left Freedom Score badge, top category strip (6 categories), bottom-right logo/QR box.
+OVERLAY RULES (keep simple):
+- A-ROLL scenes: Show Freedom Score badge centered on screen. No other overlays.
+- B-ROLL scenes: Show active category name + score as a lower-third caption. One overlay max.
+- Reserve lower-right 15% for CLUES logo/QR box (always visible).
+Do NOT stack multiple overlays in the same scene.
 
-STYLE: Cinematic, premium, modern. Moving shots only. Imply openness, mobility, sunlight, safety, choice. Avoid grim police, protests, surveillance, propaganda.
+STYLE: Cinematic, premium, modern. Moving shots only. Openness, mobility, sunlight, safety, choice. Avoid grim police, protests, surveillance, propaganda.
 
-SCENES: 1 & 9 = A-ROLL (Cristiano on camera). 2-8 = B-ROLL (city footage + overlays). Cinematic transitions between scenes.
+STOCK FOOTAGE: Use generic cinematic terms + city name (e.g. "modern downtown Portland", "waterfront Copenhagen"). Do NOT request hyper-specific landmarks. Footage must feel like the actual city area.
+
+SCENES: 1 & 7 = A-ROLL (Cristiano on camera). 2–6 = B-ROLL (city footage). Cinematic transitions between scenes.
 
 Storyboard:
 ${json}
 
-Use generic cinematic city footage if specific stock unavailable. Keep timing identical. End with: "Lifestyle scoring, not legal advice."
+End with: "Lifestyle scoring, not legal advice."
 
-MANDATORY CTA in Scene 9: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
+MANDATORY CTA in final scene: "For additional information on our Clues Ecosystem and family of applications and services, go to Cluesnomads.com"
 On-screen: "Cluesnomads.com". No other URL.`;
 
   console.log(`[RENDER] Prompt length: ${prompt.length} chars (limit 10000)`);

@@ -2,8 +2,8 @@
  * LIFE SCORE - Cristiano "Go To My New City" Video Service
  *
  * Client-side orchestration for the 2-stage video pipeline:
- *   Stage 1: Storyboard Builder (LLM) → 9-scene JSON
- *   Stage 2: HeyGen Video Agent Render → cinematic 120s video
+ *   Stage 1: Storyboard Builder (LLM) → 7-scene JSON
+ *   Stage 2: HeyGen Video Agent Render → cinematic 105-120s video
  *
  * Also builds the Winner Package from existing comparison/judge data
  * and handles polling for video completion.
@@ -171,7 +171,7 @@ export function buildWinnerPackage(params: {
 // ============================================================================
 
 /**
- * Call the Storyboard Builder API to generate a 9-scene storyboard.
+ * Call the Storyboard Builder API to generate a 7-scene storyboard.
  */
 export async function generateStoryboard(
   winnerPackage: WinnerPackage
