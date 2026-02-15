@@ -15,10 +15,9 @@ import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
 const HEYGEN_API_BASE = 'https://api.heygen.com/v1';
 const HEYGEN_TIMEOUT_MS = 60000;
 
-// Olivia avatar, voice & look defaults
+// Olivia avatar & voice defaults
 const DEFAULT_AVATAR_ID = process.env.HEYGEN_OLIVIA_AVATAR_ID || '';
 const DEFAULT_VOICE_ID = process.env.HEYGEN_OLIVIA_VOICE_ID || '';
-const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
 
 // ============================================================================
 // TYPES
@@ -111,7 +110,6 @@ async function createSession(
       body: JSON.stringify({
         avatar_id: avatarId,
         voice_id: voiceId || undefined,
-        look_id: AVATAR_LOOK_ID || undefined,
         quality: 'high',
         video_encoding: 'VP8',
       }),
