@@ -243,7 +243,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
   tech: `# Technical Support Manual
 
-**Version:** 4.4 | **Updated:** 2026-02-15
+**Version:** 4.5 | **Updated:** 2026-02-15
 
 ## System Architecture
 
@@ -304,6 +304,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 | **Storyboard Generation** | Claude Sonnet | ANTHROPIC_API_KEY | api/cristiano/storyboard.ts |
 
 - **2-Stage Pipeline**: Stage 1 (storyboard.ts) generates a 7-scene cinematic storyboard via Claude. Stage 2 (render.ts) submits it to HeyGen Video Agent V2 for rendering with B-roll, overlays, and transitions.
+- **B-Roll Clip Limit**: Each individual B-roll clip is capped at 6 seconds max. Scenes longer than 6s use multiple clips (e.g. 18s = 3 clips, 16s = 2-3 clips). Enforced in both Stage 1 and Stage 2 prompts.
 - **HEYGEN_AVATAR_LOOK_ID** controls Cristiano's physical appearance variant (suit, setting). This is NOT used by Olivia.
 - **Pre-render validation** checks all 3 env vars (avatar ID, voice ID, look ID) before spending HeyGen credits.
 - Results cached in Supabase. Status polling via same endpoint (action: 'status').

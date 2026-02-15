@@ -69,6 +69,7 @@ On-screen text: "Cluesnomads.com"
 Do NOT substitute any other website URL. The ONLY website mentioned must be Cluesnomads.com.
 
 B-ROLL STOCK FOOTAGE RULES:
+CRITICAL: Each individual B-roll stock footage clip MUST be 6 seconds or less. If a B-roll scene is longer than 6 seconds, use MULTIPLE clips (e.g. an 18s scene = 3 clips of 6s each, a 16s scene = 2-3 clips). Never use a single clip longer than 6 seconds.
 Use GENERIC cinematic terms first, then the specific city/area name. This helps find footage fast while keeping it location-relevant.
 - Pattern: "[generic descriptor] [city name]" e.g. "modern downtown Portland", "waterfront neighborhood Copenhagen"
 - Personal Autonomy: "vibrant street market [city]", "sunny public park [city]", "outdoor cafe district [city]"
@@ -112,6 +113,7 @@ Do NOT stack multiple overlays in the same scene.
 STYLE: Cinematic, premium, modern. Moving shots only. Openness, mobility, sunlight, safety, choice. Avoid grim police, protests, surveillance, propaganda.
 
 STOCK FOOTAGE: Use generic cinematic terms + city name (e.g. "modern downtown Portland", "waterfront Copenhagen"). Do NOT request hyper-specific landmarks. Footage must feel like the actual city area.
+CRITICAL: Each individual B-roll stock footage clip MUST be 6 seconds or less. Use multiple clips per B-roll scene (e.g. 18s scene = 3 clips, 16s scene = 2-3 clips). Never use a single clip longer than 6 seconds.
 
 SCENES: 1 & 7 = A-ROLL (Cristiano on camera). 2–6 = B-ROLL (city footage). Cinematic transitions between scenes.
 

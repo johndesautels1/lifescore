@@ -1501,6 +1501,21 @@ Judge verdict video (Cristiano avatar) now includes branding elements:
 - Poster image shown before video playback begins
 - Logo overlay on the video player
 
+### 9.17a Cristiano B-Roll 6-Second Clip Limit (Added 2026-02-15)
+
+**Problem:** HeyGen Video Agent V2 was rendering B-roll scenes as single long clips (16-18 seconds), producing static or repetitive footage.
+
+**Root Cause:** Neither the Stage 1 storyboard builder prompt nor the Stage 2 HeyGen render prompt specified a maximum individual clip duration. HeyGen defaulted to a single continuous clip per scene.
+
+**Fix:** Added explicit B-roll clip duration limits to both stages of the pipeline:
+- **Stage 1 (storyboard.ts):** Added `CRITICAL: Each individual B-roll stock footage clip MUST be 6 seconds or less` rule in the B-ROLL STOCK FOOTAGE RULES section, with examples (e.g. 18s scene = 3 clips of 6s each)
+- **Stage 2 (render.ts):** Added matching instruction in the STOCK FOOTAGE section of the HeyGen Video Agent prompt
+- Ensures B-roll scenes use multiple varied clips instead of a single long clip, resulting in more dynamic and cinematic footage
+
+**Files Changed:**
+- `api/cristiano/storyboard.ts` — `buildSystemPrompt()` B-ROLL STOCK FOOTAGE RULES
+- `api/cristiano/render.ts` — `buildVideoAgentPrompt()` STOCK FOOTAGE section
+
 ### 9.18 Court Order Video Storage (Added 2026-02-11)
 
 Court Order videos can now be uploaded to Supabase Storage for permanent access:
@@ -2333,6 +2348,7 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 | 4.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes documented: (1) Gamma trophy placement fix — 3 safeguards added to prompt (§20.4), (2) Gamma persistence fix — foreign key violation resolved, (3) backdrop-filter blur removed from 8 CSS files for INP (§10.2), (4) Login input 247ms INP fix, (5) "Watch" → "Listen to Presenter" rename. 5 new resolved issues (§14.2). |
 | 4.3 | 2026-02-14 | Claude Opus 4.6 | Major update: 23 technical changes documented. New sections: Judge collapsible panels (§9.8), GoToMyNewCity video v2 (§9.9), HeyGen timeouts (§9.10), Judge video persistence (§9.11), expired URL fixes for 3 providers (§9.12), video URL expiration (§9.13), Cristiano 422 fix (§9.14), HeyGen 10K limit fixes (§9.15), storyboard QA (§9.16), Cristiano CTA/poster (§9.17). Performance: Judge dropdown INP 354ms→50ms (§10.3). Infrastructure: timeout safety nets (§12.3), upload timeout increases (§12.4), 200MB reports limit (§12.5). Auth: profile fetch retry storm fix (§6.4). LLM: Supabase cold start warm-up + LRU cache (§7.6), Grok batch splitting (§7.10), Cost Dashboard $0 triple-fix (§7.9). Storage: Judge report Supabase fallback (§19.4), missing 6 categories fix (§19.5). UI: dark mode saved reports (§21), AUDIO badge + voice wave (§22). 23 new resolved issues (§14.2). |
 | 4.4 | 2026-02-15 | Claude Opus 4.6 | Added Codebase Statistics (§23): full LOC breakdown (~117K source lines), file/folder inventory, frontend/backend/database splits, all 23 table names, component counts. Delimited with CODEBASE_STATS markers for easy re-generation. |
+| 4.5 | 2026-02-15 | Claude Opus 4.6 | Cristiano B-roll 6-second clip limit (§9.17a): HeyGen was rendering 16-18s B-roll as single static clips. Added explicit 6s max per clip in both Stage 1 (storyboard prompt) and Stage 2 (render prompt). Supabase app_prompts updated to match. |
 
 ---
 
