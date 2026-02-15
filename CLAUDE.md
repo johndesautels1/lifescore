@@ -78,6 +78,21 @@ After ANY code change, you MUST:
 
 ---
 
+## Git Branch Awareness
+
+**Before answering ANY question about branch state, commits, or diffs:**
+
+1. **ALWAYS fetch first:** `git fetch origin main` (and `git fetch origin <current-branch>` if needed)
+2. **Check current branch:** `git branch --show-current`
+3. **Count commits ahead of main:** `git rev-list --count origin/main..HEAD`
+4. **Count commits behind main:** `git rev-list --count HEAD..origin/main`
+
+**NEVER guess or estimate commit counts. Run the commands and report the actual numbers.**
+
+If a git command fails, say so honestly — do not fabricate a number.
+
+---
+
 ## Git Commit Rules
 
 - Commit messages should be descriptive
