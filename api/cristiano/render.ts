@@ -148,7 +148,7 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
   // buildVideoAgentPrompt strips fields + adds ~750 chars of instructions.
   // Catch oversized storyboards here with a clear error instead of a 400 from HeyGen.
   const estimatedJsonSize = JSON.stringify(storyboard).length;
-  // After stripping (thumbnail, overlay_system, video_meta, ending_disclaimer,
+  // After stripping (thumbnail, video_meta, ending_disclaimer,
   // per-scene: scene/primary_category/transition, neighborhood: signature_visual)
   // rough estimate: stripped JSON ≈ 60-70% of full JSON
   const estimatedPromptSize = Math.round(estimatedJsonSize * 0.65) + 750;

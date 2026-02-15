@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS cristiano_city_videos (
   country         TEXT,                                -- Country of the winning city
   region          TEXT,                                -- State/province
   heygen_video_id TEXT,                                -- HeyGen Video Agent job ID
-  storyboard      JSONB,                               -- Full 9-scene storyboard JSON
+  storyboard      JSONB,                               -- Full 7-scene storyboard JSON
   winner_package  JSONB,                               -- Winner Package input data
   status          TEXT NOT NULL DEFAULT 'pending'
                   CHECK (status IN ('pending', 'generating_storyboard', 'storyboard_ready',
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS cristiano_city_videos (
   video_url       TEXT,                                -- Final HeyGen video URL
   thumbnail_url   TEXT,                                -- Video thumbnail
   duration_seconds NUMERIC,                            -- Actual video duration
-  scene_count     INTEGER DEFAULT 9,                   -- Should always be 9
+  scene_count     INTEGER DEFAULT 7,                   -- Should always be 7
   word_count      INTEGER,                             -- Total voiceover word count
   freedom_score   NUMERIC,                             -- Overall freedom score
   error           TEXT,                                -- Error message if failed
