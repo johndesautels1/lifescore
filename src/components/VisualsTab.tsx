@@ -706,12 +706,22 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
                 <div className="report-links">
                   {reportState.gammaUrl && (
-                    <button
-                      className="report-link view-link"
-                      onClick={() => setShowEmbedded(true)}
-                    >
-                      View Report
-                    </button>
+                    <>
+                      <a
+                        href={reportState.gammaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="report-link view-link"
+                      >
+                        Open Report ↗
+                      </a>
+                      <button
+                        className="report-link embed-link"
+                        onClick={() => setShowEmbedded(true)}
+                      >
+                        Preview Here
+                      </button>
+                    </>
                   )}
                   {reportState.pptxUrl && (
                     <a

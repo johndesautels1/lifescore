@@ -416,6 +416,10 @@
   text-decoration: none;
   font-weight: 600;
   transition: all 0.2s ease;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  border: none;
 }
 
 .view-link {
@@ -425,6 +429,16 @@
 
 .view-link:hover {
   background: var(--accent-hover, #E5C04B);
+}
+
+.embed-link {
+  background: transparent;
+  border: 1px solid var(--accent-color, #D4AF37) !important;
+  color: var(--accent-color, #D4AF37);
+}
+
+.embed-link:hover {
+  background: rgba(212, 175, 55, 0.1);
 }
 
 .download-link {
