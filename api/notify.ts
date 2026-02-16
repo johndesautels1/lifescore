@@ -193,7 +193,7 @@ export default async function handler(
         );
 
         // Also create an in-app record of the email notification
-        await supabaseAdmin
+        const { error: emailRecordError } = await supabaseAdmin
           .from('notifications')
           .insert({
             user_id: userId,
@@ -203,6 +203,9 @@ export default async function handler(
             message: `Email sent to ${recipientEmail}`,
             link: link || null,
           });
+        if (emailRecordError) {
+          console.error('[NOTIFY] Failed to create email notification record:', emailRecordError.message);
+        }
       } else {
         results.email = { success: false, error: 'No email address found' };
       }
@@ -210,13 +213,16 @@ export default async function handler(
 
     // 3. Update job status to 'notified' if jobId provided
     if (jobId) {
-      await supabaseAdmin
+      const { error: jobUpdateError } = await supabaseAdmin
         .from('jobs')
         .update({
           status: 'notified',
           notified_at: new Date().toISOString(),
         })
         .eq('id', jobId);
+      if (jobUpdateError) {
+        console.error('[NOTIFY] Failed to update job status to notified:', jobUpdateError.message);
+      }
     }
 
     res.status(200).json({ success: true, results });

@@ -133,7 +133,8 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
   // Notification system
   const [showNotifyModal, setShowNotifyModal] = useState(false);
-  const { createJob } = useJobTracker();
+  const { createJob, completeJobAndNotify } = useJobTracker();
+  const pendingJobRef = useRef<string | null>(null);
 
   // FIX 2026-02-14: Auto-restore cached Cristiano city video on mount
   // When JudgeTab remounts after a tab switch, useCristianoVideo starts idle.
@@ -169,6 +170,21 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
     checkCachedVideo();
     return () => { cancelled = true; };
   }, [winnerCity]);
+
+  // Fire pending notification when video generation completes
+  useEffect(() => {
+    if (isReady && videoUrl && pendingJobRef.current) {
+      const jobId = pendingJobRef.current;
+      pendingJobRef.current = null;
+      completeJobAndNotify(
+        jobId,
+        { winnerCity, videoUrl },
+        `Freedom Tour Ready: ${winnerCity.split(',')[0].trim()}`,
+        `Your cinematic Freedom Tour of ${winnerCity.split(',')[0].trim()} is ready to watch.`,
+        '/?tab=judge'
+      );
+    }
+  }, [isReady, videoUrl, winnerCity, completeJobAndNotify]);
 
   // Effective video URL: hook result > cached from DB
   const effectiveVideoUrl = videoUrl || cachedVideoUrl;
@@ -226,6 +242,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
       notifyVia: channels,
     });
     if (jobId) {
+      pendingJobRef.current = jobId;
       toastInfo(`We'll notify you when your Freedom Tour is ready.`);
     }
     doGenerate();

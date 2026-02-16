@@ -4,7 +4,7 @@
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useTransition } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useTransition, useRef } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
@@ -111,8 +111,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
-  const { createJob } = useJobTracker();
+  const { createJob, completeJobAndNotify } = useJobTracker();
   const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const pendingJobRef = useRef<string | null>(null);
 
   // Enhanced report options
   const [reportType, setReportType] = useState<'standard' | 'enhanced'>('standard');
@@ -410,10 +411,28 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       notifyVia: channels,
     });
     if (jobId) {
+      pendingJobRef.current = jobId;
       toastInfo(`We'll notify you when your Gamma report is ready.`);
     }
     handleGenerateReport();
   };
+
+  // Fire pending notification when Gamma report generation completes
+  useEffect(() => {
+    if (reportState.status === 'completed' && pendingJobRef.current) {
+      const jobId = pendingJobRef.current;
+      pendingJobRef.current = null;
+      const city1 = result?.city1?.city || '';
+      const city2 = result?.city2?.city || '';
+      completeJobAndNotify(
+        jobId,
+        { city1, city2, gammaUrl: reportState.gammaUrl },
+        `Gamma Report Ready: ${city1} vs ${city2}`,
+        `Your visual report for ${city1} vs ${city2} is ready to view.`,
+        '/?tab=visuals'
+      );
+    }
+  }, [reportState.status, reportState.gammaUrl, result, completeJobAndNotify]);
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
 

@@ -6,7 +6,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useCallback, useEffect, useReducer, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useReducer, useRef, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import ResetPasswordScreen from './components/ResetPasswordScreen';
@@ -51,6 +51,7 @@ import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedCompariso
 import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
+import { useJobTracker } from './hooks/useJobTracker';
 import { resetOGMetaTags } from './hooks/useOGMeta';
 import { ALL_METRICS } from './shared/metrics';
 import {
@@ -256,6 +257,8 @@ const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { completeJobAndNotify } = useJobTracker();
+  const pendingComparisonJobRef = useRef<{ jobId: string; city1: string; city2: string } | null>(null);
   const [savedKey, setSavedKey] = useState(0);
 
   // PERF #1: Modal/UI state — single reducer instead of 8 useState
@@ -366,12 +369,27 @@ const AppContent: React.FC = () => {
         return;
       }
       setActiveTab('results');
+
+      // Fire pending comparison notification if a job was created via "Notify Me"
+      const pending = pendingComparisonJobRef.current;
+      if (pending) {
+        const city1Name = pending.city1.split(',')[0].trim();
+        const city2Name = pending.city2.split(',')[0].trim();
+        completeJobAndNotify(
+          pending.jobId,
+          { city1: pending.city1, city2: pending.city2 },
+          `${city1Name} vs ${city2Name} Comparison Ready`,
+          `Your comparison of ${city1Name} vs ${city2Name} is ready to view.`,
+          `/?cityA=${encodeURIComponent(pending.city1)}&cityB=${encodeURIComponent(pending.city2)}`
+        );
+        pendingComparisonJobRef.current = null;
+      }
     }
 
     // Update refs after handling transitions
     prevEnhancedStatusRef.current = enhancedStatus;
     prevStandardStatusRef.current = state.status;
-  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged]);
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
@@ -665,6 +683,9 @@ const AppContent: React.FC = () => {
                 onWeightsChange={setCustomWeights}
                 onLawLivedChange={setLawLivedRatio}
                 onConservativeModeChange={setConservativeMode}
+                onJobCreated={(jobId, city1, city2) => {
+                  pendingComparisonJobRef.current = { jobId, city1, city2 };
+                }}
               />
 
               {/* Standard Loading State */}

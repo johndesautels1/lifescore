@@ -70,6 +70,7 @@ interface CitySelectorProps {
   onLawLivedChange?: (ratio: LawLivedRatio) => void;        // Law vs Lived ratio change
   onConservativeModeChange?: (enabled: boolean) => void;    // Conservative mode toggle
   onExcludedCategoriesChange?: (excluded: Set<CategoryId>) => void;  // Category exclusion change
+  onJobCreated?: (jobId: string, city1: string, city2: string) => void;  // Notify parent when a notification job is created
 }
 
 interface PopularComparison {
@@ -331,7 +332,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   onWeightsChange,
   onLawLivedChange,
   onConservativeModeChange,
-  onExcludedCategoriesChange
+  onExcludedCategoriesChange,
+  onJobCreated
 }) => {
   const [metro1, setMetro1] = useState<Metro>(DEFAULT_METRO1);
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
@@ -392,6 +394,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
     onCompare(city1, city2);
 
     if (jobId) {
+      onJobCreated?.(jobId, city1, city2);
       toastInfo(`We'll notify you when ${metro1.city} vs ${metro2.city} is ready.`);
     }
   };
