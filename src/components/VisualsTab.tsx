@@ -452,7 +452,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       {/* Report Selection Dropdown */}
       {hasSavedComparisons && (
         <div className="report-selector-section">
-          <label className="report-selector-label">Select Report:</label>
+          <label className="report-selector-label">📊 Choose Comparison to Visualize:</label>
           <select
             className="report-selector-dropdown"
             value={selectedComparisonId ?? ''}
@@ -497,7 +497,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
       {/* Choose Existing Gamma Report Dropdown - ALWAYS visible */}
       <div className="report-selector-section gamma-report-selector">
-        <label className="report-selector-label">View Existing Gamma Report:</label>
+        <label className="report-selector-label">🎬 View Saved Gamma Presentation:</label>
         {savedReports.length > 0 ? (
           <select
             className="report-selector-dropdown"
