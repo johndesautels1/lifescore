@@ -138,7 +138,7 @@ const AboutClues: React.FC = () => {
             </p>
             <div className="ac-callout">&ldquo;Where in the world should I live?&rdquo;</div>
             <p className="ac-body-text">
-              We know that question intimately — because we asked it ourselves. John and Mel Desautels found themselves
+              We know that question intimately — because we asked it ourselves. John and Mel Desautels II found themselves
               at that very crossroads. After decades in real estate, appraisal, and mortgage lending, John understood
               property markets better than most. But when he and Mel began exploring where they might relocate — from
               Florida to Colorado, from California to Europe — they discovered something astonishing:{' '}
@@ -168,14 +168,14 @@ const AboutClues: React.FC = () => {
             <h2 className="ac-section-title">Who We Are</h2>
             <div className="ac-section-divider"></div>
             <p className="ac-body-text">
-              CLUES originated as a product of <strong>John E. Desautels &amp; Mel P. Desautels</strong>, founders of
-              John E. Desautels &amp; Associates, a licensed real estate brokerage headquartered in Tampa, Florida.
+              CLUES originated as a product of <strong>John E. Desautels II &amp; Mel P. Desautels</strong>, founders of
+              John E. Desautels II &amp; Associates, a licensed real estate brokerage headquartered in Tampa, Florida.
               Today we serve individual clients, corporate relocation departments, and enterprise organizations
               worldwide.
             </p>
             <div className="ac-person-grid">
               <div className="ac-person-card">
-                <div className="ac-person-name">John E. Desautels</div>
+                <div className="ac-person-name">John E. Desautels II</div>
                 <div className="ac-person-role">Founder &amp; CEO</div>
                 <div className="ac-person-desc">
                   Over 35 years in real estate brokerage, property appraisal, and executive leadership in mortgage
@@ -610,7 +610,7 @@ const AboutClues: React.FC = () => {
               <div className="ac-office-tag"><span className="ac-pin">&#9679;</span> Manila</div>
             </div>
             <div style={{ marginTop: '28px' }}>
-              <p className="ac-legal">&copy; 2026 John E. Desautels &amp; Associates. All rights reserved.</p>
+              <p className="ac-legal">&copy; 2026 John E. Desautels II &amp; Associates. All rights reserved.</p>
               <p className="ac-legal">
                 CLUES™, SMART Score™, LIFE Score™, and all associated marks are trademarks of CLUES Intelligence LTD.
               </p>

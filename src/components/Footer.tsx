@@ -24,7 +24,7 @@ const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
           <h3>Company Information</h3>
           <p className="company-title">Clues Intelligence LTD</p>
           <p className="tagline">AI-Powered Global Relocation Intelligence</p>
-          <p className="founder">Founded by John E. Desautels</p>
+          <p className="founder">Founded by John E. Desautels II</p>
           <p className="experience">35+ Years Real Estate Experience</p>
         </div>
 

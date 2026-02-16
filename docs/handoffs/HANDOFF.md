@@ -1,6 +1,6 @@
 # LIFE SCORE - Build Progress & Master Handoff
 **Project:** LIFE SCORE - Legal Independence & Freedom Evaluation
-**Owner:** John E. Desautels & Associates / Clues Intelligence LTD
+**Owner:** John E. Desautels II & Associates / Clues Intelligence LTD
 **Started:** January 13, 2026
 **Last Updated:** January 22, 2026
 **Status:** Production Ready - Deployed on Vercel
