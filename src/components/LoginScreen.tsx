@@ -5,38 +5,37 @@
  * Clean, professional design.
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './LoginScreen.css';
 
 type AuthMode = 'signin' | 'signup' | 'forgot';
 
 // ============================================================================
-// REMEMBER ME — localStorage helpers
+// REMEMBER ME — localStorage helpers (email only — password left to browser)
 // ============================================================================
-const REMEMBER_KEY = 'lifescore_remember_me';
+const REMEMBER_EMAIL_KEY = 'lifescore_remember_email';
 
-function loadSavedCredentials(): { email: string; password: string } | null {
+function loadSavedEmail(): string | null {
   try {
-    const raw = localStorage.getItem(REMEMBER_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed.e || !parsed.p) return null;
-    return { email: atob(parsed.e), password: atob(parsed.p) };
+    return localStorage.getItem(REMEMBER_EMAIL_KEY);
   } catch {
     return null;
   }
 }
 
-function saveCredentials(email: string, password: string): void {
+function saveEmail(email: string): void {
   try {
-    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ e: btoa(email), p: btoa(password) }));
+    localStorage.setItem(REMEMBER_EMAIL_KEY, email);
   } catch { /* ignore quota errors */ }
 }
 
-function clearSavedCredentials(): void {
-  try { localStorage.removeItem(REMEMBER_KEY); } catch { /* ignore */ }
+function clearSavedEmail(): void {
+  try { localStorage.removeItem(REMEMBER_EMAIL_KEY); } catch { /* ignore */ }
 }
+
+// Migrate: remove old insecure credential storage if present
+try { localStorage.removeItem('lifescore_remember_me'); } catch { /* ignore */ }
 
 // ============================================================================
 // COMPONENT
@@ -56,30 +55,14 @@ const LoginScreen: React.FC = () => {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Load saved credentials on mount — auto-sign-in if Remember Me was checked
-  const autoSignInAttempted = useRef(false);
+  // Load saved email on mount (password is handled by browser password manager)
   useEffect(() => {
-    const saved = loadSavedCredentials();
-    if (saved) {
-      setEmail(saved.email);
-      setPassword(saved.password);
+    const savedEmail = loadSavedEmail();
+    if (savedEmail) {
+      setEmail(savedEmail);
       setRememberMe(true);
-
-      // Auto-sign-in: if we have saved credentials, sign in automatically
-      // This runs once on mount — prevents repeated attempts on failure
-      if (!autoSignInAttempted.current) {
-        autoSignInAttempted.current = true;
-        signInWithEmail(saved.email, saved.password).then(({ error: signInError }) => {
-          if (signInError) {
-            // Credentials are stale/invalid — clear them so user isn't stuck in a loop
-            console.warn('[Remember Me] Auto-sign-in failed, clearing saved credentials');
-            clearSavedCredentials();
-            setRememberMe(false);
-          }
-        });
-      }
     }
-  }, [signInWithEmail]);
+  }, []);
 
   const resetForm = useCallback(() => {
     setEmail('');
@@ -122,11 +105,11 @@ const LoginScreen: React.FC = () => {
       }
       setLocalError(errorMessage);
     } else {
-      // Save or clear credentials based on Remember Me
+      // Save or clear email based on Remember Me (password handled by browser)
       if (rememberMe) {
-        saveCredentials(email, password);
+        saveEmail(email);
       } else {
-        clearSavedCredentials();
+        clearSavedEmail();
       }
     }
   }, [email, password, rememberMe, signInWithEmail]);
@@ -288,7 +271,7 @@ const LoginScreen: React.FC = () => {
 
           {/* Sign In Form */}
           {mode === 'signin' && (
-            <form className="login-form" onSubmit={handleSignIn}>
+            <form className="login-form" onSubmit={handleSignIn} autoComplete="on">
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
                 <div className="input-wrapper">
@@ -300,10 +283,11 @@ const LoginScreen: React.FC = () => {
                   <input
                     type="email"
                     id="email"
+                    name="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    autoComplete="email"
+                    autoComplete="username"
                     disabled={isLoading}
                     aria-required="true"
                     aria-invalid={!!displayError}
@@ -323,6 +307,7 @@ const LoginScreen: React.FC = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="password"
+                    name="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
