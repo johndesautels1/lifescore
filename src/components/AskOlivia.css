@@ -1896,4 +1896,24 @@ button.control-item.recording {
     font-size: 0.5rem;
     color: #ffffff;
   }
+
+  /* FIX #5 2026-02-15: READY/STOP video buttons blocking Olivia's body on mobile vertical.
+     Move to screen left/right edges of the TV display, reduce size */
+  .video-controls-overlay {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    justify-content: space-between;
+  }
+
+  .video-control-btn {
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    gap: 4px;
+    border-radius: 4px;
+  }
+
+  .video-control-btn .control-icon {
+    font-size: 0.75rem;
+  }
 }

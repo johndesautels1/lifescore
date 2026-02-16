@@ -48,6 +48,7 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   isConfigured: boolean;
+  isPasswordRecovery: boolean;
   error: string | null;
 }
 
@@ -63,6 +64,8 @@ interface AuthContextValue extends AuthState {
 
   // Password reset
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
+  clearPasswordRecovery: () => void;
 
   // Sign out
   signOut: () => Promise<void>;
@@ -106,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
     isAuthenticated: false,
     isConfigured: isSupabaseConfigured(),
+    isPasswordRecovery: false,
     error: null,
   });
 
@@ -130,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Track if we're already fetching to prevent duplicate calls
   const fetchingRef = React.useRef<string | null>(null);
   // Cooldown uses module-level _lastProfileFetchFailedAt (not useRef) so it survives remounts
-  const FAILURE_COOLDOWN_MS = 30000; // 30s cooldown after a failed fetch
+  const FAILURE_COOLDOWN_MS = 60000; // 60s circuit breaker — prevents retry storms after ErrorBoundary remounts
 
   const fetchUserData = useCallback(async (userId: string) => {
     if (!state.isConfigured) return { profile: null, preferences: null };
@@ -155,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile and preferences in parallel with reduced timeout/retries
       // to prevent long blocking loops when Supabase is slow or unreachable.
       // Fail fast, fail open — the app works without profile data.
-      const PROFILE_TIMEOUT_MS = 5000; // 5s — PostgREST is always-on, not serverless
+      const PROFILE_TIMEOUT_MS = 15000; // 15s — covers mobile latency for 2 parallel SELECTs (profile + prefs)
       const [profileResult, prefsResult] = await Promise.all([
         withRetry(
           () => supabase
@@ -235,12 +239,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // SUPABASE MODE: Get initial session with timeout
-    const SESSION_TIMEOUT_MS = 10000; // 10s — session check hits local cache first
+    const SESSION_TIMEOUT_MS = 20000; // 20s — getSession reads local cache first, then validates token
     let initialLoadDone = false; // Tracks whether the first profile fetch has completed
     let initialUserId: string | null = null; // Track which user getSession already loaded
     const sessionTimeout = setTimeout(() => {
       if (!initialLoadDone) {
-        console.warn("[Auth] Session check timed out after 10s");
+        console.warn(`[Auth] Session check timed out after ${SESSION_TIMEOUT_MS / 1000}s`);
         initialLoadDone = true;
         setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       }
@@ -272,6 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
           isAuthenticated: true,
           isConfigured: true,
+          isPasswordRecovery: false,
           error: null,
         });
       } else {
@@ -320,6 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading: false,
             isAuthenticated: true,
             isConfigured: true,
+            isPasswordRecovery: false,
             error: null,
           });
 
@@ -330,6 +336,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }).catch(err => {
             console.error('[Auth] Database sync failed:', err);
           });
+        } else if (event === 'PASSWORD_RECOVERY') {
+          // User clicked the reset link in their email — show the "set new password" form
+          console.log('[Auth] Password recovery flow detected');
+          setState(prev => ({
+            ...prev,
+            isPasswordRecovery: true,
+            isAuthenticated: true,
+            isLoading: false,
+            session,
+            supabaseUser: session?.user ?? null,
+          }));
         } else if (event === 'SIGNED_OUT') {
           setState({
             supabaseUser: null,
@@ -340,6 +357,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading: false,
             isAuthenticated: false,
             isConfigured: true,
+            isPasswordRecovery: false,
             error: null,
           });
         } else if (event === 'TOKEN_REFRESHED' && session) {
@@ -495,6 +513,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, [state.isConfigured]);
 
+  const updatePassword = useCallback(async (newPassword: string) => {
+    if (!state.isConfigured) {
+      return { error: { message: 'Supabase not configured' } as AuthError };
+    }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    setState(prev => ({
+      ...prev,
+      isLoading: false,
+      isPasswordRecovery: false,
+      error: error?.message || null,
+    }));
+
+    // Clean up the URL hash left by Supabase recovery redirect
+    if (!error && window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    return { error };
+  }, [state.isConfigured]);
+
+  const clearPasswordRecovery = useCallback(() => {
+    setState(prev => ({ ...prev, isPasswordRecovery: false }));
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!state.isConfigured) {
       // Demo mode logout
@@ -591,6 +640,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithMagicLink,
     signUp,
     resetPassword,
+    updatePassword,
+    clearPasswordRecovery,
     signOut,
     login,
     logout,

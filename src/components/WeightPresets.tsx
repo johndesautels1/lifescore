@@ -405,8 +405,9 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
       <button
         className="presets-toggle"
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
       >
-        <span className="toggle-icon">⚙️</span>
+        <span className="toggle-icon" aria-hidden="true">⚙️</span>
         <span className="toggle-text">
           Customize Priorities
           {selectedPreset !== 'balanced' && !isCustom && (

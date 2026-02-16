@@ -140,7 +140,7 @@ const CookieConsent: React.FC = () => {
   if (!showBanner) return null;
 
   return (
-    <div className="cookie-consent-overlay">
+    <div className="cookie-consent-overlay" role="dialog" aria-modal="true" aria-label="Cookie consent">
       <div className="cookie-consent-banner">
         {!showSettings ? (
           // Simple banner view
@@ -195,6 +195,7 @@ const CookieConsent: React.FC = () => {
                 type="button"
                 className="cookie-settings-close"
                 onClick={() => setShowSettings(false)}
+                aria-label="Close cookie preferences"
               >
                 &times;
               </button>

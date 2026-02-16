@@ -1,6 +1,6 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.4
+**Version:** 4.6
 **Last Updated:** February 15, 2026
 **Document ID:** LS-TSM-001
 
@@ -1017,23 +1017,22 @@ All Supabase queries use automatic retry with exponential backoff to handle tran
 **Configuration (`src/lib/supabase.ts`):**
 ```typescript
 RETRY_CONFIG = {
-  maxRetries: 3,           // Up to 3 retry attempts
+  maxRetries: 2,           // 2 retries = 3 total attempts
   initialDelayMs: 1000,    // Start with 1 second delay
-  maxDelayMs: 10000,       // Cap at 10 seconds
+  maxDelayMs: 5000,        // Cap at 5 seconds
   backoffMultiplier: 2,    // Double delay each retry
 }
-SUPABASE_TIMEOUT_MS = 45000  // 45 second timeout per attempt
+SUPABASE_TIMEOUT_MS = 12000  // 12 second timeout per attempt
 ```
 
 **Retry Behavior:**
 - Attempt 1: Immediate
 - Attempt 2: Wait 1s, then retry
-- Attempt 3: Wait 2s, then retry
-- Attempt 4: Wait 4s, then retry (final)
-- Total max wait: ~7 seconds + query time
+- Attempt 3: Wait 2s, then retry (final)
+- Total max wait: ~3 seconds + query time
 
 **Retryable Errors:**
-- Timeout errors (query took > 45s)
+- Timeout errors (query took > 12s)
 - Network errors (fetch failed)
 
 **Non-Retryable Errors:**
@@ -1501,6 +1500,21 @@ Judge verdict video (Cristiano avatar) now includes branding elements:
 - Poster image shown before video playback begins
 - Logo overlay on the video player
 
+### 9.17a Cristiano B-Roll 6-Second Clip Limit (Added 2026-02-15)
+
+**Problem:** HeyGen Video Agent V2 was rendering B-roll scenes as single long clips (16-18 seconds), producing static or repetitive footage.
+
+**Root Cause:** Neither the Stage 1 storyboard builder prompt nor the Stage 2 HeyGen render prompt specified a maximum individual clip duration. HeyGen defaulted to a single continuous clip per scene.
+
+**Fix:** Added explicit B-roll clip duration limits to both stages of the pipeline:
+- **Stage 1 (storyboard.ts):** Added `CRITICAL: Each individual B-roll stock footage clip MUST be 6 seconds or less` rule in the B-ROLL STOCK FOOTAGE RULES section, with examples (e.g. 18s scene = 3 clips of 6s each)
+- **Stage 2 (render.ts):** Added matching instruction in the STOCK FOOTAGE section of the HeyGen Video Agent prompt
+- Ensures B-roll scenes use multiple varied clips instead of a single long clip, resulting in more dynamic and cinematic footage
+
+**Files Changed:**
+- `api/cristiano/storyboard.ts` — `buildSystemPrompt()` B-ROLL STOCK FOOTAGE RULES
+- `api/cristiano/render.ts` — `buildVideoAgentPrompt()` STOCK FOOTAGE section
+
 ### 9.18 Court Order Video Storage (Added 2026-02-11)
 
 Court Order videos can now be uploaded to Supabase Storage for permanent access:
@@ -1865,6 +1879,16 @@ npm run preview
 | Dark mode: unreadable city names in saved reports | City names now use visible color in dark mode | 2026-02-14 |
 | Dark mode: date text hard to read | Date text now uses crisp white (#FFFFFF) in dark mode | 2026-02-14 |
 | AUDIO badge hidden at bottom of PIP | Badge moved to top-right corner + animated voice wave indicator when playing | 2026-02-14 |
+| Mobile: Winner/Loser score cards overflow | Added `@media (max-width: 480px)` rules to Results.css — reduced padding, font-size, gap on `.score-grid` and `.score-box` | 2026-02-15 |
+| Mobile: Category % weight badge pushed off-screen | Added `flex-shrink: 0`, `white-space: nowrap` to `.category-weight`; `min-width: 0`, `text-overflow: ellipsis` to `.category-name` in Results.css | 2026-02-15 |
+| Mobile: About Clues services table overflows | Added `display: block; overflow-x: auto` to table wrapper + reduced cell padding/font-size in AboutClues.css | 2026-02-15 |
+| Mobile: How It Works step 3 modules cut off | Reduced module chip padding, font-size, and grid gap in `@media (max-width: 480px)` in AboutClues.css | 2026-02-15 |
+| Mobile: Olivia READY/STOP buttons blocking body | Repositioned `.video-controls-overlay` to bottom edges, reduced button size in AskOlivia.css | 2026-02-15 |
+| Mobile: Gamma Read/Listen/Open/Close buttons overflow | Added `flex-direction: column` to `.embedded-header`, `flex-wrap: wrap` to `.embedded-actions` in VisualsTab.css | 2026-02-15 |
+| Mobile: Judge doormat triangle + retry button overflow | Reduced silhouette dimensions (80px→40px), icon size, and button padding at 480px/768px breakpoints in JudgeTab.css | 2026-02-15 |
+| Mobile: GoToMyNewCity Sovereign badge overflow | Added first-ever `@media (max-width: 480px)` block to GoToMyNewCity.css — footer `flex-wrap`, badge padding/font-size reduction | 2026-02-15 |
+| Mobile: Settings CONNECTED button off-screen | Added `flex-wrap: wrap`, `min-width: 0`, `text-overflow: ellipsis` to `.connected-account` in SettingsModal.css | 2026-02-15 |
+| Supabase timeout/retry values bloated by rogue agent | Reverted SUPABASE_TIMEOUT_MS from 20s→12s, maxRetries from 3→2 across 11 files. Aligned all withTimeout wrappers (databaseService, reportStorageService, savedComparisons, useTierAccess, JudgeTab). Reduced AuthContext PROFILE_TIMEOUT_MS 24s→15s, SESSION_TIMEOUT_MS 45s→20s. Reduced SavedComparisons SYNC_TIMEOUT_MS 20s→15s. Reduced generate-judge-video DB_TIMEOUT_MS 45s→15s. | 2026-02-15 |
 
 ---
 
@@ -2333,6 +2357,9 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 | 4.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes documented: (1) Gamma trophy placement fix — 3 safeguards added to prompt (§20.4), (2) Gamma persistence fix — foreign key violation resolved, (3) backdrop-filter blur removed from 8 CSS files for INP (§10.2), (4) Login input 247ms INP fix, (5) "Watch" → "Listen to Presenter" rename. 5 new resolved issues (§14.2). |
 | 4.3 | 2026-02-14 | Claude Opus 4.6 | Major update: 23 technical changes documented. New sections: Judge collapsible panels (§9.8), GoToMyNewCity video v2 (§9.9), HeyGen timeouts (§9.10), Judge video persistence (§9.11), expired URL fixes for 3 providers (§9.12), video URL expiration (§9.13), Cristiano 422 fix (§9.14), HeyGen 10K limit fixes (§9.15), storyboard QA (§9.16), Cristiano CTA/poster (§9.17). Performance: Judge dropdown INP 354ms→50ms (§10.3). Infrastructure: timeout safety nets (§12.3), upload timeout increases (§12.4), 200MB reports limit (§12.5). Auth: profile fetch retry storm fix (§6.4). LLM: Supabase cold start warm-up + LRU cache (§7.6), Grok batch splitting (§7.10), Cost Dashboard $0 triple-fix (§7.9). Storage: Judge report Supabase fallback (§19.4), missing 6 categories fix (§19.5). UI: dark mode saved reports (§21), AUDIO badge + voice wave (§22). 23 new resolved issues (§14.2). |
 | 4.4 | 2026-02-15 | Claude Opus 4.6 | Added Codebase Statistics (§23): full LOC breakdown (~117K source lines), file/folder inventory, frontend/backend/database splits, all 23 table names, component counts. Delimited with CODEBASE_STATS markers for easy re-generation. |
+| 4.5 | 2026-02-15 | Claude Opus 4.6 | Cristiano B-roll 6-second clip limit (§9.17a): HeyGen was rendering 16-18s B-roll as single static clips. Added explicit 6s max per clip in both Stage 1 (storyboard prompt) and Stage 2 (render prompt). Supabase app_prompts updated to match. |
+| 4.6 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§14.2): WCAG accessibility updates introduced flex overflow on narrow viewports (≤480px). Fixed across 8 CSS files: Results.css (score cards + category badges), AboutClues.css (services table + module chips), AskOlivia.css (READY/STOP buttons), VisualsTab.css (Read/Listen/Open/Close buttons), JudgeTab.css (doormat triangle + category accordion), GoToMyNewCity.css (Sovereign badge — first-ever mobile rules), SettingsModal.css (CONNECTED button), EnhancedComparison.css (consistency fix). Pattern: `min-width: 0` + `flex-shrink: 0` + `text-overflow: ellipsis` + `flex-wrap: wrap` at mobile breakpoints. |
+| 4.7 | 2026-02-15 | Claude Opus 4.6 | Supabase timeout/retry remediation: Reverted rogue agent's bloated values across 11 source files. SUPABASE_TIMEOUT_MS 20s→12s, maxRetries 3→2 (3 total attempts). Updated §7.5 Supabase Retry Logic with correct config. New resolved issue (§14.2). Updated App Schema Manual §6.1 to match. |
 
 ---
 

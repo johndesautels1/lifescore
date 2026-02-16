@@ -30,7 +30,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     : null;
 
   return (
-    <div className="loading-state card">
+    <div className="loading-state card" aria-busy="true">
       <div className="loading-header">
         <div className="loading-icon">🔍</div>
         <h2>Analyzing Legal &amp; Lived Freedom Metrics</h2>

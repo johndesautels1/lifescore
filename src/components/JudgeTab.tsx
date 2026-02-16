@@ -44,7 +44,7 @@ async function withTimeout<T>(
   return withRetry(() => promise, {
     timeoutMs: ms,
     operationName,
-    maxRetries: 1,
+    maxRetries: 2, // 3 total attempts — ~40s worst case with 12s timeout + backoff
   });
 }
 import { toastSuccess, toastError } from '../utils/toast';

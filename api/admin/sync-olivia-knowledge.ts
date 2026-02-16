@@ -17,7 +17,7 @@ const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || 'asst_3wbVjyY629u7fDylaK
 const ADMIN_EMAILS_ENV = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 const ADMIN_EMAILS = ADMIN_EMAILS_ENV.length > 0
   ? ADMIN_EMAILS_ENV
-  : ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com'];
+  : ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
 
 interface FileObject {
   id: string;

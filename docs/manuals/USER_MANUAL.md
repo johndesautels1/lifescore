@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 3.3
-**Last Updated:** February 14, 2026
+**Version:** 3.4
+**Last Updated:** February 15, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -741,6 +741,26 @@ For Enhanced mode with your own keys:
 4. Clear browser cookies
 5. Contact support for unlock
 
+### Mobile Display Issues
+
+**Symptoms:** Content cut off on the right side, buttons pushed off-screen, text overlapping on mobile phones
+
+**Fixed (2026-02-15):** Nine mobile display issues have been resolved. If you previously experienced any of the following on phones (screens ≤480px wide), these are now fixed:
+
+| Area | What Was Broken | Status |
+|------|----------------|--------|
+| Results page winner/loser cards | Score cards too wide for screen | Fixed |
+| Category breakdown % badges | Weight badges pushed off right edge | Fixed |
+| About > Services table | Table wider than screen | Fixed |
+| About > How It Works modules | Module chips cut off | Fixed |
+| Ask Olivia READY/STOP buttons | Buttons obscured Olivia's response area | Fixed |
+| Gamma Report viewer buttons | Read/Listen/Open/Close buttons overflowed | Fixed |
+| Judge doormat + retry button | Triangle icon and retry button too large | Fixed |
+| Judge verdict Sovereign badge | Badge and "THE JUDGE" text cut off | Fixed |
+| Account Settings CONNECTED button | Connected status pushed off-screen | Fixed |
+
+**If you still see display issues on mobile:** Try a hard refresh (pull down on mobile, or Ctrl+Shift+R on desktop). If problems persist, contact support with a screenshot and your device/browser info.
+
 ---
 
 ## 13. Privacy & Data
@@ -944,3 +964,4 @@ The Emilia help system includes multiple tabs for different types of information
 | 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8): Read/Listen toggle, Live PIP avatar presenter, pre-rendered HeyGen video with download. Presenter troubleshooting (§12). |
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Trophy 🏆 now correctly placed on winner not loser in Gamma reports (§9), (2) Gamma reports persistence fix — foreign key constraint resolved (§7, §9), (3) backdrop-filter blur removed from 8 CSS files for INP performance, (4) 247ms INP fix on login email input, (5) "Watch Presenter" renamed to "Listen to Presenter" (§8). |
 | 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page redesign: collapsible panels (§7), GoToMyNewCity multi-scene video (§7), auto-restore videos on tab switch (§7), missing 6 category sections fix (§7), Judge dropdown INP fix (§7). Video URL expiration handling for all providers (§12). Cost Dashboard $0.00 fix (§15). Cristiano video CTA + poster (§8). AUDIO badge + voice wave indicator (§8). Storyboard progress bar (§8). Dark mode fixes for saved reports (§10). Judge report Supabase fallback (§7). Expired video URL HEAD-request validation (§12). localStorage quota crash protection. |
+| 3.4 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§12): Results score cards, category % badges, About services table, How It Works modules, Olivia READY/STOP buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. All scoped to ≤480px viewports. New "Mobile Display Issues" troubleshooting section. |

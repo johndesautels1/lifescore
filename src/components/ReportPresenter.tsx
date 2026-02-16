@@ -64,14 +64,14 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   const [subMode, setSubMode] = useState<PresenterSubMode>('live');
 
   // ---- Live presenter state ----
-  const [state, setState] = useState<PresenterState>({
+  const [state, setState] = useState<PresenterState>(() => ({
     status: 'idle',
     currentSegmentIndex: 0,
-    segments: [],
+    segments: generatePresentationScript(result).segments,
     error: undefined,
     avatarConnected: false,
     ttsOnly: false,
-  });
+  }));
 
   // ---- Video generation state ----
   const [videoState, setVideoState] = useState<VideoGenerationState>({
@@ -97,15 +97,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
       cleanupSession();
     };
   }, []);
-
-  // ---- Build script on mount ----
-  useEffect(() => {
-    const script = generatePresentationScript(result);
-    setState((prev) => ({
-      ...prev,
-      segments: script.segments,
-    }));
-  }, [result]);
 
   // ============================================================================
   // SESSION MANAGEMENT (Live Mode)

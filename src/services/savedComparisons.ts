@@ -24,7 +24,7 @@ async function withTimeout<T>(
   return withRetry(factory, {
     timeoutMs: ms,
     operationName,
-    maxRetries: 3,
+    maxRetries: 2, // 3 total attempts — aligned with supabase.ts RETRY_CONFIG
   });
 }
 import {

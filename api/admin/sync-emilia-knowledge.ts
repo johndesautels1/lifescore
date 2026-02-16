@@ -17,7 +17,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'cluesnomads@gmail.com,brokerpinellas@gmail.com')
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'cluesnomads@gmail.com,brokerpinellas@gmail.com,jdes7@aol.com')
   .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
 // The 6 manuals Emilia needs

@@ -32,6 +32,7 @@ const supabaseAdmin = createClient(
 const ADMIN_EMAILS = [
   'cluesnomads@gmail.com',
   'brokerpinellas@gmail.com',
+  'jdes7@aol.com',
   ...(process.env.DEV_BYPASS_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
 ];
 

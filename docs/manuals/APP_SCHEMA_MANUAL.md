@@ -1,7 +1,7 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.2.0
-**Last Updated:** 2026-02-14
+**Version:** 2.3.0
+**Last Updated:** 2026-02-15
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 **Auto-Generated From:** Codebase introspection of ~250 commits ahead of main
 
@@ -799,7 +799,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 | File | Purpose |
 |------|---------|
-| `src/lib/supabase.ts` | Supabase client init, retry logic, withTimeout helper (24s timeout), cold start warm-up ping on app load, LRU cache expansion, retry fix (PromiseLike → Promise.resolve) |
+| `src/lib/supabase.ts` | Supabase client init, retry logic, withTimeout helper (12s timeout, 2 retries = 3 attempts), cold start warm-up ping on app load, LRU cache expansion, retry fix (PromiseLike → Promise.resolve) |
 | `src/lib/fetchWithTimeout.ts` | Reusable fetch wrapper with AbortController |
 | `src/lib/errorTracking.ts` | Lightweight error capture (extensible to Sentry/LogRocket) |
 

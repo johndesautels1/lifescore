@@ -96,6 +96,80 @@ button:disabled,
   }
 }
 
+/* A18b: Restore keyboard focus outlines on components that suppress them (WCAG 2.4.7)
+   Many component CSS files use :focus { outline: none } for mouse styling.
+   These rules ensure keyboard focus (focus-visible) always shows a visible ring. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #0047AB !important;
+  outline-offset: 2px !important;
+}
+
+[data-theme="dark"] input:focus-visible,
+[data-theme="dark"] select:focus-visible,
+[data-theme="dark"] textarea:focus-visible {
+  outline-color: #D4AF37 !important;
+}
+
+/* Custom interactive elements that suppress outline in :focus */
+.metro-select-btn:focus-visible,
+.metro-search-input:focus-visible,
+.weight-slider:focus-visible,
+.control-item:focus-visible,
+.chat-textarea:focus-visible,
+.bubble-input:focus-visible,
+.emilia-input:focus-visible,
+.judge-report-dropdown:focus-visible,
+.report-selector-dropdown:focus-visible,
+.invideo-input:focus-visible,
+.prompt-editor-textarea:focus-visible,
+.category-filter select:focus-visible,
+.category-header-btn:focus-visible,
+.dealbreakers-toggle:focus-visible,
+.category-toggle:focus-visible,
+.presets-toggle:focus-visible,
+.preset-btn:focus-visible,
+.metric-chip:focus-visible,
+.popular-btn:focus-visible,
+.cookie-btn:focus-visible,
+.bubble-send-btn:focus-visible,
+.bubble-action-btn:focus-visible,
+.toolbar-btn:focus-visible,
+.olivia-fab:focus-visible,
+.about-top-tab:focus-visible,
+.section-toggle:focus-visible {
+  outline: 3px solid #0047AB !important;
+  outline-offset: 2px !important;
+}
+
+[data-theme="dark"] .metro-select-btn:focus-visible,
+[data-theme="dark"] .metro-search-input:focus-visible,
+[data-theme="dark"] .weight-slider:focus-visible,
+[data-theme="dark"] .control-item:focus-visible,
+[data-theme="dark"] .chat-textarea:focus-visible,
+[data-theme="dark"] .bubble-input:focus-visible,
+[data-theme="dark"] .emilia-input:focus-visible,
+[data-theme="dark"] .judge-report-dropdown:focus-visible,
+[data-theme="dark"] .report-selector-dropdown:focus-visible,
+[data-theme="dark"] .invideo-input:focus-visible,
+[data-theme="dark"] .prompt-editor-textarea:focus-visible,
+[data-theme="dark"] .category-header-btn:focus-visible,
+[data-theme="dark"] .dealbreakers-toggle:focus-visible,
+[data-theme="dark"] .category-toggle:focus-visible,
+[data-theme="dark"] .presets-toggle:focus-visible,
+[data-theme="dark"] .preset-btn:focus-visible,
+[data-theme="dark"] .metric-chip:focus-visible,
+[data-theme="dark"] .popular-btn:focus-visible,
+[data-theme="dark"] .bubble-send-btn:focus-visible,
+[data-theme="dark"] .bubble-action-btn:focus-visible,
+[data-theme="dark"] .toolbar-btn:focus-visible,
+[data-theme="dark"] .olivia-fab:focus-visible,
+[data-theme="dark"] .about-top-tab:focus-visible,
+[data-theme="dark"] .section-toggle:focus-visible {
+  outline-color: #D4AF37 !important;
+}
+
 /* A11y: Link underlines for non-nav links (WCAG 1.4.1) */
 main a:not(.btn):not(.report-link):not(.llm-add-btn) {
   text-decoration: underline;

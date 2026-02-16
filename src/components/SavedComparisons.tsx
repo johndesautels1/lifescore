@@ -78,11 +78,11 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   }, []);
 
   // Sync reports AND comparisons from Supabase to ensure cross-device consistency
-  // Max 20 seconds — if Supabase is slow, show cached data and stop spinner
+  // Max 15 seconds — if Supabase is slow, show cached data and stop spinner
   const syncAndLoadComparisons = async () => {
     setIsSyncing(true);
 
-    const SYNC_TIMEOUT_MS = 20000; // 20 seconds max for entire sync
+    const SYNC_TIMEOUT_MS = 15000; // 15s — aligned with new 12s SUPABASE_TIMEOUT_MS + overhead
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Sync timed out')), SYNC_TIMEOUT_MS)
     );
@@ -617,10 +617,13 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                     <div key={report.id} className="saved-item gamma-report-item">
                       <div className="saved-item-main">
                         <div className="saved-item-cities">
-                          <span className="gamma-report-icon">📊</span>
-                          <span className="saved-cities-text">
-                            {report.city1} vs {report.city2}
-                          </span>
+                          <div className="saved-cities-row">
+                            <span className="gamma-report-icon">📊</span>
+                            <span className="saved-cities-text">
+                              {report.city1} vs {report.city2}
+                            </span>
+                            <span className="gamma-type-badge" title="Gamma Visual Report">Gamma</span>
+                          </div>
                         </div>
                         <div className="saved-item-meta">
                           <span className="saved-date">{formatDate(report.savedAt)}</span>
@@ -677,11 +680,13 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                     <div key={report.reportId} className="saved-item gamma-report-item">
                       <div className="saved-item-main">
                         <div className="saved-item-cities">
-                          <span className="gamma-report-icon">&#9878;</span>
-                          <span className="saved-cities-text">
-                            {report.city1} vs {report.city2}
-                          </span>
-                          <span className="enhanced-badge" title="Judge Verdict">Judge</span>
+                          <div className="saved-cities-row">
+                            <span className="gamma-report-icon">&#9878;</span>
+                            <span className="saved-cities-text">
+                              {report.city1} vs {report.city2}
+                            </span>
+                            <span className="enhanced-badge" title="Judge Verdict">Judge</span>
+                          </div>
                         </div>
                         <div className="saved-item-meta">
                           <span className={`saved-winner ${report.executiveSummary.recommendation}`}>

@@ -245,8 +245,8 @@
   width: 16px;
   height: 16px;
   font-size: 0.65rem;
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.15);
+  color: #FF8C00;
+  background: rgba(255, 140, 0, 0.15);
   border-radius: 50%;
   cursor: help;
   transition: all 0.2s ease;
@@ -258,7 +258,7 @@
 }
 
 .meter-count {
-  color: #e2e8f0;
+  color: #FF8C00;
   font-weight: 600;
   font-size: 0.8rem;
 }
@@ -297,12 +297,12 @@
 }
 
 :root:not([data-theme="dark"]) .meter-count {
-  color: #334155;
+  color: #FF8C00;
 }
 
 :root:not([data-theme="dark"]) .meter-info-icon {
-  color: #475569;
-  background: rgba(71, 85, 105, 0.12);
+  color: #FF8C00;
+  background: rgba(255, 140, 0, 0.12);
 }
 
 :root:not([data-theme="dark"]) .meter-bar {

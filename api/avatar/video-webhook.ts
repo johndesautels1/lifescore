@@ -14,7 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 
-const TIMEOUT_MS = 10000; // 10s for DB + persist operations
+const TIMEOUT_MS = 45000; // 45s — required for DB + video download from Replicate CDN + upload to Supabase Storage
 
 export const config = {
   maxDuration: 60, // Increased from 30s to allow video download+upload to Supabase Storage

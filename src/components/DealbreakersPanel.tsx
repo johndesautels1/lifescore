@@ -105,8 +105,9 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
       <button
         className="dealbreakers-toggle"
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
       >
-        <span className="toggle-icon">🚨</span>
+        <span className="toggle-icon" aria-hidden="true">🚨</span>
         <span className="toggle-text">
           Dealbreakers
           {selectedDealbreakers.length > 0 && (
@@ -163,6 +164,7 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
                   <button
                     className="category-toggle"
                     onClick={() => setExpandedCategory(isOpen ? null : category.id)}
+                    aria-expanded={isOpen}
                   >
                     <span className="category-info">
                       <span className="category-icon">{category.icon}</span>

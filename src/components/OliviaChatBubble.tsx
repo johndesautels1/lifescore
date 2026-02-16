@@ -303,7 +303,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
     >
       {/* Expanded Chat Panel */}
       {isOpen && !isMinimized && (
-        <div className="bubble-chat-panel">
+        <div className="bubble-chat-panel" role="region" aria-label="Chat with Olivia">
           {/* Header */}
           <div className="bubble-header">
             <div className="bubble-header-left">
@@ -331,9 +331,10 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                   className="toolbar-btn"
                   onClick={handleSaveConversation}
                   title="Save conversation"
+                  aria-label="Save conversation"
                   disabled={messages.length === 0}
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14">
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
                     <path fill="currentColor" d="M5 20h14v-2H5v2zm7-18L5.33 9h3.17v4h5v-4h3.17L12 2z"/>
                   </svg>
                 </button>
@@ -341,9 +342,10 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                   className="toolbar-btn"
                   onClick={handleShareConversation}
                   title="Share"
+                  aria-label="Share conversation"
                   disabled={messages.length === 0}
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14">
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
                     <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                   </svg>
                 </button>
@@ -351,6 +353,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                   className="toolbar-btn"
                   onClick={handlePrintConversation}
                   title="Print"
+                  aria-label="Print conversation"
                   disabled={messages.length === 0}
                 >
                   <svg viewBox="0 0 24 24" width="14" height="14">
@@ -379,21 +382,23 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
                 className="bubble-action-btn"
                 onClick={() => setIsMinimized(true)}
                 title="Minimize"
+                aria-label="Minimize chat"
               >
-                <span>−</span>
+                <span aria-hidden="true">−</span>
               </button>
               <button
                 className="bubble-action-btn close"
                 onClick={handleClose}
                 title="Close"
+                aria-label="Close chat"
               >
-                <span>×</span>
+                <span aria-hidden="true">×</span>
               </button>
             </div>
           </div>
 
           {/* Messages */}
-          <div className="bubble-messages">
+          <div className="bubble-messages" role="log" aria-live="polite">
             {messages.length === 0 && (
               <div className="bubble-welcome">
                 <div className="welcome-avatar">O</div>
@@ -506,13 +511,15 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={usageLimitReached}
+              aria-label="Message Olivia"
             />
             <button
               className="bubble-send-btn"
               onClick={handleSendMessage}
               disabled={!inputText.trim() || usageLimitReached}
+              aria-label="Send message"
             >
-              <svg viewBox="0 0 24 24" width="18" height="18">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
               </svg>
             </button>
@@ -526,7 +533,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
           <div className="minimized-avatar">O</div>
           <span className="minimized-name">OLIVIA</span>
           {hasNewMessage && <span className="minimized-badge">1</span>}
-          <button className="minimized-close" onClick={handleClose}>×</button>
+          <button className="minimized-close" onClick={handleClose} aria-label="Close chat">×</button>
         </div>
       )}
 

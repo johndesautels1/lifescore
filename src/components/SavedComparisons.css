@@ -357,13 +357,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5rem;
   padding: 0.15rem 0.4rem;
   background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
   color: white;
   font-size: 0.65rem;
   border-radius: 4px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* FIX 2026-02-08: Clear report type badges with icon + text */
@@ -738,11 +739,38 @@
 
 .gamma-report-icon {
   font-size: 1.25rem;
-  margin-right: 0.5rem;
+  margin-right: 0;
+  flex-shrink: 0;
 }
 
+/* FIX 2026-02-15: Horizontal row keeps icon + city text + badge on one line */
+.saved-cities-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* FIX 2026-02-15: Gamma report type badge (teal gradient, matching Judge badge sizing) */
+.gamma-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.4rem;
+  background: linear-gradient(135deg, #059669 0%, #0891B2 100%);
+  color: white;
+  font-size: 0.65rem;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* FIX 2026-02-15: Fixed-width actions area prevents badge stagger across rows */
 .gamma-report-actions {
   gap: 0.5rem;
+  min-width: 152px;
+  justify-content: flex-end;
 }
 
 .gamma-report-actions .action-btn {
@@ -790,6 +818,12 @@
 
 [data-theme="dark"] .gamma-report-item:hover {
   background: rgba(0, 71, 171, 0.2);
+}
+
+/* Dark mode Gamma badge */
+[data-theme="dark"] .gamma-type-badge {
+  background: linear-gradient(135deg, #065F46 0%, #155E75 100%);
+  color: #A7F3D0;
 }
 
 /* ============================================

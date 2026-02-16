@@ -421,18 +421,28 @@
     left: 0.5rem;
   }
 
-  /* FIX: Reduce header-right by 25% on mobile (same as desktop) */
+  /* FIX: Use actual smaller sizes instead of scale() to avoid layout overflow.
+     scale() only visually shrinks — the element's layout box stays full-size,
+     causing it to overlap the centered "CLUES INTELLIGENCE LTD" heading. */
   .header-right {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    transform: scale(0.75);
-    transform-origin: top right;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    max-width: 200px;
+    transform: none;
+  }
+
+  .header-right button,
+  .header-right a {
+    min-height: 28px;
+    min-width: 28px;
   }
 
   /* Add top padding to container so content doesn't overlap with absolute positioned elements */
   .header-container {
-    padding-top: 3rem;
+    padding-top: 2.5rem;
   }
 
   /* Ensure all centered content stays centered */
@@ -445,28 +455,66 @@
   }
 
   .upgrade-btn {
-    padding: 0.35rem 0.6rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.55rem;
+    border-radius: 10px;
   }
 
   .upgrade-btn span {
-    display: inline;
-    font-size: 0.65rem;
+    display: none;
   }
 
-  .user-avatar {
+  .upgrade-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .tier-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.55rem;
+  }
+
+  .admin-btn {
     width: 24px;
     height: 24px;
     font-size: 0.7rem;
   }
 
+  .settings-btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.6rem;
+  }
+
+  .settings-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .settings-btn span {
+    display: none;
+  }
+
+  .user-account {
+    padding: 0.2rem 0.3rem;
+    gap: 0.2rem;
+  }
+
+  .user-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+  }
+
   .logout-btn {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
   }
 
   .logout-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 }
 
@@ -475,7 +523,6 @@
   .header-left,
   .header-right {
     position: static;
-    transform: none;
   }
 
   .header-container {
@@ -492,9 +539,9 @@
 
   .header-right {
     order: 2;
-    transform: scale(0.7);
-    transform-origin: center right;
     max-width: none;
+    gap: 0.2rem;
+    font-size: 0.6rem;
   }
 
   .company-name,
@@ -518,13 +565,12 @@
   .header-left,
   .header-right {
     position: static;
-    transform: none;
     order: unset;
   }
 
   .header-right {
-    transform: scale(0.65);
-    transform-origin: center;
+    font-size: 0.55rem;
+    gap: 0.15rem;
   }
 
   .company-name,

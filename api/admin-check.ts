@@ -33,7 +33,7 @@ function getAdminEmails(): string[] {
     .filter(Boolean);
 
   // Hardcoded fallback — ensures admin access even if env var is missing
-  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com'];
+  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
 
   // Merge and deduplicate
   return [...new Set([...envEmails, ...fallbackEmails])];

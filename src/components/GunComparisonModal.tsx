@@ -96,7 +96,7 @@ export const GunComparisonModal: React.FC<GunComparisonModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="gun-modal-overlay" onClick={onClose}>
+    <div className="gun-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Gun Rights Comparison">
       <div className="gun-modal" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="gun-modal-header">
