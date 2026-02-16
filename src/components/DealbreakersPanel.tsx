@@ -97,7 +97,9 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
   };
 
   const getMetricsByCategory = (categoryId: string) => {
-    return ALL_METRICS.filter(m => m.categoryId === categoryId);
+    return ALL_METRICS
+      .filter(m => m.categoryId === categoryId)
+      .sort((a, b) => a.shortName.localeCompare(b.shortName));
   };
 
   return (
