@@ -370,6 +370,9 @@ const AppContent: React.FC = () => {
       }
       setActiveTab('results');
 
+      // Auto-scroll to top so user sees results from the beginning
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       // Fire pending comparison notification if a job was created via "Notify Me"
       const pending = pendingComparisonJobRef.current;
       if (pending) {
@@ -516,6 +519,7 @@ const AppContent: React.FC = () => {
 
     // FIX 2026-01-25: Switch to results tab after loading saved comparison
     setActiveTab('results');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loadResult]);
 
   const handleSaved = useCallback(() => {
@@ -530,6 +534,7 @@ const AppContent: React.FC = () => {
     dispatchEnhanced({ type: 'VIEW_JUDGE_REPORT', report });
     // Switch to the judges-report tab
     setActiveTab('judges-report');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleCompare = useCallback(async (city1: string, city2: string) => {
