@@ -340,3 +340,8 @@
     height: 150px;
   }
 }
+
+/* Dark mode: VS text */
+[data-theme="dark"] .vs {
+  color: #94a3b8;
+}

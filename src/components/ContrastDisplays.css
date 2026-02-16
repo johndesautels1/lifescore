@@ -486,3 +486,10 @@
     text-align: center;
   }
 }
+
+/* Dark mode: VS divider text */
+[data-theme="dark"] .divider-text {
+  color: #f5d54a;
+  background: rgba(245, 213, 74, 0.12);
+  border-color: rgba(245, 213, 74, 0.25);
+}
