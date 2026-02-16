@@ -154,6 +154,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [videoProgress, setVideoProgress] = useState(0);
   const videoProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // FIX 2026-02-16: Track which comparisonId we've already loaded cached data for
+  // Declared here so it's available to the prop-change reset effect below
+  const checkedComparisonIdRef = useRef<string | null>(null);
+
   // Report selection state - allows user to select from saved comparisons
   // FIX: Restore from localStorage when prop is null (tab switch persistence)
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(() => {
@@ -202,6 +206,32 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       }
     } catch { /* ignore */ }
   }, [selectedComparisonId]);
+
+  // FIX 2026-02-16: When the parent loads a DIFFERENT comparison (user ran a new comparison
+  // or loaded one from Saved), reset stale Judge state so we don't show city A's report
+  // under city B's header. The prop is the single source of truth when present.
+  const prevPropComparisonIdRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const incomingId = propComparisonResult?.comparisonId || null;
+    // Skip the very first render (ref is undefined) — only react to CHANGES
+    if (prevPropComparisonIdRef.current === undefined) {
+      prevPropComparisonIdRef.current = incomingId;
+      return;
+    }
+    if (incomingId && incomingId !== prevPropComparisonIdRef.current) {
+      console.log('[JudgeTab] Prop comparison changed:', prevPropComparisonIdRef.current, '→', incomingId, '— resetting stale state');
+      // Clear manual dropdown selection so useMemo falls through to propComparisonResult
+      setSelectedComparisonId(null);
+      // Clear stale judge report so we don't show the old verdict under new cities
+      setJudgeReport(null);
+      setGenerationProgress(0);
+      // Allow loadCachedData effect to run for the new comparisonId
+      checkedComparisonIdRef.current = null;
+      // Update localStorage to point to the new comparison
+      try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, incomingId); } catch { /* ignore */ }
+    }
+    prevPropComparisonIdRef.current = incomingId;
+  }, [propComparisonResult?.comparisonId]);
 
   // FIX 2026-02-08: Load saved Judge report when passed from SavedComparisons
   // Fetches full report from Supabase to get complete data (categoryAnalysis, etc.)
@@ -850,9 +880,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, report.comparisonId); } catch { /* ignore */ }
     console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
   };
-
-  // FIX 2026-01-29: Track which comparisonId we've already checked to prevent runaway loops
-  const checkedComparisonIdRef = useRef<string | null>(null);
 
   // Load report from localStorage on mount (if we have a matching comparison)
   // Also check for pre-generated video
