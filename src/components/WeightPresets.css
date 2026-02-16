@@ -451,8 +451,16 @@
 
 .law-lived-section {
   margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  padding: 1.5rem 1rem 1rem;
   border-top: 2px solid var(--gray-200);
+  border-radius: var(--radius-md, 8px);
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.law-lived-section.active {
+  background: rgba(0, 71, 171, 0.06);
+  border-color: #0047AB;
+  box-shadow: 0 0 0 1px rgba(0, 71, 171, 0.15), 0 0 12px rgba(0, 71, 171, 0.08);
 }
 
 .weight-presets .section-header {
@@ -663,6 +671,12 @@
 /* Dark Mode - Law/Lived Section */
 [data-theme="dark"] .law-lived-section {
   border-top-color: #3d3d55;
+}
+
+[data-theme="dark"] .law-lived-section.active {
+  background: rgba(107, 163, 255, 0.08);
+  border-color: #6ba3ff;
+  box-shadow: 0 0 0 1px rgba(107, 163, 255, 0.2), 0 0 12px rgba(107, 163, 255, 0.1);
 }
 
 [data-theme="dark"] .weight-presets .section-title {
