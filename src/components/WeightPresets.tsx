@@ -551,7 +551,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
             </div>
 
             {/* Conservative Mode Toggle */}
-            <div className="conservative-mode">
+            <div className={`conservative-mode${conservativeMode ? ' active' : ''}`}>
               <label className="toggle-label">
                 <input
                   type="checkbox"
