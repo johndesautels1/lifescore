@@ -276,6 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
           isAuthenticated: true,
           isConfigured: true,
+          isPasswordRecovery: false,
           error: null,
         });
       } else {
@@ -324,6 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading: false,
             isAuthenticated: true,
             isConfigured: true,
+            isPasswordRecovery: false,
             error: null,
           });
 
