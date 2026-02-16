@@ -2049,3 +2049,77 @@
     margin-left: auto;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DISPLAY SCREEN BUTTONS — Glassmorphic toggle buttons at bottom
+   Left: Court Order Video | Right: My New City
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.display-screen-buttons {
+  display: flex;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+}
+
+.display-screen-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  min-height: 100px;
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  border-radius: 12px;
+  background: rgba(13, 40, 71, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--platinum, #e2e8f0);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.display-screen-btn:hover {
+  background: rgba(13, 40, 71, 0.7);
+  border-color: rgba(201, 162, 39, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.display-screen-btn.active {
+  background: rgba(13, 40, 71, 0.85);
+  border-color: var(--brushed-gold, #e6b800);
+  box-shadow:
+    0 0 20px rgba(201, 162, 39, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--brushed-gold, #e6b800);
+}
+
+.display-screen-btn-icon {
+  font-size: 1.6rem;
+}
+
+.display-screen-btn-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .display-screen-buttons {
+    gap: 0.6rem;
+  }
+
+  .display-screen-btn {
+    padding: 1rem 0.5rem;
+    min-height: 80px;
+    font-size: 0.75rem;
+  }
+
+  .display-screen-btn-icon {
+    font-size: 1.3rem;
+  }
+}

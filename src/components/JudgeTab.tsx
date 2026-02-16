@@ -148,6 +148,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   // Notification system
   const [showNotifyModal, setShowNotifyModal] = useState(false);
+
+  // Bottom display screen toggle — null means neither open
+  const [openDisplay, setOpenDisplay] = useState<'court-order' | 'freedom-tour' | null>(null);
   const { createJob } = useJobTracker();
 
   // Video generation progress simulation (Replicate doesn't return %)
@@ -2080,85 +2083,104 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          COURT ORDER VIDEO - Perfect Life Visualization
+          DISPLAY SCREEN BUTTONS — Two glassmorphic buttons at the bottom
+          Left: Court Order Video | Right: My New City
+          Click to expand the screen below. Click again to collapse.
       ═══════════════════════════════════════════════════════════════════ */}
       {judgeReport && (
-        <section className="court-order-section">
-          <CourtOrderVideo
-            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
-            winnerCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Name
-                : city1Name
-            }
-            loserCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city2Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city1Name
-                : city2Name
-            }
-            winnerScore={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? judgeReport.summaryOfFindings.city1Score
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? judgeReport.summaryOfFindings.city2Score
-                : judgeReport.summaryOfFindings.city1Score
-            }
-            freedomEducation={judgeReport.freedomEducation}
-          />
-        </section>
-      )}
+        <>
+          <div className="display-screen-buttons">
+            <button
+              className={`display-screen-btn${openDisplay === 'court-order' ? ' active' : ''}`}
+              onClick={() => setOpenDisplay(openDisplay === 'court-order' ? null : 'court-order')}
+            >
+              <span className="display-screen-btn-icon">&#9878;</span>
+              <span className="display-screen-btn-label">COURT ORDER VIDEO</span>
+            </button>
+            <button
+              className={`display-screen-btn${openDisplay === 'freedom-tour' ? ' active' : ''}`}
+              onClick={() => setOpenDisplay(openDisplay === 'freedom-tour' ? null : 'freedom-tour')}
+            >
+              <span className="display-screen-btn-icon">&#127757;</span>
+              <span className="display-screen-btn-label">MY NEW CITY</span>
+            </button>
+          </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          GO TO MY NEW CITY - Cristiano's Cinematic Freedom Tour
-          Sovereign plan only. Appears after Court Order.
-      ═══════════════════════════════════════════════════════════════════ */}
-      {judgeReport && (
-        <section className="new-city-section">
-          <GoToMyNewCity
-            winnerCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Name
-                : city1Name
-            }
-            winnerCountry={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Country
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Country
-                : city1Country
-            }
-            winnerRegion={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Region
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Region
-                : city1Region
-            }
-            winnerScore={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? judgeReport.summaryOfFindings.city1Score
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? judgeReport.summaryOfFindings.city2Score
-                : judgeReport.summaryOfFindings.city1Score
-            }
-            winnerCategories={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? (comparisonResult as any)?.city1?.categories
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? (comparisonResult as any)?.city2?.categories
-                : (comparisonResult as any)?.city1?.categories
-            }
-            executiveSummary={judgeReport.executiveSummary}
-            categoryWinners={(comparisonResult as any)?.categoryWinners}
-            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
-          />
-        </section>
+          {openDisplay === 'court-order' && (
+            <section className="court-order-section">
+              <CourtOrderVideo
+                comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
+                winnerCity={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Name
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Name
+                    : city1Name
+                }
+                loserCity={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city2Name
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city1Name
+                    : city2Name
+                }
+                winnerScore={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? judgeReport.summaryOfFindings.city1Score
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? judgeReport.summaryOfFindings.city2Score
+                    : judgeReport.summaryOfFindings.city1Score
+                }
+                freedomEducation={judgeReport.freedomEducation}
+              />
+            </section>
+          )}
+
+          {openDisplay === 'freedom-tour' && (
+            <section className="new-city-section">
+              <GoToMyNewCity
+                winnerCity={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Name
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Name
+                    : city1Name
+                }
+                winnerCountry={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Country
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Country
+                    : city1Country
+                }
+                winnerRegion={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Region
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Region
+                    : city1Region
+                }
+                winnerScore={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? judgeReport.summaryOfFindings.city1Score
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? judgeReport.summaryOfFindings.city2Score
+                    : judgeReport.summaryOfFindings.city1Score
+                }
+                winnerCategories={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? (comparisonResult as any)?.city1?.categories
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? (comparisonResult as any)?.city2?.categories
+                    : (comparisonResult as any)?.city1?.categories
+                }
+                executiveSummary={judgeReport.executiveSummary}
+                categoryWinners={(comparisonResult as any)?.categoryWinners}
+                comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
+              />
+            </section>
+          )}
+        </>
       )}
 
         </div>{/* end panel-content: verdict */}
