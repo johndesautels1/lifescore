@@ -25,7 +25,7 @@ const supabaseAdmin = createClient(
 
 // Resend API
 const RESEND_API_URL = 'https://api.resend.com/emails';
-const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <notifications@cluesnomad.com>';
+const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
 
 // ============================================================================
 // TYPES
