@@ -47,13 +47,16 @@ async function withTimeout<T>(
     maxRetries: 2, // 3 total attempts — ~40s worst case with 12s timeout + backoff
   });
 }
-import { toastSuccess, toastError } from '../utils/toast';
+import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
 import GoToMyNewCity from './GoToMyNewCity';
+import { NotifyMeModal } from './NotifyMeModal';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
+import { useJobTracker } from '../hooks/useJobTracker';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
+import type { NotifyChannel } from '../types/database';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
@@ -142,6 +145,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // FIX: Track video errors to detect expired Replicate URLs
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
+
+  // Notification system
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const { createJob } = useJobTracker();
 
   // Video generation progress simulation (Replicate doesn't return %)
   const [videoProgress, setVideoProgress] = useState(0);
@@ -711,6 +718,30 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Generate Judge Report handler - Phase B Implementation
   // Client timeout must exceed server's 240s timeout for Opus
   const JUDGE_API_TIMEOUT_MS = 300000; // 5 minutes
+
+  // Show notify modal before generating
+  const handleGenerateReportClick = () => {
+    if (!comparisonResult || isGenerating) return;
+    setShowNotifyModal(true);
+  };
+
+  const handleJudgeWaitHere = () => {
+    handleGenerateReport();
+  };
+
+  const handleJudgeNotifyMe = async (channels: NotifyChannel[]) => {
+    const city1 = comparisonResult?.city1?.city || '';
+    const city2 = comparisonResult?.city2?.city || '';
+    const jobId = await createJob({
+      type: 'judge_verdict',
+      payload: { city1, city2, comparisonId: comparisonResult?.comparisonId },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      toastInfo(`We'll notify you when The Judge's Verdict is ready.`);
+    }
+    handleGenerateReport();
+  };
 
   const handleGenerateReport = async () => {
     if (!comparisonResult) return;
@@ -1638,7 +1669,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="awaiting-subtext">Judge's Video Report</div>
                       <button
                         className="generate-report-btn"
-                        onClick={handleGenerateReport}
+                        onClick={handleGenerateReportClick}
                       >
                         <span className="btn-icon">⚖️</span>
                         <span className="btn-text">GENERATE JUDGE'S VERDICT</span>
@@ -2127,6 +2158,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <span className="footer-model">Powered by Claude Opus 4.5</span>
         </div>
       </footer>
+
+      {/* Notify Me Modal */}
+      <NotifyMeModal
+        isOpen={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        onWaitHere={handleJudgeWaitHere}
+        onNotifyMe={handleJudgeNotifyMe}
+        taskLabel="Judge's Verdict"
+        estimatedSeconds={60}
+      />
     </div>
   );
 };

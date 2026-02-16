@@ -20,9 +20,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { useCristianoVideo } from '../hooks/useCristianoVideo';
 import FeatureGate from './FeatureGate';
-import { toastSuccess, toastError } from '../utils/toast';
+import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import { buildWinnerPackage } from '../services/cristianoVideoService';
+import { NotifyMeModal } from './NotifyMeModal';
+import { useJobTracker } from '../hooks/useJobTracker';
 import { supabase } from '../lib/supabase';
+import type { NotifyChannel } from '../types/database';
 import './GoToMyNewCity.css';
 
 // ============================================================================
@@ -128,6 +131,10 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
+  // Notification system
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const { createJob } = useJobTracker();
+
   // FIX 2026-02-14: Auto-restore cached Cristiano city video on mount
   // When JudgeTab remounts after a tab switch, useCristianoVideo starts idle.
   // Query cristiano_city_videos for a completed video so we don't lose it.
@@ -168,12 +175,18 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   const effectiveThumbnailUrl = thumbnailUrl || cachedThumbnailUrl;
   const hasVideo = (isReady && videoUrl) || !!cachedVideoUrl;
 
-  // Handle video generation
-  const handleGenerate = async () => {
+  // Handle video generation — show notify modal first
+  const handleGenerate = () => {
     if (!user?.id) {
       toastError('Please log in to generate videos.');
       return;
     }
+    setShowNotifyModal(true);
+  };
+
+  // Actually generate the video (after user chooses wait/notify)
+  const doGenerate = async () => {
+    if (!user?.id) return;
 
     // ADMIN BYPASS: Skip usage checks for admin users
     if (!isAdmin) {
@@ -200,6 +213,22 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
     });
 
     await generate(winnerPackage);
+  };
+
+  const handleTourWaitHere = () => {
+    doGenerate();
+  };
+
+  const handleTourNotifyMe = async (channels: NotifyChannel[]) => {
+    const jobId = await createJob({
+      type: 'freedom_tour',
+      payload: { comparisonId, winnerCity },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      toastInfo(`We'll notify you when your Freedom Tour is ready.`);
+    }
+    doGenerate();
   };
 
   // Playback controls
@@ -338,6 +367,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   };
 
   return (
+    <>
     <FeatureGate feature="cristianoVideos" blurContent={true}>
       <div className="new-city-wrapper">
         <div className="new-city-container">
@@ -557,6 +587,17 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
         </div>
       </div>
     </FeatureGate>
+
+    {/* Notify Me Modal */}
+    <NotifyMeModal
+      isOpen={showNotifyModal}
+      onClose={() => setShowNotifyModal(false)}
+      onWaitHere={handleTourWaitHere}
+      onNotifyMe={handleTourNotifyMe}
+      taskLabel="Freedom Tour Video"
+      estimatedSeconds={120}
+    />
+    </>
   );
 };
 

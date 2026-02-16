@@ -5,6 +5,7 @@
 
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess, TIER_NAMES } from '../hooks/useTierAccess';
 import './Header.css';
@@ -67,6 +68,9 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
                   <span>💰</span>
                 </button>
               )}
+
+              {/* Notification Bell */}
+              <NotificationBell />
 
               {/* Settings Button */}
               {onSettingsClick && (

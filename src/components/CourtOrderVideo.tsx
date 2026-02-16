@@ -15,13 +15,16 @@ import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { saveCourtOrder } from '../services/savedComparisons';
-import { toastSuccess, toastError } from '../utils/toast';
+import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import { supabase } from '../lib/supabase';
 import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
 import FreedomCategoryTabs from './FreedomCategoryTabs';
 import FreedomMetricsList from './FreedomMetricsList';
 import FreedomHeroFooter from './FreedomHeroFooter';
+import { NotifyMeModal } from './NotifyMeModal';
+import { useJobTracker } from '../hooks/useJobTracker';
 import type { CategoryId, FreedomEducationData, CategoryFreedomData } from '../types/freedomEducation';
+import type { NotifyChannel } from '../types/database';
 import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '../utils/freedomEducationUtils';
 import './CourtOrderVideo.css';
 
@@ -93,6 +96,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
+  // Notification system
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const { createJob } = useJobTracker();
 
   // ══════════════════════════════════════════════════════════════════════════
   // INVIDEO OVERRIDE STATE
@@ -276,12 +282,18 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   // Check if freedom education data is valid
   const hasFreedomData = isValidFreedomData(freedomEducation);
 
-  // Handle video generation
-  const handleGenerateVideo = async () => {
+  // Handle video generation — show notify modal first
+  const handleGenerateVideo = () => {
     if (!user?.id) {
       console.warn('[CourtOrderVideo] No user ID available');
       return;
     }
+    setShowNotifyModal(true);
+  };
+
+  // Actually generate the video (after user chooses wait/notify)
+  const doGenerateVideo = async () => {
+    if (!user?.id) return;
 
     // ADMIN BYPASS: Skip usage checks for admin users
     if (!isAdmin) {
@@ -304,6 +316,22 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       comparisonId,
       winnerCity,
     });
+  };
+
+  const handleVideoWaitHere = () => {
+    doGenerateVideo();
+  };
+
+  const handleVideoNotifyMe = async (channels: NotifyChannel[]) => {
+    const jobId = await createJob({
+      type: 'court_order',
+      payload: { comparisonId, winnerCity },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      toastInfo(`We'll notify you when your Court Order video is ready.`);
+    }
+    doGenerateVideo();
   };
 
   // Handle play/pause
@@ -579,6 +607,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   };
 
   return (
+    <>
     <FeatureGate feature="grokVideos" blurContent={true}>
       <div className="court-order-wrapper">
         <div className="court-order-video">
@@ -899,6 +928,17 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         </div>
       </div>
     </FeatureGate>
+
+    {/* Notify Me Modal */}
+    <NotifyMeModal
+      isOpen={showNotifyModal}
+      onClose={() => setShowNotifyModal(false)}
+      onWaitHere={handleVideoWaitHere}
+      onNotifyMe={handleVideoNotifyMe}
+      taskLabel="Court Order Video"
+      estimatedSeconds={90}
+    />
+    </>
   );
 };
 

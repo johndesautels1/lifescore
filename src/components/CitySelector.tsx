@@ -17,8 +17,12 @@ import {
 import { parseURLParams, updateURL } from '../hooks/useURLParams';
 import { DealbreakersPanel } from './DealbreakersPanel';
 import { WeightPresets, type CategoryWeights } from './WeightPresets';
+import { NotifyMeModal } from './NotifyMeModal';
+import { useJobTracker } from '../hooks/useJobTracker';
 import type { LawLivedRatio, CategoryId } from '../types/metrics';
+import type { NotifyChannel } from '../types/database';
 import { getFlagUrl } from '../utils/countryFlags';
+import { toastInfo } from '../utils/toast';
 import './CitySelector.css';
 
 // Country → short code for badges
@@ -333,6 +337,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   const [metro2, setMetro2] = useState<Metro>(DEFAULT_METRO2);
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [activePopularIndex, setActivePopularIndex] = useState<number | null>(null);
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const { createJob, completeJobAndNotify } = useJobTracker();
 
   // Load cities from URL params on mount
   useEffect(() => {
@@ -360,7 +366,33 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault();
     if (metro1 && metro2) {
+      setShowNotifyModal(true);
+    }
+  };
+
+  const handleWaitHere = () => {
+    if (metro1 && metro2) {
       onCompare(formatMetro(metro1), formatMetro(metro2));
+    }
+  };
+
+  const handleNotifyMe = async (channels: NotifyChannel[]) => {
+    if (!metro1 || !metro2) return;
+    const city1 = formatMetro(metro1);
+    const city2 = formatMetro(metro2);
+
+    // Create a job in the database
+    const jobId = await createJob({
+      type: 'comparison',
+      payload: { city1, city2 },
+      notifyVia: channels,
+    });
+
+    // Still trigger the comparison — the existing flow runs as normal
+    onCompare(city1, city2);
+
+    if (jobId) {
+      toastInfo(`We'll notify you when ${metro1.city} vs ${metro2.city} is ready.`);
     }
   };
 
@@ -480,6 +512,16 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
       <p className="info-text bottom-info">
         Analysis uses our proprietary weighted average multi variant Life score technology to verify and evaluate all 100 freedom metrics.
       </p>
+
+      {/* Notify Me Modal */}
+      <NotifyMeModal
+        isOpen={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        onWaitHere={handleWaitHere}
+        onNotifyMe={handleNotifyMe}
+        taskLabel="City Comparison"
+        estimatedSeconds={90}
+      />
     </div>
   );
 };

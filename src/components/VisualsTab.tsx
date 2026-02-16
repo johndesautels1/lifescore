@@ -28,7 +28,11 @@ import {
 import NewLifeVideos from './NewLifeVideos';
 import ReportPresenter from './ReportPresenter';
 import FeatureGate from './FeatureGate';
+import { NotifyMeModal } from './NotifyMeModal';
+import { useJobTracker } from '../hooks/useJobTracker';
 import { useTierAccess } from '../hooks/useTierAccess';
+import { toastInfo } from '../utils/toast';
+import type { NotifyChannel } from '../types/database';
 import type { ReportViewMode } from '../types/presenter';
 import './VisualsTab.css';
 
@@ -107,6 +111,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { createJob } = useJobTracker();
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
 
   // Enhanced report options
   const [reportType, setReportType] = useState<'standard' | 'enhanced'>('standard');
@@ -391,6 +397,24 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     setIsReportSaved(false);
   }, []);
 
+  const handleGammaWaitHere = () => {
+    handleGenerateReport();
+  };
+
+  const handleGammaNotifyMe = async (channels: NotifyChannel[]) => {
+    const city1 = result?.city1?.city || '';
+    const city2 = result?.city2?.city || '';
+    const jobId = await createJob({
+      type: 'gamma_report',
+      payload: { city1, city2 },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      toastInfo(`We'll notify you when your Gamma report is ready.`);
+    }
+    handleGenerateReport();
+  };
+
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
 
   if (!result && !hasSavedComparisons && savedReports.length === 0) {
@@ -605,7 +629,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               </div>
               <button
                 className="generate-btn primary-btn"
-                onClick={handleGenerateReport}
+                onClick={() => setShowNotifyModal(true)}
               >
                 {reportType === 'enhanced' ? 'Generate Enhanced Report' : 'Generate Report'}
               </button>
@@ -908,6 +932,15 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
         )
       )}
+      {/* Notify Me Modal */}
+      <NotifyMeModal
+        isOpen={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        onWaitHere={handleGammaWaitHere}
+        onNotifyMe={handleGammaNotifyMe}
+        taskLabel="Gamma Report"
+        estimatedSeconds={90}
+      />
     </div>
   );
 };

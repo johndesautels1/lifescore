@@ -12,6 +12,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { notifyJobComplete } from '../shared/notifyJob.js';
 import crypto from 'crypto';
 
 // Storage bucket for persisting court order / grok videos
@@ -1025,6 +1026,18 @@ export default async function handler(
         console.log('[GROK-VIDEO] No usage counted - fully cached');
       }
 
+      // Fire-and-forget: create in-app notification for the user
+      if (!fullyFromCache) {
+        const { winnerCity, loserCity } = body as NewLifeVideosRequest;
+        notifyJobComplete({
+          userId: body.userId,
+          jobType: 'court_order',
+          title: `New Life Videos Ready`,
+          message: `${winnerCity} (winner) and ${loserCity} (loser) mood videos are ready.`,
+          link: `/?tab=visuals`,
+        });
+      }
+
       // Collect provider debug info for troubleshooting
       const providerDebug: Record<string, string> = {};
       if (winnerResult.klingError) providerDebug.winnerKlingError = winnerResult.klingError;
@@ -1103,6 +1116,17 @@ export default async function handler(
         console.log('[GROK-VIDEO] Usage counted: 1 for court_order_video');
       } else {
         console.log('[GROK-VIDEO] No usage counted - cached');
+      }
+
+      // Fire-and-forget: create in-app notification for the user
+      if (!result.cached) {
+        notifyJobComplete({
+          userId: body.userId,
+          jobType: 'court_order',
+          title: `Court Order Video Ready: ${winnerCity}`,
+          message: `Your perfect life video for ${winnerCity} is ready to watch.`,
+          link: `/?tab=judge`,
+        });
       }
 
       res.status(200).json({

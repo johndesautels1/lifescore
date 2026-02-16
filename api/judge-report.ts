@@ -18,6 +18,7 @@ import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 import { CATEGORIES } from './shared/metrics.js';
+import { notifyJobComplete } from './shared/notifyJob.js';
 
 // Timeout constant for Opus API (240s - within Vercel Pro 300s limit)
 const OPUS_TIMEOUT_MS = 240000;
@@ -677,6 +678,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const latencyMs = Date.now() - startTime;
     console.log(`[JUDGE-REPORT] Report generated in ${latencyMs}ms, reportId: ${reportId}`);
+
+    // Fire-and-forget: create in-app notification for the user
+    notifyJobComplete({
+      userId,
+      jobType: 'judge_verdict',
+      title: `Judge's Verdict Ready: ${city1} vs ${city2}`,
+      message: `The Judge has rendered their verdict in ${Math.round(latencyMs / 1000)}s.`,
+      link: `/?tab=judge`,
+    });
 
     return res.status(200).json({
       success: true,
