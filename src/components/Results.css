@@ -642,7 +642,7 @@
   .category-header {
     gap: 0.4rem;
     min-width: 0;
-    overflow: hidden;
+    flex-wrap: wrap;
   }
 
   .results .category-icon {
@@ -651,11 +651,10 @@
   }
 
   .results .category-name {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .category-weight {
