@@ -338,7 +338,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [activePopularIndex, setActivePopularIndex] = useState<number | null>(null);
   const [showNotifyModal, setShowNotifyModal] = useState(false);
-  const { createJob, completeJobAndNotify } = useJobTracker();
+  const { createJob } = useJobTracker();
 
   // Load cities from URL params on mount
   useEffect(() => {
