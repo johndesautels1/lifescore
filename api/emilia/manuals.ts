@@ -56,7 +56,7 @@ const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.5 | **Updated:** 2026-02-17
+**Version:** 3.6 | **Updated:** 2026-02-17
 
 ## Getting Started
 
@@ -131,6 +131,31 @@ If you've forgotten your password:
 - Export as PDF or share
 - Syncs across devices when logged in
 
+### Comparison Settings (Updated 2026-02-16)
+- **Law vs Lived slider** illuminates with a highlighted border when changed from default
+- **Worst-Case Mode toggle** glows when active (uses MIN of law/lived scores)
+- **Dealbreakers panel** metrics are now alphabetized A-Z within each category
+- Page auto-scrolls to top when results appear
+
+### Results Features (Updated 2026-02-16)
+- **Explain the Winner toggle** — AI narrative explaining why the winner scored higher (Standard Mode)
+- **Confidence interval hover cards** on Judge score cards — shows provider agreement level
+
+### Judge Tab (Updated 2026-02-16)
+- **Glassmorphic display screen buttons** at the bottom for Court Order and Freedom Tour access
+- **Phone call audio warning** on all video displays (Judge, Court Order, Freedom Tour, Olivia, Grok)
+- Fixed stale state when switching between comparisons
+
+### Notifications (Added 2026-02-16)
+- Bell icon in header with unread badge
+- "Notify Me & Go" modal for long-running tasks (comparisons, Judge, video, Gamma)
+- Email notification from alerts@lifescore.app (opt-in)
+- 30-second polling for new notifications
+
+### Mobile Warning (Added 2026-02-16)
+- Warning modal appears on small screens explaining app is optimized for desktop/tablet
+- User can continue on mobile; warning appears once per session
+
 ## Troubleshooting
 
 ### Comparison Taking Too Long
@@ -170,7 +195,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.0 | **Updated:** 2026-02-13
+**Version:** 3.5 | **Updated:** 2026-02-17
 
 ## Support Overview
 
@@ -254,6 +279,24 @@ If you've forgotten your password:
 - Partial month after cancellation
 - Disagreement with AI results
 
+### "Notifications not working" (Added 2026-02-16)
+- Notifications only trigger when user selects "Notify Me & Go" in the modal
+- Bell icon polls every 30 seconds; try refreshing the page
+- Email notifications sent from alerts@lifescore.app — check spam folder
+
+### "Judge tab shows old data after switching comparisons" (Fixed 2026-02-16)
+- Judge state now resets when switching between comparisons
+
+### "Gamma report links not clickable" (Fixed 2026-02-16)
+- CSS pointer-events and z-index fixed on report URLs
+
+### "VS text invisible in dark mode" (Fixed 2026-02-16)
+- VS separator now visible in dark mode across all comparison views
+
+### "Explain the Winner toggle" (Added 2026-02-16)
+- New toggle in standard Results view showing AI narrative explaining the winner
+- Direct users to this if they ask "Why did City X win?"
+
 ## Escalation Path
 
 1. **Tier 1**: Email support (most issues)
@@ -263,7 +306,7 @@ If you've forgotten your password:
 
   tech: `# Technical Support Manual
 
-**Version:** 4.6 | **Updated:** 2026-02-17
+**Version:** 4.8 | **Updated:** 2026-02-17
 
 ## System Architecture
 
@@ -458,6 +501,44 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - Fixed: tie handling corrected in judge-report.ts
 - Trend values standardized to 'improving' for DB constraint
 
+## Notification System (Added 2026-02-16)
+
+### Architecture
+User triggers task → NotifyMeModal → job created in \`jobs\` table → task completes → notification in \`notifications\` table → bell updates (30s poll) + email via Resend
+
+### Database Tables
+- **jobs**: Persistent job queue (user_id, type, status, metadata)
+- **notifications**: In-app bell + email records (user_id, job_id, title, body, channel, read)
+- **profiles.phone**: Added for future SMS support
+
+### Components
+- NotificationBell.tsx — bell icon with unread badge + dropdown
+- NotifyMeModal.tsx — "Wait Here" vs "Notify Me & Go" modal
+- MobileWarningModal.tsx — small-screen warning (Added 2026-02-16)
+- VideoPhoneWarning.tsx — phone call audio warning overlay (Added 2026-02-16)
+
+### Hooks
+- useNotifications.ts — polls notifications every 30s
+- useJobTracker.ts — creates jobs, updates status, triggers notification
+
+### API
+- POST /api/notify — create notification + email via Resend (from: alerts@lifescore.app)
+- POST /api/admin/new-signup — admin email on new user signup
+
+### Resolved Issues (2026-02-16)
+- Resend from email → alerts@lifescore.app
+- isPasswordRecovery missing in AuthContext setState
+- 3 broken notification flows (CitySelector, GoToMyNewCity, VisualsTab)
+- VS text invisible in dark mode (4 CSS files)
+- Founder name "II" suffix
+- Mobile +/- buttons and LLM badges overflow
+- Visuals page labeling confusion
+- Gamma report links not clickable
+- Browser not saving login credentials (3 iterations)
+- Judge tab stale state on comparison switch
+- Password reset redirect URL mismatch
+- Admin email notification on new signup
+
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
 - Supabase Dashboard > Logs
@@ -557,7 +638,7 @@ profiles, user_preferences, comparisons, olivia_conversations, gamma_reports, ju
 
 ## 2. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buckets**.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **3 storage buckets**.
 
 ### 2.1 All Tables
 
@@ -584,6 +665,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | app_prompts | 50 system prompts (6 categories) |
 | invideo_overrides | Admin cinematic prompt overrides |
 | report_shares | Shared report links |
+| jobs | Persistent job queue for long-running tasks (Added 2026-02-16) |
+| notifications | In-app bell + email notification records (Added 2026-02-16) |
 
 ### 1.2 Storage Buckets
 - **avatars** (5 MB) - User profile pictures
@@ -592,7 +675,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 
 ---
 
-## 2. API Endpoints (49 total)
+## 2. API Endpoints (46 total)
 
 ### Core
 | Endpoint | Method | Description |
@@ -640,9 +723,15 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | /api/prompts | GET/POST/PUT | System prompts (admin) |
 | /api/stripe/webhook | POST | Stripe events |
 
+### Notifications (Added 2026-02-16)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/notify | POST | Create in-app notification + email via Resend |
+| /api/admin/new-signup | POST | Admin email on new user signup |
+
 ---
 
-## 3. Key Components (46 total)
+## 3. Key Components (49 total)
 
 ### Core: App, Header, Footer, LoginScreen, TabNavigation
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
@@ -651,10 +740,11 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 ### Video: NewLifeVideos (blob URL playback, error detection)
 ### Reports: VisualsTab (Read/Listen toggle), ReportPresenter (Olivia video presenter), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
+### Notifications (Added 2026-02-16): NotificationBell, NotifyMeModal, MobileWarningModal, VideoPhoneWarning
 
 ---
 
-## 4. Hooks (18 total)
+## 4. Hooks (20 total)
 
 | Hook | Purpose |
 |------|---------|
@@ -665,6 +755,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | useSimli | WebRTC avatar session |
 | useTTS | Text-to-speech |
 | useEmilia | Emilia help widget |
+| useNotifications | Polls notifications every 30s (Added 2026-02-16) |
+| useJobTracker | Job creation + status + notification trigger (Added 2026-02-16) |
 
 ---
 

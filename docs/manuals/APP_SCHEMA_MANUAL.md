@@ -1,6 +1,6 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.4.0
+**Version:** 2.5.0
 **Last Updated:** 2026-02-17
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 **Auto-Generated From:** Codebase introspection of ~250 commits ahead of main
@@ -187,7 +187,7 @@ The `AuthContext` exposes these auth-related state properties:
 
 ## 2. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables**, **3 storage buckets**, **15 database functions**, and **12 triggers**. All tables have Row Level Security (RLS) enabled.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables**, **3 storage buckets**, **15 database functions**, and **13 triggers**. All tables have Row Level Security (RLS) enabled.
 
 ### 2.1 Core User Tables
 
@@ -679,7 +679,53 @@ Controls access to admin documentation.
 
 ---
 
-### 2.8 Storage Buckets
+### 2.8 Job & Notification Tables (Added 2026-02-16)
+
+#### `jobs`
+Persistent job queue for long-running tasks (comparisons, Judge verdicts, video generation, Gamma reports).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | Job ID |
+| user_id | UUID | FK(profiles), NOT NULL | Job owner |
+| type | TEXT | NOT NULL | comparison, judge, video, gamma, court_order, freedom_tour |
+| status | TEXT | NOT NULL, DEFAULT 'pending' | pending, processing, completed, failed |
+| metadata | JSONB | DEFAULT '{}' | Task-specific data (city names, report IDs, etc.) |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Job creation |
+| updated_at | TIMESTAMPTZ | | Last status change |
+
+**RLS:** Users can only see/update their own jobs.
+**Trigger:** auto-updates `updated_at` on status change.
+**Indexes:** user_id, status, (user_id, status) composite.
+
+---
+
+#### `notifications`
+In-app bell notifications and email notification records.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | Notification ID |
+| user_id | UUID | FK(profiles), NOT NULL | Notification recipient |
+| job_id | UUID | FK(jobs), nullable | Related job (if applicable) |
+| type | TEXT | NOT NULL | Notification type identifier |
+| title | TEXT | NOT NULL | Notification title |
+| body | TEXT | | Notification message body |
+| channel | TEXT | NOT NULL, DEFAULT 'in_app' | in_app, email, both |
+| read | BOOLEAN | DEFAULT false | Whether user has seen it |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+
+**RLS:** Users can only see/update their own notifications.
+**Indexes:** user_id, (user_id, read) composite for unread count queries.
+
+---
+
+#### `profiles.phone` column
+Added TEXT column to profiles table for future SMS notification support.
+
+---
+
+### 2.9 Storage Buckets
 
 | Bucket | Access | Purpose | Limits |
 |--------|--------|---------|--------|
@@ -691,7 +737,7 @@ Controls access to admin documentation.
 
 ## 3. API Endpoints
 
-All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.**
+All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.**
 
 ### 3.1 Comparison & Scoring (3)
 
@@ -786,11 +832,18 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | GET | `/api/usage/elevenlabs` | No | Fetch ElevenLabs subscription usage |
 | POST | `/api/consent/log` | No (rate-limited) | GDPR consent audit logging |
 
+### 3.11 Notifications (Added 2026-02-16) (2)
+
+| Method | Endpoint | Auth | Purpose |
+|--------|----------|------|---------|
+| POST | `/api/notify` | JWT | Create in-app notification + send email via Resend |
+| POST | `/api/admin/new-signup` | JWT | Send admin email notification on new user signup |
+
 ---
 
 ## 4. Component Architecture
 
-**46 components** in `src/components/`.
+**49 components** in `src/components/`.
 
 ### 4.1 Core Layout
 
@@ -875,6 +928,15 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `AboutClues.tsx` | About Clues section with 6 sub-tabs |
 | `SavedComparisons.tsx` | Comparison history list with Connect GitHub |
 
+### 4.8 Notifications (Added 2026-02-16)
+
+| Component | Purpose |
+|-----------|---------|
+| `NotificationBell.tsx` | Bell icon in header with unread badge + dropdown list |
+| `NotifyMeModal.tsx` | "Wait Here" vs "Notify Me & Go" modal for long-running tasks |
+| `MobileWarningModal.tsx` | Warning modal for small-screen visitors (Added 2026-02-16) |
+| `VideoPhoneWarning.tsx` | Phone call audio warning overlay for all video displays (Added 2026-02-16) |
+
 ---
 
 ## 5. State Management
@@ -911,6 +973,8 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `useOGMeta.ts` | Dynamic Open Graph meta tags for social sharing |
 | `useDraggable.ts` | Drag-to-reposition for floating UI elements |
 | `useFocusTrap.ts` | Focus trap within modals/dialogs |
+| `useNotifications.ts` | Polls notifications table every 30s for unread count (Added 2026-02-16) |
+| `useJobTracker.ts` | Creates jobs, updates status, triggers notification on completion (Added 2026-02-16) |
 
 ---
 
@@ -920,7 +984,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 | File | Key Types |
 |------|-----------|
-| `database.ts` | UserTier, Profile, UserPreferences, SavedComparison, UsageTracking |
+| `database.ts` | UserTier, Profile, UserPreferences, SavedComparison, UsageTracking, Job, Notification, NotifyChannel |
 | `metrics.ts` | CategoryId (6 categories), Category, MetricDefinition, ScoringCriteria |
 | `enhancedComparison.ts` | CityScore, CategoryScore, MetricScore, ComparisonResult |
 | `judge.ts` | JudgeReport, CategoryAnalysis, ExecutiveSummary |
