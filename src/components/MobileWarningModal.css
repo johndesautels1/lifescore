@@ -1,0 +1,131 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE WARNING MODAL
+   One-time glassmorphic warning for mobile visitors
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-warning-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: mobileOverlayIn 0.3s ease-out;
+  padding: 1.5rem;
+}
+
+@keyframes mobileOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.mobile-warning-card {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(13, 25, 50, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(201, 162, 39, 0.08);
+  animation: mobileCardIn 0.35s ease-out;
+}
+
+@keyframes mobileCardIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mobile-warning-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.mobile-warning-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  margin: 0 0 1rem;
+}
+
+.mobile-warning-body {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 0.75rem;
+}
+
+.mobile-warning-body strong {
+  color: var(--brushed-gold, #e6b800);
+}
+
+.mobile-warning-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 1.5rem;
+}
+
+.mobile-warning-btn {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 10px;
+  background: rgba(201, 162, 39, 0.12);
+  color: var(--brushed-gold, #e6b800);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-warning-btn:hover,
+.mobile-warning-btn:active {
+  background: rgba(201, 162, 39, 0.22);
+  border-color: rgba(201, 162, 39, 0.6);
+}
+
+/* Light theme override */
+[data-theme="light"] .mobile-warning-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .mobile-warning-title {
+  color: #1e293b;
+}
+
+[data-theme="light"] .mobile-warning-body {
+  color: #475569;
+}
+
+[data-theme="light"] .mobile-warning-body strong {
+  color: var(--sapphire, #2563eb);
+}
+
+[data-theme="light"] .mobile-warning-sub {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .mobile-warning-btn {
+  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--sapphire, #2563eb);
+}
+
+[data-theme="light"] .mobile-warning-btn:hover,
+[data-theme="light"] .mobile-warning-btn:active {
+  background: rgba(37, 99, 235, 0.15);
+}

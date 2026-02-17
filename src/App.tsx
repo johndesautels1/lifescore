@@ -32,6 +32,7 @@ const AboutClues = React.lazy(() => import('./components/AboutClues'));
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import HelpBubble from './components/HelpBubble';
+import MobileWarningModal from './components/MobileWarningModal';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
@@ -1391,6 +1392,9 @@ const AppContent: React.FC = () => {
 
       {/* Cookie Consent Banner */}
       <CookieConsent />
+
+      {/* Mobile Warning Modal — one-time warning for mobile visitors */}
+      <MobileWarningModal />
 
       {/* Emilia Help Bubble - Shows on all pages */}
       <HelpBubble />
