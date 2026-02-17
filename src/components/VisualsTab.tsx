@@ -322,15 +322,15 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         setIsReportSaved(true);
       }
     }
-  }, [reportState.status, reportState.gammaUrl, reportState.generationId, result, isReportSaved]);
+  }, [reportState.status, reportState.gammaUrl, reportState.generationId, reportState.pdfUrl, reportState.pptxUrl, reportState.pdfStoragePath, reportState.pptxStoragePath, result, isReportSaved]);
 
-  // Check if report is already saved when component mounts or report changes
-  const comparisonId = result?.comparisonId || '';
-  const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
-
-  const existingReport = isAlreadySaved
-    ? savedReports.find(r => r.comparisonId === comparisonId) || null
-    : null;
+  // Check if report is already saved — memoized to avoid repeated .find() scans
+  const { isAlreadySaved, existingReport } = useMemo(() => {
+    const cid = result?.comparisonId || '';
+    const saved = cid ? hasGammaReportForComparison(cid) : false;
+    const report = saved ? savedReports.find(r => r.comparisonId === cid) || null : null;
+    return { isAlreadySaved: saved, existingReport: report };
+  }, [result, savedReports]);
 
   // FIX #3: Check if current result matches the viewing report's cities
   const resultMatchesViewingReport = useMemo(() => {
@@ -548,6 +548,16 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     }
   }, [savedReports, startTransition]);
 
+  // Extracted delete handler — avoids complex inline function in JSX
+  const handleDeleteViewingReport = useCallback(() => {
+    if (!viewingReport) return;
+    if (window.confirm(`Delete report for ${viewingReport.city1} vs ${viewingReport.city2}?`)) {
+      deleteGammaReport(viewingReport.id);
+      setViewingReport(null);
+      setReportsRefreshKey(k => k + 1);
+    }
+  }, [viewingReport]);
+
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
   const hasAnything = !!result || hasSavedComparisons || savedReports.length > 0;
 
@@ -574,7 +584,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   ) => (
     <div className="embedded-header">
       <div className="embedded-actions">
-        <div className="report-view-toggle">
+        <div className="report-view-toggle" role="group" aria-label="Report view mode">
           <button
             type="button"
             className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
@@ -609,6 +619,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           className="external-link-btn"
+          aria-label="Open report in new tab"
         >
           Open External ↗
         </a>
@@ -671,7 +682,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             <button
               type="button"
               className={`selector-tab ${selectorTab === 'generate' ? 'active' : ''}`}
-              onClick={() => setSelectorTab('generate')}
+              onClick={() => { setSelectorTab('generate'); setViewingReport(null); }}
               aria-pressed={selectorTab === 'generate'}
             >
               Generate a New Report
@@ -679,7 +690,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             <button
               type="button"
               className={`selector-tab ${selectorTab === 'view' ? 'active' : ''}`}
-              onClick={() => setSelectorTab('view')}
+              onClick={() => { setSelectorTab('view'); setSelectedComparisonId(null); }}
               aria-pressed={selectorTab === 'view'}
             >
               View Existing Report
@@ -689,6 +700,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           {selectorTab === 'generate' && (
             <select
               id="generate-selector"
+              aria-label="Select a comparison to generate a report"
               className="report-selector-dropdown"
               value={selectedComparisonId ?? ''}
               onChange={handleGenerateTabSelect}
@@ -709,6 +721,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           {selectorTab === 'view' && (
             <select
               id="view-selector"
+              aria-label="Select a saved report to view"
               className="report-selector-dropdown"
               value={viewingReport?.id ?? ''}
               onChange={handleViewTabSelect}
@@ -795,8 +808,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
             <div className="generate-controls">
               <div className="report-type-selector">
-                <label>Report Type:</label>
-                <div className="report-type-options">
+                <label id="report-type-label">Report Type:</label>
+                <div className="report-type-options" role="group" aria-labelledby="report-type-label">
                   <button
                     type="button"
                     className={`type-btn ${reportType === 'standard' ? 'active' : ''}`}
@@ -836,8 +849,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               )}
 
               <div className="format-selector">
-                <label>Export Format:</label>
-                <div className="format-options">
+                <label id="export-format-label">Export Format:</label>
+                <div className="format-options" role="group" aria-labelledby="export-format-label">
                   <button
                     type="button"
                     className={`format-btn ${exportFormat === 'pdf' ? 'active' : ''}`}
@@ -993,13 +1006,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             <button
               type="button"
               className="report-action-btn delete"
-              onClick={() => {
-                if (window.confirm(`Delete report for ${viewingReport.city1} vs ${viewingReport.city2}?`)) {
-                  deleteGammaReport(viewingReport.id);
-                  setViewingReport(null);
-                  setReportsRefreshKey(k => k + 1);
-                }
-              }}
+              onClick={handleDeleteViewingReport}
               title="Delete report"
             >
               ✕ Delete
@@ -1007,7 +1014,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
 
           {(viewingReport.pdfUrl || viewingReport.pptxUrl) && (
-            <div className="report-links" style={{ marginBottom: '0.75rem' }}>
+            <div className="report-links saved-report-downloads">
               {viewingReport.pdfUrl && (
                 <a href={viewingReport.pdfUrl} target="_blank" rel="noopener noreferrer" className="report-link download-link">
                   Download PDF

@@ -647,13 +647,6 @@
   font-size: 0.9rem;
 }
 
-/* Loading link fallback */
-.loading-link {
-  opacity: 0.6;
-  cursor: wait;
-  animation: pulse 1.5s infinite;
-}
-
 /* ============================================================================
    EMBEDDED REPORT VIEW
    ============================================================================ */
@@ -1014,15 +1007,17 @@
   }
 
   .external-link-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
     border-radius: 4px;
+    min-height: 36px;
   }
 
   .close-embed-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
     border-radius: 4px;
+    min-height: 36px;
   }
 
   .report-view-toggle {
@@ -1030,9 +1025,10 @@
   }
 
   .view-toggle-btn {
-    padding: 4px 6px;
-    font-size: 0.65rem;
+    padding: 6px 8px;
+    font-size: 0.7rem;
     flex: 1;
+    min-height: 36px;
   }
 }
 
@@ -1163,6 +1159,10 @@
 
 .report-action-btn.delete:hover {
   background: rgba(231, 76, 60, 0.15);
+}
+
+.saved-report-downloads {
+  margin-bottom: 0.75rem;
 }
 
 .saved-report-viewer {

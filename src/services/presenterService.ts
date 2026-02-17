@@ -13,7 +13,7 @@
 
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { CityScore, CategoryId } from '../types/metrics';
-import type { PresenterSegment, PresentationScript } from '../types/presenter';
+import type { PresenterSegment, PresentationScript, PresenterStatus } from '../types/presenter';
 import type { AnyComparisonResult } from './gammaService';
 
 // ============================================================================
@@ -307,7 +307,7 @@ export function generatePresentationScript(result: AnyComparisonResult): Present
  * Get a concise status label for the current presenter state
  */
 export function getPresenterStatusLabel(
-  status: string,
+  status: PresenterStatus,
   currentIndex: number,
   totalSegments: number
 ): string {

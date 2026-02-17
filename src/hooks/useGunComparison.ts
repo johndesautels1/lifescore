@@ -5,7 +5,7 @@
  * between two cities. Completely isolated from the 100-metric system.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface GunLawCategory {
   label: string;
@@ -23,8 +23,18 @@ export interface GunComparisonData {
 
 export type GunComparisonStatus = 'idle' | 'loading' | 'ready' | 'error';
 
-// Simple in-memory cache
+// Bounded in-memory cache with LRU eviction
+const MAX_CACHE_SIZE = 50;
 const cache = new Map<string, GunComparisonData>();
+
+function cacheSet(key: string, value: GunComparisonData): void {
+  if (cache.size >= MAX_CACHE_SIZE && !cache.has(key)) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) cache.delete(firstKey);
+  }
+  cache.delete(key);
+  cache.set(key, value);
+}
 
 function getCacheKey(cityA: string, cityB: string): string {
   return `gun_${cityA.toLowerCase()}_${cityB.toLowerCase()}`;
@@ -70,7 +80,7 @@ export function useGunComparison() {
       }
 
       const result: GunComparisonData = await response.json();
-      cache.set(key, result);
+      cacheSet(key, result);
       setData(result);
       setStatus('ready');
       return result;
@@ -81,6 +91,13 @@ export function useGunComparison() {
       setStatus('error');
       return null;
     }
+  }, []);
+
+  // Abort in-flight requests on unmount to prevent state updates after unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   const reset = useCallback(() => {
