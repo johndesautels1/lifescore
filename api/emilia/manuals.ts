@@ -56,7 +56,7 @@ const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.6 | **Updated:** 2026-02-17
+**Version:** 3.7 | **Updated:** 2026-02-17
 
 ## Getting Started
 
@@ -115,20 +115,25 @@ If you've forgotten your password:
 - **Ask Olivia Help** (chat bubble): OpenAI Assistants API brain, ElevenLabs cloned voice → OpenAI "nova" fallback
 - **Ask Olivia page** (video + chat): Same voice wiring as Help chat
 
-#### Visual Reports
+#### Visual Reports (Updated 2026-02-17)
+- **Two-Tab Layout**: The Visuals page has two tabs:
+  - **"Generate a New Report"** — shows saved comparisons that don't already have a Gamma report, sorted alphabetically
+  - **"View Existing Report"** — shows all saved Gamma reports, sorted alphabetically
+- Enhanced comparisons are marked with an amber **"Enhanced"** badge in the dropdown
+- **Three View Modes** (top-level buttons, always visible when a report exists):
+  - **Read** — view the Gamma report in an embedded iframe
+  - **Live Presenter** — real-time HeyGen streaming avatar overlay (Olivia narrates your report)
+  - **Generate Video** — pre-rendered HeyGen MP4 download (up to 10 min)
 - Generate PDF/PPTX reports via Gamma
-- **Permanent Downloads (2026-02-17):** PDF/PPTX exports are now permanently stored in Supabase Storage. Old reports with expired CDN links need regeneration.
-- **Expired Report Detection (2026-02-17):** If a Gamma embed fails to load, the app shows a clear message instead of a broken page.
+- **Permanent Downloads:** PDF/PPTX exports are permanently stored in Supabase Storage. Old reports with expired CDN links need regeneration.
+- **Expired Report Detection:** If a Gamma embed fails to load, the app shows a clear fallback message instead of a broken page.
 - AI-generated "New Life" videos (Freedom vs Imprisonment)
 - Judge verdict video with Court Order option
-- **Olivia Video Presenter** (HeyGen): Toggle "Listen to Presenter" to have Olivia narrate your Gamma report
-  - Live Presenter: Real-time HeyGen streaming avatar overlay (instant)
-  - Generate Video: Pre-rendered HeyGen MP4 download (up to 10 min)
-  - Uses HEYGEN_OLIVIA_AVATAR_ID + HEYGEN_OLIVIA_VOICE_ID (separate from ElevenLabs/OpenAI)
 - All saved to both browser and cloud
 
-#### Saved Comparisons
-- Comparisons auto-save to both localStorage and Supabase (dual-storage)
+#### Saved Comparisons (Updated 2026-02-17)
+- Comparisons **auto-save on completion** to both localStorage and Supabase — no need to manually click "Save"
+- The Save button immediately reflects saved state after auto-save
 - Access from the "Saved" tab
 - Export as PDF or share
 - Syncs across devices when logged in
@@ -148,11 +153,12 @@ If you've forgotten your password:
 - **Phone call audio warning** on all video displays (Judge, Court Order, Freedom Tour, Olivia, Grok)
 - Fixed stale state when switching between comparisons
 
-### Notifications (Added 2026-02-16)
+### Notifications (Updated 2026-02-17)
 - Bell icon in header with unread badge
 - "Notify Me & Go" modal for long-running tasks (comparisons, Judge, video, Gamma)
 - Email notification from alerts@lifescore.app (opt-in)
 - 30-second polling for new notifications
+- Clicking a notification navigates within the app instantly (no page reload)
 
 ### Mobile Warning (Added 2026-02-16)
 - Warning modal appears on small screens explaining app is optimized for desktop/tablet
@@ -197,7 +203,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.5 | **Updated:** 2026-02-17
+**Version:** 3.6 | **Updated:** 2026-02-17
 
 ## Support Overview
 
@@ -305,6 +311,26 @@ If you've forgotten your password:
 - Old reports with expired links need regeneration — comparison data is still saved
 - Iframe embeds that fail to load now show a clear fallback message
 
+### "Visuals tab is confusing / can't find my report" (Updated 2026-02-17)
+- The Visuals page now has **two tabs**: "Generate a New Report" and "View Existing Report"
+- **Generate tab** shows comparisons that don't have a Gamma report yet
+- **View tab** shows all saved Gamma reports
+- Enhanced comparisons display an amber "Enhanced" badge in the dropdown
+- If a user can't find their report, direct them to the **"View Existing Report"** tab
+
+### "Live Presenter / Watch Video buttons grayed out" (Fixed 2026-02-17)
+- Fixed: viewing a saved report now auto-loads the matching comparison data
+- Buttons become active when the loaded comparison matches the report being viewed
+
+### "Notification click does nothing / reloads the page" (Fixed 2026-02-17)
+- Fixed: notifications now navigate within the app (SPA) instead of triggering a full page reload
+- Supported destinations: Visuals tab, Judge tab, comparison results
+
+### "My comparison results disappeared after navigating away" (Fixed 2026-02-17)
+- Comparisons now **auto-save on completion** (both standard and enhanced)
+- No need to manually click "Save" — results persist to browser + Supabase automatically
+- The Save button immediately reflects the saved state
+
 ## Escalation Path
 
 1. **Tier 1**: Email support (most issues)
@@ -314,7 +340,7 @@ If you've forgotten your password:
 
   tech: `# Technical Support Manual
 
-**Version:** 4.8 | **Updated:** 2026-02-17
+**Version:** 4.9 | **Updated:** 2026-02-17
 
 ## System Architecture
 
@@ -442,8 +468,9 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - src/services/presenterService.ts (narration script generator)
 - src/services/presenterVideoService.ts (video orchestration + polling)
 - src/types/presenter.ts (all presenter types)
-- src/components/ReportPresenter.tsx (UI: Live/Video sub-modes)
-- src/components/VisualsTab.tsx (Read/Listen toggle)
+- src/components/GammaIframe.tsx (shared Gamma iframe with sandbox + error handling)
+- src/components/ReportPresenter.tsx (UI: Read/Live Presenter/Generate Video modes)
+- src/components/VisualsTab.tsx (two-tab layout: Generate New / View Existing)
 
 ## Video System (Updated 2026-02-13)
 
@@ -488,7 +515,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 | Database (supabase/) | 5,555 | 4.7% |
 | Scripts / Config / Other | 4,078 | 3.5% |
 
-- **48** React components, **46** CSS files
+- **49** React components, **46** CSS files
 - **55** serverless API functions
 - **19** custom hooks, **17** service modules
 - **176** TypeScript files (76,284 lines)
@@ -550,6 +577,10 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 ### Resolved Issues (2026-02-17)
 - **Gamma export URLs (PDF/PPTX) expiring** — Asset materialization pattern: api/gamma.ts downloads exports from Gamma CDN on completion, uploads to Supabase Storage (gamma-exports public bucket). Returns permanent public URLs. New DB columns: pdf_storage_path, pptx_storage_path. Iframe error detection on all 4 embed locations. 11 files, 35 changes.
 - **Gamma report colored cards losing colors** — solidBoxes variant colors stripped by Gamma AI rendering. Fix: 6× category heat maps → barStats (bar length = confidence %). PAGE 64 → semiCircle gauges + table. PAGE 51 → structured table. PAGE 53 → semiCircle dials. Same data, varied chart types, no prompt size increase.
+- **Visuals Tab redesign** — Two-tab layout (Generate New Report / View Existing Report). Amber "Enhanced" badges in custom dropdown. 3 top-level mode buttons (Read / Live Presenter / Generate Video) always visible when a Gamma URL exists. New shared GammaIframe.tsx component with sandbox + error handling. 11 UX fixes + 25 audit fixes + 20 audit fixes across VisualsTab, ReportPresenter, useGunComparison.
+- **Notification click rebooting app** — window.location.href replaced with SPA onNavigate callback threaded App→Header→NotificationBell. Parses notification link query params and maps to setActiveTab(). Supports /?tab=visuals, /?tab=judge, /?cityA=X&cityB=Y.
+- **Auto-save on completion** — Both standard and enhanced comparisons auto-save to localStorage + Supabase when complete. Save button reflects saved state via savedKey prop. 3 files changed (App.tsx, Results.tsx, EnhancedComparison.tsx).
+- **Presenter/Video buttons grayed out on saved reports** — handleViewTabSelect now auto-loads matching comparison via selectedComparisonId so result + resultMatchesViewingReport resolve correctly and presenterAvailable becomes true.
 
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
@@ -613,7 +644,7 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.4.0 | **Updated:** 2026-02-17
+**Version:** 2.5.0 | **Updated:** 2026-02-17
 
 ---
 
@@ -746,14 +777,14 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 3. Key Components (49 total)
+## 3. Key Components (50 total)
 
 ### Core: App, Header, Footer, LoginScreen, TabNavigation
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
 ### Video: NewLifeVideos (blob URL playback, error detection)
-### Reports: VisualsTab (Read/Listen toggle), ReportPresenter (Olivia video presenter), AboutClues
+### Reports: VisualsTab (2-tab layout: Generate New / View Existing), ReportPresenter (Read/Live Presenter/Generate Video modes), GammaIframe (shared iframe with sandbox + error handling), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
 ### Notifications (Added 2026-02-16): NotificationBell, NotifyMeModal, MobileWarningModal, VideoPhoneWarning
 
