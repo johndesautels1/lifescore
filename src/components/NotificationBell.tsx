@@ -35,7 +35,13 @@ function notificationIcon(n: Notification): string {
   return '🔔';
 }
 
-export const NotificationBell: React.FC = () => {
+interface NotificationBellProps {
+  /** SPA navigation handler — receives the notification link (e.g. "/?tab=visuals").
+   *  When provided the bell navigates in-app instead of doing a full page reload. */
+  onNavigate?: (link: string) => void;
+}
+
+export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -60,7 +66,12 @@ export const NotificationBell: React.FC = () => {
       markAsRead(n.id);
     }
     if (n.link) {
-      window.location.href = n.link;
+      if (onNavigate) {
+        onNavigate(n.link);
+      } else {
+        // Fallback: full reload (should not happen when mounted inside App)
+        window.location.href = n.link;
+      }
     }
     setIsOpen(false);
   };

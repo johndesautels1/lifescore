@@ -627,6 +627,46 @@ const AppContent: React.FC = () => {
     return <LoginScreen />;
   }
 
+  // Handle in-app navigation from notification bell clicks.
+  // Maps query-param links (e.g. "/?tab=visuals") to React state transitions
+  // so the user stays in the SPA instead of triggering a full page reload.
+  const handleNotificationNavigate = useCallback((link: string) => {
+    try {
+      const url = new URL(link, window.location.origin);
+      const tab = url.searchParams.get('tab');
+
+      // Map notification link ?tab= values to internal TabId values
+      const tabMap: Record<string, TabId> = {
+        visuals: 'visuals',
+        judge: 'judges-report',
+        'judges-report': 'judges-report',
+        saved: 'saved',
+        compare: 'compare',
+        results: 'results',
+        olivia: 'olivia',
+        about: 'about',
+      };
+
+      if (tab && tabMap[tab]) {
+        setActiveTab(tabMap[tab]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Comparison deep-link: /?cityA=...&cityB=...  → go to results tab
+      if (url.searchParams.get('cityA') && url.searchParams.get('cityB')) {
+        setActiveTab('results');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    } catch {
+      // Malformed link — fall through to full reload
+    }
+
+    // Fallback for unrecognised links
+    window.location.href = link;
+  }, []);
+
   return (
     <div className="app">
       {/* A17: Skip-to-content link for keyboard users */}
@@ -638,6 +678,7 @@ const AppContent: React.FC = () => {
         onUpgradeClick={() => dispatchModal({ type: 'OPEN_PRICING' })}
         onCostDashboardClick={() => dispatchModal({ type: 'OPEN_COST_DASHBOARD' })}
         onSettingsClick={() => dispatchModal({ type: 'OPEN_SETTINGS' })}
+        onNotificationNavigate={handleNotificationNavigate}
       />
 
       {/* Tab Navigation */}
