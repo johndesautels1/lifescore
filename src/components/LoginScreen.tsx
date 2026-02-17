@@ -283,11 +283,11 @@ const LoginScreen: React.FC = () => {
                   <input
                     type="email"
                     id="email"
-                    name="username"
+                    name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    autoComplete="username"
+                    autoComplete="email"
                     disabled={isLoading}
                     aria-required="true"
                     aria-invalid={!!displayError}
@@ -428,7 +428,7 @@ const LoginScreen: React.FC = () => {
 
           {/* Sign Up Form */}
           {mode === 'signup' && (
-            <form className="login-form" onSubmit={handleSignUp}>
+            <form className="login-form" onSubmit={handleSignUp} autoComplete="on">
               <div className="form-group">
                 <label htmlFor="fullName">Full Name (Optional)</label>
                 <div className="input-wrapper">
@@ -440,6 +440,7 @@ const LoginScreen: React.FC = () => {
                   <input
                     type="text"
                     id="fullName"
+                    name="name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="John Doe"
@@ -460,6 +461,7 @@ const LoginScreen: React.FC = () => {
                   <input
                     type="email"
                     id="signupEmail"
+                    name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
@@ -480,6 +482,7 @@ const LoginScreen: React.FC = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="signupPassword"
+                    name="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimum 6 characters"
@@ -508,6 +511,7 @@ const LoginScreen: React.FC = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="confirmPassword"
+                    name="confirmPassword"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter your password"
