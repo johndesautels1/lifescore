@@ -355,6 +355,10 @@ const AppContent: React.FC = () => {
     setSavedCount(count);
   }, [savedKey]);
 
+  const handleSaved = useCallback(() => {
+    setSavedKey(prev => prev + 1);
+  }, []);
+
   // Auto-switch to results tab when comparison COMPLETES (BOTH modes)
   // Only switch on actual completion transitions, not on mode toggle with stale results
   // BUT: If there are category failures, require user to click "SEE RESULTS" first
@@ -540,10 +544,6 @@ const AppContent: React.FC = () => {
     setActiveTab('results');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loadResult]);
-
-  const handleSaved = useCallback(() => {
-    setSavedKey(prev => prev + 1);
-  }, []);
 
   // FIX 2026-02-08: Handler to view a saved Judge report
   // FIX 2026-02-08: Clear stale state to prevent contamination from previous comparisons
