@@ -141,8 +141,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const pendingJobRef = useRef<string | null>(null);
 
   // Audit 8.1: Ref for setTimeout cleanup to prevent state updates after unmount
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(saveTimeoutRef.current), []);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); }, []);
 
   // Enhanced report options
   const [reportType, setReportType] = useState<'standard' | 'enhanced'>('standard');

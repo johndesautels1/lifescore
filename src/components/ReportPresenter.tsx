@@ -175,19 +175,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   // SPEAKING (Live Mode)
   // ============================================================================
 
-  const speakSegment = useCallback(async (segment: PresenterSegment) => {
-    if (heygenSessionRef.current && !ttsOnlyRef.current) {
-      try {
-        await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
-      } catch (err) {
-        console.warn('[ReportPresenter] HeyGen speak failed, falling back to TTS:', err);
-        await speakTTSFallback(segment.narration);
-      }
-    } else {
-      await speakTTSFallback(segment.narration);
-    }
-  }, [speakTTSFallback]);
-
   const speakTTSFallback = useCallback(async (text: string) => {
     try {
       const ttsResponse = await generateTTS(text);
@@ -201,13 +188,26 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     }
   }, []);
 
+  const speakSegment = useCallback(async (segment: PresenterSegment) => {
+    if (heygenSessionRef.current && !ttsOnlyRef.current) {
+      try {
+        await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
+      } catch (err) {
+        console.warn('[ReportPresenter] HeyGen speak failed, falling back to TTS:', err);
+        await speakTTSFallback(segment.narration);
+      }
+    } else {
+      await speakTTSFallback(segment.narration);
+    }
+  }, [speakTTSFallback]);
+
   // ============================================================================
   // LIVE PLAYBACK CONTROLS
   // ============================================================================
 
   // Refs to break circular useCallback dependency: scheduleNextSegment <-> advanceToSegment
-  const advanceToSegmentRef = useRef<(index: number) => Promise<void>>();
-  const scheduleNextSegmentRef = useRef<(currentIndex: number) => void>();
+  const advanceToSegmentRef = useRef<((index: number) => Promise<void>) | undefined>(undefined);
+  const scheduleNextSegmentRef = useRef<((currentIndex: number) => void) | undefined>(undefined);
 
   const scheduleNextSegment = useCallback((currentIndex: number) => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
