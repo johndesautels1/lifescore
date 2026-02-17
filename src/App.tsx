@@ -623,28 +623,6 @@ const AppContent: React.FC = () => {
     resetOGMetaTags();
   }, [reset]);
 
-  // Show loading spinner while checking auth
-  if (authLoading) {
-    return (
-      <div className="app auth-loading">
-        <div className="auth-loading-spinner" role="status" aria-label="Loading application">
-          <div className="spinner-ring"></div>
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Show password reset screen when user clicked a reset link
-  if (isPasswordRecovery) {
-    return <ResetPasswordScreen updatePassword={updatePassword} clearPasswordRecovery={clearPasswordRecovery} />;
-  }
-
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
-    return <LoginScreen />;
-  }
-
   // Handle in-app navigation from notification bell clicks.
   // Maps query-param links (e.g. "/?tab=visuals") to React state transitions
   // so the user stays in the SPA instead of triggering a full page reload.
@@ -684,6 +662,28 @@ const AppContent: React.FC = () => {
     // Fallback for unrecognised links
     window.location.href = link;
   }, []);
+
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="app auth-loading">
+        <div className="auth-loading-spinner" role="status" aria-label="Loading application">
+          <div className="spinner-ring"></div>
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show password reset screen when user clicked a reset link
+  if (isPasswordRecovery) {
+    return <ResetPasswordScreen updatePassword={updatePassword} clearPasswordRecovery={clearPasswordRecovery} />;
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
 
   return (
     <div className="app">

@@ -32,122 +32,121 @@ function isEnhancedResult(result: ResultType): result is EnhancedComparisonResul
   return 'llmsUsed' in result;
 }
 
+// Helper to extract domain name from URL for display
+function extractDomainFromUrl(url: string): string {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace('www.', '');
+  } catch {
+    return url.slice(0, 50);
+  }
+}
+
+// Collect all evidence from the result (handles both simple and enhanced)
+function collectEvidenceFromResult(result: NonNullable<ResultType>): CollectedEvidence[] {
+  const collected: CollectedEvidence[] = [];
+
+  if (isEnhancedResult(result)) {
+    // ENHANCED MODE: Collect from llmScores[].evidence[] with LLM attribution (B3 fix)
+    result.city1.categories.forEach(category => {
+      category.metrics.forEach(metric => {
+        metric.llmScores?.forEach(score => {
+          if (score.evidence && score.evidence.length > 0) {
+            collected.push({
+              metricId: metric.metricId,
+              metricName: metric.metricId,
+              city: result.city1.city,
+              provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
+              evidence: score.evidence
+            });
+          }
+        });
+      });
+    });
+
+    result.city2.categories.forEach(category => {
+      category.metrics.forEach(metric => {
+        metric.llmScores?.forEach(score => {
+          if (score.evidence && score.evidence.length > 0) {
+            collected.push({
+              metricId: metric.metricId,
+              metricName: metric.metricId,
+              city: result.city2.city,
+              provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
+              evidence: score.evidence
+            });
+          }
+        });
+      });
+    });
+  } else {
+    // SIMPLE MODE: Collect from metric.sources[] (URL strings)
+    const now = new Date().toISOString();
+
+    // City 1
+    result.city1.categories.forEach(category => {
+      category.metrics.forEach(metric => {
+        if (metric.sources && metric.sources.length > 0) {
+          const evidence: EvidenceItem[] = metric.sources.map(url => ({
+            city: result.city1.city,
+            title: extractDomainFromUrl(url),
+            url: url,
+            snippet: '',
+            retrieved_at: now
+          }));
+          collected.push({
+            metricId: metric.metricId,
+            metricName: metric.metricId,
+            city: result.city1.city,
+            evidence
+          });
+        }
+      });
+    });
+
+    // City 2
+    result.city2.categories.forEach(category => {
+      category.metrics.forEach(metric => {
+        if (metric.sources && metric.sources.length > 0) {
+          const evidence: EvidenceItem[] = metric.sources.map(url => ({
+            city: result.city2.city,
+            title: extractDomainFromUrl(url),
+            url: url,
+            snippet: '',
+            retrieved_at: now
+          }));
+          collected.push({
+            metricId: metric.metricId,
+            metricName: metric.metricId,
+            city: result.city2.city,
+            evidence
+          });
+        }
+      });
+    });
+  }
+
+  return collected;
+}
+
 const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
   const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed
   const [filterCity, setFilterCity] = useState<'all' | 'city1' | 'city2'>('all');
 
-  if (!result) return null;
-
-  // Collect all evidence from the result (handles both simple and enhanced)
-  const collectEvidence = (): CollectedEvidence[] => {
-    const collected: CollectedEvidence[] = [];
-
-    if (isEnhancedResult(result)) {
-      // ENHANCED MODE: Collect from llmScores[].evidence[] with LLM attribution (B3 fix)
-      result.city1.categories.forEach(category => {
-        category.metrics.forEach(metric => {
-          metric.llmScores?.forEach(score => {
-            if (score.evidence && score.evidence.length > 0) {
-              collected.push({
-                metricId: metric.metricId,
-                metricName: metric.metricId,
-                city: result.city1.city,
-                provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
-                evidence: score.evidence
-              });
-            }
-          });
-        });
-      });
-
-      result.city2.categories.forEach(category => {
-        category.metrics.forEach(metric => {
-          metric.llmScores?.forEach(score => {
-            if (score.evidence && score.evidence.length > 0) {
-              collected.push({
-                metricId: metric.metricId,
-                metricName: metric.metricId,
-                city: result.city2.city,
-                provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
-                evidence: score.evidence
-              });
-            }
-          });
-        });
-      });
-    } else {
-      // SIMPLE MODE: Collect from metric.sources[] (URL strings)
-      const now = new Date().toISOString();
-
-      // City 1
-      result.city1.categories.forEach(category => {
-        category.metrics.forEach(metric => {
-          if (metric.sources && metric.sources.length > 0) {
-            const evidence: EvidenceItem[] = metric.sources.map(url => ({
-              city: result.city1.city,
-              title: extractDomainFromUrl(url),
-              url: url,
-              snippet: '',
-              retrieved_at: now
-            }));
-            collected.push({
-              metricId: metric.metricId,
-              metricName: metric.metricId,
-              city: result.city1.city,
-              evidence
-            });
-          }
-        });
-      });
-
-      // City 2
-      result.city2.categories.forEach(category => {
-        category.metrics.forEach(metric => {
-          if (metric.sources && metric.sources.length > 0) {
-            const evidence: EvidenceItem[] = metric.sources.map(url => ({
-              city: result.city2.city,
-              title: extractDomainFromUrl(url),
-              url: url,
-              snippet: '',
-              retrieved_at: now
-            }));
-            collected.push({
-              metricId: metric.metricId,
-              metricName: metric.metricId,
-              city: result.city2.city,
-              evidence
-            });
-          }
-        });
-      });
-    }
-
-    return collected;
-  };
-
-  // Helper to extract domain name from URL for display
-  function extractDomainFromUrl(url: string): string {
-    try {
-      const hostname = new URL(url).hostname;
-      return hostname.replace('www.', '');
-    } catch {
-      return url.slice(0, 50);
-    }
-  }
-
+  // ALL hooks must be called before any conditional return (React Rules of Hooks)
   // Memoize evidence collection to avoid recalculating on every render
-  const allEvidence = useMemo(() => collectEvidence(), [result]);
+  const allEvidence = useMemo(() => result ? collectEvidenceFromResult(result) : [], [result]);
 
   // Filter by city if selected
-  const filteredEvidence = useMemo(() =>
-    filterCity === 'all'
+  const filteredEvidence = useMemo(() => {
+    if (!result) return [];
+    return filterCity === 'all'
       ? allEvidence
       : allEvidence.filter(e =>
           (filterCity === 'city1' && e.city === result.city1.city) ||
           (filterCity === 'city2' && e.city === result.city2.city)
-        ),
-    [allEvidence, filterCity, result.city1.city, result.city2.city]
-  );
+        );
+  }, [allEvidence, filterCity, result]);
 
   // Memoize unique URLs for the summary
   const uniqueUrls = useMemo(() => {
@@ -162,6 +161,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ result }) => {
       setIsCollapsed(prev => !prev);
     });
   }, []);
+
+  // Early return AFTER all hooks
+  if (!result) return null;
 
   return (
     <div className={`evidence-panel-container ${isCollapsed ? 'collapsed' : ''}`}>
