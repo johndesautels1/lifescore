@@ -58,7 +58,7 @@ export interface PresenterState {
 // PRESENTER VIEW MODE
 // ============================================================================
 
-export type ReportViewMode = 'read' | 'presenter';
+export type ReportViewMode = 'read' | 'live' | 'video';
 
 // ============================================================================
 // VIDEO GENERATION (Pre-rendered HeyGen video)

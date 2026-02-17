@@ -1074,61 +1074,8 @@
 }
 
 /* ============================================================================
-   SAVED REPORTS LIBRARY
+   SAVED REPORT VIEWER (unified — replaces old saved-reports-list)
    ============================================================================ */
-
-.saved-reports-section {
-  padding: 1.25rem;
-}
-
-.saved-reports-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.saved-report-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--card-background, rgba(26, 26, 46, 0.6));
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-  border-radius: 8px;
-  gap: 1rem;
-}
-
-.saved-report-item .report-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.saved-report-item .report-cities {
-  font-weight: 700;
-  color: #f5a623;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.saved-report-item .report-date {
-  font-size: 0.8rem;
-  color: var(--text-secondary, #888);
-}
-
-[data-theme="dark"] .saved-report-item .report-date {
-  color: #ffffff;
-}
-
-.saved-report-item .report-actions {
-  display: flex;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
 
 .report-action-btn {
   padding: 0.35rem 0.6rem;
@@ -1147,15 +1094,6 @@
   color: var(--text-primary, #fff);
 }
 
-.report-action-btn.view {
-  color: var(--accent-color, #d4af37);
-  border-color: var(--accent-color, rgba(212, 175, 55, 0.3));
-}
-
-.report-action-btn.view:hover {
-  background: rgba(212, 175, 55, 0.15);
-}
-
 .report-action-btn.delete {
   color: #e74c3c;
   border-color: rgba(231, 76, 60, 0.3);
@@ -1169,6 +1107,34 @@
   padding: 1rem;
 }
 
+.saved-report-viewer-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.saved-report-viewer-title h3 {
+  margin: 0;
+  color: #D4AF37;
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+/* FIX #3: City mismatch warning */
+.city-mismatch-warning {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  margin: 0;
+  width: 100%;
+}
+
 .saved-report-viewer .gamma-embed-frame {
   width: 100%;
   height: 70vh;
@@ -1177,16 +1143,15 @@
   margin-top: 0.75rem;
 }
 
-@media (max-width: 640px) {
-  .saved-report-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+/* FIX #11: Disabled toggle buttons */
+.view-toggle-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-  .saved-report-item .report-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
+.view-toggle-btn:disabled:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* ============================================================================

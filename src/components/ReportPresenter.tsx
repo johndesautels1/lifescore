@@ -33,6 +33,7 @@ import {
   closeHeyGenSession,
   generateTTS,
 } from '../services/oliviaService';
+import GammaIframe from './GammaIframe';
 import VideoPhoneWarning from './VideoPhoneWarning';
 import './ReportPresenter.css';
 
@@ -44,6 +45,8 @@ interface ReportPresenterProps {
   result: AnyComparisonResult;
   gammaUrl: string;
   onClose: () => void;
+  /** Pre-select sub-mode: 'live' for live avatar, 'video' for pre-rendered video */
+  initialSubMode?: PresenterSubMode;
 }
 
 // ============================================================================
@@ -60,12 +63,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   result,
   gammaUrl,
   onClose,
+  initialSubMode = 'live',
 }) => {
   // ---- Sub-mode: live presenter vs pre-rendered video ----
-  const [subMode, setSubMode] = useState<PresenterSubMode>('live');
-
-  // ---- Gamma iframe error detection ----
-  const [gammaIframeError, setGammaIframeError] = useState(false);
+  const [subMode, setSubMode] = useState<PresenterSubMode>(initialSubMode);
 
   // ---- Live presenter state ----
   const [state, setState] = useState<PresenterState>(() => ({
@@ -335,30 +336,11 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         <>
           {/* Gamma Report Iframe (background) */}
           <div className="presenter-report-container">
-            {gammaIframeError ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', padding: '2rem', textAlign: 'center', color: '#d4af37' }}>
-                <p>Report embed may no longer be available.</p>
-                <button className="btn btn-primary" onClick={onClose}>Close Presenter</button>
-              </div>
-            ) : (
-              <iframe
-                src={gammaUrl.replace('/docs/', '/embed/')}
-                className="presenter-gamma-frame"
-                title="LIFE SCORE Visual Report"
-                allowFullScreen
-                onError={() => setGammaIframeError(true)}
-                onLoad={(e) => {
-                  try {
-                    const iframe = e.target as HTMLIFrameElement;
-                    if (!iframe.contentWindow) {
-                      setGammaIframeError(true);
-                    }
-                  } catch {
-                    // Cross-origin — expected
-                  }
-                }}
-              />
-            )}
+            <GammaIframe
+              gammaUrl={gammaUrl}
+              className="presenter-gamma-frame"
+              onLoadError={onClose}
+            />
           </div>
 
           {/* Olivia PIP Overlay */}
