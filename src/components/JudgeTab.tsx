@@ -1596,7 +1596,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           onClick={() => setPanelMediaOpen(prev => !prev)}
         >
           <span className="panel-icon">🎬</span>
-          <span className="panel-title">JUDGE'S VIDEO & MEDIA</span>
+          <span className="panel-title">JUDGES VIDEO FINDINGS</span>
           <span className="panel-summary">
             {judgeReport?.videoStatus === 'ready' ? 'Video ready' :
              isGeneratingVideo ? 'Generating...' :
