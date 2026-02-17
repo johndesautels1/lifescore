@@ -484,6 +484,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
+    // Fire-and-forget: notify admins of new signup (never blocks UI)
+    if (!error) {
+      fetch('/api/admin/new-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, fullName }),
+      }).catch(() => { /* silent — admin alert is non-critical */ });
+    }
+
     setState(prev => ({
       ...prev,
       isLoading: false,
