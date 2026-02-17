@@ -95,7 +95,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ updatePasswor
               </div>
             </div>
           ) : (
-            <form className="login-form" onSubmit={handleSubmit}>
+            <form className="login-form" onSubmit={handleSubmit} autoComplete="on">
               <div className="form-group">
                 <label htmlFor="newPassword">New Password</label>
                 <div className="input-wrapper">
@@ -107,6 +107,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ updatePasswor
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="newPassword"
+                    name="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimum 6 characters"
@@ -136,6 +137,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ updatePasswor
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="confirmNewPassword"
+                    name="confirmPassword"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter your new password"

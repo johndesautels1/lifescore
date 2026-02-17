@@ -610,7 +610,7 @@ const LoginScreen: React.FC = () => {
 
           {/* Forgot Password Form */}
           {mode === 'forgot' && (
-            <form className="login-form" onSubmit={handleForgotPassword}>
+            <form className="login-form" onSubmit={handleForgotPassword} autoComplete="on">
               <div className="form-group">
                 <label htmlFor="resetEmail">Email Address</label>
                 <div className="input-wrapper">
@@ -622,6 +622,7 @@ const LoginScreen: React.FC = () => {
                   <input
                     type="email"
                     id="resetEmail"
+                    name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
