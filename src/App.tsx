@@ -49,7 +49,7 @@ import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
-import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
+import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveComparisonLocal, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
 import { useJobTracker } from './hooks/useJobTracker';
@@ -388,12 +388,30 @@ const AppContent: React.FC = () => {
         );
         pendingComparisonJobRef.current = null;
       }
+
+      // === AUTO-SAVE on completion (prevents losing expensive reports) ===
+      if (standardJustCompleted && state.result) {
+        saveComparisonLocal(state.result)
+          .then(() => {
+            console.log('[App] Auto-saved standard comparison:', state.result!.comparisonId);
+            handleSaved();
+          })
+          .catch(err => console.warn('[App] Auto-save standard failed (non-fatal):', err));
+      }
+      if (enhancedJustCompleted && enhancedResult) {
+        saveEnhancedComparisonLocal(enhancedResult)
+          .then(() => {
+            console.log('[App] Auto-saved enhanced comparison:', enhancedResult!.comparisonId);
+            handleSaved();
+          })
+          .catch(err => console.warn('[App] Auto-save enhanced failed (non-fatal):', err));
+      }
     }
 
     // Update refs after handling transitions
     prevEnhancedStatusRef.current = enhancedStatus;
     prevStandardStatusRef.current = state.status;
-  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify]);
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify, state.result, enhancedResult, handleSaved]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
@@ -1123,6 +1141,7 @@ const AppContent: React.FC = () => {
                     dealbreakers={dealbreakers}
                     customWeights={customWeights}
                     onSaved={handleSaved}
+                    savedKey={savedKey}
                   />
                   
                   {/* ADD MORE MODELS SECTION - Phase 3 Incremental LLM Feature */}
@@ -1184,7 +1203,7 @@ const AppContent: React.FC = () => {
               {/* Standard Results */}
               {!enhancedMode && state.status === 'success' && state.result && (
                 <>
-                  <Results result={state.result} onSaved={handleSaved} customWeights={customWeights} />
+                  <Results result={state.result} onSaved={handleSaved} customWeights={customWeights} savedKey={savedKey} />
                   <div className="new-comparison">
                     <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
                       ← New Comparison

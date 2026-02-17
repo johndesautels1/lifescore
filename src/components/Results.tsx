@@ -420,16 +420,18 @@ interface ResultsProps {
   result: ComparisonResult;
   onSaved?: () => void;
   customWeights?: Record<string, number> | null;  // User's persona weights (Digital Nomad, etc.)
+  /** Bumped by App.tsx after auto-save so the button reflects the saved state */
+  savedKey?: number;
 }
 
-export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights }) => {
+export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights, savedKey }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setIsSaved(isComparisonSaved(result.comparisonId));
-  }, [result.comparisonId]);
+  }, [result.comparisonId, savedKey]);
 
   // FIXED 2026-01-25: Added loading state for better UX feedback
   const handleSave = async () => {

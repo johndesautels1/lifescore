@@ -1234,6 +1234,8 @@ interface EnhancedResultsProps {
   onToggleEvidence?: () => void;
   customWeights?: Record<string, number> | null;  // User's persona weights (Digital Nomad, etc.)
   onSaved?: () => void;  // Callback when comparison is saved successfully
+  /** Bumped by App.tsx after auto-save so the button reflects the saved state */
+  savedKey?: number;
 }
 
 // Helper to calculate top metric differences
@@ -1306,7 +1308,7 @@ const calculateTopDifferences = (result: EnhancedComparisonResult, count: number
   return differences.sort((a, b) => b.difference - a.difference).slice(0, count);
 };
 
-export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [], customWeights, onSaved }) => {
+export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbreakers = [], customWeights, onSaved, savedKey }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [isSaved, setIsSaved] = useState(false);
@@ -1396,7 +1398,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
 
   useEffect(() => {
     setIsSaved(isEnhancedComparisonSaved(result.comparisonId));
-  }, [result.comparisonId]);
+  }, [result.comparisonId, savedKey]);
 
   // Close tooltip on outside tap or scroll (mobile fix)
   useEffect(() => {
