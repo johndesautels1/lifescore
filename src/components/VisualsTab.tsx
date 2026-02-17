@@ -15,11 +15,26 @@
  *  #9  Save button disabled when URL missing
  *  #10 Removed duplicate saved reports list (unified dropdown covers it)
  *  #11 Surfaced Read / Live Presenter / Generate Video as top-level modes
+ *
+ * Audit fixes (2026-02-17):
+ *  6.1   Stale closure: gunData after await (fetchGunComparison now returns data)
+ *  3.3   Missing startTransition in handleReset deps
+ *  3.4   Missing startTransition in enterMode deps
+ *  5.3   Extracted onChange handler to memoized handleSelectorChange
+ *  8.1   setTimeout cleanup via saveTimeoutRef
+ *  8.2   Async unmount guard in Supabase sync effect
+ *  9.1   type="button" on all buttons
+ *  9.2-4 aria-pressed on toggle buttons
+ *  9.5   htmlFor/id on label+select
+ *  9.6   aria-label on close button
+ *  11.1  Removed unused enhancedResult prop
+ *  11.2  Removed unused simpleResult prop + ComparisonResult import
+ *  12.2  Eliminated handleGammaWaitHere wrapper
+ *  12.3  Memoized handleGammaNotifyMe
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useTransition, useRef } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
-import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
 import {
   generateAndWaitForReport,
@@ -92,14 +107,10 @@ interface JudgeReportData {
   };
 }
 
+// Audit 11.1 & 11.2: Removed unused enhancedResult and simpleResult props
 interface VisualsTabProps {
   result: AnyComparisonResult | null;
-  // Optional: for backward compatibility, accept enhanced result separately
-  enhancedResult?: EnhancedComparisonResult | null;
-  simpleResult?: ComparisonResult | null;
-  // Optional: Judge report data for enhanced reports
   judgeReport?: JudgeReportData | null;
-  // LIFTED STATE: Gamma report state (persists across tab switches)
   reportState?: VisualReportState;
   setReportState?: React.Dispatch<React.SetStateAction<VisualReportState>>;
   exportFormat?: 'pdf' | 'pptx';
@@ -128,6 +139,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const { createJob, completeJobAndNotify } = useJobTracker();
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const pendingJobRef = useRef<string | null>(null);
+
+  // Audit 8.1: Ref for setTimeout cleanup to prevent state updates after unmount
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(saveTimeoutRef.current), []);
 
   // Enhanced report options
   const [reportType, setReportType] = useState<'standard' | 'enhanced'>('standard');
@@ -200,26 +215,25 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // INP fix: mark presenter mount/unmount as a non-urgent transition
   const [isPending, startTransition] = useTransition();
 
-  // Load saved reports from localStorage, then always sync from Supabase
+  // Audit 8.2: Async unmount guard in Supabase sync effect
   useEffect(() => {
+    let cancelled = false;
     const localReports = getSavedGammaReports();
     setSavedReports(localReports);
 
-    // Always sync from Supabase — merges any reports saved on other devices
-    // or reports that were lost from localStorage (browser cleanup, etc.)
     syncGammaReportsFromSupabase().then((synced) => {
-      if (synced.length > 0) {
+      if (!cancelled && synced.length > 0) {
         console.log('[VisualsTab] Synced', synced.length, 'Gamma reports (local + Supabase merged)');
         setSavedReports(synced);
       }
     }).catch(err => {
       console.error('[VisualsTab] Supabase sync failed:', err);
     });
+    return () => { cancelled = true; };
   }, [reportsRefreshKey, isReportSaved]);
 
   // Auto-save Gamma reports when generation completes
   useEffect(() => {
-    // Log conditions for debugging persistence issues
     if (reportState.status === 'completed') {
       console.log('[VisualsTab] Auto-save check:', {
         status: reportState.status,
@@ -259,7 +273,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         setReportsRefreshKey(k => k + 1);
         console.log('[VisualsTab] Auto-save complete. Verifying localStorage:', getSavedGammaReports().length, 'reports');
       } else {
-        // Report already exists — mark as saved so we don't keep checking
         setIsReportSaved(true);
       }
     }
@@ -269,7 +282,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const comparisonId = result?.comparisonId || '';
   const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
 
-  // Find the matching saved report for current comparison (for "View Existing Report")
   const existingReport = isAlreadySaved
     ? savedReports.find(r => r.comparisonId === comparisonId) || null
     : null;
@@ -283,28 +295,31 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     );
   }, [result, viewingReport]);
 
+  // Audit 8.1: Helper to set save message with auto-clear (cleans up on unmount)
+  const showSaveMessage = useCallback((msg: string, durationMs = 3000) => {
+    setSaveMessage(msg);
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => setSaveMessage(null), durationMs);
+  }, []);
+
   const handleSaveReport = useCallback(() => {
     if (!result) {
-      setSaveMessage('Error: No comparison data available');
-      setTimeout(() => setSaveMessage(null), 3000);
+      showSaveMessage('Error: No comparison data available');
       return;
     }
 
     if (!reportState.gammaUrl) {
-      setSaveMessage('Error: Report URL not available. Please regenerate the report.');
-      setTimeout(() => setSaveMessage(null), 5000);
+      showSaveMessage('Error: Report URL not available. Please regenerate the report.', 5000);
       console.error('[VisualsTab] Save failed: gammaUrl is undefined. Report state:', reportState);
       return;
     }
 
     if (!reportState.generationId) {
-      setSaveMessage('Error: Generation ID missing. Please regenerate the report.');
-      setTimeout(() => setSaveMessage(null), 5000);
+      showSaveMessage('Error: Generation ID missing. Please regenerate the report.', 5000);
       console.error('[VisualsTab] Save failed: generationId is undefined. Report state:', reportState);
       return;
     }
 
-    // FIX: Generate fallback comparisonId if missing (must be UUID for Supabase FK)
     const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
 
     console.log('[VisualsTab] Saving report:', {
@@ -315,7 +330,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       generationId: reportState.generationId,
     });
 
-    const savedReport = saveGammaReport({
+    saveGammaReport({
       comparisonId: effectiveComparisonId,
       city1: result.city1.city,
       city2: result.city2.city,
@@ -327,12 +342,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       generationId: reportState.generationId,
     });
 
-    console.log('[VisualsTab] Report saved successfully:', savedReport);
-
     setIsReportSaved(true);
-    setSaveMessage('Report saved to your library!');
-    setTimeout(() => setSaveMessage(null), 3000);
-  }, [result, reportState]);
+    showSaveMessage('Report saved to your library!');
+  }, [result, reportState, showSaveMessage]);
 
   const handleGenerateReport = useCallback(async () => {
     if (!result) return;
@@ -340,17 +352,13 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     // FIX #2: Clear any saved report being viewed when generating
     setViewingReport(null);
 
-    // ADMIN BYPASS: Skip usage checks for admin users
     if (!isAdmin) {
-      // Check usage limits before generating Gamma report
       const usageResult = await checkUsage('gammaReports');
       if (!usageResult.allowed) {
         console.log('[VisualsTab] Gamma report limit reached:', usageResult);
         setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
         return;
       }
-
-      // Increment usage counter before starting generation
       await incrementUsage('gammaReports');
       console.log('[VisualsTab] Incremented gammaReports usage');
     }
@@ -358,22 +366,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     try {
       setReportState({ status: 'generating', progress: 0 });
 
-      // Determine which generation function to use
       const isEnhanced = reportType === 'enhanced' && isEnhancedResult(result);
 
       if (isEnhanced) {
-        // Enhanced 82-page report
         console.log('[VisualsTab] Generating enhanced 82-page report');
 
-        // Fetch gun data if requested and not already cached
+        // Audit 6.1: Use return value from fetchGunComparison to avoid stale closure
         let gunDataToUse: GunComparisonData | undefined = undefined;
         if (includeGunRights) {
           if (gunData) {
             gunDataToUse = gunData;
           } else if (gunStatus !== 'loading') {
-            // Fetch gun comparison data
-            await fetchGunComparison(result.city1.city, result.city2.city);
-            gunDataToUse = gunData || undefined;
+            const fetched = await fetchGunComparison(result.city1.city, result.city2.city);
+            gunDataToUse = fetched || undefined;
           }
         }
 
@@ -396,7 +401,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           progress: 100,
         });
       } else {
-        // Standard 35-page report (existing behavior)
         console.log('[VisualsTab] Generating standard report');
 
         const finalState = await generateAndWaitForReport(
@@ -424,24 +428,22 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     }
   }, [result, exportFormat, reportType, includeGunRights, gunData, gunStatus, fetchGunComparison, propsJudgeReport, checkUsage, incrementUsage, isAdmin, setReportState]);
 
+  // Audit 3.3: Added startTransition to deps
   const handleReset = useCallback(() => {
     setReportState({ status: 'idle' });
     setIsReportSaved(false);
     setShowEmbedded(false);
     startTransition(() => setReportViewMode('read'));
-  }, [setReportState, setShowEmbedded]);
+  }, [setReportState, setShowEmbedded, startTransition]);
 
-  // FIX #11: Enter a specific view mode
+  // Audit 3.4: Added startTransition to deps
   const enterMode = useCallback((mode: ReportViewMode) => {
     setShowEmbedded(true);
     startTransition(() => setReportViewMode(mode));
-  }, [setShowEmbedded]);
+  }, [setShowEmbedded, startTransition]);
 
-  const handleGammaWaitHere = () => {
-    handleGenerateReport();
-  };
-
-  const handleGammaNotifyMe = async (channels: NotifyChannel[]) => {
+  // Audit 12.3: Memoized handleGammaNotifyMe
+  const handleGammaNotifyMe = useCallback(async (channels: NotifyChannel[]) => {
     const city1 = result?.city1?.city || '';
     const city2 = result?.city2?.city || '';
     const jobId = await createJob({
@@ -454,7 +456,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       toastInfo(`We'll notify you when your Gamma report is ready.`);
     }
     handleGenerateReport();
-  };
+  }, [result, createJob, handleGenerateReport]);
 
   // Fire pending notification when Gamma report generation completes
   useEffect(() => {
@@ -473,6 +475,29 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     }
   }, [reportState.status, reportState.gammaUrl, result, completeJobAndNotify]);
 
+  // Audit 5.3: Extracted selector onChange to memoized handler
+  const handleSelectorChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+
+    if (value.startsWith('gamma:')) {
+      const reportId = value.replace('gamma:', '');
+      const report = savedReports.find(r => r.id === reportId);
+      if (report) {
+        setViewingReport(report);
+        setSelectedComparisonId(null);
+        startTransition(() => setReportViewMode('read'));
+      }
+    } else {
+      setViewingReport(null);
+      setSelectedComparisonId(value === '' ? null : value);
+      if (value !== selectedComparisonId) {
+        setReportState({ status: 'idle' });
+        setIsReportSaved(false);
+        setShowEmbedded(false);
+      }
+    }
+  }, [savedReports, selectedComparisonId, setReportState, setShowEmbedded, startTransition]);
+
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
   const hasAnything = !!result || hasSavedComparisons || savedReports.length > 0;
 
@@ -490,6 +515,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // ============================================================================
   // SHARED: Mode selector buttons used in both completed state & saved viewer
   // FIX #4, #11: Always visible when a Gamma URL exists
+  // Audit 9.1: type="button", 9.2-4: aria-pressed, 9.6: aria-label
   // ============================================================================
   const renderModeSelector = (
     gammaUrl: string,
@@ -500,24 +526,30 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       <div className="embedded-actions">
         <div className="report-view-toggle">
           <button
+            type="button"
             className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
             onClick={() => enterMode('read')}
+            aria-pressed={reportViewMode === 'read'}
           >
             📖 Read
           </button>
           <button
-            className={`view-toggle-btn ${reportViewMode === 'live' ? 'active' : ''} ${isPending ? 'loading' : ''}`}
+            type="button"
+            className={`view-toggle-btn ${reportViewMode === 'live' ? 'active' : ''}`}
             onClick={() => enterMode('live')}
             disabled={!presenterAvailable}
             title={!presenterAvailable ? 'Load a matching comparison to enable presenter' : 'Olivia presents the report live'}
+            aria-pressed={reportViewMode === 'live'}
           >
             {isPending && reportViewMode === 'live' ? '...' : '🎙️ Live Presenter'}
           </button>
           <button
-            className={`view-toggle-btn ${reportViewMode === 'video' ? 'active' : ''} ${isPending ? 'loading' : ''}`}
+            type="button"
+            className={`view-toggle-btn ${reportViewMode === 'video' ? 'active' : ''}`}
             onClick={() => enterMode('video')}
             disabled={!presenterAvailable}
             title={!presenterAvailable ? 'Load a matching comparison to enable video' : 'Generate a polished video with Olivia'}
+            aria-pressed={reportViewMode === 'video'}
           >
             {isPending && reportViewMode === 'video' ? '...' : '🎬 Watch Video'}
           </button>
@@ -531,8 +563,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           Open External ↗
         </a>
         <button
+          type="button"
           className="close-embed-btn"
           onClick={onClose}
+          aria-label="Close embedded report"
         >
           ✕ Close
         </button>
@@ -568,7 +602,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         />
       );
     }
-    // Default: read mode — GammaIframe (FIX #5, #6, #7)
     return (
       <GammaIframe
         gammaUrl={gammaUrl}
@@ -580,37 +613,17 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   return (
     <div className="visuals-tab">
       {/* ================================================================
-          FIX #1 & #10: UNIFIED SELECTOR — single dropdown for comparisons + saved reports
+          FIX #1 & #10: UNIFIED SELECTOR
+          Audit 9.5: htmlFor/id on label+select
           ================================================================ */}
       {(hasSavedComparisons || savedReports.length > 0) && (
         <div className="report-selector-section">
-          <label className="report-selector-label">📊 Select Report:</label>
+          <label className="report-selector-label" htmlFor="report-selector">📊 Select Report:</label>
           <select
+            id="report-selector"
             className="report-selector-dropdown"
             value={viewingReport ? `gamma:${viewingReport.id}` : selectedComparisonId ?? ''}
-            onChange={(e) => {
-              const value = e.target.value;
-
-              if (value.startsWith('gamma:')) {
-                // Selected a saved Gamma report
-                const reportId = value.replace('gamma:', '');
-                const report = savedReports.find(r => r.id === reportId);
-                if (report) {
-                  setViewingReport(report);
-                  setSelectedComparisonId(null);
-                  startTransition(() => setReportViewMode('read'));
-                }
-              } else {
-                // Selected a comparison (or cleared)
-                setViewingReport(null);
-                setSelectedComparisonId(value === '' ? null : value);
-                if (value !== selectedComparisonId) {
-                  setReportState({ status: 'idle' });
-                  setIsReportSaved(false);
-                  setShowEmbedded(false);
-                }
-              }
-            }}
+            onChange={handleSelectorChange}
           >
             <option value="">
               {propResult
@@ -650,7 +663,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         </div>
       )}
 
-      {/* No result selected message */}
       {!result && !viewingReport && (
         <div className="no-results-message card">
           <h3>Select a Report</h3>
@@ -660,7 +672,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
       {/* ================================================================
           GAMMA REPORT GENERATION SECTION
-          FIX #2: Hidden when viewing a saved report (mutual exclusivity)
           ================================================================ */}
       {result && !viewingReport && (
       <div className="gamma-section card">
@@ -672,7 +683,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           Create a professional presentation of your {result.city1.city} vs {result.city2.city} comparison.
         </p>
 
-        {/* Existing Report Banner — shown when a saved report matches this comparison */}
         {reportState.status === 'idle' && existingReport && (
           <div className="existing-report-banner">
             <div className="existing-report-info">
@@ -686,6 +696,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             </div>
             <div className="existing-report-actions">
               <button
+                type="button"
                 className="existing-report-btn view"
                 onClick={() => setViewingReport(existingReport)}
               >
@@ -718,21 +729,24 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         {reportState.status === 'idle' && (
           <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
             <div className="generate-controls">
-              {/* Report Type Toggle */}
               <div className="report-type-selector">
                 <label>Report Type:</label>
                 <div className="report-type-options">
                   <button
+                    type="button"
                     className={`type-btn ${reportType === 'standard' ? 'active' : ''}`}
                     onClick={() => setReportType('standard')}
+                    aria-pressed={reportType === 'standard'}
                   >
                     Standard (35 pages)
                   </button>
                   <button
+                    type="button"
                     className={`type-btn ${reportType === 'enhanced' ? 'active' : ''}`}
                     onClick={() => setReportType('enhanced')}
                     disabled={!isEnhancedResult(result)}
                     title={!isEnhancedResult(result) ? 'Requires Enhanced Comparison (multi-LLM)' : 'Generate comprehensive 82-page report'}
+                    aria-pressed={reportType === 'enhanced'}
                   >
                     Enhanced (82 pages)
                   </button>
@@ -742,7 +756,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 )}
               </div>
 
-              {/* Gun Rights Checkbox (only for enhanced) */}
               {reportType === 'enhanced' && isEnhancedResult(result) && (
                 <div className="gun-rights-option">
                   <label className="checkbox-label">
@@ -761,20 +774,25 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 <label>Export Format:</label>
                 <div className="format-options">
                   <button
+                    type="button"
                     className={`format-btn ${exportFormat === 'pdf' ? 'active' : ''}`}
                     onClick={() => setExportFormat('pdf')}
+                    aria-pressed={exportFormat === 'pdf'}
                   >
                     PDF
                   </button>
                   <button
+                    type="button"
                     className={`format-btn ${exportFormat === 'pptx' ? 'active' : ''}`}
                     onClick={() => setExportFormat('pptx')}
+                    aria-pressed={exportFormat === 'pptx'}
                   >
                     PowerPoint
                   </button>
                 </div>
               </div>
               <button
+                type="button"
                 className="generate-btn primary-btn"
                 onClick={() => setShowNotifyModal(true)}
               >
@@ -786,7 +804,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
         {(reportState.status === 'generating' || reportState.status === 'polling') && (
           <div className="generating-state">
-            {/* Spinner + Percentage */}
             <div className="progress-header">
               <div className="spinner"></div>
               <span className="progress-percentage">{reportState.progress || 0}%</span>
@@ -813,7 +830,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               Report generated successfully!
             </div>
 
-            {/* Save Report Button — FIX #9: disabled when URL missing */}
             <div className="save-report-section">
               {saveMessage && (
                 <span className={`save-message ${saveMessage.startsWith('Error') ? 'error' : ''}`}>
@@ -821,6 +837,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 </span>
               )}
               <button
+                type="button"
                 className={`save-report-btn ${isReportSaved || isAlreadySaved ? 'saved' : ''} ${!reportState.gammaUrl ? 'disabled-url' : ''}`}
                 onClick={handleSaveReport}
                 disabled={isReportSaved || isAlreadySaved || !reportState.gammaUrl}
@@ -830,7 +847,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               </button>
             </div>
 
-            {/* Download links row */}
             <div className="report-links">
               {reportState.pdfUrl && (
                 <a
@@ -853,6 +869,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 </a>
               )}
               <button
+                type="button"
                 className="reset-btn secondary-btn"
                 onClick={handleReset}
               >
@@ -860,12 +877,11 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               </button>
             </div>
 
-            {/* FIX #4, #11: Mode selector + embedded content */}
             {reportState.gammaUrl && (
               <div className="embedded-report">
                 {renderModeSelector(
                   reportState.gammaUrl,
-                  !!result, // presenter available if we have comparison data
+                  !!result,
                   () => { setShowEmbedded(false); startTransition(() => setReportViewMode('read')); },
                 )}
                 {showEmbedded && renderModeContent(
@@ -885,6 +901,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               {reportState.error}
             </div>
             <button
+              type="button"
               className="retry-btn secondary-btn"
               onClick={handleReset}
             >
@@ -897,22 +914,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
       {/* ================================================================
           VIEWING A SAVED REPORT
-          FIX #2: Mutual exclusivity with generation section
-          FIX #3: Warns if result cities don't match saved report
           ================================================================ */}
       {viewingReport && (
         <div className="saved-report-viewer card">
           <div className="saved-report-viewer-title">
             <h3>{viewingReport.city1} vs {viewingReport.city2} — Saved Report</h3>
-            {/* FIX #3: Mismatch warning */}
             {result && !resultMatchesViewingReport && (
               <p className="city-mismatch-warning">
                 Active comparison ({result.city1.city} vs {result.city2.city}) doesn't match this report.
                 Presenter narration won't be accurate.
               </p>
             )}
-            {/* Delete button for the viewed report */}
             <button
+              type="button"
               className="report-action-btn delete"
               onClick={() => {
                 if (window.confirm(`Delete report for ${viewingReport.city1} vs ${viewingReport.city2}?`)) {
@@ -927,7 +941,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             </button>
           </div>
 
-          {/* Download links for saved report */}
           {(viewingReport.pdfUrl || viewingReport.pptxUrl) && (
             <div className="report-links" style={{ marginBottom: '0.75rem' }}>
               {viewingReport.pdfUrl && (
@@ -943,14 +956,12 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             </div>
           )}
 
-          {/* FIX #4, #11: Mode selector always visible for saved reports */}
           {renderModeSelector(
             viewingReport.gammaUrl,
-            !!result && resultMatchesViewingReport, // FIX #3: disable presenter on mismatch
+            !!result && resultMatchesViewingReport,
             () => { setViewingReport(null); startTransition(() => setReportViewMode('read')); },
           )}
 
-          {/* Content area */}
           {renderModeContent(
             viewingReport.gammaUrl,
             result && resultMatchesViewingReport ? result : null,
@@ -978,11 +989,11 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
         )
       )}
-      {/* Notify Me Modal */}
+      {/* Audit 12.2: Eliminated handleGammaWaitHere wrapper — pass handleGenerateReport directly */}
       <NotifyMeModal
         isOpen={showNotifyModal}
         onClose={() => setShowNotifyModal(false)}
-        onWaitHere={handleGammaWaitHere}
+        onWaitHere={handleGenerateReport}
         onNotifyMe={handleGammaNotifyMe}
         taskLabel="Gamma Report"
         estimatedSeconds={90}

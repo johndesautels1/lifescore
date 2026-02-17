@@ -36,7 +36,7 @@ export function useGunComparison() {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const fetchComparison = useCallback(async (cityA: string, cityB: string) => {
+  const fetchComparison = useCallback(async (cityA: string, cityB: string): Promise<GunComparisonData | null> => {
     // Check cache first
     const key = getCacheKey(cityA, cityB);
     const cached = cache.get(key);
@@ -44,7 +44,7 @@ export function useGunComparison() {
       setData(cached);
       setStatus('ready');
       setError(null);
-      return;
+      return cached;
     }
 
     // Abort any pending request
@@ -73,11 +73,13 @@ export function useGunComparison() {
       cache.set(key, result);
       setData(result);
       setStatus('ready');
+      return result;
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (err instanceof DOMException && err.name === 'AbortError') return null;
       const message = err instanceof Error ? err.message : 'Failed to fetch gun comparison';
       setError(message);
       setStatus('error');
+      return null;
     }
   }, []);
 
