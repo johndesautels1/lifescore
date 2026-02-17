@@ -76,8 +76,8 @@ import './JudgeTab.css';
 
 /** Get the total score from either Enhanced (totalConsensusScore) or Standard (totalScore) city data */
 function getCityTotalScore(city: EnhancedComparisonResult['city1'] | ComparisonResult['city1']): number {
-  if ('totalConsensusScore' in city) return city.totalConsensusScore;
-  if ('totalScore' in city) return city.totalScore;
+  if ('totalConsensusScore' in city) return Number(city.totalConsensusScore) || 0;
+  if ('totalScore' in city) return Number(city.totalScore) || 0;
   return 0;
 }
 
@@ -131,31 +131,33 @@ function buildJudgeReport(
     videoStatus = 'error';
   }
 
+  // Defensive: coerce every field that gets rendered in JSX to primitives.
+  // Supabase / localStorage can return unexpected shapes (Promise<any | null>).
   return {
-    reportId: source.reportId,
-    generatedAt: source.generatedAt,
-    userId: overrides?.userId ?? source.userId,
-    comparisonId: source.comparisonId,
-    city1: source.city1,
-    city2: source.city2,
-    city1Country: source.city1Country,
-    city2Country: source.city2Country,
+    reportId: String(source.reportId || ''),
+    generatedAt: String(source.generatedAt || ''),
+    userId: String(overrides?.userId ?? source.userId ?? ''),
+    comparisonId: String(source.comparisonId || ''),
+    city1: String(source.city1 || ''),
+    city2: String(source.city2 || ''),
+    city1Country: source.city1Country ? String(source.city1Country) : undefined,
+    city2Country: source.city2Country ? String(source.city2Country) : undefined,
     videoUrl,
-    videoStatus: (videoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
+    videoStatus: String(videoStatus || 'pending') as 'pending' | 'generating' | 'ready' | 'error',
     summaryOfFindings: {
-      city1Score: source.summaryOfFindings.city1Score,
-      city1Trend: (source.summaryOfFindings.city1Trend || 'stable') as 'improving' | 'stable' | 'declining',
-      city2Score: source.summaryOfFindings.city2Score,
-      city2Trend: (source.summaryOfFindings.city2Trend || 'stable') as 'improving' | 'stable' | 'declining',
-      overallConfidence: source.summaryOfFindings.overallConfidence as 'high' | 'medium' | 'low',
+      city1Score: Number(source.summaryOfFindings.city1Score) || 0,
+      city1Trend: String(source.summaryOfFindings.city1Trend || 'stable') as 'improving' | 'stable' | 'declining',
+      city2Score: Number(source.summaryOfFindings.city2Score) || 0,
+      city2Trend: String(source.summaryOfFindings.city2Trend || 'stable') as 'improving' | 'stable' | 'declining',
+      overallConfidence: String(source.summaryOfFindings.overallConfidence || 'medium') as 'high' | 'medium' | 'low',
     },
-    categoryAnalysis: source.categoryAnalysis || [],
+    categoryAnalysis: Array.isArray(source.categoryAnalysis) ? source.categoryAnalysis : [],
     executiveSummary: {
-      recommendation: source.executiveSummary.recommendation as 'city1' | 'city2' | 'tie',
-      rationale: source.executiveSummary.rationale,
-      keyFactors: source.executiveSummary.keyFactors || [],
-      futureOutlook: source.executiveSummary.futureOutlook || '',
-      confidenceLevel: (source.executiveSummary.confidenceLevel || source.summaryOfFindings.overallConfidence) as 'high' | 'medium' | 'low',
+      recommendation: String(source.executiveSummary.recommendation || 'tie') as 'city1' | 'city2' | 'tie',
+      rationale: String(source.executiveSummary.rationale || ''),
+      keyFactors: Array.isArray(source.executiveSummary.keyFactors) ? source.executiveSummary.keyFactors : [],
+      futureOutlook: String(source.executiveSummary.futureOutlook || ''),
+      confidenceLevel: String(source.executiveSummary.confidenceLevel || source.summaryOfFindings.overallConfidence || 'medium') as 'high' | 'medium' | 'low',
     },
     freedomEducation: source.freedomEducation,
   };
@@ -1393,7 +1395,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const city2Region = ALL_METROS.find(m => m.city === city2Name && m.country === city2Country)?.region
     || ALL_METROS.find(m => m.city === city2Name)?.region
     || '';
-  const reportId = judgeReport?.reportId
+  const reportId = (typeof judgeReport?.reportId === 'string' ? judgeReport.reportId : null)
     || `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
   // Pre-compute winner/loser derived values to avoid repeating the same ternary 9+ times
