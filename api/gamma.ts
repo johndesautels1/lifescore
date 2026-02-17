@@ -27,7 +27,7 @@ import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 const GAMMA_API_BASE = 'https://public-api.gamma.app/v1.0';
 const GAMMA_TIMEOUT_MS = 60000;  // 60 seconds for API calls
 const PERSIST_TIMEOUT_MS = 30000; // 30 seconds for download + upload
-const STORAGE_BUCKET = 'reports'; // Same bucket as HTML reports
+const STORAGE_BUCKET = 'gamma-exports'; // Dedicated public bucket for PDF/PPTX exports
 
 // ============================================================================
 // TYPES
@@ -132,7 +132,7 @@ async function persistGammaExport(
   format: 'pdf' | 'pptx',
   supabaseAdmin: ReturnType<typeof createClient>
 ): Promise<PersistedExport | null> {
-  const storagePath = `gamma-exports/${generationId}.${format}`;
+  const storagePath = `${generationId}.${format}`;
   const contentType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
   try {

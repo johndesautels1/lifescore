@@ -325,7 +325,7 @@ If you've forgotten your password:
 
 ### Backend
 - **Platform**: Vercel Serverless Functions (Node.js 20)
-- **Database**: Supabase (PostgreSQL) - 23 tables, 3 storage buckets
+- **Database**: Supabase (PostgreSQL) - 23 tables, 6 storage buckets
 - **Auth**: Supabase Auth with JWT verification
 
 ## Authentication & Password Recovery Architecture
@@ -548,7 +548,7 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - Admin email notification on new signup
 
 ### Resolved Issue (2026-02-17)
-- **Gamma export URLs (PDF/PPTX) expiring** — Asset materialization pattern: api/gamma.ts downloads exports from Gamma CDN on completion, uploads to Supabase Storage (reports bucket, gamma-exports/ folder). Returns permanent public URLs. New DB columns: pdf_storage_path, pptx_storage_path. Iframe error detection on all 4 embed locations. 11 files, 35 changes.
+- **Gamma export URLs (PDF/PPTX) expiring** — Asset materialization pattern: api/gamma.ts downloads exports from Gamma CDN on completion, uploads to Supabase Storage (gamma-exports public bucket). Returns permanent public URLs. New DB columns: pdf_storage_path, pptx_storage_path. Iframe error detection on all 4 embed locations. 11 files, 35 changes.
 
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
@@ -649,7 +649,7 @@ profiles, user_preferences, comparisons, olivia_conversations, gamma_reports, ju
 
 ## 2. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **3 storage buckets**.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buckets**.
 
 ### 2.1 All Tables
 
@@ -680,9 +680,12 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **3 storage buc
 | notifications | In-app bell + email notification records (Added 2026-02-16) |
 
 ### 1.2 Storage Buckets
-- **avatars** (5 MB) - User profile pictures
-- **judge-videos** (50 MB) - Judge avatar video cache
-- **user-videos** (100 MB) - Court Order video uploads
+- **reports** (200 MB) - HTML reports per user folder (private, RLS-controlled)
+- **user-videos** (100 MB) - User-uploaded Court Order videos
+- **contrast-images** (5 MB) - Permanent contrast image copies
+- **judge-videos** (50 MB) - Persisted Judge avatar videos
+- **court-order-videos** (50 MB) - Persisted Court Order videos
+- **gamma-exports** (50 MB) - Persisted Gamma PDF/PPTX exports (public)
 
 ---
 

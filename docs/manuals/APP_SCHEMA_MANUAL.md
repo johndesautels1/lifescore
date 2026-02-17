@@ -187,7 +187,7 @@ The `AuthContext` exposes these auth-related state properties:
 
 ## 2. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables**, **3 storage buckets**, **15 database functions**, and **13 triggers**. All tables have Row Level Security (RLS) enabled.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables**, **6 storage buckets**, **15 database functions**, and **13 triggers**. All tables have Row Level Security (RLS) enabled.
 
 ### 2.1 Core User Tables
 
@@ -370,7 +370,7 @@ Gamma-generated visual PDF/PPTX reports.
 
 **Persistence Fix (2026-02-14):** The `comparison_id` column has a foreign key reference to `comparisons(id)`. Previously, INSERT operations silently failed because the code was passing UUIDs that didn't exist in the `comparisons` table (the comparison_id format didn't match). The fire-and-forget `.then()` pattern swallowed the Postgres FK violation error. Now fixed with proper error handling and correct ID resolution.
 
-**Export URL Expiration Fix (2026-02-17):** Gamma CDN export URLs (PDF/PPTX) expire after hours/days. The `api/gamma.ts` endpoint now downloads exports immediately on generation completion and uploads to Supabase Storage (`reports` bucket, `gamma-exports/{generationId}.{format}` path). The `pdf_url`/`pptx_url` columns now store permanent Supabase Storage public URLs. The `pdf_storage_path`/`pptx_storage_path` columns track the Storage paths for cleanup/migration. Migration: `20260217_add_gamma_export_storage_paths.sql`.
+**Export URL Expiration Fix (2026-02-17):** Gamma CDN export URLs (PDF/PPTX) expire after hours/days. The `api/gamma.ts` endpoint now downloads exports immediately on generation completion and uploads to Supabase Storage (`gamma-exports` public bucket, `{generationId}.{format}` path). The `pdf_url`/`pptx_url` columns now store permanent Supabase Storage public URLs. The `pdf_storage_path`/`pptx_storage_path` columns track the Storage paths for cleanup/migration. Migrations: `20260217_add_gamma_export_storage_paths.sql` (DB columns), `20260217_create_gamma_exports_storage.sql` (Storage bucket).
 
 ---
 
@@ -738,6 +738,9 @@ Added TEXT column to profiles table for future SMS notification support.
 | `reports` | Public reads, RLS writes | HTML reports per user folder (`{userId}/*`) | 200MB, text/html MIME |
 | `user-videos` | Public reads, RLS writes | User-uploaded Court Order videos (`{userId}/{comparisonId}-{ts}.mp4`) | 100MB, video/* MIME |
 | `contrast-images` | Public reads, service-role writes | Permanent contrast image copies (`{key}_a.webp`, `{key}_b.webp`) | 5MB, image/* MIME |
+| `judge-videos` | Public reads, service-role writes | Persisted Judge avatar videos (`{comparisonId}.mp4`) | 50MB, video/mp4+webm |
+| `court-order-videos` | Public reads, service-role writes | Persisted Court Order videos (`{comparisonId}.mp4`) | 50MB, video/mp4+webm |
+| `gamma-exports` | Public reads, service-role writes | Persisted Gamma PDF/PPTX exports (`{generationId}.pdf`) | 50MB, application/pdf+pptx |
 
 ---
 
