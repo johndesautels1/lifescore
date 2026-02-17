@@ -394,7 +394,7 @@ const AppContent: React.FC = () => {
         saveComparisonLocal(state.result)
           .then(() => {
             console.log('[App] Auto-saved standard comparison:', state.result!.comparisonId);
-            setSavedKey(prev => prev + 1);
+            handleSaved();
           })
           .catch(err => console.warn('[App] Auto-save standard failed (non-fatal):', err));
       }
@@ -402,7 +402,7 @@ const AppContent: React.FC = () => {
         saveEnhancedComparisonLocal(enhancedResult)
           .then(() => {
             console.log('[App] Auto-saved enhanced comparison:', enhancedResult!.comparisonId);
-            setSavedKey(prev => prev + 1);
+            handleSaved();
           })
           .catch(err => console.warn('[App] Auto-save enhanced failed (non-fatal):', err));
       }
@@ -411,7 +411,7 @@ const AppContent: React.FC = () => {
     // Update refs after handling transitions
     prevEnhancedStatusRef.current = enhancedStatus;
     prevStandardStatusRef.current = state.status;
-  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify, state.result, enhancedResult]);
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify, state.result, enhancedResult, handleSaved]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
