@@ -557,6 +557,10 @@ Generate professional presentation-style reports:
 
 **Trophy Placement (Fixed 2026-02-14):** The 🏆 trophy in Gamma reports now correctly appears next to the **winning** city only. Previously, the trophy could appear next to the losing city due to a prompt formatting issue.
 
+**Permanent Downloads (Added 2026-02-17):** PDF and PPTX export files are now permanently stored. Previously, download links could expire after a few hours because they pointed to Gamma's temporary CDN. Now, export files are automatically saved to permanent storage when your report completes — download links will always work, even months later. If you see a broken download link on an older report, simply regenerate the report from the Visuals tab.
+
+**Expired Report Detection (Added 2026-02-17):** If a Gamma report embed can no longer load (e.g., the hosted document was removed), the app now shows a clear message instead of a broken page, with instructions to regenerate or use your saved PDF/PPTX exports.
+
 ### Saving Comparisons
 
 1. Click the **Star** icon to favorite a comparison
@@ -1101,3 +1105,4 @@ If you choose "Notify Me & Go":
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§12): Results score cards, category % badges, About services table, How It Works modules, Olivia READY/STOP buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. All scoped to ≤480px viewports. New "Mobile Display Issues" troubleshooting section. |
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | Full "Forgot Password" flow documented (§2): 3-step walkthrough covering reset request, email link, new password form, and data safety notes. Updated App Schema Manual with complete Authentication & Password Recovery architecture (§1.0). Updated CSM and Tech manuals with password reset troubleshooting and architecture. |
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notifications system (§17) with bell icon, "Notify Me" modal, email alerts. Explain the Winner toggle (§5). Confidence interval hover cards (§7). Glassmorphic Judge buttons (§7). Phone call audio warning (§7). Mobile warning modal (§12). Law vs Lived / Worst-Case illumination (§4). Dealbreakers A-Z sort (§4). Auto-scroll to top (§4). VS text dark mode fix (§10). Mobile +/- buttons and LLM badges fix (§12). Visuals labeling fix. Gamma links fix. Login credential storage fix. Judge stale state fix. Password reset redirect fix. Admin signup email. |
+| 3.7 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§9): Permanent Downloads note — PDF/PPTX exports now permanently stored in Supabase Storage. Expired Report Detection note — iframe error handling shows fallback message. |

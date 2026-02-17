@@ -350,6 +350,8 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Report not generating | Ensure comparison completed first |
 | "Generation ID missing" error | Fixed in Session 8 — the system now uses fallback ID from status response |
 | PDF download fails | Try PPTX format instead; clear cache |
+| PDF/PPTX download link broken (old report) | Fixed (2026-02-17) — Export URLs from Gamma's CDN expire after hours/days. New reports now automatically save PDF/PPTX to permanent storage. Old reports with expired links need to be regenerated. |
+| Report embed shows blank/error page | Fixed (2026-02-17) — Gamma may delete hosted documents over time. The system now detects iframe load failures and shows a helpful fallback message instead of a broken page. |
 | Report shows wrong data | Regenerate from fresh comparison |
 | Report links not clickable | Fixed (2026-02-16) — Gamma report URLs in VisualsTab now have proper CSS pointer-events and z-index |
 
@@ -358,6 +360,14 @@ Currently, LifeScore supports **200 metropolitan areas**:
 **Note (Updated 2026-02-14):** Two Gamma report issues fixed:
 - **Persistence fix:** Reports previously failed to save to the database due to a foreign key constraint on `comparison_id`. The save was fire-and-forget so errors were silently swallowed. Now fixed with proper error handling.
 - **Trophy placement fix:** The 🏆 trophy emoji in the Executive Summary was incorrectly placed next to the losing city instead of the winner. The Gamma AI prompt now explicitly marks which city is the winner with clear trophy placement rules.
+
+**Note (Updated 2026-02-17):** Gamma export URL expiration fix:
+- **PDF/PPTX exports** are now automatically downloaded from Gamma's CDN and stored permanently in Supabase Storage when a report completes. Download links never expire.
+- **Iframe error detection** added to all 4 Gamma embed locations. If a hosted Gamma document becomes unavailable, users see a clear message instead of a broken page.
+- **Existing reports** with expired export URLs will show broken download links. Advise users to regenerate the report.
+
+**Response Template (Expired Gamma Export):**
+> "Your report's download link has expired because Gamma's CDN URLs are temporary. New reports generated after February 17, 2026 will have permanent download links. To fix this, please regenerate your report from the Visuals tab — your comparison data is still saved."
 
 ### 5.6 Judge Page Issues (Added 2026-02-14)
 
@@ -978,6 +988,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page update: collapsible panels (§8.3), GoToMyNewCity video (§8.7), auto-restore videos on tab switch, missing 6 category sections fix, Judge dropdown INP fix. Video URL expiration: HEAD request validation for all providers, Court Order URL fix, HeyGen URL fix, localStorage quota protection (§5.4). Cost Dashboard $0.00 fix (§8.10). Cristiano video CTA + poster (§8.4). AUDIO badge + voice wave (§8.9). Storyboard progress bar. Dark mode saved reports fix. Judge report Supabase fallback. New customer inquiries (§4.5-4.9). New FAQs (§11). New glossary terms (§12). |
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | New §5.9 Mobile Display Issues: 9 mobile vertical overflow fixes documented with response template. Affected areas: Results score cards, category badges, About services table, How It Works modules, Olivia buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. |
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system (§5.10, §8.12) with troubleshooting and architecture. "Explain the Winner" toggle (§8.6a). Judge stale state fix (§5.6). VS text dark mode fix (§5.8). Gamma links fix (§5.5). Phone call audio warning (§5.4). Mobile warning modal (§5.9). Mobile +/- buttons and LLM badges fix. Password reset and login credential fixes. Admin signup notification. |
+| 3.6 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§5.5): PDF/PPTX exports now persisted to permanent Supabase Storage. Iframe error detection added to all 4 embed locations. New troubleshooting entries and response template for expired export URLs. |
 
 ---
 

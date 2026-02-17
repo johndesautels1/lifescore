@@ -117,6 +117,8 @@ If you've forgotten your password:
 
 #### Visual Reports
 - Generate PDF/PPTX reports via Gamma
+- **Permanent Downloads (2026-02-17):** PDF/PPTX exports are now permanently stored in Supabase Storage. Old reports with expired CDN links need regeneration.
+- **Expired Report Detection (2026-02-17):** If a Gamma embed fails to load, the app shows a clear message instead of a broken page.
 - AI-generated "New Life" videos (Freedom vs Imprisonment)
 - Judge verdict video with Court Order option
 - **Olivia Video Presenter** (HeyGen): Toggle "Listen to Presenter" to have Olivia narrate your Gamma report
@@ -296,6 +298,12 @@ If you've forgotten your password:
 ### "Explain the Winner toggle" (Added 2026-02-16)
 - New toggle in standard Results view showing AI narrative explaining the winner
 - Direct users to this if they ask "Why did City X win?"
+
+### "Gamma PDF/PPTX download link broken" (Fixed 2026-02-17)
+- Export URLs from Gamma's CDN expire after hours/days
+- New reports (after 2026-02-17) have permanent Supabase Storage URLs that never expire
+- Old reports with expired links need regeneration — comparison data is still saved
+- Iframe embeds that fail to load now show a clear fallback message
 
 ## Escalation Path
 
@@ -539,6 +547,9 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - Password reset redirect URL mismatch
 - Admin email notification on new signup
 
+### Resolved Issue (2026-02-17)
+- **Gamma export URLs (PDF/PPTX) expiring** — Asset materialization pattern: api/gamma.ts downloads exports from Gamma CDN on completion, uploads to Supabase Storage (reports bucket, gamma-exports/ folder). Returns permanent public URLs. New DB columns: pdf_storage_path, pptx_storage_path. Iframe error detection on all 4 embed locations. 11 files, 35 changes.
+
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
 - Supabase Dashboard > Logs
@@ -649,7 +660,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **3 storage buc
 | subscriptions | Stripe billing records |
 | olivia_conversations | Olivia chat threads |
 | olivia_messages | Olivia chat messages |
-| gamma_reports | Report URLs (with city1, city2 columns) |
+| gamma_reports | Report URLs + permanent storage paths (pdf_storage_path, pptx_storage_path added 2026-02-17) |
 | user_preferences | Single-row-per-user settings (JSONB columns) |
 | usage_tracking | Monthly usage limits |
 | consent_logs | GDPR consent records |
