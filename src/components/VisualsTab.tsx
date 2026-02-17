@@ -157,6 +157,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // Two-tab selector: Generate New Report vs View Existing Report
   const [selectorTab, setSelectorTab] = useState<'generate' | 'view'>('generate');
 
+  // Custom dropdown state for generate tab (allows styled "Enhanced" label)
+  const [generateDropdownOpen, setGenerateDropdownOpen] = useState(false);
+  const generateDropdownRef = useRef<HTMLDivElement>(null);
+
   // Load saved comparisons with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
   const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
@@ -177,6 +181,18 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [refreshComparisons]);
+
+  // Close custom dropdown on outside click
+  useEffect(() => {
+    if (!generateDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (generateDropdownRef.current && !generateDropdownRef.current.contains(e.target as Node)) {
+        setGenerateDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [generateDropdownOpen]);
 
   // FIX #8: Memoize comparison lookup instead of running on every render
   const result = useMemo((): AnyComparisonResult | null => {
@@ -534,6 +550,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   }, [selectedComparisonId, setReportState, setShowEmbedded]);
 
   // Handler for "View" tab dropdown — selecting an existing Gamma report
+  // Auto-loads matching comparison data so presenter/video buttons are enabled
   const handleViewTabSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === '') {
@@ -543,10 +560,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     const report = savedReports.find(r => r.id === value);
     if (report) {
       setViewingReport(report);
-      setSelectedComparisonId(null);
+      // Find matching comparison data for this report's comparisonId
+      const matchingEnhanced = savedEnhanced.find(c => c.result.comparisonId === report.comparisonId);
+      const matchingStandard = savedComparisons.find(c => c.result.comparisonId === report.comparisonId);
+      if (matchingEnhanced) {
+        setSelectedComparisonId(matchingEnhanced.result.comparisonId);
+      } else if (matchingStandard) {
+        setSelectedComparisonId(matchingStandard.result.comparisonId);
+      } else {
+        setSelectedComparisonId(null);
+      }
       startTransition(() => setReportViewMode('read'));
     }
-  }, [savedReports, startTransition]);
+  }, [savedReports, savedEnhanced, savedComparisons, startTransition]);
 
   // Extracted delete handler — avoids complex inline function in JSX
   const handleDeleteViewingReport = useCallback(() => {
@@ -560,6 +586,17 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
   const hasAnything = !!result || hasSavedComparisons || savedReports.length > 0;
+
+  // Helper to render dropdown label with amber "Enhanced" or dim "Standard"
+  const renderDropdownLabel = (label: string, type: 'enhanced' | 'standard') => {
+    const parts = label.split(' — ');
+    if (parts.length < 2) return <>{label}</>;
+    return (
+      <>
+        {parts[0]} — <span className={type === 'enhanced' ? 'label-enhanced' : 'label-standard'}>{parts[1]}</span>
+      </>
+    );
+  };
 
   if (!hasAnything) {
     return (
@@ -698,24 +735,69 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
 
           {selectorTab === 'generate' && (
-            <select
-              id="generate-selector"
-              aria-label="Select a comparison to generate a report"
-              className="report-selector-dropdown"
-              value={selectedComparisonId ?? ''}
-              onChange={handleGenerateTabSelect}
-            >
-              <option value="">
-                {propResult
-                  ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
-                  : 'Select a comparison to generate'}
-              </option>
-              {generatableComparisons.map((item) => (
-                <option key={item.id} value={item.comparisonId}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+            <div className="custom-dropdown" ref={generateDropdownRef}>
+              <button
+                type="button"
+                id="generate-selector"
+                className="custom-dropdown-trigger report-selector-dropdown"
+                onClick={() => setGenerateDropdownOpen(!generateDropdownOpen)}
+                aria-haspopup="listbox"
+                aria-expanded={generateDropdownOpen}
+                aria-label="Select a comparison to generate a report"
+              >
+                {selectedComparisonId
+                  ? (() => {
+                      const item = generatableComparisons.find(c => c.comparisonId === selectedComparisonId);
+                      return item ? renderDropdownLabel(item.label, item.type) : 'Select a comparison to generate';
+                    })()
+                  : propResult
+                    ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
+                    : 'Select a comparison to generate'}
+              </button>
+              {generateDropdownOpen && (
+                <div className="custom-dropdown-menu" role="listbox" aria-label="Comparisons to generate">
+                  <div
+                    className={`custom-dropdown-option${!selectedComparisonId ? ' selected' : ''}`}
+                    role="option"
+                    aria-selected={!selectedComparisonId}
+                    onClick={() => {
+                      setViewingReport(null);
+                      if (selectedComparisonId !== null) {
+                        setReportState({ status: 'idle' });
+                        setIsReportSaved(false);
+                        setShowEmbedded(false);
+                      }
+                      setSelectedComparisonId(null);
+                      setGenerateDropdownOpen(false);
+                    }}
+                  >
+                    {propResult
+                      ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
+                      : 'Select a comparison to generate'}
+                  </div>
+                  {generatableComparisons.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`custom-dropdown-option${selectedComparisonId === item.comparisonId ? ' selected' : ''}`}
+                      role="option"
+                      aria-selected={selectedComparisonId === item.comparisonId}
+                      onClick={() => {
+                        setViewingReport(null);
+                        if (item.comparisonId !== selectedComparisonId) {
+                          setReportState({ status: 'idle' });
+                          setIsReportSaved(false);
+                          setShowEmbedded(false);
+                        }
+                        setSelectedComparisonId(item.comparisonId);
+                        setGenerateDropdownOpen(false);
+                      }}
+                    >
+                      {renderDropdownLabel(item.label, item.type)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {selectorTab === 'view' && (

@@ -159,6 +159,64 @@
   }
 }
 
+/* ============================================================================
+   CUSTOM DROPDOWN (Generate tab — allows styled "Enhanced" label)
+   ============================================================================ */
+
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown-trigger {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #1a1a2e;
+  border: 1px solid var(--border-color, #2a2a4a);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.custom-dropdown-option {
+  padding: 0.75rem 1rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.15s ease;
+}
+
+.custom-dropdown-option:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.custom-dropdown-option.selected {
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+}
+
+/* Amber highlight for "Enhanced", dim for "Standard" */
+.label-enhanced {
+  color: #F59E0B;
+  font-weight: 700;
+}
+
+.label-standard {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 400;
+}
+
 /* Gamma Report Selector - distinct styling */
 .gamma-report-selector {
   margin-top: 0.5rem;
