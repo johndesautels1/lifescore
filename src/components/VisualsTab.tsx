@@ -192,7 +192,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // Gamma iframe error detection — tracks if embedded Gamma doc failed to load
   // (e.g. Gamma deleted the doc, sharing settings changed, or URL expired)
   const [iframeLoadError, setIframeLoadError] = useState(false);
-  const iframeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset iframe error when a new report is loaded
   useEffect(() => {
