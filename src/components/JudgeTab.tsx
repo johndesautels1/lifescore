@@ -1371,6 +1371,62 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     </optgroup>
   ) : null;
 
+  // FIX 2026-02-08: Use judgeReport's city names when viewing saved report
+  // This prevents showing wrong cities (e.g., Bern/Mesa for Baltimore/Bratislava)
+  // NOTE: Moved before early returns so verdict useMemo is always called (React hooks rule)
+  const city1Name = judgeReport?.city1 || comparisonResult?.city1?.city || 'City 1';
+  const city2Name = judgeReport?.city2 || comparisonResult?.city2?.city || 'City 2';
+  // FIX 2026-02-10: Country must come from the SAME source as the city name.
+  // Priority: judgeReport's own country > matching comparisonResult > ALL_METROS lookup
+  const city1Country = judgeReport?.city1Country
+    || (comparisonResult?.city1?.city === city1Name ? comparisonResult.city1.country : '')
+    || ALL_METROS.find(m => m.city === city1Name)?.country
+    || '';
+  const city2Country = judgeReport?.city2Country
+    || (comparisonResult?.city2?.city === city2Name ? comparisonResult.city2.country : '')
+    || ALL_METROS.find(m => m.city === city2Name)?.country
+    || '';
+  // Region (state/province) from metro data
+  const city1Region = ALL_METROS.find(m => m.city === city1Name && m.country === city1Country)?.region
+    || ALL_METROS.find(m => m.city === city1Name)?.region
+    || '';
+  const city2Region = ALL_METROS.find(m => m.city === city2Name && m.country === city2Country)?.region
+    || ALL_METROS.find(m => m.city === city2Name)?.region
+    || '';
+  const reportId = judgeReport?.reportId
+    || `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
+
+  // Pre-compute winner/loser derived values to avoid repeating the same ternary 9+ times
+  const verdict = useMemo(() => {
+    if (!judgeReport) return null;
+    const rec = judgeReport.executiveSummary.recommendation;
+    const isCity1 = rec === 'city1';
+    const isCity2 = rec === 'city2';
+    return {
+      winnerCity: isCity1 ? city1Name : isCity2 ? city2Name : city1Name,
+      loserCity: isCity1 ? city2Name : isCity2 ? city1Name : city2Name,
+      winnerCountry: isCity1 ? city1Country : isCity2 ? city2Country : city1Country,
+      winnerRegion: isCity1 ? city1Region : isCity2 ? city2Region : city1Region,
+      winnerScore: isCity1
+        ? judgeReport.summaryOfFindings.city1Score
+        : isCity2
+        ? judgeReport.summaryOfFindings.city2Score
+        : judgeReport.summaryOfFindings.city1Score,
+      winnerCategories: (() => {
+        const cats = isCity1
+          ? comparisonResult?.city1?.categories
+          : isCity2
+          ? comparisonResult?.city2?.categories
+          : comparisonResult?.city1?.categories;
+        // Normalize: Enhanced uses averageConsensusScore, Standard uses averageScore
+        return cats?.map(c => ({
+          categoryId: c.categoryId,
+          averageScore: 'averageScore' in c ? c.averageScore : ('averageConsensusScore' in c ? c.averageConsensusScore : null),
+        }));
+      })(),
+    };
+  }, [judgeReport, city1Name, city2Name, city1Country, city2Country, city1Region, city2Region, comparisonResult]);
+
   // Saved report is loading from Supabase — show brief loading state
   if (!comparisonResult && !judgeReport && savedJudgeReport) {
     return (
@@ -1439,61 +1495,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       </div>
     );
   }
-
-  // FIX 2026-02-08: Use judgeReport's city names when viewing saved report
-  // This prevents showing wrong cities (e.g., Bern/Mesa for Baltimore/Bratislava)
-  const city1Name = judgeReport?.city1 || comparisonResult?.city1?.city || 'City 1';
-  const city2Name = judgeReport?.city2 || comparisonResult?.city2?.city || 'City 2';
-  // FIX 2026-02-10: Country must come from the SAME source as the city name.
-  // Priority: judgeReport's own country > matching comparisonResult > ALL_METROS lookup
-  const city1Country = judgeReport?.city1Country
-    || (comparisonResult?.city1?.city === city1Name ? comparisonResult.city1.country : '')
-    || ALL_METROS.find(m => m.city === city1Name)?.country
-    || '';
-  const city2Country = judgeReport?.city2Country
-    || (comparisonResult?.city2?.city === city2Name ? comparisonResult.city2.country : '')
-    || ALL_METROS.find(m => m.city === city2Name)?.country
-    || '';
-  // Region (state/province) from metro data
-  const city1Region = ALL_METROS.find(m => m.city === city1Name && m.country === city1Country)?.region
-    || ALL_METROS.find(m => m.city === city1Name)?.region
-    || '';
-  const city2Region = ALL_METROS.find(m => m.city === city2Name && m.country === city2Country)?.region
-    || ALL_METROS.find(m => m.city === city2Name)?.region
-    || '';
-  const reportId = judgeReport?.reportId
-    || `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
-
-  // Pre-compute winner/loser derived values to avoid repeating the same ternary 9+ times
-  const verdict = useMemo(() => {
-    if (!judgeReport) return null;
-    const rec = judgeReport.executiveSummary.recommendation;
-    const isCity1 = rec === 'city1';
-    const isCity2 = rec === 'city2';
-    return {
-      winnerCity: isCity1 ? city1Name : isCity2 ? city2Name : city1Name,
-      loserCity: isCity1 ? city2Name : isCity2 ? city1Name : city2Name,
-      winnerCountry: isCity1 ? city1Country : isCity2 ? city2Country : city1Country,
-      winnerRegion: isCity1 ? city1Region : isCity2 ? city2Region : city1Region,
-      winnerScore: isCity1
-        ? judgeReport.summaryOfFindings.city1Score
-        : isCity2
-        ? judgeReport.summaryOfFindings.city2Score
-        : judgeReport.summaryOfFindings.city1Score,
-      winnerCategories: (() => {
-        const cats = isCity1
-          ? comparisonResult?.city1?.categories
-          : isCity2
-          ? comparisonResult?.city2?.categories
-          : comparisonResult?.city1?.categories;
-        // Normalize: Enhanced uses averageConsensusScore, Standard uses averageScore
-        return cats?.map(c => ({
-          categoryId: c.categoryId,
-          averageScore: 'averageScore' in c ? c.averageScore : ('averageConsensusScore' in c ? c.averageConsensusScore : null),
-        }));
-      })(),
-    };
-  }, [judgeReport, city1Name, city2Name, city1Country, city2Country, city1Region, city2Region, comparisonResult]);
 
   return (
     <div className="judge-tab">
