@@ -537,18 +537,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     }
   }, [reportState.status, reportState.gammaUrl, result, completeJobAndNotify]);
 
-  // Handler for "Generate" tab dropdown — selecting a comparison to generate
-  const handleGenerateTabSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setViewingReport(null);
-    setSelectedComparisonId(value === '' ? null : value);
-    if (value !== selectedComparisonId) {
-      setReportState({ status: 'idle' });
-      setIsReportSaved(false);
-      setShowEmbedded(false);
-    }
-  }, [selectedComparisonId, setReportState, setShowEmbedded]);
-
   // Handler for "View" tab dropdown — selecting an existing Gamma report
   // Auto-loads matching comparison data so presenter/video buttons are enabled
   const handleViewTabSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
