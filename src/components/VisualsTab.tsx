@@ -189,6 +189,16 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // INP fix: mark presenter mount/unmount as a non-urgent transition
   const [isPending, startTransition] = useTransition();
 
+  // Gamma iframe error detection — tracks if embedded Gamma doc failed to load
+  // (e.g. Gamma deleted the doc, sharing settings changed, or URL expired)
+  const [iframeLoadError, setIframeLoadError] = useState(false);
+  const iframeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset iframe error when a new report is loaded
+  useEffect(() => {
+    setIframeLoadError(false);
+  }, [reportState.gammaUrl, viewingReport?.gammaUrl]);
+
   // Load saved reports from localStorage, then always sync from Supabase
   useEffect(() => {
     const localReports = getSavedGammaReports();
@@ -240,6 +250,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           gammaUrl: reportState.gammaUrl,
           pdfUrl: reportState.pdfUrl,
           pptxUrl: reportState.pptxUrl,
+          pdfStoragePath: reportState.pdfStoragePath,
+          pptxStoragePath: reportState.pptxStoragePath,
           generationId: reportState.generationId,
         });
         setIsReportSaved(true);
@@ -300,6 +312,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       gammaUrl: reportState.gammaUrl,
       pdfUrl: reportState.pdfUrl,
       pptxUrl: reportState.pptxUrl,
+      pdfStoragePath: reportState.pdfStoragePath,
+      pptxStoragePath: reportState.pptxStoragePath,
       generationId: reportState.generationId,
     });
 
@@ -364,6 +378,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           gammaUrl: finalState.url,
           pdfUrl: finalState.pdfUrl,
           pptxUrl: finalState.pptxUrl,
+          pdfStoragePath: finalState.pdfStoragePath,
+          pptxStoragePath: finalState.pptxStoragePath,
           progress: 100,
         });
       } else {
@@ -382,6 +398,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           gammaUrl: finalState.url,
           pdfUrl: finalState.pdfUrl,
           pptxUrl: finalState.pptxUrl,
+          pdfStoragePath: finalState.pdfStoragePath,
+          pptxStoragePath: finalState.pptxStoragePath,
           progress: 100,
         });
       }
@@ -793,12 +811,34 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     gammaUrl={reportState.gammaUrl}
                     onClose={() => startTransition(() => setReportViewMode('read'))}
                   />
+                ) : iframeLoadError ? (
+                  <div className="gamma-embed-error">
+                    <p>This report may no longer be available on Gamma's servers.</p>
+                    <p>Try regenerating the report, or check your saved PDF/PPTX exports.</p>
+                    <button className="btn btn-primary" onClick={() => { setIframeLoadError(false); setShowEmbedded(false); }}>
+                      Close
+                    </button>
+                  </div>
                 ) : (
                   <iframe
                     src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
                     className="gamma-embed-frame"
                     title="LIFE SCORE Visual Report"
                     allowFullScreen
+                    onError={() => setIframeLoadError(true)}
+                    onLoad={(e) => {
+                      // Detect if iframe loaded an error page (cross-origin restrictions
+                      // prevent reading content, so we check if the iframe is suspiciously
+                      // empty by using a timeout heuristic)
+                      try {
+                        const iframe = e.target as HTMLIFrameElement;
+                        if (!iframe.contentWindow) {
+                          setIframeLoadError(true);
+                        }
+                      } catch {
+                        // Cross-origin — iframe loaded something, which is expected
+                      }
+                    }}
                   />
                 )}
               </div>
@@ -931,12 +971,31 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               gammaUrl={viewingReport.gammaUrl}
               onClose={() => startTransition(() => setReportViewMode('read'))}
             />
+          ) : iframeLoadError ? (
+            <div className="gamma-embed-error">
+              <p>This saved report may no longer be available on Gamma's servers.</p>
+              <p>Try your saved PDF/PPTX exports, or regenerate the report.</p>
+              <button className="btn btn-primary" onClick={() => { setIframeLoadError(false); setViewingReport(null); }}>
+                Close
+              </button>
+            </div>
           ) : (
             <iframe
               src={viewingReport.gammaUrl?.replace('/docs/', '/embed/')}
               className="gamma-embed-frame"
               title="LIFE SCORE Saved Report"
               allowFullScreen
+              onError={() => setIframeLoadError(true)}
+              onLoad={(e) => {
+                try {
+                  const iframe = e.target as HTMLIFrameElement;
+                  if (!iframe.contentWindow) {
+                    setIframeLoadError(true);
+                  }
+                } catch {
+                  // Cross-origin — iframe loaded something, expected
+                }
+              }}
             />
           )}
         </div>

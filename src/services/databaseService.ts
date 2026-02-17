@@ -534,7 +534,9 @@ export async function saveGammaReport(
   pptxUrl?: string,
   nickname?: string,
   city1?: string,  // FIX: Add city names for cross-device sync
-  city2?: string   // FIX: Add city names for cross-device sync
+  city2?: string,  // FIX: Add city names for cross-device sync
+  pdfStoragePath?: string,   // Permanent Supabase Storage path for PDF export
+  pptxStoragePath?: string   // Permanent Supabase Storage path for PPTX export
 ): Promise<{ data: GammaReport | null; error: Error | null }> {
   requireDatabase();
 
@@ -554,6 +556,8 @@ export async function saveGammaReport(
     gamma_url: gammaUrl,
     pdf_url: pdfUrl || null,
     pptx_url: pptxUrl || null,
+    pdf_storage_path: pdfStoragePath || null,
+    pptx_storage_path: pptxStoragePath || null,
     nickname: nickname || null,
     city1: city1 || null,
     city2: city2 || null,

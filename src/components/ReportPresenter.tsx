@@ -64,6 +64,9 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   // ---- Sub-mode: live presenter vs pre-rendered video ----
   const [subMode, setSubMode] = useState<PresenterSubMode>('live');
 
+  // ---- Gamma iframe error detection ----
+  const [gammaIframeError, setGammaIframeError] = useState(false);
+
   // ---- Live presenter state ----
   const [state, setState] = useState<PresenterState>(() => ({
     status: 'idle',
@@ -332,12 +335,30 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         <>
           {/* Gamma Report Iframe (background) */}
           <div className="presenter-report-container">
-            <iframe
-              src={gammaUrl.replace('/docs/', '/embed/')}
-              className="presenter-gamma-frame"
-              title="LIFE SCORE Visual Report"
-              allowFullScreen
-            />
+            {gammaIframeError ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', padding: '2rem', textAlign: 'center', color: '#d4af37' }}>
+                <p>Report embed may no longer be available.</p>
+                <button className="btn btn-primary" onClick={onClose}>Close Presenter</button>
+              </div>
+            ) : (
+              <iframe
+                src={gammaUrl.replace('/docs/', '/embed/')}
+                className="presenter-gamma-frame"
+                title="LIFE SCORE Visual Report"
+                allowFullScreen
+                onError={() => setGammaIframeError(true)}
+                onLoad={(e) => {
+                  try {
+                    const iframe = e.target as HTMLIFrameElement;
+                    if (!iframe.contentWindow) {
+                      setGammaIframeError(true);
+                    }
+                  } catch {
+                    // Cross-origin — expected
+                  }
+                }}
+              />
+            )}
           </div>
 
           {/* Olivia PIP Overlay */}

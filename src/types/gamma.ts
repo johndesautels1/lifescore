@@ -183,6 +183,8 @@ export interface VisualReportResponse {
   url?: string;
   pdfUrl?: string;
   pptxUrl?: string;
+  pdfStoragePath?: string;
+  pptxStoragePath?: string;
   error?: string;
 }
 
@@ -195,6 +197,8 @@ export interface VisualReportState {
   gammaUrl?: string;
   pdfUrl?: string;
   pptxUrl?: string;
+  pdfStoragePath?: string;
+  pptxStoragePath?: string;
   error?: string;
   progress?: number;  // 0-100 for progress bar
   statusMessage?: string;  // Progressive status message for enhanced reports

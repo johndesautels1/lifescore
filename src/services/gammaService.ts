@@ -590,6 +590,8 @@ export async function pollUntilComplete(
         gammaUrl: status.url,
         pdfUrl: status.pdfUrl,
         pptxUrl: status.pptxUrl,
+        pdfStoragePath: status.pdfStoragePath,
+        pptxStoragePath: status.pptxStoragePath,
         error: status.error,
         progress: status.status === 'completed' ? 100 : estimatedProgress,
       });
@@ -2870,6 +2872,8 @@ export async function pollEnhancedUntilComplete(
         gammaUrl: status.url,
         pdfUrl: status.pdfUrl,
         pptxUrl: status.pptxUrl,
+        pdfStoragePath: status.pdfStoragePath,
+        pptxStoragePath: status.pptxStoragePath,
         error: status.error,
         progress: status.status === 'completed' ? 100 : estimatedProgress,
         statusMessage,
@@ -3004,6 +3008,8 @@ export async function generateAndSaveEnhancedReport(
         generationId: response.generationId,
         gammaUrl: response.url,
         pdfUrl: response.pdfUrl,
+        pdfStoragePath: response.pdfStoragePath,
+        pptxStoragePath: response.pptxStoragePath,
         progress: 98,
         statusMessage: 'Saving report to your library...',
       });
@@ -3087,6 +3093,8 @@ export async function generateAndSaveEnhancedReport(
           generationId: response.generationId,
           gammaUrl: response.url,
           pdfUrl: response.pdfUrl,
+          pdfStoragePath: response.pdfStoragePath,
+          pptxStoragePath: response.pptxStoragePath,
           progress: 100,
           statusMessage: 'Report saved to your library!',
         });
