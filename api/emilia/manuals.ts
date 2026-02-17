@@ -547,8 +547,9 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - Password reset redirect URL mismatch
 - Admin email notification on new signup
 
-### Resolved Issue (2026-02-17)
+### Resolved Issues (2026-02-17)
 - **Gamma export URLs (PDF/PPTX) expiring** — Asset materialization pattern: api/gamma.ts downloads exports from Gamma CDN on completion, uploads to Supabase Storage (gamma-exports public bucket). Returns permanent public URLs. New DB columns: pdf_storage_path, pptx_storage_path. Iframe error detection on all 4 embed locations. 11 files, 35 changes.
+- **Gamma report colored cards losing colors** — solidBoxes variant colors stripped by Gamma AI rendering. Fix: 6× category heat maps → barStats (bar length = confidence %). PAGE 64 → semiCircle gauges + table. PAGE 51 → structured table. PAGE 53 → semiCircle dials. Same data, varied chart types, no prompt size increase.
 
 ## Debugging
 - Vercel Dashboard > Deployments > Functions

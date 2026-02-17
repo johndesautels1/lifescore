@@ -37,11 +37,10 @@ To change the prompt, edit the TypeScript code and push to GitHub.
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
 ================================================================================
 
-Heat Maps: <smart-layout variant="solidBoxes" cellsize="15"> with label, value, and color attributes
-Gauges: <smart-layout variant="semiCircle">
-Bars: <smart-layout variant="barStats">
+Gauges/Dials: <smart-layout variant="semiCircle"> — radial gauges for headline metrics
+Bars/Charts: <smart-layout variant="barStats"> — horizontal progress bars for heat maps + comparisons
 Process Steps: <smart-layout variant="processSteps" numbered="true">
-Solid Boxes: <smart-layout variant="solidBoxes">
+Solid Boxes: <smart-layout variant="solidBoxes"> — use sparingly, colors may not render
 Outline Boxes: <smart-layout variant="outlineBoxes"> or variant="outlineBoxesWithTopCircle">
 Images with Text: <smart-layout variant="imagesText" imagePosition="left">
 Tables: <table colwidths="[30,35,35]">
@@ -72,12 +71,16 @@ Success: Green #10B981
 Info: Blue #3B82F6
 
 ================================================================================
-HEAT MAP COLOR LEGEND (solidBoxes):
+HEAT MAP VISUALIZATION (barStats — bar length conveys data):
 ================================================================================
 
-Green (#10B981): High/Strong consensus — unanimous or strong LLM agreement
-Orange (#F59E0B): Moderate agreement — most LLMs aligned
-Red (#DC2626): Split opinion — significant divergence between models
+Bar length represents AI consensus strength per metric:
+95% = Unanimous — all LLMs aligned (longest bar)
+85% = Strong — most LLMs agreed
+70% = Moderate — generally aligned
+50% = Split — significant divergence (shortest bar)
+Hidden Costs use semiCircle gauges for cost severity dials.
+Myth vs Reality uses structured tables (always renders correctly).
 
 ================================================================================
 METRIC TABLE FORMAT:
@@ -147,7 +150,7 @@ CRITICAL PRODUCTION RULES:
 4. DO NOT TRUNCATE — include ALL sections, ALL metrics, ALL insights
 5. Apply COLOR CODING consistently throughout
 6. Gun Rights section is UNSCORED — facts only, no winner
-7. Heat maps use solidBoxes (NOT circleStats)
+7. Heat maps use barStats (bar length = confidence), NOT solidBoxes (colors get stripped)
 8. Confidence column shows full words (NOT abbreviated)
 9. All URLs are clickable markdown hyperlinks
 10. Make this feel like a PREMIUM deliverable, not just a data dump
