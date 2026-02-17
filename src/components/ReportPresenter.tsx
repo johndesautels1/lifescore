@@ -33,6 +33,7 @@ import {
   closeHeyGenSession,
   generateTTS,
 } from '../services/oliviaService';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './ReportPresenter.css';
 
 // ============================================================================
@@ -303,6 +304,9 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   return (
     <div className="report-presenter">
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
+
       {/* Sub-mode tabs: Live Presenter vs Generate Video */}
       <div className="presenter-mode-tabs">
         <button

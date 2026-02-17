@@ -18,6 +18,7 @@ import { saveCourtOrder } from '../services/savedComparisons';
 import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import { supabase } from '../lib/supabase';
 import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import FreedomCategoryTabs from './FreedomCategoryTabs';
 import FreedomMetricsList from './FreedomMetricsList';
 import FreedomHeroFooter from './FreedomHeroFooter';
@@ -655,6 +656,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
             )}
           </div>
         )}
+
+        {/* Phone call audio warning (mobile only) */}
+        <VideoPhoneWarning />
 
         {/* LCD Screen Container */}
         <div className="lcd-screen">

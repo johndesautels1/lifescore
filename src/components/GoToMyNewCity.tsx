@@ -26,6 +26,7 @@ import { NotifyMeModal } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import { supabase } from '../lib/supabase';
 import type { NotifyChannel } from '../types/database';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './GoToMyNewCity.css';
 
 // ============================================================================
@@ -413,6 +414,9 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
               <span className="stage-label">Done</span>
             </div>
           )}
+
+          {/* Phone call audio warning (mobile only) */}
+          <VideoPhoneWarning />
 
           {/* LCD Screen */}
           <div className="lcd-screen">

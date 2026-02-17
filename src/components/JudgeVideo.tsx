@@ -12,6 +12,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './JudgeVideo.css';
 
 interface JudgeVideoProps {
@@ -188,6 +189,8 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
 
   return (
     <div className={`judge-video ${className}`}>
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
       {/* Video Player */}
       {isReady && video?.videoUrl ? (
         <div className="video-player">

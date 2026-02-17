@@ -1,0 +1,77 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIDEO PHONE WARNING BANNER
+   Shown on mobile above video players — warns phone calls mute audio
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.video-phone-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  animation: vpwSlideIn 0.3s ease-out;
+}
+
+@keyframes vpwSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.vpw-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.vpw-text {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.vpw-text strong {
+  color: var(--stable-amber, #f59e0b);
+}
+
+.vpw-close {
+  flex-shrink: 0;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  line-height: 1;
+}
+
+.vpw-close:hover {
+  color: #fff;
+}
+
+/* Light theme */
+[data-theme="light"] .video-phone-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+[data-theme="light"] .vpw-text {
+  color: #475569;
+}
+
+[data-theme="light"] .vpw-text strong {
+  color: #d97706;
+}
+
+[data-theme="light"] .vpw-close {
+  color: #94a3b8;
+}
+
+/* Hide on desktop — only visible on mobile */
+@media (min-width: 769px) {
+  .video-phone-warning {
+    display: none;
+  }
+}

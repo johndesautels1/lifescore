@@ -51,6 +51,7 @@ import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
 import GoToMyNewCity from './GoToMyNewCity';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import { NotifyMeModal } from './NotifyMeModal';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useJobTracker } from '../hooks/useJobTracker';
@@ -1632,6 +1633,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <span className={`panel-chevron ${panelMediaOpen ? 'open' : ''}`}>▼</span>
         </button>
         <div className="panel-content" style={{ display: panelMediaOpen ? 'block' : 'none' }}>
+
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
 
       <section className="video-viewport-section">
         <div className="viewport-frame">
