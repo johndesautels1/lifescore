@@ -175,7 +175,7 @@ const LoginScreen: React.FC = () => {
     if (resetError) {
       setLocalError(resetError.message || 'Failed to send reset email');
     } else {
-      setSuccessMessage('Password reset link sent! Please check your email.');
+      setSuccessMessage('Password reset link sent! Please check your email (including spam/junk folder). The link expires in 1 hour.');
     }
   }, [email, resetPassword]);
 
