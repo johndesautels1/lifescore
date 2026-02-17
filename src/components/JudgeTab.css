@@ -2342,3 +2342,55 @@
     font-size: 1.3rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   YOUR FUTURE SECTION — Freedom Education content in its own display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.your-future-section {
+  margin: 1rem 0;
+  animation: fadeSlideIn 0.35s ease;
+}
+
+.your-future-wrapper {
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 12px;
+  background: rgba(13, 40, 71, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.your-future-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.your-future-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--brushed-gold, #e6b800);
+  margin: 0 0 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.your-future-title .gavel-icon {
+  font-size: 1.6rem;
+}
+
+.your-future-subtitle {
+  font-size: 1rem;
+  color: var(--platinum, #e2e8f0);
+  opacity: 0.8;
+  margin: 0;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

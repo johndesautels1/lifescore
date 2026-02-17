@@ -79,8 +79,12 @@ const LAST_JUDGE_COMPARISON_KEY = 'lifescore_last_judge_comparison';
 // TYPES
 // ============================================================================
 
-// Import FreedomEducation types
-import type { FreedomEducationData } from '../types/freedomEducation';
+// Import FreedomEducation types and components
+import type { FreedomEducationData, CategoryId, CategoryFreedomData } from '../types/freedomEducation';
+import FreedomCategoryTabs from './FreedomCategoryTabs';
+import FreedomMetricsList from './FreedomMetricsList';
+import FreedomHeroFooter from './FreedomHeroFooter';
+import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '../utils/freedomEducationUtils';
 
 export interface JudgeReport {
   reportId: string;
@@ -151,7 +155,20 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [showNotifyModal, setShowNotifyModal] = useState(false);
 
   // Bottom display screen toggle — null means neither open
-  const [openDisplay, setOpenDisplay] = useState<'court-order' | 'freedom-tour' | null>(null);
+  const [openDisplay, setOpenDisplay] = useState<'your-future' | 'court-order' | 'freedom-tour' | null>(null);
+
+  // "Your Future" Freedom Education tab state
+  const [futureActiveCategory, setFutureActiveCategory] = useState<CategoryId>('personal_freedom');
+
+  // Initialize "Your Future" active category to first non-empty category when report changes
+  useEffect(() => {
+    if (judgeReport?.freedomEducation?.categories) {
+      const firstCategory = getFirstNonEmptyCategory(judgeReport.freedomEducation.categories);
+      if (firstCategory) {
+        setFutureActiveCategory(firstCategory);
+      }
+    }
+  }, [judgeReport]);
 
   // Confidence interval hover cards — which card is open
   const [hoverCard, setHoverCard] = useState<'city1' | 'city2' | 'confidence' | null>(null);
@@ -1507,6 +1524,23 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     || '';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
 
+  // "Your Future" — derive freedom education data for the display
+  const freedomEducation = judgeReport?.freedomEducation;
+  const hasFreedomData = isValidFreedomData(freedomEducation);
+  const futureWinnerCity = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city1Name
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city2Name
+    : city1Name
+    : city1Name;
+  const futureLoserCity = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city2Name
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city1Name
+    : city2Name
+    : city2Name;
+  const futureCategoryData: CategoryFreedomData | null = freedomEducation?.categories
+    ? getCategoryData(freedomEducation.categories, futureActiveCategory)
+    : null;
+
   return (
     <div className="judge-tab">
       {/* ═══════════════════════════════════════════════════════════════════
@@ -2310,18 +2344,25 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          DISPLAY SCREEN BUTTONS — Two glassmorphic buttons at the bottom
-          Left: Court Order Video | Right: My New City
+          DISPLAY SCREEN BUTTONS — Three glassmorphic buttons at the bottom
+          Left: Your Future | Center: Court Order Video | Right: My New City
           Click to expand the screen below. Click again to collapse.
       ═══════════════════════════════════════════════════════════════════ */}
       {judgeReport && (
         <>
           <div className="display-screen-buttons">
             <button
+              className={`display-screen-btn${openDisplay === 'your-future' ? ' active' : ''}`}
+              onClick={() => setOpenDisplay(openDisplay === 'your-future' ? null : 'your-future')}
+            >
+              <span className="display-screen-btn-icon">&#9878;</span>
+              <span className="display-screen-btn-label">YOUR FUTURE</span>
+            </button>
+            <button
               className={`display-screen-btn${openDisplay === 'court-order' ? ' active' : ''}`}
               onClick={() => setOpenDisplay(openDisplay === 'court-order' ? null : 'court-order')}
             >
-              <span className="display-screen-btn-icon">&#9878;</span>
+              <span className="display-screen-btn-icon">&#127909;</span>
               <span className="display-screen-btn-label">COURT ORDER VIDEO</span>
             </button>
             <button
@@ -2333,24 +2374,52 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </button>
           </div>
 
+          {/* YOUR FUTURE — Freedom Education: category tabs + metrics + hero quotes */}
+          {openDisplay === 'your-future' && hasFreedomData && freedomEducation && (
+            <section className="your-future-section">
+              <div className="your-future-wrapper">
+                <div className="your-future-header">
+                  <h4 className="your-future-title">
+                    <span className="gavel-icon">&#9878;</span>
+                    COURT ORDER
+                  </h4>
+                  <p className="your-future-subtitle">
+                    Your future in {freedomEducation.winnerCity || futureWinnerCity}
+                  </p>
+                </div>
+                <div className="freedom-education-section">
+                  <FreedomCategoryTabs
+                    activeCategory={futureActiveCategory}
+                    onCategoryChange={setFutureActiveCategory}
+                    categories={freedomEducation.categories}
+                  />
+                  {futureCategoryData && (
+                    <>
+                      <FreedomMetricsList
+                        metrics={futureCategoryData.winningMetrics}
+                        winnerCity={freedomEducation.winnerCity || futureWinnerCity}
+                        loserCity={freedomEducation.loserCity || futureLoserCity}
+                        categoryName={futureCategoryData.categoryName}
+                      />
+                      {futureCategoryData.heroStatement && (
+                        <FreedomHeroFooter
+                          heroStatement={futureCategoryData.heroStatement}
+                          winnerCity={freedomEducation.winnerCity || futureWinnerCity}
+                          categoryName={futureCategoryData.categoryName}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {openDisplay === 'court-order' && (
             <section className="court-order-section">
               <CourtOrderVideo
                 comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
-                winnerCity={
-                  judgeReport.executiveSummary.recommendation === 'city1'
-                    ? city1Name
-                    : judgeReport.executiveSummary.recommendation === 'city2'
-                    ? city2Name
-                    : city1Name
-                }
-                loserCity={
-                  judgeReport.executiveSummary.recommendation === 'city1'
-                    ? city2Name
-                    : judgeReport.executiveSummary.recommendation === 'city2'
-                    ? city1Name
-                    : city2Name
-                }
+                winnerCity={futureWinnerCity}
                 winnerScore={
                   judgeReport.executiveSummary.recommendation === 'city1'
                     ? judgeReport.summaryOfFindings.city1Score
@@ -2358,7 +2427,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                     ? judgeReport.summaryOfFindings.city2Score
                     : judgeReport.summaryOfFindings.city1Score
                 }
-                freedomEducation={judgeReport.freedomEducation}
               />
             </section>
           )}
