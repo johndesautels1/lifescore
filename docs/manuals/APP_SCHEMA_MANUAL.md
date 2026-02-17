@@ -1,7 +1,7 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.3.0
-**Last Updated:** 2026-02-15
+**Version:** 2.4.0
+**Last Updated:** 2026-02-17
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 **Auto-Generated From:** Codebase introspection of ~250 commits ahead of main
 
@@ -9,24 +9,187 @@
 
 ## Table of Contents
 
-1. [Database Schema](#1-database-schema)
-2. [API Endpoints](#2-api-endpoints)
-3. [Component Architecture](#3-component-architecture)
-4. [State Management](#4-state-management)
-5. [Type Definitions](#5-type-definitions)
-6. [Services Layer](#6-services-layer)
-7. [External Integrations](#7-external-integrations)
-8. [Tier System](#8-tier-system)
-9. [Environment Variables](#9-environment-variables)
-10. [File Structure](#10-file-structure)
+1. [Authentication & Password Recovery](#1-authentication--password-recovery)
+2. [Database Schema](#2-database-schema)
+3. [API Endpoints](#3-api-endpoints)
+4. [Component Architecture](#4-component-architecture)
+5. [State Management](#5-state-management)
+6. [Type Definitions](#6-type-definitions)
+7. [Services Layer](#7-services-layer)
+8. [External Integrations](#8-external-integrations)
+9. [Tier System](#9-tier-system)
+10. [Environment Variables](#10-environment-variables)
+11. [File Structure](#11-file-structure)
 
 ---
 
-## 1. Database Schema
+## 1. Authentication & Password Recovery
+
+### 1.1 Authentication Provider
+
+LIFE SCORE uses **Supabase Auth (GoTrue)** for all authentication. Supabase manages the `auth.users` table internally — passwords are bcrypt-hashed and never exposed to client code.
+
+**Supported Sign-In Methods:**
+- Email + Password
+- Google OAuth
+- GitHub OAuth
+- Magic Link (passwordless email)
+
+**Key Files:**
+| File | Purpose |
+|------|---------|
+| `src/contexts/AuthContext.tsx` | Central auth state, sign-in/sign-up/reset methods, `onAuthStateChange` listener |
+| `src/components/LoginScreen.tsx` | Sign In, Sign Up, and Forgot Password forms |
+| `src/components/ResetPasswordScreen.tsx` | "Set New Password" form shown after clicking email reset link |
+| `src/App.tsx` | Route gate: shows `ResetPasswordScreen` when `isPasswordRecovery` is true |
+
+### 1.2 Supabase `auth.users` Table (Managed)
+
+This table is fully managed by Supabase — it does NOT appear in your migrations. Relevant columns:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key, referenced by `profiles.id` |
+| email | TEXT | User's email address |
+| encrypted_password | TEXT | Bcrypt hash of the user's password |
+| raw_user_meta_data | JSONB | Sign-up metadata (`full_name`, `avatar_url`) |
+| recovery_token | TEXT | One-time password reset token (nullable, 1hr TTL) |
+| recovery_sent_at | TIMESTAMPTZ | When the reset email was sent |
+| email_confirmed_at | TIMESTAMPTZ | When email was verified |
+| created_at | TIMESTAMPTZ | Account creation |
+| updated_at | TIMESTAMPTZ | Last auth change |
+
+### 1.3 Auto-Provisioning on Sign-Up
+
+When a new user is created in `auth.users`, a database trigger fires automatically:
+
+```
+TRIGGER: on_auth_user_created (AFTER INSERT ON auth.users)
+  → FUNCTION: handle_new_user() [SECURITY DEFINER]
+    → INSERT INTO profiles (id, email, full_name, avatar_url)
+    → INSERT INTO user_preferences (user_id)
+```
+
+**Source:** `supabase/migrations/001_initial_schema.sql:320-343`
+
+This ensures every authenticated user immediately has a `profiles` row and a `user_preferences` row — no manual setup required.
+
+### 1.4 Password Reset Flow (Complete)
+
+```
+STEP 1: USER REQUESTS RESET
+────────────────────────────
+LoginScreen.tsx  →  AuthContext.resetPassword(email)
+                    →  supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: window.location.origin + '/auth/callback'
+                       })
+
+  Supabase:
+    1. Looks up email in auth.users
+    2. Generates a one-time recovery JWT (1-hour expiry)
+    3. Stores recovery_token + recovery_sent_at in auth.users
+    4. Sends email via Supabase mail service:
+       From: noreply@mail.app.supabase.io
+       Link: https://lifescore.vercel.app/auth/callback#access_token=...&type=recovery
+    5. Returns success even if email doesn't exist (prevents enumeration)
+
+  UI shows: "Password reset link sent! Check your email (including spam)."
+
+
+STEP 2: USER CLICKS EMAIL LINK
+───────────────────────────────
+Browser navigates to: /auth/callback#access_token=...&type=recovery
+
+  Supabase JS client auto-parses the URL hash fragment.
+  supabase.auth.onAuthStateChange() fires with:
+    event  = 'PASSWORD_RECOVERY'
+    session = { access_token, refresh_token, user }
+
+  AuthContext.tsx:339-349 handles this:
+    → isPasswordRecovery = true
+    → isAuthenticated = true (temporary session)
+
+  App.tsx:621-622 route gate:
+    if (isPasswordRecovery) → renders <ResetPasswordScreen />
+
+
+STEP 3: USER SETS NEW PASSWORD
+───────────────────────────────
+ResetPasswordScreen.tsx shows:
+  [New Password]        (min 6 chars)
+  [Confirm Password]    (must match)
+  [Update Password]     (submit)
+  [Skip — go to app]    (bypass)
+
+On submit → AuthContext.updatePassword(newPassword)
+  → supabase.auth.updateUser({ password: newPassword })
+
+  Supabase:
+    1. Hashes new password with bcrypt
+    2. Updates auth.users.encrypted_password
+    3. Nullifies auth.users.recovery_token (consumed)
+
+  AuthContext:
+    → isPasswordRecovery = false
+    → Cleans URL hash fragment
+    → User is now fully authenticated with the new password
+
+  UI shows: "Password updated successfully! Redirecting..."
+  After 2s → clearPasswordRecovery() → main app loads
+```
+
+### 1.5 What the Database Does (and Doesn't Do) During Password Reset
+
+| Table | Affected? | What Happens |
+|-------|-----------|--------------|
+| `auth.users` | YES | `encrypted_password` updated, `recovery_token` consumed |
+| `profiles` | NO | Untouched — same user, same data |
+| `user_preferences` | NO | Untouched |
+| `comparisons` | NO | Untouched — all saved comparisons preserved |
+| `olivia_conversations` | NO | Untouched |
+| `olivia_messages` | NO | Untouched |
+| `gamma_reports` | NO | Untouched |
+| `judge_reports` | NO | Untouched |
+| `subscriptions` | NO | Untouched — billing continues normally |
+| `jobs` | NO | Untouched |
+| `notifications` | NO | Untouched |
+
+**Password reset changes ONLY the password hash. All user data remains intact.**
+
+### 1.6 Auth State Properties
+
+The `AuthContext` exposes these auth-related state properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `isAuthenticated` | boolean | User has a valid session |
+| `isPasswordRecovery` | boolean | User clicked a reset link and needs to set a new password |
+| `isLoading` | boolean | Auth operation in progress |
+| `isConfigured` | boolean | Supabase URL + key are present |
+| `user` | User \| null | Supabase user object |
+| `session` | Session \| null | Current JWT session |
+
+**Auth Methods:**
+
+| Method | Signature | Purpose |
+|--------|-----------|---------|
+| `signInWithEmail` | `(email, password) → { error }` | Email/password sign-in |
+| `signUp` | `(email, password, fullName?) → { error }` | Create new account |
+| `resetPassword` | `(email) → { error }` | Send password reset email |
+| `updatePassword` | `(newPassword) → { error }` | Set new password during recovery |
+| `clearPasswordRecovery` | `() → void` | Exit recovery mode, clean URL hash |
+| `signInWithGoogle` | `() → void` | Google OAuth redirect |
+| `signInWithGitHub` | `() → void` | GitHub OAuth redirect |
+| `signInWithMagicLink` | `(email) → { error }` | Passwordless email login |
+| `signOut` | `() → void` | Sign out, clear session |
+
+---
+
+## 2. Database Schema
 
 LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables**, **3 storage buckets**, **15 database functions**, and **12 triggers**. All tables have Row Level Security (RLS) enabled.
 
-### 1.1 Core User Tables
+### 2.1 Core User Tables
 
 #### `profiles`
 User profiles linked to Supabase Auth. Auto-created via trigger on auth.users insert.
@@ -87,7 +250,7 @@ Stripe subscription records.
 
 ---
 
-### 1.2 Comparison Tables
+### 2.2 Comparison Tables
 
 #### `comparisons`
 Stored city comparison results. (Previously documented as `saved_comparisons` — the actual table name is `comparisons`.)
@@ -117,7 +280,7 @@ Stored city comparison results. (Previously documented as `saved_comparisons` �
 
 ---
 
-### 1.3 AI Assistant Tables
+### 2.3 AI Assistant Tables
 
 #### `olivia_conversations`
 Olivia AI chat threads.
@@ -154,7 +317,7 @@ Chat message history for Olivia.
 
 ---
 
-### 1.4 Judge & Report Tables
+### 2.4 Judge & Report Tables
 
 #### `judge_reports`
 THE JUDGE's comprehensive verdicts.
@@ -273,7 +436,7 @@ Report analytics and audit trail.
 
 ---
 
-### 1.5 Video Tables
+### 2.5 Video Tables
 
 #### `grok_videos`
 Video generation records for New Life Videos and Court Orders. Primary provider: Kling AI; fallback: Replicate Minimax.
@@ -349,7 +512,7 @@ Admin-uploaded cinematic video replacements for Court Order videos.
 
 ---
 
-### 1.6 Usage & Cost Tracking
+### 2.6 Usage & Cost Tracking
 
 #### `usage_tracking`
 Feature usage per billing period.
@@ -433,7 +596,7 @@ Admin-configurable per-provider API quotas with alert thresholds.
 
 ---
 
-### 1.7 Compliance & System Tables
+### 2.7 Compliance & System Tables
 
 #### `consent_logs`
 GDPR audit trail for user consent actions.
@@ -516,7 +679,7 @@ Controls access to admin documentation.
 
 ---
 
-### 1.8 Storage Buckets
+### 2.8 Storage Buckets
 
 | Bucket | Access | Purpose | Limits |
 |--------|--------|---------|--------|
@@ -526,11 +689,11 @@ Controls access to admin documentation.
 
 ---
 
-## 2. API Endpoints
+## 3. API Endpoints
 
 All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.**
 
-### 2.1 Comparison & Scoring (3)
+### 3.1 Comparison & Scoring (3)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -538,7 +701,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/judge` | No (rate-limited) | Claude Opus consensus builder computing final scores from evaluator results |
 | POST | `/api/judge-report` | No (rate-limited) | Claude Opus comprehensive analysis with holistic freedom analysis and recommendations |
 
-### 2.2 Video Generation (7)
+### 3.2 Video Generation (7)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -550,7 +713,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/avatar/video-webhook` | No (webhook) | Replicate webhook callback for video completion |
 | POST | `/api/judge-video` | No (rate-limited) | D-ID fallback avatar endpoint for Judge verdict |
 
-### 2.3 Avatar & Streaming (5)
+### 3.3 Avatar & Streaming (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -560,7 +723,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/olivia/avatar/heygen` | No (rate-limited) | HeyGen Streaming Avatar API |
 | POST, GET | `/api/olivia/avatar/heygen-video` | No (rate-limited) | HeyGen pre-rendered video generation + status polling for Olivia presenter |
 
-### 2.4 Olivia AI Assistant (6)
+### 3.4 Olivia AI Assistant (6)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -571,7 +734,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/olivia/tts` | Yes | ElevenLabs TTS with OpenAI fallback |
 | POST | `/api/olivia/contrast-images` | Yes | AI contrast images via Flux (Replicate) |
 
-### 2.5 Emilia Help Assistant (4)
+### 3.5 Emilia Help Assistant (4)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -580,7 +743,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/emilia/speak` | Yes | TTS for Emilia voice (ElevenLabs + OpenAI fallback) |
 | GET | `/api/emilia/manuals` | Partial | Serve documentation content; admin-only for restricted manuals |
 
-### 2.6 Stripe Billing (4)
+### 3.6 Stripe Billing (4)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -589,7 +752,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | GET | `/api/stripe/get-subscription` | No | Get current subscription status |
 | POST | `/api/stripe/webhook` | No (signature) | Handle Stripe lifecycle events |
 
-### 2.7 Admin (4)
+### 3.7 Admin (4)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -598,14 +761,14 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | POST | `/api/admin/sync-olivia-knowledge` | Yes + Admin | Upload knowledge base to OpenAI Assistant |
 | GET, PUT | `/api/prompts` | Admin (PUT) | Admin-editable prompt management |
 
-### 2.8 User Data (2)
+### 3.8 User Data (2)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | DELETE | `/api/user/delete` | Rate-limited | GDPR Article 17 — Right to Erasure |
 | POST | `/api/user/export` | Rate-limited | GDPR Article 20 — Right to Data Portability |
 
-### 2.9 Utility & Infrastructure (5)
+### 3.9 Utility & Infrastructure (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -615,7 +778,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | GET | `/api/health` | No | API health check |
 | POST | `/api/test-llm` | No (rate-limited) | Test each LLM API connection |
 
-### 2.10 Usage, Quota & Consent (3)
+### 3.10 Usage, Quota & Consent (3)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
@@ -625,11 +788,11 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 ---
 
-## 3. Component Architecture
+## 4. Component Architecture
 
 **46 components** in `src/components/`.
 
-### 3.1 Core Layout
+### 4.1 Core Layout
 
 | Component | Purpose |
 |-----------|---------|
@@ -639,7 +802,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `LoginScreen.tsx` | Sign In, Sign Up, Password Reset with Remember Me |
 | `ErrorBoundary.tsx` | Catches and handles component errors |
 
-### 3.2 Comparison & Results
+### 4.2 Comparison & Results
 
 | Component | Purpose |
 |-----------|---------|
@@ -652,7 +815,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `LoadingState.tsx` | Progress during 100-metric analysis with category tracking |
 | `ScoreMethodology.tsx` | Explains complete scoring pipeline (AI → Consensus → Judge → Weighting) |
 
-### 3.3 Customization
+### 4.3 Customization
 
 | Component | Purpose |
 |-----------|---------|
@@ -661,7 +824,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `DealbreakersWarning.tsx` | Warning modal when city fails dealbreaker metrics |
 | `GunComparisonModal.tsx` | Standalone unscored gun rights comparison |
 
-### 3.4 AI Assistants
+### 4.4 AI Assistants
 
 | Component | Purpose |
 |-----------|---------|
@@ -675,7 +838,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `PromptsManager.tsx` | Admin-editable prompts with sub-tabs per category |
 | `EnvConfigPanel.tsx` | Admin panel showing all env var configuration status |
 
-### 3.5 Judge & Reports
+### 4.5 Judge & Reports
 
 | Component | Purpose |
 |-----------|---------|
@@ -690,7 +853,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `VisualsTab.tsx` | Gamma report viewer with saved reports library + Read/Listen to Presenter toggle |
 | `ReportPresenter.tsx` | Olivia video presenter: Live PIP avatar overlay + pre-rendered HeyGen video with download |
 
-### 3.6 Subscription & Settings
+### 4.6 Subscription & Settings
 
 | Component | Purpose |
 |-----------|---------|
@@ -701,7 +864,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `CostDashboard.tsx` | Admin cost dashboard with per-provider breakdown |
 | `SettingsModal.tsx` | Profile, password, and preference management |
 
-### 3.7 Utility
+### 4.7 Utility
 
 | Component | Purpose |
 |-----------|---------|
@@ -714,9 +877,9 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 ---
 
-## 4. State Management
+## 5. State Management
 
-### 4.1 React Context
+### 5.1 React Context
 
 **`AuthContext.tsx`** — Single context providing authentication state and methods.
 
@@ -726,7 +889,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 **Modes:** Supabase Mode (full auth) / Demo Mode (localStorage fallback)
 
-### 4.2 Custom Hooks (18)
+### 5.2 Custom Hooks (18)
 
 | Hook | Purpose |
 |------|---------|
@@ -751,7 +914,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 ---
 
-## 5. Type Definitions
+## 6. Type Definitions
 
 **12 type files** in `src/types/`.
 
@@ -772,7 +935,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 ---
 
-## 6. Services Layer
+## 7. Services Layer
 
 **16 services** in `src/services/`.
 
@@ -795,7 +958,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `rateLimiter.ts` | Rate limit handling with exponential backoff across providers |
 | `cache.ts` | Aggressive caching to reduce API costs with TTL management |
 
-### 6.1 Utility Libraries
+### 7.1 Utility Libraries
 
 | File | Purpose |
 |------|---------|
@@ -803,7 +966,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `src/lib/fetchWithTimeout.ts` | Reusable fetch wrapper with AbortController |
 | `src/lib/errorTracking.ts` | Lightweight error capture (extensible to Sentry/LogRocket) |
 
-### 6.2 Utility Functions
+### 7.2 Utility Functions
 
 | File | Purpose |
 |------|---------|
@@ -813,7 +976,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | `src/utils/freedomEducationUtils.ts` | Data transform for Freedom Education tabs |
 | `src/utils/invideoPromptBuilder.ts` | Cinematic prompt generation for InVideo relocation stories |
 
-### 6.3 Shared API Utilities
+### 7.3 Shared API Utilities
 
 | File | Purpose |
 |------|---------|
@@ -825,9 +988,9 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 ---
 
-## 7. External Integrations
+## 8. External Integrations
 
-### 7.1 AI/LLM Providers
+### 8.1 AI/LLM Providers
 
 | Provider | Purpose | Models Used |
 |----------|---------|-------------|
@@ -838,7 +1001,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | **Perplexity** | Real-time web search evaluation | Sonar models |
 | **Tavily** | Web research for evidence gathering | Tavily Search API |
 
-### 7.2 Video Providers
+### 8.2 Video Providers
 
 | Service | Purpose | Models/Features |
 |---------|---------|-----------------|
@@ -849,7 +1012,7 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | **HeyGen** | Avatar streaming + pre-rendered video presenter | Streaming Avatar API, Video Generate v2, Video Status v1 |
 | **InVideo** | Admin cinematic movie overrides | Cinema-quality Court Order replacements |
 
-### 7.3 Audio
+### 8.3 Audio
 
 | Service | Purpose |
 |---------|---------|
@@ -857,20 +1020,20 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 | **OpenAI TTS** | Fallback TTS when ElevenLabs unavailable |
 | **Web Speech API** | Browser-native voice input |
 
-### 7.4 Document Generation
+### 8.4 Document Generation
 
 | Service | Purpose |
 |---------|---------|
 | **Gamma** | Visual PDF/PPTX reports (35-page standard, 82-page enhanced) |
 
-### 7.5 Payment & Email
+### 8.5 Payment & Email
 
 | Service | Purpose |
 |---------|---------|
 | **Stripe** | Subscription billing (Navigator $29/mo, Sovereign $99/mo) |
 | **Resend** | Email notifications and quota alerts |
 
-### 7.6 Infrastructure
+### 8.6 Infrastructure
 
 | Service | Purpose |
 |---------|---------|
@@ -880,9 +1043,9 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 ---
 
-## 8. Tier System
+## 9. Tier System
 
-### 8.1 Tier Definitions
+### 9.1 Tier Definitions
 
 **SOURCE OF TRUTH:** `src/hooks/useTierAccess.ts`
 
@@ -900,15 +1063,15 @@ All endpoints are Vercel serverless functions in `/api/`. **44 endpoints total.*
 
 **DB Mapping:** free → 'free', NAVIGATOR → 'pro', SOVEREIGN → 'enterprise'
 
-### 8.2 Developer Bypass
+### 9.2 Developer Bypass
 
 Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `brokerpinellas@gmail.com` get enterprise-level access regardless of subscription.
 
 ---
 
-## 9. Environment Variables
+## 10. Environment Variables
 
-### 9.1 Client-Side (VITE_*)
+### 10.1 Client-Side (VITE_*)
 
 | Variable | Purpose |
 |----------|---------|
@@ -919,7 +1082,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `VITE_ERROR_REPORTING_URL` | Error reporting endpoint |
 | `VITE_AVATAR_PROVIDER` | Avatar provider (simli, did, heygen) |
 
-### 9.2 Server-Side — Database & Auth
+### 10.2 Server-Side — Database & Auth
 
 | Variable | Purpose |
 |----------|---------|
@@ -928,7 +1091,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `SUPABASE_SERVICE_ROLE_KEY` | Alias for SUPABASE_SERVICE_KEY |
 | `SUPABASE_ANON_KEY` | Anon key for server-side fallback |
 
-### 9.3 Server-Side — LLM Providers
+### 10.3 Server-Side — LLM Providers
 
 | Variable | Purpose |
 |----------|---------|
@@ -941,7 +1104,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `PERPLEXITY_API_KEY` | Perplexity web search |
 | `TAVILY_API_KEY` | Tavily research API |
 
-### 9.4 Server-Side — Video & Avatar
+### 10.4 Server-Side — Video & Avatar
 
 | Variable | Purpose |
 |----------|---------|
@@ -962,7 +1125,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `REPLICATE_API_TOKEN` | Replicate (video fallback + Wav2Lip) |
 | `WEBHOOK_BASE_URL` | Video generation webhook URL |
 
-### 9.5 Server-Side — TTS
+### 10.5 Server-Side — TTS
 
 | Variable | Purpose |
 |----------|---------|
@@ -972,7 +1135,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `ELEVENLABS_CRISTIANO_VOICE_ID` | Judge Cristiano voice |
 | `ELEVENLABS_EMILIA_VOICE_ID` | Emilia help voice |
 
-### 9.6 Server-Side — Gamma, Stripe, Email
+### 10.6 Server-Side — Gamma, Stripe, Email
 
 | Variable | Purpose |
 |----------|---------|
@@ -989,7 +1152,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 | `RESEND_API_KEY` | Email service |
 | `RESEND_FROM_EMAIL` | Sender email (default: cluesnomads@gmail.com) |
 
-### 9.7 Server-Side — Infrastructure & Admin
+### 10.7 Server-Side — Infrastructure & Admin
 
 | Variable | Purpose |
 |----------|---------|
@@ -1003,7 +1166,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 
 ---
 
-## 10. File Structure
+## 11. File Structure
 
 ```
 lifescore/

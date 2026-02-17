@@ -264,6 +264,26 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Google/GitHub SSO failure | Clear cookies; try incognito mode |
 | Login feels slow/unresponsive | Fixed 2026-02-14 — removed backdrop-filter blur that caused 247ms input delay |
 
+### 5.1.1 Password Reset Issues (Added 2026-02-17)
+
+| Issue | Solution |
+|-------|----------|
+| "I didn't get the reset email" | Check spam/junk folder for email from **noreply@mail.app.supabase.io**. Wait 1-2 minutes. Try requesting again. |
+| "The reset link doesn't work" | Links expire after **1 hour**. Request a new one from the login screen. |
+| "I clicked the link but don't see the password form" | Clear browser cache, try in incognito. The app must detect the `#access_token` in the URL hash. |
+| "My password won't update" | New password must be at least 6 characters and both fields must match. |
+| "I reset my password but my data is gone" | **Password reset NEVER deletes data.** All comparisons, reports, and settings are untouched. If data appears missing, try signing out and back in with the new password. |
+| "I get a success message but the email isn't mine" | For security, the app always shows a success message — even if the email doesn't exist in our system. This prevents email enumeration attacks. |
+| User says they never requested a reset | Advise them to change their password immediately via Settings. The reset link expires in 1 hour and cannot be used after the password is changed. |
+
+**Password Reset Flow (for support reference):**
+1. User clicks "Forgot your password?" on login screen
+2. Enters email → clicks "Send Reset Link"
+3. Supabase sends email with one-time link (1hr expiry)
+4. User clicks link → app shows "Set New Password" screen
+5. User enters new password (min 6 chars) + confirm → clicks "Update Password"
+6. Password updated → user redirected to main app (fully authenticated)
+
 ### 5.2 Comparison Failures
 
 | Error Message | Cause | Solution |

@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 3.4
-**Last Updated:** February 15, 2026
+**Version:** 3.5
+**Last Updated:** February 17, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -77,6 +77,38 @@ Each city receives a Freedom Score from 0-100, calculated across:
 2. Enter your email and password
 3. Click **Sign In**
 4. If you forgot your password, click "Forgot your password?" to receive a reset link
+
+### Forgot Password / Password Reset
+
+If you've forgotten your password, here's the complete step-by-step flow:
+
+**Step 1: Request a Reset Link**
+1. On the Sign In screen, click **"Forgot your password?"**
+2. The form switches to **Reset Password** mode
+3. Enter your email address
+4. Click **Send Reset Link**
+5. You'll see: *"Password reset link sent! Please check your email (including spam/junk folder). The link expires in 1 hour."*
+
+**Step 2: Check Your Email**
+1. Open your email inbox (check spam/junk if you don't see it)
+2. Look for an email from **noreply@mail.app.supabase.io** with subject "Reset Your Password"
+3. Click the reset link in the email
+4. The link redirects you back to LifeScore automatically
+
+**Step 3: Set Your New Password**
+1. LifeScore detects the password recovery link and shows the **Set New Password** screen
+2. Enter your new password (minimum 6 characters)
+3. Re-enter the password to confirm
+4. Use the eye icon to toggle password visibility
+5. Click **Update Password**
+6. You'll see: *"Password updated successfully! Redirecting..."*
+7. After 2 seconds, you're automatically signed into the app
+
+**Important Notes:**
+- The reset link expires after **1 hour** — request a new one if it expires
+- For security, you'll receive a success message even if the email doesn't exist in our system (this prevents email enumeration)
+- Your saved comparisons, reports, Judge verdicts, and all other data remain **completely untouched** during a password reset — only the password itself changes
+- If you don't want to reset after clicking the link, click **"Skip — go to app"** to enter the app without changing your password
 
 ### Theme Selection
 
@@ -965,3 +997,4 @@ The Emilia help system includes multiple tabs for different types of information
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Trophy 🏆 now correctly placed on winner not loser in Gamma reports (§9), (2) Gamma reports persistence fix — foreign key constraint resolved (§7, §9), (3) backdrop-filter blur removed from 8 CSS files for INP performance, (4) 247ms INP fix on login email input, (5) "Watch Presenter" renamed to "Listen to Presenter" (§8). |
 | 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page redesign: collapsible panels (§7), GoToMyNewCity multi-scene video (§7), auto-restore videos on tab switch (§7), missing 6 category sections fix (§7), Judge dropdown INP fix (§7). Video URL expiration handling for all providers (§12). Cost Dashboard $0.00 fix (§15). Cristiano video CTA + poster (§8). AUDIO badge + voice wave indicator (§8). Storyboard progress bar (§8). Dark mode fixes for saved reports (§10). Judge report Supabase fallback (§7). Expired video URL HEAD-request validation (§12). localStorage quota crash protection. |
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§12): Results score cards, category % badges, About services table, How It Works modules, Olivia READY/STOP buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. All scoped to ≤480px viewports. New "Mobile Display Issues" troubleshooting section. |
+| 3.5 | 2026-02-17 | Claude Opus 4.6 | Full "Forgot Password" flow documented (§2): 3-step walkthrough covering reset request, email link, new password form, and data safety notes. Updated App Schema Manual with complete Authentication & Password Recovery architecture (§1.0). Updated CSM and Tech manuals with password reset troubleshooting and architecture. |

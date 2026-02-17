@@ -886,7 +886,55 @@ User Login → Supabase Auth → JWT Token →
 → Stored in localStorage → Sent in headers
 ```
 
-### 6.2 Session Management
+### 6.2 Password Reset Flow (Added 2026-02-17)
+
+**Complete technical flow for "Forgot Password":**
+
+```
+STEP 1: REQUEST RESET
+  LoginScreen.tsx:163-180  handleForgotPassword()
+    → AuthContext.tsx:505-523  resetPassword(email)
+      → supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/auth/callback'
+        })
+    → Supabase stores recovery_token (1hr TTL) in auth.users
+    → Supabase sends email from noreply@mail.app.supabase.io
+    → Returns success even if email doesn't exist (anti-enumeration)
+
+STEP 2: USER CLICKS EMAIL LINK
+  Browser → /auth/callback#access_token=...&type=recovery
+    → Supabase JS auto-parses URL hash fragment
+    → supabase.auth.onAuthStateChange fires:
+        event = 'PASSWORD_RECOVERY'
+        session = { access_token, refresh_token, user }
+    → AuthContext.tsx:339-349 handles event:
+        isPasswordRecovery = true
+        isAuthenticated = true (temporary session)
+    → App.tsx:621-622 route gate:
+        if (isPasswordRecovery) → <ResetPasswordScreen />
+
+STEP 3: SET NEW PASSWORD
+  ResetPasswordScreen.tsx (validation: min 6 chars, must match)
+    → AuthContext.tsx:525-547  updatePassword(newPassword)
+      → supabase.auth.updateUser({ password: newPassword })
+    → Supabase: bcrypt(newPassword) → auth.users.encrypted_password
+    → recovery_token = NULL (consumed)
+    → isPasswordRecovery = false
+    → URL hash cleaned
+    → App renders main content (user fully authenticated)
+```
+
+**Key Files:**
+| File | Lines | Responsibility |
+|------|-------|---------------|
+| `src/contexts/AuthContext.tsx` | 505-553 | `resetPassword()`, `updatePassword()`, `clearPasswordRecovery()` |
+| `src/components/LoginScreen.tsx` | 163-180 | Forgot password form, success message |
+| `src/components/ResetPasswordScreen.tsx` | Full | New password form (6 char min, confirm match, show/hide toggle) |
+| `src/App.tsx` | 621-622 | `isPasswordRecovery` route gate |
+
+**Database impact:** ONLY `auth.users.encrypted_password` and `auth.users.recovery_token` are modified. All application tables (`profiles`, `comparisons`, `subscriptions`, etc.) are untouched.
+
+### 6.3 Session Management
 
 ```typescript
 // src/lib/supabase.ts
@@ -899,7 +947,7 @@ const supabase = createClient(url, anonKey, {
 });
 ```
 
-### 6.3 Tier Enforcement
+### 6.4 Tier Enforcement
 
 **Client-side:** `src/hooks/useTierAccess.ts`
 **Server-side:** `api/shared/tierCheck.ts`
@@ -913,7 +961,7 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
 }
 ```
 
-### 6.4 Auth Profile Fetch Retry Storm Fix (Added 2026-02-14)
+### 6.5 Auth Profile Fetch Retry Storm Fix (Added 2026-02-14)
 
 **Problem:** When a profile fetch from Supabase failed (e.g., network blip, cold start), the auth context would immediately retry, creating an exponential retry loop that could hammer Supabase Auth with hundreds of requests per second.
 
@@ -927,7 +975,7 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
 
 **Impact:** Prevents exponential retry loops from overwhelming Supabase Auth during transient failures.
 
-### 6.5 API Key Handling
+### 6.6 API Key Handling
 
 User-provided API keys are:
 - Passed in request body (not stored)

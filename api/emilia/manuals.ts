@@ -56,12 +56,23 @@ const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.0 | **Updated:** 2026-02-13
+**Version:** 3.5 | **Updated:** 2026-02-17
 
 ## Getting Started
 
 ### What is LifeScore?
 LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that compares cities across 100 freedom metrics to help you make informed decisions about relocation.
+
+### Forgot Password / Password Reset
+
+If you've forgotten your password:
+
+1. **Request a Reset Link** — On the Sign In screen, click "Forgot your password?", enter your email, and click "Send Reset Link"
+2. **Check Your Email** — Look for an email from noreply@mail.app.supabase.io (check spam/junk). The link expires in 1 hour.
+3. **Set New Password** — Click the link, enter your new password (min 6 characters), confirm it, and click "Update Password"
+4. **Done** — You'll be automatically signed in. All your saved data (comparisons, reports, etc.) remains untouched.
+
+**Security note:** For privacy, a success message is shown even if the email doesn't exist in our system.
 
 ### How to Run a Comparison
 
@@ -222,6 +233,15 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - If ElevenLabs quota exceeded, OpenAI TTS auto-kicks in
 - HeyGen env vars are irrelevant to the chat voice
 
+### "I can't reset my password" / "Reset email not arriving"
+- Confirm the user is entering the correct email address
+- Ask them to check spam/junk folder for email from noreply@mail.app.supabase.io
+- The reset link expires after 1 hour — they can request a new one
+- For security, the app shows a success message even if the email doesn't exist (prevents enumeration)
+- If the link opens but the "Set New Password" screen doesn't appear, ask them to clear browser cache and try again
+- The password reset flow: LoginScreen → supabase.auth.resetPasswordForEmail() → email link → /auth/callback → PASSWORD_RECOVERY event → ResetPasswordScreen → supabase.auth.updateUser()
+- Password reset does NOT affect any saved data (comparisons, reports, subscriptions, etc.)
+
 ## Refund Policy
 
 ### Eligible Refunds
@@ -243,7 +263,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
   tech: `# Technical Support Manual
 
-**Version:** 4.5 | **Updated:** 2026-02-15
+**Version:** 4.6 | **Updated:** 2026-02-17
 
 ## System Architecture
 
@@ -256,6 +276,36 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - **Platform**: Vercel Serverless Functions (Node.js 20)
 - **Database**: Supabase (PostgreSQL) - 23 tables, 3 storage buckets
 - **Auth**: Supabase Auth with JWT verification
+
+## Authentication & Password Recovery Architecture
+
+### Auth Flow Overview
+- **Provider**: Supabase Auth (GoTrue) — manages auth.users table with bcrypt passwords
+- **State Management**: AuthContext.tsx — single React context with onAuthStateChange listener
+- **Sign-In Methods**: Email/Password, Google OAuth, GitHub OAuth, Magic Link
+
+### Password Reset Technical Flow
+1. LoginScreen.tsx calls AuthContext.resetPassword(email)
+2. AuthContext calls supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + '/auth/callback' })
+3. Supabase stores recovery_token (1hr TTL) in auth.users and sends email
+4. User clicks link → browser navigates to /auth/callback#access_token=...&type=recovery
+5. Supabase JS parses URL hash → fires onAuthStateChange with event='PASSWORD_RECOVERY'
+6. AuthContext sets isPasswordRecovery=true, isAuthenticated=true (temp session)
+7. App.tsx route gate renders ResetPasswordScreen when isPasswordRecovery is true
+8. User submits new password → AuthContext.updatePassword(pw) → supabase.auth.updateUser({ password })
+9. Supabase updates encrypted_password, nullifies recovery_token
+10. clearPasswordRecovery() resets flag + cleans URL hash → main app loads
+
+### Key Files
+| File | Responsibility |
+|------|---------------|
+| src/contexts/AuthContext.tsx:496-553 | resetPassword(), updatePassword(), clearPasswordRecovery() |
+| src/components/LoginScreen.tsx:163-180 | handleForgotPassword() form + success message |
+| src/components/ResetPasswordScreen.tsx | New password form with validation (6 char min, match check) |
+| src/App.tsx:621-622 | isPasswordRecovery route gate |
+
+### Database Impact
+Password reset ONLY modifies auth.users.encrypted_password and auth.users.recovery_token. Zero impact on profiles, comparisons, subscriptions, or any other application table.
 
 ### AI Providers
 - **Claude Sonnet 4.5**: Primary evaluator
@@ -470,15 +520,46 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.0.0 | **Updated:** 2026-02-13
+**Version:** 2.4.0 | **Updated:** 2026-02-17
 
 ---
 
-## 1. Database Schema
+## 1. Authentication & Password Recovery
+
+### Authentication Provider
+Supabase Auth (GoTrue) manages all authentication. The auth.users table is Supabase-managed (bcrypt passwords, recovery tokens).
+
+### Supported Sign-In Methods
+- Email + Password
+- Google OAuth
+- GitHub OAuth
+- Magic Link (passwordless)
+
+### Password Reset Flow
+1. **User clicks "Forgot your password?"** on LoginScreen → AuthContext.resetPassword(email) → supabase.auth.resetPasswordForEmail()
+2. **Supabase sends email** with one-time recovery JWT (1hr expiry) to user's email
+3. **User clicks email link** → /auth/callback → Supabase JS fires PASSWORD_RECOVERY event
+4. **AuthContext sets isPasswordRecovery=true** → App.tsx renders ResetPasswordScreen
+5. **User enters new password** → AuthContext.updatePassword() → supabase.auth.updateUser({ password })
+6. **Supabase updates auth.users** (new bcrypt hash, recovery_token nullified)
+7. **isPasswordRecovery cleared** → user enters main app, fully authenticated
+
+### Key Files
+- src/contexts/AuthContext.tsx — auth state + resetPassword/updatePassword/clearPasswordRecovery
+- src/components/LoginScreen.tsx — "Forgot your password?" form
+- src/components/ResetPasswordScreen.tsx — "Set New Password" form
+- src/App.tsx — route gate (isPasswordRecovery → ResetPasswordScreen)
+
+### What Password Reset Does NOT Touch
+profiles, user_preferences, comparisons, olivia_conversations, gamma_reports, judge_reports, subscriptions, jobs, notifications — ALL untouched. Only auth.users.encrypted_password changes.
+
+---
+
+## 2. Database Schema
 
 LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buckets**.
 
-### 1.1 All Tables
+### 2.1 All Tables
 
 | Table | Purpose |
 |-------|---------|
