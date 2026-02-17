@@ -2198,7 +2198,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               onClick={() => setOpenDisplay(openDisplay === 'court-order' ? null : 'court-order')}
             >
               <span className="display-screen-btn-icon">&#9878;</span>
-              <span className="display-screen-btn-label">COURT ORDER VIDEO</span>
+              <span className="display-screen-btn-label">OUR CINEMATIC FREEDOM JOURNEY</span>
             </button>
             <button
               className={`display-screen-btn${openDisplay === 'freedom-tour' ? ' active' : ''}`}
