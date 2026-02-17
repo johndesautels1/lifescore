@@ -355,10 +355,6 @@ const AppContent: React.FC = () => {
     setSavedCount(count);
   }, [savedKey]);
 
-  const handleSaved = useCallback(() => {
-    setSavedKey(prev => prev + 1);
-  }, []);
-
   // Auto-switch to results tab when comparison COMPLETES (BOTH modes)
   // Only switch on actual completion transitions, not on mode toggle with stale results
   // BUT: If there are category failures, require user to click "SEE RESULTS" first
@@ -398,7 +394,7 @@ const AppContent: React.FC = () => {
         saveComparisonLocal(state.result)
           .then(() => {
             console.log('[App] Auto-saved standard comparison:', state.result!.comparisonId);
-            handleSaved();
+            setSavedKey(prev => prev + 1);
           })
           .catch(err => console.warn('[App] Auto-save standard failed (non-fatal):', err));
       }
@@ -406,7 +402,7 @@ const AppContent: React.FC = () => {
         saveEnhancedComparisonLocal(enhancedResult)
           .then(() => {
             console.log('[App] Auto-saved enhanced comparison:', enhancedResult!.comparisonId);
-            handleSaved();
+            setSavedKey(prev => prev + 1);
           })
           .catch(err => console.warn('[App] Auto-save enhanced failed (non-fatal):', err));
       }
@@ -415,7 +411,7 @@ const AppContent: React.FC = () => {
     // Update refs after handling transitions
     prevEnhancedStatusRef.current = enhancedStatus;
     prevStandardStatusRef.current = state.status;
-  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify, state.result, enhancedResult, handleSaved]);
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify, state.result, enhancedResult]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
@@ -544,6 +540,10 @@ const AppContent: React.FC = () => {
     setActiveTab('results');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loadResult]);
+
+  const handleSaved = useCallback(() => {
+    setSavedKey(prev => prev + 1);
+  }, []);
 
   // FIX 2026-02-08: Handler to view a saved Judge report
   // FIX 2026-02-08: Clear stale state to prevent contamination from previous comparisons
