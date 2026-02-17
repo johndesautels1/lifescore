@@ -1350,30 +1350,26 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   };
 
   // ── Shared option groups for report selector dropdowns ──
-  const reportOptionGroups = (
-    <>
-      {savedComparisons.length > 0 && (
-        <optgroup label="Standard Reports">
-          {savedComparisons.map((saved) => (
-            <option key={saved.id} value={saved.result.comparisonId}>
-              {saved.result.city1.city} vs {saved.result.city2.city}
-              {saved.nickname ? ` (${saved.nickname})` : ''}
-            </option>
-          ))}
-        </optgroup>
-      )}
-      {savedEnhanced.length > 0 && (
-        <optgroup label="Enhanced Reports">
-          {savedEnhanced.map((saved) => (
-            <option key={saved.id} value={saved.result.comparisonId}>
-              ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
-              {saved.nickname ? ` (${saved.nickname})` : ''}
-            </option>
-          ))}
-        </optgroup>
-      )}
-    </>
-  );
+  const standardOptionGroup = savedComparisons.length > 0 ? (
+    <optgroup label="Standard Reports">
+      {savedComparisons.map((saved) => (
+        <option key={saved.id} value={saved.result.comparisonId}>
+          {saved.result.city1.city} vs {saved.result.city2.city}
+          {saved.nickname ? ` (${saved.nickname})` : ''}
+        </option>
+      ))}
+    </optgroup>
+  ) : null;
+  const enhancedOptionGroup = savedEnhanced.length > 0 ? (
+    <optgroup label="Enhanced Reports">
+      {savedEnhanced.map((saved) => (
+        <option key={saved.id} value={saved.result.comparisonId}>
+          ⭐ {saved.result.city1.city} vs {saved.result.city2.city}
+          {saved.nickname ? ` (${saved.nickname})` : ''}
+        </option>
+      ))}
+    </optgroup>
+  ) : null;
 
   // Saved report is loading from Supabase — show brief loading state
   if (!comparisonResult && !judgeReport && savedJudgeReport) {
@@ -1434,7 +1430,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 }}
               >
                 <option value="">Choose a report...</option>
-                {reportOptionGroups}
+                {standardOptionGroup}
+                {enhancedOptionGroup}
               </select>
             </div>
           )}
@@ -1561,7 +1558,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 ? `Current: ${propComparisonResult.city1?.city || 'City 1'} vs ${propComparisonResult.city2?.city || 'City 2'}`
                 : 'Select a report...'}
             </option>
-            {reportOptionGroups}
+            {standardOptionGroup}
+            {enhancedOptionGroup}
           </select>
         </div>
       )}
