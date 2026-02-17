@@ -154,6 +154,9 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   // Selected comparison from dropdown (null = use prop)
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
 
+  // Two-tab selector: Generate New Report vs View Existing Report
+  const [selectorTab, setSelectorTab] = useState<'generate' | 'view'>('generate');
+
   // Load saved comparisons with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
   const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
@@ -214,6 +217,49 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
   // INP fix: mark presenter mount/unmount as a non-urgent transition
   const [isPending, startTransition] = useTransition();
+
+  // ============================================================================
+  // TAB 1 — "Generate a New Report": comparisons WITHOUT a Gamma report, sorted A-Z
+  // ============================================================================
+  const generatableComparisons = useMemo(() => {
+    const gammaCompIds = new Set(savedReports.map(r => r.comparisonId));
+    const items: { id: string; label: string; type: 'enhanced' | 'standard'; comparisonId: string }[] = [];
+
+    for (const c of savedEnhanced) {
+      if (!gammaCompIds.has(c.result.comparisonId)) {
+        items.push({
+          id: c.id,
+          label: `${c.result.city1.city} vs ${c.result.city2.city}${c.nickname ? ` (${c.nickname})` : ''} — Enhanced`,
+          type: 'enhanced',
+          comparisonId: c.result.comparisonId,
+        });
+      }
+    }
+    for (const c of savedComparisons) {
+      if (!gammaCompIds.has(c.result.comparisonId)) {
+        items.push({
+          id: c.id,
+          label: `${c.result.city1.city} vs ${c.result.city2.city}${c.nickname ? ` (${c.nickname})` : ''} — Standard`,
+          type: 'standard',
+          comparisonId: c.result.comparisonId,
+        });
+      }
+    }
+
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }, [savedComparisons, savedEnhanced, savedReports]);
+
+  // ============================================================================
+  // TAB 2 — "View Existing Report": Gamma reports, sorted A-Z
+  // ============================================================================
+  const viewableReports = useMemo(() => {
+    return [...savedReports]
+      .sort((a, b) => {
+        const labelA = `${a.city1} vs ${a.city2}`;
+        const labelB = `${b.city1} vs ${b.city2}`;
+        return labelA.localeCompare(labelB);
+      });
+  }, [savedReports]);
 
   // Audit 8.2: Async unmount guard in Supabase sync effect
   useEffect(() => {
@@ -475,28 +521,32 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     }
   }, [reportState.status, reportState.gammaUrl, result, completeJobAndNotify]);
 
-  // Audit 5.3: Extracted selector onChange to memoized handler
-  const handleSelectorChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Handler for "Generate" tab dropdown — selecting a comparison to generate
+  const handleGenerateTabSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-
-    if (value.startsWith('gamma:')) {
-      const reportId = value.replace('gamma:', '');
-      const report = savedReports.find(r => r.id === reportId);
-      if (report) {
-        setViewingReport(report);
-        setSelectedComparisonId(null);
-        startTransition(() => setReportViewMode('read'));
-      }
-    } else {
-      setViewingReport(null);
-      setSelectedComparisonId(value === '' ? null : value);
-      if (value !== selectedComparisonId) {
-        setReportState({ status: 'idle' });
-        setIsReportSaved(false);
-        setShowEmbedded(false);
-      }
+    setViewingReport(null);
+    setSelectedComparisonId(value === '' ? null : value);
+    if (value !== selectedComparisonId) {
+      setReportState({ status: 'idle' });
+      setIsReportSaved(false);
+      setShowEmbedded(false);
     }
-  }, [savedReports, selectedComparisonId, setReportState, setShowEmbedded, startTransition]);
+  }, [selectedComparisonId, setReportState, setShowEmbedded]);
+
+  // Handler for "View" tab dropdown — selecting an existing Gamma report
+  const handleViewTabSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setViewingReport(null);
+      return;
+    }
+    const report = savedReports.find(r => r.id === value);
+    if (report) {
+      setViewingReport(report);
+      setSelectedComparisonId(null);
+      startTransition(() => setReportViewMode('read'));
+    }
+  }, [savedReports, startTransition]);
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
   const hasAnything = !!result || hasSavedComparisons || savedReports.length > 0;
@@ -613,60 +663,75 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   return (
     <div className="visuals-tab">
       {/* ================================================================
-          FIX #1 & #10: UNIFIED SELECTOR
-          Audit 9.5: htmlFor/id on label+select
+          TWO-TAB SELECTOR: Generate a New Report | View Existing Report
           ================================================================ */}
       {(hasSavedComparisons || savedReports.length > 0) && (
         <div className="report-selector-section">
-          <label className="report-selector-label" htmlFor="report-selector">📊 Select Report:</label>
-          <select
-            id="report-selector"
-            className="report-selector-dropdown"
-            value={viewingReport ? `gamma:${viewingReport.id}` : selectedComparisonId ?? ''}
-            onChange={handleSelectorChange}
-          >
-            <option value="">
-              {propResult
-                ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
-                : 'Select a comparison or report'}
-            </option>
-            {savedEnhanced.length > 0 && (
-              <optgroup label="Enhanced Comparisons">
-                {savedEnhanced.map((saved) => (
-                  <option key={saved.id} value={saved.result.comparisonId}>
-                    {saved.result.city1.city} vs {saved.result.city2.city}
-                    {saved.nickname ? ` (${saved.nickname})` : ''}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {savedComparisons.length > 0 && (
-              <optgroup label="Standard Comparisons">
-                {savedComparisons.map((saved) => (
-                  <option key={saved.id} value={saved.result.comparisonId}>
-                    {saved.result.city1.city} vs {saved.result.city2.city}
-                    {saved.nickname ? ` (${saved.nickname})` : ''}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {savedReports.length > 0 && (
-              <optgroup label="Saved Gamma Reports">
-                {savedReports.map((report) => (
-                  <option key={report.id} value={`gamma:${report.id}`}>
-                    {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
+          <div className="selector-tabs">
+            <button
+              type="button"
+              className={`selector-tab ${selectorTab === 'generate' ? 'active' : ''}`}
+              onClick={() => setSelectorTab('generate')}
+              aria-pressed={selectorTab === 'generate'}
+            >
+              Generate a New Report
+            </button>
+            <button
+              type="button"
+              className={`selector-tab ${selectorTab === 'view' ? 'active' : ''}`}
+              onClick={() => setSelectorTab('view')}
+              aria-pressed={selectorTab === 'view'}
+            >
+              View Existing Report
+            </button>
+          </div>
+
+          {selectorTab === 'generate' && (
+            <select
+              id="generate-selector"
+              className="report-selector-dropdown"
+              value={selectedComparisonId ?? ''}
+              onChange={handleGenerateTabSelect}
+            >
+              <option value="">
+                {propResult
+                  ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
+                  : 'Select a comparison to generate'}
+              </option>
+              {generatableComparisons.map((item) => (
+                <option key={item.id} value={item.comparisonId}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {selectorTab === 'view' && (
+            <select
+              id="view-selector"
+              className="report-selector-dropdown"
+              value={viewingReport?.id ?? ''}
+              onChange={handleViewTabSelect}
+            >
+              <option value="">Select a saved report to view</option>
+              {viewableReports.map((report) => (
+                <option key={report.id} value={report.id}>
+                  {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
       {!result && !viewingReport && (
         <div className="no-results-message card">
           <h3>Select a Report</h3>
-          <p>Choose a saved comparison or Gamma report from the dropdown above.</p>
+          <p>
+            {selectorTab === 'generate'
+              ? 'Choose a saved comparison from the dropdown to generate a Gamma report.'
+              : 'Choose a saved Gamma report from the dropdown to view it.'}
+          </p>
         </div>
       )}
 
