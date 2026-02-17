@@ -151,6 +151,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   // Bottom display screen toggle — null means neither open
   const [openDisplay, setOpenDisplay] = useState<'court-order' | 'freedom-tour' | null>(null);
+
+  // Confidence interval hover cards — which card is open
+  const [hoverCard, setHoverCard] = useState<'city1' | 'city2' | 'confidence' | null>(null);
+  const hoverCardRef = useRef<HTMLDivElement>(null);
   const { createJob } = useJobTracker();
 
   // Video generation progress simulation (Replicate doesn't return %)
@@ -470,6 +474,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Close hover card on outside click
+  useEffect(() => {
+    if (!hoverCard) return;
+    const handler = (e: MouseEvent) => {
+      if (hoverCardRef.current && !hoverCardRef.current.contains(e.target as Node)) {
+        setHoverCard(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [hoverCard]);
 
   // Cockpit-style time formatting
   const formatTime = (date: Date) => {
@@ -1333,6 +1349,51 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     }
   };
 
+  // ── Confidence interval stats for hover cards ──
+  const getConfidenceStats = (cityKey: 'city1' | 'city2') => {
+    const enhanced = comparisonResult as EnhancedComparisonResult | null;
+    const cityData = enhanced?.[cityKey];
+    if (!cityData?.categories) return null;
+
+    const allMetrics = cityData.categories.flatMap(c => c.metrics || []);
+    const scored = allMetrics.filter(m => m.consensusScore != null && !m.isMissing);
+    const totalPossible = allMetrics.length;
+    const stdDevs = scored.map(m => m.standardDeviation).filter((s): s is number => s != null);
+    const avgStdDev = stdDevs.length ? stdDevs.reduce((a, b) => a + b, 0) / stdDevs.length : null;
+
+    // Count agreement levels
+    const unanimous = scored.filter(m => m.confidenceLevel === 'unanimous').length;
+    const strong = scored.filter(m => m.confidenceLevel === 'strong').length;
+    const moderate = scored.filter(m => m.confidenceLevel === 'moderate').length;
+    const split = scored.filter(m => m.confidenceLevel === 'split').length;
+
+    return {
+      metricsEvaluated: scored.length,
+      totalMetrics: totalPossible,
+      overallAgreement: cityData.overallAgreement,
+      avgStdDev,
+      unanimous,
+      strong,
+      moderate,
+      split,
+      llmsUsed: enhanced?.llmsUsed?.length ?? 0,
+      scoreDifference: enhanced?.scoreDifference ?? null,
+    };
+  };
+
+  const confidenceExplanation = (level: string) => {
+    switch (level?.toLowerCase()) {
+      case 'high':
+        return 'Multiple LLMs reached strong consensus with low disagreement across metrics.';
+      case 'medium':
+        return 'LLMs showed moderate agreement. Some metrics had notable variation in scores.';
+      case 'low':
+        return 'LLMs disagreed significantly on several metrics. Results should be treated as estimates.';
+      default:
+        return 'Confidence level pending analysis.';
+    }
+  };
+
   // Saved report is loading from Supabase — show brief loading state
   if (!comparisonResult && !judgeReport && savedJudgeReport) {
     return (
@@ -1858,6 +1919,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       <section className="findings-section">
 
         <div className="findings-grid">
+          {/* ── CITY 1 CARD ── */}
           <div className="finding-card city1">
             <div className="card-header">
               <span className="city-name">{city1Name}</span>
@@ -1869,11 +1931,67 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 {city1Country}
               </span>
             </div>
-            <div className="card-score">
-              <span className="score-value">
+            <div className="card-score hover-card-anchor">
+              <span
+                className="score-value score-clickable"
+                onClick={() => setHoverCard(hoverCard === 'city1' ? null : 'city1')}
+                title="Tap for confidence details"
+              >
                 {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1?.city === city1Name ? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult.city1 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
+              <span className="score-tap-hint">tap score for details</span>
+
+              {/* Hover Card — City 1 */}
+              {hoverCard === 'city1' && (() => {
+                const stats = getConfidenceStats('city1');
+                return (
+                  <div className="confidence-hover-card" ref={hoverCardRef}>
+                    <div className="hover-card-header">
+                      <span className="hover-card-title">Score Confidence</span>
+                      <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
+                    </div>
+                    {stats ? (
+                      <div className="hover-card-body">
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Metrics Evaluated</span>
+                          <span className="hover-card-value">{stats.metricsEvaluated} / {stats.totalMetrics}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">LLMs Used</span>
+                          <span className="hover-card-value">{stats.llmsUsed}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Overall Agreement</span>
+                          <span className="hover-card-value">{stats.overallAgreement != null ? `${Math.round(stats.overallAgreement)}%` : '—'}</span>
+                        </div>
+                        {stats.avgStdDev != null && (
+                          <div className="hover-card-row">
+                            <span className="hover-card-label">Avg Std Deviation</span>
+                            <span className="hover-card-value">{stats.avgStdDev.toFixed(1)}</span>
+                          </div>
+                        )}
+                        <div className="hover-card-agreement-bar">
+                          <div className="agreement-segment unanimous" style={{ flex: stats.unanimous }} title={`Unanimous: ${stats.unanimous}`} />
+                          <div className="agreement-segment strong" style={{ flex: stats.strong }} title={`Strong: ${stats.strong}`} />
+                          <div className="agreement-segment moderate" style={{ flex: stats.moderate }} title={`Moderate: ${stats.moderate}`} />
+                          <div className="agreement-segment split" style={{ flex: stats.split }} title={`Split: ${stats.split}`} />
+                        </div>
+                        <div className="hover-card-legend">
+                          <span className="legend-item"><span className="legend-dot unanimous" />Unanimous</span>
+                          <span className="legend-item"><span className="legend-dot strong" />Strong</span>
+                          <span className="legend-item"><span className="legend-dot moderate" />Moderate</span>
+                          <span className="legend-item"><span className="legend-dot split" />Split</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="hover-card-body">
+                        <p className="hover-card-empty">Detailed consensus data not available for this comparison.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city1Trend || 'stable') : ''}`}>
               <span className="trend-icon">
@@ -1885,16 +2003,65 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
           </div>
 
+          {/* ── VS / CONFIDENCE CENTER CARD ── */}
           <div className="finding-card versus">
             <span className="versus-text">VS</span>
-            <div className="confidence-badge">
+            <div className="confidence-badge hover-card-anchor">
               <span className="confidence-label">CONFIDENCE</span>
-              <span className={`confidence-value ${judgeReport?.summaryOfFindings.overallConfidence ?? 'pending'}`}>
+              <span
+                className={`confidence-value confidence-clickable ${judgeReport?.summaryOfFindings.overallConfidence ?? 'pending'}`}
+                onClick={() => setHoverCard(hoverCard === 'confidence' ? null : 'confidence')}
+                title="Tap for confidence breakdown"
+              >
                 {judgeReport?.summaryOfFindings.overallConfidence?.toUpperCase() ?? 'PENDING'}
               </span>
+
+              {/* Hover Card — Confidence explanation */}
+              {hoverCard === 'confidence' && (() => {
+                const conf = judgeReport?.summaryOfFindings.overallConfidence ?? 'pending';
+                const enhanced = comparisonResult as EnhancedComparisonResult | null;
+                return (
+                  <div className="confidence-hover-card confidence-center-card" ref={hoverCardRef}>
+                    <div className="hover-card-header">
+                      <span className="hover-card-title">Confidence Level</span>
+                      <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
+                    </div>
+                    <div className="hover-card-body">
+                      <p className="hover-card-explanation">{confidenceExplanation(conf)}</p>
+                      {enhanced?.scoreDifference != null && (
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Score Margin</span>
+                          <span className="hover-card-value">{Math.round(enhanced.scoreDifference)} pts</span>
+                        </div>
+                      )}
+                      {enhanced?.llmsUsed && (
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">LLMs in Panel</span>
+                          <span className="hover-card-value">{enhanced.llmsUsed.length}</span>
+                        </div>
+                      )}
+                      {enhanced?.disagreementSummary && (
+                        <div className="hover-card-disagreement">
+                          <span className="hover-card-label">Key Disagreements</span>
+                          <p className="hover-card-disagreement-text">{enhanced.disagreementSummary}</p>
+                        </div>
+                      )}
+                      {judgeReport?.executiveSummary?.confidenceLevel && (
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Judge Confidence</span>
+                          <span className={`hover-card-value conf-${judgeReport.executiveSummary.confidenceLevel}`}>
+                            {judgeReport.executiveSummary.confidenceLevel.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
+          {/* ── CITY 2 CARD ── */}
           <div className="finding-card city2">
             <div className="card-header">
               <span className="city-name">{city2Name}</span>
@@ -1906,11 +2073,67 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 {city2Country}
               </span>
             </div>
-            <div className="card-score">
-              <span className="score-value">
+            <div className="card-score hover-card-anchor">
+              <span
+                className="score-value score-clickable"
+                onClick={() => setHoverCard(hoverCard === 'city2' ? null : 'city2')}
+                title="Tap for confidence details"
+              >
                 {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2?.city === city2Name ? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult.city2 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
+              <span className="score-tap-hint">tap score for details</span>
+
+              {/* Hover Card — City 2 */}
+              {hoverCard === 'city2' && (() => {
+                const stats = getConfidenceStats('city2');
+                return (
+                  <div className="confidence-hover-card" ref={hoverCardRef}>
+                    <div className="hover-card-header">
+                      <span className="hover-card-title">Score Confidence</span>
+                      <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
+                    </div>
+                    {stats ? (
+                      <div className="hover-card-body">
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Metrics Evaluated</span>
+                          <span className="hover-card-value">{stats.metricsEvaluated} / {stats.totalMetrics}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">LLMs Used</span>
+                          <span className="hover-card-value">{stats.llmsUsed}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Overall Agreement</span>
+                          <span className="hover-card-value">{stats.overallAgreement != null ? `${Math.round(stats.overallAgreement)}%` : '—'}</span>
+                        </div>
+                        {stats.avgStdDev != null && (
+                          <div className="hover-card-row">
+                            <span className="hover-card-label">Avg Std Deviation</span>
+                            <span className="hover-card-value">{stats.avgStdDev.toFixed(1)}</span>
+                          </div>
+                        )}
+                        <div className="hover-card-agreement-bar">
+                          <div className="agreement-segment unanimous" style={{ flex: stats.unanimous }} title={`Unanimous: ${stats.unanimous}`} />
+                          <div className="agreement-segment strong" style={{ flex: stats.strong }} title={`Strong: ${stats.strong}`} />
+                          <div className="agreement-segment moderate" style={{ flex: stats.moderate }} title={`Moderate: ${stats.moderate}`} />
+                          <div className="agreement-segment split" style={{ flex: stats.split }} title={`Split: ${stats.split}`} />
+                        </div>
+                        <div className="hover-card-legend">
+                          <span className="legend-item"><span className="legend-dot unanimous" />Unanimous</span>
+                          <span className="legend-item"><span className="legend-dot strong" />Strong</span>
+                          <span className="legend-item"><span className="legend-dot moderate" />Moderate</span>
+                          <span className="legend-item"><span className="legend-dot split" />Split</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="hover-card-body">
+                        <p className="hover-card-empty">Detailed consensus data not available for this comparison.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city2Trend || 'stable') : ''}`}>
               <span className="trend-icon">

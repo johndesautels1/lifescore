@@ -1217,6 +1217,225 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   CONFIDENCE INTERVAL HOVER CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.hover-card-anchor {
+  position: relative;
+}
+
+.score-clickable,
+.confidence-clickable {
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.score-clickable:hover {
+  filter: brightness(1.2);
+}
+
+.confidence-clickable:hover {
+  filter: brightness(1.15);
+}
+
+.score-tap-hint {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.08em;
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+}
+
+/* ── The popover card itself ── */
+.confidence-hover-card {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 280px;
+  background: rgba(13, 25, 50, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 10px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(201, 162, 39, 0.08);
+  animation: hoverCardIn 0.2s ease-out;
+}
+
+/* Center card on versus column */
+.confidence-center-card {
+  width: 300px;
+}
+
+@keyframes hoverCardIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Arrow pointing up */
+.confidence-hover-card::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: rgba(13, 25, 50, 0.92);
+  border-left: 1px solid rgba(201, 162, 39, 0.3);
+  border-top: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+.hover-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hover-card-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brushed-gold, #e6b800);
+}
+
+.hover-card-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.hover-card-close:hover {
+  color: #fff;
+}
+
+.hover-card-body {
+  padding: 0.7rem 0.8rem;
+}
+
+.hover-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+}
+
+.hover-card-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.05em;
+}
+
+.hover-card-value {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--platinum, #e2e8f0);
+}
+
+.hover-card-value.conf-high   { color: var(--verdict-green, #10b981); }
+.hover-card-value.conf-medium { color: var(--stable-amber, #f59e0b); }
+.hover-card-value.conf-low    { color: var(--declining-red, #ef4444); }
+
+.hover-card-explanation {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin: 0 0 0.6rem;
+}
+
+.hover-card-empty {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+/* ── Agreement bar (stacked horizontal bar) ── */
+.hover-card-agreement-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.6rem 0 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.agreement-segment {
+  min-width: 0;
+  transition: flex 0.3s ease;
+}
+
+.agreement-segment.unanimous { background: var(--verdict-green, #10b981); }
+.agreement-segment.strong    { background: #3b82f6; }
+.agreement-segment.moderate  { background: var(--stable-amber, #f59e0b); }
+.agreement-segment.split     { background: var(--declining-red, #ef4444); }
+
+/* ── Legend below agreement bar ── */
+.hover-card-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.legend-dot.unanimous { background: var(--verdict-green, #10b981); }
+.legend-dot.strong    { background: #3b82f6; }
+.legend-dot.moderate  { background: var(--stable-amber, #f59e0b); }
+.legend-dot.split     { background: var(--declining-red, #ef4444); }
+
+/* ── Disagreement summary ── */
+.hover-card-disagreement {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hover-card-disagreement-text {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+  margin: 0.25rem 0 0;
+}
+
+/* ── Responsive: on mobile the cards flip below ── */
+@media (max-width: 600px) {
+  .confidence-hover-card {
+    width: 250px;
+  }
+
+  .confidence-center-card {
+    width: 260px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    CATEGORY ANALYSIS SECTION
    ═══════════════════════════════════════════════════════════════════════════ */
 .category-analysis-list {
