@@ -5,7 +5,7 @@
  * between two cities. Completely isolated from the 100-metric system.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface GunLawCategory {
   label: string;
@@ -23,8 +23,18 @@ export interface GunComparisonData {
 
 export type GunComparisonStatus = 'idle' | 'loading' | 'ready' | 'error';
 
-// Simple in-memory cache
+// Bounded in-memory cache with LRU eviction
+const MAX_CACHE_SIZE = 50;
 const cache = new Map<string, GunComparisonData>();
+
+function cacheSet(key: string, value: GunComparisonData): void {
+  if (cache.size >= MAX_CACHE_SIZE && !cache.has(key)) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) cache.delete(firstKey);
+  }
+  cache.delete(key);
+  cache.set(key, value);
+}
 
 function getCacheKey(cityA: string, cityB: string): string {
   return `gun_${cityA.toLowerCase()}_${cityB.toLowerCase()}`;
@@ -36,7 +46,7 @@ export function useGunComparison() {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const fetchComparison = useCallback(async (cityA: string, cityB: string) => {
+  const fetchComparison = useCallback(async (cityA: string, cityB: string): Promise<GunComparisonData | null> => {
     // Check cache first
     const key = getCacheKey(cityA, cityB);
     const cached = cache.get(key);
@@ -44,7 +54,7 @@ export function useGunComparison() {
       setData(cached);
       setStatus('ready');
       setError(null);
-      return;
+      return cached;
     }
 
     // Abort any pending request
@@ -70,15 +80,24 @@ export function useGunComparison() {
       }
 
       const result: GunComparisonData = await response.json();
-      cache.set(key, result);
+      cacheSet(key, result);
       setData(result);
       setStatus('ready');
+      return result;
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (err instanceof DOMException && err.name === 'AbortError') return null;
       const message = err instanceof Error ? err.message : 'Failed to fetch gun comparison';
       setError(message);
       setStatus('error');
+      return null;
     }
+  }, []);
+
+  // Abort in-flight requests on unmount to prevent state updates after unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   const reset = useCallback(() => {

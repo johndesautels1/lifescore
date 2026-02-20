@@ -179,11 +179,11 @@ where we can access and sign it.
 
 Company: Clues Intelligence LTD
 Country: United Kingdom
-Contact: John E. Desautels
+Contact: John E. Desautels II
 Email: cluesnomads@gmail.com
 
 Thank you,
-John E. Desautels
+John E. Desautels II
 Clues Intelligence LTD
 ```
 
@@ -204,11 +204,11 @@ where we can access and sign it.
 
 Company: Clues Intelligence LTD
 Country: United Kingdom
-Contact: John E. Desautels
+Contact: John E. Desautels II
 Email: cluesnomads@gmail.com
 
 Thank you,
-John E. Desautels
+John E. Desautels II
 Clues Intelligence LTD
 ```
 
@@ -229,11 +229,11 @@ where we can access and sign it.
 
 Company: Clues Intelligence LTD
 Country: United Kingdom
-Contact: John E. Desautels
+Contact: John E. Desautels II
 Email: cluesnomads@gmail.com
 
 Thank you,
-John E. Desautels
+John E. Desautels II
 Clues Intelligence LTD
 ```
 
@@ -254,11 +254,11 @@ where we can access and sign it.
 
 Company: Clues Intelligence LTD
 Country: United Kingdom
-Contact: John E. Desautels
+Contact: John E. Desautels II
 Email: cluesnomads@gmail.com
 
 Thank you,
-John E. Desautels
+John E. Desautels II
 Clues Intelligence LTD
 ```
 
@@ -279,11 +279,11 @@ where we can access and sign it.
 
 Company: Clues Intelligence LTD
 Country: United Kingdom
-Contact: John E. Desautels
+Contact: John E. Desautels II
 Email: cluesnomads@gmail.com
 
 Thank you,
-John E. Desautels
+John E. Desautels II
 Clues Intelligence LTD
 ```
 

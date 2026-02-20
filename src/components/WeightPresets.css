@@ -451,8 +451,16 @@
 
 .law-lived-section {
   margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  padding: 1.5rem 1rem 1rem;
   border-top: 2px solid var(--gray-200);
+  border-radius: var(--radius-md, 8px);
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.law-lived-section.active {
+  background: rgba(0, 71, 171, 0.06);
+  border-color: #0047AB;
+  box-shadow: 0 0 0 1px rgba(0, 71, 171, 0.15), 0 0 12px rgba(0, 71, 171, 0.08);
 }
 
 .weight-presets .section-header {
@@ -588,6 +596,13 @@
   border: 2px solid var(--gray-200);
   border-radius: var(--radius-md);
   padding: 1rem;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.conservative-mode.active {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(220, 38, 38, 0.06) 100%);
+  border-color: #DC2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.2), 0 0 12px rgba(220, 38, 38, 0.1);
 }
 
 .weight-presets .toggle-label {
@@ -665,6 +680,12 @@
   border-top-color: #3d3d55;
 }
 
+[data-theme="dark"] .law-lived-section.active {
+  background: rgba(107, 163, 255, 0.08);
+  border-color: #6ba3ff;
+  box-shadow: 0 0 0 1px rgba(107, 163, 255, 0.2), 0 0 12px rgba(107, 163, 255, 0.1);
+}
+
 [data-theme="dark"] .weight-presets .section-title {
   color: #ffffff;
 }
@@ -705,6 +726,12 @@
 [data-theme="dark"] .conservative-mode {
   background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%);
   border-color: #3d3d55;
+}
+
+[data-theme="dark"] .conservative-mode.active {
+  background: linear-gradient(135deg, rgba(255, 80, 80, 0.18) 0%, rgba(255, 80, 80, 0.08) 100%);
+  border-color: #ff5050;
+  box-shadow: 0 0 0 1px rgba(255, 80, 80, 0.25), 0 0 12px rgba(255, 80, 80, 0.12);
 }
 
 [data-theme="dark"] .weight-presets .toggle-switch {

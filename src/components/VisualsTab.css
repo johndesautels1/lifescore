@@ -14,8 +14,8 @@
 
 .report-selector-section {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0;
   padding: 1rem 1.25rem;
   background: var(--card-background, #1a1a2e);
   border-radius: 10px;
@@ -26,6 +26,60 @@
   font-weight: 600;
   color: #ffffff;  /* Crisp white label */
   white-space: nowrap;
+}
+
+/* ============================================================================
+   SELECTOR TABS — Generate a New Report | View Existing Report
+   ============================================================================ */
+
+.selector-tabs {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  margin-bottom: 0.75rem;
+}
+
+.selector-tab {
+  flex: 1;
+  padding: 0.7rem 1.25rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.selector-tab:first-child {
+  border-right: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.selector-tab:hover:not(.active) {
+  background: rgba(212, 175, 55, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.selector-tab.active {
+  background: rgba(212, 175, 55, 0.12);
+  color: #D4AF37;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.selector-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: #D4AF37;
+  border-radius: 2px 2px 0 0;
 }
 
 /* FIX #54: Enhanced dropdown for better touch responsiveness */
@@ -81,8 +135,7 @@
 /* FIX #54: Enhanced mobile dropdown experience */
 @media (max-width: 600px) {
   .report-selector-section {
-    flex-direction: column;
-    align-items: stretch;
+    padding: 0.75rem;
   }
 
   .report-selector-label {
@@ -95,6 +148,73 @@
     font-size: 16px; /* Prevents iOS zoom on focus */
     border-width: 2px;
   }
+
+  .selector-tabs {
+    border-radius: 8px;
+  }
+
+  .selector-tab {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================================================
+   CUSTOM DROPDOWN (Generate tab — allows styled "Enhanced" label)
+   ============================================================================ */
+
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown-trigger {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #1a1a2e;
+  border: 1px solid var(--border-color, #2a2a4a);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.custom-dropdown-option {
+  padding: 0.75rem 1rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.15s ease;
+}
+
+.custom-dropdown-option:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.custom-dropdown-option.selected {
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+}
+
+/* Amber highlight for "Enhanced", dim for "Standard" */
+.label-enhanced {
+  color: #F59E0B;
+  font-weight: 700;
+}
+
+.label-standard {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 400;
 }
 
 /* Gamma Report Selector - distinct styling */
@@ -416,6 +536,10 @@
   text-decoration: none;
   font-weight: 600;
   transition: all 0.2s ease;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  border: none;
 }
 
 .view-link {
@@ -425,6 +549,16 @@
 
 .view-link:hover {
   background: var(--accent-hover, #E5C04B);
+}
+
+.embed-link {
+  background: transparent;
+  border: 1px solid var(--accent-color, #D4AF37) !important;
+  color: var(--accent-color, #D4AF37);
+}
+
+.embed-link:hover {
+  background: rgba(212, 175, 55, 0.1);
 }
 
 .download-link {
@@ -571,13 +705,6 @@
   font-size: 0.9rem;
 }
 
-/* Loading link fallback */
-.loading-link {
-  opacity: 0.6;
-  cursor: wait;
-  animation: pulse 1.5s infinite;
-}
-
 /* ============================================================================
    EMBEDDED REPORT VIEW
    ============================================================================ */
@@ -649,6 +776,31 @@
   min-height: 600px;
   border: none;
   background: #ffffff;
+}
+
+.gamma-embed-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 2rem;
+  text-align: center;
+  color: #d4af37;
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  gap: 0.5rem;
+}
+
+.gamma-embed-error p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.gamma-embed-error .btn {
+  margin-top: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -913,15 +1065,17 @@
   }
 
   .external-link-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
     border-radius: 4px;
+    min-height: 36px;
   }
 
   .close-embed-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
     border-radius: 4px;
+    min-height: 36px;
   }
 
   .report-view-toggle {
@@ -929,9 +1083,10 @@
   }
 
   .view-toggle-btn {
-    padding: 4px 6px;
-    font-size: 0.65rem;
+    padding: 6px 8px;
+    font-size: 0.7rem;
     flex: 1;
+    min-height: 36px;
   }
 }
 
@@ -1035,61 +1190,8 @@
 }
 
 /* ============================================================================
-   SAVED REPORTS LIBRARY
+   SAVED REPORT VIEWER (unified — replaces old saved-reports-list)
    ============================================================================ */
-
-.saved-reports-section {
-  padding: 1.25rem;
-}
-
-.saved-reports-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.saved-report-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--card-background, rgba(26, 26, 46, 0.6));
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-  border-radius: 8px;
-  gap: 1rem;
-}
-
-.saved-report-item .report-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.saved-report-item .report-cities {
-  font-weight: 700;
-  color: #f5a623;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.saved-report-item .report-date {
-  font-size: 0.8rem;
-  color: var(--text-secondary, #888);
-}
-
-[data-theme="dark"] .saved-report-item .report-date {
-  color: #ffffff;
-}
-
-.saved-report-item .report-actions {
-  display: flex;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
 
 .report-action-btn {
   padding: 0.35rem 0.6rem;
@@ -1108,15 +1210,6 @@
   color: var(--text-primary, #fff);
 }
 
-.report-action-btn.view {
-  color: var(--accent-color, #d4af37);
-  border-color: var(--accent-color, rgba(212, 175, 55, 0.3));
-}
-
-.report-action-btn.view:hover {
-  background: rgba(212, 175, 55, 0.15);
-}
-
 .report-action-btn.delete {
   color: #e74c3c;
   border-color: rgba(231, 76, 60, 0.3);
@@ -1126,8 +1219,40 @@
   background: rgba(231, 76, 60, 0.15);
 }
 
+.saved-report-downloads {
+  margin-bottom: 0.75rem;
+}
+
 .saved-report-viewer {
   padding: 1rem;
+}
+
+.saved-report-viewer-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.saved-report-viewer-title h3 {
+  margin: 0;
+  color: #D4AF37;
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+/* FIX #3: City mismatch warning */
+.city-mismatch-warning {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  margin: 0;
+  width: 100%;
 }
 
 .saved-report-viewer .gamma-embed-frame {
@@ -1138,16 +1263,15 @@
   margin-top: 0.75rem;
 }
 
-@media (max-width: 640px) {
-  .saved-report-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+/* FIX #11: Disabled toggle buttons */
+.view-toggle-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-  .saved-report-item .report-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
+.view-toggle-btn:disabled:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* ============================================================================

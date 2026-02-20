@@ -47,13 +47,17 @@ async function withTimeout<T>(
     maxRetries: 2, // 3 total attempts — ~40s worst case with 12s timeout + backoff
   });
 }
-import { toastSuccess, toastError } from '../utils/toast';
+import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
 import GoToMyNewCity from './GoToMyNewCity';
+import VideoPhoneWarning from './VideoPhoneWarning';
+import { NotifyMeModal } from './NotifyMeModal';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
+import { useJobTracker } from '../hooks/useJobTracker';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { GenerateJudgeVideoRequest } from '../types/avatar';
+import type { NotifyChannel } from '../types/database';
 import {
   getLocalComparisons,
   getLocalEnhancedComparisons,
@@ -75,8 +79,12 @@ const LAST_JUDGE_COMPARISON_KEY = 'lifescore_last_judge_comparison';
 // TYPES
 // ============================================================================
 
-// Import FreedomEducation types
-import type { FreedomEducationData } from '../types/freedomEducation';
+// Import FreedomEducation types and components
+import type { FreedomEducationData, CategoryId, CategoryFreedomData } from '../types/freedomEducation';
+import FreedomCategoryTabs from './FreedomCategoryTabs';
+import FreedomMetricsList from './FreedomMetricsList';
+import FreedomHeroFooter from './FreedomHeroFooter';
+import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '../utils/freedomEducationUtils';
 
 export interface JudgeReport {
   reportId: string;
@@ -143,9 +151,37 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
+  // Notification system
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+
+  // Bottom display screen toggle — null means neither open
+  const [openDisplay, setOpenDisplay] = useState<'your-future' | 'court-order' | 'freedom-tour' | null>(null);
+
+  // "Your Future" Freedom Education tab state
+  const [futureActiveCategory, setFutureActiveCategory] = useState<CategoryId>('personal_freedom');
+
+  // Initialize "Your Future" active category to first non-empty category when report changes
+  useEffect(() => {
+    if (judgeReport?.freedomEducation?.categories) {
+      const firstCategory = getFirstNonEmptyCategory(judgeReport.freedomEducation.categories);
+      if (firstCategory) {
+        setFutureActiveCategory(firstCategory);
+      }
+    }
+  }, [judgeReport]);
+
+  // Confidence interval hover cards — which card is open
+  const [hoverCard, setHoverCard] = useState<'city1' | 'city2' | 'confidence' | null>(null);
+  const hoverCardRef = useRef<HTMLDivElement>(null);
+  const { createJob } = useJobTracker();
+
   // Video generation progress simulation (Replicate doesn't return %)
   const [videoProgress, setVideoProgress] = useState(0);
   const videoProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // FIX 2026-02-16: Track which comparisonId we've already loaded cached data for
+  // Declared here so it's available to the prop-change reset effect below
+  const checkedComparisonIdRef = useRef<string | null>(null);
 
   // Report selection state - allows user to select from saved comparisons
   // FIX: Restore from localStorage when prop is null (tab switch persistence)
@@ -195,6 +231,32 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       }
     } catch { /* ignore */ }
   }, [selectedComparisonId]);
+
+  // FIX 2026-02-16: When the parent loads a DIFFERENT comparison (user ran a new comparison
+  // or loaded one from Saved), reset stale Judge state so we don't show city A's report
+  // under city B's header. The prop is the single source of truth when present.
+  const prevPropComparisonIdRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const incomingId = propComparisonResult?.comparisonId || null;
+    // Skip the very first render (ref is undefined) — only react to CHANGES
+    if (prevPropComparisonIdRef.current === undefined) {
+      prevPropComparisonIdRef.current = incomingId;
+      return;
+    }
+    if (incomingId && incomingId !== prevPropComparisonIdRef.current) {
+      console.log('[JudgeTab] Prop comparison changed:', prevPropComparisonIdRef.current, '→', incomingId, '— resetting stale state');
+      // Clear manual dropdown selection so useMemo falls through to propComparisonResult
+      setSelectedComparisonId(null);
+      // Clear stale judge report so we don't show the old verdict under new cities
+      setJudgeReport(null);
+      setGenerationProgress(0);
+      // Allow loadCachedData effect to run for the new comparisonId
+      checkedComparisonIdRef.current = null;
+      // Update localStorage to point to the new comparison
+      try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, incomingId); } catch { /* ignore */ }
+    }
+    prevPropComparisonIdRef.current = incomingId;
+  }, [propComparisonResult?.comparisonId]);
 
   // FIX 2026-02-08: Load saved Judge report when passed from SavedComparisons
   // Fetches full report from Supabase to get complete data (categoryAnalysis, etc.)
@@ -430,6 +492,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Close hover card on outside click
+  useEffect(() => {
+    if (!hoverCard) return;
+    const handler = (e: MouseEvent) => {
+      if (hoverCardRef.current && !hoverCardRef.current.contains(e.target as Node)) {
+        setHoverCard(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [hoverCard]);
 
   // Cockpit-style time formatting
   const formatTime = (date: Date) => {
@@ -712,6 +786,30 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Client timeout must exceed server's 240s timeout for Opus
   const JUDGE_API_TIMEOUT_MS = 300000; // 5 minutes
 
+  // Show notify modal before generating
+  const handleGenerateReportClick = () => {
+    if (!comparisonResult || isGenerating) return;
+    setShowNotifyModal(true);
+  };
+
+  const handleJudgeWaitHere = () => {
+    handleGenerateReport();
+  };
+
+  const handleJudgeNotifyMe = async (channels: NotifyChannel[]) => {
+    const city1 = comparisonResult?.city1?.city || '';
+    const city2 = comparisonResult?.city2?.city || '';
+    const jobId = await createJob({
+      type: 'judge_verdict',
+      payload: { city1, city2, comparisonId: comparisonResult?.comparisonId },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      toastInfo(`We'll notify you when The Judge's Verdict is ready.`);
+    }
+    handleGenerateReport();
+  };
+
   const handleGenerateReport = async () => {
     if (!comparisonResult) return;
 
@@ -819,9 +917,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, report.comparisonId); } catch { /* ignore */ }
     console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
   };
-
-  // FIX 2026-01-29: Track which comparisonId we've already checked to prevent runaway loops
-  const checkedComparisonIdRef = useRef<string | null>(null);
 
   // Load report from localStorage on mount (if we have a matching comparison)
   // Also check for pre-generated video
@@ -1272,6 +1367,51 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     }
   };
 
+  // ── Confidence interval stats for hover cards ──
+  const getConfidenceStats = (cityKey: 'city1' | 'city2') => {
+    const enhanced = comparisonResult as EnhancedComparisonResult | null;
+    const cityData = enhanced?.[cityKey];
+    if (!cityData?.categories) return null;
+
+    const allMetrics = cityData.categories.flatMap(c => c.metrics || []);
+    const scored = allMetrics.filter(m => m.consensusScore != null && !m.isMissing);
+    const totalPossible = allMetrics.length;
+    const stdDevs = scored.map(m => m.standardDeviation).filter((s): s is number => s != null);
+    const avgStdDev = stdDevs.length ? stdDevs.reduce((a, b) => a + b, 0) / stdDevs.length : null;
+
+    // Count agreement levels
+    const unanimous = scored.filter(m => m.confidenceLevel === 'unanimous').length;
+    const strong = scored.filter(m => m.confidenceLevel === 'strong').length;
+    const moderate = scored.filter(m => m.confidenceLevel === 'moderate').length;
+    const split = scored.filter(m => m.confidenceLevel === 'split').length;
+
+    return {
+      metricsEvaluated: scored.length,
+      totalMetrics: totalPossible,
+      overallAgreement: cityData.overallAgreement,
+      avgStdDev,
+      unanimous,
+      strong,
+      moderate,
+      split,
+      llmsUsed: enhanced?.llmsUsed?.length ?? 0,
+      scoreDifference: enhanced?.scoreDifference ?? null,
+    };
+  };
+
+  const confidenceExplanation = (level: string) => {
+    switch (level?.toLowerCase()) {
+      case 'high':
+        return 'Multiple LLMs reached strong consensus with low disagreement across metrics.';
+      case 'medium':
+        return 'LLMs showed moderate agreement. Some metrics had notable variation in scores.';
+      case 'low':
+        return 'LLMs disagreed significantly on several metrics. Results should be treated as estimates.';
+      default:
+        return 'Confidence level pending analysis.';
+    }
+  };
+
   // Saved report is loading from Supabase — show brief loading state
   if (!comparisonResult && !judgeReport && savedJudgeReport) {
     return (
@@ -1383,6 +1523,23 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     || ALL_METROS.find(m => m.city === city2Name)?.region
     || '';
   const reportId = `LIFE-JDG-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${userId.slice(0,8).toUpperCase()}`;
+
+  // "Your Future" — derive freedom education data for the display
+  const freedomEducation = judgeReport?.freedomEducation;
+  const hasFreedomData = isValidFreedomData(freedomEducation);
+  const futureWinnerCity = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city1Name
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city2Name
+    : city1Name
+    : city1Name;
+  const futureLoserCity = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city2Name
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city1Name
+    : city2Name
+    : city2Name;
+  const futureCategoryData: CategoryFreedomData | null = freedomEducation?.categories
+    ? getCategoryData(freedomEducation.categories, futureActiveCategory)
+    : null;
 
   return (
     <div className="judge-tab">
@@ -1511,6 +1668,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         </button>
         <div className="panel-content" style={{ display: panelMediaOpen ? 'block' : 'none' }}>
 
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
+
       <section className="video-viewport-section">
         <div className="viewport-frame">
           <div className="viewport-bezel">
@@ -1638,7 +1798,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="awaiting-subtext">Judge's Video Report</div>
                       <button
                         className="generate-report-btn"
-                        onClick={handleGenerateReport}
+                        onClick={handleGenerateReportClick}
                       >
                         <span className="btn-icon">⚖️</span>
                         <span className="btn-text">GENERATE JUDGE'S VERDICT</span>
@@ -1797,6 +1957,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       <section className="findings-section">
 
         <div className="findings-grid">
+          {/* ── CITY 1 CARD ── */}
           <div className="finding-card city1">
             <div className="card-header">
               <span className="city-name">{city1Name}</span>
@@ -1808,11 +1969,67 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 {city1Country}
               </span>
             </div>
-            <div className="card-score">
-              <span className="score-value">
+            <div className="card-score hover-card-anchor">
+              <span
+                className="score-value score-clickable"
+                onClick={() => setHoverCard(hoverCard === 'city1' ? null : 'city1')}
+                title="Tap for confidence details"
+              >
                 {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1?.city === city1Name ? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult.city1 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
+              <span className="score-tap-hint">tap score for details</span>
+
+              {/* Hover Card — City 1 */}
+              {hoverCard === 'city1' && (() => {
+                const stats = getConfidenceStats('city1');
+                return (
+                  <div className="confidence-hover-card" ref={hoverCardRef}>
+                    <div className="hover-card-header">
+                      <span className="hover-card-title">Score Confidence</span>
+                      <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
+                    </div>
+                    {stats ? (
+                      <div className="hover-card-body">
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Metrics Evaluated</span>
+                          <span className="hover-card-value">{stats.metricsEvaluated} / {stats.totalMetrics}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">LLMs Used</span>
+                          <span className="hover-card-value">{stats.llmsUsed}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Overall Agreement</span>
+                          <span className="hover-card-value">{stats.overallAgreement != null ? `${Math.round(stats.overallAgreement)}%` : '—'}</span>
+                        </div>
+                        {stats.avgStdDev != null && (
+                          <div className="hover-card-row">
+                            <span className="hover-card-label">Avg Std Deviation</span>
+                            <span className="hover-card-value">{stats.avgStdDev.toFixed(1)}</span>
+                          </div>
+                        )}
+                        <div className="hover-card-agreement-bar">
+                          <div className="agreement-segment unanimous" style={{ flex: stats.unanimous }} title={`Unanimous: ${stats.unanimous}`} />
+                          <div className="agreement-segment strong" style={{ flex: stats.strong }} title={`Strong: ${stats.strong}`} />
+                          <div className="agreement-segment moderate" style={{ flex: stats.moderate }} title={`Moderate: ${stats.moderate}`} />
+                          <div className="agreement-segment split" style={{ flex: stats.split }} title={`Split: ${stats.split}`} />
+                        </div>
+                        <div className="hover-card-legend">
+                          <span className="legend-item"><span className="legend-dot unanimous" />Unanimous</span>
+                          <span className="legend-item"><span className="legend-dot strong" />Strong</span>
+                          <span className="legend-item"><span className="legend-dot moderate" />Moderate</span>
+                          <span className="legend-item"><span className="legend-dot split" />Split</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="hover-card-body">
+                        <p className="hover-card-empty">Detailed consensus data not available for this comparison.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city1Trend || 'stable') : ''}`}>
               <span className="trend-icon">
@@ -1824,16 +2041,65 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
           </div>
 
+          {/* ── VS / CONFIDENCE CENTER CARD ── */}
           <div className="finding-card versus">
             <span className="versus-text">VS</span>
-            <div className="confidence-badge">
+            <div className="confidence-badge hover-card-anchor">
               <span className="confidence-label">CONFIDENCE</span>
-              <span className={`confidence-value ${judgeReport?.summaryOfFindings.overallConfidence ?? 'pending'}`}>
+              <span
+                className={`confidence-value confidence-clickable ${judgeReport?.summaryOfFindings.overallConfidence ?? 'pending'}`}
+                onClick={() => setHoverCard(hoverCard === 'confidence' ? null : 'confidence')}
+                title="Tap for confidence breakdown"
+              >
                 {judgeReport?.summaryOfFindings.overallConfidence?.toUpperCase() ?? 'PENDING'}
               </span>
+
+              {/* Hover Card — Confidence explanation */}
+              {hoverCard === 'confidence' && (() => {
+                const conf = judgeReport?.summaryOfFindings.overallConfidence ?? 'pending';
+                const enhanced = comparisonResult as EnhancedComparisonResult | null;
+                return (
+                  <div className="confidence-hover-card confidence-center-card" ref={hoverCardRef}>
+                    <div className="hover-card-header">
+                      <span className="hover-card-title">Confidence Level</span>
+                      <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
+                    </div>
+                    <div className="hover-card-body">
+                      <p className="hover-card-explanation">{confidenceExplanation(conf)}</p>
+                      {enhanced?.scoreDifference != null && (
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Score Margin</span>
+                          <span className="hover-card-value">{Math.round(enhanced.scoreDifference)} pts</span>
+                        </div>
+                      )}
+                      {enhanced?.llmsUsed && (
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">LLMs in Panel</span>
+                          <span className="hover-card-value">{enhanced.llmsUsed.length}</span>
+                        </div>
+                      )}
+                      {enhanced?.disagreementSummary && (
+                        <div className="hover-card-disagreement">
+                          <span className="hover-card-label">Key Disagreements</span>
+                          <p className="hover-card-disagreement-text">{enhanced.disagreementSummary}</p>
+                        </div>
+                      )}
+                      {judgeReport?.executiveSummary?.confidenceLevel && (
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Judge Confidence</span>
+                          <span className={`hover-card-value conf-${judgeReport.executiveSummary.confidenceLevel}`}>
+                            {judgeReport.executiveSummary.confidenceLevel.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
+          {/* ── CITY 2 CARD ── */}
           <div className="finding-card city2">
             <div className="card-header">
               <span className="city-name">{city2Name}</span>
@@ -1845,11 +2111,67 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 {city2Country}
               </span>
             </div>
-            <div className="card-score">
-              <span className="score-value">
+            <div className="card-score hover-card-anchor">
+              <span
+                className="score-value score-clickable"
+                onClick={() => setHoverCard(hoverCard === 'city2' ? null : 'city2')}
+                title="Tap for confidence details"
+              >
                 {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2?.city === city2Name ? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult.city2 as any).totalScore ?? 0) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
+              <span className="score-tap-hint">tap score for details</span>
+
+              {/* Hover Card — City 2 */}
+              {hoverCard === 'city2' && (() => {
+                const stats = getConfidenceStats('city2');
+                return (
+                  <div className="confidence-hover-card" ref={hoverCardRef}>
+                    <div className="hover-card-header">
+                      <span className="hover-card-title">Score Confidence</span>
+                      <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
+                    </div>
+                    {stats ? (
+                      <div className="hover-card-body">
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Metrics Evaluated</span>
+                          <span className="hover-card-value">{stats.metricsEvaluated} / {stats.totalMetrics}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">LLMs Used</span>
+                          <span className="hover-card-value">{stats.llmsUsed}</span>
+                        </div>
+                        <div className="hover-card-row">
+                          <span className="hover-card-label">Overall Agreement</span>
+                          <span className="hover-card-value">{stats.overallAgreement != null ? `${Math.round(stats.overallAgreement)}%` : '—'}</span>
+                        </div>
+                        {stats.avgStdDev != null && (
+                          <div className="hover-card-row">
+                            <span className="hover-card-label">Avg Std Deviation</span>
+                            <span className="hover-card-value">{stats.avgStdDev.toFixed(1)}</span>
+                          </div>
+                        )}
+                        <div className="hover-card-agreement-bar">
+                          <div className="agreement-segment unanimous" style={{ flex: stats.unanimous }} title={`Unanimous: ${stats.unanimous}`} />
+                          <div className="agreement-segment strong" style={{ flex: stats.strong }} title={`Strong: ${stats.strong}`} />
+                          <div className="agreement-segment moderate" style={{ flex: stats.moderate }} title={`Moderate: ${stats.moderate}`} />
+                          <div className="agreement-segment split" style={{ flex: stats.split }} title={`Split: ${stats.split}`} />
+                        </div>
+                        <div className="hover-card-legend">
+                          <span className="legend-item"><span className="legend-dot unanimous" />Unanimous</span>
+                          <span className="legend-item"><span className="legend-dot strong" />Strong</span>
+                          <span className="legend-item"><span className="legend-dot moderate" />Moderate</span>
+                          <span className="legend-item"><span className="legend-dot split" />Split</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="hover-card-body">
+                        <p className="hover-card-empty">Detailed consensus data not available for this comparison.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <div className={`card-trend ${judgeReport ? getTrendClass(judgeReport.summaryOfFindings.city2Trend || 'stable') : ''}`}>
               <span className="trend-icon">
@@ -2022,85 +2344,138 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          COURT ORDER VIDEO - Perfect Life Visualization
+          DISPLAY SCREEN BUTTONS — Three glassmorphic buttons at the bottom
+          Left: Your Future | Center: Court Order Video | Right: My New City
+          Click to expand the screen below. Click again to collapse.
       ═══════════════════════════════════════════════════════════════════ */}
       {judgeReport && (
-        <section className="court-order-section">
-          <CourtOrderVideo
-            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
-            winnerCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Name
-                : city1Name
-            }
-            loserCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city2Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city1Name
-                : city2Name
-            }
-            winnerScore={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? judgeReport.summaryOfFindings.city1Score
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? judgeReport.summaryOfFindings.city2Score
-                : judgeReport.summaryOfFindings.city1Score
-            }
-            freedomEducation={judgeReport.freedomEducation}
-          />
-        </section>
-      )}
+        <>
+          <div className="display-screen-buttons">
+            <button
+              className={`display-screen-btn${openDisplay === 'your-future' ? ' active' : ''}`}
+              onClick={() => setOpenDisplay(openDisplay === 'your-future' ? null : 'your-future')}
+            >
+              <span className="display-screen-btn-icon">&#9878;</span>
+              <span className="display-screen-btn-label">YOUR FUTURE</span>
+            </button>
+            <button
+              className={`display-screen-btn${openDisplay === 'court-order' ? ' active' : ''}`}
+              onClick={() => setOpenDisplay(openDisplay === 'court-order' ? null : 'court-order')}
+            >
+              <span className="display-screen-btn-icon">&#127909;</span>
+              <span className="display-screen-btn-label">COURT ORDER VIDEO</span>
+            </button>
+            <button
+              className={`display-screen-btn${openDisplay === 'freedom-tour' ? ' active' : ''}`}
+              onClick={() => setOpenDisplay(openDisplay === 'freedom-tour' ? null : 'freedom-tour')}
+            >
+              <span className="display-screen-btn-icon">&#127757;</span>
+              <span className="display-screen-btn-label">MY NEW CITY</span>
+            </button>
+          </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          GO TO MY NEW CITY - Cristiano's Cinematic Freedom Tour
-          Sovereign plan only. Appears after Court Order.
-      ═══════════════════════════════════════════════════════════════════ */}
-      {judgeReport && (
-        <section className="new-city-section">
-          <GoToMyNewCity
-            winnerCity={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Name
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Name
-                : city1Name
-            }
-            winnerCountry={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Country
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Country
-                : city1Country
-            }
-            winnerRegion={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? city1Region
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? city2Region
-                : city1Region
-            }
-            winnerScore={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? judgeReport.summaryOfFindings.city1Score
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? judgeReport.summaryOfFindings.city2Score
-                : judgeReport.summaryOfFindings.city1Score
-            }
-            winnerCategories={
-              judgeReport.executiveSummary.recommendation === 'city1'
-                ? (comparisonResult as any)?.city1?.categories
-                : judgeReport.executiveSummary.recommendation === 'city2'
-                ? (comparisonResult as any)?.city2?.categories
-                : (comparisonResult as any)?.city1?.categories
-            }
-            executiveSummary={judgeReport.executiveSummary}
-            categoryWinners={(comparisonResult as any)?.categoryWinners}
-            comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
-          />
-        </section>
+          {/* YOUR FUTURE — Freedom Education: category tabs + metrics + hero quotes */}
+          {openDisplay === 'your-future' && hasFreedomData && freedomEducation && (
+            <section className="your-future-section">
+              <div className="your-future-wrapper">
+                <div className="your-future-header">
+                  <h4 className="your-future-title">
+                    <span className="gavel-icon">&#9878;</span>
+                    COURT ORDER
+                  </h4>
+                  <p className="your-future-subtitle">
+                    Your future in {freedomEducation.winnerCity || futureWinnerCity}
+                  </p>
+                </div>
+                <div className="freedom-education-section">
+                  <FreedomCategoryTabs
+                    activeCategory={futureActiveCategory}
+                    onCategoryChange={setFutureActiveCategory}
+                    categories={freedomEducation.categories}
+                  />
+                  {futureCategoryData && (
+                    <>
+                      <FreedomMetricsList
+                        metrics={futureCategoryData.winningMetrics}
+                        winnerCity={freedomEducation.winnerCity || futureWinnerCity}
+                        loserCity={freedomEducation.loserCity || futureLoserCity}
+                        categoryName={futureCategoryData.categoryName}
+                      />
+                      {futureCategoryData.heroStatement && (
+                        <FreedomHeroFooter
+                          heroStatement={futureCategoryData.heroStatement}
+                          winnerCity={freedomEducation.winnerCity || futureWinnerCity}
+                          categoryName={futureCategoryData.categoryName}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {openDisplay === 'court-order' && (
+            <section className="court-order-section">
+              <CourtOrderVideo
+                comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
+                winnerCity={futureWinnerCity}
+                winnerScore={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? judgeReport.summaryOfFindings.city1Score
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? judgeReport.summaryOfFindings.city2Score
+                    : judgeReport.summaryOfFindings.city1Score
+                }
+              />
+            </section>
+          )}
+
+          {openDisplay === 'freedom-tour' && (
+            <section className="new-city-section">
+              <GoToMyNewCity
+                winnerCity={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Name
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Name
+                    : city1Name
+                }
+                winnerCountry={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Country
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Country
+                    : city1Country
+                }
+                winnerRegion={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? city1Region
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? city2Region
+                    : city1Region
+                }
+                winnerScore={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? judgeReport.summaryOfFindings.city1Score
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? judgeReport.summaryOfFindings.city2Score
+                    : judgeReport.summaryOfFindings.city1Score
+                }
+                winnerCategories={
+                  judgeReport.executiveSummary.recommendation === 'city1'
+                    ? (comparisonResult as any)?.city1?.categories
+                    : judgeReport.executiveSummary.recommendation === 'city2'
+                    ? (comparisonResult as any)?.city2?.categories
+                    : (comparisonResult as any)?.city1?.categories
+                }
+                executiveSummary={judgeReport.executiveSummary}
+                categoryWinners={(comparisonResult as any)?.categoryWinners}
+                comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
+              />
+            </section>
+          )}
+        </>
       )}
 
         </div>{/* end panel-content: verdict */}
@@ -2127,6 +2502,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           <span className="footer-model">Powered by Claude Opus 4.5</span>
         </div>
       </footer>
+
+      {/* Notify Me Modal */}
+      <NotifyMeModal
+        isOpen={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        onWaitHere={handleJudgeWaitHere}
+        onNotifyMe={handleJudgeNotifyMe}
+        taskLabel="Judge's Verdict"
+        estimatedSeconds={60}
+      />
     </div>
   );
 };

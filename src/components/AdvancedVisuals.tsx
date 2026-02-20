@@ -163,7 +163,11 @@ export function prepareLineChartData(result: EnhancedComparisonResult, categoryI
   }
 
   return {
-    labels: category1.metrics.map(m => m.metricId.split('-').pop() || m.metricId),
+    labels: category1.metrics.map(m => {
+      const parts = m.metricId.split('-');
+      const meaningful = parts.slice(-2).map(w => w.charAt(0).toUpperCase() + w.slice(1));
+      return meaningful.join(' ');
+    }),
     datasets: [
       {
         label: result.city1.city,

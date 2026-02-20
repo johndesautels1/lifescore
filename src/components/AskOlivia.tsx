@@ -34,6 +34,7 @@ import {
   getLocalEnhancedComparisons,
 } from '../services/savedComparisons';
 import { toastSuccess } from '../utils/toast';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './AskOlivia.css';
 
 interface AskOliviaProps {
@@ -657,6 +658,9 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           </div>
         </div>
       </header>
+
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
 
       {/* ═══════════════════════════════════════════════════════════════════
           MAIN VIEWPORT - Simli AI Video (Avatar Only, No Brain)

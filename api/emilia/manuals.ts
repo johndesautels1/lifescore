@@ -56,12 +56,23 @@ const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.0 | **Updated:** 2026-02-13
+**Version:** 3.7 | **Updated:** 2026-02-17
 
 ## Getting Started
 
 ### What is LifeScore?
 LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that compares cities across 100 freedom metrics to help you make informed decisions about relocation.
+
+### Forgot Password / Password Reset
+
+If you've forgotten your password:
+
+1. **Request a Reset Link** — On the Sign In screen, click "Forgot your password?", enter your email, and click "Send Reset Link"
+2. **Check Your Email** — Look for an email from noreply@mail.app.supabase.io (check spam/junk). The link expires in 1 hour.
+3. **Set New Password** — Click the link, enter your new password (min 6 characters), confirm it, and click "Update Password"
+4. **Done** — You'll be automatically signed in. All your saved data (comparisons, reports, etc.) remains untouched.
+
+**Security note:** For privacy, a success message is shown even if the email doesn't exist in our system.
 
 ### How to Run a Comparison
 
@@ -104,21 +115,54 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - **Ask Olivia Help** (chat bubble): OpenAI Assistants API brain, ElevenLabs cloned voice → OpenAI "nova" fallback
 - **Ask Olivia page** (video + chat): Same voice wiring as Help chat
 
-#### Visual Reports
+#### Visual Reports (Updated 2026-02-17)
+- **Two-Tab Layout**: The Visuals page has two tabs:
+  - **"Generate a New Report"** — shows saved comparisons that don't already have a Gamma report, sorted alphabetically
+  - **"View Existing Report"** — shows all saved Gamma reports, sorted alphabetically
+- Enhanced comparisons are marked with an amber **"Enhanced"** badge in the dropdown
+- **Three View Modes** (top-level buttons, always visible when a report exists):
+  - **Read** — view the Gamma report in an embedded iframe
+  - **Live Presenter** — real-time HeyGen streaming avatar overlay (Olivia narrates your report)
+  - **Generate Video** — pre-rendered HeyGen MP4 download (up to 10 min)
 - Generate PDF/PPTX reports via Gamma
+- **Permanent Downloads:** PDF/PPTX exports are permanently stored in Supabase Storage. Old reports with expired CDN links need regeneration.
+- **Expired Report Detection:** If a Gamma embed fails to load, the app shows a clear fallback message instead of a broken page.
 - AI-generated "New Life" videos (Freedom vs Imprisonment)
 - Judge verdict video with Court Order option
-- **Olivia Video Presenter** (HeyGen): Toggle "Listen to Presenter" to have Olivia narrate your Gamma report
-  - Live Presenter: Real-time HeyGen streaming avatar overlay (instant)
-  - Generate Video: Pre-rendered HeyGen MP4 download (up to 10 min)
-  - Uses HEYGEN_OLIVIA_AVATAR_ID + HEYGEN_OLIVIA_VOICE_ID (separate from ElevenLabs/OpenAI)
 - All saved to both browser and cloud
 
-#### Saved Comparisons
-- Comparisons auto-save to both localStorage and Supabase (dual-storage)
+#### Saved Comparisons (Updated 2026-02-17)
+- Comparisons **auto-save on completion** to both localStorage and Supabase — no need to manually click "Save"
+- The Save button immediately reflects saved state after auto-save
 - Access from the "Saved" tab
 - Export as PDF or share
 - Syncs across devices when logged in
+
+### Comparison Settings (Updated 2026-02-16)
+- **Law vs Lived slider** illuminates with a highlighted border when changed from default
+- **Worst-Case Mode toggle** glows when active (uses MIN of law/lived scores)
+- **Dealbreakers panel** metrics are now alphabetized A-Z within each category
+- Page auto-scrolls to top when results appear
+
+### Results Features (Updated 2026-02-16)
+- **Explain the Winner toggle** — AI narrative explaining why the winner scored higher (Standard Mode)
+- **Confidence interval hover cards** on Judge score cards — shows provider agreement level
+
+### Judge Tab (Updated 2026-02-16)
+- **Glassmorphic display screen buttons** at the bottom for Court Order and Freedom Tour access
+- **Phone call audio warning** on all video displays (Judge, Court Order, Freedom Tour, Olivia, Grok)
+- Fixed stale state when switching between comparisons
+
+### Notifications (Updated 2026-02-17)
+- Bell icon in header with unread badge
+- "Notify Me & Go" modal for long-running tasks (comparisons, Judge, video, Gamma)
+- Email notification from alerts@lifescore.app (opt-in)
+- 30-second polling for new notifications
+- Clicking a notification navigates within the app instantly (no page reload)
+
+### Mobile Warning (Added 2026-02-16)
+- Warning modal appears on small screens explaining app is optimized for desktop/tablet
+- User can continue on mobile; warning appears once per session
 
 ## Troubleshooting
 
@@ -159,7 +203,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
   csm: `# Customer Service Manual
 
-**Version:** 3.0 | **Updated:** 2026-02-13
+**Version:** 3.6 | **Updated:** 2026-02-17
 
 ## Support Overview
 
@@ -222,6 +266,15 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - If ElevenLabs quota exceeded, OpenAI TTS auto-kicks in
 - HeyGen env vars are irrelevant to the chat voice
 
+### "I can't reset my password" / "Reset email not arriving"
+- Confirm the user is entering the correct email address
+- Ask them to check spam/junk folder for email from noreply@mail.app.supabase.io
+- The reset link expires after 1 hour — they can request a new one
+- For security, the app shows a success message even if the email doesn't exist (prevents enumeration)
+- If the link opens but the "Set New Password" screen doesn't appear, ask them to clear browser cache and try again
+- The password reset flow: LoginScreen → supabase.auth.resetPasswordForEmail() → email link → /auth/callback → PASSWORD_RECOVERY event → ResetPasswordScreen → supabase.auth.updateUser()
+- Password reset does NOT affect any saved data (comparisons, reports, subscriptions, etc.)
+
 ## Refund Policy
 
 ### Eligible Refunds
@@ -234,6 +287,50 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - Partial month after cancellation
 - Disagreement with AI results
 
+### "Notifications not working" (Added 2026-02-16)
+- Notifications only trigger when user selects "Notify Me & Go" in the modal
+- Bell icon polls every 30 seconds; try refreshing the page
+- Email notifications sent from alerts@lifescore.app — check spam folder
+
+### "Judge tab shows old data after switching comparisons" (Fixed 2026-02-16)
+- Judge state now resets when switching between comparisons
+
+### "Gamma report links not clickable" (Fixed 2026-02-16)
+- CSS pointer-events and z-index fixed on report URLs
+
+### "VS text invisible in dark mode" (Fixed 2026-02-16)
+- VS separator now visible in dark mode across all comparison views
+
+### "Explain the Winner toggle" (Added 2026-02-16)
+- New toggle in standard Results view showing AI narrative explaining the winner
+- Direct users to this if they ask "Why did City X win?"
+
+### "Gamma PDF/PPTX download link broken" (Fixed 2026-02-17)
+- Export URLs from Gamma's CDN expire after hours/days
+- New reports (after 2026-02-17) have permanent Supabase Storage URLs that never expire
+- Old reports with expired links need regeneration — comparison data is still saved
+- Iframe embeds that fail to load now show a clear fallback message
+
+### "Visuals tab is confusing / can't find my report" (Updated 2026-02-17)
+- The Visuals page now has **two tabs**: "Generate a New Report" and "View Existing Report"
+- **Generate tab** shows comparisons that don't have a Gamma report yet
+- **View tab** shows all saved Gamma reports
+- Enhanced comparisons display an amber "Enhanced" badge in the dropdown
+- If a user can't find their report, direct them to the **"View Existing Report"** tab
+
+### "Live Presenter / Watch Video buttons grayed out" (Fixed 2026-02-17)
+- Fixed: viewing a saved report now auto-loads the matching comparison data
+- Buttons become active when the loaded comparison matches the report being viewed
+
+### "Notification click does nothing / reloads the page" (Fixed 2026-02-17)
+- Fixed: notifications now navigate within the app (SPA) instead of triggering a full page reload
+- Supported destinations: Visuals tab, Judge tab, comparison results
+
+### "My comparison results disappeared after navigating away" (Fixed 2026-02-17)
+- Comparisons now **auto-save on completion** (both standard and enhanced)
+- No need to manually click "Save" — results persist to browser + Supabase automatically
+- The Save button immediately reflects the saved state
+
 ## Escalation Path
 
 1. **Tier 1**: Email support (most issues)
@@ -243,7 +340,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
   tech: `# Technical Support Manual
 
-**Version:** 4.5 | **Updated:** 2026-02-15
+**Version:** 4.9 | **Updated:** 2026-02-17
 
 ## System Architecture
 
@@ -254,8 +351,38 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 
 ### Backend
 - **Platform**: Vercel Serverless Functions (Node.js 20)
-- **Database**: Supabase (PostgreSQL) - 23 tables, 3 storage buckets
+- **Database**: Supabase (PostgreSQL) - 23 tables, 6 storage buckets
 - **Auth**: Supabase Auth with JWT verification
+
+## Authentication & Password Recovery Architecture
+
+### Auth Flow Overview
+- **Provider**: Supabase Auth (GoTrue) — manages auth.users table with bcrypt passwords
+- **State Management**: AuthContext.tsx — single React context with onAuthStateChange listener
+- **Sign-In Methods**: Email/Password, Google OAuth, GitHub OAuth, Magic Link
+
+### Password Reset Technical Flow
+1. LoginScreen.tsx calls AuthContext.resetPassword(email)
+2. AuthContext calls supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + '/auth/callback' })
+3. Supabase stores recovery_token (1hr TTL) in auth.users and sends email
+4. User clicks link → browser navigates to /auth/callback#access_token=...&type=recovery
+5. Supabase JS parses URL hash → fires onAuthStateChange with event='PASSWORD_RECOVERY'
+6. AuthContext sets isPasswordRecovery=true, isAuthenticated=true (temp session)
+7. App.tsx route gate renders ResetPasswordScreen when isPasswordRecovery is true
+8. User submits new password → AuthContext.updatePassword(pw) → supabase.auth.updateUser({ password })
+9. Supabase updates encrypted_password, nullifies recovery_token
+10. clearPasswordRecovery() resets flag + cleans URL hash → main app loads
+
+### Key Files
+| File | Responsibility |
+|------|---------------|
+| src/contexts/AuthContext.tsx:496-553 | resetPassword(), updatePassword(), clearPasswordRecovery() |
+| src/components/LoginScreen.tsx:163-180 | handleForgotPassword() form + success message |
+| src/components/ResetPasswordScreen.tsx | New password form with validation (6 char min, match check) |
+| src/App.tsx:621-622 | isPasswordRecovery route gate |
+
+### Database Impact
+Password reset ONLY modifies auth.users.encrypted_password and auth.users.recovery_token. Zero impact on profiles, comparisons, subscriptions, or any other application table.
 
 ### AI Providers
 - **Claude Sonnet 4.5**: Primary evaluator
@@ -341,8 +468,9 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 - src/services/presenterService.ts (narration script generator)
 - src/services/presenterVideoService.ts (video orchestration + polling)
 - src/types/presenter.ts (all presenter types)
-- src/components/ReportPresenter.tsx (UI: Live/Video sub-modes)
-- src/components/VisualsTab.tsx (Read/Listen toggle)
+- src/components/GammaIframe.tsx (shared Gamma iframe with sandbox + error handling)
+- src/components/ReportPresenter.tsx (UI: Read/Live Presenter/Generate Video modes)
+- src/components/VisualsTab.tsx (two-tab layout: Generate New / View Existing)
 
 ## Video System (Updated 2026-02-13)
 
@@ -387,7 +515,7 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 | Database (supabase/) | 5,555 | 4.7% |
 | Scripts / Config / Other | 4,078 | 3.5% |
 
-- **48** React components, **46** CSS files
+- **49** React components, **46** CSS files
 - **55** serverless API functions
 - **19** custom hooks, **17** service modules
 - **176** TypeScript files (76,284 lines)
@@ -407,6 +535,52 @@ LifeScore (Legal Independence & Freedom Evaluation) is a comprehensive tool that
 ### Judge "winner is TIE"
 - Fixed: tie handling corrected in judge-report.ts
 - Trend values standardized to 'improving' for DB constraint
+
+## Notification System (Added 2026-02-16)
+
+### Architecture
+User triggers task → NotifyMeModal → job created in \`jobs\` table → task completes → notification in \`notifications\` table → bell updates (30s poll) + email via Resend
+
+### Database Tables
+- **jobs**: Persistent job queue (user_id, type, status, metadata)
+- **notifications**: In-app bell + email records (user_id, job_id, title, body, channel, read)
+- **profiles.phone**: Added for future SMS support
+
+### Components
+- NotificationBell.tsx — bell icon with unread badge + dropdown
+- NotifyMeModal.tsx — "Wait Here" vs "Notify Me & Go" modal
+- MobileWarningModal.tsx — small-screen warning (Added 2026-02-16)
+- VideoPhoneWarning.tsx — phone call audio warning overlay (Added 2026-02-16)
+
+### Hooks
+- useNotifications.ts — polls notifications every 30s
+- useJobTracker.ts — creates jobs, updates status, triggers notification
+
+### API
+- POST /api/notify — create notification + email via Resend (from: alerts@lifescore.app)
+- POST /api/admin/new-signup — admin email on new user signup
+
+### Resolved Issues (2026-02-16)
+- Resend from email → alerts@lifescore.app
+- isPasswordRecovery missing in AuthContext setState
+- 3 broken notification flows (CitySelector, GoToMyNewCity, VisualsTab)
+- VS text invisible in dark mode (4 CSS files)
+- Founder name "II" suffix
+- Mobile +/- buttons and LLM badges overflow
+- Visuals page labeling confusion
+- Gamma report links not clickable
+- Browser not saving login credentials (3 iterations)
+- Judge tab stale state on comparison switch
+- Password reset redirect URL mismatch
+- Admin email notification on new signup
+
+### Resolved Issues (2026-02-17)
+- **Gamma export URLs (PDF/PPTX) expiring** — Asset materialization pattern: api/gamma.ts downloads exports from Gamma CDN on completion, uploads to Supabase Storage (gamma-exports public bucket). Returns permanent public URLs. New DB columns: pdf_storage_path, pptx_storage_path. Iframe error detection on all 4 embed locations. 11 files, 35 changes.
+- **Gamma report colored cards losing colors** — solidBoxes variant colors stripped by Gamma AI rendering. Fix: 6× category heat maps → barStats (bar length = confidence %). PAGE 64 → semiCircle gauges + table. PAGE 51 → structured table. PAGE 53 → semiCircle dials. Same data, varied chart types, no prompt size increase.
+- **Visuals Tab redesign** — Two-tab layout (Generate New Report / View Existing Report). Amber "Enhanced" badges in custom dropdown. 3 top-level mode buttons (Read / Live Presenter / Generate Video) always visible when a Gamma URL exists. New shared GammaIframe.tsx component with sandbox + error handling. 11 UX fixes + 25 audit fixes + 20 audit fixes across VisualsTab, ReportPresenter, useGunComparison.
+- **Notification click rebooting app** — window.location.href replaced with SPA onNavigate callback threaded App→Header→NotificationBell. Parses notification link query params and maps to setActiveTab(). Supports /?tab=visuals, /?tab=judge, /?cityA=X&cityB=Y.
+- **Auto-save on completion** — Both standard and enhanced comparisons auto-save to localStorage + Supabase when complete. Save button reflects saved state via savedKey prop. 3 files changed (App.tsx, Results.tsx, EnhancedComparison.tsx).
+- **Presenter/Video buttons grayed out on saved reports** — handleViewTabSelect now auto-loads matching comparison via selectedComparisonId so result + resultMatchesViewingReport resolve correctly and presenterAvailable becomes true.
 
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
@@ -470,15 +644,46 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.0.0 | **Updated:** 2026-02-13
+**Version:** 2.5.0 | **Updated:** 2026-02-17
 
 ---
 
-## 1. Database Schema
+## 1. Authentication & Password Recovery
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buckets**.
+### Authentication Provider
+Supabase Auth (GoTrue) manages all authentication. The auth.users table is Supabase-managed (bcrypt passwords, recovery tokens).
 
-### 1.1 All Tables
+### Supported Sign-In Methods
+- Email + Password
+- Google OAuth
+- GitHub OAuth
+- Magic Link (passwordless)
+
+### Password Reset Flow
+1. **User clicks "Forgot your password?"** on LoginScreen → AuthContext.resetPassword(email) → supabase.auth.resetPasswordForEmail()
+2. **Supabase sends email** with one-time recovery JWT (1hr expiry) to user's email
+3. **User clicks email link** → /auth/callback → Supabase JS fires PASSWORD_RECOVERY event
+4. **AuthContext sets isPasswordRecovery=true** → App.tsx renders ResetPasswordScreen
+5. **User enters new password** → AuthContext.updatePassword() → supabase.auth.updateUser({ password })
+6. **Supabase updates auth.users** (new bcrypt hash, recovery_token nullified)
+7. **isPasswordRecovery cleared** → user enters main app, fully authenticated
+
+### Key Files
+- src/contexts/AuthContext.tsx — auth state + resetPassword/updatePassword/clearPasswordRecovery
+- src/components/LoginScreen.tsx — "Forgot your password?" form
+- src/components/ResetPasswordScreen.tsx — "Set New Password" form
+- src/App.tsx — route gate (isPasswordRecovery → ResetPasswordScreen)
+
+### What Password Reset Does NOT Touch
+profiles, user_preferences, comparisons, olivia_conversations, gamma_reports, judge_reports, subscriptions, jobs, notifications — ALL untouched. Only auth.users.encrypted_password changes.
+
+---
+
+## 2. Database Schema
+
+LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buckets**.
+
+### 2.1 All Tables
 
 | Table | Purpose |
 |-------|---------|
@@ -487,7 +692,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | subscriptions | Stripe billing records |
 | olivia_conversations | Olivia chat threads |
 | olivia_messages | Olivia chat messages |
-| gamma_reports | Report URLs (with city1, city2 columns) |
+| gamma_reports | Report URLs + permanent storage paths (pdf_storage_path, pptx_storage_path added 2026-02-17) |
 | user_preferences | Single-row-per-user settings (JSONB columns) |
 | usage_tracking | Monthly usage limits |
 | consent_logs | GDPR consent records |
@@ -503,15 +708,20 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | app_prompts | 50 system prompts (6 categories) |
 | invideo_overrides | Admin cinematic prompt overrides |
 | report_shares | Shared report links |
+| jobs | Persistent job queue for long-running tasks (Added 2026-02-16) |
+| notifications | In-app bell + email notification records (Added 2026-02-16) |
 
 ### 1.2 Storage Buckets
-- **avatars** (5 MB) - User profile pictures
-- **judge-videos** (50 MB) - Judge avatar video cache
-- **user-videos** (100 MB) - Court Order video uploads
+- **reports** (200 MB) - HTML reports per user folder (private, RLS-controlled)
+- **user-videos** (100 MB) - User-uploaded Court Order videos
+- **contrast-images** (5 MB) - Permanent contrast image copies
+- **judge-videos** (50 MB) - Persisted Judge avatar videos
+- **court-order-videos** (50 MB) - Persisted Court Order videos
+- **gamma-exports** (50 MB) - Persisted Gamma PDF/PPTX exports (public)
 
 ---
 
-## 2. API Endpoints (49 total)
+## 2. API Endpoints (46 total)
 
 ### Core
 | Endpoint | Method | Description |
@@ -559,21 +769,28 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | /api/prompts | GET/POST/PUT | System prompts (admin) |
 | /api/stripe/webhook | POST | Stripe events |
 
+### Notifications (Added 2026-02-16)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/notify | POST | Create in-app notification + email via Resend |
+| /api/admin/new-signup | POST | Admin email on new user signup |
+
 ---
 
-## 3. Key Components (46 total)
+## 3. Key Components (50 total)
 
 ### Core: App, Header, Footer, LoginScreen, TabNavigation
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
 ### Video: NewLifeVideos (blob URL playback, error detection)
-### Reports: VisualsTab (Read/Listen toggle), ReportPresenter (Olivia video presenter), AboutClues
+### Reports: VisualsTab (2-tab layout: Generate New / View Existing), ReportPresenter (Read/Live Presenter/Generate Video modes), GammaIframe (shared iframe with sandbox + error handling), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
+### Notifications (Added 2026-02-16): NotificationBell, NotifyMeModal, MobileWarningModal, VideoPhoneWarning
 
 ---
 
-## 4. Hooks (18 total)
+## 4. Hooks (20 total)
 
 | Hook | Purpose |
 |------|---------|
@@ -584,6 +801,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **21 tables** and **3 storage buc
 | useSimli | WebRTC avatar session |
 | useTTS | Text-to-speech |
 | useEmilia | Emilia help widget |
+| useNotifications | Polls notifications every 30s (Added 2026-02-16) |
+| useJobTracker | Job creation + status + notification trigger (Added 2026-02-16) |
 
 ---
 

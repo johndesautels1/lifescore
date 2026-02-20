@@ -197,4 +197,4 @@ cd D:\LifeScore && git log --oneline -10
 ---
 
 *Handoff created: January 2026*
-*App: LIFE SCORE™ by John E. Desautels & Associates*
+*App: LIFE SCORE™ by John E. Desautels II & Associates*

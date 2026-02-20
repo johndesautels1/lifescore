@@ -525,6 +525,10 @@
   color: var(--gray-300);
 }
 
+[data-theme="dark"] .gauge-vs {
+  color: var(--gray-300);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .visual-type-selector {

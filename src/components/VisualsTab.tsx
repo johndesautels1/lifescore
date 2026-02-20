@@ -2,11 +2,39 @@
  * LIFE SCORE™ Visuals Tab
  * Combined view of in-app charts and Gamma visual report generation
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
+ *
+ * Fixes applied (2026-02-17):
+ *  #1  Merged two confusing dropdowns into one unified selector
+ *  #2  Mutual exclusivity — viewingReport and generation embed can't coexist
+ *  #3  Presenter warns when saved report cities don't match active comparison
+ *  #4  Mode selector always visible when a Gamma URL exists
+ *  #5  Embed URL via shared GammaIframe (was duplicated 3×)
+ *  #6  Iframe error handler via shared GammaIframe (was copy-pasted 3×)
+ *  #7  Sandbox attribute on third-party iframes
+ *  #8  getActiveComparison memoized
+ *  #9  Save button disabled when URL missing
+ *  #10 Removed duplicate saved reports list (unified dropdown covers it)
+ *  #11 Surfaced Read / Live Presenter / Generate Video as top-level modes
+ *
+ * Audit fixes (2026-02-17):
+ *  6.1   Stale closure: gunData after await (fetchGunComparison now returns data)
+ *  3.3   Missing startTransition in handleReset deps
+ *  3.4   Missing startTransition in enterMode deps
+ *  5.3   Extracted onChange handler to memoized handleSelectorChange
+ *  8.1   setTimeout cleanup via saveTimeoutRef
+ *  8.2   Async unmount guard in Supabase sync effect
+ *  9.1   type="button" on all buttons
+ *  9.2-4 aria-pressed on toggle buttons
+ *  9.5   htmlFor/id on label+select
+ *  9.6   aria-label on close button
+ *  11.1  Removed unused enhancedResult prop
+ *  11.2  Removed unused simpleResult prop + ComparisonResult import
+ *  12.2  Eliminated handleGammaWaitHere wrapper
+ *  12.3  Memoized handleGammaNotifyMe
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useTransition } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useTransition, useRef } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
-import type { ComparisonResult } from '../types/metrics';
 import type { VisualReportState } from '../types/gamma';
 import {
   generateAndWaitForReport,
@@ -27,8 +55,13 @@ import {
 } from '../services/savedComparisons';
 import NewLifeVideos from './NewLifeVideos';
 import ReportPresenter from './ReportPresenter';
+import GammaIframe from './GammaIframe';
 import FeatureGate from './FeatureGate';
+import { NotifyMeModal } from './NotifyMeModal';
+import { useJobTracker } from '../hooks/useJobTracker';
 import { useTierAccess } from '../hooks/useTierAccess';
+import { toastInfo } from '../utils/toast';
+import type { NotifyChannel } from '../types/database';
 import type { ReportViewMode } from '../types/presenter';
 import './VisualsTab.css';
 
@@ -74,14 +107,10 @@ interface JudgeReportData {
   };
 }
 
+// Audit 11.1 & 11.2: Removed unused enhancedResult and simpleResult props
 interface VisualsTabProps {
   result: AnyComparisonResult | null;
-  // Optional: for backward compatibility, accept enhanced result separately
-  enhancedResult?: EnhancedComparisonResult | null;
-  simpleResult?: ComparisonResult | null;
-  // Optional: Judge report data for enhanced reports
   judgeReport?: JudgeReportData | null;
-  // LIFTED STATE: Gamma report state (persists across tab switches)
   reportState?: VisualReportState;
   setReportState?: React.Dispatch<React.SetStateAction<VisualReportState>>;
   exportFormat?: 'pdf' | 'pptx';
@@ -107,6 +136,13 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { createJob, completeJobAndNotify } = useJobTracker();
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const pendingJobRef = useRef<string | null>(null);
+
+  // Audit 8.1: Ref for setTimeout cleanup to prevent state updates after unmount
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); }, []);
 
   // Enhanced report options
   const [reportType, setReportType] = useState<'standard' | 'enhanced'>('standard');
@@ -117,6 +153,13 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   // Selected comparison from dropdown (null = use prop)
   const [selectedComparisonId, setSelectedComparisonId] = useState<string | null>(null);
+
+  // Two-tab selector: Generate New Report vs View Existing Report
+  const [selectorTab, setSelectorTab] = useState<'generate' | 'view'>('generate');
+
+  // Custom dropdown state for generate tab (allows styled "Enhanced" label)
+  const [generateDropdownOpen, setGenerateDropdownOpen] = useState(false);
+  const generateDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load saved comparisons with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
@@ -139,19 +182,28 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [refreshComparisons]);
 
-  // Determine which comparison to use: Selected from dropdown > Prop
-  const getActiveComparison = (): AnyComparisonResult | null => {
+  // Close custom dropdown on outside click
+  useEffect(() => {
+    if (!generateDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (generateDropdownRef.current && !generateDropdownRef.current.contains(e.target as Node)) {
+        setGenerateDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [generateDropdownOpen]);
+
+  // FIX #8: Memoize comparison lookup instead of running on every render
+  const result = useMemo((): AnyComparisonResult | null => {
     if (selectedComparisonId) {
-      // Look up in saved comparisons
       const savedStd = savedComparisons.find(c => c.result.comparisonId === selectedComparisonId);
       if (savedStd) return savedStd.result;
       const savedEnh = savedEnhanced.find(c => c.result.comparisonId === selectedComparisonId);
       if (savedEnh) return savedEnh.result;
     }
     return propResult;
-  };
-
-  const result = getActiveComparison();
+  }, [selectedComparisonId, savedComparisons, savedEnhanced, propResult]);
 
   // Local state fallback for backward compatibility
   const [localReportState, setLocalReportState] = useState<VisualReportState>({
@@ -177,31 +229,73 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   const [viewingReport, setViewingReport] = useState<SavedGammaReport | null>(null);
   const [reportsRefreshKey, setReportsRefreshKey] = useState(0);
 
-  // Report view mode: read (iframe) or presenter (Olivia video overlay)
+  // FIX #11: Report view mode now has 3 options: read | live | video
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('read');
   // INP fix: mark presenter mount/unmount as a non-urgent transition
   const [isPending, startTransition] = useTransition();
 
-  // Load saved reports from localStorage, then always sync from Supabase
+  // ============================================================================
+  // TAB 1 — "Generate a New Report": comparisons WITHOUT a Gamma report, sorted A-Z
+  // ============================================================================
+  const generatableComparisons = useMemo(() => {
+    const gammaCompIds = new Set(savedReports.map(r => r.comparisonId));
+    const items: { id: string; label: string; type: 'enhanced' | 'standard'; comparisonId: string }[] = [];
+
+    for (const c of savedEnhanced) {
+      if (!gammaCompIds.has(c.result.comparisonId)) {
+        items.push({
+          id: c.id,
+          label: `${c.result.city1.city} vs ${c.result.city2.city}${c.nickname ? ` (${c.nickname})` : ''} — Enhanced`,
+          type: 'enhanced',
+          comparisonId: c.result.comparisonId,
+        });
+      }
+    }
+    for (const c of savedComparisons) {
+      if (!gammaCompIds.has(c.result.comparisonId)) {
+        items.push({
+          id: c.id,
+          label: `${c.result.city1.city} vs ${c.result.city2.city}${c.nickname ? ` (${c.nickname})` : ''} — Standard`,
+          type: 'standard',
+          comparisonId: c.result.comparisonId,
+        });
+      }
+    }
+
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }, [savedComparisons, savedEnhanced, savedReports]);
+
+  // ============================================================================
+  // TAB 2 — "View Existing Report": Gamma reports, sorted A-Z
+  // ============================================================================
+  const viewableReports = useMemo(() => {
+    return [...savedReports]
+      .sort((a, b) => {
+        const labelA = `${a.city1} vs ${a.city2}`;
+        const labelB = `${b.city1} vs ${b.city2}`;
+        return labelA.localeCompare(labelB);
+      });
+  }, [savedReports]);
+
+  // Audit 8.2: Async unmount guard in Supabase sync effect
   useEffect(() => {
+    let cancelled = false;
     const localReports = getSavedGammaReports();
     setSavedReports(localReports);
 
-    // Always sync from Supabase — merges any reports saved on other devices
-    // or reports that were lost from localStorage (browser cleanup, etc.)
     syncGammaReportsFromSupabase().then((synced) => {
-      if (synced.length > 0) {
+      if (!cancelled && synced.length > 0) {
         console.log('[VisualsTab] Synced', synced.length, 'Gamma reports (local + Supabase merged)');
         setSavedReports(synced);
       }
     }).catch(err => {
       console.error('[VisualsTab] Supabase sync failed:', err);
     });
+    return () => { cancelled = true; };
   }, [reportsRefreshKey, isReportSaved]);
 
   // Auto-save Gamma reports when generation completes
   useEffect(() => {
-    // Log conditions for debugging persistence issues
     if (reportState.status === 'completed') {
       console.log('[VisualsTab] Auto-save check:', {
         status: reportState.status,
@@ -233,49 +327,61 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           gammaUrl: reportState.gammaUrl,
           pdfUrl: reportState.pdfUrl,
           pptxUrl: reportState.pptxUrl,
+          pdfStoragePath: reportState.pdfStoragePath,
+          pptxStoragePath: reportState.pptxStoragePath,
           generationId: reportState.generationId,
         });
         setIsReportSaved(true);
         setReportsRefreshKey(k => k + 1);
         console.log('[VisualsTab] Auto-save complete. Verifying localStorage:', getSavedGammaReports().length, 'reports');
       } else {
-        // Report already exists — mark as saved so we don't keep checking
         setIsReportSaved(true);
       }
     }
-  }, [reportState.status, reportState.gammaUrl, reportState.generationId, result, isReportSaved]);
+  }, [reportState.status, reportState.gammaUrl, reportState.generationId, reportState.pdfUrl, reportState.pptxUrl, reportState.pdfStoragePath, reportState.pptxStoragePath, result, isReportSaved]);
 
-  // Check if report is already saved when component mounts or report changes
-  const comparisonId = result?.comparisonId || '';
-  const isAlreadySaved = comparisonId ? hasGammaReportForComparison(comparisonId) : false;
+  // Check if report is already saved — memoized to avoid repeated .find() scans
+  const { isAlreadySaved, existingReport } = useMemo(() => {
+    const cid = result?.comparisonId || '';
+    const saved = cid ? hasGammaReportForComparison(cid) : false;
+    const report = saved ? savedReports.find(r => r.comparisonId === cid) || null : null;
+    return { isAlreadySaved: saved, existingReport: report };
+  }, [result, savedReports]);
 
-  // Find the matching saved report for current comparison (for "View Existing Report")
-  const existingReport = isAlreadySaved
-    ? savedReports.find(r => r.comparisonId === comparisonId) || null
-    : null;
+  // FIX #3: Check if current result matches the viewing report's cities
+  const resultMatchesViewingReport = useMemo(() => {
+    if (!result || !viewingReport) return false;
+    return (
+      result.city1.city === viewingReport.city1 &&
+      result.city2.city === viewingReport.city2
+    );
+  }, [result, viewingReport]);
+
+  // Audit 8.1: Helper to set save message with auto-clear (cleans up on unmount)
+  const showSaveMessage = useCallback((msg: string, durationMs = 3000) => {
+    setSaveMessage(msg);
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => setSaveMessage(null), durationMs);
+  }, []);
 
   const handleSaveReport = useCallback(() => {
     if (!result) {
-      setSaveMessage('Error: No comparison data available');
-      setTimeout(() => setSaveMessage(null), 3000);
+      showSaveMessage('Error: No comparison data available');
       return;
     }
 
     if (!reportState.gammaUrl) {
-      setSaveMessage('Error: Report URL not available. Please regenerate the report.');
-      setTimeout(() => setSaveMessage(null), 5000);
+      showSaveMessage('Error: Report URL not available. Please regenerate the report.', 5000);
       console.error('[VisualsTab] Save failed: gammaUrl is undefined. Report state:', reportState);
       return;
     }
 
     if (!reportState.generationId) {
-      setSaveMessage('Error: Generation ID missing. Please regenerate the report.');
-      setTimeout(() => setSaveMessage(null), 5000);
+      showSaveMessage('Error: Generation ID missing. Please regenerate the report.', 5000);
       console.error('[VisualsTab] Save failed: generationId is undefined. Report state:', reportState);
       return;
     }
 
-    // FIX: Generate fallback comparisonId if missing (must be UUID for Supabase FK)
     const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
 
     console.log('[VisualsTab] Saving report:', {
@@ -286,37 +392,35 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       generationId: reportState.generationId,
     });
 
-    const savedReport = saveGammaReport({
+    saveGammaReport({
       comparisonId: effectiveComparisonId,
       city1: result.city1.city,
       city2: result.city2.city,
       gammaUrl: reportState.gammaUrl,
       pdfUrl: reportState.pdfUrl,
       pptxUrl: reportState.pptxUrl,
+      pdfStoragePath: reportState.pdfStoragePath,
+      pptxStoragePath: reportState.pptxStoragePath,
       generationId: reportState.generationId,
     });
 
-    console.log('[VisualsTab] Report saved successfully:', savedReport);
-
     setIsReportSaved(true);
-    setSaveMessage('Report saved to your library!');
-    setTimeout(() => setSaveMessage(null), 3000);
-  }, [result, reportState]);
+    showSaveMessage('Report saved to your library!');
+  }, [result, reportState, showSaveMessage]);
 
   const handleGenerateReport = useCallback(async () => {
     if (!result) return;
 
-    // ADMIN BYPASS: Skip usage checks for admin users
+    // FIX #2: Clear any saved report being viewed when generating
+    setViewingReport(null);
+
     if (!isAdmin) {
-      // Check usage limits before generating Gamma report
       const usageResult = await checkUsage('gammaReports');
       if (!usageResult.allowed) {
         console.log('[VisualsTab] Gamma report limit reached:', usageResult);
         setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
         return;
       }
-
-      // Increment usage counter before starting generation
       await incrementUsage('gammaReports');
       console.log('[VisualsTab] Incremented gammaReports usage');
     }
@@ -324,22 +428,19 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     try {
       setReportState({ status: 'generating', progress: 0 });
 
-      // Determine which generation function to use
       const isEnhanced = reportType === 'enhanced' && isEnhancedResult(result);
 
       if (isEnhanced) {
-        // Enhanced 82-page report
         console.log('[VisualsTab] Generating enhanced 82-page report');
 
-        // Fetch gun data if requested and not already cached
+        // Audit 6.1: Use return value from fetchGunComparison to avoid stale closure
         let gunDataToUse: GunComparisonData | undefined = undefined;
         if (includeGunRights) {
           if (gunData) {
             gunDataToUse = gunData;
           } else if (gunStatus !== 'loading') {
-            // Fetch gun comparison data
-            await fetchGunComparison(result.city1.city, result.city2.city);
-            gunDataToUse = gunData || undefined;
+            const fetched = await fetchGunComparison(result.city1.city, result.city2.city);
+            gunDataToUse = fetched || undefined;
           }
         }
 
@@ -357,10 +458,11 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           gammaUrl: finalState.url,
           pdfUrl: finalState.pdfUrl,
           pptxUrl: finalState.pptxUrl,
+          pdfStoragePath: finalState.pdfStoragePath,
+          pptxStoragePath: finalState.pptxStoragePath,
           progress: 100,
         });
       } else {
-        // Standard 35-page report (existing behavior)
         console.log('[VisualsTab] Generating standard report');
 
         const finalState = await generateAndWaitForReport(
@@ -375,6 +477,8 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           gammaUrl: finalState.url,
           pdfUrl: finalState.pdfUrl,
           pptxUrl: finalState.pptxUrl,
+          pdfStoragePath: finalState.pdfStoragePath,
+          pptxStoragePath: finalState.pptxStoragePath,
           progress: 100,
         });
       }
@@ -386,14 +490,103 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     }
   }, [result, exportFormat, reportType, includeGunRights, gunData, gunStatus, fetchGunComparison, propsJudgeReport, checkUsage, incrementUsage, isAdmin, setReportState]);
 
+  // Audit 3.3: Added startTransition to deps
   const handleReset = useCallback(() => {
     setReportState({ status: 'idle' });
     setIsReportSaved(false);
-  }, []);
+    setShowEmbedded(false);
+    startTransition(() => setReportViewMode('read'));
+  }, [setReportState, setShowEmbedded, startTransition]);
+
+  // Audit 3.4: Added startTransition to deps
+  const enterMode = useCallback((mode: ReportViewMode) => {
+    setShowEmbedded(true);
+    startTransition(() => setReportViewMode(mode));
+  }, [setShowEmbedded, startTransition]);
+
+  // Audit 12.3: Memoized handleGammaNotifyMe
+  const handleGammaNotifyMe = useCallback(async (channels: NotifyChannel[]) => {
+    const city1 = result?.city1?.city || '';
+    const city2 = result?.city2?.city || '';
+    const jobId = await createJob({
+      type: 'gamma_report',
+      payload: { city1, city2 },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      pendingJobRef.current = jobId;
+      toastInfo(`We'll notify you when your Gamma report is ready.`);
+    }
+    handleGenerateReport();
+  }, [result, createJob, handleGenerateReport]);
+
+  // Fire pending notification when Gamma report generation completes
+  useEffect(() => {
+    if (reportState.status === 'completed' && pendingJobRef.current) {
+      const jobId = pendingJobRef.current;
+      pendingJobRef.current = null;
+      const city1 = result?.city1?.city || '';
+      const city2 = result?.city2?.city || '';
+      completeJobAndNotify(
+        jobId,
+        { city1, city2, gammaUrl: reportState.gammaUrl },
+        `Gamma Report Ready: ${city1} vs ${city2}`,
+        `Your visual report for ${city1} vs ${city2} is ready to view.`,
+        '/?tab=visuals'
+      );
+    }
+  }, [reportState.status, reportState.gammaUrl, result, completeJobAndNotify]);
+
+  // Handler for "View" tab dropdown — selecting an existing Gamma report
+  // Auto-loads matching comparison data so presenter/video buttons are enabled
+  const handleViewTabSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setViewingReport(null);
+      return;
+    }
+    const report = savedReports.find(r => r.id === value);
+    if (report) {
+      setViewingReport(report);
+      // Find matching comparison data for this report's comparisonId
+      const matchingEnhanced = savedEnhanced.find(c => c.result.comparisonId === report.comparisonId);
+      const matchingStandard = savedComparisons.find(c => c.result.comparisonId === report.comparisonId);
+      if (matchingEnhanced) {
+        setSelectedComparisonId(matchingEnhanced.result.comparisonId);
+      } else if (matchingStandard) {
+        setSelectedComparisonId(matchingStandard.result.comparisonId);
+      } else {
+        setSelectedComparisonId(null);
+      }
+      startTransition(() => setReportViewMode('read'));
+    }
+  }, [savedReports, savedEnhanced, savedComparisons, startTransition]);
+
+  // Extracted delete handler — avoids complex inline function in JSX
+  const handleDeleteViewingReport = useCallback(() => {
+    if (!viewingReport) return;
+    if (window.confirm(`Delete report for ${viewingReport.city1} vs ${viewingReport.city2}?`)) {
+      deleteGammaReport(viewingReport.id);
+      setViewingReport(null);
+      setReportsRefreshKey(k => k + 1);
+    }
+  }, [viewingReport]);
 
   const hasSavedComparisons = savedComparisons.length > 0 || savedEnhanced.length > 0;
+  const hasAnything = !!result || hasSavedComparisons || savedReports.length > 0;
 
-  if (!result && !hasSavedComparisons && savedReports.length === 0) {
+  // Helper to render dropdown label with amber "Enhanced" or dim "Standard"
+  const renderDropdownLabel = (label: string, type: 'enhanced' | 'standard') => {
+    const parts = label.split(' — ');
+    if (parts.length < 2) return <>{label}</>;
+    return (
+      <>
+        {parts[0]} — <span className={type === 'enhanced' ? 'label-enhanced' : 'label-standard'}>{parts[1]}</span>
+      </>
+    );
+  };
+
+  if (!hasAnything) {
     return (
       <div className="visuals-tab">
         <div className="no-results-message card">
@@ -404,94 +597,231 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     );
   }
 
+  // ============================================================================
+  // SHARED: Mode selector buttons used in both completed state & saved viewer
+  // FIX #4, #11: Always visible when a Gamma URL exists
+  // Audit 9.1: type="button", 9.2-4: aria-pressed, 9.6: aria-label
+  // ============================================================================
+  const renderModeSelector = (
+    gammaUrl: string,
+    presenterAvailable: boolean,
+    onClose: () => void,
+  ) => (
+    <div className="embedded-header">
+      <div className="embedded-actions">
+        <div className="report-view-toggle" role="group" aria-label="Report view mode">
+          <button
+            type="button"
+            className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
+            onClick={() => enterMode('read')}
+            aria-pressed={reportViewMode === 'read'}
+          >
+            📖 Read
+          </button>
+          <button
+            type="button"
+            className={`view-toggle-btn ${reportViewMode === 'live' ? 'active' : ''}`}
+            onClick={() => enterMode('live')}
+            disabled={!presenterAvailable}
+            title={!presenterAvailable ? 'Load a matching comparison to enable presenter' : 'Olivia presents the report live'}
+            aria-pressed={reportViewMode === 'live'}
+          >
+            {isPending && reportViewMode === 'live' ? '...' : '🎙️ Live Presenter'}
+          </button>
+          <button
+            type="button"
+            className={`view-toggle-btn ${reportViewMode === 'video' ? 'active' : ''}`}
+            onClick={() => enterMode('video')}
+            disabled={!presenterAvailable}
+            title={!presenterAvailable ? 'Load a matching comparison to enable video' : 'Generate a polished video with Olivia'}
+            aria-pressed={reportViewMode === 'video'}
+          >
+            {isPending && reportViewMode === 'video' ? '...' : '🎬 Watch Video'}
+          </button>
+        </div>
+        <a
+          href={gammaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="external-link-btn"
+          aria-label="Open report in new tab"
+        >
+          Open External ↗
+        </a>
+        <button
+          type="button"
+          className="close-embed-btn"
+          onClick={onClose}
+          aria-label="Close embedded report"
+        >
+          ✕ Close
+        </button>
+      </div>
+    </div>
+  );
+
+  // ============================================================================
+  // SHARED: Render content area based on current mode
+  // ============================================================================
+  const renderModeContent = (
+    gammaUrl: string,
+    comparisonResult: AnyComparisonResult | null,
+    onPresenterClose: () => void,
+  ) => {
+    if (reportViewMode === 'live' && comparisonResult && gammaUrl) {
+      return (
+        <ReportPresenter
+          result={comparisonResult}
+          gammaUrl={gammaUrl}
+          onClose={onPresenterClose}
+          initialSubMode="live"
+        />
+      );
+    }
+    if (reportViewMode === 'video' && comparisonResult && gammaUrl) {
+      return (
+        <ReportPresenter
+          result={comparisonResult}
+          gammaUrl={gammaUrl}
+          onClose={onPresenterClose}
+          initialSubMode="video"
+        />
+      );
+    }
+    return (
+      <GammaIframe
+        gammaUrl={gammaUrl}
+        onLoadError={onPresenterClose}
+      />
+    );
+  };
+
   return (
     <div className="visuals-tab">
-      {/* Report Selection Dropdown */}
-      {hasSavedComparisons && (
+      {/* ================================================================
+          TWO-TAB SELECTOR: Generate a New Report | View Existing Report
+          ================================================================ */}
+      {(hasSavedComparisons || savedReports.length > 0) && (
         <div className="report-selector-section">
-          <label className="report-selector-label">Select Report:</label>
-          <select
-            className="report-selector-dropdown"
-            value={selectedComparisonId ?? ''}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSelectedComparisonId(value === '' ? null : value);
-              // Reset report state when switching comparisons
-              if (value !== selectedComparisonId) {
-                setReportState({ status: 'idle' });
-                setIsReportSaved(false);
-              }
-            }}
-          >
-            <option value="">
-              {propResult
-                ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
-                : 'Select a saved report'}
-            </option>
-            {savedEnhanced.length > 0 && (
-              <optgroup label="Enhanced Comparisons">
-                {savedEnhanced.map((saved) => (
-                  <option key={saved.id} value={saved.result.comparisonId}>
-                    {saved.result.city1.city} vs {saved.result.city2.city}
-                    {saved.nickname ? ` (${saved.nickname})` : ''}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {savedComparisons.length > 0 && (
-              <optgroup label="Standard Comparisons">
-                {savedComparisons.map((saved) => (
-                  <option key={saved.id} value={saved.result.comparisonId}>
-                    {saved.result.city1.city} vs {saved.result.city2.city}
-                    {saved.nickname ? ` (${saved.nickname})` : ''}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
+          <div className="selector-tabs">
+            <button
+              type="button"
+              className={`selector-tab ${selectorTab === 'generate' ? 'active' : ''}`}
+              onClick={() => { setSelectorTab('generate'); setViewingReport(null); }}
+              aria-pressed={selectorTab === 'generate'}
+            >
+              Generate a New Report
+            </button>
+            <button
+              type="button"
+              className={`selector-tab ${selectorTab === 'view' ? 'active' : ''}`}
+              onClick={() => { setSelectorTab('view'); setSelectedComparisonId(null); }}
+              aria-pressed={selectorTab === 'view'}
+            >
+              View Existing Report
+            </button>
+          </div>
+
+          {selectorTab === 'generate' && (
+            <div className="custom-dropdown" ref={generateDropdownRef}>
+              <button
+                type="button"
+                id="generate-selector"
+                className="custom-dropdown-trigger report-selector-dropdown"
+                onClick={() => setGenerateDropdownOpen(!generateDropdownOpen)}
+                aria-haspopup="listbox"
+                aria-expanded={generateDropdownOpen}
+                aria-label="Select a comparison to generate a report"
+              >
+                {selectedComparisonId
+                  ? (() => {
+                      const item = generatableComparisons.find(c => c.comparisonId === selectedComparisonId);
+                      return item ? renderDropdownLabel(item.label, item.type) : 'Select a comparison to generate';
+                    })()
+                  : propResult
+                    ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
+                    : 'Select a comparison to generate'}
+              </button>
+              {generateDropdownOpen && (
+                <div className="custom-dropdown-menu" role="listbox" aria-label="Comparisons to generate">
+                  <div
+                    className={`custom-dropdown-option${!selectedComparisonId ? ' selected' : ''}`}
+                    role="option"
+                    aria-selected={!selectedComparisonId}
+                    onClick={() => {
+                      setViewingReport(null);
+                      if (selectedComparisonId !== null) {
+                        setReportState({ status: 'idle' });
+                        setIsReportSaved(false);
+                        setShowEmbedded(false);
+                      }
+                      setSelectedComparisonId(null);
+                      setGenerateDropdownOpen(false);
+                    }}
+                  >
+                    {propResult
+                      ? `Current: ${propResult.city1.city} vs ${propResult.city2.city}`
+                      : 'Select a comparison to generate'}
+                  </div>
+                  {generatableComparisons.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`custom-dropdown-option${selectedComparisonId === item.comparisonId ? ' selected' : ''}`}
+                      role="option"
+                      aria-selected={selectedComparisonId === item.comparisonId}
+                      onClick={() => {
+                        setViewingReport(null);
+                        if (item.comparisonId !== selectedComparisonId) {
+                          setReportState({ status: 'idle' });
+                          setIsReportSaved(false);
+                          setShowEmbedded(false);
+                        }
+                        setSelectedComparisonId(item.comparisonId);
+                        setGenerateDropdownOpen(false);
+                      }}
+                    >
+                      {renderDropdownLabel(item.label, item.type)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectorTab === 'view' && (
+            <select
+              id="view-selector"
+              aria-label="Select a saved report to view"
+              className="report-selector-dropdown"
+              value={viewingReport?.id ?? ''}
+              onChange={handleViewTabSelect}
+            >
+              <option value="">Select a saved report to view</option>
+              {viewableReports.map((report) => (
+                <option key={report.id} value={report.id}>
+                  {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
-      {/* Choose Existing Gamma Report Dropdown - ALWAYS visible */}
-      <div className="report-selector-section gamma-report-selector">
-        <label className="report-selector-label">View Existing Gamma Report:</label>
-        {savedReports.length > 0 ? (
-          <select
-            className="report-selector-dropdown"
-            value=""
-            onChange={(e) => {
-              const reportId = e.target.value;
-              if (!reportId) return;
-              const report = savedReports.find(r => r.id === reportId);
-              if (report) {
-                setViewingReport(report);
-              }
-            }}
-          >
-            <option value="">Select a report to view ({savedReports.length} saved)...</option>
-            {savedReports.map((report) => (
-              <option key={report.id} value={report.id}>
-                {report.city1} vs {report.city2} — {new Date(report.savedAt).toLocaleDateString()}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div className="no-saved-reports-msg">
-            No saved Gamma reports yet. Reports are auto-saved when generated.
-          </div>
-        )}
-      </div>
-
-      {/* No result selected message */}
       {!result && !viewingReport && (
         <div className="no-results-message card">
           <h3>Select a Report</h3>
-          <p>Choose a saved comparison from the dropdown above to generate visualizations, or select an existing Gamma report.</p>
+          <p>
+            {selectorTab === 'generate'
+              ? 'Choose a saved comparison from the dropdown to generate a Gamma report.'
+              : 'Choose a saved Gamma report from the dropdown to view it.'}
+          </p>
         </div>
       )}
 
-      {/* Gamma Report Generation Section */}
-      {result && (
+      {/* ================================================================
+          GAMMA REPORT GENERATION SECTION
+          ================================================================ */}
+      {result && !viewingReport && (
       <div className="gamma-section card">
         <h3 className="section-title">
           <span className="section-icon">📊</span>
@@ -501,7 +831,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           Create a professional presentation of your {result.city1.city} vs {result.city2.city} comparison.
         </p>
 
-        {/* Existing Report Banner — shown when a saved report matches this comparison */}
         {reportState.status === 'idle' && existingReport && (
           <div className="existing-report-banner">
             <div className="existing-report-info">
@@ -515,6 +844,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             </div>
             <div className="existing-report-actions">
               <button
+                type="button"
                 className="existing-report-btn view"
                 onClick={() => setViewingReport(existingReport)}
               >
@@ -547,21 +877,24 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         {reportState.status === 'idle' && (
           <FeatureGate feature="gammaReports" showUsage={true} blurContent={false}>
             <div className="generate-controls">
-              {/* Report Type Toggle */}
               <div className="report-type-selector">
-                <label>Report Type:</label>
-                <div className="report-type-options">
+                <label id="report-type-label">Report Type:</label>
+                <div className="report-type-options" role="group" aria-labelledby="report-type-label">
                   <button
+                    type="button"
                     className={`type-btn ${reportType === 'standard' ? 'active' : ''}`}
                     onClick={() => setReportType('standard')}
+                    aria-pressed={reportType === 'standard'}
                   >
                     Standard (35 pages)
                   </button>
                   <button
+                    type="button"
                     className={`type-btn ${reportType === 'enhanced' ? 'active' : ''}`}
                     onClick={() => setReportType('enhanced')}
                     disabled={!isEnhancedResult(result)}
                     title={!isEnhancedResult(result) ? 'Requires Enhanced Comparison (multi-LLM)' : 'Generate comprehensive 82-page report'}
+                    aria-pressed={reportType === 'enhanced'}
                   >
                     Enhanced (82 pages)
                   </button>
@@ -571,7 +904,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                 )}
               </div>
 
-              {/* Gun Rights Checkbox (only for enhanced) */}
               {reportType === 'enhanced' && isEnhancedResult(result) && (
                 <div className="gun-rights-option">
                   <label className="checkbox-label">
@@ -587,25 +919,30 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               )}
 
               <div className="format-selector">
-                <label>Export Format:</label>
-                <div className="format-options">
+                <label id="export-format-label">Export Format:</label>
+                <div className="format-options" role="group" aria-labelledby="export-format-label">
                   <button
+                    type="button"
                     className={`format-btn ${exportFormat === 'pdf' ? 'active' : ''}`}
                     onClick={() => setExportFormat('pdf')}
+                    aria-pressed={exportFormat === 'pdf'}
                   >
                     PDF
                   </button>
                   <button
+                    type="button"
                     className={`format-btn ${exportFormat === 'pptx' ? 'active' : ''}`}
                     onClick={() => setExportFormat('pptx')}
+                    aria-pressed={exportFormat === 'pptx'}
                   >
                     PowerPoint
                   </button>
                 </div>
               </div>
               <button
+                type="button"
                 className="generate-btn primary-btn"
-                onClick={handleGenerateReport}
+                onClick={() => setShowNotifyModal(true)}
               >
                 {reportType === 'enhanced' ? 'Generate Enhanced Report' : 'Generate Report'}
               </button>
@@ -615,7 +952,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
         {(reportState.status === 'generating' || reportState.status === 'polling') && (
           <div className="generating-state">
-            {/* Spinner + Percentage */}
             <div className="progress-header">
               <div className="spinner"></div>
               <span className="progress-percentage">{reportState.progress || 0}%</span>
@@ -637,116 +973,69 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
         {reportState.status === 'completed' && (
           <div className="completed-state">
-            {!showEmbedded ? (
-              <>
-                <div className="success-message">
-                  <span className="success-icon">✓</span>
-                  Report generated successfully!
-                </div>
+            <div className="success-message">
+              <span className="success-icon">✓</span>
+              Report generated successfully!
+            </div>
 
-                {/* Save Report Button */}
-                <div className="save-report-section">
-                  {saveMessage && (
-                    <span className={`save-message ${saveMessage.startsWith('Error') ? 'error' : ''}`}>
-                      {saveMessage}
-                    </span>
-                  )}
-                  <button
-                    className={`save-report-btn ${isReportSaved || isAlreadySaved ? 'saved' : ''} ${!reportState.gammaUrl ? 'disabled-url' : ''}`}
-                    onClick={handleSaveReport}
-                    disabled={isReportSaved || isAlreadySaved}
-                    title={!reportState.gammaUrl ? 'Report URL not available - please regenerate' : 'Save this report to your library'}
-                  >
-                    {isReportSaved || isAlreadySaved ? '✓ Saved to Library' : !reportState.gammaUrl ? '⚠️ URL Missing' : '💾 Save Report'}
-                  </button>
-                </div>
+            <div className="save-report-section">
+              {saveMessage && (
+                <span className={`save-message ${saveMessage.startsWith('Error') ? 'error' : ''}`}>
+                  {saveMessage}
+                </span>
+              )}
+              <button
+                type="button"
+                className={`save-report-btn ${isReportSaved || isAlreadySaved ? 'saved' : ''} ${!reportState.gammaUrl ? 'disabled-url' : ''}`}
+                onClick={handleSaveReport}
+                disabled={isReportSaved || isAlreadySaved || !reportState.gammaUrl}
+                title={!reportState.gammaUrl ? 'Report URL not available - please regenerate' : 'Save this report to your library'}
+              >
+                {isReportSaved || isAlreadySaved ? '✓ Saved to Library' : !reportState.gammaUrl ? '⚠️ URL Missing' : '💾 Save Report'}
+              </button>
+            </div>
 
-                <div className="report-links">
-                  {reportState.gammaUrl && (
-                    <button
-                      className="report-link view-link"
-                      onClick={() => setShowEmbedded(true)}
-                    >
-                      View Report
-                    </button>
-                  )}
-                  {reportState.pptxUrl && (
-                    <a
-                      href={reportState.pptxUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="report-link download-link"
-                    >
-                      Download PPTX
-                    </a>
-                  )}
-                  {reportState.pdfUrl && (
-                    <a
-                      href={reportState.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="report-link download-link"
-                    >
-                      Download PDF
-                    </a>
-                  )}
-                </div>
-                <button
-                  className="reset-btn secondary-btn"
-                  onClick={handleReset}
+            <div className="report-links">
+              {reportState.pdfUrl && (
+                <a
+                  href={reportState.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="report-link download-link"
                 >
-                  Generate Another
-                </button>
-              </>
-            ) : (
+                  Download PDF
+                </a>
+              )}
+              {reportState.pptxUrl && (
+                <a
+                  href={reportState.pptxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="report-link download-link"
+                >
+                  Download PPTX
+                </a>
+              )}
+              <button
+                type="button"
+                className="reset-btn secondary-btn"
+                onClick={handleReset}
+              >
+                Generate Another
+              </button>
+            </div>
+
+            {reportState.gammaUrl && (
               <div className="embedded-report">
-                <div className="embedded-header">
-                  <h3>LIFE SCORE™ Visual Report</h3>
-                  <div className="embedded-actions">
-                    {/* Read / Listen to Presenter Toggle */}
-                    <div className="report-view-toggle">
-                      <button
-                        className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
-                        onClick={() => startTransition(() => setReportViewMode('read'))}
-                      >
-                        📖 Read
-                      </button>
-                      <button
-                        className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''} ${isPending ? 'loading' : ''}`}
-                        onClick={() => startTransition(() => setReportViewMode('presenter'))}
-                      >
-                        {isPending ? '⏳ Loading...' : '🎧 Listen to Presenter'}
-                      </button>
-                    </div>
-                    <a
-                      href={reportState.gammaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="external-link-btn"
-                    >
-                      Open External ↗
-                    </a>
-                    <button
-                      className="close-embed-btn"
-                      onClick={() => { setShowEmbedded(false); startTransition(() => setReportViewMode('read')); }}
-                    >
-                      ✕ Close
-                    </button>
-                  </div>
-                </div>
-                {reportViewMode === 'presenter' && result && reportState.gammaUrl ? (
-                  <ReportPresenter
-                    result={result}
-                    gammaUrl={reportState.gammaUrl}
-                    onClose={() => startTransition(() => setReportViewMode('read'))}
-                  />
-                ) : (
-                  <iframe
-                    src={reportState.gammaUrl?.replace('/docs/', '/embed/')}
-                    className="gamma-embed-frame"
-                    title="LIFE SCORE Visual Report"
-                    allowFullScreen
-                  />
+                {renderModeSelector(
+                  reportState.gammaUrl,
+                  !!result,
+                  () => { setShowEmbedded(false); startTransition(() => setReportViewMode('read')); },
+                )}
+                {showEmbedded && renderModeContent(
+                  reportState.gammaUrl,
+                  result,
+                  () => startTransition(() => setReportViewMode('read')),
                 )}
               </div>
             )}
@@ -760,6 +1049,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               {reportState.error}
             </div>
             <button
+              type="button"
               className="retry-btn secondary-btn"
               onClick={handleReset}
             >
@@ -770,121 +1060,54 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       </div>
       )}
 
-      {/* Saved Reports Library */}
-      {savedReports.length > 0 && !viewingReport && (
-        <div className="saved-reports-section card">
-          <h3 className="section-title">
-            <span className="section-icon">📁</span>
-            Saved Reports ({savedReports.length})
-          </h3>
-          <div className="saved-reports-list">
-            {savedReports.map((report) => (
-              <div key={report.id} className="saved-report-item">
-                <div className="report-info">
-                  <span className="report-cities">{report.city1} vs {report.city2}</span>
-                  <span className="report-date">{new Date(report.savedAt).toLocaleDateString()}</span>
-                </div>
-                <div className="report-actions">
-                  <button
-                    className="report-action-btn view"
-                    onClick={() => setViewingReport(report)}
-                    title="View report"
-                  >
-                    View
-                  </button>
-                  {report.pdfUrl && (
-                    <a
-                      href={report.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="report-action-btn download"
-                      title="Download PDF"
-                    >
-                      PDF
-                    </a>
-                  )}
-                  {report.pptxUrl && (
-                    <a
-                      href={report.pptxUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="report-action-btn download"
-                      title="Download PowerPoint"
-                    >
-                      PPTX
-                    </a>
-                  )}
-                  <button
-                    className="report-action-btn delete"
-                    onClick={() => {
-                      if (window.confirm(`Delete report for ${report.city1} vs ${report.city2}?`)) {
-                        deleteGammaReport(report.id);
-                        setReportsRefreshKey(k => k + 1);
-                      }
-                    }}
-                    title="Delete report"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Viewing a saved report */}
+      {/* ================================================================
+          VIEWING A SAVED REPORT
+          ================================================================ */}
       {viewingReport && (
         <div className="saved-report-viewer card">
-          <div className="embedded-header">
+          <div className="saved-report-viewer-title">
             <h3>{viewingReport.city1} vs {viewingReport.city2} — Saved Report</h3>
-            <div className="embedded-actions">
-              {/* Read / Listen to Presenter Toggle */}
-              {result && (
-                <div className="report-view-toggle">
-                  <button
-                    className={`view-toggle-btn ${reportViewMode === 'read' ? 'active' : ''}`}
-                    onClick={() => startTransition(() => setReportViewMode('read'))}
-                  >
-                    📖 Read
-                  </button>
-                  <button
-                    className={`view-toggle-btn ${reportViewMode === 'presenter' ? 'active' : ''} ${isPending ? 'loading' : ''}`}
-                    onClick={() => startTransition(() => setReportViewMode('presenter'))}
-                  >
-                    {isPending ? '⏳ Loading...' : '🎧 Listen to Presenter'}
-                  </button>
-                </div>
-              )}
-              <a
-                href={viewingReport.gammaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link-btn"
-              >
-                Open External ↗
-              </a>
-              <button
-                className="close-embed-btn"
-                onClick={() => { setViewingReport(null); startTransition(() => setReportViewMode('read')); }}
-              >
-                ✕ Close
-              </button>
-            </div>
+            {result && !resultMatchesViewingReport && (
+              <p className="city-mismatch-warning">
+                Active comparison ({result.city1.city} vs {result.city2.city}) doesn't match this report.
+                Presenter narration won't be accurate.
+              </p>
+            )}
+            <button
+              type="button"
+              className="report-action-btn delete"
+              onClick={handleDeleteViewingReport}
+              title="Delete report"
+            >
+              ✕ Delete
+            </button>
           </div>
-          {reportViewMode === 'presenter' && result && viewingReport.gammaUrl ? (
-            <ReportPresenter
-              result={result}
-              gammaUrl={viewingReport.gammaUrl}
-              onClose={() => startTransition(() => setReportViewMode('read'))}
-            />
-          ) : (
-            <iframe
-              src={viewingReport.gammaUrl?.replace('/docs/', '/embed/')}
-              className="gamma-embed-frame"
-              title="LIFE SCORE Saved Report"
-              allowFullScreen
-            />
+
+          {(viewingReport.pdfUrl || viewingReport.pptxUrl) && (
+            <div className="report-links saved-report-downloads">
+              {viewingReport.pdfUrl && (
+                <a href={viewingReport.pdfUrl} target="_blank" rel="noopener noreferrer" className="report-link download-link">
+                  Download PDF
+                </a>
+              )}
+              {viewingReport.pptxUrl && (
+                <a href={viewingReport.pptxUrl} target="_blank" rel="noopener noreferrer" className="report-link download-link">
+                  Download PPTX
+                </a>
+              )}
+            </div>
+          )}
+
+          {renderModeSelector(
+            viewingReport.gammaUrl,
+            !!result && resultMatchesViewingReport,
+            () => { setViewingReport(null); startTransition(() => setReportViewMode('read')); },
+          )}
+
+          {renderModeContent(
+            viewingReport.gammaUrl,
+            result && resultMatchesViewingReport ? result : null,
+            () => startTransition(() => setReportViewMode('read')),
           )}
         </div>
       )}
@@ -908,6 +1131,15 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           </div>
         )
       )}
+      {/* Audit 12.2: Eliminated handleGammaWaitHere wrapper — pass handleGenerateReport directly */}
+      <NotifyMeModal
+        isOpen={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        onWaitHere={handleGenerateReport}
+        onNotifyMe={handleGammaNotifyMe}
+        taskLabel="Gamma Report"
+        estimatedSeconds={90}
+      />
     </div>
   );
 };

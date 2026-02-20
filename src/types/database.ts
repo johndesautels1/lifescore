@@ -85,6 +85,8 @@ export interface GammaReport {
   gamma_url: string;
   pdf_url: string | null;
   pptx_url: string | null;
+  pdf_storage_path: string | null;
+  pptx_storage_path: string | null;
   nickname: string | null;
   city1: string | null;
   city2: string | null;
@@ -202,6 +204,8 @@ export interface GammaReportInsert {
   gamma_url: string;
   pdf_url?: string | null;
   pptx_url?: string | null;
+  pdf_storage_path?: string | null;
+  pptx_storage_path?: string | null;
   nickname?: string | null;
   city1?: string | null;  // FIX: Add city names for cross-device sync
   city2?: string | null;  // FIX: Add city names for cross-device sync
@@ -309,6 +313,8 @@ export interface Report {
   gamma_doc_id: string | null;
   gamma_url: string | null;
   pdf_url: string | null;
+  pdf_storage_path: string | null;
+  pptx_storage_path: string | null;
   html_storage_path: string | null;
   status: ReportStatus;
   generation_started_at: string;
@@ -337,6 +343,8 @@ export interface ReportInsert {
   gamma_doc_id?: string | null;
   gamma_url?: string | null;
   pdf_url?: string | null;
+  pdf_storage_path?: string | null;
+  pptx_storage_path?: string | null;
   html_storage_path?: string | null;
   status?: ReportStatus;
   generation_duration_seconds?: number | null;
@@ -350,6 +358,8 @@ export interface ReportUpdate {
   gamma_doc_id?: string | null;
   gamma_url?: string | null;
   pdf_url?: string | null;
+  pdf_storage_path?: string | null;
+  pptx_storage_path?: string | null;
   html_storage_path?: string | null;
   status?: ReportStatus;
   generation_completed_at?: string | null;
@@ -567,6 +577,18 @@ export type Database = {
         Row: AuthorizedManualAccess;
         Insert: Partial<AuthorizedManualAccess>;
         Update: Partial<AuthorizedManualAccess>;
+        Relationships: [];
+      };
+      jobs: {
+        Row: Job;
+        Insert: JobInsert;
+        Update: JobUpdate;
+        Relationships: [];
+      };
+      notifications: {
+        Row: Notification;
+        Insert: NotificationInsert;
+        Update: NotificationUpdate;
         Relationships: [];
       };
     };
@@ -847,4 +869,76 @@ export interface ApiCostSummary {
     tts: number;
     avatar: number;
   };
+}
+
+// ============================================================================
+// JOBS (Fire-and-Forget Notification System)
+// ============================================================================
+
+export type JobType = 'comparison' | 'judge_verdict' | 'court_order' | 'gamma_report' | 'freedom_tour';
+export type JobStatus = 'queued' | 'processing' | 'completed' | 'notified' | 'failed';
+export type NotifyChannel = 'email' | 'sms' | 'in_app';
+
+export interface Job {
+  id: string;
+  user_id: string;
+  type: JobType;
+  status: JobStatus;
+  payload: Record<string, unknown> | null;
+  result: Record<string, unknown> | null;
+  notify_via: NotifyChannel[];
+  notified_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobInsert {
+  user_id: string;
+  type: JobType;
+  status?: JobStatus;
+  payload?: Record<string, unknown> | null;
+  result?: Record<string, unknown> | null;
+  notify_via?: NotifyChannel[];
+  error_message?: string | null;
+}
+
+export interface JobUpdate {
+  status?: JobStatus;
+  result?: Record<string, unknown> | null;
+  notify_via?: NotifyChannel[];
+  notified_at?: string | null;
+  error_message?: string | null;
+}
+
+// ============================================================================
+// NOTIFICATIONS (In-App Bell + Email Records)
+// ============================================================================
+
+export type NotificationType = 'email' | 'sms' | 'in_app';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  job_id: string | null;
+  type: NotificationType;
+  title: string;
+  message: string | null;
+  read: boolean;
+  link: string | null;
+  created_at: string;
+}
+
+export interface NotificationInsert {
+  user_id: string;
+  job_id?: string | null;
+  type?: NotificationType;
+  title: string;
+  message?: string | null;
+  read?: boolean;
+  link?: string | null;
+}
+
+export interface NotificationUpdate {
+  read?: boolean;
 }

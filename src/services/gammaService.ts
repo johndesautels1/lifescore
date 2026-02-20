@@ -590,6 +590,8 @@ export async function pollUntilComplete(
         gammaUrl: status.url,
         pdfUrl: status.pdfUrl,
         pptxUrl: status.pptxUrl,
+        pdfStoragePath: status.pdfStoragePath,
+        pptxStoragePath: status.pptxStoragePath,
         error: status.error,
         progress: status.status === 'completed' ? 100 : estimatedProgress,
       });
@@ -1246,18 +1248,17 @@ ${judgeAnalysis?.trendNotes || `Both cities show stable trajectories in ${config
 
 **Overall Agreement: ${agreementPct}% - ${agreementPct >= 85 ? 'High Consensus' : agreementPct >= 70 ? 'Moderate Consensus' : 'Mixed Opinions'}**
 
-<smart-layout variant="solidBoxes" cellsize="15">
+<smart-layout variant="barStats">
 ${cat1.metrics.slice(0, 12).map(m => {
-  const name = getMetricDisplayName(m.metricId).slice(0, 20);
+  const name = getMetricDisplayName(m.metricId).slice(0, 25);
   const conf = m.confidenceLevel || 'moderate';
   const confValue = conf === 'unanimous' ? 95 : conf === 'strong' ? 85 : conf === 'moderate' ? 70 : 50;
-  const color = conf === 'unanimous' || conf === 'strong' ? '#10B981' : conf === 'moderate' ? '#F59E0B' : '#DC2626';
-  return `<item label="${name}" value="${confValue}" color="${color}">${confValue}%</item>`;
+  const confLabel = conf === 'unanimous' ? 'Unanimous' : conf === 'strong' ? 'Strong' : conf === 'moderate' ? 'Moderate' : 'Split';
+  return `<item label="${name}" value="${confValue}" max="100">${confLabel} (${confValue}%)</item>`;
 }).join('\n')}
 </smart-layout>
 
-**Legend:**
-- <labels><label variant="solid" color="#10B981">High/Strong Consensus</label> <label variant="solid" color="#F59E0B">Moderate Agreement</label> <label variant="solid" color="#DC2626">Split Opinion</label></labels>
+**Legend:** Bar length = AI consensus strength | 95% Unanimous → 85% Strong → 70% Moderate → 50% Split
 
 **Models with divergent views:** ${result.disagreementSummary?.split('.')[0] || 'Generally aligned across all 5 LLMs'}
 
@@ -1339,11 +1340,16 @@ Synthesizes all 5 evaluations into final scores and recommendation.
 
 **Interpretation: ${confidence?.toUpperCase()} CONFIDENCE**
 
-<smart-layout variant="solidBoxes" cellsize="15">
-<item label="Data Points" value="1,200+" color="#10B981">Dual scores across 100 metrics × 2 cities × 6 models</item>
-<item label="Sources Cited" value="500+" color="#3B82F6">Unique references gathered by AI models</item>
-<item label="Agreement Rate" value="${agreementPct}%" color="${agreementPct >= 85 ? '#10B981' : agreementPct >= 70 ? '#F59E0B' : '#DC2626'}">Metrics with strong LLM consensus</item>
+<smart-layout variant="semiCircle">
+<item label="Agreement Rate" value="${agreementPct}" max="100">${agreementPct}% of metrics with strong LLM consensus</item>
+<item label="Data Points" value="1200" max="1500">Dual scores across 100 metrics × 2 cities × 6 models</item>
 </smart-layout>
+
+| Metric | Value | Detail |
+|--------|-------|--------|
+| **Data Points Analyzed** | **1,200+** | Dual scores × 100 metrics × 2 cities × 6 models |
+| **Unique Sources Cited** | **500+** | References gathered across all AI models |
+| **Strong Agreement Rate** | **${agreementPct}%** | Metrics where 5 LLMs reached consensus |
 
 ${confidence === 'high' ? 'All 5 LLMs showed strong alignment on the vast majority of metrics, indicating reliable conclusions.' :
   confidence === 'medium' ? 'Most metrics showed good agreement, with some expected divergence on subjective measures.' :
@@ -2226,25 +2232,11 @@ ${winner}'s advantage comes primarily from enforcement reality, not written laws
 
 # 🎭 Reputation vs Data
 
-<smart-layout variant="solidBoxes">
-<item label="❌ MYTH" color="#DC2626">
-"${result.city1.country === 'United States' ? city1Name : city2Name} is always more free because America"
-</item>
-<item label="✅ REALITY" color="#10B981">
-${result.city1.country === 'United States' ?
-  (result.winner === 'city1' ? `${city1Name} does score higher, but by only ${Math.abs(result.scoreDifference)} points—not the landslide you'd expect.` : `${city2Name} actually beats ${city1Name} by ${Math.abs(result.scoreDifference)} points despite the American freedom narrative.`) :
-  (result.winner === 'city2' ? `${city2Name} does score higher, but by only ${Math.abs(result.scoreDifference)} points—not the landslide you'd expect.` : `${city1Name} actually beats ${city2Name} by ${Math.abs(result.scoreDifference)} points.`)}
-</item>
-</smart-layout>
-
-<smart-layout variant="solidBoxes">
-<item label="❌ MYTH" color="#DC2626">
-"Low taxes = more freedom"
-</item>
-<item label="✅ REALITY" color="#10B981">
-${getScore('city1', 'business_work') > getScore('city2', 'business_work') ? city1Name : city2Name} has better business freedom, but ${getScore('city1', 'personal_freedom') > getScore('city2', 'personal_freedom') ? city1Name : city2Name} has better personal freedom. Tax policy is just one factor.
-</item>
-</smart-layout>
+| ❌ MYTH | ✅ REALITY (Data-Backed) |
+|---------|--------------------------|
+| "${result.city1.country === 'United States' ? city1Name : city2Name} is always more free because America" | ${result.city1.country === 'United States' ? (result.winner === 'city1' ? `${city1Name} does score higher, but by only ${Math.abs(result.scoreDifference)} points—not the landslide you'd expect.` : `${city2Name} actually beats ${city1Name} by ${Math.abs(result.scoreDifference)} points despite the American freedom narrative.`) : (result.winner === 'city2' ? `${city2Name} does score higher, but by only ${Math.abs(result.scoreDifference)} points—not the landslide you'd expect.` : `${city1Name} actually beats ${city2Name} by ${Math.abs(result.scoreDifference)} points.`)} |
+| "Low taxes = more freedom" | ${getScore('city1', 'business_work') > getScore('city2', 'business_work') ? city1Name : city2Name} has better business freedom, but ${getScore('city1', 'personal_freedom') > getScore('city2', 'personal_freedom') ? city1Name : city2Name} has better personal freedom. Tax policy is just one factor. |
+| "Bigger city = less freedom" | City size has no consistent correlation. Freedom scores depend on local policy and enforcement, not population. |
 
 ---
 
@@ -2310,17 +2302,20 @@ prompt="person looking at bills and expenses, calculator, financial planning, pr
 
 **The "Freedom Tax" of choosing ${loser}:**
 
-<smart-layout variant="barStats">
-<item label="🚗 Transportation Costs" value="${getScore(loserCity, 'transportation') < 60 ? 85 : 25}" max="100" color="#F97316">
+<smart-layout variant="semiCircle">
+<item label="🚗 Transport Cost" value="${getScore(loserCity, 'transportation') < 60 ? 85 : 25}" max="100">
 ${transitCost}
 </item>
-<item label="💼 Business Compliance" value="${getScore(loserCity, 'business_work') < 60 ? 75 : 20}" max="100" color="#F97316">
+<item label="💼 Business Cost" value="${getScore(loserCity, 'business_work') < 60 ? 75 : 20}" max="100">
 ${businessCost}
 </item>
-<item label="🏠 Housing Restrictions" value="${getScore(loserCity, 'housing_property') < 60 ? 65 : 15}" max="100" color="#F97316">
+</smart-layout>
+
+<smart-layout variant="semiCircle">
+<item label="🏠 Housing Cost" value="${getScore(loserCity, 'housing_property') < 60 ? 65 : 15}" max="100">
 ${housingCost}
 </item>
-<item label="⚖️ Legal/Fine Risk" value="${getScore(loserCity, 'policing_legal') < 60 ? 55 : 10}" max="100" color="#F97316">
+<item label="⚖️ Legal Risk" value="${getScore(loserCity, 'policing_legal') < 60 ? 55 : 10}" max="100">
 ${policingCost}
 </item>
 </smart-layout>
@@ -2687,11 +2682,10 @@ Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
 ================================================================================
 
-Heat Maps: <smart-layout variant="solidBoxes" cellsize="15"> with label, value, and color attributes
-Gauges: <smart-layout variant="semiCircle">
-Bars: <smart-layout variant="barStats">
+Gauges/Dials: <smart-layout variant="semiCircle"> — radial gauges for headline metrics
+Bars/Charts: <smart-layout variant="barStats"> — horizontal progress bars for comparisons and heat maps
 Process Steps: <smart-layout variant="processSteps" numbered="true">
-Solid Boxes: <smart-layout variant="solidBoxes">
+Solid Boxes: <smart-layout variant="solidBoxes"> — use sparingly, colors may not render
 Outline Boxes: <smart-layout variant="outlineBoxes"> or variant="outlineBoxesWithTopCircle">
 Images with Text: <smart-layout variant="imagesText" imagePosition="left">
 Tables: <table colwidths="[30,35,35]">
@@ -2870,6 +2864,8 @@ export async function pollEnhancedUntilComplete(
         gammaUrl: status.url,
         pdfUrl: status.pdfUrl,
         pptxUrl: status.pptxUrl,
+        pdfStoragePath: status.pdfStoragePath,
+        pptxStoragePath: status.pptxStoragePath,
         error: status.error,
         progress: status.status === 'completed' ? 100 : estimatedProgress,
         statusMessage,
@@ -3004,6 +3000,8 @@ export async function generateAndSaveEnhancedReport(
         generationId: response.generationId,
         gammaUrl: response.url,
         pdfUrl: response.pdfUrl,
+        pdfStoragePath: response.pdfStoragePath,
+        pptxStoragePath: response.pptxStoragePath,
         progress: 98,
         statusMessage: 'Saving report to your library...',
       });
@@ -3087,6 +3085,8 @@ export async function generateAndSaveEnhancedReport(
           generationId: response.generationId,
           gammaUrl: response.url,
           pdfUrl: response.pdfUrl,
+          pdfStoragePath: response.pdfStoragePath,
+          pptxStoragePath: response.pptxStoragePath,
           progress: 100,
           statusMessage: 'Report saved to your library!',
         });

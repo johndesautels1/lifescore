@@ -19,6 +19,8 @@ interface WinnerHeroProps {
 }
 
 export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
+  const [showExplanation, setShowExplanation] = useState(false);
+
   const winner = result.winner === 'city1' ? result.city1 : result.city2;
   const loser = result.winner === 'city1' ? result.city2 : result.city1;
 
@@ -27,6 +29,33 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
   // Handle both standard (totalScore) and enhanced (totalConsensusScore) comparisons
   const getScore = (city: any) => city.totalScore ?? city.totalConsensusScore ?? 0;
   const confidence = (result.city1 as any).overallConfidence || (result as any).overallConsensusConfidence || 'medium';
+
+  // Generate explanation of why the winner won
+  const generateExplanation = () => {
+    if (isTie) {
+      return `Both ${result.city1.city} and ${result.city2.city} scored equally at ${Math.round(getScore(result.city1))} points. This is a rare outcome indicating both cities offer similar levels of freedom across our 100 metrics.`;
+    }
+
+    const categoryAdvantages = winner.categories.map((wCat, i) => {
+      const lCat = loser.categories[i];
+      return {
+        category: CATEGORIES.find(c => c.id === wCat.categoryId),
+        advantage: (wCat.averageScore ?? 0) - (lCat?.averageScore ?? 0)
+      };
+    }).filter(c => c.advantage > 0).sort((a, b) => b.advantage - a.advantage);
+
+    const loserAdvantages = loser.categories.map((lCat, i) => {
+      const wCat = winner.categories[i];
+      return {
+        category: CATEGORIES.find(c => c.id === lCat.categoryId),
+        advantage: (lCat.averageScore ?? 0) - (wCat?.averageScore ?? 0)
+      };
+    }).filter(c => c.advantage > 0).sort((a, b) => b.advantage - a.advantage);
+
+    const top3 = categoryAdvantages.slice(0, 3);
+
+    return { top3, loserAdvantages: loserAdvantages.slice(0, 2) };
+  };
 
   return (
     <div className={`winner-hero ${isTie ? 'tie' : ''}`} aria-live="polite" aria-atomic="true">
@@ -39,6 +68,13 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
           <p className="winner-difference">
             {result.scoreDifference} points more freedom than {loser.city}, {loser.country}
           </p>
+
+          <button
+            className="explain-winner-btn"
+            onClick={() => setShowExplanation(!showExplanation)}
+          >
+            {showExplanation ? '📖 Hide Explanation' : '💡 Explain This Winner'}
+          </button>
         </>
       ) : (
         <>
@@ -54,6 +90,50 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
           Data Confidence: {confidence.toUpperCase()}
         </span>
       </div>
+
+      {showExplanation && !isTie && (() => {
+        const data = generateExplanation();
+        if (typeof data === 'string') return <p className="winner-explanation-text">{data}</p>;
+        const { top3, loserAdvantages } = data;
+        return (
+          <div className="winner-explanation-panel">
+            <h4>Why {winner.city} Wins</h4>
+            <p>
+              <strong>{winner.city}</strong> scores {Math.round(getScore(winner))} vs {loser.city}'s {Math.round(getScore(loser))} — a <strong>{result.scoreDifference} point</strong> advantage.
+            </p>
+            {top3.length > 0 && (
+              <>
+                <p className="explanation-subhead">Where {winner.city} leads:</p>
+                <ul className="explanation-list">
+                  {top3.map((adv, i) => adv.category && (
+                    <li key={i}>
+                      <strong>{adv.category.icon} {adv.category.name}</strong> (+{Math.round(adv.advantage)} pts) — {adv.category.description.toLowerCase()}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {loserAdvantages.length > 0 && (
+              <>
+                <p className="explanation-subhead">Where {loser.city} has the edge:</p>
+                <ul className="explanation-list">
+                  {loserAdvantages.map((adv, i) => adv.category && (
+                    <li key={i}>
+                      <strong>{adv.category.icon} {adv.category.name}</strong> (+{Math.round(adv.advantage)} pts)
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <p className="explanation-bottom-line">
+              If you value overall freedom, <strong>{winner.city}</strong> is your better choice.
+              {loserAdvantages[0]?.category && (
+                <> However, if {loserAdvantages[0].category.name.toLowerCase()} matters most to you, {loser.city} is worth considering.</>
+              )}
+            </p>
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -340,16 +420,18 @@ interface ResultsProps {
   result: ComparisonResult;
   onSaved?: () => void;
   customWeights?: Record<string, number> | null;  // User's persona weights (Digital Nomad, etc.)
+  /** Bumped by App.tsx after auto-save so the button reflects the saved state */
+  savedKey?: number;
 }
 
-export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights }) => {
+export const Results: React.FC<ResultsProps> = ({ result, onSaved, customWeights, savedKey }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setIsSaved(isComparisonSaved(result.comparisonId));
-  }, [result.comparisonId]);
+  }, [result.comparisonId, savedKey]);
 
   // FIXED 2026-01-25: Added loading state for better UX feedback
   const handleSave = async () => {

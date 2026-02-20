@@ -317,7 +317,7 @@ Please provide your suggestions in the following format:
 This document was prepared for AI consultant review. All suggestions will be evaluated and implemented by the development team.
 
 **App:** LIFE SCORE™ (Legal Independence & Freedom Evaluation)
-**Developer:** John E. Desautels & Associates
+**Developer:** John E. Desautels II & Associates
 **Part of:** CLUES™ Platform (Comprehensive Location & Utility Evaluation System)
 
 ---

@@ -10,6 +10,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { useSimli } from '../hooks/useSimli';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './OliviaAvatar.css';
 
 interface OliviaAvatarProps {
@@ -110,6 +111,8 @@ export const OliviaAvatar: React.FC<OliviaAvatarProps> = ({
 
   return (
     <div className={`olivia-avatar ${className}`}>
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
       {/* Video Container */}
       <div className="avatar-video-container">
         {/* Simli Video Stream */}

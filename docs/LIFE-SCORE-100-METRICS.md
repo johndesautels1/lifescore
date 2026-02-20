@@ -1,7 +1,7 @@
 # LIFE SCORE™ - Complete 100 Metrics Reference
 
 **Legal Independence & Freedom Evaluation**  
-John E. Desautels & Associates © 2025
+John E. Desautels II & Associates © 2025
 
 ---
 
@@ -186,4 +186,4 @@ Each metric has `searchQueries` arrays for Claude API + Web Search verification:
 ---
 
 *Generated: January 13, 2026*
-*LIFE SCORE™ is a trademark of John E. Desautels & Associates*
+*LIFE SCORE™ is a trademark of John E. Desautels II & Associates*

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess, TIER_NAMES } from '../hooks/useTierAccess';
 import './Header.css';
@@ -13,9 +14,11 @@ interface HeaderProps {
   onUpgradeClick?: () => void;
   onCostDashboardClick?: () => void;
   onSettingsClick?: () => void;
+  /** Passed to NotificationBell for SPA navigation instead of full reload */
+  onNotificationNavigate?: (link: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardClick, onSettingsClick }) => {
+export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardClick, onSettingsClick, onNotificationNavigate }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { tier } = useTierAccess();
 
@@ -67,6 +70,9 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
                   <span>💰</span>
                 </button>
               )}
+
+              {/* Notification Bell */}
+              <NotificationBell onNavigate={onNotificationNavigate} />
 
               {/* Settings Button */}
               {onSettingsClick && (

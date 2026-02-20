@@ -6,7 +6,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import React, { useState, useCallback, useEffect, useReducer, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useReducer, useRef, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import ResetPasswordScreen from './components/ResetPasswordScreen';
@@ -32,6 +32,7 @@ const AboutClues = React.lazy(() => import('./components/AboutClues'));
 import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import HelpBubble from './components/HelpBubble';
+import MobileWarningModal from './components/MobileWarningModal';
 import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
@@ -48,9 +49,10 @@ import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
-import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
+import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveComparisonLocal, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
+import { useJobTracker } from './hooks/useJobTracker';
 import { resetOGMetaTags } from './hooks/useOGMeta';
 import { ALL_METRICS } from './shared/metrics';
 import {
@@ -256,6 +258,8 @@ const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { completeJobAndNotify } = useJobTracker();
+  const pendingComparisonJobRef = useRef<{ jobId: string; city1: string; city2: string } | null>(null);
   const [savedKey, setSavedKey] = useState(0);
 
   // PERF #1: Modal/UI state — single reducer instead of 8 useState
@@ -366,12 +370,48 @@ const AppContent: React.FC = () => {
         return;
       }
       setActiveTab('results');
+
+      // Auto-scroll to top so user sees results from the beginning
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Fire pending comparison notification if a job was created via "Notify Me"
+      const pending = pendingComparisonJobRef.current;
+      if (pending) {
+        const city1Name = pending.city1.split(',')[0].trim();
+        const city2Name = pending.city2.split(',')[0].trim();
+        completeJobAndNotify(
+          pending.jobId,
+          { city1: pending.city1, city2: pending.city2 },
+          `${city1Name} vs ${city2Name} Comparison Ready`,
+          `Your comparison of ${city1Name} vs ${city2Name} is ready to view.`,
+          `/?cityA=${encodeURIComponent(pending.city1)}&cityB=${encodeURIComponent(pending.city2)}`
+        );
+        pendingComparisonJobRef.current = null;
+      }
+
+      // === AUTO-SAVE on completion (prevents losing expensive reports) ===
+      if (standardJustCompleted && state.result) {
+        saveComparisonLocal(state.result)
+          .then(() => {
+            console.log('[App] Auto-saved standard comparison:', state.result!.comparisonId);
+            setSavedKey(prev => prev + 1);
+          })
+          .catch(err => console.warn('[App] Auto-save standard failed (non-fatal):', err));
+      }
+      if (enhancedJustCompleted && enhancedResult) {
+        saveEnhancedComparisonLocal(enhancedResult)
+          .then(() => {
+            console.log('[App] Auto-saved enhanced comparison:', enhancedResult!.comparisonId);
+            setSavedKey(prev => prev + 1);
+          })
+          .catch(err => console.warn('[App] Auto-save enhanced failed (non-fatal):', err));
+      }
     }
 
     // Update refs after handling transitions
     prevEnhancedStatusRef.current = enhancedStatus;
     prevStandardStatusRef.current = state.status;
-  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged]);
+  }, [enhancedStatus, state.status, hasCategoryFailures, failuresAcknowledged, completeJobAndNotify, state.result, enhancedResult]);
 
   // Reset failures acknowledgment when starting a new comparison
   useEffect(() => {
@@ -498,6 +538,7 @@ const AppContent: React.FC = () => {
 
     // FIX 2026-01-25: Switch to results tab after loading saved comparison
     setActiveTab('results');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loadResult]);
 
   const handleSaved = useCallback(() => {
@@ -512,6 +553,7 @@ const AppContent: React.FC = () => {
     dispatchEnhanced({ type: 'VIEW_JUDGE_REPORT', report });
     // Switch to the judges-report tab
     setActiveTab('judges-report');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleCompare = useCallback(async (city1: string, city2: string) => {
@@ -581,6 +623,46 @@ const AppContent: React.FC = () => {
     resetOGMetaTags();
   }, [reset]);
 
+  // Handle in-app navigation from notification bell clicks.
+  // Maps query-param links (e.g. "/?tab=visuals") to React state transitions
+  // so the user stays in the SPA instead of triggering a full page reload.
+  const handleNotificationNavigate = useCallback((link: string) => {
+    try {
+      const url = new URL(link, window.location.origin);
+      const tab = url.searchParams.get('tab');
+
+      // Map notification link ?tab= values to internal TabId values
+      const tabMap: Record<string, TabId> = {
+        visuals: 'visuals',
+        judge: 'judges-report',
+        'judges-report': 'judges-report',
+        saved: 'saved',
+        compare: 'compare',
+        results: 'results',
+        olivia: 'olivia',
+        about: 'about',
+      };
+
+      if (tab && tabMap[tab]) {
+        setActiveTab(tabMap[tab]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Comparison deep-link: /?cityA=...&cityB=...  → go to results tab
+      if (url.searchParams.get('cityA') && url.searchParams.get('cityB')) {
+        setActiveTab('results');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    } catch {
+      // Malformed link — fall through to full reload
+    }
+
+    // Fallback for unrecognised links
+    window.location.href = link;
+  }, []);
+
   // Show loading spinner while checking auth
   if (authLoading) {
     return (
@@ -614,6 +696,7 @@ const AppContent: React.FC = () => {
         onUpgradeClick={() => dispatchModal({ type: 'OPEN_PRICING' })}
         onCostDashboardClick={() => dispatchModal({ type: 'OPEN_COST_DASHBOARD' })}
         onSettingsClick={() => dispatchModal({ type: 'OPEN_SETTINGS' })}
+        onNotificationNavigate={handleNotificationNavigate}
       />
 
       {/* Tab Navigation */}
@@ -665,6 +748,9 @@ const AppContent: React.FC = () => {
                 onWeightsChange={setCustomWeights}
                 onLawLivedChange={setLawLivedRatio}
                 onConservativeModeChange={setConservativeMode}
+                onJobCreated={(jobId, city1, city2) => {
+                  pendingComparisonJobRef.current = { jobId, city1, city2 };
+                }}
               />
 
               {/* Standard Loading State */}
@@ -1055,6 +1141,7 @@ const AppContent: React.FC = () => {
                     dealbreakers={dealbreakers}
                     customWeights={customWeights}
                     onSaved={handleSaved}
+                    savedKey={savedKey}
                   />
                   
                   {/* ADD MORE MODELS SECTION - Phase 3 Incremental LLM Feature */}
@@ -1116,7 +1203,7 @@ const AppContent: React.FC = () => {
               {/* Standard Results */}
               {!enhancedMode && state.status === 'success' && state.result && (
                 <>
-                  <Results result={state.result} onSaved={handleSaved} customWeights={customWeights} />
+                  <Results result={state.result} onSaved={handleSaved} customWeights={customWeights} savedKey={savedKey} />
                   <div className="new-comparison">
                     <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
                       ← New Comparison
@@ -1365,6 +1452,9 @@ const AppContent: React.FC = () => {
 
       {/* Cookie Consent Banner */}
       <CookieConsent />
+
+      {/* Mobile Warning Modal — one-time warning for mobile visitors */}
+      <MobileWarningModal />
 
       {/* Emilia Help Bubble - Shows on all pages */}
       <HelpBubble />

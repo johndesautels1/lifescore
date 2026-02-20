@@ -82,15 +82,19 @@ The prompt is NOT stored in the database. It is constructed in-memory from the `
 ## Visual Specifications
 
 The prompt includes Gamma-specific layout directives:
-- **semiCircle** - Gauge charts for category scores
-- **barStats** - Horizontal bar comparisons
+- **semiCircle** - Radial gauge dials for headline metrics, cost severity, consensus stats
+- **barStats** - Horizontal progress bars for LLM agreement heat maps and comparisons
 - **processSteps** - Sequential analysis flows
-- **textLeftMediaRight** - Split layouts with data + visuals
+- **tables** - Structured data (metric scores, myth vs reality, cost comparisons)
+- **outlineBoxes** - Content boxes for decision drivers, opportunities
+
+### Color Stripping Fix (2026-02-17)
+Previous `solidBoxes` heat maps used `color="#HEX"` attributes for green/orange/red indicators. Gamma's AI rendering stripped these inline colors, producing colorless cards. Fix: replaced with `barStats` where bar LENGTH conveys the data (95%/85%/70%/50%), and `semiCircle` radial dials for cost severity. Tables used for myth vs reality (always render correctly).
 
 ### Color System
-- **Winner:** Gold (#D4AF37)
-- **Loser:** Sapphire Blue (#0F4C81)
-- **Legal Scores:** Purple (#8B5CF6)
+- **Winner:** Gold (#FFD700) / Green (#10B981)
+- **Loser:** Blue (#1E90FF)
+- **Legal Scores:** Purple (#6B46C1)
 - **Enforcement Scores:** Teal (#14B8A6)
 
 ---

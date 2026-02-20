@@ -15,14 +15,13 @@ import { useGrokVideo } from '../hooks/useGrokVideo';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { saveCourtOrder } from '../services/savedComparisons';
-import { toastSuccess, toastError } from '../utils/toast';
+import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import { supabase } from '../lib/supabase';
 import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
-import FreedomCategoryTabs from './FreedomCategoryTabs';
-import FreedomMetricsList from './FreedomMetricsList';
-import FreedomHeroFooter from './FreedomHeroFooter';
-import type { CategoryId, FreedomEducationData, CategoryFreedomData } from '../types/freedomEducation';
-import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '../utils/freedomEducationUtils';
+import VideoPhoneWarning from './VideoPhoneWarning';
+import { NotifyMeModal } from './NotifyMeModal';
+import { useJobTracker } from '../hooks/useJobTracker';
+import type { NotifyChannel } from '../types/database';
 import './CourtOrderVideo.css';
 
 // ============================================================================
@@ -41,9 +40,7 @@ interface InVideoOverride {
 interface CourtOrderVideoProps {
   comparisonId: string;
   winnerCity: string;
-  loserCity?: string;
   winnerScore: number;
-  freedomEducation?: FreedomEducationData;
 }
 
 // ============================================================================
@@ -53,15 +50,9 @@ interface CourtOrderVideoProps {
 const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   comparisonId,
   winnerCity: propWinnerCity,
-  loserCity: propLoserCity = 'City B',
   winnerScore,
-  freedomEducation,
 }) => {
-  // CRITICAL: Use freedomEducation's own city labels if available.
-  // The props may come from the overall verdict, but freedomEducation metrics
-  // are validated against actual per-metric scores on the server side.
-  const winnerCity = freedomEducation?.winnerCity || propWinnerCity;
-  const loserCity = freedomEducation?.loserCity || propLoserCity;
+  const winnerCity = propWinnerCity;
   const { user } = useAuth();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const {
@@ -93,6 +84,9 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3;
 
+  // Notification system
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const { createJob } = useJobTracker();
 
   // ══════════════════════════════════════════════════════════════════════════
   // INVIDEO OVERRIDE STATE
@@ -255,33 +249,18 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     }
   };
 
-  // Freedom Education tab state
-  const [activeCategory, setActiveCategory] = useState<CategoryId>('personal_freedom');
-
-  // Initialize active category to first non-empty category when freedomEducation changes
-  useEffect(() => {
-    if (freedomEducation?.categories) {
-      const firstCategory = getFirstNonEmptyCategory(freedomEducation.categories);
-      if (firstCategory) {
-        setActiveCategory(firstCategory);
-      }
-    }
-  }, [freedomEducation]);
-
-  // Get current category data
-  const currentCategoryData: CategoryFreedomData | null = freedomEducation?.categories
-    ? getCategoryData(freedomEducation.categories, activeCategory)
-    : null;
-
-  // Check if freedom education data is valid
-  const hasFreedomData = isValidFreedomData(freedomEducation);
-
-  // Handle video generation
-  const handleGenerateVideo = async () => {
+  // Handle video generation — show notify modal first
+  const handleGenerateVideo = () => {
     if (!user?.id) {
       console.warn('[CourtOrderVideo] No user ID available');
       return;
     }
+    setShowNotifyModal(true);
+  };
+
+  // Actually generate the video (after user chooses wait/notify)
+  const doGenerateVideo = async () => {
+    if (!user?.id) return;
 
     // ADMIN BYPASS: Skip usage checks for admin users
     if (!isAdmin) {
@@ -304,6 +283,22 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       comparisonId,
       winnerCity,
     });
+  };
+
+  const handleVideoWaitHere = () => {
+    doGenerateVideo();
+  };
+
+  const handleVideoNotifyMe = async (channels: NotifyChannel[]) => {
+    const jobId = await createJob({
+      type: 'court_order',
+      payload: { comparisonId, winnerCity },
+      notifyVia: channels,
+    });
+    if (jobId) {
+      toastInfo(`We'll notify you when your Court Order video is ready.`);
+    }
+    doGenerateVideo();
   };
 
   // Handle play/pause
@@ -579,53 +574,22 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   };
 
   return (
+    <>
     <FeatureGate feature="grokVideos" blurContent={true}>
       <div className="court-order-wrapper">
         <div className="court-order-video">
         <div className="court-order-header">
           <h4 className="court-order-title">
-            <span className="gavel-icon">⚖️</span>
-            COURT ORDER
+            <span className="gavel-icon">🎥</span>
+            COURT ORDER VIDEO
           </h4>
           <p className="court-order-subtitle">
-            Your future in {winnerCity}
+            Your cinematic freedom journey
           </p>
         </div>
 
-        {/* ════════════════════════════════════════════════════════════════
-            FREEDOM EDUCATION SECTION - 6-Tab Category Display
-        ════════════════════════════════════════════════════════════════ */}
-        {hasFreedomData && freedomEducation && (
-          <div className="freedom-education-section">
-            {/* Category Tabs */}
-            <FreedomCategoryTabs
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              categories={freedomEducation.categories}
-            />
-
-            {/* Winning Metrics List */}
-            {currentCategoryData && (
-              <>
-                <FreedomMetricsList
-                  metrics={currentCategoryData.winningMetrics}
-                  winnerCity={winnerCity}
-                  loserCity={loserCity}
-                  categoryName={currentCategoryData.categoryName}
-                />
-
-                {/* Hero Statement Footer */}
-                {currentCategoryData.heroStatement && (
-                  <FreedomHeroFooter
-                    heroStatement={currentCategoryData.heroStatement}
-                    winnerCity={winnerCity}
-                    categoryName={currentCategoryData.categoryName}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        )}
+        {/* Phone call audio warning (mobile only) */}
+        <VideoPhoneWarning />
 
         {/* LCD Screen Container */}
         <div className="lcd-screen">
@@ -899,6 +863,17 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         </div>
       </div>
     </FeatureGate>
+
+    {/* Notify Me Modal */}
+    <NotifyMeModal
+      isOpen={showNotifyModal}
+      onClose={() => setShowNotifyModal(false)}
+      onWaitHere={handleVideoWaitHere}
+      onNotifyMe={handleVideoNotifyMe}
+      taskLabel="Court Order Video"
+      estimatedSeconds={90}
+    />
+    </>
   );
 };
 

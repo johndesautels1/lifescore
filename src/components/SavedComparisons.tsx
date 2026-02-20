@@ -71,6 +71,9 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   // FIX 2026-02-08: State for embedded Gamma report viewer
   const [embeddedGammaReport, setEmbeddedGammaReport] = useState<SavedGammaReport | null>(null);
 
+  // Gamma iframe error detection — tracks if embedded Gamma doc failed to load
+  const [gammaIframeError, setGammaIframeError] = useState(false);
+
   // Load comparisons on mount — show cached data immediately, sync in background
   useEffect(() => {
     loadComparisons();
@@ -637,6 +640,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           aria-label={`View ${report.city1} vs ${report.city2} report`}
                           onClick={() => {
                             console.log('[SavedComparisons] Opening embedded Gamma report:', report.gammaUrl);
+                            setGammaIframeError(false); // Reset error state for new report
                             setEmbeddedGammaReport(report);
                           }}
                         >
@@ -796,7 +800,7 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                 </a>
                 <button
                   className="btn btn-close"
-                  onClick={() => setEmbeddedGammaReport(null)}
+                  onClick={() => { setEmbeddedGammaReport(null); setGammaIframeError(false); }}
                   title="Close"
                 >
                   ✕
@@ -804,12 +808,33 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
               </div>
             </div>
             <div className="gamma-embed-content">
-              <iframe
-                src={embeddedGammaReport.gammaUrl.replace('/docs/', '/embed/')}
-                className="gamma-embed-frame"
-                title={`LIFE SCORE Report: ${embeddedGammaReport.city1} vs ${embeddedGammaReport.city2}`}
-                allowFullScreen
-              />
+              {gammaIframeError ? (
+                <div className="gamma-embed-error" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', padding: '2rem', textAlign: 'center', color: '#d4af37' }}>
+                  <p>This report may no longer be available on Gamma's servers.</p>
+                  <p>Try your saved PDF/PPTX exports instead.</p>
+                  <button className="btn btn-secondary" onClick={() => { setEmbeddedGammaReport(null); setGammaIframeError(false); }}>
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <iframe
+                  src={embeddedGammaReport.gammaUrl.replace('/docs/', '/embed/')}
+                  className="gamma-embed-frame"
+                  title={`LIFE SCORE Report: ${embeddedGammaReport.city1} vs ${embeddedGammaReport.city2}`}
+                  allowFullScreen
+                  onError={() => setGammaIframeError(true)}
+                  onLoad={(e) => {
+                    try {
+                      const iframe = e.target as HTMLIFrameElement;
+                      if (!iframe.contentWindow) {
+                        setGammaIframeError(true);
+                      }
+                    } catch {
+                      // Cross-origin — iframe loaded something, expected
+                    }
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>

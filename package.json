@@ -36,7 +36,7 @@
     "vite-plugin-pwa": "^1.2.0"
   },
   "description": "LIFE SCORE - Legal Independence & Freedom Evaluation. Compare cities across 100 freedom metrics.",
-  "author": "John E. Desautels & Associates",
+  "author": "John E. Desautels II & Associates",
   "license": "UNLICENSED",
   "overrides": {
     "path-to-regexp": "6.3.0",

@@ -83,7 +83,7 @@ Includes provisions for:
 **Company:** Clues Intelligence LTD
 **Accepted:** Via Terms of Service acceptance
 **Date:** January 23, 2026
-**Reviewed by:** John E. Desautels
+**Reviewed by:** John E. Desautels II
 
 ---
 

@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.4
-**Last Updated:** February 15, 2026
+**Version:** 3.5
+**Last Updated:** February 17, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -264,6 +264,26 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Google/GitHub SSO failure | Clear cookies; try incognito mode |
 | Login feels slow/unresponsive | Fixed 2026-02-14 — removed backdrop-filter blur that caused 247ms input delay |
 
+### 5.1.1 Password Reset Issues (Added 2026-02-17)
+
+| Issue | Solution |
+|-------|----------|
+| "I didn't get the reset email" | Check spam/junk folder for email from **noreply@mail.app.supabase.io**. Wait 1-2 minutes. Try requesting again. |
+| "The reset link doesn't work" | Links expire after **1 hour**. Request a new one from the login screen. |
+| "I clicked the link but don't see the password form" | Clear browser cache, try in incognito. The app must detect the `#access_token` in the URL hash. |
+| "My password won't update" | New password must be at least 6 characters and both fields must match. |
+| "I reset my password but my data is gone" | **Password reset NEVER deletes data.** All comparisons, reports, and settings are untouched. If data appears missing, try signing out and back in with the new password. |
+| "I get a success message but the email isn't mine" | For security, the app always shows a success message — even if the email doesn't exist in our system. This prevents email enumeration attacks. |
+| User says they never requested a reset | Advise them to change their password immediately via Settings. The reset link expires in 1 hour and cannot be used after the password is changed. |
+
+**Password Reset Flow (for support reference):**
+1. User clicks "Forgot your password?" on login screen
+2. Enters email → clicks "Send Reset Link"
+3. Supabase sends email with one-time link (1hr expiry)
+4. User clicks link → app shows "Set New Password" screen
+5. User enters new password (min 6 chars) + confirm → clicks "Update Password"
+6. Password updated → user redirected to main app (fully authenticated)
+
 ### 5.2 Comparison Failures
 
 | Error Message | Cause | Solution |
@@ -301,6 +321,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Download works but playback doesn't | Try clicking play again; blob URLs load asynchronously |
 | Video disappeared after tab switch | Fixed — videos now auto-restore from Supabase on tab re-entry |
 | Court Order video broken/expired | Fixed — Court Order videos no longer use expiring provider CDN URLs |
+| Audio played during phone call | Expected — a phone call audio warning (added 2026-02-16) now appears on all video displays to alert users |
 | HeyGen presenter video expired | Fixed — HeyGen URLs now validated before display; auto re-fetched if expired |
 | Browser crashed with quota error | Fixed — localStorage quota overflow is now caught gracefully |
 | Storyboard generation fails with 422 | Fixed — storyboard QA and render validation alignment corrected |
@@ -329,13 +350,24 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Report not generating | Ensure comparison completed first |
 | "Generation ID missing" error | Fixed in Session 8 — the system now uses fallback ID from status response |
 | PDF download fails | Try PPTX format instead; clear cache |
+| PDF/PPTX download link broken (old report) | Fixed (2026-02-17) — Export URLs from Gamma's CDN expire after hours/days. New reports now automatically save PDF/PPTX to permanent storage. Old reports with expired links need to be regenerated. |
+| Report embed shows blank/error page | Fixed (2026-02-17) — Gamma may delete hosted documents over time. The system now detects iframe load failures and shows a helpful fallback message instead of a broken page. |
 | Report shows wrong data | Regenerate from fresh comparison |
+| Report links not clickable | Fixed (2026-02-16) — Gamma report URLs in VisualsTab now have proper CSS pointer-events and z-index |
 
 **Note (Updated 2026-02-05):** The "Generation ID missing" error has been resolved. Gamma reports and Judge reports are now also saved to Supabase (cloud backup) and visible in the Visual Reports / Saved tab.
 
 **Note (Updated 2026-02-14):** Two Gamma report issues fixed:
 - **Persistence fix:** Reports previously failed to save to the database due to a foreign key constraint on `comparison_id`. The save was fire-and-forget so errors were silently swallowed. Now fixed with proper error handling.
 - **Trophy placement fix:** The 🏆 trophy emoji in the Executive Summary was incorrectly placed next to the losing city instead of the winner. The Gamma AI prompt now explicitly marks which city is the winner with clear trophy placement rules.
+
+**Note (Updated 2026-02-17):** Gamma export URL expiration fix:
+- **PDF/PPTX exports** are now automatically downloaded from Gamma's CDN and stored permanently in Supabase Storage when a report completes. Download links never expire.
+- **Iframe error detection** added to all 4 Gamma embed locations. If a hosted Gamma document becomes unavailable, users see a clear message instead of a broken page.
+- **Existing reports** with expired export URLs will show broken download links. Advise users to regenerate the report.
+
+**Response Template (Expired Gamma Export):**
+> "Your report's download link has expired because Gamma's CDN URLs are temporary. New reports generated after February 17, 2026 will have permanent download links. To fix this, please regenerate your report from the Visuals tab — your comparison data is still saved."
 
 ### 5.6 Judge Page Issues (Added 2026-02-14)
 
@@ -347,6 +379,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Judge dropdown selector feels slow | Fixed — response time reduced from 354ms to ~50ms |
 | Judge report missing after cache clear | Fixed — system falls back to Supabase when localStorage is empty |
 | GoToMyNewCity video not appearing | Only shows when a judge report is loaded; check Verdict panel |
+| Judge tab showing stale data after switching comparisons | Fixed (2026-02-16) — Judge tab now resets state when switching between different comparisons |
 
 ### 5.7 Cost Dashboard Issues (Added 2026-02-14)
 
@@ -362,6 +395,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 |-------|----------|
 | Saved report city names unreadable | Fixed — proper contrast applied in dark mode |
 | Saved report dates hard to read | Fixed — crisp white text now used in dark mode |
+| "VS" text invisible between city names | Fixed (2026-02-16) — VS text now visible in dark mode across AdvancedVisuals, ContrastDisplays, JudgeTab, JudgeVideo |
 | Other dark mode text issues | Report specific elements to support for investigation |
 
 ### 5.9 Mobile Display Issues (Added 2026-02-15)
@@ -377,9 +411,23 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Gamma report buttons overflowing | Fixed — buttons wrap to multiple rows on mobile |
 | Judge page elements too large | Fixed — doormat, retry button, and Sovereign badge reduced for mobile |
 | CONNECTED button off-screen in Settings | Fixed — account status wraps properly on narrow screens |
+| User confused by mobile layout issues | A mobile warning modal (added 2026-02-16) now informs small-screen visitors that the app is optimized for desktop/tablet |
 
 **Response template:**
-"Thank you for reporting the mobile display issue. We deployed fixes for 9 mobile layout problems on February 15, 2026. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
+"Thank you for reporting the mobile display issue. We deployed fixes for 9 mobile layout problems on February 15, 2026, and added a mobile warning modal on February 16, 2026 to set expectations for phone users. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
+
+### 5.10 Notification Issues (Added 2026-02-16)
+
+| Issue | Solution |
+|-------|----------|
+| Bell icon not showing | Ensure user is logged in; bell appears in the header for authenticated users |
+| No notification after task completes | Task must be started via "Notify Me & Go" option in the modal; "Wait Here" doesn't create notifications |
+| Email notification not received | Check spam/junk for email from **alerts@lifescore.app**; email is only sent if user opted in |
+| Unread count not updating | Notifications poll every 30 seconds; try refreshing the page |
+| Old notifications still showing | Notifications persist in the database; this is by design for history |
+
+**Response template:**
+"LifeScore now includes a notification system (added February 16, 2026). When you start a long-running task like a comparison or video generation, a modal asks if you'd like to 'Wait Here' or 'Notify Me & Go.' If you choose Notify Me, you'll receive an in-app notification (bell icon in the header) and optionally an email when the task completes. If you're not seeing notifications, please make sure you selected 'Notify Me & Go' when starting the task."
 
 ---
 
@@ -543,6 +591,12 @@ A glass-morphic card in the results view explains the 5-stage scoring pipeline:
 
 Users can click "How is this scored?" to see this breakdown.
 
+### 8.6a "Explain the Winner" Toggle (Added 2026-02-16)
+
+A toggle in the standard Results view that shows an AI-generated narrative explaining why the winning city scored higher. Available in Standard Mode (not just Enhanced). Covers key categories, driving metrics, and strengths/weaknesses of each city.
+
+**Common support issue:** If users ask "Why did X win?" — direct them to the "Explain the Winner" toggle below the score cards.
+
 ### 8.7 GoToMyNewCity Video (Added 2026-02-14)
 
 A personalized multi-scene cinematic relocation video for the winning city, displayed at the bottom of the Judge Verdict panel:
@@ -629,6 +683,25 @@ Emilia is the in-app help widget (separate from Olivia):
 | Emilia not appearing | Check if widget blocked by ad blocker |
 | Voice not playing | Check browser audio permissions |
 | Wrong answers | Emilia is for app help, redirect to Olivia for comparison questions |
+
+### 8.12 Notification System (Added 2026-02-16)
+
+In-app notification bell with optional email alerts for long-running tasks:
+
+**How it works:**
+1. User starts a task (comparison, Judge verdict, video, Gamma report)
+2. A modal offers "Wait Here" or "Notify Me & Go"
+3. If user selects "Notify Me & Go," they can navigate freely
+4. On task completion, a notification appears on the bell icon in the header
+5. If opted in, an email is also sent from alerts@lifescore.app via Resend
+
+**Architecture:**
+- `jobs` table tracks task status (pending → processing → completed/failed)
+- `notifications` table stores in-app and email notification records
+- Bell icon polls for new notifications every 30 seconds
+- Email sent via Resend API (fire-and-forget, non-blocking)
+
+**Integrated into:** CitySelector (Compare), JudgeTab (Judge Verdict), VisualsTab (Gamma), CourtOrderVideo, GoToMyNewCity (Freedom Tour), Grok video generation
 
 ---
 
@@ -914,6 +987,8 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Gamma trophy 🏆 now placed on winner not loser (§5.5), (2) Gamma persistence — foreign key fix (§5.5), (3) backdrop-filter blur removed from 8 CSS files for INP, (4) Login input 247ms INP delay fixed (§5.1), (5) "Watch Presenter" → "Listen to Presenter" rename. |
 | 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page update: collapsible panels (§8.3), GoToMyNewCity video (§8.7), auto-restore videos on tab switch, missing 6 category sections fix, Judge dropdown INP fix. Video URL expiration: HEAD request validation for all providers, Court Order URL fix, HeyGen URL fix, localStorage quota protection (§5.4). Cost Dashboard $0.00 fix (§8.10). Cristiano video CTA + poster (§8.4). AUDIO badge + voice wave (§8.9). Storyboard progress bar. Dark mode saved reports fix. Judge report Supabase fallback. New customer inquiries (§4.5-4.9). New FAQs (§11). New glossary terms (§12). |
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | New §5.9 Mobile Display Issues: 9 mobile vertical overflow fixes documented with response template. Affected areas: Results score cards, category badges, About services table, How It Works modules, Olivia buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. |
+| 3.5 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system (§5.10, §8.12) with troubleshooting and architecture. "Explain the Winner" toggle (§8.6a). Judge stale state fix (§5.6). VS text dark mode fix (§5.8). Gamma links fix (§5.5). Phone call audio warning (§5.4). Mobile warning modal (§5.9). Mobile +/- buttons and LLM badges fix. Password reset and login credential fixes. Admin signup notification. |
+| 3.6 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§5.5): PDF/PPTX exports now persisted to permanent Supabase Storage. Iframe error detection added to all 4 embed locations. New troubleshooting entries and response template for expired export URLs. |
 
 ---
 

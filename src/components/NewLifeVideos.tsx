@@ -15,6 +15,7 @@ import { useGrokVideo } from '../hooks/useGrokVideo';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './NewLifeVideos.css';
 
 // ============================================================================
@@ -324,6 +325,9 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
             See the contrast between freedom and imprisonment
           </p>
         </div>
+
+        {/* Phone call audio warning (mobile only) */}
+        <VideoPhoneWarning />
 
         {/* Video Display Area */}
         <div className="video-comparison-container">

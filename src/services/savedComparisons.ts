@@ -75,9 +75,11 @@ export interface SavedGammaReport {
   comparisonId: string;          // Links to the comparison this report is for
   city1: string;
   city2: string;
-  gammaUrl: string;              // URL to the Gamma presentation
-  pdfUrl?: string;               // Optional PDF download URL
-  pptxUrl?: string;              // Optional PPTX download URL
+  gammaUrl: string;              // URL to the Gamma presentation (hosted on gamma.app)
+  pdfUrl?: string;               // PDF download URL (permanent Supabase Storage URL if persisted)
+  pptxUrl?: string;              // PPTX download URL (permanent Supabase Storage URL if persisted)
+  pdfStoragePath?: string;       // Supabase Storage path for persisted PDF (never expires)
+  pptxStoragePath?: string;      // Supabase Storage path for persisted PPTX (never expires)
   generationId: string;          // Gamma's generation ID
   savedAt: string;
   nickname?: string;
@@ -1019,6 +1021,8 @@ export async function syncGammaReportsFromSupabase(): Promise<SavedGammaReport[]
         gammaUrl: record.gamma_url,
         pdfUrl: record.pdf_url || undefined,
         pptxUrl: record.pptx_url || undefined,
+        pdfStoragePath: record.pdf_storage_path || undefined,
+        pptxStoragePath: record.pptx_storage_path || undefined,
         generationId: record.gamma_generation_id,
         savedAt: record.created_at,
       };
@@ -1106,7 +1110,9 @@ export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>
             report.pptxUrl,
             undefined,      // nickname
             report.city1,   // FIX: Include city names for cross-device sync
-            report.city2    // FIX: Include city names for cross-device sync
+            report.city2,   // FIX: Include city names for cross-device sync
+            report.pdfStoragePath,   // Permanent Supabase Storage path for PDF
+            report.pptxStoragePath   // Permanent Supabase Storage path for PPTX
           ).then(({ data, error }) => {
             if (error) {
               console.error('[savedComparisons] Gamma DB save failed:', error);

@@ -75,11 +75,10 @@ Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
 ================================================================================
 
-Heat Maps: <smart-layout variant="circleStats"> with label and color attributes
-Gauges: <smart-layout variant="semiCircle"> or variant="circleStats">
-Bars: <smart-layout variant="barStats">
+Gauges/Dials: <smart-layout variant="semiCircle"> — radial gauges for headline metrics and cost severity
+Bars/Charts: <smart-layout variant="barStats"> — horizontal progress bars for heat maps (bar length = confidence)
 Process Steps: <smart-layout variant="processSteps" numbered="true">
-Solid Boxes: <smart-layout variant="solidBoxes">
+Solid Boxes: <smart-layout variant="solidBoxes"> — use sparingly, colors may not render
 Outline Boxes: <smart-layout variant="outlineBoxes"> or variant="outlineBoxesWithTopCircle">
 Images with Text: <smart-layout variant="imagesText" imagePosition="left">
 Tables: <table colwidths="[30,35,35]">

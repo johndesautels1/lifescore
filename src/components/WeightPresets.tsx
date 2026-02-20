@@ -507,7 +507,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
           </div>
 
           {/* NEW: Law vs Lived Reality Slider */}
-          <div className="law-lived-section">
+          <div className={`law-lived-section${isLawLivedCustom ? ' active' : ''}`}>
             <div className="section-header">
               <span className="section-title">Law vs Lived Reality</span>
               {isLawLivedCustom && (
@@ -551,7 +551,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
             </div>
 
             {/* Conservative Mode Toggle */}
-            <div className="conservative-mode">
+            <div className={`conservative-mode${conservativeMode ? ' active' : ''}`}>
               <label className="toggle-label">
                 <input
                   type="checkbox"

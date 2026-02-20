@@ -3,10 +3,19 @@
  * Vercel Serverless Function for generating visual reports
  *
  * POST - Create new generation from template
- * GET  - Check generation status
+ * GET  - Check generation status (+ persist exports to Supabase Storage)
+ *
+ * When a generation completes with PDF/PPTX export URLs, this endpoint
+ * immediately downloads and persists them to Supabase Storage. Export URLs
+ * from Gamma's CDN expire after hours/days — permanent storage URLs don't.
+ * This follows the same pattern as persistVideo.ts for judge/court-order videos.
+ *
+ * Clues Intelligence LTD
+ * © 2025-2026 All Rights Reserved
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
@@ -17,6 +26,8 @@ import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 const GAMMA_API_BASE = 'https://public-api.gamma.app/v1.0';
 const GAMMA_TIMEOUT_MS = 60000;  // 60 seconds for API calls
+const PERSIST_TIMEOUT_MS = 30000; // 30 seconds for download + upload
+const STORAGE_BUCKET = 'gamma-exports'; // Dedicated public bucket for PDF/PPTX exports
 
 // ============================================================================
 // TYPES
@@ -58,6 +69,11 @@ interface GammaStatusResponse {
   error?: string;
 }
 
+interface PersistedExport {
+  publicUrl: string;
+  storagePath: string;
+}
+
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -82,6 +98,102 @@ function getTemplateId(): string {
     throw new Error('GAMMA_TEMPLATE_ID not configured');
   }
   return templateId;
+}
+
+/**
+ * Get Supabase admin client for server-side Storage uploads
+ */
+function getSupabaseAdmin() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    console.warn('[GAMMA] Supabase not configured for export persistence');
+    return null;
+  }
+
+  return createClient(url, serviceKey);
+}
+
+// ============================================================================
+// EXPORT PERSISTENCE (Industry best practice: materialize ephemeral CDN URLs)
+// ============================================================================
+
+/**
+ * Download a Gamma export (PDF/PPTX) from its CDN URL and upload to
+ * permanent Supabase Storage. Returns the permanent public URL and path.
+ *
+ * Same pattern as api/shared/persistVideo.ts — download immediately before
+ * the CDN URL expires, upload to Supabase Storage for permanent access.
+ */
+async function persistGammaExport(
+  exportUrl: string,
+  generationId: string,
+  format: 'pdf' | 'pptx',
+  supabaseAdmin: ReturnType<typeof createClient>
+): Promise<PersistedExport | null> {
+  const storagePath = `${generationId}.${format}`;
+  const contentType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+  try {
+    // Step 1: Download from Gamma CDN
+    console.log(`[GAMMA] Persisting ${format.toUpperCase()} export:`, exportUrl.substring(0, 80) + '...');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PERSIST_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(exportUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+    } catch (err) {
+      clearTimeout(timeout);
+      const msg = err instanceof Error ? err.message : 'Download failed';
+      console.error(`[GAMMA] ${format.toUpperCase()} download failed:`, msg);
+      return null;
+    }
+
+    if (!response.ok) {
+      console.error(`[GAMMA] ${format.toUpperCase()} download HTTP error:`, response.status);
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    console.log(`[GAMMA] Downloaded ${format.toUpperCase()}:`, buffer.length, 'bytes');
+
+    if (buffer.length < 1000) {
+      console.error(`[GAMMA] ${format.toUpperCase()} content too small — likely expired URL`);
+      return null;
+    }
+
+    // Step 2: Upload to Supabase Storage
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .upload(storagePath, buffer, {
+        contentType,
+        upsert: true, // Idempotent — safe to call on repeated polls
+        cacheControl: '31536000', // 1 year cache (content is immutable per generationId)
+      });
+
+    if (uploadError) {
+      console.error(`[GAMMA] ${format.toUpperCase()} upload error:`, uploadError.message);
+      return null;
+    }
+
+    // Step 3: Get permanent public URL
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(storagePath);
+
+    console.log(`[GAMMA] ${format.toUpperCase()} persisted:`, publicUrlData.publicUrl);
+    return { publicUrl: publicUrlData.publicUrl, storagePath };
+
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`[GAMMA] ${format.toUpperCase()} persistence error:`, msg);
+    return null;
+  }
 }
 
 // ============================================================================
@@ -270,12 +382,55 @@ export default async function handler(
         console.error('[GAMMA] WARNING: Completed but no URL found! Full response:', JSON.stringify(status, null, 2));
       }
 
+      // Resolve export URLs
+      const pdfUrl = exportUrl?.includes('.pdf') ? exportUrl : status.pdfUrl;
+      const pptxUrl = exportUrl?.includes('.pptx') ? exportUrl : status.pptxUrl;
+
+      // ====================================================================
+      // PERSIST EXPORTS TO SUPABASE STORAGE (on completion)
+      // Gamma CDN URLs expire — download immediately and store permanently.
+      // Uses upsert:true so repeated polls are idempotent (no duplicate uploads).
+      // If persistence fails, we still return the original CDN URLs as fallback.
+      // ====================================================================
+      let pdfStoragePath: string | undefined;
+      let pdfPermanentUrl: string | undefined;
+      let pptxStoragePath: string | undefined;
+      let pptxPermanentUrl: string | undefined;
+
+      if (status.status === 'completed' && (pdfUrl || pptxUrl)) {
+        const supabaseAdmin = getSupabaseAdmin();
+
+        if (supabaseAdmin) {
+          // Persist PDF and PPTX in parallel for speed
+          const [pdfResult, pptxResult] = await Promise.all([
+            pdfUrl ? persistGammaExport(pdfUrl, generationId, 'pdf', supabaseAdmin) : null,
+            pptxUrl ? persistGammaExport(pptxUrl, generationId, 'pptx', supabaseAdmin) : null,
+          ]);
+
+          if (pdfResult) {
+            pdfPermanentUrl = pdfResult.publicUrl;
+            pdfStoragePath = pdfResult.storagePath;
+            console.log('[GAMMA] PDF persisted to permanent storage');
+          }
+
+          if (pptxResult) {
+            pptxPermanentUrl = pptxResult.publicUrl;
+            pptxStoragePath = pptxResult.storagePath;
+            console.log('[GAMMA] PPTX persisted to permanent storage');
+          }
+        }
+      }
+
       res.status(200).json({
         generationId: status.id || generationId,
         status: status.status,
         url: gammaDocUrl,
-        pdfUrl: exportUrl?.includes('.pdf') ? exportUrl : status.pdfUrl,
-        pptxUrl: exportUrl?.includes('.pptx') ? exportUrl : status.pptxUrl,
+        // Return permanent Storage URLs if available, else original CDN URLs
+        pdfUrl: pdfPermanentUrl || pdfUrl,
+        pptxUrl: pptxPermanentUrl || pptxUrl,
+        // Storage paths for database persistence
+        pdfStoragePath,
+        pptxStoragePath,
         error: status.error,
       });
       return;

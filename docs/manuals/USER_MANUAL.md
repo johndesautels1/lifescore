@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 3.4
-**Last Updated:** February 15, 2026
+**Version:** 3.6
+**Last Updated:** February 17, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -24,6 +24,7 @@
 14. [Frequently Asked Questions](#14-frequently-asked-questions)
 15. [Cost Dashboard & Usage Monitoring](#15-cost-dashboard--usage-monitoring)
 16. [Emilia Help Assistant](#16-emilia-help-assistant)
+17. [Notifications](#17-notifications-added-2026-02-16)
 
 ---
 
@@ -76,7 +77,40 @@ Each city receives a Freedom Score from 0-100, calculated across:
 1. Click the **Sign In** tab
 2. Enter your email and password
 3. Click **Sign In**
-4. If you forgot your password, click "Forgot your password?" to receive a reset link
+4. Your browser will offer to **save your credentials** for faster future logins (password manager compatible)
+5. If you forgot your password, click "Forgot your password?" to receive a reset link
+
+### Forgot Password / Password Reset
+
+If you've forgotten your password, here's the complete step-by-step flow:
+
+**Step 1: Request a Reset Link**
+1. On the Sign In screen, click **"Forgot your password?"**
+2. The form switches to **Reset Password** mode
+3. Enter your email address
+4. Click **Send Reset Link**
+5. You'll see: *"Password reset link sent! Please check your email (including spam/junk folder). The link expires in 1 hour."*
+
+**Step 2: Check Your Email**
+1. Open your email inbox (check spam/junk if you don't see it)
+2. Look for an email from **noreply@mail.app.supabase.io** with subject "Reset Your Password"
+3. Click the reset link in the email
+4. The link redirects you back to LifeScore automatically
+
+**Step 3: Set Your New Password**
+1. LifeScore detects the password recovery link and shows the **Set New Password** screen
+2. Enter your new password (minimum 6 characters)
+3. Re-enter the password to confirm
+4. Use the eye icon to toggle password visibility
+5. Click **Update Password**
+6. You'll see: *"Password updated successfully! Redirecting..."*
+7. After 2 seconds, you're automatically signed into the app
+
+**Important Notes:**
+- The reset link expires after **1 hour** — request a new one if it expires
+- For security, you'll receive a success message even if the email doesn't exist in our system (this prevents email enumeration)
+- Your saved comparisons, reports, Judge verdicts, and all other data remain **completely untouched** during a password reset — only the password itself changes
+- If you don't want to reset after clicking the link, click **"Skip — go to app"** to enter the app without changing your password
 
 ### Theme Selection
 
@@ -142,16 +176,28 @@ Your dashboard shows:
 - Move left to weight *written laws* more heavily
 - Move right to weight *actual enforcement* more heavily
 - Default: 50/50 balance
+- The section **illuminates with a highlighted border** when you change it from the default, so you can see at a glance that you've customized it
+
+**Worst-Case Mode Toggle:**
+- When enabled, uses the **lower** of Law and Lived scores (worst-case scenario)
+- The toggle **glows/illuminates when active** to make the active state clearly visible
+- Overrides the Law vs Lived slider with MIN(law, lived) for each metric
 
 **Category Weights:**
 - Customize which categories matter most to you
 - Use preset personas or create custom weights
+
+**Dealbreakers Panel:**
+- Mark specific metrics as dealbreakers (must-haves)
+- Metrics are listed **alphabetically A-Z within each category** for easy scanning
+- Dealbreaker metrics are highlighted and weighted more heavily in the final score
 
 ### Step 4: Run Comparison
 
 1. Click **Compare Cities**
 2. Watch the progress indicator
 3. Results appear automatically when complete
+4. The page **auto-scrolls to the top** so you immediately see the score cards
 
 ---
 
@@ -168,6 +214,15 @@ After comparison, you'll see:
 │      WINNER
 └─────────────────────────────────────────┘
 ```
+
+### Explain the Winner (Added 2026-02-16)
+
+Below the score cards, a toggle labeled **"Explain the Winner"** lets you view a detailed AI-generated narrative explaining:
+- Why the winning city scored higher
+- The key categories and metrics that drove the difference
+- Notable strengths and weaknesses of each city
+
+This feature is available in **Standard Mode** (not just Enhanced) and provides the same quality of explanation as the Judge verdict, but directly in the Results view.
 
 ### Score Breakdown
 
@@ -297,6 +352,15 @@ The Judge page now uses **three collapsible panels** to reduce scroll clutter an
 - Each panel header displays live summary stats so you can see key information without expanding
 - All panels remember their state during your session
 
+### Confidence Interval Hover Cards (Added 2026-02-16)
+
+The Judge tab score cards now feature **confidence interval hover cards**. When you hover over (or tap on mobile) any score card, a tooltip appears showing:
+- The confidence level (unanimous, strong, moderate, or split)
+- The score range across all AI providers
+- How much the providers agreed or disagreed
+
+This helps you understand how reliable each score is — a "unanimous" confidence means all AI providers agreed closely, while "split" means significant disagreement.
+
 ### Understanding the Verdict
 
 ```
@@ -314,6 +378,16 @@ The Judge page now uses **three collapsible panels** to reduce scroll clutter an
 └─────────────────────────────────────────┘
 ```
 
+### Phone Call Audio Warning (Added 2026-02-16)
+
+All video displays across the app (Judge Video, Court Order, Freedom Tour, Olivia Presenter, Grok Videos, and Olivia Avatar) now include a **phone call audio warning**. If you are on an active phone call while viewing a video, a warning overlay appears reminding you that playing audio may interrupt your call. This applies to:
+- Judge verdict videos
+- Court Order videos
+- GoToMyNewCity (Freedom Tour) videos
+- Olivia presenter and avatar videos
+- Grok/Kling mood videos
+- Report presenter videos
+
 ### Judge Video
 
 SOVEREIGN tier users can generate a video of the Judge explaining the verdict:
@@ -321,10 +395,18 @@ SOVEREIGN tier users can generate a video of the Judge explaining the verdict:
 2. Wait 90-180 seconds for generation
 3. Watch the animated verdict
 
+### Display Screen Buttons (Added 2026-02-16)
+
+At the bottom of the Judge tab, two **glassmorphic (frosted-glass) buttons** provide quick access to:
+- **Court Order** — Generate or view the Court Order video for the winning city
+- **Freedom Tour** — Generate or view the GoToMyNewCity cinematic relocation video
+
+These buttons feature a modern glassmorphic design with blur effect and hover animations.
+
 ### Court Order Videos (Added 2026-02-11)
 
 The Judge can generate a Court Order video for the winning city — a cinematic "perfect life" video:
-- Click **Generate Court Order** in the Judge tab
+- Click **Generate Court Order** in the Judge tab (or use the glassmorphic button at the bottom)
 - Video is generated by Kling AI (90-180 seconds)
 - Videos are saved to cloud storage for permanent access
 - SOVEREIGN tier only
@@ -475,6 +557,10 @@ Generate professional presentation-style reports:
 
 **Trophy Placement (Fixed 2026-02-14):** The 🏆 trophy in Gamma reports now correctly appears next to the **winning** city only. Previously, the trophy could appear next to the losing city due to a prompt formatting issue.
 
+**Permanent Downloads (Added 2026-02-17):** PDF and PPTX export files are now permanently stored. Previously, download links could expire after a few hours because they pointed to Gamma's temporary CDN. Now, export files are automatically saved to permanent storage when your report completes — download links will always work, even months later. If you see a broken download link on an older report, simply regenerate the report from the Visuals tab.
+
+**Expired Report Detection (Added 2026-02-17):** If a Gamma report embed can no longer load (e.g., the hosted document was removed), the app now shows a clear message instead of a broken page, with instructions to regenerate or use your saved PDF/PPTX exports.
+
 ### Saving Comparisons
 
 1. Click the **Star** icon to favorite a comparison
@@ -524,11 +610,12 @@ Generate professional presentation-style reports:
 | Auto-Speak | Automatic voice responses |
 | Voice Selection | Choose Olivia's voice |
 
-### Dark Mode Improvements (Fixed 2026-02-14)
+### Dark Mode Improvements (Fixed 2026-02-14, Updated 2026-02-16)
 
 Dark mode now displays saved reports correctly:
 - **Saved report city names** are now clearly readable in dark mode (previously had poor contrast)
 - **Saved report dates** now use crisp white text in dark mode for easy reading
+- **"VS" text** between city names is now clearly visible in dark mode across all comparison views (AdvancedVisuals, ContrastDisplays, JudgeTab, JudgeVideo) — previously invisible against dark backgrounds (Fixed 2026-02-16)
 
 ### API Keys (Advanced)
 
@@ -741,6 +828,13 @@ For Enhanced mode with your own keys:
 4. Clear browser cookies
 5. Contact support for unlock
 
+### Mobile Warning Modal (Added 2026-02-16)
+
+When visiting LifeScore on a small screen (phone), a **warning modal** appears explaining that the app is optimized for desktop/tablet. The modal offers:
+- A brief explanation that some features work best on larger screens
+- A button to **continue anyway** on mobile
+- The warning only appears once per session
+
 ### Mobile Display Issues
 
 **Symptoms:** Content cut off on the right side, buttons pushed off-screen, text overlapping on mobile phones
@@ -758,6 +852,8 @@ For Enhanced mode with your own keys:
 | Judge doormat + retry button | Triangle icon and retry button too large | Fixed |
 | Judge verdict Sovereign badge | Badge and "THE JUDGE" text cut off | Fixed |
 | Account Settings CONNECTED button | Connected status pushed off-screen | Fixed |
+| Enhanced Mode +/- weight buttons | Buttons pushed off-screen on narrow phones | Fixed (2026-02-16) |
+| Enhanced Mode LLM provider badges | Badge pills overflowing container on mobile | Fixed (2026-02-16) |
 
 **If you still see display issues on mobile:** Try a hard refresh (pull down on mobile, or Ctrl+Shift+R on desktop). If problems persist, contact support with a screenshot and your device/browser info.
 
@@ -934,6 +1030,48 @@ The Emilia help system includes multiple tabs for different types of information
 
 ---
 
+## 17. Notifications (Added 2026-02-16)
+
+### Notification Bell
+
+A notification bell icon appears in the app header. When you have unread notifications, a badge with the count appears on the bell. Click it to see your recent notifications in a dropdown.
+
+### "Notify Me" for Long-Running Tasks
+
+When you start a task that takes time (comparisons, Judge verdicts, video generation, Gamma reports), a modal appears offering two choices:
+
+| Option | What Happens |
+|--------|-------------|
+| **Wait Here** | Stay on the page and watch the progress bar |
+| **Notify Me & Go** | Navigate away freely — you'll get a notification when it's done |
+
+If you choose "Notify Me & Go":
+1. The task continues running in the background
+2. When complete, the bell icon updates with a new unread notification
+3. Click the bell to see the notification and jump to your results
+4. If you opted in to email notifications, you'll also receive an email from alerts@lifescore.app
+
+### Notification Types
+
+| Notification | Trigger |
+|-------------|---------|
+| Comparison complete | Standard or Enhanced comparison finishes |
+| Judge verdict ready | Judge analysis completes |
+| Video generated | Grok/Kling mood video finishes rendering |
+| Gamma report ready | Gamma report generation completes |
+| Court Order video ready | Court Order video finishes rendering |
+| Freedom Tour video ready | GoToMyNewCity video finishes rendering |
+
+### Managing Notifications
+
+- Click the **bell icon** to view all notifications
+- Unread notifications appear with a highlight
+- The unread count badge updates in real time (polled every 30 seconds)
+- Notifications include a timestamp showing when the task completed
+- When you have no notifications, the dropdown shows an orange "No notifications yet" message
+
+---
+
 ## Getting Help
 
 **Need assistance?**
@@ -965,3 +1103,6 @@ The Emilia help system includes multiple tabs for different types of information
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Trophy 🏆 now correctly placed on winner not loser in Gamma reports (§9), (2) Gamma reports persistence fix — foreign key constraint resolved (§7, §9), (3) backdrop-filter blur removed from 8 CSS files for INP performance, (4) 247ms INP fix on login email input, (5) "Watch Presenter" renamed to "Listen to Presenter" (§8). |
 | 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page redesign: collapsible panels (§7), GoToMyNewCity multi-scene video (§7), auto-restore videos on tab switch (§7), missing 6 category sections fix (§7), Judge dropdown INP fix (§7). Video URL expiration handling for all providers (§12). Cost Dashboard $0.00 fix (§15). Cristiano video CTA + poster (§8). AUDIO badge + voice wave indicator (§8). Storyboard progress bar (§8). Dark mode fixes for saved reports (§10). Judge report Supabase fallback (§7). Expired video URL HEAD-request validation (§12). localStorage quota crash protection. |
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§12): Results score cards, category % badges, About services table, How It Works modules, Olivia READY/STOP buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. All scoped to ≤480px viewports. New "Mobile Display Issues" troubleshooting section. |
+| 3.5 | 2026-02-17 | Claude Opus 4.6 | Full "Forgot Password" flow documented (§2): 3-step walkthrough covering reset request, email link, new password form, and data safety notes. Updated App Schema Manual with complete Authentication & Password Recovery architecture (§1.0). Updated CSM and Tech manuals with password reset troubleshooting and architecture. |
+| 3.6 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notifications system (§17) with bell icon, "Notify Me" modal, email alerts. Explain the Winner toggle (§5). Confidence interval hover cards (§7). Glassmorphic Judge buttons (§7). Phone call audio warning (§7). Mobile warning modal (§12). Law vs Lived / Worst-Case illumination (§4). Dealbreakers A-Z sort (§4). Auto-scroll to top (§4). VS text dark mode fix (§10). Mobile +/- buttons and LLM badges fix (§12). Visuals labeling fix. Gamma links fix. Login credential storage fix. Judge stale state fix. Password reset redirect fix. Admin signup email. |
+| 3.7 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§9): Permanent Downloads note — PDF/PPTX exports now permanently stored in Supabase Storage. Expired Report Detection note — iframe error handling shows fallback message. |

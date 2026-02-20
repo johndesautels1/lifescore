@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.6
-**Last Updated:** February 15, 2026
+**Version:** 4.8
+**Last Updated:** February 17, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -886,7 +886,55 @@ User Login → Supabase Auth → JWT Token →
 → Stored in localStorage → Sent in headers
 ```
 
-### 6.2 Session Management
+### 6.2 Password Reset Flow (Added 2026-02-17)
+
+**Complete technical flow for "Forgot Password":**
+
+```
+STEP 1: REQUEST RESET
+  LoginScreen.tsx:163-180  handleForgotPassword()
+    → AuthContext.tsx:505-523  resetPassword(email)
+      → supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/auth/callback'
+        })
+    → Supabase stores recovery_token (1hr TTL) in auth.users
+    → Supabase sends email from noreply@mail.app.supabase.io
+    → Returns success even if email doesn't exist (anti-enumeration)
+
+STEP 2: USER CLICKS EMAIL LINK
+  Browser → /auth/callback#access_token=...&type=recovery
+    → Supabase JS auto-parses URL hash fragment
+    → supabase.auth.onAuthStateChange fires:
+        event = 'PASSWORD_RECOVERY'
+        session = { access_token, refresh_token, user }
+    → AuthContext.tsx:339-349 handles event:
+        isPasswordRecovery = true
+        isAuthenticated = true (temporary session)
+    → App.tsx:621-622 route gate:
+        if (isPasswordRecovery) → <ResetPasswordScreen />
+
+STEP 3: SET NEW PASSWORD
+  ResetPasswordScreen.tsx (validation: min 6 chars, must match)
+    → AuthContext.tsx:525-547  updatePassword(newPassword)
+      → supabase.auth.updateUser({ password: newPassword })
+    → Supabase: bcrypt(newPassword) → auth.users.encrypted_password
+    → recovery_token = NULL (consumed)
+    → isPasswordRecovery = false
+    → URL hash cleaned
+    → App renders main content (user fully authenticated)
+```
+
+**Key Files:**
+| File | Lines | Responsibility |
+|------|-------|---------------|
+| `src/contexts/AuthContext.tsx` | 505-553 | `resetPassword()`, `updatePassword()`, `clearPasswordRecovery()` |
+| `src/components/LoginScreen.tsx` | 163-180 | Forgot password form, success message |
+| `src/components/ResetPasswordScreen.tsx` | Full | New password form (6 char min, confirm match, show/hide toggle) |
+| `src/App.tsx` | 621-622 | `isPasswordRecovery` route gate |
+
+**Database impact:** ONLY `auth.users.encrypted_password` and `auth.users.recovery_token` are modified. All application tables (`profiles`, `comparisons`, `subscriptions`, etc.) are untouched.
+
+### 6.3 Session Management
 
 ```typescript
 // src/lib/supabase.ts
@@ -899,7 +947,7 @@ const supabase = createClient(url, anonKey, {
 });
 ```
 
-### 6.3 Tier Enforcement
+### 6.4 Tier Enforcement
 
 **Client-side:** `src/hooks/useTierAccess.ts`
 **Server-side:** `api/shared/tierCheck.ts`
@@ -913,7 +961,7 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
 }
 ```
 
-### 6.4 Auth Profile Fetch Retry Storm Fix (Added 2026-02-14)
+### 6.5 Auth Profile Fetch Retry Storm Fix (Added 2026-02-14)
 
 **Problem:** When a profile fetch from Supabase failed (e.g., network blip, cold start), the auth context would immediately retry, creating an exponential retry loop that could hammer Supabase Auth with hundreds of requests per second.
 
@@ -927,7 +975,7 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
 
 **Impact:** Prevents exponential retry loops from overwhelming Supabase Auth during transient failures.
 
-### 6.5 API Key Handling
+### 6.6 API Key Handling
 
 User-provided API keys are:
 - Passed in request body (not stored)
@@ -1889,6 +1937,22 @@ npm run preview
 | Mobile: GoToMyNewCity Sovereign badge overflow | Added first-ever `@media (max-width: 480px)` block to GoToMyNewCity.css — footer `flex-wrap`, badge padding/font-size reduction | 2026-02-15 |
 | Mobile: Settings CONNECTED button off-screen | Added `flex-wrap: wrap`, `min-width: 0`, `text-overflow: ellipsis` to `.connected-account` in SettingsModal.css | 2026-02-15 |
 | Supabase timeout/retry values bloated by rogue agent | Reverted SUPABASE_TIMEOUT_MS from 20s→12s, maxRetries from 3→2 across 11 files. Aligned all withTimeout wrappers (databaseService, reportStorageService, savedComparisons, useTierAccess, JudgeTab). Reduced AuthContext PROFILE_TIMEOUT_MS 24s→15s, SESSION_TIMEOUT_MS 45s→20s. Reduced SavedComparisons SYNC_TIMEOUT_MS 20s→15s. Reduced generate-judge-video DB_TIMEOUT_MS 45s→15s. | 2026-02-15 |
+| Resend `from` email wrong sender | Changed default from address to alerts@lifescore.app in api/notify.ts | 2026-02-16 |
+| Missing isPasswordRecovery in AuthContext setState | Added isPasswordRecovery to initial setState call in AuthContext.tsx; removed unused import in CitySelector.tsx | 2026-02-16 |
+| 3 broken notification flows (CitySelector, GoToMyNewCity, VisualsTab) | Fixed notification not triggering on Compare, Freedom Tour, and Gamma report completion; added error logging to api/notify.ts | 2026-02-16 |
+| "VS" text invisible in dark mode | Applied visible text color to VS separator in AdvancedVisuals.css, ContrastDisplays.css, JudgeTab.css, JudgeVideo.css | 2026-02-16 |
+| Founder name missing "II" suffix | Added "II" suffix to "John E. Desautels" in package.json, api/shared/types.ts, handoff docs, compliance docs, and DPA agreements | 2026-02-16 |
+| Mobile: +/- weight buttons off-screen | Text wrapping instead of truncating in EnhancedComparison.css and Results.css | 2026-02-16 |
+| Mobile: LLM provider badges overflow | Badge container now wraps on narrow viewports in EnhancedComparison.css | 2026-02-16 |
+| Visuals page labeling confusion | Clarified section labels in AdvancedVisuals.tsx and VisualsTab.tsx to distinguish video types and report sections | 2026-02-16 |
+| Gamma report links not clickable | Fixed CSS pointer-events and z-index on report URLs in VisualsTab.css and VisualsTab.tsx | 2026-02-16 |
+| Browser not offering to save login credentials | Added proper `<form>` structure, autocomplete attributes, and name attributes to LoginScreen.tsx for browser password manager detection (3 iterations: ab30df4, b33989c, ac6a910) | 2026-02-16 |
+| Judge tab stale state after comparison switch | JudgeTab.tsx now resets all state (videos, verdicts, reports) when the active comparison changes | 2026-02-16 |
+| Court Order / Freedom Tour toggle tabs (reverted) | Added toggle tabs in JudgeTab.tsx, then reverted — replaced with glassmorphic buttons approach instead | 2026-02-16 |
+| Password reset email not sending | Redirect URL in `resetPasswordForEmail()` was mismatched; fixed to use `window.location.origin + '/auth/callback'` in both LoginScreen.tsx and AuthContext.tsx | 2026-02-16 |
+| No admin notification on new signups | New endpoint `POST /api/admin/new-signup` sends email to admin (cluesnomads@gmail.com) via Resend when a new user signs up; called from AuthContext.tsx after successful signup | 2026-02-16 |
+| Gamma export URLs (PDF/PPTX) expiring | Industry-standard asset materialization: `api/gamma.ts` now downloads PDF/PPTX from Gamma CDN immediately on generation completion and uploads to Supabase Storage (`gamma-exports` public bucket). Returns permanent public URLs instead of ephemeral CDN URLs. Same pattern as `persistVideo.ts`. New DB columns: `pdf_storage_path`, `pptx_storage_path` on both `gamma_reports` and `reports` tables. Migrations: `20260217_add_gamma_export_storage_paths.sql` (columns), `20260217_create_gamma_exports_storage.sql` (bucket). All 4 Gamma iframe embeds (VisualsTab ×2, ReportPresenter, SavedComparisons) now have `onError`/`onLoad` handlers with fallback UI. Full pipeline: API persistence → types → databaseService → savedComparisons → gammaService → UI components. 11 files changed, 35 discrete code changes. | 2026-02-17 |
+| Gamma report colored cards losing colors | `solidBoxes` variant relies on inline `color="#HEX"` attributes that Gamma's AI rendering strips during beautification. Fix: replaced 6× category LLM agreement heat map pages with `barStats` (bar LENGTH conveys confidence: 95% Unanimous → 50% Split). PAGE 64 consensus stats → `semiCircle` radial gauges + table. PAGE 51 myth vs reality → structured table with ❌/✅ columns. PAGE 53 hidden costs → `semiCircle` dial gauges (2×2 layout). Visual specs header updated. Same data, zero prompt size increase, varied chart types. Updated in: `gammaService.ts`, Supabase seed migration, `GAMMA_PROMPT_TEMPLATE.md`, `GAMMA_PROMPTS_MANUAL.md`. | 2026-02-17 |
 
 ---
 
@@ -2223,6 +2287,78 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 
 ---
 
+## 24. Notification System (Added 2026-02-16)
+
+### 24.1 Architecture
+
+Fire-and-forget notification system for long-running tasks (comparisons, Judge verdicts, video generation, Gamma reports).
+
+```
+User triggers task → NotifyMeModal → "Wait Here" or "Notify Me & Go"
+→ job created in `jobs` table (status: pending)
+→ task runs as normal (status: processing)
+→ on completion: notification row in `notifications` table
+→ bell icon updates (30s poll) + email via Resend (if opted in)
+```
+
+### 24.2 Database Tables
+
+**`jobs` table:**
+- Persistent job queue for long-running tasks
+- Columns: id (UUID PK), user_id (FK profiles), type (comparison|judge|video|gamma|court_order|freedom_tour), status (pending|processing|completed|failed), metadata (JSONB), created_at, updated_at
+- RLS: users can only see their own jobs
+- Trigger: auto-updates updated_at
+
+**`notifications` table:**
+- In-app bell + email notification records
+- Columns: id (UUID PK), user_id (FK profiles), job_id (FK jobs, nullable), type (text), title (text), body (text), channel (in_app|email|both), read (boolean, default false), created_at
+- RLS: users can only see their own notifications
+
+**`profiles.phone` column:** Added for future SMS notification support.
+
+### 24.3 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| POST /api/notify | POST | Create notification (in-app + email via Resend) |
+
+**Server-side helper:** `api/shared/notifyJob.ts` — fire-and-forget helper that creates in-app notification and sends email in parallel without blocking the calling endpoint.
+
+### 24.4 Frontend Components
+
+| Component | Purpose |
+|-----------|---------|
+| `NotificationBell.tsx` + `.css` | Bell icon in header with unread badge + dropdown |
+| `NotifyMeModal.tsx` + `.css` | "Wait Here" vs "Notify Me & Go" modal |
+
+### 24.5 Custom Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `useNotifications.ts` | Polls `notifications` table every 30 seconds for unread count |
+| `useJobTracker.ts` | Creates jobs, updates status, triggers notification on completion |
+
+### 24.6 Integration Points
+
+NotifyMeModal is integrated into:
+- `CitySelector.tsx` — Compare button (comparison jobs)
+- `JudgeTab.tsx` — Judge Verdict generation
+- `VisualsTab.tsx` — Gamma report generation
+- `CourtOrderVideo.tsx` — Court Order video generation
+- `GoToMyNewCity.tsx` — Freedom Tour video generation
+
+Server-side notifications triggered in:
+- `api/judge-report.ts` — on Judge report completion
+- `api/video/grok-generate.ts` — on video generation completion
+
+### 24.7 Email Configuration
+
+- **Service:** Resend
+- **From address:** alerts@lifescore.app
+- **Trigger:** Only when user opts in via "Notify Me & Go" with email channel
+
+---
+
 ## 23. Codebase Statistics (Added 2026-02-15)
 
 <!-- CODEBASE_STATS_START — regenerate with: claude "run codebase stats" -->
@@ -2360,6 +2496,8 @@ The PIP (Picture-in-Picture) player for the Report Presenter received two visual
 | 4.5 | 2026-02-15 | Claude Opus 4.6 | Cristiano B-roll 6-second clip limit (§9.17a): HeyGen was rendering 16-18s B-roll as single static clips. Added explicit 6s max per clip in both Stage 1 (storyboard prompt) and Stage 2 (render prompt). Supabase app_prompts updated to match. |
 | 4.6 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§14.2): WCAG accessibility updates introduced flex overflow on narrow viewports (≤480px). Fixed across 8 CSS files: Results.css (score cards + category badges), AboutClues.css (services table + module chips), AskOlivia.css (READY/STOP buttons), VisualsTab.css (Read/Listen/Open/Close buttons), JudgeTab.css (doormat triangle + category accordion), GoToMyNewCity.css (Sovereign badge — first-ever mobile rules), SettingsModal.css (CONNECTED button), EnhancedComparison.css (consistency fix). Pattern: `min-width: 0` + `flex-shrink: 0` + `text-overflow: ellipsis` + `flex-wrap: wrap` at mobile breakpoints. |
 | 4.7 | 2026-02-15 | Claude Opus 4.6 | Supabase timeout/retry remediation: Reverted rogue agent's bloated values across 11 source files. SUPABASE_TIMEOUT_MS 20s→12s, maxRetries 3→2 (3 total attempts). Updated §7.5 Supabase Retry Logic with correct config. New resolved issue (§14.2). Updated App Schema Manual §6.1 to match. |
+| 4.8 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system architecture (§24) — jobs/notifications tables, api/notify endpoint, NotificationBell/NotifyMeModal components, useNotifications/useJobTracker hooks. 15 new resolved issues (§14.2): Resend from email, isPasswordRecovery, 3 notification flows, VS dark mode, II suffix, mobile +/- and badges, Visuals labeling, Gamma links, login credentials (3 iterations), Judge stale state, Court Order tabs revert, password reset redirect, admin signup email. |
+| 4.9 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§14.2): Asset materialization pattern — `api/gamma.ts` persists PDF/PPTX exports to Supabase Storage on completion. New DB columns `pdf_storage_path`/`pptx_storage_path`. Iframe error detection on all 4 embed locations. 11 files, 35 changes. |
 
 ---
 

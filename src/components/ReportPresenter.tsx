@@ -33,6 +33,8 @@ import {
   closeHeyGenSession,
   generateTTS,
 } from '../services/oliviaService';
+import GammaIframe from './GammaIframe';
+import VideoPhoneWarning from './VideoPhoneWarning';
 import './ReportPresenter.css';
 
 // ============================================================================
@@ -43,6 +45,8 @@ interface ReportPresenterProps {
   result: AnyComparisonResult;
   gammaUrl: string;
   onClose: () => void;
+  /** Pre-select sub-mode: 'live' for live avatar, 'video' for pre-rendered video */
+  initialSubMode?: PresenterSubMode;
 }
 
 // ============================================================================
@@ -59,9 +63,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   result,
   gammaUrl,
   onClose,
+  initialSubMode = 'live',
 }) => {
   // ---- Sub-mode: live presenter vs pre-rendered video ----
-  const [subMode, setSubMode] = useState<PresenterSubMode>('live');
+  const [subMode, setSubMode] = useState<PresenterSubMode>(initialSubMode);
 
   // ---- Live presenter state ----
   const [state, setState] = useState<PresenterState>(() => ({
@@ -88,14 +93,23 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   // ---- TTS fallback ----
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ---- Refs for breaking stale closures in circular callbacks ----
+  const ttsOnlyRef = useRef(state.ttsOnly);
+  ttsOnlyRef.current = state.ttsOnly;
+  const segmentsRef = useRef(state.segments);
+  segmentsRef.current = state.segments;
+  const mountedRef = useRef(true);
+
   // ---- Segment auto-advance timer ----
   const segmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ---- Cleanup on unmount ----
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       cleanupSession();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================================================
@@ -129,7 +143,7 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
       heygenSessionRef.current = {
         sessionId: response.sessionId,
-        token: (response as any).token || '',
+        token: 'token' in response ? String(response.token) : '',
       };
 
       if (response.sdpOffer && response.iceServers) {
@@ -161,19 +175,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   // SPEAKING (Live Mode)
   // ============================================================================
 
-  const speakSegment = useCallback(async (segment: PresenterSegment) => {
-    if (heygenSessionRef.current && !state.ttsOnly) {
-      try {
-        await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
-      } catch (err) {
-        console.warn('[ReportPresenter] HeyGen speak failed, falling back to TTS:', err);
-        await speakTTSFallback(segment.narration);
-      }
-    } else {
-      await speakTTSFallback(segment.narration);
-    }
-  }, [state.ttsOnly]);
-
   const speakTTSFallback = useCallback(async (text: string) => {
     try {
       const ttsResponse = await generateTTS(text);
@@ -187,15 +188,59 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     }
   }, []);
 
+  const speakSegment = useCallback(async (segment: PresenterSegment) => {
+    if (heygenSessionRef.current && !ttsOnlyRef.current) {
+      try {
+        await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
+      } catch (err) {
+        console.warn('[ReportPresenter] HeyGen speak failed, falling back to TTS:', err);
+        await speakTTSFallback(segment.narration);
+      }
+    } else {
+      await speakTTSFallback(segment.narration);
+    }
+  }, [speakTTSFallback]);
+
   // ============================================================================
   // LIVE PLAYBACK CONTROLS
   // ============================================================================
 
+  // Refs to break circular useCallback dependency: scheduleNextSegment <-> advanceToSegment
+  const advanceToSegmentRef = useRef<((index: number) => Promise<void>) | undefined>(undefined);
+  const scheduleNextSegmentRef = useRef<((currentIndex: number) => void) | undefined>(undefined);
+
+  const scheduleNextSegment = useCallback((currentIndex: number) => {
+    if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
+    const segment = segmentsRef.current[currentIndex];
+    if (!segment) return;
+
+    segmentTimerRef.current = setTimeout(() => {
+      advanceToSegmentRef.current?.(currentIndex + 1);
+    }, segment.durationEstimateMs + 1500);
+  }, []);
+  scheduleNextSegmentRef.current = scheduleNextSegment;
+
+  const advanceToSegment = useCallback(async (index: number) => {
+    if (!mountedRef.current) return;
+    if (index >= segmentsRef.current.length) {
+      setState((prev) => ({ ...prev, status: 'completed', currentSegmentIndex: prev.segments.length - 1 }));
+      return;
+    }
+    setState((prev) => ({ ...prev, status: 'presenting', currentSegmentIndex: index }));
+    const segment = segmentsRef.current[index];
+    await speakSegment(segment);
+    if (mountedRef.current) {
+      scheduleNextSegmentRef.current?.(index);
+    }
+  }, [speakSegment]);
+  advanceToSegmentRef.current = advanceToSegment;
+
   const startPresentation = useCallback(async () => {
-    if (state.segments.length === 0) return;
+    if (segmentsRef.current.length === 0) return;
     setState((prev) => ({ ...prev, status: 'loading' }));
 
     const avatarConnected = await connectHeyGen();
+    if (!mountedRef.current) return;
 
     setState((prev) => ({
       ...prev,
@@ -205,58 +250,50 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
       ttsOnly: !avatarConnected,
     }));
 
-    const firstSegment = state.segments[0];
+    const firstSegment = segmentsRef.current[0];
     await speakSegment(firstSegment);
-    scheduleNextSegment(0);
-  }, [state.segments, connectHeyGen, speakSegment]);
-
-  const scheduleNextSegment = useCallback((currentIndex: number) => {
-    if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
-    const segment = state.segments[currentIndex];
-    if (!segment) return;
-
-    segmentTimerRef.current = setTimeout(() => {
-      advanceToSegment(currentIndex + 1);
-    }, segment.durationEstimateMs + 1500);
-  }, [state.segments]);
-
-  const advanceToSegment = useCallback(async (index: number) => {
-    if (index >= state.segments.length) {
-      setState((prev) => ({ ...prev, status: 'completed', currentSegmentIndex: prev.segments.length - 1 }));
-      return;
+    if (mountedRef.current) {
+      scheduleNextSegmentRef.current?.(0);
     }
-    setState((prev) => ({ ...prev, status: 'presenting', currentSegmentIndex: index }));
-    const segment = state.segments[index];
-    await speakSegment(segment);
-    scheduleNextSegment(index);
-  }, [state.segments, speakSegment, scheduleNextSegment]);
+  }, [connectHeyGen, speakSegment]);
 
   const handlePause = useCallback(() => {
     if (segmentTimerRef.current) { clearTimeout(segmentTimerRef.current); segmentTimerRef.current = null; }
-    if (heygenSessionRef.current && !state.ttsOnly) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    if (heygenSessionRef.current && !ttsOnlyRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
     if (ttsAudioRef.current) ttsAudioRef.current.pause();
     setState((prev) => ({ ...prev, status: 'paused' }));
-  }, [state.ttsOnly]);
+  }, []);
 
   const handleResume = useCallback(async () => {
-    setState((prev) => ({ ...prev, status: 'presenting' }));
-    const segment = state.segments[state.currentSegmentIndex];
-    if (segment) { await speakSegment(segment); scheduleNextSegment(state.currentSegmentIndex); }
-  }, [state.segments, state.currentSegmentIndex, speakSegment, scheduleNextSegment]);
+    setState((prev) => {
+      const segment = prev.segments[prev.currentSegmentIndex];
+      if (segment) {
+        speakSegment(segment);
+        scheduleNextSegmentRef.current?.(prev.currentSegmentIndex);
+      }
+      return { ...prev, status: 'presenting' };
+    });
+  }, [speakSegment]);
 
   const handleSkipForward = useCallback(() => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
-    if (heygenSessionRef.current && !state.ttsOnly) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    if (heygenSessionRef.current && !ttsOnlyRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
     if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
-    advanceToSegment(state.currentSegmentIndex + 1);
-  }, [state.currentSegmentIndex, state.ttsOnly, advanceToSegment]);
+    setState((prev) => {
+      advanceToSegmentRef.current?.(prev.currentSegmentIndex + 1);
+      return prev;
+    });
+  }, []);
 
   const handleSkipBack = useCallback(() => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
-    if (heygenSessionRef.current && !state.ttsOnly) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    if (heygenSessionRef.current && !ttsOnlyRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
     if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
-    advanceToSegment(Math.max(0, state.currentSegmentIndex - 1));
-  }, [state.currentSegmentIndex, state.ttsOnly, advanceToSegment]);
+    setState((prev) => {
+      advanceToSegmentRef.current?.(Math.max(0, prev.currentSegmentIndex - 1));
+      return prev;
+    });
+  }, []);
 
   const handleClose = useCallback(() => { cleanupSession(); onClose(); }, [cleanupSession, onClose]);
 
@@ -273,10 +310,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     setVideoState({ status: 'generating', progress: 0 });
 
     const finalState = await generatePresenterVideo(result, (progress) => {
-      setVideoState(progress);
+      if (mountedRef.current) setVideoState(progress);
     });
 
-    setVideoState(finalState);
+    if (mountedRef.current) setVideoState(finalState);
   }, [result]);
 
   const handleVideoReset = useCallback(() => {
@@ -303,19 +340,26 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   return (
     <div className="report-presenter">
+      {/* Phone call audio warning (mobile only) */}
+      <VideoPhoneWarning />
+
       {/* Sub-mode tabs: Live Presenter vs Generate Video */}
-      <div className="presenter-mode-tabs">
+      <div className="presenter-mode-tabs" role="group" aria-label="Presenter mode">
         <button
+          type="button"
           className={`presenter-mode-tab ${subMode === 'live' ? 'active' : ''}`}
           onClick={() => setSubMode('live')}
           disabled={isVideoGenerating}
+          aria-pressed={subMode === 'live'}
         >
           Live Presenter
         </button>
         <button
+          type="button"
           className={`presenter-mode-tab ${subMode === 'video' ? 'active' : ''}`}
           onClick={() => setSubMode('video')}
           disabled={state.status === 'presenting' || state.status === 'loading'}
+          aria-pressed={subMode === 'video'}
         >
           Generate Video
         </button>
@@ -328,11 +372,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         <>
           {/* Gamma Report Iframe (background) */}
           <div className="presenter-report-container">
-            <iframe
-              src={gammaUrl.replace('/docs/', '/embed/')}
+            <GammaIframe
+              gammaUrl={gammaUrl}
               className="presenter-gamma-frame"
-              title="LIFE SCORE Visual Report"
-              allowFullScreen
+              onLoadError={onClose}
             />
           </div>
 
@@ -391,36 +434,36 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
             </div>
             <div className="presenter-buttons">
               {state.status === 'idle' && (
-                <button className="presenter-btn presenter-btn-play" onClick={startPresentation}>
+                <button type="button" className="presenter-btn presenter-btn-play" onClick={startPresentation}>
                   ▶ Start Presentation
                 </button>
               )}
               {state.status === 'loading' && (
-                <button className="presenter-btn presenter-btn-loading" disabled>
+                <button type="button" className="presenter-btn presenter-btn-loading" disabled>
                   <span className="presenter-spinner" /> Connecting...
                 </button>
               )}
               {state.status === 'presenting' && (
                 <>
-                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">⏮</button>
-                  <button className="presenter-btn presenter-btn-pause" onClick={handlePause} title="Pause">⏸</button>
-                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">⏭</button>
+                  <button type="button" className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">⏮</button>
+                  <button type="button" className="presenter-btn presenter-btn-pause" onClick={handlePause} title="Pause">⏸</button>
+                  <button type="button" className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">⏭</button>
                 </>
               )}
               {state.status === 'paused' && (
                 <>
-                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">⏮</button>
-                  <button className="presenter-btn presenter-btn-play" onClick={handleResume} title="Resume">▶</button>
-                  <button className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">⏭</button>
+                  <button type="button" className="presenter-btn presenter-btn-skip" onClick={handleSkipBack} title="Previous segment">⏮</button>
+                  <button type="button" className="presenter-btn presenter-btn-play" onClick={handleResume} title="Resume">▶</button>
+                  <button type="button" className="presenter-btn presenter-btn-skip" onClick={handleSkipForward} title="Next segment">⏭</button>
                 </>
               )}
               {state.status === 'completed' && (
-                <button className="presenter-btn presenter-btn-play" onClick={handleRestart}>↻ Replay</button>
+                <button type="button" className="presenter-btn presenter-btn-play" onClick={handleRestart}>↻ Replay</button>
               )}
               {state.status === 'error' && (
-                <button className="presenter-btn presenter-btn-play" onClick={handleRestart}>↻ Retry</button>
+                <button type="button" className="presenter-btn presenter-btn-play" onClick={handleRestart}>↻ Retry</button>
               )}
-              <button className="presenter-btn presenter-btn-close" onClick={handleClose} title="Exit presenter">✕</button>
+              <button type="button" className="presenter-btn presenter-btn-close" onClick={handleClose} title="Exit presenter">✕</button>
             </div>
           </div>
 
@@ -453,10 +496,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
                 >
                   Download MP4
                 </a>
-                <button className="presenter-btn presenter-btn-play" onClick={handleVideoReset}>
+                <button type="button" className="presenter-btn presenter-btn-play" onClick={handleVideoReset}>
                   Generate New
                 </button>
-                <button className="presenter-btn presenter-btn-close" onClick={handleClose} title="Exit presenter">
+                <button type="button" className="presenter-btn presenter-btn-close" onClick={handleClose} title="Exit presenter">
                   ✕
                 </button>
               </div>
@@ -502,10 +545,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
                 <span className="presenter-video-error-icon">!</span>
                 <p>{videoState.error || 'Video generation failed'}</p>
                 <div className="presenter-video-error-actions">
-                  <button className="presenter-btn presenter-btn-play" onClick={handleGenerateVideo}>
+                  <button type="button" className="presenter-btn presenter-btn-play" onClick={handleGenerateVideo}>
                     ↻ Retry
                   </button>
-                  <button className="presenter-btn presenter-btn-close" onClick={handleClose}>
+                  <button type="button" className="presenter-btn presenter-btn-close" onClick={handleClose}>
                     ✕ Close
                   </button>
                 </div>
@@ -536,10 +579,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
                     <li>~2-5 minute rendering time</li>
                   </ul>
                   <div className="presenter-video-idle-actions">
-                    <button className="presenter-btn presenter-btn-play" onClick={handleGenerateVideo}>
+                    <button type="button" className="presenter-btn presenter-btn-play" onClick={handleGenerateVideo}>
                       Generate Video
                     </button>
-                    <button className="presenter-btn presenter-btn-close" onClick={handleClose}>
+                    <button type="button" className="presenter-btn presenter-btn-close" onClick={handleClose}>
                       ✕ Cancel
                     </button>
                   </div>
