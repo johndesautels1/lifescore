@@ -214,7 +214,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // FIX: Auto-reset video when expired URL errors exceed threshold
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS && judgeReport) {
-      console.log('[JudgeTab] Video error threshold reached — clearing expired videoUrl');
       setJudgeReport(prev => prev ? { ...prev, videoUrl: undefined, videoStatus: 'error' as const } : null);
       setVideoErrorCount(0);
     }
@@ -252,7 +251,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       return;
     }
     if (incomingId && incomingId !== prevPropComparisonIdRef.current) {
-      console.log('[JudgeTab] Prop comparison changed:', prevPropComparisonIdRef.current, '→', incomingId, '— resetting stale state');
       // Clear manual dropdown selection so useMemo falls through to propComparisonResult
       setSelectedComparisonId(null);
       // Clear stale judge report so we don't show the old verdict under new cities
@@ -272,19 +270,14 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     if (!savedJudgeReport) return;
 
     const loadReport = async () => {
-      console.log('[JudgeTab] Loading saved Judge report:', savedJudgeReport.reportId);
-
       // Try to fetch the full report from Supabase
       const fullReport = await fetchFullJudgeReport(savedJudgeReport.reportId);
 
       if (fullReport) {
-        console.log('[JudgeTab] Loaded full report from Supabase:', fullReport.reportId);
-
         // FIX 2026-02-14: Proactive video URL expiration check
         let videoUrl = fullReport.videoUrl;
         let videoStatus = fullReport.videoStatus;
         if (videoUrl && (videoUrl.includes('replicate.delivery') || videoUrl.includes('klingai.com'))) {
-          console.log('[JudgeTab] Clearing expired provider URL from Supabase report');
           videoUrl = undefined;
           videoStatus = 'error';
         }
@@ -320,8 +313,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         };
         setJudgeReport(loadedReport);
       } else {
-        console.log('[JudgeTab] Full report not available from Supabase, checking localStorage...');
-
         // FIX 2026-02-14: Before falling back to empty data, check localStorage
         // for a full report that may have categoryAnalysis etc. intact.
         const localReports = getSavedJudgeReports();
@@ -368,11 +359,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         };
         setJudgeReport(loadedReport);
 
-        if (localMatch?.categoryAnalysis && localMatch.categoryAnalysis.length > 0) {
-          console.log('[JudgeTab] Loaded full report from localStorage fallback');
-        } else {
-          console.log('[JudgeTab] Using summary-only data (no categoryAnalysis available)');
-        }
       }
 
       // Notify parent that we loaded the report
@@ -430,7 +416,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       if (computedErrorRef.current && selectedComparisonId) {
         try {
           localStorage.removeItem(LAST_JUDGE_COMPARISON_KEY);
-          console.log('[JudgeTab] Cleared stale LAST_JUDGE_COMPARISON_KEY for deleted comparison');
         } catch { /* ignore */ }
       }
     }
@@ -608,7 +593,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   // Poll for video status until ready or error (legacy D-ID polling, kept for reference)
   const _pollVideoStatus = async (talkId: string, report: JudgeReport) => {
-    console.log('[JudgeTab] Starting video status polling for:', talkId);
     setVideoGenerationProgress('Cristiano is preparing your video report...');
 
     // Clear any existing polling
@@ -630,8 +614,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         }
 
         const data = await response.json();
-        console.log('[JudgeTab] Video status:', data.status);
-
         if (data.status === 'ready' && data.videoUrl) {
           // Video is ready!
           if (videoPollingRef.current) {
@@ -648,7 +630,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           setJudgeReport(updatedReport);
           saveReportToLocalStorage(updatedReport);
           setVideoGenerationProgress('');
-          console.log('[JudgeTab] Video ready:', data.videoUrl);
         } else if (data.status === 'error') {
           // Video generation failed
           if (videoPollingRef.current) {
@@ -693,23 +674,19 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       // Check usage limits before generating video
       const usageResult = await checkUsage('judgeVideos');
       if (!usageResult.allowed) {
-        console.log('[JudgeTab] Judge video limit reached:', usageResult);
         setVideoGenerationProgress('');
         return;
       }
 
       // Increment usage counter before starting generation
       await incrementUsage('judgeVideos');
-      console.log('[JudgeTab] Incremented judgeVideos usage');
     }
 
     // Prevent concurrent video generations
     if (isGeneratingVideo) {
-      console.log('[JudgeTab] Video generation already in progress, cancelling previous');
       cancelVideoGeneration();
     }
 
-    console.log('[JudgeTab] Starting Replicate video generation for report:', report.reportId);
     setVideoGenerationProgress('Initiating video generation...');
 
     // Build script for Cristiano to speak
@@ -773,7 +750,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       setJudgeReport(updatedReport);
       saveReportToLocalStorage(updatedReport);
       setVideoGenerationProgress('');
-      console.log('[JudgeTab] Replicate video ready:', replicateVideo.videoUrl);
     }
   }, [isVideoReady, replicateVideo?.videoUrl]);
 
@@ -823,24 +799,16 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     // Generation lock: Prevent concurrent report generations
     if (isGenerating) {
-      console.log('[JudgeTab] Generation already in progress, ignoring request');
       return;
     }
 
     // Also check if video is still being generated
     if (isGeneratingVideo) {
-      console.log('[JudgeTab] Video generation in progress, cancelling before new report');
       cancelVideoGeneration();
     }
 
     setIsGenerating(true);
     setGenerationProgress(0);
-
-    console.log('[JudgeTab] Generate report requested for:', {
-      city1: comparisonResult.city1.city,
-      city2: comparisonResult.city2.city,
-      userId
-    });
 
     // Setup abort controller for client-side timeout
     const controller = new AbortController();
@@ -895,8 +863,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       // Save to localStorage
       saveReportToLocalStorage(data.report);
 
-      console.log('[JudgeTab] Report generated successfully:', data.report.reportId);
-
       // Automatically start video generation
       generateJudgeVideo(data.report);
 
@@ -923,7 +889,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     saveJudgeReport(report);
     // FIX 2026-02-14: Also persist the comparisonId for tab-switch restoration
     try { localStorage.setItem(LAST_JUDGE_COMPARISON_KEY, report.comparisonId); } catch { /* ignore */ }
-    console.log('[JudgeTab] Report saved to localStorage:', report.reportId);
   };
 
   // Load report from localStorage on mount (if we have a matching comparison)
@@ -936,7 +901,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
     // FIX 2026-01-29: Prevent runaway polling - only check once per comparisonId
     if (checkedComparisonIdRef.current === currentComparisonId) {
-      console.log('[JudgeTab] Already checked this comparison, skipping:', currentComparisonId);
       return;
     }
     checkedComparisonIdRef.current = currentComparisonId;
@@ -953,15 +917,12 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         );
 
         if (matchingReport) {
-          console.log('[JudgeTab] Found cached report:', matchingReport.reportId);
-
           // FIX 2026-02-14: Proactive video URL expiration check.
           // Replicate delivery URLs expire after ~24h. Clear them now instead
           // of waiting for 3 consecutive video load errors.
           if (matchingReport.videoUrl &&
               (matchingReport.videoUrl.includes('replicate.delivery') ||
                matchingReport.videoUrl.includes('klingai.com'))) {
-            console.log('[JudgeTab] Clearing expired provider video URL:', matchingReport.videoUrl.substring(0, 60));
             matchingReport.videoUrl = undefined;
             matchingReport.videoStatus = 'error';
             // Persist the cleanup
@@ -972,10 +933,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
           // If report exists but no video, check for pre-generated video
           if (!matchingReport.videoUrl || matchingReport.videoStatus !== 'ready') {
-            console.log('[JudgeTab] Checking for pre-generated video...');
             const existingVideo = await checkExistingVideo(currentComparisonId);
             if (existingVideo?.videoUrl) {
-              console.log('[JudgeTab] Found pre-generated video:', existingVideo.videoUrl);
               const updatedReport: JudgeReport = {
                 ...matchingReport,
                 videoUrl: existingVideo.videoUrl,
@@ -993,14 +952,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           // list would show a blank judge page because the report was in
           // Supabase but not in localStorage.
           // ════════════════════════════════════════════════════════════════
-          console.log('[JudgeTab] No local report match. Trying Supabase fallback...');
-
           // Strategy 1: Lookup by comparisonId in Supabase
           let supabaseReport = await fetchJudgeReportByComparisonId(currentComparisonId);
 
           // Strategy 2: Lookup by city names (covers different-session comparisonIds)
           if (!supabaseReport && comparisonResult.city1?.city && comparisonResult.city2?.city) {
-            console.log('[JudgeTab] Supabase comparisonId miss. Trying city name lookup...');
             supabaseReport = await fetchJudgeReportByCities(
               comparisonResult.city1.city,
               comparisonResult.city2.city
@@ -1008,8 +964,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           }
 
           if (supabaseReport) {
-            console.log('[JudgeTab] Supabase fallback found report:', supabaseReport.reportId);
-
             // Clear expired video URLs proactively
             if (supabaseReport.videoUrl &&
                 (supabaseReport.videoUrl.includes('replicate.delivery') ||
@@ -1051,14 +1005,10 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             setJudgeReport(loadedReport);
             // Cache to localStorage so next time it loads instantly
             saveReportToLocalStorage(loadedReport);
-            console.log('[JudgeTab] Supabase report cached to localStorage');
           } else {
             // No report anywhere — check if there's a pre-generated video waiting
-            console.log('[JudgeTab] No report in localStorage or Supabase.');
             const existingVideo = await checkExistingVideo(currentComparisonId);
-            if (existingVideo) {
-              console.log('[JudgeTab] Found pre-generated video (no report yet):', existingVideo.status);
-            }
+            void existingVideo;
           }
         }
       } catch (error) {
@@ -1077,10 +1027,8 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         if (videoRef.current && videoRef.current.readyState >= 1) {
           videoRef.current.play().then(() => {
             setIsPlaying(true);
-            console.log('[JudgeTab] Auto-playing cached video');
-          }).catch((err) => {
+          }).catch(() => {
             // Browser may block autoplay - that's OK, user can click play
-            console.log('[JudgeTab] Autoplay blocked by browser:', err.message);
           });
         }
       }, 300);
@@ -1091,13 +1039,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Save report to Supabase (for authenticated users)
   const saveReportToSupabase = async (report: JudgeReport): Promise<boolean> => {
     if (!isSupabaseConfigured()) {
-      console.log('[JudgeTab] Supabase not configured, skipping cloud save');
       return false;
     }
 
     // Use auth context user instead of API call (avoids AbortError issues)
     if (!isAuthenticated || !supabaseUser) {
-      console.log('[JudgeTab] No authenticated user, skipping Supabase save');
       return false;
     }
 
@@ -1145,7 +1091,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         );
 
         if (error) throw error;
-        console.log('[JudgeTab] Report updated in Supabase:', report.reportId);
       } else {
         // Insert new report (with timeout)
         const { error } = await withTimeout(
@@ -1176,7 +1121,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         );
 
         if (error) throw error;
-        console.log('[JudgeTab] Report saved to Supabase:', report.reportId);
       }
 
       return true;
@@ -1189,8 +1133,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Action handlers - Phase B Implementation
   const handleSaveReport = async () => {
     if (!judgeReport) return;
-
-    console.log('[JudgeTab] Save report requested:', judgeReport.reportId);
 
     // Save to localStorage (deferred to avoid blocking UI)
     saveReportToLocalStorage(judgeReport);
@@ -1208,8 +1150,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   const handleDownloadReport = (format: 'pdf' | 'video') => {
     if (!judgeReport) return;
 
-    console.log('[JudgeTab] Download requested:', format);
-
     if (format === 'pdf') {
       // Generate PDF content
       const pdfContent = generatePDFContent(judgeReport);
@@ -1224,8 +1164,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
-      console.log('[JudgeTab] PDF downloaded:', judgeReport.reportId);
     } else if (format === 'video') {
       if (!judgeReport.videoUrl) {
         toastError('Video not yet available. Generate video report first.');
@@ -1243,8 +1181,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   const handleForwardReport = () => {
     if (!judgeReport) return;
-
-    console.log('[JudgeTab] Forward report requested');
 
     // Generate shareable summary
     const summary = `🏆 LIFE SCORE™ Judge's Verdict\n\n` +
@@ -1698,7 +1634,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                   onTimeUpdate={() => setCurrentVideoTime(videoRef.current?.currentTime || 0)}
                   onLoadedMetadata={() => {
                     setVideoDuration(videoRef.current?.duration || 0);
-                    console.log('[JudgeTab] Video loaded, duration:', videoRef.current?.duration);
                   }}
                   onCanPlay={() => {
                     // FIX: Auto-play when video is ready (e.g. loaded from cache)
