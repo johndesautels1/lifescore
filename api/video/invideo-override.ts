@@ -18,6 +18,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 
 // ============================================================================
 // CONFIGURATION
@@ -67,7 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res, 'restricted', { methods: 'GET, POST, DELETE, OPTIONS' })) return;
 
   try {
-    // ── GET: Lookup override (public for authenticated users) ──────────
+    // FIX A11: Require authentication for all methods
+    const auth = await requireAuth(req, res);
+    if (!auth) return;
+
+    // ── GET: Lookup override (authenticated users) ──────────
     if (req.method === 'GET') {
       const { comparisonId, city } = req.query;
 

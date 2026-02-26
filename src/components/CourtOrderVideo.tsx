@@ -16,7 +16,7 @@ import FeatureGate from './FeatureGate';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { saveCourtOrder } from '../services/savedComparisons';
 import { toastSuccess, toastError, toastInfo } from '../utils/toast';
-import { supabase } from '../lib/supabase';
+import { supabase, getAuthHeaders } from '../lib/supabase';
 import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
 import VideoPhoneWarning from './VideoPhoneWarning';
 import { NotifyMeModal } from './NotifyMeModal';
@@ -105,8 +105,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     async function checkOverride() {
       setIsLoadingOverride(true);
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(
-          `/api/video/invideo-override?comparisonId=${encodeURIComponent(comparisonId)}&city=${encodeURIComponent(winnerCity)}`
+          `/api/video/invideo-override?comparisonId=${encodeURIComponent(comparisonId)}&city=${encodeURIComponent(winnerCity)}`,
+          { headers: authHeaders }
         );
         if (!cancelled && response.ok) {
           const data = await response.json();
