@@ -88,7 +88,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 |-----|-----------|------------|-------------------|
 | #4 | ~~Errors only show in the browser console — no toast/popup.~~ | **ALREADY FIXED** in prior session. react-hot-toast installed, `<Toaster>` in main.tsx, custom wrapper in utils/toast.tsx, used across 19 files. | N/A |
 | #7 | No offline detection — if the user loses internet, nothing tells them | MEDIUM — App just silently fails | YES — Most users understand when they're offline |
-| #10 | No error tracking service (Sentry, LogRocket). 259 console.error calls go nowhere in production. | MEDIUM for debugging — When users report bugs, you have no data | YES for launch — Set up Sentry within first month |
+| #10 | ~~No error tracking service.~~ | **ALREADY FIXED** in prior session. `src/lib/errorTracking.ts` captures global errors + unhandled rejections, buffers them, and can send to external endpoint via `VITE_ERROR_REPORTING_URL`. Not Sentry, but functional. | N/A |
 
 ### Database/Supabase (6 remaining)
 
@@ -160,9 +160,9 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 
 1. **G1+G2** — GDPR database tables (UK legal requirement)
 2. **Legal section B** — DPAs, ICO registration
-3. **Error tracking #10** — Set up Sentry so you can debug production issues
+3. ~~**Error tracking #10**~~ — **ALREADY FIXED** in prior session. `src/lib/errorTracking.ts` captures errors globally. Set `VITE_ERROR_REPORTING_URL` to enable remote reporting.
 4. **Mobile HIGH items** — 5 layout issues on small phones
-5. **Letter C bug (G1)** — Users can't type the letter C in Ask Olivia
+5. ~~**Letter C bug (G1)**~~ — **ALREADY FIXED** in prior session. AskOlivia keyboard handler only intercepts Enter, doesn't block any letters. `startTransition` used for smooth typing.
 
 ### Everything else can wait
 
