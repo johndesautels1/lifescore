@@ -6,6 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth } from './shared/auth.js';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 import type { ScoreResult } from './shared/metrics.js';
@@ -1870,6 +1871,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Require authentication — uses LLM API credits (Claude, GPT-4o, Gemini, Tavily)
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const { provider, city1, city2, metrics } = req.body as EvaluationRequest;

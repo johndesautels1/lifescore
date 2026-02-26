@@ -11,6 +11,7 @@
 import type { LLMProvider, LLMAPIKeys, LLMMetricScore } from '../types/enhancedComparison';
 import type { MetricDefinition, CategoryId } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // TIMEOUT CONSTANTS
@@ -112,9 +113,10 @@ async function evaluateCategoryBatch(
 
   try {
     // Call Vercel serverless function which has access to env vars
+    const authHeaders = await getAuthHeaders();
     const response = await fetch('/api/evaluate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       signal: controller.signal,
       body: JSON.stringify({
         provider,
