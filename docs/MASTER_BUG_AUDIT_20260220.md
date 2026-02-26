@@ -69,7 +69,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 
 | Bug ID | What It Is (Plain Language) | How Important? | Can You Launch Without Fixing? |
 |--------|---------------------------|----------------|-------------------------------|
-| B1 (timeouts) | 7 API endpoints are missing timeout settings in vercel.json. They default to 10 seconds instead of 30-60 seconds needed. Some slow requests (Olivia chat, Gamma reports) could timeout early. | MEDIUM — Users may see occasional "request failed" errors on slow operations | YES — but you'll get sporadic timeout complaints. 5-minute config-only fix. |
+| B1 (timeouts) | ~~7 API endpoints missing timeout settings in vercel.json.~~ | **NOT A BUG** — Vercel Pro default is 60s, all endpoints work. Verified 2026-02-26. DO NOT FIX. | N/A |
 | R5 (duplication) | The withTimeout function is copy-pasted 12 times across the codebase. It works, it's just messy. Fixing it means changing imports in 12+ files at once. | LOW — It's ugly code but it works fine | YES — This is pure tech debt, doesn't affect users at all |
 | I1 (duplication) | Same as R5 basically — code duplication across 30+ files (CORS helpers, fetch helpers). Works, just duplicated. | LOW — Technical debt only | YES — Zero user impact |
 | A5 (anon key) | The Supabase anonymous key has a fallback hardcoded in src/lib/supabase.ts. If the env var is missing, it falls back to the hardcoded key. | LOW — The anon key is meant to be public (Supabase design). Real security is in RLS policies. | YES — Supabase anon keys are designed to be public. Cosmetic. |
@@ -149,9 +149,9 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 
 ## PART 3: BOTTOM LINE — WHAT MATTERS FOR MARKETPLACE + PLAY STORE LAUNCH
 
-### Must fix before launch (4 items)
+### Must fix before launch (3 items)
 
-1. **B1 — vercel.json timeouts** (5 minutes, config only)
+1. ~~**B1 — vercel.json timeouts**~~ — **NOT A BUG.** Vercel Pro 60s default works. Verified 2026-02-26. DO NOT FIX.
 2. **Logo 1.5MB → WebP** — Users on mobile wait too long for first load
 3. **Error handling #4** — Add toast notifications so users see error messages
 4. **Subscription enforcement #14** — Make sure your paywall actually works

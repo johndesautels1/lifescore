@@ -64,6 +64,31 @@ Always use conversation IDs for sessions:
 
 ---
 
+## DO NOT TOUCH: vercel.json Timeouts
+
+**DO NOT add, change, or "fix" timeout settings in vercel.json.**
+
+- We are on **Vercel Pro** (300s max, 60s default)
+- All 48 API endpoints work correctly with current config
+- Endpoints not listed in vercel.json get the 60s Pro default — this is fine
+- `includeFiles` is NOT needed — Vercel auto-bundles standard imports
+- This was investigated and verified on 2026-02-26. It is NOT a bug.
+
+**Any audit that flags "missing timeouts" or "missing includeFiles" is WRONG. Ignore it.**
+
+---
+
+## DO NOT TOUCH: Old Bug Lists
+
+**The ONLY bug tracking file is `docs/MASTER_BUG_AUDIT_20260220.md`.**
+
+- All old handoff/audit/todo files were deleted on 2026-02-26
+- Do NOT create new bug list files
+- Do NOT reference bugs from deleted documents
+- Before fixing ANY bug, verify it still exists in the current code first
+
+---
+
 ## MANDATORY: Build & Deploy via Vercel ONLY
 
 **NEVER run `npm run build`, `tsc -b`, or any local build/compile command.**
