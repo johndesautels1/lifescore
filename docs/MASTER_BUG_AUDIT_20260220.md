@@ -105,7 +105,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 
 | Priority | Count | What They Are | Launch Without? |
 |----------|-------|--------------|-----------------|
-| HIGH (5) | 5 | Category bars lose color identity when stacked, score headers not centered at 768px, cockpit header too tall, 7-column grid unreadable at 480px, metric names truncated | These are visual polish — app works, just looks rough on some phone sizes |
+| HIGH (5) | ~~5~~ | ~~Category bars lose color identity, score headers not centered, cockpit header too tall, 7-column grid unreadable, metric names truncated~~ | **ALL 5 ALREADY FIXED** in prior sessions. Verified 2026-02-26: border colors at 768px, single-column grid, reduced padding, 4-column collapse at 480px, ellipsis truncation. |
 | MEDIUM (22) | 22 | !important cleanup, forced white text in light mode, touch targets too small, missing breakpoints, table overflow | YES — Cosmetic issues |
 | LOW (12) | 12 | Minor spacing, alignment tweaks | YES — Nice to have |
 
@@ -161,7 +161,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 1. **G1+G2** — GDPR database tables (UK legal requirement)
 2. **Legal section B** — DPAs, ICO registration
 3. ~~**Error tracking #10**~~ — **ALREADY FIXED** in prior session. `src/lib/errorTracking.ts` captures errors globally. Set `VITE_ERROR_REPORTING_URL` to enable remote reporting.
-4. **Mobile HIGH items** — 5 layout issues on small phones
+4. ~~**Mobile HIGH items**~~ — **ALL 5 ALREADY FIXED** in prior sessions. Verified 2026-02-26: responsive breakpoints at 768px and 480px properly handle all 5 layout issues.
 5. ~~**Letter C bug (G1)**~~ — **ALREADY FIXED** in prior session. AskOlivia keyboard handler only intercepts Enter, doesn't block any letters. `startTransition` used for smooth typing.
 
 ### Everything else can wait
