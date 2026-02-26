@@ -916,6 +916,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
   let tavilyContext = '';
+  let gpt4oTavilyCredits = 0; // FIX B4: replaced var with let
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
       // personal_freedom (15 metrics)
@@ -945,7 +946,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
     ]);
 
     // Track total Tavily credits used for GPT-4o
-    var gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
+    gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
     console.log(`[GPT-4o] Total Tavily credits used: ${gpt4oTavilyCredits}`);
 
     const allResults = searchResults.flatMap(r => r.results);
@@ -973,7 +974,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
     }
   } else {
-    var gpt4oTavilyCredits = 0;
+    // gpt4oTavilyCredits already initialized to 0 above
   }
 
   // GPT-4o SPECIFIC ADDENDUM
