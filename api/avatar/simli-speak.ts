@@ -13,6 +13,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 
 export const config = {
   maxDuration: 60,
@@ -49,6 +50,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Require authentication — calls ElevenLabs/OpenAI TTS APIs
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
