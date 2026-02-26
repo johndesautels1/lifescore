@@ -11,7 +11,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -45,8 +45,8 @@ const MANUAL_TITLES: Record<string, string> = {
 // Manuals that require admin authorization
 const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations', 'prompts'];
 
-// Hardcoded admin emails (fallback if table doesn't exist yet)
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
+// Admin emails from shared auth module (reads DEV_BYPASS_EMAILS env var)
+const ADMIN_EMAILS = getAdminEmails();
 
 // ============================================================================
 // EMBEDDED CONTENT (Fallback)

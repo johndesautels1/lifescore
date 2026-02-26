@@ -18,20 +18,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
-
-// ============================================================================
-// ADMIN CHECK
-// ============================================================================
-
-function getAdminEmails(): string[] {
-  const envEmails = (process.env.DEV_BYPASS_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
-  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
-  return [...new Set([...envEmails, ...fallbackEmails])];
-}
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 
 // ============================================================================
 // ENV VARIABLE REGISTRY — Every env var the app uses, grouped by category

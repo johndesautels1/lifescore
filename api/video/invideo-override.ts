@@ -18,7 +18,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 
 // ============================================================================
 // CONFIGURATION
@@ -28,14 +28,6 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
-
-// Admin emails authorized to manage InVideo overrides
-const ADMIN_EMAILS = [
-  'cluesnomads@gmail.com',
-  'brokerpinellas@gmail.com',
-  'jdes7@aol.com',
-  ...(process.env.DEV_BYPASS_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
-];
 
 // ============================================================================
 // HELPERS
@@ -55,7 +47,7 @@ async function verifyAdmin(req: VercelRequest): Promise<{ email: string } | null
   if (error || !user?.email) return null;
 
   const email = user.email.toLowerCase();
-  if (!ADMIN_EMAILS.includes(email)) return null;
+  if (!getAdminEmails().includes(email)) return null;
 
   return { email };
 }

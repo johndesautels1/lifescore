@@ -10,14 +10,14 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 import { createClient } from '@supabase/supabase-js';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
-const ALERT_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
+const ALERT_EMAILS = getAdminEmails();
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;

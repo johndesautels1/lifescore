@@ -8,16 +8,14 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getAdminEmails } from '../shared/auth.js';
 import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
 const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || 'asst_3wbVjyY629u7fDylaK0s5gsM';
-const ADMIN_EMAILS_ENV = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-const ADMIN_EMAILS = ADMIN_EMAILS_ENV.length > 0
-  ? ADMIN_EMAILS_ENV
-  : ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
+const ADMIN_EMAILS = getAdminEmails();
 
 interface FileObject {
   id: string;
