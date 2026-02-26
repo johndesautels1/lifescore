@@ -9,6 +9,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 
@@ -39,6 +40,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Require authentication — usage data should not be public
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
 
