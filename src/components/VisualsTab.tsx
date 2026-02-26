@@ -285,7 +285,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
     syncGammaReportsFromSupabase().then((synced) => {
       if (!cancelled && synced.length > 0) {
-        console.log('[VisualsTab] Synced', synced.length, 'Gamma reports (local + Supabase merged)');
         setSavedReports(synced);
       }
     }).catch(err => {
@@ -296,16 +295,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
   // Auto-save Gamma reports when generation completes
   useEffect(() => {
-    if (reportState.status === 'completed') {
-      console.log('[VisualsTab] Auto-save check:', {
-        status: reportState.status,
-        hasGammaUrl: !!reportState.gammaUrl,
-        hasGenerationId: !!reportState.generationId,
-        hasResult: !!result,
-        isReportSaved,
-      });
-    }
-
     if (
       reportState.status === 'completed' &&
       reportState.gammaUrl &&
@@ -316,10 +305,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
       const alreadyExists = hasGammaReportForComparison(effectiveComparisonId);
 
-      console.log('[VisualsTab] Auto-save:', { effectiveComparisonId, alreadyExists });
-
       if (!alreadyExists) {
-        console.log('[VisualsTab] Auto-saving Gamma report for:', effectiveComparisonId);
         saveGammaReport({
           comparisonId: effectiveComparisonId,
           city1: result.city1.city,
@@ -333,7 +319,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         });
         setIsReportSaved(true);
         setReportsRefreshKey(k => k + 1);
-        console.log('[VisualsTab] Auto-save complete. Verifying localStorage:', getSavedGammaReports().length, 'reports');
       } else {
         setIsReportSaved(true);
       }
@@ -384,14 +369,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
 
     const effectiveComparisonId = result.comparisonId || crypto.randomUUID();
 
-    console.log('[VisualsTab] Saving report:', {
-      comparisonId: effectiveComparisonId,
-      city1: result.city1.city,
-      city2: result.city2.city,
-      gammaUrl: reportState.gammaUrl,
-      generationId: reportState.generationId,
-    });
-
     saveGammaReport({
       comparisonId: effectiveComparisonId,
       city1: result.city1.city,
@@ -417,12 +394,10 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
     if (!isAdmin) {
       const usageResult = await checkUsage('gammaReports');
       if (!usageResult.allowed) {
-        console.log('[VisualsTab] Gamma report limit reached:', usageResult);
         setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
         return;
       }
       await incrementUsage('gammaReports');
-      console.log('[VisualsTab] Incremented gammaReports usage');
     }
 
     try {
@@ -431,8 +406,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
       const isEnhanced = reportType === 'enhanced' && isEnhancedResult(result);
 
       if (isEnhanced) {
-        console.log('[VisualsTab] Generating enhanced 82-page report');
-
         // Audit 6.1: Use return value from fetchGunComparison to avoid stale closure
         let gunDataToUse: GunComparisonData | undefined = undefined;
         if (includeGunRights) {
@@ -463,8 +436,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
           progress: 100,
         });
       } else {
-        console.log('[VisualsTab] Generating standard report');
-
         const finalState = await generateAndWaitForReport(
           result,
           exportFormat,
