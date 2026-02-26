@@ -86,7 +86,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 
 | Bug | What It Is | Important? | Launch Without It? |
 |-----|-----------|------------|-------------------|
-| #4 | Errors only show in the browser console — no toast/popup tells the user something went wrong | HIGH — Users see a blank screen instead of "Something went wrong, try again" | Risky — Users will think the app is broken. Consider react-hot-toast. |
+| #4 | ~~Errors only show in the browser console — no toast/popup.~~ | **ALREADY FIXED** in prior session. react-hot-toast installed, `<Toaster>` in main.tsx, custom wrapper in utils/toast.tsx, used across 19 files. | N/A |
 | #7 | No offline detection — if the user loses internet, nothing tells them | MEDIUM — App just silently fails | YES — Most users understand when they're offline |
 | #10 | No error tracking service (Sentry, LogRocket). 259 console.error calls go nowhere in production. | MEDIUM for debugging — When users report bugs, you have no data | YES for launch — Set up Sentry within first month |
 
@@ -153,7 +153,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 
 1. ~~**B1 — vercel.json timeouts**~~ — **NOT A BUG.** Vercel Pro 60s default works. Verified 2026-02-26. DO NOT FIX.
 2. ~~**Logo 1.5MB → WebP**~~ — **FIXED** 2026-02-26 (commit eacb56b). 37KB WebP.
-3. **Error handling #4** — Add toast notifications so users see error messages
+3. ~~**Error handling #4**~~ — **ALREADY FIXED** in prior session. react-hot-toast installed, Toaster mounted, used in 19 files.
 4. **Subscription enforcement #14** — Make sure your paywall actually works
 
 ### Should fix within 30 days of launch (5 items)
