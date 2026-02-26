@@ -959,7 +959,7 @@ Cap at 95% while generating
 async function isUserAuthorized(userEmail: string | null): Promise<boolean> {
   if (!userEmail) return false;
 
-  // Check hardcoded admin list first
+  // Check admin email list (from DEV_BYPASS_EMAILS env var)
   if (ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
     return true;
   }
@@ -969,7 +969,7 @@ async function isUserAuthorized(userEmail: string | null): Promise<boolean> {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('[manuals] Supabase not configured, using hardcoded admin list only');
+    console.warn('[manuals] Supabase not configured, using admin email list only');
     return false;
   }
 

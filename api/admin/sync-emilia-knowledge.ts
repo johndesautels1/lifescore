@@ -102,7 +102,7 @@ async function updateAssistant(apiKey: string, assistantId: string, vectorStoreI
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  if (handleCors(req, res)) return;
+  if (handleCors(req, res, 'same-app', { methods: 'POST, OPTIONS' })) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });

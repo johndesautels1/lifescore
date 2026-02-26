@@ -3,7 +3,7 @@
  *
  * Returns whether the authenticated user has admin/developer bypass status.
  * Keeps admin email list server-side only (not in the client JS bundle).
- * Both brokerpinellas@gmail.com and cluesnomads@gmail.com are hardcoded fallbacks.
+ * Admin emails are read from DEV_BYPASS_EMAILS env var via shared getAdminEmails().
  *
  * Requires env var: DEV_BYPASS_EMAILS (comma-separated admin emails)
  *
