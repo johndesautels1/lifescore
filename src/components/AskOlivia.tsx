@@ -141,9 +141,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     videoRef,
     audioRef,
     autoFallback: true,
-    onProviderSwitch: (from, to, reason) => {
-      console.log(`[AskOlivia] Avatar provider switched: ${from} → ${to} (${reason})`);
-    },
+    onProviderSwitch: () => {},
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -186,16 +184,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   // Connect/disconnect avatar based on videoEnabled state
   useEffect(() => {
     if (videoEnabled) {
-      console.log('[AskOlivia] Starting video chat (Simli primary, D-ID fallback)');
       connectAvatar();
     } else {
-      console.log('[AskOlivia] Video chat disabled, disconnecting avatar');
       disconnectAvatar();
     }
 
     // Cleanup ALL audio sources on page refresh/close
     const handleBeforeUnload = () => {
-      console.log('[AskOlivia] Page unloading - stopping ALL audio');
       interruptAvatar();
       stopSpeaking();
       disconnectAvatar();
@@ -210,7 +205,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     // When page loses visibility, STOP all audio to prevent chaos when returning
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log('[AskOlivia] 📱 Page hidden (text/notification/app switch) - stopping audio');
         interruptAvatar();
         stopSpeaking();
         if ('speechSynthesis' in window) {
@@ -222,7 +216,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
     // Also handle blur (loses focus but still visible)
     const handleBlur = () => {
-      console.log('[AskOlivia] 📱 Window blur - pausing audio');
       interruptAvatar();
       stopSpeaking();
       if ('speechSynthesis' in window) {
@@ -236,7 +229,6 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
       // CRITICAL: Stop ALL audio on cleanup/navigation
-      console.log('[AskOlivia] Cleanup - stopping ALL audio sources');
       interruptAvatar();
       stopSpeaking();
       disconnectAvatar();
