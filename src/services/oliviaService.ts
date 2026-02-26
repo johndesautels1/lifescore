@@ -157,7 +157,7 @@ export async function createHeyGenSession(): Promise<HeyGenSessionResponse> {
     '/api/olivia/avatar/heygen',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     },
     45000 // 45 second timeout for avatar session creation
@@ -188,7 +188,7 @@ export async function heygenSpeak(
     '/api/olivia/avatar/heygen',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     },
     60000 // 60 second timeout for avatar speech (TTS + streaming)
@@ -215,7 +215,7 @@ export async function heygenInterrupt(sessionId: string): Promise<HeyGenSessionR
     '/api/olivia/avatar/heygen',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     }
   );
@@ -241,7 +241,7 @@ export async function closeHeyGenSession(sessionId: string): Promise<void> {
     '/api/olivia/avatar/heygen',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     }
   );
@@ -264,7 +264,7 @@ export async function createDIDSession(): Promise<DIDAgentResponse> {
     '/api/olivia/avatar/did',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     }
   );
@@ -295,7 +295,7 @@ export async function didChat(
     '/api/olivia/avatar/did',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     }
   );
@@ -322,7 +322,7 @@ export async function closeDIDSession(sessionId: string): Promise<void> {
     '/api/olivia/avatar/did',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(request),
     }
   );
