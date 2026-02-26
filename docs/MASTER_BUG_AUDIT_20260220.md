@@ -122,7 +122,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 | Bug | What It Is | Important? | Launch Without It? |
 |-----|-----------|------------|-------------------|
 | #1 CRITICAL | App.tsx has 32 useState variables — should be consolidated with useReducer | MEDIUM — App re-renders more than it needs to, feels sluggish | YES — Works, just slower than ideal |
-| #2 CRITICAL | Logo PNG is 1.5MB — should be WebP (~100KB) | HIGH — Every user downloads 1.5MB just for the logo, slow first load | Fix this — 5-minute conversion, huge payoff |
+| #2 CRITICAL | ~~Logo PNG is 1.5MB — should be WebP.~~ | **FIXED** 2026-02-26 (commit eacb56b). Switched to 37KB WebP. | N/A |
 | #4 CRITICAL | SavedComparisons blocks on Supabase sync at mount — should show local data first | MEDIUM — Saved comparisons tab feels slow to open | YES |
 | #7-#9 | Missing useCallback/useMemo optimizations | LOW — Slight performance gains | YES |
 | #14 | 100 metrics in DOM without virtualization | MEDIUM — Scroll performance on low-end phones | YES |
@@ -152,7 +152,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 ### Must fix before launch (3 items)
 
 1. ~~**B1 — vercel.json timeouts**~~ — **NOT A BUG.** Vercel Pro 60s default works. Verified 2026-02-26. DO NOT FIX.
-2. **Logo 1.5MB → WebP** — Users on mobile wait too long for first load
+2. ~~**Logo 1.5MB → WebP**~~ — **FIXED** 2026-02-26 (commit eacb56b). 37KB WebP.
 3. **Error handling #4** — Add toast notifications so users see error messages
 4. **Subscription enforcement #14** — Make sure your paywall actually works
 
