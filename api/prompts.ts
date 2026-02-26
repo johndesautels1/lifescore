@@ -14,6 +14,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth } from './shared/auth.js';
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
@@ -44,6 +45,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res, 'restricted', { methods: 'GET, PUT, OPTIONS' })) return;
 
   try {
+    // FIX AC4: Require authentication for all methods (prompts are internal IP)
+    const auth = await requireAuth(req, res);
+    if (!auth) return;
+
     // ── GET: List prompts or categories ───────────────────────────────
     if (req.method === 'GET') {
       const { category, key, categories } = req.query;
