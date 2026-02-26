@@ -18,6 +18,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth } from './shared/auth.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -330,6 +331,10 @@ export default async function handler(
   if (!applyRateLimit(req.headers, 'gamma', 'light', res)) {
     return; // 429 already sent
   }
+
+  // Require authentication — uses Gamma API credits
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     // POST - Create new generation

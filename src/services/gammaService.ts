@@ -12,6 +12,7 @@ import type {
   MetricConsensus
 } from '../types/enhancedComparison';
 import type { ComparisonResult, CategoryScore, MetricScore } from '../types/metrics';
+import { getAuthHeaders } from '../lib/supabase';
 import type {
   VisualReportResponse,
   VisualReportState,
@@ -516,10 +517,12 @@ export async function generateVisualReport(
 ): Promise<VisualReportResponse> {
   const prompt = formatComparisonForGamma(result);
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetch('/api/gamma', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
     body: JSON.stringify({
       prompt,
@@ -552,10 +555,12 @@ export async function generateVisualReport(
  * Check generation status
  */
 export async function checkGenerationStatus(generationId: string): Promise<VisualReportResponse> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`/api/gamma?generationId=${encodeURIComponent(generationId)}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
   });
 
@@ -2799,10 +2804,12 @@ export async function generateEnhancedVisualReport(
 
   console.log(`[GammaService] Generating enhanced report: ${prompt.length} chars`);
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetch('/api/gamma', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
     body: JSON.stringify({
       prompt,
