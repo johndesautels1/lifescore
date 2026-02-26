@@ -928,9 +928,9 @@ ${city1Name} vs ${city2Name}
 ${keyFactors}
 </smart-layout>
 
-**Top 5 Factors Determining the Winner:**
+**Top 5 Factors Determining the ${winner === 'TIE' ? 'Outcome' : 'Winner'}:**
 
-These metrics contributed most to ${winner}'s victory, accounting for the majority of the ${scoreDiff}-point margin.
+${winner === 'TIE' ? 'These metrics had the largest impact on the final scores, despite the overall tie.' : `These metrics contributed most to ${winner}'s victory, accounting for the majority of the ${scoreDiff}-point margin.`}
 
 ---
 
