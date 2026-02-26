@@ -154,9 +154,10 @@ export async function checkVideoStatus(
     params.append('predictionId', predictionId);
   }
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     `/api/video/grok-status?${params.toString()}`,
-    { method: 'GET' },
+    { method: 'GET', headers: authHeaders },
     VIDEO_STATUS_TIMEOUT
   );
 
@@ -306,11 +307,12 @@ export async function checkCachedVideos(
   hasCached: boolean;
   videos?: GrokVideoPair | GrokVideo;
 }> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/video/grok-status',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         action: 'check_cache',
         city1,

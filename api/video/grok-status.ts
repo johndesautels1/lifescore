@@ -12,6 +12,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
 
@@ -214,6 +215,10 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   if (handleCors(req, res, 'same-app', { methods: 'GET, POST, OPTIONS' })) return;
+
+  // Require authentication — queries user video data
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   // Prevent browser/CDN caching - status polling must always get fresh data
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
