@@ -105,7 +105,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
 
       // Increment usage counter before starting generation
       await incrementUsage('grokVideos');
-      console.log('[NewLifeVideos] Incremented grokVideos usage');
     }
 
     setHasStarted(true);
@@ -223,7 +222,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
-      console.log('[NewLifeVideos] Video error threshold reached - resetting to allow regeneration');
       reset();
       setHasStarted(false);
       setIsPlaying(false);

@@ -82,7 +82,6 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
 
     // If comparison changed and we had a previous one, clear history
     if (lastComparisonIdRef.current !== null && currentId !== lastComparisonIdRef.current) {
-      console.log('[OliviaChatBubble] Comparison changed, clearing chat history');
       clearHistory();
     }
 

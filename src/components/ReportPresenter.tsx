@@ -137,7 +137,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   const connectHeyGen = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('[ReportPresenter] Creating HeyGen session...');
       const response = await createHeyGenSession();
       if (!response.sessionId) throw new Error('No session ID returned');
 
@@ -162,7 +161,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         await pc.setRemoteDescription(response.sdpOffer);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        console.log('[ReportPresenter] WebRTC connected');
       }
       return true;
     } catch (err) {

@@ -161,7 +161,6 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
         if (!cancelled && data?.video_url) {
           setCachedVideoUrl(data.video_url);
           setCachedThumbnailUrl(data.thumbnail_url || null);
-          console.log('[GoToMyNewCity] Restored cached video:', data.video_url.substring(0, 60) + '...');
         }
       } catch (err) {
         console.warn('[GoToMyNewCity] Cache check failed:', err);
@@ -214,7 +213,6 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
       }
 
       await incrementUsage('cristianoVideos' as any);
-      console.log('[GoToMyNewCity] Incremented cristianoVideos usage');
     }
 
     setHasStarted(true);
@@ -320,7 +318,6 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   // Auto-reset on repeated errors (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
-      console.log('[GoToMyNewCity] Video error threshold reached - resetting');
       reset();
       setHasStarted(false);
       setIsPlaying(false);
