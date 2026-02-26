@@ -60,7 +60,6 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   const [showGammaReports, setShowGammaReports] = useState(false);
   const [showGitHubModal, setShowGitHubModal] = useState(false);
   const [gitHubToken, setGitHubToken] = useState('');
-  const [, setGitHubUsername] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState(getSyncStatus());
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [editingNickname, setEditingNickname] = useState<string | null>(null);
@@ -299,7 +298,6 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
 
     const result = await connectGitHub(gitHubToken.trim());
     if (result.success) {
-      setGitHubUsername(result.username || null);
       setShowGitHubModal(false);
       setGitHubToken('');
       loadComparisons();
@@ -312,7 +310,6 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   const handleDisconnectGitHub = () => {
     toastConfirm('Disconnect from GitHub? Your local comparisons will be kept.', async () => {
       await disconnectGitHub(false);
-      setGitHubUsername(null);
       loadComparisons();
       showMessage('success', 'Disconnected from GitHub');
     });
