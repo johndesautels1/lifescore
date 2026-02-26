@@ -21,7 +21,7 @@ const ALERT_EMAILS = getAdminEmails();
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'cluesnomads@gmail.com';
+const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
 
 // ============================================================================
 // TYPES
@@ -167,7 +167,7 @@ async function sendAlertEmail(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: RESEND_FROM_EMAIL,
+        from: RESEND_FROM,
         to: ALERT_EMAILS,
         subject,
         html,
