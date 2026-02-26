@@ -152,7 +152,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           const isExpiredProviderUrl = url.includes('replicate.delivery') || url.includes('klingai.com');
           if (!isExpiredProviderUrl || !data.video_storage_path) {
             setCachedVideoUrl(url);
-            console.log('[CourtOrderVideo] Restored cached video:', url.substring(0, 60) + '...');
           }
         }
       } catch (err) {
@@ -269,13 +268,11 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       // Check usage limits before generating Grok video
       const usageResult = await checkUsage('grokVideos');
       if (!usageResult.allowed) {
-        console.log('[CourtOrderVideo] Grok video limit reached:', usageResult);
         return;
       }
 
       // Increment usage counter before starting generation
       await incrementUsage('grokVideos');
-      console.log('[CourtOrderVideo] Incremented grokVideos usage');
     }
 
     setHasStarted(true);
@@ -398,7 +395,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         setUserVideoUrl(result.publicUrl);
         setUploadStatus(null);
         toastSuccess('Video saved to cloud!');
-        console.log('[CourtOrderVideo] Video uploaded to Supabase:', result.publicUrl);
       } catch (err) {
         // Upload failed — keep the blob URL so video still plays locally
         console.error('[CourtOrderVideo] Supabase upload failed:', err);
@@ -439,7 +435,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
   // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
-      console.log('[CourtOrderVideo] Video error threshold reached - resetting to allow regeneration');
       // Clear broken InVideo override so we fall back to Kling generation
       if (invideoOverride) {
         console.warn('[CourtOrderVideo] Clearing broken InVideo override, falling back to Kling');
@@ -494,7 +489,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           videoUrl,
           savedAt: new Date().toISOString(),
         });
-        console.log('[CourtOrderVideo] Court Order saved:', comparisonId);
         toastSuccess('Court Order saved successfully!');
       } catch (error) {
         console.error('[CourtOrderVideo] Failed to save Court Order:', error);
@@ -511,8 +505,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     const filename = `court-order-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${comparisonId.slice(0, 8)}.mp4`;
 
     try {
-      console.log('[CourtOrderVideo] Downloading video:', videoUrl);
-
       // For blob URLs (user uploads), use the URL directly as download href
       if (videoUrl.startsWith('blob:')) {
         const a = document.createElement('a');
@@ -535,7 +527,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         URL.revokeObjectURL(blobUrl);
       }
 
-      console.log('[CourtOrderVideo] Download initiated');
     } catch (err) {
       console.error('[CourtOrderVideo] Download error:', err);
       toastError('Failed to download video. Please try again.');
@@ -556,12 +547,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     try {
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
-        console.log('[CourtOrderVideo] Shared successfully');
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(videoUrl);
         toastSuccess('Video URL copied to clipboard!');
-        console.log('[CourtOrderVideo] URL copied to clipboard');
       }
     } catch (err) {
       console.error('[CourtOrderVideo] Share error:', err);
