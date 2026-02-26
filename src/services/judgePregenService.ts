@@ -202,7 +202,8 @@ export async function checkExistingVideo(
 ): Promise<{ exists: boolean; videoUrl?: string; status?: string }> {
   try {
     const response = await fetch(
-      `/api/avatar/video-status?comparisonId=${encodeURIComponent(comparisonId)}`
+      `/api/avatar/video-status?comparisonId=${encodeURIComponent(comparisonId)}`,
+      { headers: await getAuthHeaders() }
     );
 
     if (!response.ok) {

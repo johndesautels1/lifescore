@@ -12,6 +12,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -75,6 +76,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Require authentication — queries user video data
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   const videoId = req.query.videoId as string;
   const comparisonId = req.query.comparisonId as string;
