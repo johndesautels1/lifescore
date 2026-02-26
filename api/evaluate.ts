@@ -15,6 +15,9 @@ import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM API calls (OpenAI, Claude, Gemini, etc.)
 const TAVILY_TIMEOUT_MS = 45000; // 45 seconds for Tavily search/research (web APIs should be fast)
 
+// FIX SD1+SD2: Dynamic year for Tavily search queries (prevents stale hardcoded years)
+const CURRENT_YEAR = new Date().getFullYear().toString();
+
 // ============================================================================
 // TAVILY RESEARCH CACHE (In-memory, clears on redeploy)
 // Added 2026-02-03 - Reduces duplicate Research API calls across LLM providers
@@ -560,7 +563,7 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
           headers: getTavilyHeaders(apiKey),
           body: JSON.stringify({
             // api_key removed - now using Bearer auth in header per Tavily docs
-            input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
+            input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on ${CURRENT_YEAR} current laws.`,
             model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
             citation_format: 'numbered'
           })
@@ -732,23 +735,23 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
     // Step 1: Research API for comprehensive baseline (runs in parallel with searches)
     const searchQueries = [
       // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
       // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations 2025`,
-      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
       // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws 2025`,
-      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
       // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
       // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
-      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
       // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
-      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     ];
 
     // Run Research + Search in parallel for speed
@@ -916,23 +919,23 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
       // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
       // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations 2025`,
-      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
       // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws 2025`,
-      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
       // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
       // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
-      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
       // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
-      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     ];
 
     // Run Research + Search in parallel for speed
@@ -1341,7 +1344,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 
 ### REAL-TIME DATA STRATEGY
 - Use your native X/Twitter search to bridge "legal theory" vs "enforcement reality"
-- Query pattern: "${city1} OR ${city2} [metric keywords] enforcement experience since:2025-01-01"
+- Query pattern: "${city1} OR ${city2} [metric keywords] enforcement experience since:${CURRENT_YEAR}-01-01"
 - Summarize 5-10 recent posts to inform if enforcement deviates from written law
 - Weight X anecdotes at 20-30% alongside official sources (gov sites, statutes)
 
@@ -1554,23 +1557,23 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
       // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
       // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations 2025`,
-      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
       // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws 2025`,
-      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
       // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
       // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
-      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
       // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
-      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     ];
 
     // Run Research + Search in parallel for speed
