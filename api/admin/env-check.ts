@@ -139,10 +139,11 @@ const ENV_VARS: EnvVarDef[] = [
 // MASK HELPER
 // ============================================================================
 
+// FIX S4: Tighter masking — show only first 3 chars, hide the rest
 function maskValue(val: string): string {
   if (!val) return '';
-  if (val.length <= 8) return val.substring(0, 2) + '***';
-  return val.substring(0, 4) + '***' + val.substring(val.length - 2);
+  if (val.length <= 4) return '***';
+  return val.substring(0, 3) + '***';
 }
 
 // ============================================================================
