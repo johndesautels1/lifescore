@@ -184,7 +184,7 @@ export async function withRetryFallback<T>(
  * Returns fallback value on timeout instead of throwing.
  *
  * @param promise - The Supabase query promise
- * @param timeoutMs - Timeout in milliseconds (default: 45000)
+ * @param timeoutMs - Timeout in milliseconds (default: 12000)
  * @param fallback - Value to return on timeout
  */
 export async function withSupabaseTimeout<T>(
@@ -208,7 +208,7 @@ export async function withSupabaseTimeout<T>(
  * Use when you need to know if timeout occurred.
  *
  * @param promise - The Supabase query promise
- * @param timeoutMs - Timeout in milliseconds (default: 45000)
+ * @param timeoutMs - Timeout in milliseconds (default: 12000)
  */
 export async function withSupabaseTimeoutThrow<T>(
   promise: PromiseLike<T>,
