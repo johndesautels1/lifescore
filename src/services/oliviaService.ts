@@ -34,7 +34,7 @@ export async function buildContext(
     '/api/olivia/context',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify({
         comparisonResult,
         includeEvidence: options.includeEvidence ?? true,
