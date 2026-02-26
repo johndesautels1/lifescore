@@ -98,7 +98,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 | #8 | Hung Supabase connections don't get cancelled, just raced with a timeout | LOW — Wastes a connection but doesn't break anything | YES |
 | #10 | avatar_videos table is publicly readable (no auth needed to SELECT) | BY DESIGN — These are public video content | YES |
 | #13 | Connection pooling concerns | LOW — Supabase handles this | YES |
-| #14 | Subscription enforcement gaps | MEDIUM — Some premium features might be accessible without paying | Check this — if monetization matters, verify your paywall |
+| #14 | Subscription enforcement gaps — frontend gates work, backend APIs don't check tier | MEDIUM — Technical users could bypass frontend paywall via direct API calls | **DEFER TO DEDICATED SESSION** — frontend gates prevent normal user abuse. Backend tier checks risk breaking payment flow if done wrong. Verified 2026-02-26. |
 | #15 | Minor migration ordering issues | LOW | YES |
 
 ### Mobile UI/UX (39 remaining)
@@ -154,7 +154,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 1. ~~**B1 — vercel.json timeouts**~~ — **NOT A BUG.** Vercel Pro 60s default works. Verified 2026-02-26. DO NOT FIX.
 2. ~~**Logo 1.5MB → WebP**~~ — **FIXED** 2026-02-26 (commit eacb56b). 37KB WebP.
 3. ~~**Error handling #4**~~ — **ALREADY FIXED** in prior session. react-hot-toast installed, Toaster mounted, used in 19 files.
-4. **Subscription enforcement #14** — Make sure your paywall actually works
+4. **Subscription enforcement #14** — Frontend paywall works (FeatureGate, useTierAccess, checkUsage all solid). Backend APIs do NOT check tier — a technical user could bypass frontend and call evaluate/judge/gamma/video APIs directly on free tier. Frontend gates prevent normal abuse. **DEFER TO DEDICATED SESSION** — touching payment logic risks locking out paying users. Verified 2026-02-26.
 
 ### Should fix within 30 days of launch (5 items)
 
