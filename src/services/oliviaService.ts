@@ -410,7 +410,7 @@ export async function generateHeyGenVideo(
     '/api/olivia/avatar/heygen-video',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify({
         action: 'generate',
         script,
@@ -446,7 +446,7 @@ export async function checkHeyGenVideoStatus(
 }> {
   const response = await fetchWithTimeout(
     `/api/olivia/avatar/heygen-video?videoId=${encodeURIComponent(videoId)}`,
-    { method: 'GET' },
+    { method: 'GET', headers: await getAuthHeaders() },
     30000 // 30 second timeout for status check
   );
 

@@ -7,6 +7,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // RATE LIMITING CONSTANTS
@@ -144,9 +145,10 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
 
     try {
       // 1. Request stream from backend
+      const authHeaders = await getAuthHeaders();
       const createResponse = await fetch('/api/olivia/avatar/streams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ action: 'create' }),
       });
 
@@ -198,7 +200,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
           try {
             await fetch('/api/olivia/avatar/streams', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', ...authHeaders },
               body: JSON.stringify({
                 action: 'ice-candidate',
                 streamId,
@@ -233,7 +235,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       // 8. Send answer to D-ID
       const startResponse = await fetch('/api/olivia/avatar/streams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'speak',
           streamId,
@@ -296,9 +298,10 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
     onSpeakingStartRef.current?.();
 
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/olivia/avatar/streams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'speak',
           streamId: state.streamId,
@@ -356,9 +359,10 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
     // Notify backend
     if (state.streamId && state.sessionId) {
       try {
+        const authHeaders = await getAuthHeaders();
         await fetch('/api/olivia/avatar/streams', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
             action: 'destroy',
             streamId: state.streamId,
