@@ -159,6 +159,12 @@ export default async function handler(
       return;
     }
 
+    // FIX X3: Validate voiceId format to prevent URL path injection
+    if (!/^[a-zA-Z0-9_-]+$/.test(voiceId)) {
+      res.status(400).json({ error: 'Invalid voiceId format' });
+      return;
+    }
+
     // Truncate if needed
     const processedText = truncateText(text.trim());
     console.log('[OLIVIA/TTS] Generating speech for', processedText.length, 'characters');
