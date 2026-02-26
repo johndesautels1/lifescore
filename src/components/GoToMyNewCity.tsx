@@ -421,7 +421,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
               <div className="lcd-display">
                 {/* Clues Logo Overlay - always visible in corner */}
                 <img
-                  src="/logo-transparent.png"
+                  src="/logo-transparent.webp"
                   alt="CLUES"
                   className="video-logo-overlay"
                 />
@@ -431,7 +431,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                     {!isPlaying && currentTime === 0 && (
                       <div className="video-poster-overlay" onClick={handlePlayPause}>
                         <img
-                          src="/logo-transparent.png"
+                          src="/logo-transparent.webp"
                           alt="CLUES"
                           className="poster-logo"
                         />
