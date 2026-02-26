@@ -324,8 +324,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS - open for report generation
-  if (handleCors(req, res, 'open', { methods: 'GET, POST, OPTIONS' })) return;
+  // CORS - restricted to same app (requires auth)
+  if (handleCors(req, res, 'same-app', { methods: 'GET, POST, OPTIONS' })) return;
 
   // Rate limiting - light preset for report generation
   if (!applyRateLimit(req.headers, 'gamma', 'light', res)) {

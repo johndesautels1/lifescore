@@ -398,8 +398,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  if (handleCors(req, res, 'open')) return;
+  // CORS - restricted to same app (requires auth)
+  if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - heavy preset (video generation is expensive)
   if (!applyRateLimit(req.headers, 'judge-video', 'heavy', res)) {

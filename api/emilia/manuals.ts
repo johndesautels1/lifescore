@@ -1002,8 +1002,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  if (handleCors(req, res, 'open', { methods: 'GET, OPTIONS' })) return;
+  // CORS - restricted to same app (requires auth)
+  if (handleCors(req, res, 'same-app', { methods: 'GET, OPTIONS' })) return;
 
   // Method check
   if (req.method !== 'GET') {
