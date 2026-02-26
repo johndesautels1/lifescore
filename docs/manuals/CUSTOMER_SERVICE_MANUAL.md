@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.5
-**Last Updated:** February 17, 2026
+**Version:** 3.7
+**Last Updated:** February 26, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -249,6 +249,34 @@ Currently, LifeScore supports **200 metropolitan areas**:
 
 **Expected Response:**
 "Thank you for reporting this. We've fixed the dark mode styling for saved reports — city names and dates now display with proper contrast. Please refresh the page to see the fix. If text is still hard to read, try toggling dark mode off and on again in Settings."
+
+### 4.10 "Is my data secure?" / "Who can access my comparisons?"
+
+**Expected Response:**
+"Your data is highly secure. As of February 2026, all API endpoints require authenticated login — no one can access comparison data, videos, or reports without being signed into their own account. We use bank-level JWT authentication on every request. Your comparisons are isolated by your user ID and protected by Row Level Security in the database, meaning even at the database level, users can only see their own data."
+
+**Technical Background (2026-02-26 security audit):**
+- 38+ API endpoints now require JWT authentication (previously ~15 were unprotected)
+- IDOR vulnerability fixed on video generation endpoint — users can no longer spoof another user's ID
+- CORS restrictions tightened — API only accepts requests from the LIFE SCORE app domain
+- API keys are never sent to the browser
+- XSS injection vectors patched (innerHTML, URL path injection, open redirects)
+- 87 debug console.log statements removed from production (were leaking internal data to browser console)
+- Admin email list centralized — no more hardcoded bypass emails scattered across files
+
+### 4.11 "The copyright says the wrong year" / "It says 2025"
+
+**Expected Response:**
+"This has been fixed. All copyright notices and date displays now use the current year automatically. Please refresh the page to see the updated year."
+
+**Root Cause (resolved 2026-02-26):** Hardcoded "2025" year strings were replaced with dynamic `new Date().getFullYear()` across the codebase.
+
+### 4.12 "When two cities tie, the report text looks wrong"
+
+**Expected Response:**
+"This has been fixed. When two cities score within 1 point of each other, the report now shows 'evenly matched' instead of blank or broken winner text. The Judge provides a balanced analysis of both cities without declaring a winner."
+
+**Root Cause (resolved 2026-02-26):** The victory text template had no handler for the tie case, resulting in blank/undefined text in the report verdict.
 
 ---
 
@@ -968,6 +996,11 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **Voice Wave Indicator** | Animated visual feedback on PIP player showing when audio is actively playing |
 | **Storyboard QA** | Word count and content validation step before video rendering begins |
 | **Field-by-Field Merge** | Cost Dashboard technique that takes the higher value from localStorage vs database for each cost field |
+| **JWT Authentication** | JSON Web Token — a secure login token sent with every API request to verify the user's identity |
+| **IDOR** | Insecure Direct Object Reference — a vulnerability where a user can access another user's data by changing an ID in the request (fixed 2026-02-26) |
+| **CORS** | Cross-Origin Resource Sharing — browser security policy controlling which websites can call the API |
+| **XSS** | Cross-Site Scripting — an attack where malicious code is injected into a web page (patched 2026-02-26) |
+| **getAdminEmails()** | Shared function that provides the centralized admin email list to all API endpoints (added 2026-02-26) |
 
 ---
 
@@ -989,6 +1022,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | New §5.9 Mobile Display Issues: 9 mobile vertical overflow fixes documented with response template. Affected areas: Results score cards, category badges, About services table, How It Works modules, Olivia buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. |
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system (§5.10, §8.12) with troubleshooting and architecture. "Explain the Winner" toggle (§8.6a). Judge stale state fix (§5.6). VS text dark mode fix (§5.8). Gamma links fix (§5.5). Phone call audio warning (§5.4). Mobile warning modal (§5.9). Mobile +/- buttons and LLM badges fix. Password reset and login credential fixes. Admin signup notification. |
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§5.5): PDF/PPTX exports now persisted to permanent Supabase Storage. Iframe error detection added to all 4 embed locations. New troubleshooting entries and response template for expired export URLs. |
+| 3.7 | 2026-02-26 | Claude Opus 4.6 | Security audit update: 47-fix session documented. New customer inquiries §4.10 (data security), §4.11 (copyright year), §4.12 (tie case). All API endpoints now authenticated (38+). IDOR fix, CORS hardening, XSS patches, 87 debug console.log removed, admin emails centralized. New glossary terms: JWT, IDOR, CORS, XSS, getAdminEmails(). |
 
 ---
 

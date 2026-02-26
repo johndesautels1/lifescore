@@ -1,7 +1,7 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.5.0
-**Last Updated:** 2026-02-17
+**Version:** 2.6.0
+**Last Updated:** 2026-02-26
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 **Auto-Generated From:** Codebase introspection of ~250 commits ahead of main
 
@@ -752,51 +752,51 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/evaluate` | No (rate-limited) | LLM evaluation scoring cities across 100 metrics with cached Tavily research |
-| POST | `/api/judge` | No (rate-limited) | Claude Opus consensus builder computing final scores from evaluator results |
-| POST | `/api/judge-report` | No (rate-limited) | Claude Opus comprehensive analysis with holistic freedom analysis and recommendations |
+| POST | `/api/evaluate` | Yes (JWT) | LLM evaluation scoring cities across 100 metrics with cached Tavily research |
+| POST | `/api/judge` | Yes (JWT) | Claude Opus consensus builder computing final scores from evaluator results |
+| POST | `/api/judge-report` | Yes (JWT) | Claude Opus comprehensive analysis with holistic freedom analysis and recommendations |
 
 ### 3.2 Video Generation (7)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/video/grok-generate` | No | Generate videos via Kling AI (primary) with Replicate fallback |
-| GET, POST | `/api/video/grok-status` | No | Check video generation status; POST supports cache checking |
-| GET, POST, DELETE | `/api/video/invideo-override` | Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
-| POST | `/api/avatar/generate-judge-video` | Yes | Generate Cristiano judge videos via Replicate Wav2Lip |
-| GET | `/api/avatar/video-status` | No | Check judge video generation status |
+| POST | `/api/video/grok-generate` | Yes (JWT) | Generate videos via Kling AI (primary) with Replicate fallback. **IDOR fix 2026-02-26:** userId overridden with auth user ID |
+| GET, POST | `/api/video/grok-status` | Yes (JWT) | Check video generation status; POST supports cache checking |
+| GET, POST, DELETE | `/api/video/invideo-override` | Yes (JWT) + Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
+| POST | `/api/avatar/generate-judge-video` | Yes (JWT) | Generate Cristiano judge videos via Replicate Wav2Lip |
+| GET | `/api/avatar/video-status` | Yes (JWT) | Check judge video generation status |
 | POST | `/api/avatar/video-webhook` | No (webhook) | Replicate webhook callback for video completion |
-| POST | `/api/judge-video` | No (rate-limited) | D-ID fallback avatar endpoint for Judge verdict |
+| POST | `/api/judge-video` | Yes (JWT) | D-ID fallback avatar endpoint for Judge verdict |
 
 ### 3.3 Avatar & Streaming (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/avatar/simli-session` | No | Returns Simli WebRTC session credentials |
-| POST | `/api/avatar/simli-speak` | No | TTS audio in PCM Int16 format for Simli playback |
-| POST | `/api/olivia/avatar/streams` | No (rate-limited) | D-ID Streams API for WebRTC avatar |
-| POST | `/api/olivia/avatar/heygen` | No (rate-limited) | HeyGen Streaming Avatar API |
-| POST, GET | `/api/olivia/avatar/heygen-video` | No (rate-limited) | HeyGen pre-rendered video generation + status polling for Olivia presenter |
+| POST | `/api/avatar/simli-session` | Yes (JWT) | Returns Simli WebRTC session credentials (API key no longer leaked in response — S1 fix 2026-02-26) |
+| POST | `/api/avatar/simli-speak` | Yes (JWT) | TTS audio in PCM Int16 format for Simli playback |
+| POST | `/api/olivia/avatar/streams` | Yes (JWT) | D-ID Streams API for WebRTC avatar |
+| POST | `/api/olivia/avatar/heygen` | Yes (JWT) | HeyGen Streaming Avatar API |
+| POST, GET | `/api/olivia/avatar/heygen-video` | Yes (JWT) | HeyGen pre-rendered video generation + status polling for Olivia presenter |
 
 ### 3.4 Olivia AI Assistant (6)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/olivia/chat` | Yes | Main chat via OpenAI Assistants API |
-| POST | `/api/olivia/context` | No (rate-limited) | Transform comparison data into Olivia context |
-| POST | `/api/olivia/field-evidence` | Yes | Source evidence for specific metrics |
-| POST | `/api/olivia/gun-comparison` | No | Standalone unscored gun rights comparison |
-| POST | `/api/olivia/tts` | Yes | ElevenLabs TTS with OpenAI fallback |
-| POST | `/api/olivia/contrast-images` | Yes | AI contrast images via Flux (Replicate) |
+| POST | `/api/olivia/chat` | Yes (JWT) | Main chat via OpenAI Assistants API |
+| POST | `/api/olivia/context` | Yes (JWT) | Transform comparison data into Olivia context |
+| POST | `/api/olivia/field-evidence` | Yes (JWT) | Source evidence for specific metrics |
+| POST | `/api/olivia/gun-comparison` | Yes (JWT) | Standalone unscored gun rights comparison |
+| POST | `/api/olivia/tts` | Yes (JWT) | ElevenLabs TTS with OpenAI fallback. voiceId validated with regex (X3 fix 2026-02-26) |
+| POST | `/api/olivia/contrast-images` | Yes (JWT) | AI contrast images via Flux (Replicate) |
 
 ### 3.5 Emilia Help Assistant (4)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/emilia/thread` | No | Create new Emilia conversation thread |
-| POST | `/api/emilia/message` | Yes | Send message to Emilia and get response |
-| POST | `/api/emilia/speak` | Yes | TTS for Emilia voice (ElevenLabs + OpenAI fallback) |
-| GET | `/api/emilia/manuals` | Partial | Serve documentation content; admin-only for restricted manuals |
+| POST | `/api/emilia/thread` | Yes (JWT) | Create new Emilia conversation thread |
+| POST | `/api/emilia/message` | Yes (JWT) | Send message to Emilia and get response |
+| POST | `/api/emilia/speak` | Yes (JWT) | TTS for Emilia voice (ElevenLabs + OpenAI fallback) |
+| GET | `/api/emilia/manuals` | Yes (JWT) + Admin for restricted | Serve documentation content; admin-only for restricted manuals |
 
 ### 3.6 Stripe Billing (4)
 
@@ -807,14 +807,15 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | GET | `/api/stripe/get-subscription` | No | Get current subscription status |
 | POST | `/api/stripe/webhook` | No (signature) | Handle Stripe lifecycle events |
 
-### 3.7 Admin (4)
+### 3.7 Admin (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | GET | `/api/admin-check` | Yes + Admin | Check if user has admin/developer bypass status |
-| GET | `/api/admin/env-check` | Yes + Admin | Show all environment variable configuration status |
+| GET | `/api/admin/env-check` | Yes + Admin | Show all environment variable configuration status (secrets masked — S4 fix 2026-02-26) |
 | POST | `/api/admin/sync-olivia-knowledge` | Yes + Admin | Upload knowledge base to OpenAI Assistant |
-| GET, PUT | `/api/prompts` | Admin (PUT) | Admin-editable prompt management |
+| POST | `/api/admin/sync-emilia-knowledge` | Yes + Admin | Upload Emilia knowledge base to OpenAI Assistant (CORS fix C2 2026-02-26) |
+| GET, PUT | `/api/prompts` | Yes (JWT) + Admin (PUT) | Admin-editable prompt management (GET was unprotected — AC4 fix 2026-02-26) |
 
 ### 3.8 User Data (2)
 
@@ -827,9 +828,9 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| GET, POST | `/api/gamma` | No (rate-limited) | Generate Gamma visual reports and check status. On completion, persists PDF/PPTX exports to Supabase Storage (permanent URLs). Returns `pdfStoragePath`/`pptxStoragePath` in response. |
-| POST | `/api/kv-cache` | Yes | Server-side proxy for Vercel KV operations |
-| GET | `/api/simli-config` | Yes | Return Simli credentials (keep API key out of client bundle) |
+| GET, POST | `/api/gamma` | Yes (JWT) | Generate Gamma visual reports and check status. On completion, persists PDF/PPTX exports to Supabase Storage (permanent URLs). Returns `pdfStoragePath`/`pptxStoragePath` in response. |
+| POST | `/api/kv-cache` | Yes (JWT) | Server-side proxy for Vercel KV operations |
+| GET | `/api/simli-config` | Yes (JWT) | Return Simli credentials (keep API key out of client bundle) |
 | GET | `/api/health` | No | API health check |
 | POST | `/api/test-llm` | No (rate-limited) | Test each LLM API connection |
 
@@ -837,8 +838,8 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| GET, POST | `/api/usage/check-quotas` | No | Check all provider quotas and send email alerts |
-| GET | `/api/usage/elevenlabs` | No | Fetch ElevenLabs subscription usage |
+| GET, POST | `/api/usage/check-quotas` | Yes (JWT) | Check all provider quotas and send email alerts |
+| GET | `/api/usage/elevenlabs` | Yes (JWT) | Fetch ElevenLabs subscription usage |
 | POST | `/api/consent/log` | No (rate-limited) | GDPR consent audit logging |
 
 ### 3.11 Notifications (Added 2026-02-16) (2)

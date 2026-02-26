@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.8
-**Last Updated:** February 17, 2026
+**Version:** 4.9
+**Last Updated:** February 26, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -1953,6 +1953,45 @@ npm run preview
 | No admin notification on new signups | New endpoint `POST /api/admin/new-signup` sends email to admin (cluesnomads@gmail.com) via Resend when a new user signs up; called from AuthContext.tsx after successful signup | 2026-02-16 |
 | Gamma export URLs (PDF/PPTX) expiring | Industry-standard asset materialization: `api/gamma.ts` now downloads PDF/PPTX from Gamma CDN immediately on generation completion and uploads to Supabase Storage (`gamma-exports` public bucket). Returns permanent public URLs instead of ephemeral CDN URLs. Same pattern as `persistVideo.ts`. New DB columns: `pdf_storage_path`, `pptx_storage_path` on both `gamma_reports` and `reports` tables. Migrations: `20260217_add_gamma_export_storage_paths.sql` (columns), `20260217_create_gamma_exports_storage.sql` (bucket). All 4 Gamma iframe embeds (VisualsTab ×2, ReportPresenter, SavedComparisons) now have `onError`/`onLoad` handlers with fallback UI. Full pipeline: API persistence → types → databaseService → savedComparisons → gammaService → UI components. 11 files changed, 35 discrete code changes. | 2026-02-17 |
 | Gamma report colored cards losing colors | `solidBoxes` variant relies on inline `color="#HEX"` attributes that Gamma's AI rendering strips during beautification. Fix: replaced 6× category LLM agreement heat map pages with `barStats` (bar LENGTH conveys confidence: 95% Unanimous → 50% Split). PAGE 64 consensus stats → `semiCircle` radial gauges + table. PAGE 51 myth vs reality → structured table with ❌/✅ columns. PAGE 53 hidden costs → `semiCircle` dial gauges (2×2 layout). Visual specs header updated. Same data, zero prompt size increase, varied chart types. Updated in: `gammaService.ts`, Supabase seed migration, `GAMMA_PROMPT_TEMPLATE.md`, `GAMMA_PROMPTS_MANUAL.md`. | 2026-02-17 |
+| **SECURITY AUDIT — 47 fixes (2026-02-26)** | Comprehensive security + code quality audit. All changes on branch `claude/coding-session-Jh27y`. Details below. | 2026-02-26 |
+| H1: React hooks below conditional return | Moved all React hooks above conditional early return in affected component — React rules of hooks violation caused potential crash | 2026-02-26 |
+| S1: API key leaked to browser | `api/avatar/simli-session` was sending the Simli API key in the response body. Removed — client never needed it | 2026-02-26 |
+| X1+X2: Open redirect in Stripe endpoints | `success_url` and `cancel_url` in Stripe checkout/portal now validated against app origin — prevents phishing redirects | 2026-02-26 |
+| X3: voiceId path injection | `voiceId` parameter in ElevenLabs TTS now validated with regex before URL interpolation — prevents path traversal | 2026-02-26 |
+| N4: Tie case blank victory text | When scores are tied, report verdict text now says "evenly matched" instead of showing blank/broken winner text | 2026-02-26 |
+| RT1: withTimeout retry broken | `withTimeout` accepted a pre-created promise, so retries reused stale results. Now accepts a factory function for proper retry semantics | 2026-02-26 |
+| SD1+SD2: Hardcoded year "2025" | Replaced all hardcoded year strings with `new Date().getFullYear()` — copyright notices and date displays now always current | 2026-02-26 |
+| D1: innerHTML XSS vulnerability | `innerHTML`-based HTML entity decoding replaced with safe `DOMParser` approach | 2026-02-26 |
+| M1: JSDoc timeout mismatch | JSDoc said 45000ms timeout but code used 12000ms — corrected the documentation comment | 2026-02-26 |
+| M3: Hardcoded bypass emails | `grok-generate.ts` had hardcoded admin emails for tier bypass — replaced with shared `getAdminEmails()` | 2026-02-26 |
+| B4: `var` scoping bug | `var gpt4oTavilyCredits` in evaluate.ts replaced with `let` — prevents accidental hoisting across scope | 2026-02-26 |
+| DC1: Dead `byProvider` Map | Unused `byProvider` Map accumulator removed from rateLimiter.ts | 2026-02-26 |
+| DC3: Dead `gitHubUsername` state | Unused `gitHubUsername` state variable removed from SavedComparisons.tsx | 2026-02-26 |
+| P2: OG/Twitter image relative URLs | Social meta tags now use absolute URLs (`https://clueslifescore.com/...`) — previews work on all platforms | 2026-02-26 |
+| S4: Secret masking too loose | Admin env-check endpoint now masks secrets more aggressively (shorter reveal length) | 2026-02-26 |
+| S5: Admin emails copy-pasted in 10 files | Created shared `getAdminEmails()` in `api/shared/auth.ts` — migrated 9 API files to use it | 2026-02-26 |
+| EN1+EN2: Missing env var docs | Added missing `VITE_*` variables to `.env.example`; marked `EMILIA_ASSISTANT_ID` as required | 2026-02-26 |
+| EN3: Inconsistent Resend from-address | Standardized `from` address to `alerts@lifescore.app` in check-quotas.ts email sends | 2026-02-26 |
+| C2: CORS missing on admin endpoint | `sync-emilia-knowledge` was missing CORS mode — added shared CORS helper | 2026-02-26 |
+| C3: CORS too open on auth endpoints | Tightened CORS from `*` (any origin) to same-app restricted origin on 3 auth-protected endpoints | 2026-02-26 |
+| A12: gun-comparison unprotected | Added JWT auth to `/api/olivia/gun-comparison` | 2026-02-26 |
+| A13: olivia/context unprotected | Added JWT auth to `/api/olivia/context` | 2026-02-26 |
+| A14: emilia/thread unprotected | Added JWT auth to `/api/emilia/thread` | 2026-02-26 |
+| A15: simli-speak unprotected | Added JWT auth to `/api/avatar/simli-speak` | 2026-02-26 |
+| A16: video-status unprotected | Added JWT auth to `/api/avatar/video-status` | 2026-02-26 |
+| A17: olivia/avatar/heygen unprotected | Added JWT auth to `/api/olivia/avatar/heygen` streaming endpoint | 2026-02-26 |
+| A18+A19: heygen-video + DID streams unprotected | Added JWT auth to both HeyGen video and D-ID streams endpoints | 2026-02-26 |
+| A27: grok-status unprotected | Added JWT auth to `/api/video/grok-status` polling endpoint | 2026-02-26 |
+| A28: grok-generate IDOR vulnerability | Added JWT auth + **fixed IDOR** — userId from request body overridden with authenticated user's ID, preventing spoofing | 2026-02-26 |
+| A30: evaluate unprotected | Added JWT auth to `/api/evaluate` — the main comparison engine | 2026-02-26 |
+| A31: judge unprotected | Added JWT auth to `/api/judge` Opus consensus endpoint | 2026-02-26 |
+| A33: gamma unprotected | Added JWT auth to `/api/gamma` report generation endpoint | 2026-02-26 |
+| A34: judge-video unprotected | Added JWT auth to `/api/judge-video` | 2026-02-26 |
+| RL2: check-quotas unprotected | Added JWT auth to `/api/usage/check-quotas` | 2026-02-26 |
+| RL3: elevenlabs unprotected | Added JWT auth to `/api/usage/elevenlabs` | 2026-02-26 |
+| AC4: prompts GET unprotected | Added JWT auth to GET `/api/prompts` | 2026-02-26 |
+| A11: invideo-override unprotected | Added JWT auth to `/api/video/invideo-override` | 2026-02-26 |
+| CL1-CL6: 87 debug console.log removed | Removed 87 debug `console.log` statements from 10 component files: JudgeTab (44), CourtOrderVideo (10), VisualsTab (10), AskOlivia (7), SavedComparisons (5), + 11 from 5 smaller components | 2026-02-26 |
 
 ---
 
@@ -1992,17 +2031,77 @@ npm run preview
 - GDPR compliance logging
 - 30-day deletion queue
 
-### 16.3 JWT Auth Requirements (Added 2026-02-10)
+### 16.3 JWT Auth Requirements (Added 2026-02-10, Major Expansion 2026-02-26)
 
-The following endpoints now require JWT authentication headers (previously unprotected):
+Nearly all API endpoints now require JWT authentication headers. The 2026-02-26 security audit added auth to 20+ previously unprotected endpoints, bringing total authenticated endpoints to **38+**.
 
-| Endpoint | Security Fix |
-|----------|-------------|
-| `/api/emilia/manuals` | Was bypassable via unverified email query param |
-| `/api/emilia/thread` | Added JWT verification |
-| `/api/avatar/simli-speak` | Added JWT verification |
-| `/api/judge-video` | Added JWT verification |
-| + 5 additional endpoints | All now require valid auth header |
+**Comparison & Scoring — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/evaluate` | 2026-02-26 — Main LLM evaluation engine |
+| `POST /api/judge` | 2026-02-26 — Opus consensus builder |
+| `POST /api/gamma` | 2026-02-26 — Report generation |
+| `POST /api/judge-video` | 2026-02-10 |
+| `POST /api/judge-report` | Already authenticated |
+
+**Video Generation — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/video/grok-generate` | 2026-02-26 — **Also fixed IDOR**: userId from body now overridden with authenticated user ID |
+| `GET/POST /api/video/grok-status` | 2026-02-26 |
+| `GET/POST/DELETE /api/video/invideo-override` | 2026-02-26 |
+| `POST /api/avatar/generate-judge-video` | Already authenticated |
+| `GET /api/avatar/video-status` | 2026-02-26 |
+| `POST /api/avatar/simli-speak` | 2026-02-10 |
+
+**Olivia Assistant — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/olivia/chat` | Already authenticated |
+| `POST /api/olivia/context` | 2026-02-26 |
+| `POST /api/olivia/gun-comparison` | 2026-02-26 |
+| `POST /api/olivia/tts` | Already authenticated |
+| `POST /api/olivia/avatar/streams` | 2026-02-26 |
+| `POST /api/olivia/avatar/heygen` | 2026-02-26 |
+| `POST/GET /api/olivia/avatar/heygen-video` | 2026-02-26 |
+
+**Emilia Help — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/emilia/thread` | 2026-02-26 (was 2026-02-10, re-verified) |
+| `POST /api/emilia/message` | Already authenticated |
+| `POST /api/emilia/speak` | Already authenticated |
+| `GET /api/emilia/manuals` | 2026-02-10 — auth bypass fixed |
+
+**Usage & Quota — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `GET/POST /api/usage/check-quotas` | 2026-02-26 |
+| `GET /api/usage/elevenlabs` | 2026-02-26 |
+
+**Admin — ALL require Admin role:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `GET /api/admin-check` | Already authenticated |
+| `GET /api/admin/env-check` | Already authenticated |
+| `POST /api/admin/sync-olivia-knowledge` | Already authenticated |
+| `POST /api/admin/sync-emilia-knowledge` | Already authenticated |
+| `GET/PUT /api/prompts` | 2026-02-26 (GET was unprotected) |
+
+**Endpoints that intentionally do NOT require auth:**
+
+| Endpoint | Reason |
+|----------|--------|
+| `POST /api/stripe/webhook` | Uses Stripe signature verification instead |
+| `POST /api/avatar/video-webhook` | Replicate webhook callback |
+| `GET /api/health` | Public health check |
+| `GET /api/simli-config` | Returns sanitized config only |
 
 **Admin Check Caching:**
 - Admin status cached with 5-minute TTL + 1-hour grace period
@@ -2018,6 +2117,37 @@ const LIMITS = {
   heavy: { windowMs: 60000, maxRequests: 10 }  // Recommend: 50
 };
 ```
+
+### 16.5 CORS Hardening (Added 2026-02-26)
+
+Three endpoints had CORS tightened from `Access-Control-Allow-Origin: *` (any website) to same-app restricted origin. All auth-protected endpoints now only accept requests from the LIFE SCORE application domain.
+
+Additionally, the `sync-emilia-knowledge` admin endpoint was missing CORS configuration entirely — now uses the shared CORS helper.
+
+### 16.6 XSS & Injection Fixes (Added 2026-02-26)
+
+| Fix | File | Description |
+|-----|------|-------------|
+| D1 | Client-side | `innerHTML`-based HTML entity decoding replaced with safe `DOMParser` |
+| X3 | `api/olivia/tts.ts` | `voiceId` parameter validated with regex before URL path interpolation |
+| X1+X2 | Stripe endpoints | `success_url` and `cancel_url` validated against app origin |
+
+### 16.7 Shared Auth Module (Added 2026-02-26)
+
+Admin email addresses were previously hardcoded in 10+ API files. A shared `getAdminEmails()` function was created in `api/shared/auth.ts` and all files migrated to use it. This ensures admin access changes propagate instantly across all endpoints.
+
+### 16.8 Console Log Cleanup (Added 2026-02-26)
+
+87 debug `console.log` statements removed from 10 frontend component files. These were leaking internal state, comparison IDs, API response data, and video URLs to the browser console in production. Remaining `console.log` calls are intentional operational logging (errors, warnings).
+
+| File | Removed |
+|------|---------|
+| JudgeTab.tsx | 44 |
+| CourtOrderVideo.tsx | 10 |
+| VisualsTab.tsx | 10 |
+| AskOlivia.tsx | 7 |
+| SavedComparisons.tsx | 5 |
+| 5 smaller components | 11 |
 
 ---
 

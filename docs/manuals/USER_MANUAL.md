@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 3.6
-**Last Updated:** February 17, 2026
+**Version:** 3.8
+**Last Updated:** February 26, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -442,6 +442,7 @@ Judge reports are automatically saved to both your browser (localStorage) and th
 - Reports sync to the cloud for access on other devices
 - View all saved Judge reports in the **Visual Reports / Saved** tab
 - Tie results are now handled correctly — no more "winner is TIE" text
+- **Tie victory text fix (2026-02-26):** When two cities score within 1 point of each other, the report verdict now says "evenly matched" instead of showing blank winner text
 - **Supabase fallback (Added 2026-02-14):** If a Judge report is missing from localStorage (e.g., after clearing browser cache), the system automatically falls back to Supabase to retrieve it. Your reports survive browser cache clearing.
 
 ### Saving Gamma Reports (Updated 2026-02-14)
@@ -884,6 +885,15 @@ When visiting LifeScore on a small screen (phone), a **warning modal** appears e
 3. Confirm via email
 4. Processed within 30 days
 
+### Security (Updated 2026-02-26)
+
+Your data is protected by multiple security layers:
+- **Authenticated APIs:** All 38+ API endpoints require you to be logged in — no anonymous access to any user data or functionality
+- **Row Level Security:** Database policies ensure you can only see your own comparisons, reports, and settings
+- **No data leaks:** Internal debug information has been removed from production (87 debug statements cleaned up)
+- **Input validation:** All user inputs are validated before processing to prevent injection attacks
+- **CORS protection:** The API only accepts requests from the official LIFE SCORE application
+
 ### Third-Party Services
 
 We use:
@@ -926,6 +936,12 @@ A: The Judge page was redesigned with collapsible panels (Media, Evidence, Verdi
 
 **Q: What is the "Go To My New City" video?**
 A: This is a personalized cinematic relocation video for the winning city, shown at the bottom of the Judge Verdict panel. It features multiple scenes with Cluesnomads.com branding and only appears when a judge report is loaded.
+
+**Q: The copyright or date shows the wrong year**
+A: Fixed as of February 2026. All year displays now update automatically. Refresh the page to see the current year.
+
+**Q: When cities tie, the report text looks blank or broken**
+A: Fixed as of February 2026. Tie results now show "evenly matched" with a balanced analysis of both cities, rather than blank winner text.
 
 ### Technical
 
@@ -1106,3 +1122,4 @@ If you choose "Notify Me & Go":
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | Full "Forgot Password" flow documented (§2): 3-step walkthrough covering reset request, email link, new password form, and data safety notes. Updated App Schema Manual with complete Authentication & Password Recovery architecture (§1.0). Updated CSM and Tech manuals with password reset troubleshooting and architecture. |
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notifications system (§17) with bell icon, "Notify Me" modal, email alerts. Explain the Winner toggle (§5). Confidence interval hover cards (§7). Glassmorphic Judge buttons (§7). Phone call audio warning (§7). Mobile warning modal (§12). Law vs Lived / Worst-Case illumination (§4). Dealbreakers A-Z sort (§4). Auto-scroll to top (§4). VS text dark mode fix (§10). Mobile +/- buttons and LLM badges fix (§12). Visuals labeling fix. Gamma links fix. Login credential storage fix. Judge stale state fix. Password reset redirect fix. Admin signup email. |
 | 3.7 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§9): Permanent Downloads note — PDF/PPTX exports now permanently stored in Supabase Storage. Expired Report Detection note — iframe error handling shows fallback message. |
+| 3.8 | 2026-02-26 | Claude Opus 4.6 | Security audit session (47 fixes): New Security subsection in Privacy & Data (§13) documenting 38+ authenticated endpoints, CORS hardening, debug cleanup. Tie victory text fix in Judge reports (§7). New FAQs for wrong year display and tie case. All user-facing data now requires authentication. |
