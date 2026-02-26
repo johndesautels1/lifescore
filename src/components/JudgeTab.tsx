@@ -35,13 +35,21 @@ import { useAuth } from '../contexts/AuthContext';
 /**
  * Wrap a Supabase query with retry logic and timeout.
  * Uses exponential backoff on timeout/network errors.
+ *
+ * FIX RT1: Accept a factory function OR a PromiseLike.
+ * When a PromiseLike is passed, retries still work because Supabase
+ * query builders are lazy — .then() triggers a fresh HTTP request
+ * each time. But for safety, callers can pass a factory instead.
  */
 async function withTimeout<T>(
-  promise: PromiseLike<T>,
+  promiseOrFactory: PromiseLike<T> | (() => PromiseLike<T>),
   ms: number = SUPABASE_TIMEOUT_MS,
   operationName: string = 'Judge tab query'
 ): Promise<T> {
-  return withRetry(() => promise, {
+  const factory = typeof promiseOrFactory === 'function'
+    ? promiseOrFactory
+    : () => promiseOrFactory;
+  return withRetry(factory, {
     timeoutMs: ms,
     operationName,
     maxRetries: 2, // 3 total attempts — ~40s worst case with 12s timeout + backoff
