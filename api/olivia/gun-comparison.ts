@@ -11,6 +11,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -85,6 +86,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Require authentication — this makes Anthropic API calls
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const { cityA, cityB } = req.body || {};
