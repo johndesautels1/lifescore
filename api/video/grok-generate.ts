@@ -11,6 +11,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { notifyJobComplete } from '../shared/notifyJob.js';
 import crypto from 'crypto';
@@ -943,12 +944,19 @@ export default async function handler(
     return;
   }
 
+  // Require authentication — uses video generation credits (Kling/Replicate)
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
   const body = req.body as GenerateRequest;
 
-  if (!body.action || !body.userId || !body.comparisonId) {
+  // Override userId with authenticated user to prevent IDOR
+  body.userId = auth.userId;
+
+  if (!body.action || !body.comparisonId) {
     res.status(400).json({
       error: 'Missing required fields',
-      required: ['action', 'userId', 'comparisonId'],
+      required: ['action', 'comparisonId'],
     });
     return;
   }
