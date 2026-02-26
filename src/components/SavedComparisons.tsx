@@ -171,7 +171,6 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
         const merged = [...standardComparisons, ...enhancedComparisons]
           .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
         setComparisons(merged);
-        console.log('[SavedComparisons] Loaded', standardComparisons.length, 'standard +', allEnhanced.length, 'enhanced (local + Supabase)');
       }
     } catch {
       // Supabase unavailable — local data already shown
@@ -268,8 +267,6 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     }
 
     try {
-      console.log('[SavedComparisons] Loading comparison:', comparison.result.comparisonId,
-        comparison.result.city1.city, 'vs', comparison.result.city2.city);
       onLoadComparison(comparison.result);
       setIsExpanded(false);
       showMessage('success', `Loaded: ${comparison.result.city1.city} vs ${comparison.result.city2.city}`);
@@ -562,12 +559,10 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('[SavedComparisons] View button clicked for:', comparison.id);
                           handleLoad(comparison);
                         }}
                         onTouchEnd={(e) => {
                           e.preventDefault();
-                          console.log('[SavedComparisons] View button touched for:', comparison.id);
                           handleLoad(comparison);
                         }}
                         title="View comparison"
@@ -636,7 +631,6 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                           title="View Report"
                           aria-label={`View ${report.city1} vs ${report.city2} report`}
                           onClick={() => {
-                            console.log('[SavedComparisons] Opening embedded Gamma report:', report.gammaUrl);
                             setGammaIframeError(false); // Reset error state for new report
                             setEmbeddedGammaReport(report);
                           }}
