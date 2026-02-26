@@ -10,6 +10,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { createClient } from '@supabase/supabase-js';
 
 // ============================================================================
@@ -211,6 +212,10 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   if (handleCors(req, res, 'same-app')) return;
+
+  // FIX RL2: Require authentication to prevent public access to quota data
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const supabase = getSupabaseAdmin();
