@@ -1,0 +1,180 @@
+/* ============================================================================
+   DARK MODE
+   ============================================================================ */
+
+[data-theme="dark"] .score-methodology {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 71, 171, 0.08) 0%,
+    rgba(247, 147, 30, 0.05) 50%,
+    rgba(212, 175, 55, 0.08) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 12px 48px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .methodology-title {
+  color: var(--gold, #D4AF37);
+}
+
+[data-theme="dark"] .methodology-subtitle {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+[data-theme="dark"] .methodology-arrow {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] .methodology-toggle:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .stage-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .stage-label {
+  color: var(--gold, #D4AF37);
+}
+
+[data-theme="dark"] .stage-content p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+[data-theme="dark"] .stage-content strong {
+  color: var(--gold-light, #f0d878);
+}
+
+[data-theme="dark"] .stage-divider {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.15) 20%,
+    rgba(212, 175, 55, 0.25) 50%,
+    rgba(212, 175, 55, 0.15) 80%,
+    transparent 100%
+  );
+}
+
+[data-theme="dark"] .score-dimension,
+[data-theme="dark"] .weight-table,
+[data-theme="dark"] .judge-flow,
+[data-theme="dark"] .category-weights-visual,
+[data-theme="dark"] .bonus-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dimension-label,
+[data-theme="dark"] .weight-value,
+[data-theme="dark"] .judge-step,
+[data-theme="dark"] .category-weight-label,
+[data-theme="dark"] .bonus-label,
+[data-theme="dark"] .category-weight-pct {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .dimension-desc,
+[data-theme="dark"] .bonus-detail {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+[data-theme="dark"] .weight-bar-track,
+[data-theme="dark"] .category-weight-bar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .formula-block {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(212, 175, 55, 0.15);
+}
+
+[data-theme="dark"] .formula-block code {
+  color: var(--gold, #D4AF37);
+}
+
+[data-theme="dark"] .dimension-badge.legal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dimension-badge.enforcement {
+  background: rgba(247, 147, 30, 0.15);
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .weight-confidence.high {
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.12);
+}
+
+[data-theme="dark"] .weight-confidence.medium {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.12);
+}
+
+[data-theme="dark"] .weight-confidence.low {
+  color: #F87171;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+[data-theme="dark"] .bonus-value {
+  background: linear-gradient(135deg, #60A5FA, var(--gold, #D4AF37));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================================
+   STAGE 6: TRANSPARENCY FEATURES
+   ============================================================================ */
+
+.transparency-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.transparency-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.transparency-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.transparency-feature div {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-primary, #374151);
+}
+
+.transparency-feature strong {
+  color: var(--sapphire, #0047AB);
+}
+
+[data-theme="dark"] .transparency-features {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .transparency-feature div {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+[data-theme="dark"] .transparency-feature strong {
+  color: var(--gold-light, #f0d878);
+}
+
