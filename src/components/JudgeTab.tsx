@@ -2418,9 +2418,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 winnerCategories={futureWinnerCategories}
                 loserCategories={futureLoserCategories}
                 categoryWinners={(comparisonResult as any)?.categoryWinners}
-                judgeSummary={judgeReport.executiveSummary.finalVerdict}
+                judgeSummary={judgeReport.executiveSummary.rationale}
                 judgeRecommendation={judgeReport.executiveSummary.recommendation}
-                userName={user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+                userName={supabaseUser?.user_metadata?.full_name || supabaseUser?.email?.split('@')[0]}
               />
               <div className="court-order-divider">
                 <span className="court-order-divider-line" />
