@@ -1,0 +1,334 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTH TABS (Sign In / Sign Up)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ls-steel);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab:hover:not(.active) {
+  color: var(--ls-platinum);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.auth-tab.active {
+  background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
+  color: var(--ls-midnight);
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SUCCESS MESSAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.form-success {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  color: var(--ls-success);
+  font-size: 0.85rem;
+  animation: fade-slide-up 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REMEMBER ME + FORGOT PASSWORD ROW
+   ═══════════════════════════════════════════════════════════════════════════ */
+.remember-forgot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+}
+
+/* Custom checkbox */
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.remember-me-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.remember-me-checkmark {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.remember-me-checkbox:checked + .remember-me-checkmark {
+  background: var(--ls-gold);
+  border-color: var(--ls-gold);
+  box-shadow: 0 0 8px var(--ls-gold-glow);
+}
+
+.remember-me-checkbox:checked + .remember-me-checkmark::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid var(--ls-midnight);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+
+.remember-me-checkbox:focus-visible + .remember-me-checkmark {
+  box-shadow: 0 0 0 3px var(--ls-gold-glow);
+}
+
+.remember-me-label:hover .remember-me-checkmark {
+  border-color: var(--ls-gold);
+}
+
+.remember-me-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ls-platinum);
+  letter-spacing: 0.01em;
+}
+
+.forgot-password-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: var(--ls-gold);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.forgot-password-link:hover {
+  color: var(--ls-gold-light);
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BACK TO SIGN IN BUTTON
+   ═══════════════════════════════════════════════════════════════════════════ */
+.back-to-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: var(--ls-platinum);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-to-signin:hover {
+  border-color: var(--ls-gold);
+  color: var(--ls-gold);
+  background: rgba(201, 162, 39, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIGURATION WARNING
+   ═══════════════════════════════════════════════════════════════════════════ */
+.config-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.config-warning svg {
+  flex-shrink: 0;
+  color: #fbbf24;
+  margin-top: 2px;
+}
+
+.config-warning p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ls-platinum);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD HEADER FIX - Make description more visible
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-screen .card-header p {
+  font-size: 0.9rem;
+  color: var(--ls-platinum);
+  margin: 0.5rem 0 0;
+  opacity: 0.9;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE (Already dark, but ensure consistency)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] .login-screen {
+  /* Already dark themed */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OAUTH DIVIDER & BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.oauth-divider span {
+  font-size: 0.75rem;
+  color: #F5A623;  /* Golden orange for visibility */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.oauth-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.oauth-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.oauth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.oauth-btn.loading {
+  pointer-events: none;
+}
+
+.oauth-btn svg {
+  flex-shrink: 0;
+}
+
+/* Google Button */
+.oauth-btn.google-btn {
+  background: var(--ls-white);
+  color: #1f2937;
+}
+
+.oauth-btn.google-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: rgba(66, 133, 244, 0.5);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+  transform: translateY(-1px);
+}
+
+.oauth-btn.google-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* GitHub Button */
+.oauth-btn.github-btn {
+  background: #24292e;
+  color: var(--ls-white);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.oauth-btn.github-btn:hover:not(:disabled) {
+  background: #2f363d;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.oauth-btn.github-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* OAuth Button Loading State */
+.oauth-btn.loading .spinner {
+  width: 18px;
+  height: 18px;
+}
+
+.oauth-btn.google-btn.loading {
+  background: #e5e7eb;
+}
+
+.oauth-btn.github-btn.loading {
+  background: #1b1f23;
+}
+
+/* Responsive OAuth Buttons */
+@media (max-width: 400px) {
+  .oauth-buttons {
+    flex-direction: column;
+  }
+
+  .oauth-btn {
+    width: 100%;
+  }
+}
