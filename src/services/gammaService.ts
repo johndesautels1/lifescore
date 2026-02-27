@@ -1215,7 +1215,7 @@ function formatSection5LLMConsensus(
 |-------|----------|------|----------|
 | 📝 Claude Sonnet 4.5 | Anthropic | Primary Evaluator | Legal framework analysis |
 | 🤖 GPT-4o | OpenAI | Cross-validation | Fact-checking |
-| 💎 Gemini 3 Pro | Google | Data validation | Google Search grounding |
+| 💎 Gemini 3.1 Pro | Google | Data validation | Google Search grounding |
 | 𝕏 Grok 4 | xAI | Sentiment analysis | X/Twitter integration |
 | 🔮 Sonar Pro | Perplexity | Deep research | Source credibility |
 
@@ -1296,7 +1296,7 @@ Two cities entered for comparison
 </item>
 <item label="2. Parallel AI Research">
 5 LLMs simultaneously research 100 metrics:
-• Claude Sonnet 4.5 • GPT-4o • Gemini 3 Pro • Grok 4 • Sonar Reasoning Pro
+• Claude Sonnet 4.5 • GPT-4o • Gemini 3.1 Pro • Grok 4 • Sonar Reasoning Pro
 </item>
 <item label="3. Dual Scoring">
 Each LLM provides Legal + Enforcement scores per metric
@@ -2566,7 +2566,7 @@ CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 5 LLMs Used for Evaluation:
 📝 Claude Sonnet 4.5 (Anthropic) - Primary evaluator with web search
 🤖 GPT-4o (OpenAI) - Cross-validation with Tavily search
-💎 Gemini 3 Pro (Google) - Native Google Search grounding
+💎 Gemini 3.1 Pro (Google) - Native Google Search grounding
 𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
 🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
 

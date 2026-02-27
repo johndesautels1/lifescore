@@ -123,7 +123,7 @@ const TAVILY_HEADERS = {
 - GPT-4o
 
 ### LLMs NOT Using Tavily (have native search):
-- Gemini 3 Pro (Google Search grounding)
+- Gemini 3.1 Pro (Google Search grounding)
 - Grok 4 (native X/Twitter search)
 - Perplexity (native web search)
 

@@ -951,7 +951,7 @@ A: Fixed on 2026-02-14. Judge reports now fall back to Supabase when localStorag
 A: Law scores reflect written legislation. Lived scores reflect actual enforcement. A city may have strict laws rarely enforced, or lenient laws strictly enforced.
 
 **Q: What AI providers does LifeScore use?**
-A: Claude Sonnet 4.5 (Anthropic), GPT-4o (OpenAI), Gemini 3 Pro (Google), Grok 4 (xAI), and Perplexity Sonar (Perplexity). Enhanced mode uses all five providers for consensus, with Claude Opus 4.5 as the final Judge.
+A: Claude Sonnet 4.5 (Anthropic), GPT-4o (OpenAI), Gemini 3.1 Pro (Google), Grok 4 (xAI), and Perplexity Sonar (Perplexity). Enhanced mode uses all five providers for consensus, with Claude Opus 4.5 as the final Judge.
 
 **Q: How long does a comparison take?**
 A: Standard: 2-3 minutes. Enhanced: 5-8 minutes. Video generation: 90-180 seconds.

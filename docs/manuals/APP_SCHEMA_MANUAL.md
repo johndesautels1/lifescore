@@ -1092,7 +1092,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 |----------|---------|-------------|
 | **OpenAI** | Olivia chat, Emilia help, evaluation | GPT-4o, GPT-4o-mini |
 | **Anthropic** | THE JUDGE, enhanced evaluation | Claude Opus 4.5, Claude Sonnet 4.5 |
-| **Google** | Multi-LLM consensus | Gemini 3 Pro |
+| **Google** | Multi-LLM consensus | Gemini 3.1 Pro |
 | **xAI** | Enhanced evaluation | Grok 4 |
 | **Perplexity** | Real-time web search evaluation | Sonar models |
 | **Tavily** | Web research for evidence gathering | Tavily Search API |

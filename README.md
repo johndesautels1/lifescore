@@ -647,7 +647,7 @@ Added same Tavily pre-fetch to Perplexity that Claude/GPT-4o have:
 |-----|-------------------|
 | Claude Sonnet | Tavily pre-fetch ✅ |
 | GPT-4o | Tavily pre-fetch ✅ |
-| Gemini 3 Pro | Google Search grounding |
+| Gemini 3.1 Pro | Google Search grounding |
 | Grok 4 | Native X search |
 | Perplexity | Tavily pre-fetch ✅ + Sonar |
 
@@ -844,7 +844,7 @@ GAMMA_FOLDER_ID=[optional - for organizing reports]
 | Claude Sonnet | `claude-sonnet-4-5-20250929` | api.anthropic.com |
 | Claude Opus | `claude-opus-4-5-20251101` | api.anthropic.com |
 | GPT-4o | `gpt-4o` | api.openai.com |
-| Gemini | `gemini-3-pro-preview` | generativelanguage.googleapis.com |
+| Gemini | `gemini-3.1-pro-preview` | generativelanguage.googleapis.com |
 | Grok | `grok-4` | api.x.ai |
 | Perplexity | `sonar-reasoning-pro` | api.perplexity.ai |
 
@@ -852,7 +852,7 @@ GAMMA_FOLDER_ID=[optional - for organizing reports]
 ```
 ANTHROPIC_API_KEY    # Claude Sonnet & Opus
 OPENAI_API_KEY       # GPT-4o
-GEMINI_API_KEY       # Gemini 3 Pro
+GEMINI_API_KEY       # Gemini 3.1 Pro
 XAI_API_KEY          # Grok 4
 PERPLEXITY_API_KEY   # Perplexity Sonar
 TAVILY_API_KEY       # Web search for Claude/GPT
@@ -863,7 +863,7 @@ TAVILY_API_KEY       # Web search for Claude/GPT
 |-----|-------------------|
 | Claude Sonnet | Tavily API (prepended to prompt) |
 | GPT-4o | Tavily API (prepended to prompt) |
-| Gemini 3 Pro | Google Search Grounding (google_search tool) |
+| Gemini 3.1 Pro | Google Search Grounding (google_search tool) |
 | Grok 4 | Native (`search: true`) |
 | Perplexity | Tavily API + Native Sonar (commit f3a9dd1) |
 

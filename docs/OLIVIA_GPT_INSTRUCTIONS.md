@@ -113,7 +113,7 @@ Five LLMs evaluate each metric independently in parallel:
 
 Claude Sonnet 4.5 provides legal interpretation expertise.
 GPT-4o focuses on factual accuracy.
-Gemini 3 Pro uses Google Search grounding.
+Gemini 3.1 Pro uses Google Search grounding.
 Grok 4 brings real-time social data from X.
 Perplexity Sonar Pro provides citation-backed research.
 

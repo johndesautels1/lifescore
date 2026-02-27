@@ -243,7 +243,7 @@ D:\LifeScore\
 |----------|---------|-------|------------|
 | Claude Sonnet 4.5 | `claude-sonnet` | claude-sonnet-4-5-20250929 | Tavily |
 | GPT-4o | `gpt-4o` | gpt-4o | Tavily |
-| Gemini 3 Pro | `gemini-3-pro` | gemini-3-pro-preview | Google |
+| Gemini 3.1 Pro | `gemini-3-pro` | gemini-3.1-pro-preview | Google |
 | Grok 4 | `grok-4` | grok-4 | Native |
 | Perplexity | `perplexity` | sonar-reasoning-pro | Native |
 | **Judge** | `claude-opus` | claude-opus-4-5-20251101 | N/A |

@@ -468,7 +468,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">💎</span>
-                <span className="provider-name">Gemini 3 Pro</span>
+                <span className="provider-name">Gemini 3.1 Pro</span>
                 <span className="provider-cost">{formatCost(summary.geminiCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.geminiCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -623,7 +623,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td>$10.00</td>
                   </tr>
                   <tr>
-                    <td>💎 Gemini 3 Pro</td>
+                    <td>💎 Gemini 3.1 Pro</td>
                     <td>$1.25</td>
                     <td>$5.00</td>
                   </tr>

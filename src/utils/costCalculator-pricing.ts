@@ -36,7 +36,7 @@ export const API_PRICING = {
   'gemini-3-pro': {
     input: 1.25,     // $1.25 per 1M input tokens
     output: 5.00,    // $5 per 1M output tokens
-    name: 'Gemini 3 Pro',
+    name: 'Gemini 3.1 Pro',
     icon: '💎'
   },
 

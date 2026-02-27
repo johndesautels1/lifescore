@@ -703,7 +703,7 @@ LIFE SCORE uses 5 different AI models evaluating independently to reduce bias:
 - Web Search: Tavily Search API
 - Approach: Focus on verifiable facts with 5 anchor bands
 
-**3. Gemini 3 Pro (Google)**
+**3. Gemini 3.1 Pro (Google)**
 - Specialization: Google Search grounding + advanced reasoning
 - Strength: Native Google Search integration
 - Approach: Extra reasoning time on contradictions between legal text and enforcement

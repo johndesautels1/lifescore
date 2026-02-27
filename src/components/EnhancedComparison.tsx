@@ -551,7 +551,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, gemini: e.target.value })}
               placeholder="AI..."
             />
-            <span className="key-models">Gemini 3 Pro</span>
+            <span className="key-models">Gemini 3.1 Pro</span>
           </div>
 
           <div className="api-key-group">

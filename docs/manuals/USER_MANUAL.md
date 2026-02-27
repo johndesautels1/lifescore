@@ -959,7 +959,7 @@ A: Currently web-only. The site is mobile-responsive.
 A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
 
 **Q: What is Enhanced Mode and how does it work?**
-A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.5 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
+A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.5, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.5 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
 
 **Q: Why would I use Enhanced Mode over Standard Mode?**
 A: Enhanced Mode provides multi-LLM consensus scoring, which reduces individual AI bias and catches edge cases a single model might miss. The Judge feature highlights where AI providers disagree and explains the reasoning. Best for important relocation decisions.

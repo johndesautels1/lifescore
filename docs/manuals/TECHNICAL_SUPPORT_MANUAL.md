@@ -608,7 +608,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Anthropic | `claude-sonnet` | claude-sonnet-4-5-20250929 | Primary evaluator |
 | Anthropic | `claude-opus` | claude-opus-4-5-20251101 | Judge/consensus |
 | OpenAI | `gpt-4o` | gpt-4o | Secondary evaluator |
-| Google | `gemini-3-pro` | gemini-3-pro-preview | Evaluator with Google Search |
+| Google | `gemini-3-pro` | gemini-3.1-pro-preview | Evaluator with Google Search |
 | xAI | `grok-4` | grok-4 | Evaluator with X search |
 | Perplexity | `perplexity` | sonar-reasoning-pro | Research evaluator |
 | Tavily | N/A | Search + Research | Web research |
@@ -1038,7 +1038,7 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 | Claude Sonnet 4.5 | $3.00 | $15.00 |
 | Claude Opus 4.5 | $15.00 | $75.00 |
 | GPT-4o | $2.50 | $10.00 |
-| Gemini 3 Pro | $1.25 | $5.00 |
+| Gemini 3.1 Pro | $1.25 | $5.00 |
 | Grok 4 | $3.00 | $15.00 (estimated) |
 | Perplexity | $1.00 | $5.00 |
 
@@ -1165,7 +1165,7 @@ backoffMs = 2^(attempt-1) * 1000  // 1s, 2s, 4s delays
 ```
 
 **Providers with Retry:**
-- ✅ Gemini 3 Pro (Fix #49 - Added 2026-02-04)
+- ✅ Gemini 3.1 Pro (Fix #49 - Added 2026-02-04)
 - ✅ Grok 4 (existing)
 - ❌ Claude Sonnet (uses SDK with built-in retry)
 - ❌ GPT-4o (uses SDK with built-in retry)
@@ -2172,7 +2172,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | `anthropic_opus` | Claude Opus 4.5 | 🧠 | dollars | $100.00 | $15/1M input, $75/1M output |
 | `openai_gpt4o` | GPT-4o | 🤖 | dollars | $50.00 | $2.50/1M input, $10/1M output |
 | `openai_olivia` | GPT-4 Turbo (Olivia) | 💬 | dollars | $30.00 | $10/1M input, $30/1M output |
-| `gemini` | Gemini 3 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
+| `gemini` | Gemini 3.1 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
 | `grok` | Grok 4 | 🚀 | dollars | $30.00 | $3/1M input, $15/1M output |
 | `perplexity` | Perplexity Sonar | 🔍 | dollars | $25.00 | $1/1M input, $5/1M output |
 | `tavily` | Tavily Research | 🔎 | credits | 5,000 | ~$0.01/credit |

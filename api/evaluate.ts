@@ -1108,7 +1108,7 @@ Use the Tavily research data provided in the user message to evaluate laws and r
   return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
-// Gemini 3 Pro evaluation (with Google Search grounding)
+// Gemini 3.1 Pro evaluation (with Google Search grounding)
 async function evaluateWithGemini(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -1194,7 +1194,7 @@ ${isLargeCategory ? `
       console.log(`[GEMINI] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
       const response = await fetchWithTimeout(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1898,7 +1898,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         result = await evaluateWithGPT4o(city1, city2, metrics);
         break;
       case 'gemini-3-pro':
-        console.log('[EVALUATE] Calling Gemini 3 Pro...');
+        console.log('[EVALUATE] Calling Gemini 3.1 Pro...');
         result = await evaluateWithGemini(city1, city2, metrics);
         break;
       case 'grok-4':

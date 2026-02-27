@@ -79,7 +79,7 @@ INSERT INTO public.api_quota_settings (provider_key, display_name, icon, quota_t
   ('anthropic_opus', 'Claude Opus 4.5', '🧠', 'dollars', 100.00, 'Judge - $15/1M input, $75/1M output'),
   ('openai_gpt4o', 'GPT-4o', '🤖', 'dollars', 50.00, 'City evaluator - $2.50/1M input, $10/1M output'),
   ('openai_olivia', 'GPT-4 Turbo (Olivia)', '💬', 'dollars', 30.00, 'Olivia chat - $10/1M input, $30/1M output'),
-  ('gemini', 'Gemini 3 Pro', '💎', 'dollars', 25.00, 'City evaluator with grounding - $1.25/1M input, $5/1M output'),
+  ('gemini', 'Gemini 3.1 Pro', '💎', 'dollars', 25.00, 'City evaluator with grounding - $1.25/1M input, $5/1M output'),
   ('grok', 'Grok 4', '🚀', 'dollars', 30.00, 'City evaluator with X search - $3/1M input, $15/1M output'),
   ('perplexity', 'Perplexity Sonar', '🔍', 'dollars', 25.00, 'City evaluator with web search - $1/1M input, $5/1M output'),
 
