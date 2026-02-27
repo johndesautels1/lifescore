@@ -1,0 +1,265 @@
+/**
+ * Cost Dashboard Styles
+ */
+
+.cost-dashboard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.cost-dashboard {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.header-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1a1a1a;
+}
+
+.last-saved {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.cost-dashboard .close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #6b7280;
+  line-height: 1;
+  padding: 0;
+}
+
+.cost-dashboard .close-btn:hover {
+  color: #1a1a1a;
+}
+
+/* Summary Section */
+.summary-section {
+  padding: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.summary-section h3 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: #374151;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.summary-card.total {
+  background: linear-gradient(135deg, #0047AB 0%, #0066cc 100%);
+  border-color: #0047AB;
+  color: white;
+}
+
+.cost-dashboard .card-icon {
+  display: block;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cost-dashboard .card-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #D4AF37;  /* FIX #59: Golden yellow card titles */
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.cost-dashboard .summary-card.total .card-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.cost-dashboard .card-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.cost-dashboard .summary-card.total .card-value {
+  color: white;
+  font-size: 1.5rem;
+}
+
+/* Provider Breakdown */
+.provider-breakdown {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.provider-row:last-child {
+  border-bottom: none;
+}
+
+.provider-row.highlight {
+  background: rgba(212, 175, 55, 0.1);
+  margin: 0 -1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+
+.provider-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.provider-name {
+  flex: 1;
+  font-weight: 600;
+  color: #F7931E;  /* FIX #62: Golden orange provider names */
+}
+
+.provider-cost {
+  font-weight: 700;
+  color: #1a1a1a;
+  min-width: 80px;
+  text-align: right;
+}
+
+.provider-pct {
+  min-width: 50px;
+  text-align: right;
+  color: #FFD700;  /* FIX #60: Crisp yellow percentage text */
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Profitability Section */
+.profitability {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+  border: 2px solid #D4AF37;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.profit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.profit-row:last-child {
+  border-bottom: none;
+}
+
+.profit-row span {
+  color: #F7931E;  /* FIX #61: Crisp orange profitability labels */
+  font-weight: 500;
+}
+
+.profit-row strong {
+  color: #1a1a1a;
+  font-size: 1.1rem;
+}
+
+/* Comparisons Section */
+.comparisons-section {
+  padding: 1.5rem;
+}
+
+.cost-dashboard .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cost-dashboard .section-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #374151;
+}
+
+.section-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Top row: Show Pricing and Export - centered */
+.section-actions-top {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* Bottom row: Save to Database - full width centered */
+.section-actions-bottom {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* FIX: Reduced all buttons to 75% size + consistent text alignment */
+/* SCOPED to .cost-dashboard to prevent leaking to other components */
