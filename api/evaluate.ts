@@ -9,7 +9,6 @@ import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
-import type { ScoreResult } from './shared/metrics.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // Timeout constants (in milliseconds)

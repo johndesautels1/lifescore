@@ -933,6 +933,6 @@ if total_chars > 10,000:
   - `api/judge-report.ts`
   - `src/hooks/useComparison.ts`
   - `src/hooks/useGrokVideo.ts`
-  - `src/data/metrics.ts`
+  - `src/data/metrics.ts` (barrel — actual data in `metrics-{category}.ts` files)
   - `src/constants/scoringThresholds.ts`
 - **Last Updated:** 2026-02-14

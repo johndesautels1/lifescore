@@ -578,7 +578,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Modify Supabase client | `src/lib/supabase.ts` |
 | Modify build config | `vite.config.ts` |
 | Modify deploy config | `vercel.json` |
-| Modify scoring metrics | `src/data/metrics.ts` |
+| Modify scoring metrics | `src/data/metrics.ts` (barrel) — edit the category file for the metric's category (e.g., `metrics-housing-property.ts`) |
 
 ---
 
@@ -1186,7 +1186,7 @@ Comparison completes → finalizeCostBreakdown() →
 
 **Files Involved:**
 - `src/App.tsx` - Auto-sync trigger point (line 594-606)
-- `src/utils/costCalculator.ts` - Cost calculation and conversion
+- `src/utils/costCalculator.ts` - Barrel re-exporting from `costCalculator-pricing.ts` (rates) and `costCalculator-functions.ts` (logic)
 - `src/services/databaseService.ts` - Database insert with upsert
 
 **Logging:**

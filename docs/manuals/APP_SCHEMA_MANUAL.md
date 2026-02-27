@@ -990,18 +990,27 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 ## 6. Type Definitions
 
-**12 type files** in `src/types/`.
+**21 type files** in `src/types/` (split into domain files for maintainability).
 
 | File | Key Types |
 |------|-----------|
-| `database.ts` | UserTier, Profile, UserPreferences, SavedComparison, UsageTracking, Job, Notification, NotifyChannel |
+| `database.ts` | **Barrel** — re-exports all database types from 5 domain files below |
+| `database-core.ts` | UserTier, Profile, UserPreferences, UsageTracking |
+| `database-features.ts` | SavedComparison, ComparisonMetadata |
+| `database-jobs.ts` | Job, Notification, NotifyChannel |
+| `database-reports.ts` | GammaReport, JudgeReportRecord |
+| `database-costs.ts` | ApiCostRecord, CostSummary |
 | `metrics.ts` | CategoryId (6 categories), Category, MetricDefinition, ScoringCriteria |
 | `enhancedComparison.ts` | CityScore, CategoryScore, MetricScore, ComparisonResult |
 | `judge.ts` | JudgeReport, CategoryAnalysis, ExecutiveSummary |
 | `avatar.ts` | AvatarProvider ('simli' \| 'd-id' \| 'heygen' \| 'none'), AvatarConfig, AvatarSession |
 | `grokVideo.ts` | GrokVideo, GrokVideoPair, GrokVideoStatus |
 | `gamma.ts` | GammaGenerationRequest, GammaGenerationStatus |
-| `olivia.ts` | OliviaMessage, OliviaContext, OliviaResponse |
+| `olivia.ts` | **Barrel** — re-exports all Olivia types from 4 domain files below |
+| `olivia-chat.ts` | OliviaMessage, OliviaConversation, OliviaResponse |
+| `olivia-state.ts` | OliviaContext, OliviaUIState |
+| `olivia-actions.ts` | OliviaAction, OliviaCommand |
+| `olivia-avatar.ts` | OliviaAvatarConfig, OliviaAvatarState |
 | `freedomEducation.ts` | FreedomEducationData, CategoryTab definitions for Court Order |
 | `apiUsage.ts` | ApiUsageRecord, UsageSummary, QuotaStatus |
 | `presenter.ts` | PresenterSegment, PresentationScript, PresenterState, ReportViewMode, VideoGenerationState, HeyGenVideoRequest/Response |
@@ -1044,20 +1053,33 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | File | Purpose |
 |------|---------|
-| `src/utils/costCalculator.ts` | API cost tracking with provider-specific pricing |
+| `src/utils/costCalculator.ts` | **Barrel** — re-exports from 2 domain files below |
+| `src/utils/costCalculator-pricing.ts` | Provider-specific pricing constants and rate tables |
+| `src/utils/costCalculator-functions.ts` | Cost calculation logic, formatters, aggregation |
 | `src/utils/exportUtils.ts` | CSV and PDF export functionality |
-| `src/utils/contryFlags.ts` | Country flag images via flagcdn.com CDN |
+| `src/utils/countryFlags.ts` | Country flag images via flagcdn.com CDN |
 | `src/utils/freedomEducationUtils.ts` | Data transform for Freedom Education tabs |
 | `src/utils/invideoPromptBuilder.ts` | Cinematic prompt generation for InVideo relocation stories |
+| `src/utils/toast.tsx` | Toast notification wrapper (react-hot-toast) |
 
 ### 7.3 Shared API Utilities
 
 | File | Purpose |
 |------|---------|
+| `api/shared/auth.ts` | Auth middleware (requireAuth, getAdminEmails) |
 | `api/shared/cors.ts` | CORS handling with same-app verification |
 | `api/shared/rateLimit.ts` | Server-side rate limiting (standard, light, heavy presets) |
 | `api/shared/fetchWithTimeout.ts` | Server-side timeout wrapper |
-| `api/shared/metrics.ts` | Metric definitions shared between client/server |
+| `api/shared/metrics.ts` | Metric scoring functions shared between client/server |
+| `api/shared/metrics-data.ts` | **Barrel** — re-exports metric definitions from 6 category files below |
+| `api/shared/metrics-data-personal-freedom.ts` | Personal Freedom metrics (15 metrics) |
+| `api/shared/metrics-data-housing-property.ts` | Housing & Property metrics (20 metrics) |
+| `api/shared/metrics-data-business-work.ts` | Business & Work metrics (25 metrics) |
+| `api/shared/metrics-data-transportation.ts` | Transportation metrics (15 metrics) |
+| `api/shared/metrics-data-policing-legal.ts` | Policing & Legal metrics (15 metrics) |
+| `api/shared/metrics-data-speech-lifestyle.ts` | Speech & Lifestyle metrics (10 metrics) |
+| `api/shared/notifyJob.ts` | Job completion notification helper |
+| `api/shared/persistVideo.ts` | Video persistence to Supabase Storage |
 | `api/shared/types.ts` | Shared TypeScript types |
 
 ---
@@ -1310,26 +1332,157 @@ lifescore/
 │   │   └── log.ts                    # Consent audit logging
 │   │
 │   └── shared/                       # Shared API utilities
-│       ├── cors.ts
-│       ├── rateLimit.ts
-│       ├── fetchWithTimeout.ts
-│       ├── metrics.ts
-│       └── types.ts
+│       ├── auth.ts                   # Auth middleware (requireAuth, getAdminEmails)
+│       ├── cors.ts                   # CORS handling
+│       ├── rateLimit.ts              # Rate limiting
+│       ├── fetchWithTimeout.ts       # Timeout wrapper
+│       ├── metrics.ts                # Metric scoring functions
+│       ├── metrics-data.ts           # Barrel — re-exports from 6 category files:
+│       │   ├── metrics-data-personal-freedom.ts
+│       │   ├── metrics-data-housing-property.ts
+│       │   ├── metrics-data-business-work.ts
+│       │   ├── metrics-data-transportation.ts
+│       │   ├── metrics-data-policing-legal.ts
+│       │   └── metrics-data-speech-lifestyle.ts
+│       ├── notifyJob.ts              # Job completion notifications
+│       ├── persistVideo.ts           # Video persistence
+│       └── types.ts                  # Shared types
 │
-├── src/                              # Frontend source (97 files)
+├── src/                              # Frontend source
 │   ├── App.tsx                       # Main app, routing, providers
+│   ├── App.css                       # App-level styles
 │   ├── main.tsx                      # Entry point
 │   ├── index.css                     # Global styles
 │   │
+│   ├── styles/                       # Global stylesheets (split)
+│   │   ├── globals.css               # Barrel — imports from:
+│   │   │   ├── globals-base.css      #   Base reset + typography
+│   │   │   ├── globals-components.css #   Shared component styles
+│   │   │   └── globals-utilities.css  #   Utility classes
+│   │   └── dark-mode.css             # Dark mode overrides
+│   │
 │   ├── components/                   # React components (46)
+│   │   ├── EnhancedComparison.tsx    # Main comparison view
+│   │   ├── EnhancedComparison.css    # Barrel — imports from:
+│   │   │   ├── EnhancedComparison-actions.css
+│   │   │   ├── EnhancedComparison-consensus.css
+│   │   │   ├── EnhancedComparison-controls.css
+│   │   │   ├── EnhancedComparison-metrics.css
+│   │   │   ├── EnhancedComparison-responsive.css
+│   │   │   └── EnhancedComparison-results.css
+│   │   ├── JudgeTab.css              # Barrel — imports from:
+│   │   │   ├── JudgeTab-analysis.css
+│   │   │   ├── JudgeTab-footer.css
+│   │   │   ├── JudgeTab-layout.css
+│   │   │   ├── JudgeTab-panels.css
+│   │   │   └── JudgeTab-video.css
+│   │   ├── AskOlivia.css             # Barrel — imports from:
+│   │   │   ├── AskOlivia-controls.css
+│   │   │   ├── AskOlivia-header.css
+│   │   │   ├── AskOlivia-panels.css
+│   │   │   └── AskOlivia-responsive.css
+│   │   ├── VisualsTab.css            # Barrel — imports from:
+│   │   │   ├── VisualsTab-content.css
+│   │   │   ├── VisualsTab-reports.css
+│   │   │   ├── VisualsTab-saved.css
+│   │   │   └── VisualsTab-selectors.css
+│   │   ├── SavedComparisons.css      # Barrel — imports from:
+│   │   │   ├── SavedComparisons-list.css
+│   │   │   ├── SavedComparisons-modals.css
+│   │   │   └── SavedComparisons-viewer.css
+│   │   ├── Results.css               # Barrel — imports from:
+│   │   │   ├── Results-categories.css
+│   │   │   ├── Results-header.css
+│   │   │   └── Results-responsive.css
+│   │   ├── WeightPresets.css          # Barrel — imports from:
+│   │   │   ├── WeightPresets-base.css
+│   │   │   ├── WeightPresets-exclusion.css
+│   │   │   └── WeightPresets-law.css
+│   │   ├── AboutClues.css             # Barrel — imports from:
+│   │   │   ├── AboutClues-content.css
+│   │   │   ├── AboutClues-features.css
+│   │   │   └── AboutClues-layout.css
+│   │   ├── ScoreMethodology.css       # Barrel — imports from:
+│   │   │   ├── ScoreMethodology-dark.css
+│   │   │   ├── ScoreMethodology-responsive.css
+│   │   │   └── ScoreMethodology-stages.css
+│   │   ├── SettingsModal.css          # Barrel — imports from:
+│   │   │   ├── SettingsModal-forms.css
+│   │   │   ├── SettingsModal-layout.css
+│   │   │   └── SettingsModal-responsive.css
+│   │   ├── OliviaChatBubble.css       # Barrel — imports from:
+│   │   │   ├── OliviaChatBubble-fab.css
+│   │   │   ├── OliviaChatBubble-panel.css
+│   │   │   └── OliviaChatBubble-responsive.css
+│   │   ├── LoginScreen.css            # Barrel — imports from:
+│   │   │   ├── LoginScreen-auth.css
+│   │   │   ├── LoginScreen-controls.css
+│   │   │   └── LoginScreen-layout.css
+│   │   ├── ReportPresenter.css        # Barrel — imports from:
+│   │   │   ├── ReportPresenter-controls.css
+│   │   │   ├── ReportPresenter-overlay.css
+│   │   │   └── ReportPresenter-video.css
+│   │   └── CostDashboard.css          # Barrel — imports from:
+│   │       ├── CostDashboard-layout.css
+│   │       ├── CostDashboard-tables.css
+│   │       └── CostDashboard-theme.css
+│   │
 │   ├── contexts/                     # React contexts (1)
 │   │   └── AuthContext.tsx
 │   ├── hooks/                        # Custom hooks (18)
 │   ├── services/                     # Business logic (16)
 │   ├── lib/                          # Utility libraries (3)
-│   ├── utils/                        # Utility functions (5)
-│   ├── types/                        # TypeScript types (12)
-│   └── data/                         # Static data (metrics.ts)
+│   │
+│   ├── utils/                        # Utility functions
+│   │   ├── costCalculator.ts         # Barrel — re-exports from:
+│   │   │   ├── costCalculator-pricing.ts   # Provider pricing constants
+│   │   │   └── costCalculator-functions.ts # Calculation logic
+│   │   ├── exportUtils.ts
+│   │   ├── countryFlags.ts
+│   │   ├── freedomEducationUtils.ts
+│   │   ├── invideoPromptBuilder.ts
+│   │   └── toast.tsx
+│   │
+│   ├── types/                        # TypeScript types (21 files)
+│   │   ├── index.ts                  # Master barrel
+│   │   ├── database.ts               # Barrel — re-exports from:
+│   │   │   ├── database-core.ts      #   UserTier, Profile, UserPreferences
+│   │   │   ├── database-features.ts  #   SavedComparison, metadata
+│   │   │   ├── database-jobs.ts      #   Job, Notification, NotifyChannel
+│   │   │   ├── database-reports.ts   #   GammaReport, JudgeReportRecord
+│   │   │   └── database-costs.ts     #   ApiCostRecord, CostSummary
+│   │   ├── olivia.ts                 # Barrel — re-exports from:
+│   │   │   ├── olivia-chat.ts        #   OliviaMessage, Conversation, Response
+│   │   │   ├── olivia-state.ts       #   OliviaContext, UIState
+│   │   │   ├── olivia-actions.ts     #   OliviaAction, Command
+│   │   │   └── olivia-avatar.ts      #   OliviaAvatarConfig, State
+│   │   ├── metrics.ts
+│   │   ├── enhancedComparison.ts
+│   │   ├── judge.ts
+│   │   ├── avatar.ts
+│   │   ├── grokVideo.ts
+│   │   ├── gamma.ts
+│   │   ├── freedomEducation.ts
+│   │   ├── apiUsage.ts
+│   │   └── presenter.ts
+│   │
+│   └── data/                         # Static data (split into category files)
+│       ├── metrics.ts                # Barrel — re-exports from:
+│       │   ├── metrics-personal-freedom.ts
+│       │   ├── metrics-housing-property.ts
+│       │   ├── metrics-business-work.ts
+│       │   ├── metrics-transportation.ts
+│       │   ├── metrics-policing-legal.ts
+│       │   └── metrics-speech-lifestyle.ts
+│       ├── fieldKnowledge.ts         # Barrel — re-exports from:
+│       │   ├── fieldKnowledge-personal-freedom.ts
+│       │   ├── fieldKnowledge-housing-property.ts
+│       │   ├── fieldKnowledge-business-work.ts
+│       │   ├── fieldKnowledge-transportation.ts
+│       │   ├── fieldKnowledge-policing-legal.ts
+│       │   └── fieldKnowledge-speech-lifestyle.ts
+│       ├── metricTooltips.ts
+│       └── metros.ts
 │
 ├── supabase/                         # Database migrations (32 files)
 │   └── migrations/
@@ -1402,8 +1555,9 @@ LIFE SCORE evaluates cities across **100 metrics** in **6 categories**:
 ## Document Info
 
 - **Generated by:** Claude Opus 4.6
-- **For:** LIFE SCORE Ask Emelia Help System
-- **Last Updated:** 2026-02-17
+- **For:** LIFE SCORE Ask Emilia Help System
+- **Last Updated:** 2026-02-27
 - **Verified Against:** ~280 commits
-- **Total Codebase:** 44 API endpoints, 47 components, 18 hooks, 16 services, 12 type files, 21 DB tables, 61 env vars
+- **Total Codebase:** 44 API endpoints, 47 components, 18 hooks, 16 services, 21 type files, 21 DB tables, 61 env vars
+- **2026-02-27 Update:** Updated file structure to reflect 22-file refactoring (31,494 lines split into 78 domain files with barrel re-exports). Updated type definitions (12→21 files), utility functions, shared API utilities, and full file tree.
 - **2026-02-17 Update:** Gamma export URL expiration fix — new `pdf_storage_path`/`pptx_storage_path` columns on `gamma_reports` and `reports` tables, `/api/gamma` endpoint now persists exports to Supabase Storage on completion
