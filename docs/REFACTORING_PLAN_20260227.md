@@ -6,7 +6,7 @@
 
 ---
 
-## ZERO RISK Files to Split
+## Batch 1: Original 11 Splits
 
 ### Data Files (pure arrays/objects)
 
@@ -34,13 +34,47 @@
 | 10 | `SavedComparisons.css` | 1,163 | 3 section files + barrel | DONE | `ddae894` |
 | 11 | `Results.css` | 1,098 | 3 section files + barrel | DONE | `ef636ad` |
 
-### Summary
+---
 
-- **Total lines refactored:** 23,216
-- **New domain/section files created:** 48
-- **Barrel files (existing files converted):** 11
+## Batch 2: Additional Zero-Risk Splits
+
+### CSS Files (700+ lines)
+
+| # | File | Lines | Split Strategy | Status | Commit |
+|---|------|------:|----------------|--------|--------|
+| 12 | `WeightPresets.css` | 990 | 3 section files + barrel | DONE | `9426e6c` |
+| 13 | `AboutClues.css` | 976 | 3 section files + barrel | DONE | `305116f` |
+| 14 | `ScoreMethodology.css` | 891 | 3 section files + barrel | DONE | `f878c4e` |
+| 15 | `SettingsModal.css` | 847 | 3 section files + barrel | DONE | `26a561a` |
+| 16 | `OliviaChatBubble.css` | 838 | 3 section files + barrel | DONE | `2403369` |
+| 17 | `LoginScreen.css` | 829 | 3 section files + barrel | DONE | `3afe92e` |
+| 18 | `App.css` | 739 | 3 section files + barrel | DONE | `b273368` |
+| 19 | `ReportPresenter.css` | 737 | 3 section files + barrel | DONE | `f470cff` |
+| 20 | `CostDashboard.css` | 737 | 3 section files + barrel | DONE | `37d77c7` |
+| 21 | `globals.css` | 693 | 3 section files + barrel | DONE | `5c1c462` |
+
+### Utility Files (pure functions + data)
+
+| # | File | Lines | Split Strategy | Status | Commit |
+|---|------|------:|----------------|--------|--------|
+| 22 | `costCalculator.ts` | 749 | 2 domain files + barrel | DONE | `fdd6df8` |
+
+### Skipped (zero consumers, not worth splitting)
+
+| File | Lines | Reason |
+|------|------:|--------|
+| `invideoPromptBuilder.ts` | 575 | Zero imports anywhere in codebase |
+
+---
+
+## Grand Total
+
+- **Total files refactored:** 22
+- **Total lines refactored:** 31,494
+- **New domain/section files created:** 78
+- **Barrel files (existing files converted):** 22
 - **Consumer changes needed:** 0 (all barrels re-export identically)
-- **MD5 verified (CSS):** All 6 CSS splits byte-for-byte identical when concatenated
+- **MD5 verified (CSS):** All 16 CSS splits byte-for-byte identical when concatenated
 - **Type count verified:** All TypeScript splits have complete export coverage
 
 ---
@@ -48,8 +82,10 @@
 ## DO NOT TOUCH (not zero risk)
 
 - EnhancedComparison.tsx, JudgeTab.tsx, App.tsx, AskOlivia.tsx — stateful components
-- gammaService.ts, savedComparisons.ts — interconnected service logic
-- api/evaluate.ts, api/olivia/context.ts — serverless functions
+- gammaService.ts, savedComparisons.ts, databaseService.ts, cache.ts — interconnected service logic
+- api/evaluate.ts, api/olivia/context.ts, api/judge.ts — serverless functions
+- All hooks (useComparison, useTierAccess, useEmilia) — stateful React hooks
+- contrastImageService.ts — mixed data + service (partial risk)
 - src/types/metrics.ts — foundational types used everywhere (204 lines, fine as-is)
 
 ---
@@ -63,3 +99,4 @@ Each split includes:
 4. Verified no broken references
 5. CSS splits: MD5 checksum verified (concatenated domain files = original)
 6. Type splits: Every exported type/interface accounted for in barrel re-exports
+7. Utility splits: All function + const exports verified in barrel
