@@ -62,6 +62,9 @@
     "api/video/grok-status.ts": {
       "maxDuration": 60,
       "includeFiles": "api/shared/**"
+    },
+    "api/warmup.ts": {
+      "maxDuration": 30
     }
   },
   "buildCommand": "npm run build",
@@ -82,6 +85,12 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/warmup",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
