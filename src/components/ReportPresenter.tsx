@@ -175,6 +175,11 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   const speakTTSFallback = useCallback(async (text: string) => {
     try {
+      // Stop any currently playing audio before starting new segment
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current = null;
+      }
       const ttsResponse = await generateTTS(text);
       if (ttsResponse.audioUrl) {
         const audio = new Audio(ttsResponse.audioUrl);

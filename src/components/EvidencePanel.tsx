@@ -8,6 +8,7 @@ import React, { useState, useMemo, useCallback, startTransition } from 'react';
 import type { EnhancedComparisonResult, EvidenceItem } from '../types/enhancedComparison';
 import { LLM_CONFIGS } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
+import { getMetricDisplayName } from '../shared/metricDisplayNames';
 import './EvidencePanel.css';
 
 // Union type to accept both simple and enhanced results
@@ -54,7 +55,7 @@ function collectEvidenceFromResult(result: NonNullable<ResultType>): CollectedEv
           if (score.evidence && score.evidence.length > 0) {
             collected.push({
               metricId: metric.metricId,
-              metricName: metric.metricId,
+              metricName: getMetricDisplayName(metric.metricId),
               city: result.city1.city,
               provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
               evidence: score.evidence
@@ -70,7 +71,7 @@ function collectEvidenceFromResult(result: NonNullable<ResultType>): CollectedEv
           if (score.evidence && score.evidence.length > 0) {
             collected.push({
               metricId: metric.metricId,
-              metricName: metric.metricId,
+              metricName: getMetricDisplayName(metric.metricId),
               city: result.city2.city,
               provider: LLM_CONFIGS[score.llmProvider]?.shortName || 'AI',
               evidence: score.evidence
@@ -96,7 +97,7 @@ function collectEvidenceFromResult(result: NonNullable<ResultType>): CollectedEv
           }));
           collected.push({
             metricId: metric.metricId,
-            metricName: metric.metricId,
+            metricName: getMetricDisplayName(metric.metricId),
             city: result.city1.city,
             evidence
           });
@@ -117,7 +118,7 @@ function collectEvidenceFromResult(result: NonNullable<ResultType>): CollectedEv
           }));
           collected.push({
             metricId: metric.metricId,
-            metricName: metric.metricId,
+            metricName: getMetricDisplayName(metric.metricId),
             city: result.city2.city,
             evidence
           });

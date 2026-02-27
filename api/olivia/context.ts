@@ -899,7 +899,7 @@ function buildStandardContext(result: any): LifeScoreContext {
 
     const topMetrics: ContextMetric[] = metricDiffs.slice(0, 3).map((md: any) => ({
       id: md.metric.metricId,
-      name: md.metric.metricName || md.metric.metricId,
+      name: getMetricDisplayName(md.metric.metricId),
       city1Score: Math.round(md.metric.normalizedScore),
       city2Score: Math.round(md.city2Metric?.normalizedScore || 0),
     }));
