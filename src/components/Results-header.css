@@ -1,0 +1,270 @@
+/**
+ * Results Component Styles
+ */
+
+/* FIX 2026-02-08: Report Type Header Badge */
+.report-type-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.report-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.report-type-badge .badge-icon {
+  font-size: 1.1rem;
+}
+
+.report-type-badge.enhanced {
+  background: linear-gradient(135deg, #E8E0F0 0%, #EDE9F5 100%);
+  color: #2D2D2D;
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  font-weight: 800;
+}
+
+.report-type-badge.standard {
+  background: linear-gradient(135deg, #E0F2FE 0%, #E0FAF5 100%);
+  color: #2D2D2D;
+  box-shadow: 0 3px 10px rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  font-weight: 800;
+}
+
+/* Match Standard Report badge to LIVE-100 badge dimensions */
+.results .report-type-header {
+  display: block;
+}
+
+.results .report-type-badge.standard {
+  display: block;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  color: var(--gray-900) !important;
+  font-weight: 800;
+  text-shadow: none !important;
+}
+
+/* Dark mode */
+[data-theme="dark"] .report-type-badge.enhanced {
+  background: linear-gradient(135deg, #3B2D5E 0%, #2E2654 100%);
+  color: #E8E0F0;
+  box-shadow: 0 3px 12px rgba(167, 139, 250, 0.3);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+}
+
+[data-theme="dark"] .report-type-badge.standard {
+  background: linear-gradient(135deg, #1E3A4F 0%, #1E3D3D 100%);
+  color: #E0F2FE;
+  box-shadow: 0 3px 12px rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+/* Winner Hero */
+
+@media (max-width: 768px) {
+  .report-type-header .report-type-badge {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+.winner-hero {
+  background: linear-gradient(135deg, var(--sapphire), var(--sapphire-light), var(--orange));
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.winner-hero.tie {
+  background: linear-gradient(135deg, var(--gray-600), var(--gray-500));
+}
+
+.winner-trophy {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.winner-city {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.winner-score {
+  font-size: 5rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 1rem 0;
+  line-height: 1;
+}
+
+.winner-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+.winner-difference {
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  color: #E8E8E8;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.02em;
+}
+
+.confidence-badge-hero {
+  margin-top: 1.5rem;
+}
+
+/* Explain the Winner */
+.explain-winner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding: 0.6rem 1.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+.explain-winner-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.winner-explanation-panel {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.winner-explanation-panel h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--gold-light);
+}
+
+.winner-explanation-panel p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.explanation-subhead {
+  font-weight: 600;
+  color: var(--gold-light) !important;
+  margin-top: 1rem !important;
+}
+
+.explanation-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 1rem;
+}
+
+.explanation-list li {
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.explanation-list li:last-child {
+  border-bottom: none;
+}
+
+.explanation-bottom-line {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9) !important;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Score Grid */
+.score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.5rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.results .score-box {
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.results .score-box.winner {
+  background: #f0fdf4;
+  border-color: var(--success);
+}
+
+.results .score-box h3 {
+  font-size: 1.25rem;
+  color: var(--sapphire);
+  margin-bottom: 0.75rem;
+}
+
+.results .score-box .score {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--gray-700);
+  line-height: 1;
+}
+
+.results .score-box.winner .score {
+  color: var(--success-dark);
+}
+
+.score-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-top: 0.5rem;
+}
+
+[data-theme="dark"] .score-label {
+  color: var(--orange, #f97316);
+}
+
+/* Category Breakdown */
