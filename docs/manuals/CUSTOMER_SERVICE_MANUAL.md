@@ -346,6 +346,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Video shows blank/expired | Wait for auto-reset (after 3 errors) then regenerate |
 | Only one video plays | Both videos use independent playback — one failing won't block the other |
 | Progress bar stuck at 73% | Fixed — progress now scales smoothly to 95% during generation |
+| Video freezes or stutters mid-play | Normal — a buffering spinner will appear while the video loads; ensure stable internet connection |
 | Download works but playback doesn't | Try clicking play again; blob URLs load asynchronously |
 | Video disappeared after tab switch | Fixed — videos now auto-restore from Supabase on tab re-entry |
 | Court Order video broken/expired | Fixed — Court Order videos no longer use expiring provider CDN URLs |
@@ -370,6 +371,11 @@ Currently, LifeScore supports **200 metropolitan areas**:
 - **HeyGen URLs:** Fixed HeyGen video URL expiration that caused broken presenter videos
 - **Storyboard progress bar:** New real-time progress bar during video generation with word-count QA validation
 - **Cristiano video:** Added "Visit Cluesnomads.com" CTA, poster image, and logo overlay; fixed 422 storyboard/render alignment error
+
+**Note (Updated 2026-02-27):** Video playback smoothness improved:
+- All video players now use `preload="auto"` so the browser pre-buffers the entire video before the user presses play
+- A buffering spinner overlay appears automatically if the video stalls mid-playback (instead of appearing frozen)
+- Applies to: Judge Video, Court Order, Freedom Tour (Cristiano), and Olivia Video Presenter
 
 ### 5.5 Gamma Report Issues
 

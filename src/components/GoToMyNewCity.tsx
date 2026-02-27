@@ -130,6 +130,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
   // Error tracking for expired URLs
   const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
   const MAX_VIDEO_ERRORS = 3;
 
   // Notification system
@@ -445,13 +446,21 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                       src={effectiveVideoUrl!}
                       poster={effectiveThumbnailUrl || undefined}
                       className="court-video"
+                      preload="auto"
                       onEnded={handleVideoEnded}
                       onTimeUpdate={handleTimeUpdate}
                       onLoadedMetadata={handleLoadedMetadata}
                       onError={handleVideoError}
+                      onWaiting={() => setIsBuffering(true)}
+                      onPlaying={() => setIsBuffering(false)}
                       playsInline
                       crossOrigin="anonymous"
                     />
+                    {isBuffering && (
+                      <div className="video-buffering-overlay">
+                        <div className="lcd-spinner"></div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="lcd-placeholder">

@@ -487,6 +487,7 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
                 className="presenter-video-player"
                 controls
                 autoPlay
+                preload="auto"
                 poster={videoState.thumbnailUrl}
               />
               <div className="presenter-video-actions">

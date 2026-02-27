@@ -1371,8 +1371,19 @@ let progressPct = completedPct + (remainingPct * pollFraction);
 if (!winnerDone || !loserDone) progressPct = Math.min(progressPct, 95);
 ```
 
+**Video Preload & Buffering (Added 2026-02-27):**
+All video elements (`GoToMyNewCity.tsx`, `CourtOrderVideo.tsx`, `JudgeVideo.tsx`, `ReportPresenter.tsx`) use:
+- `preload="auto"` — browser pre-buffers the full video before user presses play, eliminating startup stutter
+- `onWaiting` / `onPlaying` events — show/hide a translucent buffering spinner overlay when the video stalls mid-playback
+- Buffering overlay CSS: `.video-buffering-overlay` (absolute positioned, semi-transparent black, centered spinner, `pointer-events: none`)
+- Spinner reuses existing `.lcd-spinner` keyframe animation (gold rotating ring)
+
 **Files Involved:**
 - `src/components/NewLifeVideos.tsx` - Blob URL playback, error tracking, dead URL detection
+- `src/components/GoToMyNewCity.tsx` - Cristiano Freedom Tour video (preload + buffering spinner)
+- `src/components/CourtOrderVideo.tsx` - Court Order video (preload + buffering spinner)
+- `src/components/JudgeVideo.tsx` - Judge ruling video (preload + buffering spinner)
+- `src/components/ReportPresenter.tsx` - Olivia pre-rendered video (preload)
 - `src/hooks/useGrokVideo.ts` - Poll loop, progress calculation, `reset()` function
 - `api/video/grok-status.ts` - HEAD validation of replicate URLs, stale detection
 - `api/video/grok-generate.ts` - Sequential generation, Kling/Replicate providers

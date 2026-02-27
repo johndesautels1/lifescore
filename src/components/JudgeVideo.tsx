@@ -59,6 +59,7 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
 
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
   const MAX_VIDEO_ERRORS = 3;
 
   // Auto-generate on mount if requested
@@ -195,12 +196,20 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
             ref={videoRef}
             src={video.videoUrl}
             className="video-element"
+            preload="auto"
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => setIsPlaying(false)}
             onError={handleVideoError}
+            onWaiting={() => setIsBuffering(true)}
+            onPlaying={() => setIsBuffering(false)}
             playsInline
           />
+          {isBuffering && (
+            <div className="video-buffering-overlay">
+              <div className="lcd-spinner"></div>
+            </div>
+          )}
 
           {/* Custom Controls */}
           <div className="video-controls">

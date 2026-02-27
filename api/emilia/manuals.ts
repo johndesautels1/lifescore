@@ -435,6 +435,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - **HEYGEN_AVATAR_LOOK_ID** controls Cristiano's physical appearance variant (suit, setting). This is NOT used by Olivia.
 - **Pre-render validation** checks all 3 env vars (avatar ID, voice ID, look ID) before spending HeyGen credits.
 - Results cached in Supabase. Status polling via same endpoint (action: 'status').
+- Video playback uses \`preload="auto"\` for smoother start and a buffering spinner overlay if the video stalls mid-stream.
 
 ### Cristiano API Endpoints
 - POST /api/cristiano/storyboard — Generate 7-scene storyboard JSON (Stage 1)
@@ -459,6 +460,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - Resolution: 1920×1080 (16:9)
 - Background: #0a1628 (dark branded LIFE SCORE theme)
 - Multi-scene: script auto-split at ~1500 char paragraph boundaries
+- Pre-rendered video player uses \`preload="auto"\` for immediate playback readiness
 
 ### Key Files
 - api/olivia/avatar/heygen.ts (HeyGen streaming avatar endpoint)
@@ -486,6 +488,8 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - Expired replicate URLs auto-detected via HEAD check
 - Dead URLs tracked in state; shows regenerate placeholder
 - Progress bar: scales smoothly to 95% during generation
+- All video elements use \`preload="auto"\` for smooth playback (browser pre-buffers the full video before user presses play)
+- Buffering spinner overlay appears automatically when video stalls mid-playback (\`onWaiting\`/\`onPlaying\` events)
 
 ### Video Caching
 - HEAD validation on replicate.delivery URLs (expire ~24h)
@@ -788,7 +792,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
-### Video: NewLifeVideos (blob URL playback, error detection)
+### Video: NewLifeVideos (blob URL playback, error detection), GoToMyNewCity (Cristiano Freedom Tour)
+### Video Playback: All video components use \`preload="auto"\` for smooth buffering + buffering spinner overlay on stall
 ### Reports: VisualsTab (2-tab layout: Generate New / View Existing), ReportPresenter (Read/Live Presenter/Generate Video modes), GammaIframe (shared iframe with sandbox + error handling), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
 ### Notifications (Added 2026-02-16): NotificationBell, NotifyMeModal, MobileWarningModal, VideoPhoneWarning

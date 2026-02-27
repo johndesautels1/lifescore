@@ -82,6 +82,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
 
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
   const MAX_VIDEO_ERRORS = 3;
 
   // Notification system
@@ -591,13 +592,21 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                   ref={videoRef}
                   src={effectiveVideoUrl}
                   className="court-video"
+                  preload="auto"
                   onEnded={handleVideoEnded}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleLoadedMetadata}
                   onError={handleVideoError}
+                  onWaiting={() => setIsBuffering(true)}
+                  onPlaying={() => setIsBuffering(false)}
                   playsInline
                   crossOrigin="anonymous"
                 />
+                {isBuffering && (
+                  <div className="video-buffering-overlay">
+                    <div className="lcd-spinner"></div>
+                  </div>
+                )}
               ) : (
                 <div className="lcd-placeholder">
                   {isGenerating ? (

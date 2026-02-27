@@ -808,6 +808,8 @@ For Enhanced mode with your own keys:
 
 **Video URL Expiration (Updated 2026-02-14):** All video providers (Replicate, HeyGen, Kling) now have expiration-aware URL handling. The system performs a HEAD request to validate cached video URLs before displaying them. If a URL has expired, the video is automatically re-fetched or regenerated — no manual action needed. Additionally, localStorage quota crash protection has been added, so large video caches won't cause browser errors.
 
+**Smooth Playback (Updated 2026-02-27):** All video players now pre-buffer the full video before you press play, eliminating startup stutter. If the video pauses to buffer mid-playback, a spinner overlay appears so you know it's loading (not frozen). This applies to the Judge Video, Court Order, Freedom Tour, and Olivia Video Presenter.
+
 ### Olivia Presenter Not Working
 
 **Symptoms:** Presenter doesn't appear, video won't generate, avatar not speaking
