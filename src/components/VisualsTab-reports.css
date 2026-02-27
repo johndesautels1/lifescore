@@ -1,0 +1,385 @@
+/* ============================================================================
+   EMBEDDED REPORT VIEW
+   ============================================================================ */
+
+.embedded-report {
+  width: 100%;
+  background: #0a0a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #D4AF37;
+}
+
+.embedded-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.embedded-header h3 {
+  margin: 0;
+  color: #D4AF37;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.embedded-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.external-link-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.external-link-btn:hover {
+  border-color: #D4AF37;
+  color: #D4AF37;
+}
+
+.close-embed-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #D4AF37;
+  border-radius: 6px;
+  color: #D4AF37;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-embed-btn:hover {
+  background: rgba(212, 175, 55, 0.15);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.gamma-embed-frame {
+  width: 100%;
+  height: 80vh;
+  min-height: 600px;
+  border: none;
+  background: #ffffff;
+}
+
+.gamma-embed-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 2rem;
+  text-align: center;
+  color: #d4af37;
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  gap: 0.5rem;
+}
+
+.gamma-embed-error p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.gamma-embed-error .btn {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .embedded-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .gamma-embed-frame {
+    height: 60vh;
+    min-height: 400px;
+  }
+}
+
+/* ============================================================================
+   ENHANCED REPORT TYPE SELECTOR
+   ============================================================================ */
+
+.report-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.report-type-selector > label {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.report-type-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(145deg, #1e2a3a 0%, #0f1824 100%);
+  border: 2px solid #3a4a5a;
+  border-radius: 10px;
+  color: #FFB300;  /* Sunshine orange for visibility */
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 179, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.type-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.type-btn:hover:not(:disabled) {
+  border-color: #D4AF37;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(212, 175, 55, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.type-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.type-btn.active {
+  background: linear-gradient(145deg, #2a3a4a 0%, #1a2530 100%);
+  border-color: #D4AF37;
+  color: #D4AF37;
+  font-weight: 700;
+  box-shadow:
+    0 4px 16px rgba(212, 175, 55, 0.3),
+    0 0 30px rgba(212, 175, 55, 0.15),
+    inset 0 1px 0 rgba(212, 175, 55, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.type-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(145deg, #1a2230 0%, #0d1218 100%);
+  border-color: #2a3a4a;
+  color: #6a7a8a;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.type-hint {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.85rem;
+  color: #d0d0e0;
+  font-style: italic;
+}
+
+/* ============================================================================
+   GUN RIGHTS CHECKBOX OPTION
+   ============================================================================ */
+
+.gun-rights-option {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #2a2a4a);
+  margin-bottom: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #D4AF37;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  flex: 1;
+}
+
+.gun-hint {
+  margin: 0.5rem 0 0 1.75rem;
+  font-size: 0.85rem;
+  color: #FBBF24;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   ENHANCED REPORT PROGRESS HINT
+   ============================================================================ */
+
+.enhanced-hint {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #E5C04B;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   RESPONSIVE - REPORT TYPE SELECTOR
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .report-type-options {
+    flex-direction: column;
+  }
+
+  .type-btn {
+    text-align: center;
+  }
+}
+
+/* 480px breakpoint for small mobile */
+@media (max-width: 480px) {
+  .gamma-section,
+  .in-app-visuals {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .gamma-section .section-title,
+  .in-app-visuals .section-title {
+    font-size: 1.05rem;
+  }
+
+  .visuals-tab .section-description {
+    font-size: 0.85rem;
+  }
+
+  .visuals-tab .generate-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+    min-height: 48px;
+  }
+
+  .format-btn {
+    padding: 0.625rem 0.75rem;
+    min-height: 44px;
+  }
+
+  .type-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    min-height: 48px;
+  }
+
+  .report-links {
+    gap: 0.5rem;
+  }
+
+  .report-link {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .embedded-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .gamma-embed-frame {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .gun-rights-option {
+    padding: 0.75rem;
+  }
+
+  .save-report-btn {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  /* FIX #6 2026-02-15: Read/Listen/Open External/Close buttons overflow on mobile vertical.
+     Reduce all buttons to approximately half height and width */
+  .embedded-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+  }
+
+  .embedded-header h3 {
+    font-size: 0.85rem;
+  }
+
+  .embedded-actions {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .external-link-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    min-height: 36px;
+  }
+
+  .close-embed-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    min-height: 36px;
+  }
+
+  .report-view-toggle {
+    width: 100%;
+  }
+
+  .view-toggle-btn {
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    flex: 1;
+    min-height: 36px;
+  }
+}
+

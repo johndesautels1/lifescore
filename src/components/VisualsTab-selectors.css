@@ -1,0 +1,238 @@
+/**
+ * LIFE SCORE™ Visuals Tab Styles
+ */
+
+.visuals-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ============================================================================
+   REPORT SELECTOR DROPDOWN
+   ============================================================================ */
+
+.report-selector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem 1.25rem;
+  background: var(--card-background, #1a1a2e);
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #2a2a4a);
+}
+
+.report-selector-label {
+  font-weight: 600;
+  color: #ffffff;  /* Crisp white label */
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   SELECTOR TABS — Generate a New Report | View Existing Report
+   ============================================================================ */
+
+.selector-tabs {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  margin-bottom: 0.75rem;
+}
+
+.selector-tab {
+  flex: 1;
+  padding: 0.7rem 1.25rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.selector-tab:first-child {
+  border-right: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.selector-tab:hover:not(.active) {
+  background: rgba(212, 175, 55, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.selector-tab.active {
+  background: rgba(212, 175, 55, 0.12);
+  color: #D4AF37;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.selector-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: #D4AF37;
+  border-radius: 2px 2px 0 0;
+}
+
+/* FIX #54: Enhanced dropdown for better touch responsiveness */
+.report-selector-dropdown {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  min-height: 44px; /* iOS minimum touch target */
+  background: rgba(10, 22, 40, 0.9);
+  border: 1px solid var(--border-color, #2a2a4a);
+  border-radius: 8px;
+  color: #D4AF37;  /* Bold gold for selected city vs city */
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+  /* Touch improvements */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(212, 175, 55, 0.2);
+  position: relative;
+  z-index: 10;
+}
+
+.report-selector-dropdown:hover {
+  border-color: rgba(201, 162, 39, 0.5);
+}
+
+.report-selector-dropdown:focus {
+  outline: none;
+  border-color: #c9a227;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+}
+
+.report-selector-dropdown option {
+  background: #1a1a2e;
+  color: #ffffff;  /* White text in dropdown list */
+  padding: 0.5rem;
+  font-weight: 400;
+}
+
+.report-selector-dropdown optgroup {
+  font-weight: 600;
+  color: #c9a227;
+}
+
+/* FIX #54: Enhanced mobile dropdown experience */
+@media (max-width: 600px) {
+  .report-selector-section {
+    padding: 0.75rem;
+  }
+
+  .report-selector-label {
+    margin-bottom: 0.25rem;
+  }
+
+  .report-selector-dropdown {
+    min-height: 48px;
+    padding: 0.875rem 1rem;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    border-width: 2px;
+  }
+
+  .selector-tabs {
+    border-radius: 8px;
+  }
+
+  .selector-tab {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================================================
+   CUSTOM DROPDOWN (Generate tab — allows styled "Enhanced" label)
+   ============================================================================ */
+
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown-trigger {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #1a1a2e;
+  border: 1px solid var(--border-color, #2a2a4a);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.custom-dropdown-option {
+  padding: 0.75rem 1rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.15s ease;
+}
+
+.custom-dropdown-option:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.custom-dropdown-option.selected {
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+}
+
+/* Amber highlight for "Enhanced", dim for "Standard" */
+.label-enhanced {
+  color: #F59E0B;
+  font-weight: 700;
+}
+
+.label-standard {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 400;
+}
+
+/* Gamma Report Selector - distinct styling */
+.gamma-report-selector {
+  margin-top: 0.5rem;
+  border-color: rgba(201, 162, 39, 0.3);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(10, 22, 40, 0.95));
+}
+
+.gamma-report-selector .report-selector-label {
+  color: #c9a227;
+}
+
+.no-saved-reports-msg {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
