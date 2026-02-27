@@ -1,0 +1,391 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.judge-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #0a1628;
+  border-top: 1px solid var(--glass-border);
+  margin-top: auto;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.footer-brand {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--brushed-gold);
+}
+
+.footer-divider {
+  color: var(--platinum);
+}
+
+.footer-tagline {
+  font-size: 0.85rem;
+  color: var(--platinum);
+}
+
+.footer-center {
+  display: flex;
+  justify-content: center;
+}
+
+.judge-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.ready {
+  background: var(--verdict-green);
+  box-shadow: 0 0 8px var(--verdict-green);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.status-dot.awaiting {
+  background: var(--stable-amber);
+  box-shadow: 0 0 8px var(--stable-amber);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.status-text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--platinum);
+  text-transform: uppercase;
+}
+
+.footer-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.footer-model {
+  font-size: 0.7rem;
+  color: var(--platinum);
+  letter-spacing: 0.05em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .findings-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .finding-card.versus {
+    flex-direction: row;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem 2rem;
+  }
+
+  .analysis-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pending-features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .judge-header {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    text-align: center;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Hide empty center column on mobile */
+  .header-center {
+    display: none;
+  }
+
+  .header-left {
+    justify-content: center;
+    order: 1;
+  }
+
+  .header-right {
+    justify-content: center;
+    order: 2;
+  }
+
+  /* Fix: Center time cluster on mobile (was right-aligned) */
+  .time-cluster {
+    text-align: center;
+  }
+
+  .time-display {
+    justify-content: center;
+  }
+
+  /* Fix: Keep status indicator horizontal but compact on mobile */
+  .status-indicator {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .status-cluster {
+    justify-content: center;
+  }
+
+  .report-id-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .video-controls {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .controls-left,
+  .controls-right {
+    justify-content: center;
+  }
+
+  /* FIX: Action buttons — 2x2 grid on tablet */
+  .action-buttons-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .judge-tab .action-btn {
+    min-height: auto;
+    padding: 1rem 1.25rem;
+  }
+
+  .judge-tab .action-btn .btn-icon {
+    font-size: 1.25rem;
+  }
+
+  .judge-tab .action-btn .btn-text {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    color: #ffffff;
+  }
+
+  /* Mobile: show short labels, hide full labels */
+  .judge-tab .action-btn .btn-text-full {
+    display: none;
+  }
+
+  .judge-tab .action-btn .btn-text-short {
+    display: inline;
+  }
+
+  /* Fix: Verdict winner badge centering on mobile */
+  .verdict-banner {
+    padding: 1.25rem 1rem;
+  }
+
+  .verdict-winner {
+    font-size: 1.5rem;
+  }
+
+  .pending-features {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .judge-footer {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .footer-left,
+  .footer-right {
+    justify-content: center;
+  }
+
+  /* FIX #7 2026-02-15: Judge Welcome Screen — reduce yellow triangle + retry button
+     by one-third so they don't overflow the video display top/bottom on mobile */
+  .avatar-silhouette {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 0.4rem;
+  }
+
+  .silhouette-icon {
+    font-size: 1.4rem;
+  }
+
+  .awaiting-text {
+    font-size: 0.85rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .awaiting-subtext {
+    font-size: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .generate-report-btn {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.6rem;
+    gap: 0.35rem;
+  }
+
+  .generate-report-btn .btn-icon {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .judge-header,
+  .report-id-bar,
+  .video-viewport-section,
+  .findings-section,
+  .analysis-section,
+  .executive-section {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Fix: Tighter header spacing on small phones */
+  .judge-header {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .indicator-label,
+  .indicator-value {
+    font-size: 0.65rem;
+  }
+
+  .time-label {
+    font-size: 0.7rem;
+  }
+
+  .time-value {
+    font-size: 1rem;
+  }
+
+  .date-value {
+    font-size: 0.7rem;
+  }
+
+  /* FIX: Action buttons — single column, full width on small mobile */
+  .action-buttons-section {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .judge-tab .action-btn {
+    min-height: auto;
+    padding: 1rem 1.25rem;
+    width: 100%;
+  }
+
+  .judge-tab .action-btn .btn-icon {
+    font-size: 1.25rem;
+  }
+
+  .judge-tab .action-btn .btn-text {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: #ffffff;
+  }
+
+  /* Small mobile: ensure short labels shown, full labels hidden */
+  .judge-tab .action-btn .btn-text-full {
+    display: none;
+  }
+
+  .judge-tab .action-btn .btn-text-short {
+    display: inline;
+  }
+
+  /* Fix: Verdict winner badge centering on small phones */
+  .verdict-winner {
+    font-size: 1.25rem;
+  }
+
+  .pending-features {
+    grid-template-columns: 1fr;
+  }
+
+  /* FIX #7 2026-02-15: Judge Welcome Screen — further reduce for small phones
+     Yellow triangle + retry button must fit inside video display without overflow */
+  .avatar-silhouette {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 0.3rem;
+  }
+
+  .silhouette-icon {
+    font-size: 1rem;
+  }
+
+  .awaiting-text {
+    font-size: 0.7rem;
+    margin-bottom: 0.1rem;
+    letter-spacing: 0.08em;
+  }
+
+  .awaiting-subtext {
+    font-size: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .generate-report-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .generate-report-btn .btn-icon {
+    font-size: 0.7rem;
+  }
+
+  /* FIX 2026-02-15: Judge category accordion buttons overflow on small phones */
+  .judge-tab .category-header-btn {
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .judge-tab .category-icon {
+    font-size: 1.1rem;
+  }
+
+  .judge-tab .category-name {
+    font-size: 0.75rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .judge-tab .category-weight {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.35rem;
+    white-space: nowrap;
+  }
+}
+
