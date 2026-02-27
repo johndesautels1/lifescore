@@ -197,18 +197,18 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | T9 | src/components/ManualViewer.tsx | 2 | LOW | Optional chain missing on nested access | OPEN |
 | T10 | src/hooks/useEmilia.ts | 2 | LOW | Cast to `any` silences type error on audio context | OPEN |
 | T11 | api/shared/supabaseClient.ts | 2 | LOW | Module-level `!` assertion on env vars | N/A (file removed) |
-| T12 | api/evaluate.ts | 1 | LOW | Unused import | OPEN |
-| T13 | api/video/grok-generate.ts | 1 | LOW | Unused import | OPEN |
+| T12 | api/evaluate.ts | 1 | LOW | Unused import | **FIXED** (commit 597d4d9, 2026-02-27) |
+| T13 | api/video/grok-generate.ts | 1 | LOW | Unused import | NOT A BUG — verified 2026-02-27, no unused imports found |
 | T14 | api/gamma/generate-gamma.ts | 1 | LOW | Unused import | N/A (path changed) |
-| T15 | src/components/TabNavigation.tsx | 1 | LOW | Prop interface overly broad | OPEN |
-| T16 | src/components/HelpBubble.tsx | 1 | LOW | Unused CSS class | OPEN |
+| T15 | src/components/TabNavigation.tsx | 1 | LOW | Prop interface overly broad | NOT A BUG — verified 2026-02-27, interface is clean and well-typed |
+| T16 | src/components/HelpBubble.tsx | 1 | LOW | Unused CSS class | NOT A BUG — verified 2026-02-27, all CSS classes used |
 | T17 | api/stripe/webhook.ts | 2 | LOW | event.type switch no default case | OPEN |
 | T18 | api/user/preferences.ts | 2 | LOW | Missing validation on preference key names | OPEN |
 | T19 | src/hooks/useTierAccess.ts | 2 | LOW | Retry count hardcoded, no backoff | OPEN |
-| T20 | src/components/LoadingState.tsx | 1 | LOW | Inline style objects recreated every render | OPEN |
+| T20 | src/components/LoadingState.tsx | 1 | LOW | Inline style objects recreated every render | NOT A BUG — verified 2026-02-27, dynamic width style is intentional |
 | T21 | api/shared/rateLimiter.ts | 2 | LOW | In-memory rate limiter resets on cold start | OPEN |
 | T22 | api/emilia/manuals.ts | 1 | LOW | Error message leaks internal path | OPEN |
-| T23 | src/components/ErrorBoundary.tsx | 1 | LOW | componentDidCatch logs to console only | OPEN |
+| T23 | src/components/ErrorBoundary.tsx | 1 | LOW | componentDidCatch logs to console only | NOT A BUG — verified 2026-02-27, already calls trackError() |
 | T24 | api/evaluate.ts | 2 | LOW | LLM response not validated against schema | OPEN |
 | T25 | src/hooks/useURLParams.ts | 1 | LOW | URL params not sanitized before use | OPEN |
 
@@ -270,9 +270,9 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | S12 | api/user/delete.ts | 2 | LOW | No delete confirmation | OPEN |
 | S13 | src/hooks/useVoiceRecognition.ts | 1 | LOW | Mic permission not graceful | OPEN |
 | S14 | public/manifest.json | 1 | LOW | CSP not configured for PWA | OPEN |
-| S15 | api/evaluate.ts | 1 | LOW | Stack trace in error response | OPEN |
-| S16 | api/judge.ts | 1 | LOW | Same stack trace leak | OPEN |
-| S17 | api/video/grok-generate.ts | 1 | LOW | Same stack trace leak | OPEN |
+| S15 | api/evaluate.ts | 1 | LOW | Stack trace in error response | NOT A BUG — verified 2026-02-27, no stack traces in responses |
+| S16 | api/judge.ts | 1 | LOW | Same stack trace leak | NOT A BUG — verified 2026-02-27, safe error messages only |
+| S17 | api/video/grok-generate.ts | 1 | LOW | Same stack trace leak | NOT A BUG — verified 2026-02-27, safe error messages only |
 
 ### CATEGORY D: CONFIG, BUILD, DATABASE & COMPLIANCE (35 bugs)
 
@@ -301,17 +301,17 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | B21 | docs/legal | 3 | MED | Data retention not implemented | OPEN |
 | B22 | docs/legal | 3 | MED | Data portability not implemented | OPEN |
 | B23 | api/user/delete.ts | 3 | MED | No confirmation email on delete | OPEN |
-| B24 | public/robots.txt | 1 | LOW | Allows crawling /api/ | OPEN |
+| B24 | public/robots.txt | 1 | LOW | Allows crawling /api/ | **FIXED** (commit 597d4d9, 2026-02-27) |
 | B25 | public/index.html | 1 | LOW | Missing OG meta tags | **FIXED** |
 | B26 | package.json | 1 | LOW | No engines field | OPEN |
 | B27 | vercel.json | 1 | LOW | No region config | OPEN |
-| B28 | .gitignore | 1 | LOW | Missing .env.local | OPEN |
+| B28 | .gitignore | 1 | LOW | Missing .env.local | NOT A BUG — verified 2026-02-27, .env.local already in .gitignore (lines 28+41) |
 | B29 | supabase/migrations | 1 | LOW | Inconsistent naming | OPEN |
 | B30 | tsconfig.json | 1 | LOW | No path aliases | OPEN |
 | B31 | vite.config.ts | 1 | LOW | No env validation plugin | OPEN |
 | B32 | package.json | 1 | LOW | No prepare script | OPEN |
 | B33 | supabase/migrations | 1 | LOW | No comments on RLS policies | OPEN |
-| B34 | .env.example | 1 | LOW | No descriptions for env vars | OPEN |
+| B34 | .env.example | 1 | LOW | No descriptions for env vars | NOT A BUG — verified 2026-02-27, all vars have section headers + inline comments |
 | B35 | vercel.json | 2 | LOW | SPA fallback masks API 404s | OPEN |
 
 ### CATEGORY E: REACT STATE & MEMORY LEAKS (14 bugs, 4 cross-referenced above)
