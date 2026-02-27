@@ -1,0 +1,367 @@
+   SECTION HEADERS
+   ============================================================================ */
+.about-clues .ac-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--ac-orange);
+  margin-bottom: 12px;
+}
+
+.about-clues .ac-section-title {
+  font-family: var(--ac-font-display);
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 600;
+  color: var(--ac-text-primary);
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+.about-clues .ac-section-divider {
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, var(--ac-orange), var(--ac-sapphire-light));
+  border-radius: 1px;
+  margin-bottom: 28px;
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+.about-clues .ac-body-text {
+  font-size: 16px;
+  color: var(--ac-text-accent);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.about-clues .ac-body-text strong {
+  color: var(--ac-text-primary);
+  font-weight: 600;
+}
+
+.about-clues .ac-lead-text {
+  font-size: 18px;
+  color: var(--ac-text-primary);
+  font-weight: 400;
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+/* ============================================================================
+   CALLOUT BOX
+   ============================================================================ */
+.about-clues .ac-callout {
+  background: var(--ac-highlight-bg);
+  border-left: 3px solid var(--ac-orange);
+  border-radius: 0 12px 12px 0;
+  padding: 24px 28px;
+  margin: 28px 0;
+  font-family: var(--ac-font-display);
+  font-size: 17px;
+  font-style: italic;
+  color: var(--ac-text-primary);
+  line-height: 1.7;
+}
+
+/* ============================================================================
+   PERSON CARDS
+   ============================================================================ */
+.about-clues .ac-person-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 28px 0;
+}
+
+@media (max-width: 640px) {
+  .about-clues .ac-person-grid { grid-template-columns: 1fr; }
+}
+
+.about-clues .ac-person-card {
+  background: var(--ac-accent-surface);
+  border: 1px solid var(--ac-glass-border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.about-clues .ac-person-card:hover {
+  border-color: var(--ac-glass-border-hover);
+  transform: translateY(-2px);
+}
+
+.about-clues .ac-person-name {
+  font-family: var(--ac-font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ac-text-primary);
+  margin-bottom: 4px;
+}
+
+.about-clues .ac-person-role {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ac-orange);
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+.about-clues .ac-person-desc {
+  font-size: 14px;
+  color: var(--ac-text-secondary);
+  line-height: 1.7;
+}
+
+/* ============================================================================
+   SERVICE LINE TABLE
+   ============================================================================ */
+.about-clues .ac-services-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 24px 0;
+  font-size: 14px;
+}
+
+.about-clues .ac-services-table thead th {
+  background: var(--ac-table-header);
+  padding: 14px 18px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ac-text-secondary);
+  border-bottom: 1px solid var(--ac-table-border);
+}
+
+.about-clues .ac-services-table thead th:last-child { text-align: center; }
+
+.about-clues .ac-services-table tbody td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ac-table-border);
+  color: var(--ac-text-accent);
+  vertical-align: top;
+}
+
+.about-clues .ac-services-table tbody tr:nth-child(even) td {
+  background: var(--ac-table-row-alt);
+}
+
+.about-clues .ac-services-table tbody tr:last-child td { border-bottom: none; }
+
+.about-clues .ac-service-name {
+  font-weight: 600;
+  color: var(--ac-text-primary);
+}
+
+.about-clues .ac-service-flag {
+  display: inline-block;
+  background: var(--ac-tag-bg);
+  border: 1px solid var(--ac-tag-border);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ac-sapphire-light);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.about-clues .ac-service-price {
+  text-align: center;
+  font-weight: 700;
+  color: var(--ac-orange);
+}
+
+/* ============================================================================
+   MODULE GRID
+   ============================================================================ */
+.about-clues .ac-module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.about-clues .ac-module-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--ac-accent-surface);
+  border: 1px solid var(--ac-glass-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.about-clues .ac-module-chip:hover {
+  border-color: var(--ac-glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.about-clues .ac-module-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px; height: 26px;
+  background: var(--ac-tag-bg);
+  border: 1px solid var(--ac-tag-border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ac-sapphire-light);
+}
+
+.about-clues .ac-module-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ac-text-primary);
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   AI PERSONAS
+   ============================================================================ */
+.about-clues .ac-persona-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 24px 0;
+}
+
+.about-clues .ac-persona-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  background: var(--ac-accent-surface);
+  border: 1px solid var(--ac-glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.about-clues .ac-persona-row:hover {
+  border-color: var(--ac-glass-border-hover);
+  transform: translateX(4px);
+}
+
+.about-clues .ac-persona-avatar {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.about-clues .ac-persona-avatar.olivia { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(245,158,11,0.2)); }
+.about-clues .ac-persona-avatar.cristiano { background: linear-gradient(135deg, rgba(30,64,175,0.3), rgba(15,23,42,0.2)); }
+.about-clues .ac-persona-avatar.emilia { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(236,72,153,0.15)); }
+
+.about-clues .ac-persona-info { flex: 1; }
+
+.about-clues .ac-persona-name-title {
+  font-family: var(--ac-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ac-text-primary);
+  margin-bottom: 2px;
+}
+
+.about-clues .ac-persona-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ac-orange);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.about-clues .ac-persona-desc {
+  font-size: 14px;
+  color: var(--ac-text-secondary);
+  line-height: 1.7;
+}
+
+/* ============================================================================
+   DIFFERENTIATORS
+   ============================================================================ */
+.about-clues .ac-diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.about-clues .ac-diff-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.about-clues .ac-diff-icon {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  background: var(--ac-tag-bg);
+  border: 1px solid var(--ac-tag-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.about-clues .ac-diff-content { flex: 1; }
+
+.about-clues .ac-diff-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ac-text-primary);
+  margin-bottom: 4px;
+}
+
+.about-clues .ac-diff-desc {
+  font-size: 14px;
+  color: var(--ac-text-secondary);
+  line-height: 1.7;
+}
+
+/* ============================================================================
+   OFFICES STRIP
+   ============================================================================ */
+.about-clues .ac-offices-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.about-clues .ac-office-tag {
+  background: var(--ac-accent-surface);
+  border: 1px solid var(--ac-glass-border);
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ac-text-accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.about-clues .ac-office-tag .ac-pin { color: var(--ac-orange); font-size: 14px; }
+
+.about-clues .ac-office-tag.hq {
+  border-color: var(--ac-tag-border);
+  background: var(--ac-tag-bg);
+  color: var(--ac-sapphire-light);
+  font-weight: 600;
+}
+
