@@ -56,7 +56,7 @@ const ADMIN_EMAILS = getAdminEmails();
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.7 | **Updated:** 2026-02-17
+**Version:** 3.9 | **Updated:** 2026-02-27
 
 ## Getting Started
 
@@ -203,7 +203,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.6 | **Updated:** 2026-02-17
+**Version:** 3.8 | **Updated:** 2026-02-27
 
 ## Support Overview
 
@@ -340,7 +340,7 @@ If you've forgotten your password:
 
   tech: `# Technical Support Manual
 
-**Version:** 4.9 | **Updated:** 2026-02-17
+**Version:** 5.1 | **Updated:** 2026-02-27
 
 ## System Architecture
 
@@ -581,6 +581,11 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - **Notification click rebooting app** — window.location.href replaced with SPA onNavigate callback threaded App→Header→NotificationBell. Parses notification link query params and maps to setActiveTab(). Supports /?tab=visuals, /?tab=judge, /?cityA=X&cityB=Y.
 - **Auto-save on completion** — Both standard and enhanced comparisons auto-save to localStorage + Supabase when complete. Save button reflects saved state via savedKey prop. 3 files changed (App.tsx, Results.tsx, EnhancedComparison.tsx).
 - **Presenter/Video buttons grayed out on saved reports** — handleViewTabSelect now auto-loads matching comparison via selectedComparisonId so result + resultMatchesViewingReport resolve correctly and presenterAvailable becomes true.
+
+### Resolved Issues (2026-02-27)
+- **Raw metric IDs shown in 7 user-facing locations** — Created \`src/shared/metricDisplayNames.ts\` as single source of truth for 100-metric display name map. Fixed: opusJudge.ts disagreementSummary (cascaded to JudgeTab, Gamma, Olivia narration), EvidencePanel.tsx (4 instances), AdvancedVisuals.tsx (bar chart, line chart, data table), exportUtils.ts (CSV + PDF), api/olivia/context.ts (fallback). Refactored gammaService.ts to import from shared utility. 8 files changed.
+- **Olivia presenter audio overlap** — ReportPresenter.tsx speakTTSFallback() created new Audio objects without stopping the previous one. Added .pause() + null cleanup before creating new Audio.
+- **Olivia context builder raw metric IDs** — api/olivia/context.ts showed raw metric IDs in 6 places. All fixed with getMetricDisplayName(). Enhanced path also missing city2 evidence entirely.
 
 ## Debugging
 - Vercel Dashboard > Deployments > Functions

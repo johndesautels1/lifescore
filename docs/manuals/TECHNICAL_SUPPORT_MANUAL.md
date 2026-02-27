@@ -450,7 +450,7 @@ Services contain the core business logic. They sit between components/hooks and 
 | `presenterService.ts` | Client-side narration script generator from comparison data. Segments: intro → winner → categories → highlights → consensus → conclusion. |
 | `presenterVideoService.ts` | HeyGen video generation orchestration + polling (5s intervals, 120 attempts, 10 min timeout). |
 | `grokVideoService.ts` | Client-side Grok video generation — triggers generation, polls status, handles downloads. |
-| `opusJudge.ts` | Claude Opus judge verdict generation — builds legal-style prompt, parses structured verdict. |
+| `opusJudge.ts` | Claude Opus judge verdict generation — builds legal-style prompt, parses structured verdict. Uses `getMetricDisplayName()` from `src/shared/metricDisplayNames.ts` for disagreement summaries. |
 | `judgePregenService.ts` | Pre-generates judge verdicts in the background after comparison completes. |
 | `videoStorageService.ts` | Uploads and retrieves videos from Supabase Storage buckets. |
 | `enhancedComparison.ts` | State management for enhanced (multi-LLM) comparison mode. |
@@ -1395,6 +1395,8 @@ User clicks "Listen to Presenter" toggle on VisualsTab →
 
 **Narration Generation:** Entirely client-side from `AnyComparisonResult` data. No API call needed. Duration estimated at ~150 words/minute.
 
+**Audio Cleanup (Fixed 2026-02-27):** `speakTTSFallback()` now stops previous audio (`.pause()` + null ref) before creating a new `Audio` object. Previously, overlapping segments caused double playback when segment timer fired before audio finished.
+
 #### Pre-Rendered Video Mode
 Polished, downloadable MP4 via HeyGen's video generation API.
 
@@ -1993,6 +1995,8 @@ npm run preview
 | A11: invideo-override unprotected | Added JWT auth to `/api/video/invideo-override` | 2026-02-26 |
 | CL1-CL6: 87 debug console.log removed | Removed 87 debug `console.log` statements from 10 component files: JudgeTab (44), CourtOrderVideo (10), VisualsTab (10), AskOlivia (7), SavedComparisons (5), + 11 from 5 smaller components | 2026-02-26 |
 | Olivia context builder raw metric IDs | `api/olivia/context.ts` was showing raw metric IDs (e.g. `pf_01_cannabis_legal`) instead of display names (e.g. `Cannabis Legality`) in 6 places: (1) enhanced top metrics per category, (2) enhanced evidence metricName, (3) enhanced disagreement names, (4) standard evidence city1 metricName, (5) standard evidence city2 metricName. Also (6) enhanced path only collected evidence from city1 — city2 evidence was missing entirely. All 6 fixed to use `getMetricDisplayName()` and both cities now included. | 2026-02-27 |
+| **Raw metric IDs shown in 7 user-facing locations** | Created `src/shared/metricDisplayNames.ts` as single source of truth for the 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab hover card, Gamma reports, Olivia narration), `EvidencePanel.tsx` (4× `metricName: metric.metricId`), `AdvancedVisuals.tsx` (bar chart `.replace()` hack, line chart `.split()` hack, data table raw ID), `exportUtils.ts` (CSV raw ID + PDF `.replace()` hack), `api/olivia/context.ts` (one remaining fallback). Refactored `gammaService.ts` to import from shared utility instead of maintaining duplicate map. 8 files changed. | 2026-02-27 |
+| Olivia presenter audio overlap (double playback) | `ReportPresenter.tsx` `speakTTSFallback()` created new `Audio` objects without stopping the previous one. When segment timer fired before audio finished, two audio streams played simultaneously. Added `.pause()` + null cleanup before creating new Audio — same pattern used in skip/pause handlers. | 2026-02-27 |
 
 ---
 
@@ -2630,6 +2634,7 @@ Server-side notifications triggered in:
 | 4.8 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system architecture (§24) — jobs/notifications tables, api/notify endpoint, NotificationBell/NotifyMeModal components, useNotifications/useJobTracker hooks. 15 new resolved issues (§14.2): Resend from email, isPasswordRecovery, 3 notification flows, VS dark mode, II suffix, mobile +/- and badges, Visuals labeling, Gamma links, login credentials (3 iterations), Judge stale state, Court Order tabs revert, password reset redirect, admin signup email. |
 | 4.9 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§14.2): Asset materialization pattern — `api/gamma.ts` persists PDF/PPTX exports to Supabase Storage on completion. New DB columns `pdf_storage_path`/`pptx_storage_path`. Iframe error detection on all 4 embed locations. 11 files, 35 changes. |
 | 5.0 | 2026-02-27 | Claude Opus 4.6 | Olivia context builder fix (§14.2): 6 bugs in `api/olivia/context.ts` — raw metric IDs shown instead of display names in enhanced top metrics, evidence, and disagreements; standard evidence also affected; enhanced path missing city2 evidence entirely. All fixed with `getMetricDisplayName()`. |
+| 5.1 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix across 7 user-facing locations (§14.2): Created `src/shared/metricDisplayNames.ts` as single source of truth for 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab, Gamma, Olivia narration), `EvidencePanel.tsx` (4 instances), `AdvancedVisuals.tsx` (bar chart, line chart, data table), `exportUtils.ts` (CSV + PDF), `api/olivia/context.ts` (fallback). Refactored `gammaService.ts` to import from shared utility. Audio overlap fix: `ReportPresenter.tsx` `speakTTSFallback()` now stops previous audio before starting new segment (§9.7). |
 
 ---
 

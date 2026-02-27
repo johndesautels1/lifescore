@@ -426,7 +426,20 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | "VS" text invisible between city names | Fixed (2026-02-16) — VS text now visible in dark mode across AdvancedVisuals, ContrastDisplays, JudgeTab, JudgeVideo |
 | Other dark mode text issues | Report specific elements to support for investigation |
 
-### 5.9 Mobile Display Issues (Added 2026-02-15)
+### 5.9 Metric Display & Export Issues (Fixed 2026-02-27)
+
+| Issue | Solution |
+|-------|----------|
+| Evidence panel shows codes like "pf_01_cannabis_legal" | Fixed — all metric names now display as human-readable (e.g., "Cannabis Legality") |
+| Chart labels in Advanced Visuals show codes | Fixed — bar charts, line charts, and data tables now use proper metric names |
+| CSV/PDF export shows raw metric codes | Fixed — both CSV and PDF exports now use readable metric names |
+| Judge disagreement summary shows codes | Fixed — disagreement areas now display proper names (e.g., "Cannabis Legality, Property Tax Rate") |
+| Olivia talking over herself during presentations | Fixed — audio from previous segments now cleanly stops before the next starts |
+
+**Response template (metric display):**
+"Thank you for reporting the display issue. We deployed a fix on February 27, 2026, that corrects all metric names across the app. Please refresh your page or run a new comparison. The fix applies to the Evidence Panel, charts, exports, and the AI Judge summary. If you still see internal codes, please clear your browser cache and try again."
+
+### 5.10 Mobile Display Issues (Added 2026-02-15) <!-- was 5.9 -->
 
 | Issue | Solution |
 |-------|----------|
@@ -444,7 +457,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 **Response template:**
 "Thank you for reporting the mobile display issue. We deployed fixes for 9 mobile layout problems on February 15, 2026, and added a mobile warning modal on February 16, 2026 to set expectations for phone users. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
 
-### 5.10 Notification Issues (Added 2026-02-16)
+### 5.11 Notification Issues (Added 2026-02-16) <!-- was 5.10 -->
 
 | Issue | Solution |
 |-------|----------|
@@ -682,6 +695,7 @@ Olivia can now present Gamma report findings as an AI avatar video:
 | Download button not working | Wait for generation to complete (progress bar must reach 100%) |
 | Olivia chat voice broken but presenter works | Separate systems — check ElevenLabs/OpenAI keys, not HeyGen |
 | Presenter broken but chat voice works | Separate systems — check HeyGen keys, not ElevenLabs/OpenAI |
+| Audio from two segments playing at once | Fixed (2026-02-27) — audio now cleanly stops before the next segment starts |
 
 ### 8.10 Cost Dashboard (Updated 2026-02-14)
 
@@ -1023,6 +1037,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system (§5.10, §8.12) with troubleshooting and architecture. "Explain the Winner" toggle (§8.6a). Judge stale state fix (§5.6). VS text dark mode fix (§5.8). Gamma links fix (§5.5). Phone call audio warning (§5.4). Mobile warning modal (§5.9). Mobile +/- buttons and LLM badges fix. Password reset and login credential fixes. Admin signup notification. |
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§5.5): PDF/PPTX exports now persisted to permanent Supabase Storage. Iframe error detection added to all 4 embed locations. New troubleshooting entries and response template for expired export URLs. |
 | 3.7 | 2026-02-26 | Claude Opus 4.6 | Security audit update: 47-fix session documented. New customer inquiries §4.10 (data security), §4.11 (copyright year), §4.12 (tie case). All API endpoints now authenticated (38+). IDOR fix, CORS hardening, XSS patches, 87 debug console.log removed, admin emails centralized. New glossary terms: JWT, IDOR, CORS, XSS, getAdminEmails(). |
+| 3.8 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix: New §5.9 Metric Display & Export Issues — 7 user-facing locations now show proper names instead of codes (Evidence Panel, charts, CSV, PDF, Judge summary). Presenter audio overlap fix added to §8.9 Common Issues table. Section renumbering: §5.10→5.10, §5.11→5.11. |
 
 ---
 

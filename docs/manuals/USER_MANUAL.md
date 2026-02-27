@@ -259,6 +259,8 @@ For each metric, click **View Evidence** to see:
 - Date of information
 - Confidence level
 
+**Metric Names (Fixed 2026-02-27):** The Evidence Panel now shows proper human-readable metric names (e.g., "Cannabis Legality", "Property Tax Rate") instead of internal codes. This fix also applies to the Advanced Visuals charts, CSV/PDF exports, and the Judge disagreement summary.
+
 ### Score Methodology (Added 2026-02-05)
 
 Click **"How is this scored?"** to see a glass-morphic explainer card showing the 5-stage scoring pipeline:
@@ -494,6 +496,8 @@ On the Visuals tab, after a Gamma report is generated or loaded from saved repor
 - She narrates the key findings: introduction, winner announcement, category breakdowns, key differences, and conclusion
 - **Controls:** Play/Pause, Next/Previous segment, Close
 - Available instantly — no generation wait time
+
+**Audio Fix (2026-02-27):** Fixed an issue where audio from one segment could overlap with the next segment if narration timing didn't align. Each segment now cleanly stops before the next begins.
 
 #### Generate Video
 - Creates a polished, downloadable MP4 video of Olivia presenting your full report
@@ -1123,3 +1127,4 @@ If you choose "Notify Me & Go":
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notifications system (§17) with bell icon, "Notify Me" modal, email alerts. Explain the Winner toggle (§5). Confidence interval hover cards (§7). Glassmorphic Judge buttons (§7). Phone call audio warning (§7). Mobile warning modal (§12). Law vs Lived / Worst-Case illumination (§4). Dealbreakers A-Z sort (§4). Auto-scroll to top (§4). VS text dark mode fix (§10). Mobile +/- buttons and LLM badges fix (§12). Visuals labeling fix. Gamma links fix. Login credential storage fix. Judge stale state fix. Password reset redirect fix. Admin signup email. |
 | 3.7 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§9): Permanent Downloads note — PDF/PPTX exports now permanently stored in Supabase Storage. Expired Report Detection note — iframe error handling shows fallback message. |
 | 3.8 | 2026-02-26 | Claude Opus 4.6 | Security audit session (47 fixes): New Security subsection in Privacy & Data (§13) documenting 38+ authenticated endpoints, CORS hardening, debug cleanup. Tie victory text fix in Judge reports (§7). New FAQs for wrong year display and tie case. All user-facing data now requires authentication. |
+| 3.9 | 2026-02-27 | Claude Opus 4.6 | Metric display name fix (§5): Evidence Panel, Advanced Visuals charts, CSV/PDF exports, and Judge disagreement summaries now show proper human-readable metric names (e.g., "Cannabis Legality") instead of internal codes (e.g., "pf_01_cannabis_legal"). Olivia presenter audio overlap fix (§8): segments no longer play over each other. |

@@ -1031,7 +1031,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | `oliviaService.ts` | Client-side wrapper for Olivia chat, TTS, context, and HeyGen video generation |
 | `presenterService.ts` | Client-side narration script generator from comparison data (no API call) |
 | `presenterVideoService.ts` | HeyGen video generation orchestration with 5s polling, 10-min timeout |
-| `opusJudge.ts` | Opus Judge client helpers and utility functions |
+| `opusJudge.ts` | Opus Judge client helpers — builds disagreement summaries using `getMetricDisplayName()` from shared utility |
 | `llmEvaluators.ts` | Client-side evaluation via Vercel serverless functions |
 | `enhancedComparison.ts` | API key management for enhanced comparison |
 | `judgePregenService.ts` | Non-blocking background Judge Report + Video generation |
@@ -1427,6 +1427,11 @@ lifescore/
 │   │       ├── CostDashboard-tables.css
 │   │       └── CostDashboard-theme.css
 │   │
+│   ├── shared/                       # Shared client-side utilities
+│   │   ├── metrics.ts                # Metric definitions (ALL_METRICS, CATEGORIES)
+│   │   ├── types.ts                  # Shared TypeScript types
+│   │   └── metricDisplayNames.ts     # 100-metric ID→display name map + getMetricDisplayName()
+│   │
 │   ├── contexts/                     # React contexts (1)
 │   │   └── AuthContext.tsx
 │   ├── hooks/                        # Custom hooks (18)
@@ -1559,5 +1564,6 @@ LIFE SCORE evaluates cities across **100 metrics** in **6 categories**:
 - **Last Updated:** 2026-02-27
 - **Verified Against:** ~280 commits
 - **Total Codebase:** 44 API endpoints, 47 components, 18 hooks, 16 services, 21 type files, 21 DB tables, 61 env vars
+- **2026-02-27 Update (b):** Added `src/shared/metricDisplayNames.ts` to file tree — single source of truth for 100-metric display name map, used by opusJudge, EvidencePanel, AdvancedVisuals, exportUtils, gammaService.
 - **2026-02-27 Update:** Updated file structure to reflect 22-file refactoring (31,494 lines split into 78 domain files with barrel re-exports). Updated type definitions (12→21 files), utility functions, shared API utilities, and full file tree.
 - **2026-02-17 Update:** Gamma export URL expiration fix — new `pdf_storage_path`/`pptx_storage_path` columns on `gamma_reports` and `reports` tables, `/api/gamma` endpoint now persists exports to Supabase Storage on completion

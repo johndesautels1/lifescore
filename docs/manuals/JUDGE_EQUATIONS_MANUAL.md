@@ -497,6 +497,10 @@ function getConfidenceLevel(stdDev) {
 | **moderate** | 12-19 | Some disagreement, interpret carefully |
 | **split** | >= 20 | Significant disagreement, unreliable |
 
+### Disagreement Display Names (Fixed 2026-02-27)
+
+When metrics are flagged as disagreement areas (StdDev >= 20), they are stored as raw metric IDs (e.g., `pf_01_cannabis_legal`). The `disagreementSummary` string in `opusJudge.ts` now maps these IDs through `getMetricDisplayName()` from `src/shared/metricDisplayNames.ts` before displaying to users. This ensures the Judge Tab, Gamma reports, and Olivia narration show human-readable names (e.g., "Cannabis Legality") instead of internal codes.
+
 ### Overall Confidence
 
 ```javascript
@@ -935,4 +939,5 @@ if total_chars > 10,000:
   - `src/hooks/useGrokVideo.ts`
   - `src/data/metrics.ts` (barrel — actual data in `metrics-{category}.ts` files)
   - `src/constants/scoringThresholds.ts`
-- **Last Updated:** 2026-02-14
+- **Last Updated:** 2026-02-27
+- **2026-02-27 Update:** Added Disagreement Display Names section (§10) — `opusJudge.ts` now maps raw metric IDs through `getMetricDisplayName()` before user-facing display.
