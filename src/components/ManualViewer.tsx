@@ -170,7 +170,7 @@ function parseMarkdownSections(content: string): ManualSection[] {
   return sections;
 }
 
-const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
+const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail: _userEmail }) => {
   const [content, setContent] = useState<ManualContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -45,7 +45,7 @@ function isEnhancedResult(result: AnyComparisonResult): result is EnhancedCompar
 // ============================================================================
 
 // Metric display names imported from shared utility (single source of truth)
-import { METRIC_DISPLAY_NAMES, getMetricDisplayName } from '../shared/metricDisplayNames';
+import { getMetricDisplayName } from '../shared/metricDisplayNames';
 
 // Category display configuration
 const CATEGORY_CONFIG: Record<string, { name: string; icon: string; metricCount: number; weight: string }> = {
