@@ -1,0 +1,216 @@
+/* ============================================================================
+   Button Styles
+   ============================================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, var(--orange), var(--orange-light));
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
+}
+
+.btn-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--sapphire);
+  color: white;
+}
+
+/* ============================================================================
+   Form Elements
+   ============================================================================ */
+
+.input-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-sm);
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  transition: all var(--transition-fast);
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: var(--sapphire);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ============================================================================
+   Score Display Components
+   ============================================================================ */
+
+.score-box {
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.score-box.winner {
+  background: #f0fdf4;
+  border-color: var(--success);
+}
+
+.score-box .score {
+  font-size: var(--font-size-5xl);
+  font-weight: 800;
+  color: var(--gray-700);
+  line-height: 1;
+}
+
+.score-box.winner .score {
+  color: var(--success-dark);
+}
+
+/* Progress Bars */
+.bar-bg {
+  width: 100%;
+  height: 12px;
+  background: var(--gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--gray-400);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+.bar-fill.winning {
+  background: var(--success);
+}
+
+.bar-fill.city1 {
+  background: var(--sapphire);
+}
+
+.bar-fill.city2 {
+  background: var(--orange);
+}
+
+/* ============================================================================
+   Winner Hero Section
+   ============================================================================ */
+
+.winner-hero {
+  background: linear-gradient(135deg, var(--sapphire), var(--sapphire-light), var(--orange));
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.winner-hero .trophy {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.winner-hero .city-name {
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  margin-bottom: var(--spacing-md);
+}
+
+.winner-hero .total-score {
+  font-size: 5rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin: var(--spacing-md) 0;
+  line-height: 1;
+}
+
+.winner-hero .score-label {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+/* ============================================================================
+   Category Breakdown
+   ============================================================================ */
+
+.category {
+  border-bottom: 1px solid var(--gray-200);
+  padding-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.category:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.category-icon {
+  font-size: var(--font-size-xl);
+}
+
+.category-name {
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.category-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .category-bars {
+    grid-template-columns: 1fr;
+  }
+}
+

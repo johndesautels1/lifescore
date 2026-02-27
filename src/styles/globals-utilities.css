@@ -1,0 +1,238 @@
+/* ============================================================================
+   Loading States
+   ============================================================================ */
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3xl);
+  text-align: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--sapphire);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: var(--spacing-md);
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.loading-progress {
+  width: 100%;
+  max-width: 300px;
+  margin-top: var(--spacing-md);
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sapphire), var(--orange));
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+/* ============================================================================
+   Confidence Indicators
+   ============================================================================ */
+
+.confidence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.confidence-high {
+  background: #dcfce7;
+  color: var(--success-dark);
+}
+
+.confidence-medium {
+  background: #fef3c7;
+  color: var(--warning);
+}
+
+.confidence-low {
+  background: #fee2e2;
+  color: var(--error);
+}
+
+/* ============================================================================
+   Responsive Utilities
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .card {
+  /* Glassmorphic 4D Effect */
+    padding: var(--spacing-md);
+  }
+  
+  h1 { font-size: var(--font-size-2xl); }
+  h2 { font-size: var(--font-size-xl); }
+  
+  .winner-hero {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+  
+  .winner-hero .total-score {
+    font-size: 3rem;
+  }
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.text-sapphire { color: var(--sapphire); }
+.text-orange { color: var(--orange); }
+.text-gold { color: var(--gold); }
+.text-gray { color: var(--gray-500); }
+.text-success { color: var(--success); }
+.text-error { color: var(--error); }
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+
+.hidden { display: none; }
+.visible { display: block; }
+
+/* ============================================================================
+   Animations
+   ============================================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn var(--transition-slow);
+}
+
+.animate-slideUp {
+  animation: slideUp var(--transition-slow);
+}
+
+/* Root element full width */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Ensure all text is readable */
+small, .text-small {
+  color: var(--gray-600);
+  font-size: var(--font-size-sm);
+}
+
+/* Fix paragraph colors */
+p {
+  color: var(--gray-700);
+}
+
+/* ============================================================================
+   Mobile Touch Optimizations
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  /* Ensure minimum touch target size (44px recommended) */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1.25rem;
+  }
+
+  /* Remove hover effects on touch devices */
+  @media (hover: none) {
+    .btn:hover {
+      transform: none;
+    }
+
+    .card:hover {
+      transform: none;
+    }
+  }
+
+  /* Improve tap highlight */
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: rgba(0, 71, 171, 0.1);
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Better scrolling on iOS */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Small mobile: Stack buttons */
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Reduce padding on very small screens */
+  .main-content {
+    padding: 1rem 0.5rem;
+  }
+
+  .container {
+    padding: 0 0.5rem;
+  }
+
+  /* Larger touch targets for links */
+  a {
+    padding: 0.25rem 0;
+  }
+}
