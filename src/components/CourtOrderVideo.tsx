@@ -588,6 +588,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
           <div className="lcd-bezel">
             <div className="lcd-display">
               {(userVideoUrl || (isReady && effectiveVideoUrl) || (invideoOverride && !isLoadingOverride)) && effectiveVideoUrl ? (
+                                                                                                           <>
                 <video
                   ref={videoRef}
                   src={effectiveVideoUrl}
@@ -607,7 +608,8 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
                     <div className="lcd-spinner"></div>
                   </div>
                 )}
-              ) : (
+                </>
+                ) : (
                 <div className="lcd-placeholder">
                   {isGenerating ? (
                     <div className="generating-state">
