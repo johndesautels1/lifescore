@@ -921,7 +921,7 @@ function buildStandardContext(result: any): LifeScoreContext {
       if (metric.sources && metric.sources.length > 0) {
         evidence.push({
           metricId: metric.metricId,
-          metricName: metric.metricName || metric.metricId,
+          metricName: getMetricDisplayName(metric.metricId),
           city: city1.city,
           sources: metric.sources.map((url: string) => ({ url })),
         });
@@ -933,7 +933,7 @@ function buildStandardContext(result: any): LifeScoreContext {
       if (metric.sources && metric.sources.length > 0) {
         evidence.push({
           metricId: metric.metricId,
-          metricName: metric.metricName || metric.metricId,
+          metricName: getMetricDisplayName(metric.metricId),
           city: city2.city,
           sources: metric.sources.map((url: string) => ({ url })),
         });
@@ -1014,7 +1014,7 @@ function buildEnhancedContext(result: any): LifeScoreContext {
 
     const topMetrics: ContextMetric[] = metricData.slice(0, 3).map((md: any) => ({
       id: md.metric.metricId,
-      name: md.metric.metricId, // Will be formatted by client
+      name: getMetricDisplayName(md.metric.metricId),
       city1Score: Math.round(md.metric.consensusScore),
       city2Score: Math.round(md.city2Metric?.consensusScore || 0),
       consensusLevel: md.metric.confidenceLevel,
@@ -1033,7 +1033,7 @@ function buildEnhancedContext(result: any): LifeScoreContext {
     };
   });
 
-  // Collect evidence from LLM scores
+  // Collect evidence from LLM scores (both cities)
   const evidence: ContextEvidence[] = [];
   city1.categories.forEach((cat: any) => {
     cat.metrics.forEach((metric: any) => {
@@ -1042,8 +1042,28 @@ function buildEnhancedContext(result: any): LifeScoreContext {
           if (llmScore.evidence && llmScore.evidence.length > 0) {
             evidence.push({
               metricId: metric.metricId,
-              metricName: metric.metricId,
+              metricName: getMetricDisplayName(metric.metricId),
               city: city1.city,
+              sources: llmScore.evidence.map((e: any) => ({
+                url: e.url,
+                title: e.title,
+                snippet: e.snippet,
+              })),
+            });
+          }
+        });
+      }
+    });
+  });
+  city2.categories.forEach((cat: any) => {
+    cat.metrics.forEach((metric: any) => {
+      if (metric.llmScores) {
+        metric.llmScores.forEach((llmScore: any) => {
+          if (llmScore.evidence && llmScore.evidence.length > 0) {
+            evidence.push({
+              metricId: metric.metricId,
+              metricName: getMetricDisplayName(metric.metricId),
+              city: city2.city,
               sources: llmScore.evidence.map((e: any) => ({
                 url: e.url,
                 title: e.title,
@@ -1062,7 +1082,7 @@ function buildEnhancedContext(result: any): LifeScoreContext {
     cat.metrics.forEach((m: any) => {
       if (m.standardDeviation && m.standardDeviation > 10) {
         topDisagreements.push({
-          metricName: m.metricId,
+          metricName: getMetricDisplayName(m.metricId),
           standardDeviation: m.standardDeviation,
           explanation: m.judgeExplanation || 'LLMs disagreed on this metric.',
         });
