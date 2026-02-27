@@ -1992,6 +1992,7 @@ npm run preview
 | AC4: prompts GET unprotected | Added JWT auth to GET `/api/prompts` | 2026-02-26 |
 | A11: invideo-override unprotected | Added JWT auth to `/api/video/invideo-override` | 2026-02-26 |
 | CL1-CL6: 87 debug console.log removed | Removed 87 debug `console.log` statements from 10 component files: JudgeTab (44), CourtOrderVideo (10), VisualsTab (10), AskOlivia (7), SavedComparisons (5), + 11 from 5 smaller components | 2026-02-26 |
+| Olivia context builder raw metric IDs | `api/olivia/context.ts` was showing raw metric IDs (e.g. `pf_01_cannabis_legal`) instead of display names (e.g. `Cannabis Legality`) in 6 places: (1) enhanced top metrics per category, (2) enhanced evidence metricName, (3) enhanced disagreement names, (4) standard evidence city1 metricName, (5) standard evidence city2 metricName. Also (6) enhanced path only collected evidence from city1 — city2 evidence was missing entirely. All 6 fixed to use `getMetricDisplayName()` and both cities now included. | 2026-02-27 |
 
 ---
 
@@ -2628,6 +2629,7 @@ Server-side notifications triggered in:
 | 4.7 | 2026-02-15 | Claude Opus 4.6 | Supabase timeout/retry remediation: Reverted rogue agent's bloated values across 11 source files. SUPABASE_TIMEOUT_MS 20s→12s, maxRetries 3→2 (3 total attempts). Updated §7.5 Supabase Retry Logic with correct config. New resolved issue (§14.2). Updated App Schema Manual §6.1 to match. |
 | 4.8 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system architecture (§24) — jobs/notifications tables, api/notify endpoint, NotificationBell/NotifyMeModal components, useNotifications/useJobTracker hooks. 15 new resolved issues (§14.2): Resend from email, isPasswordRecovery, 3 notification flows, VS dark mode, II suffix, mobile +/- and badges, Visuals labeling, Gamma links, login credentials (3 iterations), Judge stale state, Court Order tabs revert, password reset redirect, admin signup email. |
 | 4.9 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§14.2): Asset materialization pattern — `api/gamma.ts` persists PDF/PPTX exports to Supabase Storage on completion. New DB columns `pdf_storage_path`/`pptx_storage_path`. Iframe error detection on all 4 embed locations. 11 files, 35 changes. |
+| 5.0 | 2026-02-27 | Claude Opus 4.6 | Olivia context builder fix (§14.2): 6 bugs in `api/olivia/context.ts` — raw metric IDs shown instead of display names in enhanced top metrics, evidence, and disagreements; standard evidence also affected; enhanced path missing city2 evidence entirely. All fixed with `getMetricDisplayName()`. |
 
 ---
 
