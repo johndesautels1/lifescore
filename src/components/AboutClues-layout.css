@@ -1,0 +1,355 @@
+/**
+ * LIFE SCORE - About CLUES Component Styles
+ * All styles scoped under .about-clues to avoid conflicts
+ *
+ * Clues Intelligence LTD
+ * © 2025-2026 All Rights Reserved
+ */
+
+/* ============================================================================
+   CSS VARIABLES (scoped to .about-clues)
+   ============================================================================ */
+.about-clues {
+  --ac-sapphire: #1E40AF;
+  --ac-sapphire-light: #3B82F6;
+  --ac-sapphire-glow: rgba(30, 64, 175, 0.4);
+  --ac-orange: #F59E0B;
+  --ac-orange-glow: rgba(245, 158, 11, 0.35);
+  --ac-gold-light: #FEF3C7;
+  --ac-font-display: 'Playfair Display', Georgia, serif;
+  --ac-font-body: 'Outfit', sans-serif;
+  --ac-transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --ac-glass-blur: 24px;
+
+  /* Dark theme defaults */
+  --ac-bg-primary: #0a0e1a;
+  --ac-bg-secondary: #0f1628;
+  --ac-text-primary: #f1f5f9;
+  --ac-text-secondary: #94a3b8;
+  --ac-text-accent: #cbd5e1;
+  --ac-glass-bg: rgba(15, 23, 42, 0.6);
+  --ac-glass-border: rgba(148, 163, 184, 0.12);
+  --ac-glass-border-hover: rgba(148, 163, 184, 0.25);
+  --ac-glass-highlight: rgba(255, 255, 255, 0.04);
+  --ac-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(148, 163, 184, 0.06);
+  --ac-card-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.12);
+  --ac-glow-primary: 0 0 60px rgba(30, 64, 175, 0.15);
+  --ac-divider: rgba(148, 163, 184, 0.1);
+  --ac-accent-surface: rgba(30, 64, 175, 0.08);
+  --ac-accent-surface-strong: rgba(30, 64, 175, 0.15);
+  --ac-tag-bg: rgba(30, 64, 175, 0.2);
+  --ac-tag-border: rgba(59, 130, 246, 0.3);
+  --ac-highlight-bg: rgba(245, 158, 11, 0.08);
+  --ac-highlight-border: rgba(245, 158, 11, 0.25);
+  --ac-table-header: rgba(30, 64, 175, 0.25);
+  --ac-table-row-alt: rgba(15, 23, 42, 0.4);
+  --ac-table-border: rgba(148, 163, 184, 0.08);
+  --ac-scrollbar-thumb: rgba(148, 163, 184, 0.15);
+  --ac-orb-1: rgba(30, 64, 175, 0.12);
+  --ac-orb-2: rgba(245, 158, 11, 0.08);
+  --ac-orb-3: rgba(59, 130, 246, 0.06);
+}
+
+/* Light theme overrides */
+[data-theme="light"] .about-clues {
+  --ac-bg-primary: #f8faff;
+  --ac-bg-secondary: #eef2ff;
+  --ac-text-primary: #1e293b;
+  --ac-text-secondary: #64748b;
+  --ac-text-accent: #475569;
+  --ac-glass-bg: rgba(255, 255, 255, 0.7);
+  --ac-glass-border: rgba(30, 64, 175, 0.1);
+  --ac-glass-border-hover: rgba(30, 64, 175, 0.2);
+  --ac-glass-highlight: rgba(255, 255, 255, 0.8);
+  --ac-card-shadow: 0 8px 32px rgba(30, 64, 175, 0.08), 0 0 0 1px rgba(30, 64, 175, 0.06);
+  --ac-card-shadow-hover: 0 16px 48px rgba(30, 64, 175, 0.12), 0 0 0 1px rgba(30, 64, 175, 0.1);
+  --ac-glow-primary: 0 0 60px rgba(30, 64, 175, 0.06);
+  --ac-divider: rgba(30, 64, 175, 0.08);
+  --ac-accent-surface: rgba(30, 64, 175, 0.04);
+  --ac-accent-surface-strong: rgba(30, 64, 175, 0.08);
+  --ac-tag-bg: rgba(30, 64, 175, 0.08);
+  --ac-tag-border: rgba(30, 64, 175, 0.2);
+  --ac-highlight-bg: rgba(245, 158, 11, 0.06);
+  --ac-highlight-border: rgba(245, 158, 11, 0.3);
+  --ac-table-header: rgba(30, 64, 175, 0.08);
+  --ac-table-row-alt: rgba(30, 64, 175, 0.02);
+  --ac-table-border: rgba(30, 64, 175, 0.08);
+  --ac-scrollbar-thumb: rgba(30, 64, 175, 0.12);
+  --ac-orb-1: rgba(30, 64, 175, 0.06);
+  --ac-orb-2: rgba(245, 158, 11, 0.04);
+  --ac-orb-3: rgba(59, 130, 246, 0.03);
+}
+
+/* ============================================================================
+   GOOGLE FONTS IMPORT
+   ============================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+/* ============================================================================
+   CONTAINER
+   ============================================================================ */
+.about-clues {
+  position: relative;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 20px 0 40px;
+  font-family: var(--ac-font-body);
+  color: var(--ac-text-primary);
+  line-height: 1.7;
+}
+
+/* ============================================================================
+   BACKGROUND ORBS & ATMOSPHERE
+   ============================================================================ */
+.about-clues .ac-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.about-clues .ac-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.8;
+  animation: acOrbFloat 20s ease-in-out infinite;
+}
+
+.about-clues .ac-orb-1 {
+  width: 600px; height: 600px;
+  background: var(--ac-orb-1);
+  top: -10%; left: -5%;
+  animation-duration: 25s;
+}
+
+.about-clues .ac-orb-2 {
+  width: 500px; height: 500px;
+  background: var(--ac-orb-2);
+  bottom: -10%; right: -5%;
+  animation-duration: 30s;
+  animation-delay: -8s;
+}
+
+.about-clues .ac-orb-3 {
+  width: 400px; height: 400px;
+  background: var(--ac-orb-3);
+  top: 40%; left: 50%;
+  animation-duration: 22s;
+  animation-delay: -14s;
+}
+
+@keyframes acOrbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* ============================================================================
+   SUB-TAB NAVIGATION
+   ============================================================================ */
+.about-clues .ac-subtabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(13, 40, 71, 0.92);
+  border-radius: 10px;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+[data-theme="light"] .about-clues .ac-subtabs {
+  background: rgba(30, 64, 175, 0.06);
+  border-color: rgba(30, 64, 175, 0.15);
+}
+
+.about-clues .ac-subtab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: rgba(10, 22, 40, 0.4);
+  border: 1px solid rgba(201, 162, 39, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+[data-theme="light"] .about-clues .ac-subtab {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(30, 64, 175, 0.12);
+  color: #475569;
+}
+
+.about-clues .ac-subtab:hover {
+  background: rgba(201, 162, 39, 0.15);
+  border-color: rgba(201, 162, 39, 0.3);
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .about-clues .ac-subtab:hover {
+  background: rgba(30, 64, 175, 0.08);
+  border-color: rgba(30, 64, 175, 0.25);
+}
+
+.about-clues .ac-subtab.active {
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(212, 175, 55, 0.5);
+  color: #d4af37;
+  box-shadow:
+    0 0 15px rgba(212, 175, 55, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .about-clues .ac-subtab.active {
+  background: rgba(30, 64, 175, 0.12);
+  border-color: rgba(30, 64, 175, 0.35);
+  color: #1E40AF;
+  box-shadow: 0 0 15px rgba(30, 64, 175, 0.1);
+}
+
+.about-clues .ac-subtab-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* ============================================================================
+   GLASS CARD
+   ============================================================================ */
+.about-clues .ac-glass-card {
+  background: var(--ac-glass-bg);
+  border: 1px solid var(--ac-glass-border);
+  border-radius: 20px;
+  padding: 48px;
+  margin-bottom: 32px;
+  box-shadow: var(--ac-card-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.about-clues .ac-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ac-glass-highlight), transparent);
+}
+
+.about-clues .ac-glass-card:hover {
+  border-color: var(--ac-glass-border-hover);
+  box-shadow: var(--ac-card-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Disable lift on CTA section — it contains interactive links */
+.about-clues .ac-glass-card.ac-cta-section:hover {
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .about-clues .ac-glass-card { padding: 32px 24px; border-radius: 16px; }
+}
+
+/* ============================================================================
+   HERO SECTION
+   ============================================================================ */
+.about-clues .ac-hero-card {
+  text-align: center;
+  padding: 72px 48px;
+  margin-bottom: 48px;
+}
+
+.about-clues .ac-hero-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ac-orange), transparent);
+  opacity: 0.3;
+}
+
+.about-clues .ac-hero-eyebrow {
+  font-family: var(--ac-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--ac-orange);
+  margin-bottom: 20px;
+}
+
+.about-clues .ac-hero-title {
+  font-family: var(--ac-font-display);
+  font-size: clamp(42px, 6vw, 64px);
+  font-weight: 700;
+  color: var(--ac-text-primary);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.about-clues .ac-hero-title span {
+  background: linear-gradient(135deg, var(--ac-sapphire-light), var(--ac-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.about-clues .ac-hero-subtitle {
+  font-family: var(--ac-font-display);
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ac-text-secondary);
+  margin-bottom: 32px;
+  letter-spacing: 0.3px;
+}
+
+.about-clues .ac-hero-tagline {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ac-text-accent);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+.about-clues .ac-ecosystem-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ac-accent-surface);
+  border: 1px solid var(--ac-tag-border);
+  border-radius: 50px;
+  padding: 8px 20px;
+  margin-top: 28px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ac-sapphire-light);
+  letter-spacing: 0.5px;
+}
+
+.about-clues .ac-ecosystem-badge .ac-dot {
+  width: 6px; height: 6px;
+  background: var(--ac-orange);
+  border-radius: 50%;
+  animation: acPulse 2s ease-in-out infinite;
+}
+
+@keyframes acPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+

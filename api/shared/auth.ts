@@ -74,3 +74,19 @@ export async function requireAuth(
     email: user.email || '',
   };
 }
+
+// ============================================================================
+// ADMIN EMAILS
+// ============================================================================
+
+/**
+ * FIX S5: Single source of truth for admin email list.
+ * Reads from DEV_BYPASS_EMAILS env var only — no hardcoded emails in source.
+ * Set DEV_BYPASS_EMAILS in Vercel with comma-separated admin emails.
+ */
+export function getAdminEmails(): string[] {
+  return (process.env.DEV_BYPASS_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+}

@@ -1,0 +1,544 @@
+/**
+ * LIFE SCORE - Moving Movie Generator Styles
+ * Cinematic, premium styling for the 10-minute InVideo movie feature.
+ *
+ * Design: Dark cinema aesthetic with gold (#D4AF37) accents.
+ * Follows existing CourtOrderVideo.css and JudgeVideo.css patterns.
+ */
+
+/* ============================================================================
+   CONTAINER
+   ============================================================================ */
+
+.movie-generator {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* ============================================================================
+   HERO / IDLE STATE
+   ============================================================================ */
+
+.movie-hero {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: linear-gradient(145deg, #1a1a2e, #16162a);
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.movie-film-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #D4AF37 0px,
+    #D4AF37 20px,
+    transparent 20px,
+    transparent 30px
+  );
+  opacity: 0.6;
+}
+
+.movie-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.movie-subtitle {
+  font-size: 0.95rem;
+  color: #a0a0c0;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+/* Scene chips (preview of 12 scenes) */
+.movie-preview-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.movie-scene-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  color: #c0c0d0;
+}
+
+.scene-number {
+  font-weight: 700;
+  color: #D4AF37;
+  font-size: 0.65rem;
+}
+
+.scene-title {
+  white-space: nowrap;
+}
+
+/* Generate button */
+.movie-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 2rem;
+  background: linear-gradient(135deg, #D4AF37, #b8941f);
+  color: #1a1a2e;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+}
+
+.movie-generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
+}
+
+.movie-generate-btn:active {
+  transform: translateY(0);
+}
+
+.movie-generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+.movie-powered-by {
+  font-size: 0.75rem;
+  color: #606080;
+  margin-top: 1rem;
+}
+
+/* ============================================================================
+   PROGRESS STATE
+   ============================================================================ */
+
+.movie-progress-container {
+  padding: 2rem 1.5rem;
+  background: linear-gradient(145deg, #1a1a2e, #16162a);
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+}
+
+.movie-progress-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Progress bar */
+.movie-progress-bar-container {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: #2a2a4a;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.movie-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #D4AF37, #f0d060);
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+.movie-progress-label {
+  position: absolute;
+  right: 0;
+  top: -1.4rem;
+  font-size: 0.8rem;
+  color: #D4AF37;
+  font-weight: 600;
+}
+
+/* Scene-by-scene progress */
+.movie-scene-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.scene-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  font-size: 0.82rem;
+  color: #606080;
+  transition: color 0.3s;
+}
+
+.scene-progress-item.done {
+  color: #4ade80;
+}
+
+.scene-progress-item.active {
+  color: #D4AF37;
+}
+
+.scene-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a2a4a;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.scene-progress-item.done .scene-progress-dot {
+  background: #4ade80;
+}
+
+.scene-progress-item.active .scene-progress-dot {
+  background: #D4AF37;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+}
+
+/* Rendering visual */
+.movie-rendering-visual {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.film-reel {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reel-circle {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(212, 175, 55, 0.3);
+  border-top-color: #D4AF37;
+  border-radius: 50%;
+  animation: spin-reel 1s linear infinite;
+}
+
+.reel-circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.reel-circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes spin-reel {
+  to { transform: rotate(360deg); }
+}
+
+.rendering-hint {
+  font-size: 0.85rem;
+  color: #808098;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ============================================================================
+   SCREENPLAY READY (MANUAL FALLBACK)
+   ============================================================================ */
+
+.movie-screenplay-ready {
+  padding: 2rem 1.5rem;
+  background: linear-gradient(145deg, #1a1a2e, #16162a);
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.movie-prompt-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.movie-copy-btn {
+  padding: 0.7rem 1.5rem;
+  background: linear-gradient(135deg, #D4AF37, #b8941f);
+  color: #1a1a2e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.movie-copy-btn:hover {
+  transform: translateY(-1px);
+}
+
+.movie-invideo-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1.5rem;
+  background: transparent;
+  color: #D4AF37;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid #D4AF37;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.movie-invideo-link:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
+/* Screenplay preview */
+.movie-screenplay-preview {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.movie-screenplay-preview h3 {
+  font-size: 1rem;
+  color: #D4AF37;
+  margin: 0 0 0.8rem;
+}
+
+.screenplay-scenes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.6rem;
+}
+
+.screenplay-scene-card {
+  padding: 0.7rem;
+  background: rgba(42, 42, 74, 0.5);
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+}
+
+.scene-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.scene-number-badge {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #D4AF37;
+  color: #1a1a2e;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.scene-card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.scene-card-act {
+  font-size: 0.65rem;
+  color: #606080;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.scene-card-voiceover {
+  font-size: 0.75rem;
+  color: #808098;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Prompt details */
+.movie-prompt-details {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.movie-prompt-details summary {
+  font-size: 0.85rem;
+  color: #a0a0c0;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+.movie-prompt-text {
+  font-size: 0.7rem;
+  color: #808098;
+  background: #0a0a18;
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.movie-retry-btn {
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  color: #a0a0c0;
+  font-size: 0.85rem;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.movie-retry-btn:hover {
+  border-color: #D4AF37;
+  color: #D4AF37;
+}
+
+.movie-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   VIDEO PLAYER (COMPLETED STATE)
+   ============================================================================ */
+
+.movie-player-container {
+  text-align: center;
+}
+
+.movie-cinema-screen {
+  margin: 1rem 0;
+}
+
+.cinema-bezel {
+  background: linear-gradient(145deg, #0a0a18, #1a1a2e);
+  border-radius: 12px;
+  padding: 8px;
+  border: 2px solid #2a2a4a;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(212, 175, 55, 0.1);
+}
+
+.movie-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: #000;
+  display: block;
+}
+
+.movie-meta-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.movie-meta-item {
+  font-size: 0.78rem;
+  color: #606080;
+}
+
+.cache-badge {
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}
+
+/* ============================================================================
+   ERROR STATE
+   ============================================================================ */
+
+.movie-error {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: linear-gradient(145deg, #1a1a2e, #16162a);
+  border: 1px solid #3a2020;
+  border-radius: 16px;
+}
+
+.movie-error-message {
+  font-size: 0.9rem;
+  color: #f87171;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 600px) {
+  .movie-generator {
+    padding: 1rem;
+  }
+
+  .movie-hero,
+  .movie-progress-container,
+  .movie-screenplay-ready,
+  .movie-error {
+    padding: 1.5rem 1rem;
+  }
+
+  .movie-title {
+    font-size: 1.3rem;
+  }
+
+  .movie-scene-chip {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .screenplay-scenes {
+    grid-template-columns: 1fr;
+  }
+
+  .movie-prompt-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+}

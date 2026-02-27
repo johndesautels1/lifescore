@@ -123,7 +123,7 @@ AI MODELS USED:
 
 📝 Claude Sonnet 4.5 (Anthropic) - Primary legal framework analysis
 🤖 GPT-4o (OpenAI) - Cross-validation and fact-checking
-💎 Gemini 3 Pro (Google) - Native Google Search grounding
+💎 Gemini 3.1 Pro (Google) - Native Google Search grounding
 𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
 🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
 

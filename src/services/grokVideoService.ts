@@ -18,6 +18,7 @@ import type {
   CityType,
 } from '../types/grokVideo';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
+import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
 // CONSTANTS
@@ -77,11 +78,12 @@ export async function generateNewLifeVideos(
     requestWithTypes.forceRegenerate = true;
   }
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/video/grok-generate',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         action: 'new_life_videos',
         ...requestWithTypes,
@@ -114,11 +116,12 @@ export async function generateCourtOrderVideo(
     cityType: request.cityType || detectCityType(request.winnerCity),
   };
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/video/grok-generate',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         action: 'court_order_video',
         ...requestWithType,
@@ -151,9 +154,10 @@ export async function checkVideoStatus(
     params.append('predictionId', predictionId);
   }
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     `/api/video/grok-status?${params.toString()}`,
-    { method: 'GET' },
+    { method: 'GET', headers: authHeaders },
     VIDEO_STATUS_TIMEOUT
   );
 
@@ -303,11 +307,12 @@ export async function checkCachedVideos(
   hasCached: boolean;
   videos?: GrokVideoPair | GrokVideo;
 }> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetchWithTimeout(
     '/api/video/grok-status',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         action: 'check_cache',
         city1,

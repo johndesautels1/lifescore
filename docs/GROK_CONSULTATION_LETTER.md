@@ -2,9 +2,9 @@
 
 ## Context
 
-We are building **LIFE SCORE** - a city freedom comparison tool that evaluates 100 legal freedom metrics across 6 categories to help users compare two cities. The system uses 5 LLMs (Claude Sonnet, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity) as evaluators, with Claude Opus 4.5 as the final judge to build consensus.
+We are building **LIFE SCORE** - a city freedom comparison tool that evaluates 100 legal freedom metrics across 6 categories to help users compare two cities. The system uses 5 LLMs (Claude Sonnet, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity) as evaluators, with Claude Opus 4.5 as the final judge to build consensus.
 
-We have identified a critical scoring problem and are consulting multiple LLMs to design the fix. Claude Opus, GPT-4o, and Gemini 3 Pro have already provided input. We need your perspective, particularly given Grok's real-time data capabilities and unique processing approach.
+We have identified a critical scoring problem and are consulting multiple LLMs to design the fix. Claude Opus, GPT-4o, and Gemini 3.1 Pro have already provided input. We need your perspective, particularly given Grok's real-time data capabilities and unique processing approach.
 
 ---
 
@@ -194,7 +194,7 @@ Based on your unique capabilities and perspective:
 
 ## Current Consensus (For Your Reference)
 
-| Topic | Claude Opus | Gemini 3 Pro | GPT-4o |
+| Topic | Claude Opus | Gemini 3.1 Pro | GPT-4o |
 |-------|-------------|--------------|--------|
 | **Core approach** | Category keys | Value keys | Category keys |
 | **Prompt structure** | Pass options | Numbered list | value: label format |

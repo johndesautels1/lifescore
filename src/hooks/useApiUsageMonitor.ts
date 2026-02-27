@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { getAuthHeaders } from '../lib/supabase';
 import {
   API_PROVIDER_QUOTAS,
   USAGE_STORAGE_KEY,
@@ -90,7 +91,9 @@ export function useApiUsageMonitor(): UseApiUsageMonitorReturn {
   // Fetch ElevenLabs usage from API
   const fetchElevenLabsUsage = useCallback(async (): Promise<number | null> => {
     try {
-      const response = await fetch('/api/usage/elevenlabs');
+      const response = await fetch('/api/usage/elevenlabs', {
+        headers: await getAuthHeaders(),
+      });
       if (!response.ok) {
         console.warn('[useApiUsageMonitor] ElevenLabs usage API not available');
         return null;

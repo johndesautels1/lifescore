@@ -13,7 +13,7 @@ export type LLMProvider =
   | 'claude-opus'      // Anthropic Claude Opus 4.5 (Primary Judge)
   | 'claude-sonnet'    // Anthropic Claude Sonnet 4.5
   | 'gpt-4o'           // OpenAI GPT-4o (with Tavily web search)
-  | 'gemini-3-pro'     // Google Gemini 3 Pro
+  | 'gemini-3-pro'     // Google Gemini 3.1 Pro
   | 'grok-4'           // xAI Grok 4
   | 'perplexity'       // Perplexity Sonar Reasoning Pro
 
@@ -72,7 +72,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'gemini-3-pro': {
     id: 'gemini-3-pro',
-    name: 'Gemini 3 Pro',
+    name: 'Gemini 3.1 Pro',
     shortName: 'Gemini',
     vendor: 'Google',
     supportsWebSearch: true,
@@ -206,7 +206,7 @@ export interface EnhancedComparisonResult {
 export interface LLMAPIKeys {
   anthropic?: string;   // Claude Opus & Sonnet (Sonnet uses Tavily for web search)
   openai?: string;      // GPT-4o (uses Tavily for web search)
-  gemini?: string;      // Gemini 3 Pro (native Google Search grounding)
+  gemini?: string;      // Gemini 3.1 Pro (native Google Search grounding)
   xai?: string;         // Grok 4 (native X/Twitter search)
   perplexity?: string;  // Sonar Reasoning Pro (native web search)
   tavily?: string;      // Tavily Search API (for Claude Sonnet + GPT-4o web search)

@@ -6,7 +6,7 @@ We are building **LIFE SCORE** - a city freedom comparison tool that evaluates 1
 
 - **Claude Opus 4.5**: Architecture analysis, root cause identification
 - **GPT-4o**: Full prompt rewrite, implementation blueprint
-- **Gemini 3 Pro**: 4-phase methodology
+- **Gemini 3.1 Pro**: 4-phase methodology
 - **Grok 4**: Real-time data strategy, novel ideas
 
 **We need your perspective on implementation details and practical coding considerations.**
@@ -270,7 +270,7 @@ city2Category: "fully_legal"
 
 ### From Gemini:
 - LLM role = "Legal Data Classifier" (not Grader)
-- `thinking_level: "high"` for Gemini 3 Pro
+- `thinking_level: "high"` for Gemini 3.1 Pro
 - Parallelize 6 category calls for 300s Vercel timeout
 
 ---

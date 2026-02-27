@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.8
-**Last Updated:** February 17, 2026
+**Version:** 4.9
+**Last Updated:** February 26, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -450,7 +450,7 @@ Services contain the core business logic. They sit between components/hooks and 
 | `presenterService.ts` | Client-side narration script generator from comparison data. Segments: intro → winner → categories → highlights → consensus → conclusion. |
 | `presenterVideoService.ts` | HeyGen video generation orchestration + polling (5s intervals, 120 attempts, 10 min timeout). |
 | `grokVideoService.ts` | Client-side Grok video generation — triggers generation, polls status, handles downloads. |
-| `opusJudge.ts` | Claude Opus judge verdict generation — builds legal-style prompt, parses structured verdict. |
+| `opusJudge.ts` | Claude Opus judge verdict generation — builds legal-style prompt, parses structured verdict. Uses `getMetricDisplayName()` from `src/shared/metricDisplayNames.ts` for disagreement summaries. |
 | `judgePregenService.ts` | Pre-generates judge verdicts in the background after comparison completes. |
 | `videoStorageService.ts` | Uploads and retrieves videos from Supabase Storage buckets. |
 | `enhancedComparison.ts` | State management for enhanced (multi-LLM) comparison mode. |
@@ -578,7 +578,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Modify Supabase client | `src/lib/supabase.ts` |
 | Modify build config | `vite.config.ts` |
 | Modify deploy config | `vercel.json` |
-| Modify scoring metrics | `src/data/metrics.ts` |
+| Modify scoring metrics | `src/data/metrics.ts` (barrel) — edit the category file for the metric's category (e.g., `metrics-housing-property.ts`) |
 
 ---
 
@@ -608,7 +608,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Anthropic | `claude-sonnet` | claude-sonnet-4-5-20250929 | Primary evaluator |
 | Anthropic | `claude-opus` | claude-opus-4-5-20251101 | Judge/consensus |
 | OpenAI | `gpt-4o` | gpt-4o | Secondary evaluator |
-| Google | `gemini-3-pro` | gemini-3-pro-preview | Evaluator with Google Search |
+| Google | `gemini-3-pro` | gemini-3.1-pro-preview | Evaluator with Google Search |
 | xAI | `grok-4` | grok-4 | Evaluator with X search |
 | Perplexity | `perplexity` | sonar-reasoning-pro | Research evaluator |
 | Tavily | N/A | Search + Research | Web research |
@@ -1038,7 +1038,7 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 | Claude Sonnet 4.5 | $3.00 | $15.00 |
 | Claude Opus 4.5 | $15.00 | $75.00 |
 | GPT-4o | $2.50 | $10.00 |
-| Gemini 3 Pro | $1.25 | $5.00 |
+| Gemini 3.1 Pro | $1.25 | $5.00 |
 | Grok 4 | $3.00 | $15.00 (estimated) |
 | Perplexity | $1.00 | $5.00 |
 
@@ -1165,7 +1165,7 @@ backoffMs = 2^(attempt-1) * 1000  // 1s, 2s, 4s delays
 ```
 
 **Providers with Retry:**
-- ✅ Gemini 3 Pro (Fix #49 - Added 2026-02-04)
+- ✅ Gemini 3.1 Pro (Fix #49 - Added 2026-02-04)
 - ✅ Grok 4 (existing)
 - ❌ Claude Sonnet (uses SDK with built-in retry)
 - ❌ GPT-4o (uses SDK with built-in retry)
@@ -1186,7 +1186,7 @@ Comparison completes → finalizeCostBreakdown() →
 
 **Files Involved:**
 - `src/App.tsx` - Auto-sync trigger point (line 594-606)
-- `src/utils/costCalculator.ts` - Cost calculation and conversion
+- `src/utils/costCalculator.ts` - Barrel re-exporting from `costCalculator-pricing.ts` (rates) and `costCalculator-functions.ts` (logic)
 - `src/services/databaseService.ts` - Database insert with upsert
 
 **Logging:**
@@ -1371,8 +1371,19 @@ let progressPct = completedPct + (remainingPct * pollFraction);
 if (!winnerDone || !loserDone) progressPct = Math.min(progressPct, 95);
 ```
 
+**Video Preload & Buffering (Added 2026-02-27):**
+All video elements (`GoToMyNewCity.tsx`, `CourtOrderVideo.tsx`, `JudgeVideo.tsx`, `ReportPresenter.tsx`) use:
+- `preload="auto"` — browser pre-buffers the full video before user presses play, eliminating startup stutter
+- `onWaiting` / `onPlaying` events — show/hide a translucent buffering spinner overlay when the video stalls mid-playback
+- Buffering overlay CSS: `.video-buffering-overlay` (absolute positioned, semi-transparent black, centered spinner, `pointer-events: none`)
+- Spinner reuses existing `.lcd-spinner` keyframe animation (gold rotating ring)
+
 **Files Involved:**
 - `src/components/NewLifeVideos.tsx` - Blob URL playback, error tracking, dead URL detection
+- `src/components/GoToMyNewCity.tsx` - Cristiano Freedom Tour video (preload + buffering spinner)
+- `src/components/CourtOrderVideo.tsx` - Court Order video (preload + buffering spinner)
+- `src/components/JudgeVideo.tsx` - Judge ruling video (preload + buffering spinner)
+- `src/components/ReportPresenter.tsx` - Olivia pre-rendered video (preload)
 - `src/hooks/useGrokVideo.ts` - Poll loop, progress calculation, `reset()` function
 - `api/video/grok-status.ts` - HEAD validation of replicate URLs, stale detection
 - `api/video/grok-generate.ts` - Sequential generation, Kling/Replicate providers
@@ -1394,6 +1405,8 @@ User clicks "Listen to Presenter" toggle on VisualsTab →
 ```
 
 **Narration Generation:** Entirely client-side from `AnyComparisonResult` data. No API call needed. Duration estimated at ~150 words/minute.
+
+**Audio Cleanup (Fixed 2026-02-27):** `speakTTSFallback()` now stops previous audio (`.pause()` + null ref) before creating a new `Audio` object. Previously, overlapping segments caused double playback when segment timer fired before audio finished.
 
 #### Pre-Rendered Video Mode
 Polished, downloadable MP4 via HeyGen's video generation API.
@@ -1953,6 +1966,48 @@ npm run preview
 | No admin notification on new signups | New endpoint `POST /api/admin/new-signup` sends email to admin (cluesnomads@gmail.com) via Resend when a new user signs up; called from AuthContext.tsx after successful signup | 2026-02-16 |
 | Gamma export URLs (PDF/PPTX) expiring | Industry-standard asset materialization: `api/gamma.ts` now downloads PDF/PPTX from Gamma CDN immediately on generation completion and uploads to Supabase Storage (`gamma-exports` public bucket). Returns permanent public URLs instead of ephemeral CDN URLs. Same pattern as `persistVideo.ts`. New DB columns: `pdf_storage_path`, `pptx_storage_path` on both `gamma_reports` and `reports` tables. Migrations: `20260217_add_gamma_export_storage_paths.sql` (columns), `20260217_create_gamma_exports_storage.sql` (bucket). All 4 Gamma iframe embeds (VisualsTab ×2, ReportPresenter, SavedComparisons) now have `onError`/`onLoad` handlers with fallback UI. Full pipeline: API persistence → types → databaseService → savedComparisons → gammaService → UI components. 11 files changed, 35 discrete code changes. | 2026-02-17 |
 | Gamma report colored cards losing colors | `solidBoxes` variant relies on inline `color="#HEX"` attributes that Gamma's AI rendering strips during beautification. Fix: replaced 6× category LLM agreement heat map pages with `barStats` (bar LENGTH conveys confidence: 95% Unanimous → 50% Split). PAGE 64 consensus stats → `semiCircle` radial gauges + table. PAGE 51 myth vs reality → structured table with ❌/✅ columns. PAGE 53 hidden costs → `semiCircle` dial gauges (2×2 layout). Visual specs header updated. Same data, zero prompt size increase, varied chart types. Updated in: `gammaService.ts`, Supabase seed migration, `GAMMA_PROMPT_TEMPLATE.md`, `GAMMA_PROMPTS_MANUAL.md`. | 2026-02-17 |
+| **SECURITY AUDIT — 47 fixes (2026-02-26)** | Comprehensive security + code quality audit. All changes on branch `claude/coding-session-Jh27y`. Details below. | 2026-02-26 |
+| H1: React hooks below conditional return | Moved all React hooks above conditional early return in affected component — React rules of hooks violation caused potential crash | 2026-02-26 |
+| S1: API key leaked to browser | `api/avatar/simli-session` was sending the Simli API key in the response body. Removed — client never needed it | 2026-02-26 |
+| X1+X2: Open redirect in Stripe endpoints | `success_url` and `cancel_url` in Stripe checkout/portal now validated against app origin — prevents phishing redirects | 2026-02-26 |
+| X3: voiceId path injection | `voiceId` parameter in ElevenLabs TTS now validated with regex before URL interpolation — prevents path traversal | 2026-02-26 |
+| N4: Tie case blank victory text | When scores are tied, report verdict text now says "evenly matched" instead of showing blank/broken winner text | 2026-02-26 |
+| RT1: withTimeout retry broken | `withTimeout` accepted a pre-created promise, so retries reused stale results. Now accepts a factory function for proper retry semantics | 2026-02-26 |
+| SD1+SD2: Hardcoded year "2025" | Replaced all hardcoded year strings with `new Date().getFullYear()` — copyright notices and date displays now always current | 2026-02-26 |
+| D1: innerHTML XSS vulnerability | `innerHTML`-based HTML entity decoding replaced with safe `DOMParser` approach | 2026-02-26 |
+| M1: JSDoc timeout mismatch | JSDoc said 45000ms timeout but code used 12000ms — corrected the documentation comment | 2026-02-26 |
+| M3: Hardcoded bypass emails | `grok-generate.ts` had hardcoded admin emails for tier bypass — replaced with shared `getAdminEmails()` | 2026-02-26 |
+| B4: `var` scoping bug | `var gpt4oTavilyCredits` in evaluate.ts replaced with `let` — prevents accidental hoisting across scope | 2026-02-26 |
+| DC1: Dead `byProvider` Map | Unused `byProvider` Map accumulator removed from rateLimiter.ts | 2026-02-26 |
+| DC3: Dead `gitHubUsername` state | Unused `gitHubUsername` state variable removed from SavedComparisons.tsx | 2026-02-26 |
+| P2: OG/Twitter image relative URLs | Social meta tags now use absolute URLs (`https://clueslifescore.com/...`) — previews work on all platforms | 2026-02-26 |
+| S4: Secret masking too loose | Admin env-check endpoint now masks secrets more aggressively (shorter reveal length) | 2026-02-26 |
+| S5: Admin emails copy-pasted in 10 files | Created shared `getAdminEmails()` in `api/shared/auth.ts` — migrated 9 API files to use it | 2026-02-26 |
+| EN1+EN2: Missing env var docs | Added missing `VITE_*` variables to `.env.example`; marked `EMILIA_ASSISTANT_ID` as required | 2026-02-26 |
+| EN3: Inconsistent Resend from-address | Standardized `from` address to `alerts@lifescore.app` in check-quotas.ts email sends | 2026-02-26 |
+| C2: CORS missing on admin endpoint | `sync-emilia-knowledge` was missing CORS mode — added shared CORS helper | 2026-02-26 |
+| C3: CORS too open on auth endpoints | Tightened CORS from `*` (any origin) to same-app restricted origin on 3 auth-protected endpoints | 2026-02-26 |
+| A12: gun-comparison unprotected | Added JWT auth to `/api/olivia/gun-comparison` | 2026-02-26 |
+| A13: olivia/context unprotected | Added JWT auth to `/api/olivia/context` | 2026-02-26 |
+| A14: emilia/thread unprotected | Added JWT auth to `/api/emilia/thread` | 2026-02-26 |
+| A15: simli-speak unprotected | Added JWT auth to `/api/avatar/simli-speak` | 2026-02-26 |
+| A16: video-status unprotected | Added JWT auth to `/api/avatar/video-status` | 2026-02-26 |
+| A17: olivia/avatar/heygen unprotected | Added JWT auth to `/api/olivia/avatar/heygen` streaming endpoint | 2026-02-26 |
+| A18+A19: heygen-video + DID streams unprotected | Added JWT auth to both HeyGen video and D-ID streams endpoints | 2026-02-26 |
+| A27: grok-status unprotected | Added JWT auth to `/api/video/grok-status` polling endpoint | 2026-02-26 |
+| A28: grok-generate IDOR vulnerability | Added JWT auth + **fixed IDOR** — userId from request body overridden with authenticated user's ID, preventing spoofing | 2026-02-26 |
+| A30: evaluate unprotected | Added JWT auth to `/api/evaluate` — the main comparison engine | 2026-02-26 |
+| A31: judge unprotected | Added JWT auth to `/api/judge` Opus consensus endpoint | 2026-02-26 |
+| A33: gamma unprotected | Added JWT auth to `/api/gamma` report generation endpoint | 2026-02-26 |
+| A34: judge-video unprotected | Added JWT auth to `/api/judge-video` | 2026-02-26 |
+| RL2: check-quotas unprotected | Added JWT auth to `/api/usage/check-quotas` | 2026-02-26 |
+| RL3: elevenlabs unprotected | Added JWT auth to `/api/usage/elevenlabs` | 2026-02-26 |
+| AC4: prompts GET unprotected | Added JWT auth to GET `/api/prompts` | 2026-02-26 |
+| A11: invideo-override unprotected | Added JWT auth to `/api/video/invideo-override` | 2026-02-26 |
+| CL1-CL6: 87 debug console.log removed | Removed 87 debug `console.log` statements from 10 component files: JudgeTab (44), CourtOrderVideo (10), VisualsTab (10), AskOlivia (7), SavedComparisons (5), + 11 from 5 smaller components | 2026-02-26 |
+| Olivia context builder raw metric IDs | `api/olivia/context.ts` was showing raw metric IDs (e.g. `pf_01_cannabis_legal`) instead of display names (e.g. `Cannabis Legality`) in 6 places: (1) enhanced top metrics per category, (2) enhanced evidence metricName, (3) enhanced disagreement names, (4) standard evidence city1 metricName, (5) standard evidence city2 metricName. Also (6) enhanced path only collected evidence from city1 — city2 evidence was missing entirely. All 6 fixed to use `getMetricDisplayName()` and both cities now included. | 2026-02-27 |
+| **Raw metric IDs shown in 7 user-facing locations** | Created `src/shared/metricDisplayNames.ts` as single source of truth for the 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab hover card, Gamma reports, Olivia narration), `EvidencePanel.tsx` (4× `metricName: metric.metricId`), `AdvancedVisuals.tsx` (bar chart `.replace()` hack, line chart `.split()` hack, data table raw ID), `exportUtils.ts` (CSV raw ID + PDF `.replace()` hack), `api/olivia/context.ts` (one remaining fallback). Refactored `gammaService.ts` to import from shared utility instead of maintaining duplicate map. 8 files changed. | 2026-02-27 |
+| Olivia presenter audio overlap (double playback) | `ReportPresenter.tsx` `speakTTSFallback()` created new `Audio` objects without stopping the previous one. When segment timer fired before audio finished, two audio streams played simultaneously. Added `.pause()` + null cleanup before creating new Audio — same pattern used in skip/pause handlers. | 2026-02-27 |
 
 ---
 
@@ -1992,17 +2047,77 @@ npm run preview
 - GDPR compliance logging
 - 30-day deletion queue
 
-### 16.3 JWT Auth Requirements (Added 2026-02-10)
+### 16.3 JWT Auth Requirements (Added 2026-02-10, Major Expansion 2026-02-26)
 
-The following endpoints now require JWT authentication headers (previously unprotected):
+Nearly all API endpoints now require JWT authentication headers. The 2026-02-26 security audit added auth to 20+ previously unprotected endpoints, bringing total authenticated endpoints to **38+**.
 
-| Endpoint | Security Fix |
-|----------|-------------|
-| `/api/emilia/manuals` | Was bypassable via unverified email query param |
-| `/api/emilia/thread` | Added JWT verification |
-| `/api/avatar/simli-speak` | Added JWT verification |
-| `/api/judge-video` | Added JWT verification |
-| + 5 additional endpoints | All now require valid auth header |
+**Comparison & Scoring — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/evaluate` | 2026-02-26 — Main LLM evaluation engine |
+| `POST /api/judge` | 2026-02-26 — Opus consensus builder |
+| `POST /api/gamma` | 2026-02-26 — Report generation |
+| `POST /api/judge-video` | 2026-02-10 |
+| `POST /api/judge-report` | Already authenticated |
+
+**Video Generation — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/video/grok-generate` | 2026-02-26 — **Also fixed IDOR**: userId from body now overridden with authenticated user ID |
+| `GET/POST /api/video/grok-status` | 2026-02-26 |
+| `GET/POST/DELETE /api/video/invideo-override` | 2026-02-26 |
+| `POST /api/avatar/generate-judge-video` | Already authenticated |
+| `GET /api/avatar/video-status` | 2026-02-26 |
+| `POST /api/avatar/simli-speak` | 2026-02-10 |
+
+**Olivia Assistant — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/olivia/chat` | Already authenticated |
+| `POST /api/olivia/context` | 2026-02-26 |
+| `POST /api/olivia/gun-comparison` | 2026-02-26 |
+| `POST /api/olivia/tts` | Already authenticated |
+| `POST /api/olivia/avatar/streams` | 2026-02-26 |
+| `POST /api/olivia/avatar/heygen` | 2026-02-26 |
+| `POST/GET /api/olivia/avatar/heygen-video` | 2026-02-26 |
+
+**Emilia Help — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `POST /api/emilia/thread` | 2026-02-26 (was 2026-02-10, re-verified) |
+| `POST /api/emilia/message` | Already authenticated |
+| `POST /api/emilia/speak` | Already authenticated |
+| `GET /api/emilia/manuals` | 2026-02-10 — auth bypass fixed |
+
+**Usage & Quota — ALL now authenticated:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `GET/POST /api/usage/check-quotas` | 2026-02-26 |
+| `GET /api/usage/elevenlabs` | 2026-02-26 |
+
+**Admin — ALL require Admin role:**
+
+| Endpoint | Auth Added |
+|----------|-----------|
+| `GET /api/admin-check` | Already authenticated |
+| `GET /api/admin/env-check` | Already authenticated |
+| `POST /api/admin/sync-olivia-knowledge` | Already authenticated |
+| `POST /api/admin/sync-emilia-knowledge` | Already authenticated |
+| `GET/PUT /api/prompts` | 2026-02-26 (GET was unprotected) |
+
+**Endpoints that intentionally do NOT require auth:**
+
+| Endpoint | Reason |
+|----------|--------|
+| `POST /api/stripe/webhook` | Uses Stripe signature verification instead |
+| `POST /api/avatar/video-webhook` | Replicate webhook callback |
+| `GET /api/health` | Public health check |
+| `GET /api/simli-config` | Returns sanitized config only |
 
 **Admin Check Caching:**
 - Admin status cached with 5-minute TTL + 1-hour grace period
@@ -2018,6 +2133,37 @@ const LIMITS = {
   heavy: { windowMs: 60000, maxRequests: 10 }  // Recommend: 50
 };
 ```
+
+### 16.5 CORS Hardening (Added 2026-02-26)
+
+Three endpoints had CORS tightened from `Access-Control-Allow-Origin: *` (any website) to same-app restricted origin. All auth-protected endpoints now only accept requests from the LIFE SCORE application domain.
+
+Additionally, the `sync-emilia-knowledge` admin endpoint was missing CORS configuration entirely — now uses the shared CORS helper.
+
+### 16.6 XSS & Injection Fixes (Added 2026-02-26)
+
+| Fix | File | Description |
+|-----|------|-------------|
+| D1 | Client-side | `innerHTML`-based HTML entity decoding replaced with safe `DOMParser` |
+| X3 | `api/olivia/tts.ts` | `voiceId` parameter validated with regex before URL path interpolation |
+| X1+X2 | Stripe endpoints | `success_url` and `cancel_url` validated against app origin |
+
+### 16.7 Shared Auth Module (Added 2026-02-26)
+
+Admin email addresses were previously hardcoded in 10+ API files. A shared `getAdminEmails()` function was created in `api/shared/auth.ts` and all files migrated to use it. This ensures admin access changes propagate instantly across all endpoints.
+
+### 16.8 Console Log Cleanup (Added 2026-02-26)
+
+87 debug `console.log` statements removed from 10 frontend component files. These were leaking internal state, comparison IDs, API response data, and video URLs to the browser console in production. Remaining `console.log` calls are intentional operational logging (errors, warnings).
+
+| File | Removed |
+|------|---------|
+| JudgeTab.tsx | 44 |
+| CourtOrderVideo.tsx | 10 |
+| VisualsTab.tsx | 10 |
+| AskOlivia.tsx | 7 |
+| SavedComparisons.tsx | 5 |
+| 5 smaller components | 11 |
 
 ---
 
@@ -2037,7 +2183,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | `anthropic_opus` | Claude Opus 4.5 | 🧠 | dollars | $100.00 | $15/1M input, $75/1M output |
 | `openai_gpt4o` | GPT-4o | 🤖 | dollars | $50.00 | $2.50/1M input, $10/1M output |
 | `openai_olivia` | GPT-4 Turbo (Olivia) | 💬 | dollars | $30.00 | $10/1M input, $30/1M output |
-| `gemini` | Gemini 3 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
+| `gemini` | Gemini 3.1 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
 | `grok` | Grok 4 | 🚀 | dollars | $30.00 | $3/1M input, $15/1M output |
 | `perplexity` | Perplexity Sonar | 🔍 | dollars | $25.00 | $1/1M input, $5/1M output |
 | `tavily` | Tavily Research | 🔎 | credits | 5,000 | ~$0.01/credit |
@@ -2498,6 +2644,8 @@ Server-side notifications triggered in:
 | 4.7 | 2026-02-15 | Claude Opus 4.6 | Supabase timeout/retry remediation: Reverted rogue agent's bloated values across 11 source files. SUPABASE_TIMEOUT_MS 20s→12s, maxRetries 3→2 (3 total attempts). Updated §7.5 Supabase Retry Logic with correct config. New resolved issue (§14.2). Updated App Schema Manual §6.1 to match. |
 | 4.8 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system architecture (§24) — jobs/notifications tables, api/notify endpoint, NotificationBell/NotifyMeModal components, useNotifications/useJobTracker hooks. 15 new resolved issues (§14.2): Resend from email, isPasswordRecovery, 3 notification flows, VS dark mode, II suffix, mobile +/- and badges, Visuals labeling, Gamma links, login credentials (3 iterations), Judge stale state, Court Order tabs revert, password reset redirect, admin signup email. |
 | 4.9 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§14.2): Asset materialization pattern — `api/gamma.ts` persists PDF/PPTX exports to Supabase Storage on completion. New DB columns `pdf_storage_path`/`pptx_storage_path`. Iframe error detection on all 4 embed locations. 11 files, 35 changes. |
+| 5.0 | 2026-02-27 | Claude Opus 4.6 | Olivia context builder fix (§14.2): 6 bugs in `api/olivia/context.ts` — raw metric IDs shown instead of display names in enhanced top metrics, evidence, and disagreements; standard evidence also affected; enhanced path missing city2 evidence entirely. All fixed with `getMetricDisplayName()`. |
+| 5.1 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix across 7 user-facing locations (§14.2): Created `src/shared/metricDisplayNames.ts` as single source of truth for 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab, Gamma, Olivia narration), `EvidencePanel.tsx` (4 instances), `AdvancedVisuals.tsx` (bar chart, line chart, data table), `exportUtils.ts` (CSV + PDF), `api/olivia/context.ts` (fallback). Refactored `gammaService.ts` to import from shared utility. Audio overlap fix: `ReportPresenter.tsx` `speakTTSFallback()` now stops previous audio before starting new segment (§9.7). |
 
 ---
 

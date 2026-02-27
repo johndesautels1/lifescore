@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { getAuthHeaders } from '../lib/supabase';
 import { toastError, toastInfo } from '../utils/toast';
 import type {
   ComparisonState,
@@ -327,9 +328,10 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         currentController.signal.addEventListener('abort', abortHandler);
 
         try {
+          const authHeaders = await getAuthHeaders();
           const response = await fetch('/api/evaluate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
             body: JSON.stringify({
               provider: 'claude-sonnet',
               city1,

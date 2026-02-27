@@ -1,0 +1,222 @@
+/**
+ * LIFE SCORE™ Report Presenter Styles
+ * PIP avatar overlay on Gamma report with playback controls
+ */
+
+/* ============================================================================
+   MAIN CONTAINER
+   ============================================================================ */
+
+.report-presenter {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #D4AF37;
+  background: #0a0a1a;
+}
+
+/* ============================================================================
+   GAMMA REPORT BACKGROUND
+   ============================================================================ */
+
+.presenter-report-container {
+  width: 100%;
+  position: relative;
+}
+
+.presenter-gamma-frame {
+  width: 100%;
+  height: 78vh;
+  min-height: 550px;
+  border: none;
+  background: #ffffff;
+  display: block;
+}
+
+/* ============================================================================
+   OLIVIA PIP OVERLAY
+   ============================================================================ */
+
+.presenter-pip {
+  position: absolute;
+  bottom: 80px; /* Above control bar */
+  right: 20px;
+  width: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 2px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+  z-index: 20;
+  background: #0d0d1a;
+}
+
+.presenter-pip:hover {
+  transform: scale(1.03);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.7),
+    0 0 0 2px rgba(212, 175, 55, 0.5);
+}
+
+.presenter-pip.pip-speaking {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 2px #D4AF37,
+    0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Avatar Container */
+.pip-avatar-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+}
+
+.pip-avatar-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fallback Static Image */
+.pip-avatar-fallback {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pip-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+/* TTS Speaking Waves */
+.pip-speaking-waves {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 20px;
+}
+
+.pip-speaking-waves span {
+  width: 3px;
+  background: #D4AF37;
+  border-radius: 2px;
+  animation: presenterWave 0.8s ease-in-out infinite;
+}
+
+.pip-speaking-waves span:nth-child(1) { height: 8px; animation-delay: 0s; }
+.pip-speaking-waves span:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+.pip-speaking-waves span:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+.pip-speaking-waves span:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+
+@keyframes presenterWave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.4); }
+}
+
+/* Status Badge */
+.pip-status-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pip-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.pip-status-presenting .pip-status-dot {
+  background: #22c55e;
+  animation: statusPulse 1.5s infinite;
+}
+
+.pip-status-paused .pip-status-dot {
+  background: #f59e0b;
+}
+
+.pip-status-completed .pip-status-dot {
+  background: #3b82f6;
+}
+
+.pip-status-error .pip-status-dot {
+  background: #ef4444;
+}
+
+.pip-status-text {
+  color: #ffffff;
+}
+
+/* Voice Wave — animated bars inside status badge when speaking */
+.pip-voice-wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 12px;
+  margin-left: 2px;
+}
+
+.pip-voice-wave span {
+  display: block;
+  width: 2px;
+  border-radius: 1px;
+  background: #D4AF37;
+  animation: pipVoiceBar 1s ease-in-out infinite;
+}
+
+.pip-voice-wave span:nth-child(1) { height: 4px;  animation-delay: 0s; }
+.pip-voice-wave span:nth-child(2) { height: 8px;  animation-delay: 0.12s; }
+.pip-voice-wave span:nth-child(3) { height: 12px; animation-delay: 0.24s; }
+.pip-voice-wave span:nth-child(4) { height: 8px;  animation-delay: 0.36s; }
+.pip-voice-wave span:nth-child(5) { height: 4px;  animation-delay: 0.48s; }
+
+@keyframes pipVoiceBar {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50%      { transform: scaleY(1);   opacity: 1; }
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Segment Title */
+.pip-segment-title {
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #D4AF37;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

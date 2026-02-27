@@ -86,7 +86,9 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
       console.log('[useJudgeVideo] Checking status with:', param);
 
-      const response = await fetch(`${API_BASE}/video-status?${param}`);
+      const response = await fetch(`${API_BASE}/video-status?${param}`, {
+        headers: await getAuthHeaders(),
+      });
 
       // Check if generation was cancelled while fetching
       if (generationIdRef.current !== myGenerationId) {
@@ -272,7 +274,9 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
     try {
       console.log('[useJudgeVideo] Checking for existing video:', comparisonId);
 
-      const response = await fetch(`${API_BASE}/video-status?comparisonId=${encodeURIComponent(comparisonId)}`);
+      const response = await fetch(`${API_BASE}/video-status?comparisonId=${encodeURIComponent(comparisonId)}`, {
+        headers: await getAuthHeaders(),
+      });
 
       if (!response.ok) {
         console.log('[useJudgeVideo] Video status check failed (status:', response.status, ')');

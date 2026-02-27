@@ -59,6 +59,7 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
 
   // FIX #48: Error count tracking for expired URL detection
   const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
   const MAX_VIDEO_ERRORS = 3;
 
   // Auto-generate on mount if requested
@@ -95,7 +96,6 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
   // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
-      console.log('[JudgeVideo] Video error threshold reached - resetting to allow regeneration');
       cancel();
       setVideoErrorCount(0);
     }
@@ -107,7 +107,6 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
       // Check usage limits before generating Judge video
       const usageResult = await checkUsage('judgeVideos');
       if (!usageResult.allowed) {
-        console.log('[JudgeVideo] Judge video limit reached:', usageResult);
         if (onError) {
           onError('Monthly Judge video limit reached. Please upgrade to continue.');
         }
@@ -116,7 +115,6 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
 
       // Increment usage counter before starting generation
       await incrementUsage('judgeVideos');
-      console.log('[JudgeVideo] Incremented judgeVideos usage');
     }
 
     const request: GenerateJudgeVideoRequest = {
@@ -198,12 +196,20 @@ export const JudgeVideo: React.FC<JudgeVideoProps> = ({
             ref={videoRef}
             src={video.videoUrl}
             className="video-element"
+            preload="auto"
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => setIsPlaying(false)}
             onError={handleVideoError}
+            onWaiting={() => setIsBuffering(true)}
+            onPlaying={() => setIsBuffering(false)}
             playsInline
           />
+          {isBuffering && (
+            <div className="video-buffering-overlay">
+              <div className="lcd-spinner"></div>
+            </div>
+          )}
 
           {/* Custom Controls */}
           <div className="video-controls">

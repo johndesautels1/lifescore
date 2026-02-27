@@ -13,6 +13,7 @@
 import type { MetricConsensus, CategoryConsensus, EnhancedComparisonResult, CityConsensusScore, LLMProvider } from '../types/enhancedComparison';
 import type { CategoryId } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES } from '../shared/metrics';
+import { getMetricDisplayName } from '../shared/metricDisplayNames';
 import type { EvaluatorResult } from './llmEvaluators';
 
 // ============================================================================
@@ -314,7 +315,7 @@ export function buildEnhancedResultFromJudge(
 
   // Build disagreement summary
   const disagreementSummary = judgeOutput.disagreementAreas.length > 0
-    ? `LLMs disagreed most on: ${judgeOutput.disagreementAreas.join(', ')}`
+    ? `LLMs disagreed most on: ${judgeOutput.disagreementAreas.map(id => getMetricDisplayName(id)).join(', ')}`
     : 'LLMs showed strong agreement across all metrics';
 
   // Determine overall confidence

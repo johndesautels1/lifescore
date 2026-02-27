@@ -1,0 +1,478 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE - Mobile Adaptations
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .cockpit-header {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    text-align: center;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Move title to top spanning full width */
+  .cockpit-center {
+    grid-column: 1 / -1;
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+
+  .olivia-wordmark {
+    justify-content: center;
+  }
+
+  /* Hide status cluster on mobile to save vertical space */
+  .status-cluster {
+    display: none;
+  }
+
+  .cockpit-left {
+    justify-content: flex-start;
+  }
+
+  /* Center LOCAL + time display on mobile */
+  .cockpit-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .time-cluster {
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .time-display {
+    display: flex;
+    justify-content: center !important;
+    align-items: baseline;
+    width: 100%;
+  }
+
+  .date-display {
+    display: flex;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .viewport-container {
+    padding: 1rem;
+    min-height: 40vh;
+  }
+
+  .control-panel {
+    padding: 1rem;
+    align-items: center;
+  }
+
+  /* Center control row items */
+  .control-row {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    width: 100%;
+  }
+
+  .control-row .control-item:first-child,
+  .control-row .control-item:last-child {
+    margin: 0;
+  }
+
+  .control-item {
+    flex: none;
+    width: 100%;
+    max-width: 280px;
+    min-width: unset;
+    height: 48px;
+    font-size: 0.85rem;
+  }
+
+  .olivia-premium .btn-text {
+    font-size: 0.75rem;
+  }
+
+  /* Center chat input box */
+  .chat-input-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .chat-box {
+    width: 100%;
+    max-width: min(280px, 95%);
+    height: 180px;
+    margin: 0 auto;
+  }
+
+  .viewport-info-bar {
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Center quick actions panel content */
+  .quick-actions-panel {
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .panel-header {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .panel-subtitle {
+    width: 100%;
+    text-align: center;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .chat-transcript-panel {
+    margin: 0 1rem 1rem;
+  }
+
+  .olivia-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .footer-left,
+  .footer-right {
+    justify-content: center;
+  }
+
+  /* Transcript header: wrap buttons on mobile */
+  .transcript-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .chat-transcript-panel .header-right {
+    position: static;
+    transform: none;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    max-width: none;
+  }
+
+  .chat-transcript-panel .header-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.6rem;
+    min-height: auto;
+    min-width: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES (if needed)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] .olivia-premium {
+  /* Already dark themed, no changes needed */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXTRA SMALL SCREENS (Phones < 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* Center ASK OLIVIA on mobile */
+  .olivia-wordmark {
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .wordmark-prefix {
+    font-size: 0.6rem;
+    text-align: center;
+  }
+
+  .wordmark-main {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .wordmark-tagline {
+    font-size: 0.55rem;
+    text-align: center;
+  }
+
+  /* Center LOCAL and time on mobile */
+  .cockpit-right {
+    display: flex;
+    justify-content: center !important;
+    align-items: center;
+    width: 100%;
+  }
+
+  .time-cluster {
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .time-display {
+    display: flex;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .date-display {
+    display: flex;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  /* FIX: Full-width viewport on mobile vertical */
+  .viewport-container {
+    padding: 0.5rem;
+    min-height: auto;
+  }
+
+  .viewport-frame {
+    width: 100%;
+    max-width: none;  /* Full width - no scaling */
+  }
+
+  .viewport-bezel {
+    padding: 6px;
+  }
+
+  .viewport-screen {
+    aspect-ratio: 16 / 9;  /* Standard video ratio */
+  }
+
+  .viewport-info-bar {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .info-segment {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .segment-label {
+    font-size: 0.5rem;
+  }
+
+  .segment-value {
+    font-size: 0.6rem;
+  }
+
+  .control-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .control-item {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    min-width: unset;
+    height: 44px;
+    font-size: 0.8rem;
+  }
+
+  .olivia-premium .btn-text {
+    font-size: 0.7rem;
+  }
+
+  /* FIX: Match chat-box width to speak/transcript buttons on mobile vertical */
+  .chat-box {
+    width: 100%;
+    max-width: none;  /* Same as control-item buttons */
+    height: 160px;
+  }
+
+  .chat-textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  .action-tile {
+    padding: 0.75rem;
+  }
+
+  .tile-label {
+    font-size: 0.7rem;
+  }
+
+  .quick-actions-panel .panel-header {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .avatar-loading {
+    padding: 1rem;
+  }
+
+  .olivia-premium .loading-text {
+    font-size: 0.65rem;
+  }
+
+  .loading-subtext {
+    font-size: 0.55rem;
+  }
+
+  .olivia-premium .retry-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.65rem;
+  }
+
+  /* Voice feedback on small screens */
+  .voice-transcript-display {
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .voice-error-display {
+    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Pause button sizing */
+  .olivia-premium .pause-btn {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* Control panel extra padding */
+  .control-panel {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  /* Olivia TV display - scaled down 25% for mobile viewport */
+  .video-disabled-placeholder {
+    padding: 0.75rem;
+  }
+
+  .video-disabled-placeholder .placeholder-avatar {
+    margin-bottom: 0.75rem;
+  }
+
+  .video-disabled-placeholder .avatar-circle {
+    width: 45px;
+    height: 45px;
+    margin-bottom: 0.4rem;
+  }
+
+  .video-disabled-placeholder .avatar-initial {
+    font-size: 1.125rem;
+  }
+
+  .video-disabled-placeholder .avatar-name {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.1rem;
+  }
+
+  .video-disabled-placeholder .avatar-subtitle {
+    font-size: 0.5rem;
+  }
+
+  .start-video-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.65rem;
+    gap: 0.4rem;
+  }
+
+  .start-video-btn .btn-icon {
+    font-size: 0.75rem;
+  }
+
+  .text-mode-hint {
+    margin-top: 0.5rem;
+    font-size: 0.55rem;
+  }
+
+  /* Footer - tighter spacing and brighter text on mobile */
+  .olivia-footer {
+    padding: 0.75rem 1.5rem;
+    gap: 0.5rem;
+  }
+
+  .footer-left,
+  .footer-right {
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-brand {
+    font-size: 0.6rem;
+    color: #FFD700;
+    letter-spacing: 0.15em;
+  }
+
+  .footer-tagline {
+    font-size: 0.55rem;
+    color: #ffffff;
+  }
+
+  .footer-location {
+    font-size: 0.5rem;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+  }
+
+  .footer-divider {
+    display: none;
+  }
+
+  .footer-center {
+    order: -1;
+  }
+
+  .connection-status {
+    gap: 0.35rem;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .status-text {
+    font-size: 0.5rem;
+    color: #ffffff;
+  }
+
+  /* FIX #5 2026-02-15: READY/STOP video buttons blocking Olivia's body on mobile vertical.
+     Move to screen left/right edges of the TV display, reduce size */
+  .video-controls-overlay {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    justify-content: space-between;
+  }
+
+  .video-control-btn {
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    gap: 4px;
+    border-radius: 4px;
+  }
+
+  .video-control-btn .control-icon {
+    font-size: 0.75rem;
+  }
+}

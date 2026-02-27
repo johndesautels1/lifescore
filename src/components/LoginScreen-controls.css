@@ -1,0 +1,188 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ERROR MESSAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: var(--ls-error);
+  font-size: 0.85rem;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN BUTTON
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ls-midnight);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 16px rgba(201, 162, 39, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin-top: 0.5rem;
+}
+
+.login-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px rgba(201, 162, 39, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.login-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.login-btn.loading {
+  background: linear-gradient(135deg, var(--ls-navy-light) 0%, var(--ls-navy) 100%);
+  color: var(--ls-platinum);
+}
+
+.login-screen .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DEMO CREDENTIALS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.demo-credentials {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.demo-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ls-steel);
+  margin: 0 0 0.5rem;
+}
+
+.demo-hint {
+  font-size: 0.8rem;
+  color: var(--ls-steel);
+  margin: 0;
+}
+
+.demo-hint code {
+  background: rgba(201, 162, 39, 0.15);
+  color: var(--ls-gold);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-footer {
+  text-align: center;
+  animation: fade-slide-up 0.6s ease-out 0.2s backwards;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.footer-logo {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--ls-gold);
+}
+
+.footer-divider {
+  color: var(--ls-steel);
+  opacity: 0.3;
+}
+
+.footer-company {
+  font-size: 0.75rem;
+  color: var(--ls-steel);
+}
+
+.footer-legal {
+  font-size: 0.7rem;
+  color: #FFFFFF;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .login-screen {
+    padding: 1rem;
+  }
+
+  .login-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .brand-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .icon-inner {
+    font-size: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .brand-title {
+    font-size: 1.5rem;
+  }
+
+  .login-screen .card-header h2 {
+    font-size: 1.25rem;
+  }
+}
+

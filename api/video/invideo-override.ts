@@ -18,6 +18,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 
 // ============================================================================
 // CONFIGURATION
@@ -27,14 +28,6 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
-
-// Admin emails authorized to manage InVideo overrides
-const ADMIN_EMAILS = [
-  'cluesnomads@gmail.com',
-  'brokerpinellas@gmail.com',
-  'jdes7@aol.com',
-  ...(process.env.DEV_BYPASS_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
-];
 
 // ============================================================================
 // HELPERS
@@ -54,7 +47,7 @@ async function verifyAdmin(req: VercelRequest): Promise<{ email: string } | null
   if (error || !user?.email) return null;
 
   const email = user.email.toLowerCase();
-  if (!ADMIN_EMAILS.includes(email)) return null;
+  if (!getAdminEmails().includes(email)) return null;
 
   return { email };
 }
@@ -67,7 +60,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res, 'restricted', { methods: 'GET, POST, DELETE, OPTIONS' })) return;
 
   try {
-    // ── GET: Lookup override (public for authenticated users) ──────────
+    // FIX A11: Require authentication for all methods
+    const auth = await requireAuth(req, res);
+    if (!auth) return;
+
+    // ── GET: Lookup override (authenticated users) ──────────
     if (req.method === 'GET') {
       const { comparisonId, city } = req.query;
 

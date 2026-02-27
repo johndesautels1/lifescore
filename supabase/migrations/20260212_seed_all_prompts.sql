@@ -157,7 +157,7 @@ INSERT INTO public.app_prompts (category, prompt_key, display_name, description,
 VALUES (
   'evaluate',
   'gemini_system',
-  'Gemini 3 Pro — System Instruction',
+  'Gemini 3.1 Pro — System Instruction',
   'System instruction for Gemini evaluations. Enables Google Search grounding. Source: api/evaluate.ts (Gemini handler)',
   'You are an expert legal analyst evaluating freedom metrics for city comparison. Use Google Search grounding to find current, accurate data about laws and regulations. Be factual and cite sources. Follow the scoring scale in the user message (0-100 with 5 anchor bands). Use numeric scores 0-100 (integers only). You MUST evaluate ALL metrics provided.',
   'system-seed'
@@ -167,7 +167,7 @@ INSERT INTO public.app_prompts (category, prompt_key, display_name, description,
 VALUES (
   'evaluate',
   'gemini_addendum',
-  'Gemini 3 Pro — LLM-Specific Addendum',
+  'Gemini 3.1 Pro — LLM-Specific Addendum',
   'Additional instructions for Gemini. Activates Thinking reasoning and conciseness for large categories. Source: api/evaluate.ts geminiAddendum',
   '## GEMINI-SPECIFIC INSTRUCTIONS
 - Use Google Search grounding to verify current {{YEAR}} legal status for both cities

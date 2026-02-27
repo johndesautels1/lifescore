@@ -43,24 +43,7 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     reset,
   } = useGrokVideo();
 
-  // FIX #53: Early return if result is missing required data
-  if (!result?.city1?.city || !result?.city2?.city || !result?.winner) {
-    return (
-      <div className="new-life-videos">
-        <div className="new-life-header">
-          <h3 className="section-title">
-            <span className="section-icon">🎬</span>
-            City Life Videos
-          </h3>
-          <p className="section-subtitle" style={{ color: '#FFD700' }}>
-            Complete a comparison to see your new life videos
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Video refs for playback control
+  // Video refs for playback control — must be above early return (React hooks rules)
   const winnerVideoRef = useRef<HTMLVideoElement>(null);
   const loserVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -76,15 +59,25 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const [videoErrorCount, setVideoErrorCount] = useState(0);
   const MAX_VIDEO_ERRORS = 3; // Reset state after 3 failed load attempts
 
-  // Determine winner/loser from result
-  const winner = result.winner;
-  const winnerCity = winner === 'city1' ? result.city1.city : result.city2.city;
-  const loserCity = winner === 'city1' ? result.city2.city : result.city1.city;
-  const winnerScore = winner === 'city1' ? result.city1.totalConsensusScore : result.city2.totalConsensusScore;
-  const loserScore = winner === 'city1' ? result.city2.totalConsensusScore : result.city1.totalConsensusScore;
-
   // Local error state for usage/auth failures (separate from video generation errors)
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Auto-regeneration ref and dead URL tracking (must be above early return)
+  const hasTriggeredRegenRef = useRef(false);
+  const [deadUrls, setDeadUrls] = useState<Set<string>>(new Set());
+
+  // Download state
+  const [isDownloading, setIsDownloading] = useState<'winner' | 'loser' | null>(null);
+
+  // FIX H1: Check if result has required data (no early return — hooks must run unconditionally)
+  const hasRequiredData = !!(result?.city1?.city && result?.city2?.city && result?.winner);
+
+  // Determine winner/loser from result (safe defaults when data missing)
+  const winner = result?.winner;
+  const winnerCity = hasRequiredData ? (winner === 'city1' ? result.city1.city : result.city2.city) : '';
+  const loserCity = hasRequiredData ? (winner === 'city1' ? result.city2.city : result.city1.city) : '';
+  const winnerScore = hasRequiredData ? (winner === 'city1' ? result.city1.totalConsensusScore : result.city2.totalConsensusScore) : 0;
+  const loserScore = hasRequiredData ? (winner === 'city1' ? result.city2.totalConsensusScore : result.city1.totalConsensusScore) : 0;
 
   // Handle video generation (forceRegenerate bypasses "already processing" block on backend)
   const handleGenerateVideos = async (forceRegenerate: boolean = false) => {
@@ -112,7 +105,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
 
       // Increment usage counter before starting generation
       await incrementUsage('grokVideos');
-      console.log('[NewLifeVideos] Incremented grokVideos usage');
     }
 
     setHasStarted(true);
@@ -202,8 +194,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   }, []);
 
   // FIX #19: Proper cross-origin video download using fetch → blob
-  const [isDownloading, setIsDownloading] = useState<'winner' | 'loser' | null>(null);
-
   const handleDownloadVideo = useCallback(async (
     videoUrl: string,
     cityName: string,
@@ -232,21 +222,12 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   // FIX #48: Auto-reset when video errors exceed threshold (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
-      console.log('[NewLifeVideos] Video error threshold reached - resetting to allow regeneration');
       reset();
       setHasStarted(false);
       setIsPlaying(false);
       setVideoErrorCount(0);
     }
   }, [videoErrorCount, reset]);
-
-  // Auto-regeneration is handled by the error count threshold (handleVideoError).
-  // When a video element fails to load (truly expired URL), the error count
-  // reaches MAX_VIDEO_ERRORS and resets the state so the user can regenerate.
-  const hasTriggeredRegenRef = useRef(false);
-
-  // Track which video URLs are known dead (404/expired) so we don't render broken video elements
-  const [deadUrls, setDeadUrls] = useState<Set<string>>(new Set());
 
   // Fetch videos as blob URLs to bypass CORS restrictions on Kling/Replicate CDN
   // Same technique as the download handler — fetch → blob → createObjectURL
@@ -312,6 +293,23 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
     setDeadUrls(new Set());
     hasTriggeredRegenRef.current = false;
   }, [result.comparisonId]);
+
+  // FIX H1: Render fallback when data is incomplete (instead of early return that skips hooks)
+  if (!hasRequiredData) {
+    return (
+      <div className="new-life-videos">
+        <div className="new-life-header">
+          <h3 className="section-title">
+            <span className="section-icon">🎬</span>
+            City Life Videos
+          </h3>
+          <p className="section-subtitle" style={{ color: '#FFD700' }}>
+            Complete a comparison to see your new life videos
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <FeatureGate feature="grokVideos" blurContent={true}>

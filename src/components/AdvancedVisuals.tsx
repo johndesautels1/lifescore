@@ -14,6 +14,7 @@
 import React, { useState, useMemo } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { CATEGORIES } from '../shared/metrics';
+import { getMetricDisplayName } from '../shared/metricDisplayNames';
 import './AdvancedVisuals.css';
 
 // ============================================================================
@@ -118,7 +119,7 @@ export function prepareBarChartData(result: EnhancedComparisonResult, topN: numb
       const city1Score = metric.consensusScore ?? 0;
       allMetrics.push({
         id: metric.metricId,
-        name: metric.metricId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        name: getMetricDisplayName(metric.metricId),
         city1: city1Score,
         city2: city2Score,
         diff: Math.abs(city1Score - city2Score),
@@ -163,11 +164,7 @@ export function prepareLineChartData(result: EnhancedComparisonResult, categoryI
   }
 
   return {
-    labels: category1.metrics.map(m => {
-      const parts = m.metricId.split('-');
-      const meaningful = parts.slice(-2).map(w => w.charAt(0).toUpperCase() + w.slice(1));
-      return meaningful.join(' ');
-    }),
+    labels: category1.metrics.map(m => getMetricDisplayName(m.metricId)),
     datasets: [
       {
         label: result.city1.city,
@@ -246,7 +243,7 @@ export function prepareTableData(result: EnhancedComparisonResult): TableData {
 
       rows.push([
         categoryName,
-        metric.metricId,
+        getMetricDisplayName(metric.metricId),
         Math.round(city1Score),
         Math.round(city2Score),
         (diff > 0 ? '+' : '') + Math.round(diff),

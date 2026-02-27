@@ -160,7 +160,8 @@ const EmiliaChat: React.FC<EmiliaChatProps> = ({ onBack }) => {
 
   // Focus input on mount
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 100);
+    const timeoutId = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const handleSendMessage = useCallback(async () => {

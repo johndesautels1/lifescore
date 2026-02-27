@@ -22,6 +22,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth } from './shared/auth.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -397,8 +398,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  if (handleCors(req, res, 'open')) return;
+  // CORS - restricted to same app (requires auth)
+  if (handleCors(req, res, 'same-app')) return;
 
   // Rate limiting - heavy preset (video generation is expensive)
   if (!applyRateLimit(req.headers, 'judge-video', 'heavy', res)) {
@@ -409,6 +410,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Require authentication — uses D-ID/ElevenLabs/OpenAI credits
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const authHeader = getDIDAuthHeader();

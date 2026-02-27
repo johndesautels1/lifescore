@@ -133,6 +133,12 @@ export default async function handler(
   try {
     const finalVoiceId = voiceId || getEmiliaVoiceId();
 
+    // FIX X3: Validate voiceId format to prevent URL path injection
+    if (!/^[a-zA-Z0-9_-]+$/.test(finalVoiceId)) {
+      res.status(400).json({ error: 'Invalid voiceId format' });
+      return;
+    }
+
     const response = await fetch(
       `${ELEVENLABS_API_BASE}/text-to-speech/${finalVoiceId}`,
       {

@@ -1,0 +1,307 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LIFE SCORE™ Premium Login Screen Styles
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Design: Swiss private banking meets James Bond meets The Savoy
+ * Color System: Midnight Navy, Brushed Gold, Ice White
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VARIABLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-screen {
+  --ls-midnight: #0a1628;
+  --ls-navy: #0d2847;
+  --ls-navy-light: #1a3a5c;
+  --ls-gold: #c9a227;
+  --ls-gold-light: #d4af37;
+  --ls-gold-glow: rgba(201, 162, 39, 0.3);
+  --ls-platinum: #e2e8f0;
+  --ls-steel: #64748b;
+  --ls-white: #ffffff;
+  --ls-error: #ef4444;
+  --ls-success: #10b981;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--ls-midnight) 0%, var(--ls-navy) 50%, var(--ls-midnight) 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BACKGROUND EFFECTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-bg-effects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-gradient-1 {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, var(--ls-gold-glow) 0%, transparent 60%);
+  opacity: 0.4;
+  animation: float-slow 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.bg-gradient-2 {
+  position: absolute;
+  bottom: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(13, 40, 71, 0.8) 0%, transparent 60%);
+  opacity: 0.6;
+  animation: float-slow 25s ease-in-out infinite reverse;
+  will-change: transform;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, -20px); }
+}
+
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(201, 162, 39, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 162, 39, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BRAND HEADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-brand {
+  text-align: center;
+  animation: fade-slide-down 0.6s ease-out;
+}
+
+@keyframes fade-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.brand-icon {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+}
+
+.icon-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
+  border-radius: 16px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ls-midnight);
+  box-shadow:
+    0 8px 32px rgba(201, 162, 39, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.icon-ring {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid var(--ls-gold);
+  border-radius: 20px;
+  opacity: 0.3;
+  animation: pulse-ring 3s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.05); opacity: 0.5; }
+}
+
+.brand-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--ls-white);
+  margin: 0;
+}
+
+.brand-tagline {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: #F5A623;  /* Golden orange for visibility */
+  margin: 0.5rem 0 0;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-card {
+  width: 100%;
+  background: rgba(10, 22, 40, 0.92);
+  border: 1px solid rgba(201, 162, 39, 0.15);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: fade-slide-up 0.6s ease-out 0.1s backwards;
+}
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-screen .card-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-screen .card-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ls-white);
+  margin: 0;
+}
+
+.login-screen .card-header p {
+  font-size: 0.875rem;
+  color: var(--ls-steel);
+  margin: 0.5rem 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORM STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.login-screen .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.login-screen .form-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ls-platinum);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--ls-steel);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.input-wrapper:focus-within .input-icon {
+  color: var(--ls-gold);
+}
+
+.login-screen .form-group input {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 2.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--ls-white);
+  font-family: inherit;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-screen .form-group input::placeholder {
+  color: var(--ls-steel);
+}
+
+.login-screen .form-group input:focus {
+  outline: none;
+  border-color: var(--ls-gold);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px var(--ls-gold-glow);
+}
+
+.login-screen .form-group input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--ls-steel);
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.toggle-password:hover {
+  color: var(--ls-gold);
+}
+

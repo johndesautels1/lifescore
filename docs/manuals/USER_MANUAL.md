@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 3.6
-**Last Updated:** February 17, 2026
+**Version:** 3.8
+**Last Updated:** February 26, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -259,6 +259,8 @@ For each metric, click **View Evidence** to see:
 - Date of information
 - Confidence level
 
+**Metric Names (Fixed 2026-02-27):** The Evidence Panel now shows proper human-readable metric names (e.g., "Cannabis Legality", "Property Tax Rate") instead of internal codes. This fix also applies to the Advanced Visuals charts, CSV/PDF exports, and the Judge disagreement summary.
+
 ### Score Methodology (Added 2026-02-05)
 
 Click **"How is this scored?"** to see a glass-morphic explainer card showing the 5-stage scoring pipeline:
@@ -442,6 +444,7 @@ Judge reports are automatically saved to both your browser (localStorage) and th
 - Reports sync to the cloud for access on other devices
 - View all saved Judge reports in the **Visual Reports / Saved** tab
 - Tie results are now handled correctly — no more "winner is TIE" text
+- **Tie victory text fix (2026-02-26):** When two cities score within 1 point of each other, the report verdict now says "evenly matched" instead of showing blank winner text
 - **Supabase fallback (Added 2026-02-14):** If a Judge report is missing from localStorage (e.g., after clearing browser cache), the system automatically falls back to Supabase to retrieve it. Your reports survive browser cache clearing.
 
 ### Saving Gamma Reports (Updated 2026-02-14)
@@ -493,6 +496,8 @@ On the Visuals tab, after a Gamma report is generated or loaded from saved repor
 - She narrates the key findings: introduction, winner announcement, category breakdowns, key differences, and conclusion
 - **Controls:** Play/Pause, Next/Previous segment, Close
 - Available instantly — no generation wait time
+
+**Audio Fix (2026-02-27):** Fixed an issue where audio from one segment could overlap with the next segment if narration timing didn't align. Each segment now cleanly stops before the next begins.
 
 #### Generate Video
 - Creates a polished, downloadable MP4 video of Olivia presenting your full report
@@ -803,6 +808,8 @@ For Enhanced mode with your own keys:
 
 **Video URL Expiration (Updated 2026-02-14):** All video providers (Replicate, HeyGen, Kling) now have expiration-aware URL handling. The system performs a HEAD request to validate cached video URLs before displaying them. If a URL has expired, the video is automatically re-fetched or regenerated — no manual action needed. Additionally, localStorage quota crash protection has been added, so large video caches won't cause browser errors.
 
+**Smooth Playback (Updated 2026-02-27):** All video players now pre-buffer the full video before you press play, eliminating startup stutter. If the video pauses to buffer mid-playback, a spinner overlay appears so you know it's loading (not frozen). This applies to the Judge Video, Court Order, Freedom Tour, and Olivia Video Presenter.
+
 ### Olivia Presenter Not Working
 
 **Symptoms:** Presenter doesn't appear, video won't generate, avatar not speaking
@@ -884,6 +891,15 @@ When visiting LifeScore on a small screen (phone), a **warning modal** appears e
 3. Confirm via email
 4. Processed within 30 days
 
+### Security (Updated 2026-02-26)
+
+Your data is protected by multiple security layers:
+- **Authenticated APIs:** All 38+ API endpoints require you to be logged in — no anonymous access to any user data or functionality
+- **Row Level Security:** Database policies ensure you can only see your own comparisons, reports, and settings
+- **No data leaks:** Internal debug information has been removed from production (87 debug statements cleaned up)
+- **Input validation:** All user inputs are validated before processing to prevent injection attacks
+- **CORS protection:** The API only accepts requests from the official LIFE SCORE application
+
 ### Third-Party Services
 
 We use:
@@ -927,6 +943,12 @@ A: The Judge page was redesigned with collapsible panels (Media, Evidence, Verdi
 **Q: What is the "Go To My New City" video?**
 A: This is a personalized cinematic relocation video for the winning city, shown at the bottom of the Judge Verdict panel. It features multiple scenes with Cluesnomads.com branding and only appears when a judge report is loaded.
 
+**Q: The copyright or date shows the wrong year**
+A: Fixed as of February 2026. All year displays now update automatically. Refresh the page to see the current year.
+
+**Q: When cities tie, the report text looks blank or broken**
+A: Fixed as of February 2026. Tie results now show "evenly matched" with a balanced analysis of both cities, rather than blank winner text.
+
 ### Technical
 
 **Q: Which browsers are supported?**
@@ -939,7 +961,7 @@ A: Currently web-only. The site is mobile-responsive.
 A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
 
 **Q: What is Enhanced Mode and how does it work?**
-A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.5 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
+A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.5, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.5 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
 
 **Q: Why would I use Enhanced Mode over Standard Mode?**
 A: Enhanced Mode provides multi-LLM consensus scoring, which reduces individual AI bias and catches edge cases a single model might miss. The Judge feature highlights where AI providers disagree and explains the reasoning. Best for important relocation decisions.
@@ -1106,3 +1128,5 @@ If you choose "Notify Me & Go":
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | Full "Forgot Password" flow documented (§2): 3-step walkthrough covering reset request, email link, new password form, and data safety notes. Updated App Schema Manual with complete Authentication & Password Recovery architecture (§1.0). Updated CSM and Tech manuals with password reset troubleshooting and architecture. |
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notifications system (§17) with bell icon, "Notify Me" modal, email alerts. Explain the Winner toggle (§5). Confidence interval hover cards (§7). Glassmorphic Judge buttons (§7). Phone call audio warning (§7). Mobile warning modal (§12). Law vs Lived / Worst-Case illumination (§4). Dealbreakers A-Z sort (§4). Auto-scroll to top (§4). VS text dark mode fix (§10). Mobile +/- buttons and LLM badges fix (§12). Visuals labeling fix. Gamma links fix. Login credential storage fix. Judge stale state fix. Password reset redirect fix. Admin signup email. |
 | 3.7 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§9): Permanent Downloads note — PDF/PPTX exports now permanently stored in Supabase Storage. Expired Report Detection note — iframe error handling shows fallback message. |
+| 3.8 | 2026-02-26 | Claude Opus 4.6 | Security audit session (47 fixes): New Security subsection in Privacy & Data (§13) documenting 38+ authenticated endpoints, CORS hardening, debug cleanup. Tie victory text fix in Judge reports (§7). New FAQs for wrong year display and tie case. All user-facing data now requires authentication. |
+| 3.9 | 2026-02-27 | Claude Opus 4.6 | Metric display name fix (§5): Evidence Panel, Advanced Visuals charts, CSV/PDF exports, and Judge disagreement summaries now show proper human-readable metric names (e.g., "Cannabis Legality") instead of internal codes (e.g., "pf_01_cannabis_legal"). Olivia presenter audio overlap fix (§8): segments no longer play over each other. |

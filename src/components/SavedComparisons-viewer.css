@@ -1,0 +1,335 @@
+/* ============================================
+   DATABASE SYNC SPINNER
+   ============================================ */
+.sync-spinner-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(0, 51, 122, 0.08) 100%);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(0, 71, 171, 0.15);
+}
+
+.sync-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sync-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 71, 171, 0.2);
+  border-top-color: var(--sapphire, #0047AB);
+  border-radius: 50%;
+  animation: sync-spin 1s linear infinite;
+}
+
+@keyframes sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sync-spinner-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--sapphire, #0047AB);
+  text-align: center;
+  animation: sync-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sync-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Dark mode for sync spinner */
+[data-theme="dark"] .sync-spinner-overlay {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.15) 0%, rgba(0, 51, 122, 0.2) 100%);
+  border-color: rgba(0, 71, 171, 0.3);
+}
+
+[data-theme="dark"] .sync-spinner {
+  border-color: rgba(100, 149, 237, 0.3);
+  border-top-color: #6495ED;
+}
+
+[data-theme="dark"] .sync-spinner-text {
+  color: #6495ED;
+}
+
+/* Mobile adjustments for sync spinner */
+@media (max-width: 480px) {
+  .sync-spinner-overlay {
+    padding: 1.5rem 1rem;
+  }
+
+  .sync-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+
+  .sync-spinner-text {
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .saved-toolbar {
+    flex-direction: column;
+    align-items: center; /* FIX: Center buttons instead of stretching full width */
+  }
+
+  .toolbar-left,
+  .toolbar-right,
+  .toolbar-center {
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .saved-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .saved-item-actions {
+    display: flex !important;  /* FIX: Force display on tablet/mobile */
+    justify-content: center;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  /* FIX: Ensure action buttons visible on 768px screens */
+  .saved-comparisons .action-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .saved-item-meta {
+    gap: 0.5rem;
+  }
+
+  .saved-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .gamma-reports-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+/* Extra small screens - ensure action buttons fit */
+@media (max-width: 480px) {
+  .saved-item {
+    padding: 0.75rem;
+  }
+
+  .saved-item-actions {
+    display: flex !important;  /* Force display */
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    flex-wrap: nowrap;
+    min-height: 44px;  /* Ensure container has height */
+  }
+
+  /* FIX Bug #6 & #8: Ensure action buttons visible and clickable on mobile */
+  .saved-comparisons .action-btn {
+    display: flex !important;  /* Force display */
+    width: 44px !important;  /* Larger touch target */
+    height: 44px !important;  /* Larger touch target */
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Mobile touch handling */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    user-select: none;
+    -webkit-user-select: none;
+    /* Ensure emoji renders properly */
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    line-height: 1;
+  }
+
+  /* Make sure buttons are on top and receive clicks */
+  .action-btn.view-btn {
+    position: relative;
+    z-index: 10;
+    background: white;
+    border: 2px solid var(--sapphire);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .action-btn.view-btn:active {
+    transform: scale(0.95);
+    background: var(--sapphire-50);
+  }
+
+  .saved-item-main {
+    width: 100%;
+  }
+
+  .saved-item-cities {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .saved-item-meta {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ============================================
+   EMBEDDED GAMMA REPORT VIEWER MODAL
+   FIX 2026-02-08: View Gamma reports inside the app
+   ============================================ */
+.gamma-embed-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.gamma-embed-modal {
+  width: 100%;
+  max-width: 1400px;
+  height: 90vh;
+  max-height: 900px;
+  background: #1a1a2e;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gamma-embed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #0047AB 0%, #002d6d 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gamma-embed-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.gamma-embed-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.gamma-embed-actions .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.gamma-embed-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gamma-embed-actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.gamma-embed-actions .btn-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 1.25rem;
+}
+
+.gamma-embed-actions .btn-close:hover {
+  background: rgba(220, 38, 38, 0.8);
+  border-color: rgba(220, 38, 38, 0.8);
+}
+
+.gamma-embed-content {
+  flex: 1;
+  overflow: hidden;
+  background: #0f0f1a;
+}
+
+.gamma-embed-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .gamma-embed-overlay {
+    padding: 0;
+  }
+
+  .gamma-embed-modal {
+    border-radius: 0;
+    height: 100vh;
+    max-height: none;
+  }
+
+  .gamma-embed-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .gamma-embed-header h3 {
+    font-size: 1rem;
+  }
+
+  .gamma-embed-actions .btn-secondary {
+    display: none; /* Hide external link on mobile to save space */
+  }
+}

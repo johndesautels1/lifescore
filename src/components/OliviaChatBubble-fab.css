@@ -1,0 +1,173 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LIFE SCORE™ Olivia Chat Bubble Styles
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Floating chat interface - Subtle luxury meets modern messaging.
+ * Like having a concierge at The Savoy in your pocket.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.olivia-bubble-container {
+  --bubble-gold: #e6b800; /* FIX: Improved contrast from #c9a227 (3.2:1) to meet WCAG 4.5:1 */
+  --bubble-midnight: #0a1628;
+  --bubble-navy: #0d2847;
+  --bubble-platinum: #e2e8f0;
+  --bubble-steel: #64748b;
+  --bubble-white: #ffffff;
+  --bubble-success: #10b981;
+  --bubble-error: #ef4444;
+
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FLOATING ACTION BUTTON (FAB)
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Dragging state */
+.olivia-bubble-container.dragging {
+  cursor: grabbing;
+}
+
+.olivia-bubble-container.dragging .olivia-fab,
+.olivia-bubble-container.dragging .bubble-minimized-bar {
+  cursor: grabbing;
+  transition: none;
+}
+
+.olivia-fab {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--bubble-midnight) 0%, var(--bubble-navy) 100%);
+  cursor: grab;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 20px rgba(10, 22, 40, 0.4),
+    0 0 0 2px rgba(201, 162, 39, 0.2);
+}
+
+.olivia-fab:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 30px rgba(10, 22, 40, 0.5),
+    0 0 0 2px var(--bubble-gold);
+}
+
+.olivia-fab.hidden {
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fab-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab-letter {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bubble-gold);
+  position: relative;
+  z-index: 2;
+}
+
+.fab-rings {
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--bubble-gold);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.olivia-fab:hover .ring-1 {
+  animation: ring-pulse 1.5s ease-out infinite;
+}
+
+.olivia-fab:hover .ring-2 {
+  animation: ring-pulse 1.5s ease-out infinite 0.3s;
+}
+
+@keyframes ring-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  background: var(--bubble-gold);
+  color: var(--bubble-midnight);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: badge-bounce 0.5s ease;
+}
+
+@keyframes badge-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.fab-tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bubble-midnight);
+  color: var(--bubble-platinum);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.fab-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: var(--bubble-midnight);
+}
+
+.olivia-fab:hover .fab-tooltip {
+  opacity: 1;
+}
+

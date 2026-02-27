@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react';
+import { getAuthHeaders } from '../lib/supabase';
 import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
@@ -216,9 +217,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       });
 
       // Call Opus judge API (will use env vars for API key)
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/judge', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ city1, city2, evaluatorResults })
       });
 
@@ -549,7 +551,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, gemini: e.target.value })}
               placeholder="AI..."
             />
-            <span className="key-models">Gemini 3 Pro</span>
+            <span className="key-models">Gemini 3.1 Pro</span>
           </div>
 
           <div className="api-key-group">

@@ -14,18 +14,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth, getAdminEmails } from './shared/auth.js';
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
-
-const ADMIN_EMAILS = [
-  'cluesnomads@gmail.com',
-  'brokerpinellas@gmail.com',
-  'jdes7@aol.com',
-  ...(process.env.DEV_BYPASS_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
-];
 
 async function verifyAdmin(req: VercelRequest): Promise<{ email: string } | null> {
   const authHeader = req.headers.authorization;
@@ -36,7 +30,7 @@ async function verifyAdmin(req: VercelRequest): Promise<{ email: string } | null
   if (error || !user?.email) return null;
 
   const email = user.email.toLowerCase();
-  if (!ADMIN_EMAILS.includes(email)) return null;
+  if (!getAdminEmails().includes(email)) return null;
   return { email };
 }
 
@@ -44,6 +38,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res, 'restricted', { methods: 'GET, PUT, OPTIONS' })) return;
 
   try {
+    // FIX AC4: Require authentication for all methods (prompts are internal IP)
+    const auth = await requireAuth(req, res);
+    if (!auth) return;
+
     // ── GET: List prompts or categories ───────────────────────────────
     if (req.method === 'GET') {
       const { category, key, categories } = req.query;

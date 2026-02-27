@@ -35,6 +35,32 @@ interface PortalRequest {
   returnUrl?: string;
 }
 
+// FIX X2: Validate redirect URLs to prevent open redirect attacks
+function isAllowedRedirectUrl(url: string | undefined): boolean {
+  if (!url) return true; // undefined means use default — safe
+  try {
+    const parsed = new URL(url);
+    const allowedOrigins = [
+      'https://lifescore.vercel.app',
+      'https://www.thelifescore.com',
+      'https://thelifescore.com',
+      'capacitor://localhost',
+    ];
+    if (process.env.VERCEL_URL) {
+      allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+    }
+    if (process.env.PRODUCTION_URL) {
+      allowedOrigins.push(process.env.PRODUCTION_URL);
+    }
+    if (parsed.hostname === 'localhost' && parsed.protocol === 'http:') {
+      return true;
+    }
+    return allowedOrigins.includes(parsed.origin);
+  } catch {
+    return false;
+  }
+}
+
 // ============================================================================
 // HANDLER
 // ============================================================================
@@ -85,6 +111,12 @@ export default async function handler(
 
     // Override userId with authenticated user to prevent IDOR
     body.userId = user.id;
+
+    // FIX X2: Validate return URL against allowlist
+    if (!isAllowedRedirectUrl(body.returnUrl)) {
+      res.status(400).json({ error: 'Invalid redirect URL' });
+      return;
+    }
 
     // Get user's Stripe customer ID from subscription record
     // FIX 2026-01-29: Use maybeSingle() - subscription may not exist

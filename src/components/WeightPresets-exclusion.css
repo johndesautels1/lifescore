@@ -1,0 +1,196 @@
+/* ============================================================================
+   CATEGORY EXCLUSION - Feature #4
+   ============================================================================ */
+
+.sliders-hint {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+/* Exclusion Checkbox */
+.exclusion-checkbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  margin-right: 0.25rem;
+}
+
+.exclusion-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.exclusion-checkmark {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  background-color: var(--gray-100);
+  border: 2px solid var(--gray-300);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.exclusion-checkbox:hover .exclusion-checkmark {
+  border-color: #0047AB;
+  background-color: rgba(0, 71, 171, 0.05);
+}
+
+.exclusion-input:checked ~ .exclusion-checkmark {
+  background-color: #0047AB;
+  border-color: #0047AB;
+}
+
+.exclusion-checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.exclusion-input:checked ~ .exclusion-checkmark::after {
+  display: block;
+}
+
+/* Excluded Row Styling */
+.slider-row.excluded {
+  opacity: 0.6;
+  background: linear-gradient(135deg, rgba(156, 163, 175, 0.1) 0%, rgba(156, 163, 175, 0.05) 100%);
+  border-radius: var(--radius-sm);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
+.slider-icon.excluded,
+.slider-name.excluded,
+.slider-value.excluded {
+  color: var(--gray-400);
+  text-decoration: line-through;
+}
+
+.excluded-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  background: var(--gray-400);
+  padding: 0.15rem 0.5rem;
+  border-radius: 50px;
+  margin-left: auto;
+}
+
+/* Disabled Slider */
+.weight-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.weight-slider:disabled::-webkit-slider-thumb {
+  background: var(--gray-400);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.weight-slider:disabled::-moz-range-thumb {
+  background: var(--gray-400);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Exclusion Summary */
+.exclusion-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: #1e40af;
+}
+
+.summary-icon {
+  font-size: 1rem;
+}
+
+/* Dark Mode - Category Exclusion */
+[data-theme="dark"] .sliders-hint {
+  color: #8080a0;
+}
+
+[data-theme="dark"] .exclusion-checkmark {
+  background-color: #2d2d44;
+  border-color: #4d4d66;
+}
+
+[data-theme="dark"] .exclusion-checkbox:hover .exclusion-checkmark {
+  border-color: #6ba3ff;
+  background-color: rgba(107, 163, 255, 0.1);
+}
+
+[data-theme="dark"] .exclusion-input:checked ~ .exclusion-checkmark {
+  background-color: #6ba3ff;
+  border-color: #6ba3ff;
+}
+
+[data-theme="dark"] .slider-row.excluded {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2) 0%, rgba(75, 85, 99, 0.1) 100%);
+}
+
+[data-theme="dark"] .slider-icon.excluded,
+[data-theme="dark"] .slider-name.excluded,
+[data-theme="dark"] .slider-value.excluded {
+  color: #6b7280;
+}
+
+[data-theme="dark"] .excluded-badge {
+  background: #4b5563;
+}
+
+[data-theme="dark"] .exclusion-summary {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+/* Responsive - Category Exclusion */
+@media (max-width: 480px) {
+  .exclusion-checkmark {
+    height: 18px;
+    width: 18px;
+  }
+
+  .exclusion-checkmark::after {
+    left: 5px;
+    top: 1px;
+    width: 4px;
+    height: 9px;
+  }
+
+  .excluded-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .exclusion-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.25rem;
+  }
+}

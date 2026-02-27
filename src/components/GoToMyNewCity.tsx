@@ -130,6 +130,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
   // Error tracking for expired URLs
   const [videoErrorCount, setVideoErrorCount] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
   const MAX_VIDEO_ERRORS = 3;
 
   // Notification system
@@ -161,7 +162,6 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
         if (!cancelled && data?.video_url) {
           setCachedVideoUrl(data.video_url);
           setCachedThumbnailUrl(data.thumbnail_url || null);
-          console.log('[GoToMyNewCity] Restored cached video:', data.video_url.substring(0, 60) + '...');
         }
       } catch (err) {
         console.warn('[GoToMyNewCity] Cache check failed:', err);
@@ -214,7 +214,6 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
       }
 
       await incrementUsage('cristianoVideos' as any);
-      console.log('[GoToMyNewCity] Incremented cristianoVideos usage');
     }
 
     setHasStarted(true);
@@ -320,7 +319,6 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   // Auto-reset on repeated errors (expired URLs)
   useEffect(() => {
     if (videoErrorCount >= MAX_VIDEO_ERRORS) {
-      console.log('[GoToMyNewCity] Video error threshold reached - resetting');
       reset();
       setHasStarted(false);
       setIsPlaying(false);
@@ -424,7 +422,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
               <div className="lcd-display">
                 {/* Clues Logo Overlay - always visible in corner */}
                 <img
-                  src="/logo-transparent.png"
+                  src="/logo-transparent.webp"
                   alt="CLUES"
                   className="video-logo-overlay"
                 />
@@ -434,7 +432,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                     {!isPlaying && currentTime === 0 && (
                       <div className="video-poster-overlay" onClick={handlePlayPause}>
                         <img
-                          src="/logo-transparent.png"
+                          src="/logo-transparent.webp"
                           alt="CLUES"
                           className="poster-logo"
                         />
@@ -448,13 +446,21 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                       src={effectiveVideoUrl!}
                       poster={effectiveThumbnailUrl || undefined}
                       className="court-video"
+                      preload="auto"
                       onEnded={handleVideoEnded}
                       onTimeUpdate={handleTimeUpdate}
                       onLoadedMetadata={handleLoadedMetadata}
                       onError={handleVideoError}
+                      onWaiting={() => setIsBuffering(true)}
+                      onPlaying={() => setIsBuffering(false)}
                       playsInline
                       crossOrigin="anonymous"
                     />
+                    {isBuffering && (
+                      <div className="video-buffering-overlay">
+                        <div className="lcd-spinner"></div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="lcd-placeholder">

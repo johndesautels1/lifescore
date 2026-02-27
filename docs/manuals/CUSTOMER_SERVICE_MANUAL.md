@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.5
-**Last Updated:** February 17, 2026
+**Version:** 3.7
+**Last Updated:** February 26, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -250,6 +250,34 @@ Currently, LifeScore supports **200 metropolitan areas**:
 **Expected Response:**
 "Thank you for reporting this. We've fixed the dark mode styling for saved reports — city names and dates now display with proper contrast. Please refresh the page to see the fix. If text is still hard to read, try toggling dark mode off and on again in Settings."
 
+### 4.10 "Is my data secure?" / "Who can access my comparisons?"
+
+**Expected Response:**
+"Your data is highly secure. As of February 2026, all API endpoints require authenticated login — no one can access comparison data, videos, or reports without being signed into their own account. We use bank-level JWT authentication on every request. Your comparisons are isolated by your user ID and protected by Row Level Security in the database, meaning even at the database level, users can only see their own data."
+
+**Technical Background (2026-02-26 security audit):**
+- 38+ API endpoints now require JWT authentication (previously ~15 were unprotected)
+- IDOR vulnerability fixed on video generation endpoint — users can no longer spoof another user's ID
+- CORS restrictions tightened — API only accepts requests from the LIFE SCORE app domain
+- API keys are never sent to the browser
+- XSS injection vectors patched (innerHTML, URL path injection, open redirects)
+- 87 debug console.log statements removed from production (were leaking internal data to browser console)
+- Admin email list centralized — no more hardcoded bypass emails scattered across files
+
+### 4.11 "The copyright says the wrong year" / "It says 2025"
+
+**Expected Response:**
+"This has been fixed. All copyright notices and date displays now use the current year automatically. Please refresh the page to see the updated year."
+
+**Root Cause (resolved 2026-02-26):** Hardcoded "2025" year strings were replaced with dynamic `new Date().getFullYear()` across the codebase.
+
+### 4.12 "When two cities tie, the report text looks wrong"
+
+**Expected Response:**
+"This has been fixed. When two cities score within 1 point of each other, the report now shows 'evenly matched' instead of blank or broken winner text. The Judge provides a balanced analysis of both cities without declaring a winner."
+
+**Root Cause (resolved 2026-02-26):** The victory text template had no handler for the tie case, resulting in blank/undefined text in the report verdict.
+
 ---
 
 ## 5. Troubleshooting Guide
@@ -318,6 +346,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Video shows blank/expired | Wait for auto-reset (after 3 errors) then regenerate |
 | Only one video plays | Both videos use independent playback — one failing won't block the other |
 | Progress bar stuck at 73% | Fixed — progress now scales smoothly to 95% during generation |
+| Video freezes or stutters mid-play | Normal — a buffering spinner will appear while the video loads; ensure stable internet connection |
 | Download works but playback doesn't | Try clicking play again; blob URLs load asynchronously |
 | Video disappeared after tab switch | Fixed — videos now auto-restore from Supabase on tab re-entry |
 | Court Order video broken/expired | Fixed — Court Order videos no longer use expiring provider CDN URLs |
@@ -342,6 +371,11 @@ Currently, LifeScore supports **200 metropolitan areas**:
 - **HeyGen URLs:** Fixed HeyGen video URL expiration that caused broken presenter videos
 - **Storyboard progress bar:** New real-time progress bar during video generation with word-count QA validation
 - **Cristiano video:** Added "Visit Cluesnomads.com" CTA, poster image, and logo overlay; fixed 422 storyboard/render alignment error
+
+**Note (Updated 2026-02-27):** Video playback smoothness improved:
+- All video players now use `preload="auto"` so the browser pre-buffers the entire video before the user presses play
+- A buffering spinner overlay appears automatically if the video stalls mid-playback (instead of appearing frozen)
+- Applies to: Judge Video, Court Order, Freedom Tour (Cristiano), and Olivia Video Presenter
 
 ### 5.5 Gamma Report Issues
 
@@ -398,7 +432,20 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | "VS" text invisible between city names | Fixed (2026-02-16) — VS text now visible in dark mode across AdvancedVisuals, ContrastDisplays, JudgeTab, JudgeVideo |
 | Other dark mode text issues | Report specific elements to support for investigation |
 
-### 5.9 Mobile Display Issues (Added 2026-02-15)
+### 5.9 Metric Display & Export Issues (Fixed 2026-02-27)
+
+| Issue | Solution |
+|-------|----------|
+| Evidence panel shows codes like "pf_01_cannabis_legal" | Fixed — all metric names now display as human-readable (e.g., "Cannabis Legality") |
+| Chart labels in Advanced Visuals show codes | Fixed — bar charts, line charts, and data tables now use proper metric names |
+| CSV/PDF export shows raw metric codes | Fixed — both CSV and PDF exports now use readable metric names |
+| Judge disagreement summary shows codes | Fixed — disagreement areas now display proper names (e.g., "Cannabis Legality, Property Tax Rate") |
+| Olivia talking over herself during presentations | Fixed — audio from previous segments now cleanly stops before the next starts |
+
+**Response template (metric display):**
+"Thank you for reporting the display issue. We deployed a fix on February 27, 2026, that corrects all metric names across the app. Please refresh your page or run a new comparison. The fix applies to the Evidence Panel, charts, exports, and the AI Judge summary. If you still see internal codes, please clear your browser cache and try again."
+
+### 5.10 Mobile Display Issues (Added 2026-02-15) <!-- was 5.9 -->
 
 | Issue | Solution |
 |-------|----------|
@@ -416,7 +463,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 **Response template:**
 "Thank you for reporting the mobile display issue. We deployed fixes for 9 mobile layout problems on February 15, 2026, and added a mobile warning modal on February 16, 2026 to set expectations for phone users. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
 
-### 5.10 Notification Issues (Added 2026-02-16)
+### 5.11 Notification Issues (Added 2026-02-16) <!-- was 5.10 -->
 
 | Issue | Solution |
 |-------|----------|
@@ -654,6 +701,7 @@ Olivia can now present Gamma report findings as an AI avatar video:
 | Download button not working | Wait for generation to complete (progress bar must reach 100%) |
 | Olivia chat voice broken but presenter works | Separate systems — check ElevenLabs/OpenAI keys, not HeyGen |
 | Presenter broken but chat voice works | Separate systems — check HeyGen keys, not ElevenLabs/OpenAI |
+| Audio from two segments playing at once | Fixed (2026-02-27) — audio now cleanly stops before the next segment starts |
 
 ### 8.10 Cost Dashboard (Updated 2026-02-14)
 
@@ -909,7 +957,7 @@ A: Fixed on 2026-02-14. Judge reports now fall back to Supabase when localStorag
 A: Law scores reflect written legislation. Lived scores reflect actual enforcement. A city may have strict laws rarely enforced, or lenient laws strictly enforced.
 
 **Q: What AI providers does LifeScore use?**
-A: Claude Sonnet 4.5 (Anthropic), GPT-4o (OpenAI), Gemini 3 Pro (Google), Grok 4 (xAI), and Perplexity Sonar (Perplexity). Enhanced mode uses all five providers for consensus, with Claude Opus 4.5 as the final Judge.
+A: Claude Sonnet 4.5 (Anthropic), GPT-4o (OpenAI), Gemini 3.1 Pro (Google), Grok 4 (xAI), and Perplexity Sonar (Perplexity). Enhanced mode uses all five providers for consensus, with Claude Opus 4.5 as the final Judge.
 
 **Q: How long does a comparison take?**
 A: Standard: 2-3 minutes. Enhanced: 5-8 minutes. Video generation: 90-180 seconds.
@@ -968,6 +1016,11 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **Voice Wave Indicator** | Animated visual feedback on PIP player showing when audio is actively playing |
 | **Storyboard QA** | Word count and content validation step before video rendering begins |
 | **Field-by-Field Merge** | Cost Dashboard technique that takes the higher value from localStorage vs database for each cost field |
+| **JWT Authentication** | JSON Web Token — a secure login token sent with every API request to verify the user's identity |
+| **IDOR** | Insecure Direct Object Reference — a vulnerability where a user can access another user's data by changing an ID in the request (fixed 2026-02-26) |
+| **CORS** | Cross-Origin Resource Sharing — browser security policy controlling which websites can call the API |
+| **XSS** | Cross-Site Scripting — an attack where malicious code is injected into a web page (patched 2026-02-26) |
+| **getAdminEmails()** | Shared function that provides the centralized admin email list to all API endpoints (added 2026-02-26) |
 
 ---
 
@@ -989,6 +1042,8 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.4 | 2026-02-15 | Claude Opus 4.6 | New §5.9 Mobile Display Issues: 9 mobile vertical overflow fixes documented with response template. Affected areas: Results score cards, category badges, About services table, How It Works modules, Olivia buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. |
 | 3.5 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notification system (§5.10, §8.12) with troubleshooting and architecture. "Explain the Winner" toggle (§8.6a). Judge stale state fix (§5.6). VS text dark mode fix (§5.8). Gamma links fix (§5.5). Phone call audio warning (§5.4). Mobile warning modal (§5.9). Mobile +/- buttons and LLM badges fix. Password reset and login credential fixes. Admin signup notification. |
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§5.5): PDF/PPTX exports now persisted to permanent Supabase Storage. Iframe error detection added to all 4 embed locations. New troubleshooting entries and response template for expired export URLs. |
+| 3.7 | 2026-02-26 | Claude Opus 4.6 | Security audit update: 47-fix session documented. New customer inquiries §4.10 (data security), §4.11 (copyright year), §4.12 (tie case). All API endpoints now authenticated (38+). IDOR fix, CORS hardening, XSS patches, 87 debug console.log removed, admin emails centralized. New glossary terms: JWT, IDOR, CORS, XSS, getAdminEmails(). |
+| 3.8 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix: New §5.9 Metric Display & Export Issues — 7 user-facing locations now show proper names instead of codes (Evidence Panel, charts, CSV, PDF, Judge summary). Presenter audio overlap fix added to §8.9 Common Issues table. Section renumbering: §5.10→5.10, §5.11→5.11. |
 
 ---
 

@@ -1,7 +1,7 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.5.0
-**Last Updated:** 2026-02-17
+**Version:** 2.6.0
+**Last Updated:** 2026-02-26
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 **Auto-Generated From:** Codebase introspection of ~250 commits ahead of main
 
@@ -752,51 +752,51 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/evaluate` | No (rate-limited) | LLM evaluation scoring cities across 100 metrics with cached Tavily research |
-| POST | `/api/judge` | No (rate-limited) | Claude Opus consensus builder computing final scores from evaluator results |
-| POST | `/api/judge-report` | No (rate-limited) | Claude Opus comprehensive analysis with holistic freedom analysis and recommendations |
+| POST | `/api/evaluate` | Yes (JWT) | LLM evaluation scoring cities across 100 metrics with cached Tavily research |
+| POST | `/api/judge` | Yes (JWT) | Claude Opus consensus builder computing final scores from evaluator results |
+| POST | `/api/judge-report` | Yes (JWT) | Claude Opus comprehensive analysis with holistic freedom analysis and recommendations |
 
 ### 3.2 Video Generation (7)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/video/grok-generate` | No | Generate videos via Kling AI (primary) with Replicate fallback |
-| GET, POST | `/api/video/grok-status` | No | Check video generation status; POST supports cache checking |
-| GET, POST, DELETE | `/api/video/invideo-override` | Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
-| POST | `/api/avatar/generate-judge-video` | Yes | Generate Cristiano judge videos via Replicate Wav2Lip |
-| GET | `/api/avatar/video-status` | No | Check judge video generation status |
+| POST | `/api/video/grok-generate` | Yes (JWT) | Generate videos via Kling AI (primary) with Replicate fallback. **IDOR fix 2026-02-26:** userId overridden with auth user ID |
+| GET, POST | `/api/video/grok-status` | Yes (JWT) | Check video generation status; POST supports cache checking |
+| GET, POST, DELETE | `/api/video/invideo-override` | Yes (JWT) + Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
+| POST | `/api/avatar/generate-judge-video` | Yes (JWT) | Generate Cristiano judge videos via Replicate Wav2Lip |
+| GET | `/api/avatar/video-status` | Yes (JWT) | Check judge video generation status |
 | POST | `/api/avatar/video-webhook` | No (webhook) | Replicate webhook callback for video completion |
-| POST | `/api/judge-video` | No (rate-limited) | D-ID fallback avatar endpoint for Judge verdict |
+| POST | `/api/judge-video` | Yes (JWT) | D-ID fallback avatar endpoint for Judge verdict |
 
 ### 3.3 Avatar & Streaming (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/avatar/simli-session` | No | Returns Simli WebRTC session credentials |
-| POST | `/api/avatar/simli-speak` | No | TTS audio in PCM Int16 format for Simli playback |
-| POST | `/api/olivia/avatar/streams` | No (rate-limited) | D-ID Streams API for WebRTC avatar |
-| POST | `/api/olivia/avatar/heygen` | No (rate-limited) | HeyGen Streaming Avatar API |
-| POST, GET | `/api/olivia/avatar/heygen-video` | No (rate-limited) | HeyGen pre-rendered video generation + status polling for Olivia presenter |
+| POST | `/api/avatar/simli-session` | Yes (JWT) | Returns Simli WebRTC session credentials (API key no longer leaked in response — S1 fix 2026-02-26) |
+| POST | `/api/avatar/simli-speak` | Yes (JWT) | TTS audio in PCM Int16 format for Simli playback |
+| POST | `/api/olivia/avatar/streams` | Yes (JWT) | D-ID Streams API for WebRTC avatar |
+| POST | `/api/olivia/avatar/heygen` | Yes (JWT) | HeyGen Streaming Avatar API |
+| POST, GET | `/api/olivia/avatar/heygen-video` | Yes (JWT) | HeyGen pre-rendered video generation + status polling for Olivia presenter |
 
 ### 3.4 Olivia AI Assistant (6)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/olivia/chat` | Yes | Main chat via OpenAI Assistants API |
-| POST | `/api/olivia/context` | No (rate-limited) | Transform comparison data into Olivia context |
-| POST | `/api/olivia/field-evidence` | Yes | Source evidence for specific metrics |
-| POST | `/api/olivia/gun-comparison` | No | Standalone unscored gun rights comparison |
-| POST | `/api/olivia/tts` | Yes | ElevenLabs TTS with OpenAI fallback |
-| POST | `/api/olivia/contrast-images` | Yes | AI contrast images via Flux (Replicate) |
+| POST | `/api/olivia/chat` | Yes (JWT) | Main chat via OpenAI Assistants API |
+| POST | `/api/olivia/context` | Yes (JWT) | Transform comparison data into Olivia context |
+| POST | `/api/olivia/field-evidence` | Yes (JWT) | Source evidence for specific metrics |
+| POST | `/api/olivia/gun-comparison` | Yes (JWT) | Standalone unscored gun rights comparison |
+| POST | `/api/olivia/tts` | Yes (JWT) | ElevenLabs TTS with OpenAI fallback. voiceId validated with regex (X3 fix 2026-02-26) |
+| POST | `/api/olivia/contrast-images` | Yes (JWT) | AI contrast images via Flux (Replicate) |
 
 ### 3.5 Emilia Help Assistant (4)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/emilia/thread` | No | Create new Emilia conversation thread |
-| POST | `/api/emilia/message` | Yes | Send message to Emilia and get response |
-| POST | `/api/emilia/speak` | Yes | TTS for Emilia voice (ElevenLabs + OpenAI fallback) |
-| GET | `/api/emilia/manuals` | Partial | Serve documentation content; admin-only for restricted manuals |
+| POST | `/api/emilia/thread` | Yes (JWT) | Create new Emilia conversation thread |
+| POST | `/api/emilia/message` | Yes (JWT) | Send message to Emilia and get response |
+| POST | `/api/emilia/speak` | Yes (JWT) | TTS for Emilia voice (ElevenLabs + OpenAI fallback) |
+| GET | `/api/emilia/manuals` | Yes (JWT) + Admin for restricted | Serve documentation content; admin-only for restricted manuals |
 
 ### 3.6 Stripe Billing (4)
 
@@ -807,14 +807,15 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | GET | `/api/stripe/get-subscription` | No | Get current subscription status |
 | POST | `/api/stripe/webhook` | No (signature) | Handle Stripe lifecycle events |
 
-### 3.7 Admin (4)
+### 3.7 Admin (5)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | GET | `/api/admin-check` | Yes + Admin | Check if user has admin/developer bypass status |
-| GET | `/api/admin/env-check` | Yes + Admin | Show all environment variable configuration status |
+| GET | `/api/admin/env-check` | Yes + Admin | Show all environment variable configuration status (secrets masked — S4 fix 2026-02-26) |
 | POST | `/api/admin/sync-olivia-knowledge` | Yes + Admin | Upload knowledge base to OpenAI Assistant |
-| GET, PUT | `/api/prompts` | Admin (PUT) | Admin-editable prompt management |
+| POST | `/api/admin/sync-emilia-knowledge` | Yes + Admin | Upload Emilia knowledge base to OpenAI Assistant (CORS fix C2 2026-02-26) |
+| GET, PUT | `/api/prompts` | Yes (JWT) + Admin (PUT) | Admin-editable prompt management (GET was unprotected — AC4 fix 2026-02-26) |
 
 ### 3.8 User Data (2)
 
@@ -827,9 +828,9 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| GET, POST | `/api/gamma` | No (rate-limited) | Generate Gamma visual reports and check status. On completion, persists PDF/PPTX exports to Supabase Storage (permanent URLs). Returns `pdfStoragePath`/`pptxStoragePath` in response. |
-| POST | `/api/kv-cache` | Yes | Server-side proxy for Vercel KV operations |
-| GET | `/api/simli-config` | Yes | Return Simli credentials (keep API key out of client bundle) |
+| GET, POST | `/api/gamma` | Yes (JWT) | Generate Gamma visual reports and check status. On completion, persists PDF/PPTX exports to Supabase Storage (permanent URLs). Returns `pdfStoragePath`/`pptxStoragePath` in response. |
+| POST | `/api/kv-cache` | Yes (JWT) | Server-side proxy for Vercel KV operations |
+| GET | `/api/simli-config` | Yes (JWT) | Return Simli credentials (keep API key out of client bundle) |
 | GET | `/api/health` | No | API health check |
 | POST | `/api/test-llm` | No (rate-limited) | Test each LLM API connection |
 
@@ -837,8 +838,8 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| GET, POST | `/api/usage/check-quotas` | No | Check all provider quotas and send email alerts |
-| GET | `/api/usage/elevenlabs` | No | Fetch ElevenLabs subscription usage |
+| GET, POST | `/api/usage/check-quotas` | Yes (JWT) | Check all provider quotas and send email alerts |
+| GET | `/api/usage/elevenlabs` | Yes (JWT) | Fetch ElevenLabs subscription usage |
 | POST | `/api/consent/log` | No (rate-limited) | GDPR consent audit logging |
 
 ### 3.11 Notifications (Added 2026-02-16) (2)
@@ -989,18 +990,27 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 ## 6. Type Definitions
 
-**12 type files** in `src/types/`.
+**21 type files** in `src/types/` (split into domain files for maintainability).
 
 | File | Key Types |
 |------|-----------|
-| `database.ts` | UserTier, Profile, UserPreferences, SavedComparison, UsageTracking, Job, Notification, NotifyChannel |
+| `database.ts` | **Barrel** — re-exports all database types from 5 domain files below |
+| `database-core.ts` | UserTier, Profile, UserPreferences, UsageTracking |
+| `database-features.ts` | SavedComparison, ComparisonMetadata |
+| `database-jobs.ts` | Job, Notification, NotifyChannel |
+| `database-reports.ts` | GammaReport, JudgeReportRecord |
+| `database-costs.ts` | ApiCostRecord, CostSummary |
 | `metrics.ts` | CategoryId (6 categories), Category, MetricDefinition, ScoringCriteria |
 | `enhancedComparison.ts` | CityScore, CategoryScore, MetricScore, ComparisonResult |
 | `judge.ts` | JudgeReport, CategoryAnalysis, ExecutiveSummary |
 | `avatar.ts` | AvatarProvider ('simli' \| 'd-id' \| 'heygen' \| 'none'), AvatarConfig, AvatarSession |
 | `grokVideo.ts` | GrokVideo, GrokVideoPair, GrokVideoStatus |
 | `gamma.ts` | GammaGenerationRequest, GammaGenerationStatus |
-| `olivia.ts` | OliviaMessage, OliviaContext, OliviaResponse |
+| `olivia.ts` | **Barrel** — re-exports all Olivia types from 4 domain files below |
+| `olivia-chat.ts` | OliviaMessage, OliviaConversation, OliviaResponse |
+| `olivia-state.ts` | OliviaContext, OliviaUIState |
+| `olivia-actions.ts` | OliviaAction, OliviaCommand |
+| `olivia-avatar.ts` | OliviaAvatarConfig, OliviaAvatarState |
 | `freedomEducation.ts` | FreedomEducationData, CategoryTab definitions for Court Order |
 | `apiUsage.ts` | ApiUsageRecord, UsageSummary, QuotaStatus |
 | `presenter.ts` | PresenterSegment, PresentationScript, PresenterState, ReportViewMode, VideoGenerationState, HeyGenVideoRequest/Response |
@@ -1021,7 +1031,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | `oliviaService.ts` | Client-side wrapper for Olivia chat, TTS, context, and HeyGen video generation |
 | `presenterService.ts` | Client-side narration script generator from comparison data (no API call) |
 | `presenterVideoService.ts` | HeyGen video generation orchestration with 5s polling, 10-min timeout |
-| `opusJudge.ts` | Opus Judge client helpers and utility functions |
+| `opusJudge.ts` | Opus Judge client helpers — builds disagreement summaries using `getMetricDisplayName()` from shared utility |
 | `llmEvaluators.ts` | Client-side evaluation via Vercel serverless functions |
 | `enhancedComparison.ts` | API key management for enhanced comparison |
 | `judgePregenService.ts` | Non-blocking background Judge Report + Video generation |
@@ -1043,20 +1053,33 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | File | Purpose |
 |------|---------|
-| `src/utils/costCalculator.ts` | API cost tracking with provider-specific pricing |
+| `src/utils/costCalculator.ts` | **Barrel** — re-exports from 2 domain files below |
+| `src/utils/costCalculator-pricing.ts` | Provider-specific pricing constants and rate tables |
+| `src/utils/costCalculator-functions.ts` | Cost calculation logic, formatters, aggregation |
 | `src/utils/exportUtils.ts` | CSV and PDF export functionality |
-| `src/utils/contryFlags.ts` | Country flag images via flagcdn.com CDN |
+| `src/utils/countryFlags.ts` | Country flag images via flagcdn.com CDN |
 | `src/utils/freedomEducationUtils.ts` | Data transform for Freedom Education tabs |
 | `src/utils/invideoPromptBuilder.ts` | Cinematic prompt generation for InVideo relocation stories |
+| `src/utils/toast.tsx` | Toast notification wrapper (react-hot-toast) |
 
 ### 7.3 Shared API Utilities
 
 | File | Purpose |
 |------|---------|
+| `api/shared/auth.ts` | Auth middleware (requireAuth, getAdminEmails) |
 | `api/shared/cors.ts` | CORS handling with same-app verification |
 | `api/shared/rateLimit.ts` | Server-side rate limiting (standard, light, heavy presets) |
 | `api/shared/fetchWithTimeout.ts` | Server-side timeout wrapper |
-| `api/shared/metrics.ts` | Metric definitions shared between client/server |
+| `api/shared/metrics.ts` | Metric scoring functions shared between client/server |
+| `api/shared/metrics-data.ts` | **Barrel** — re-exports metric definitions from 6 category files below |
+| `api/shared/metrics-data-personal-freedom.ts` | Personal Freedom metrics (15 metrics) |
+| `api/shared/metrics-data-housing-property.ts` | Housing & Property metrics (20 metrics) |
+| `api/shared/metrics-data-business-work.ts` | Business & Work metrics (25 metrics) |
+| `api/shared/metrics-data-transportation.ts` | Transportation metrics (15 metrics) |
+| `api/shared/metrics-data-policing-legal.ts` | Policing & Legal metrics (15 metrics) |
+| `api/shared/metrics-data-speech-lifestyle.ts` | Speech & Lifestyle metrics (10 metrics) |
+| `api/shared/notifyJob.ts` | Job completion notification helper |
+| `api/shared/persistVideo.ts` | Video persistence to Supabase Storage |
 | `api/shared/types.ts` | Shared TypeScript types |
 
 ---
@@ -1069,7 +1092,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 |----------|---------|-------------|
 | **OpenAI** | Olivia chat, Emilia help, evaluation | GPT-4o, GPT-4o-mini |
 | **Anthropic** | THE JUDGE, enhanced evaluation | Claude Opus 4.5, Claude Sonnet 4.5 |
-| **Google** | Multi-LLM consensus | Gemini 3 Pro |
+| **Google** | Multi-LLM consensus | Gemini 3.1 Pro |
 | **xAI** | Enhanced evaluation | Grok 4 |
 | **Perplexity** | Real-time web search evaluation | Sonar models |
 | **Tavily** | Web research for evidence gathering | Tavily Search API |
@@ -1309,26 +1332,162 @@ lifescore/
 │   │   └── log.ts                    # Consent audit logging
 │   │
 │   └── shared/                       # Shared API utilities
-│       ├── cors.ts
-│       ├── rateLimit.ts
-│       ├── fetchWithTimeout.ts
-│       ├── metrics.ts
-│       └── types.ts
+│       ├── auth.ts                   # Auth middleware (requireAuth, getAdminEmails)
+│       ├── cors.ts                   # CORS handling
+│       ├── rateLimit.ts              # Rate limiting
+│       ├── fetchWithTimeout.ts       # Timeout wrapper
+│       ├── metrics.ts                # Metric scoring functions
+│       ├── metrics-data.ts           # Barrel — re-exports from 6 category files:
+│       │   ├── metrics-data-personal-freedom.ts
+│       │   ├── metrics-data-housing-property.ts
+│       │   ├── metrics-data-business-work.ts
+│       │   ├── metrics-data-transportation.ts
+│       │   ├── metrics-data-policing-legal.ts
+│       │   └── metrics-data-speech-lifestyle.ts
+│       ├── notifyJob.ts              # Job completion notifications
+│       ├── persistVideo.ts           # Video persistence
+│       └── types.ts                  # Shared types
 │
-├── src/                              # Frontend source (97 files)
+├── src/                              # Frontend source
 │   ├── App.tsx                       # Main app, routing, providers
+│   ├── App.css                       # App-level styles
 │   ├── main.tsx                      # Entry point
 │   ├── index.css                     # Global styles
 │   │
+│   ├── styles/                       # Global stylesheets (split)
+│   │   ├── globals.css               # Barrel — imports from:
+│   │   │   ├── globals-base.css      #   Base reset + typography
+│   │   │   ├── globals-components.css #   Shared component styles
+│   │   │   └── globals-utilities.css  #   Utility classes
+│   │   └── dark-mode.css             # Dark mode overrides
+│   │
 │   ├── components/                   # React components (46)
+│   │   ├── EnhancedComparison.tsx    # Main comparison view
+│   │   ├── EnhancedComparison.css    # Barrel — imports from:
+│   │   │   ├── EnhancedComparison-actions.css
+│   │   │   ├── EnhancedComparison-consensus.css
+│   │   │   ├── EnhancedComparison-controls.css
+│   │   │   ├── EnhancedComparison-metrics.css
+│   │   │   ├── EnhancedComparison-responsive.css
+│   │   │   └── EnhancedComparison-results.css
+│   │   ├── JudgeTab.css              # Barrel — imports from:
+│   │   │   ├── JudgeTab-analysis.css
+│   │   │   ├── JudgeTab-footer.css
+│   │   │   ├── JudgeTab-layout.css
+│   │   │   ├── JudgeTab-panels.css
+│   │   │   └── JudgeTab-video.css
+│   │   ├── AskOlivia.css             # Barrel — imports from:
+│   │   │   ├── AskOlivia-controls.css
+│   │   │   ├── AskOlivia-header.css
+│   │   │   ├── AskOlivia-panels.css
+│   │   │   └── AskOlivia-responsive.css
+│   │   ├── VisualsTab.css            # Barrel — imports from:
+│   │   │   ├── VisualsTab-content.css
+│   │   │   ├── VisualsTab-reports.css
+│   │   │   ├── VisualsTab-saved.css
+│   │   │   └── VisualsTab-selectors.css
+│   │   ├── SavedComparisons.css      # Barrel — imports from:
+│   │   │   ├── SavedComparisons-list.css
+│   │   │   ├── SavedComparisons-modals.css
+│   │   │   └── SavedComparisons-viewer.css
+│   │   ├── Results.css               # Barrel — imports from:
+│   │   │   ├── Results-categories.css
+│   │   │   ├── Results-header.css
+│   │   │   └── Results-responsive.css
+│   │   ├── WeightPresets.css          # Barrel — imports from:
+│   │   │   ├── WeightPresets-base.css
+│   │   │   ├── WeightPresets-exclusion.css
+│   │   │   └── WeightPresets-law.css
+│   │   ├── AboutClues.css             # Barrel — imports from:
+│   │   │   ├── AboutClues-content.css
+│   │   │   ├── AboutClues-features.css
+│   │   │   └── AboutClues-layout.css
+│   │   ├── ScoreMethodology.css       # Barrel — imports from:
+│   │   │   ├── ScoreMethodology-dark.css
+│   │   │   ├── ScoreMethodology-responsive.css
+│   │   │   └── ScoreMethodology-stages.css
+│   │   ├── SettingsModal.css          # Barrel — imports from:
+│   │   │   ├── SettingsModal-forms.css
+│   │   │   ├── SettingsModal-layout.css
+│   │   │   └── SettingsModal-responsive.css
+│   │   ├── OliviaChatBubble.css       # Barrel — imports from:
+│   │   │   ├── OliviaChatBubble-fab.css
+│   │   │   ├── OliviaChatBubble-panel.css
+│   │   │   └── OliviaChatBubble-responsive.css
+│   │   ├── LoginScreen.css            # Barrel — imports from:
+│   │   │   ├── LoginScreen-auth.css
+│   │   │   ├── LoginScreen-controls.css
+│   │   │   └── LoginScreen-layout.css
+│   │   ├── ReportPresenter.css        # Barrel — imports from:
+│   │   │   ├── ReportPresenter-controls.css
+│   │   │   ├── ReportPresenter-overlay.css
+│   │   │   └── ReportPresenter-video.css
+│   │   └── CostDashboard.css          # Barrel — imports from:
+│   │       ├── CostDashboard-layout.css
+│   │       ├── CostDashboard-tables.css
+│   │       └── CostDashboard-theme.css
+│   │
+│   ├── shared/                       # Shared client-side utilities
+│   │   ├── metrics.ts                # Metric definitions (ALL_METRICS, CATEGORIES)
+│   │   ├── types.ts                  # Shared TypeScript types
+│   │   └── metricDisplayNames.ts     # 100-metric ID→display name map + getMetricDisplayName()
+│   │
 │   ├── contexts/                     # React contexts (1)
 │   │   └── AuthContext.tsx
 │   ├── hooks/                        # Custom hooks (18)
 │   ├── services/                     # Business logic (16)
 │   ├── lib/                          # Utility libraries (3)
-│   ├── utils/                        # Utility functions (5)
-│   ├── types/                        # TypeScript types (12)
-│   └── data/                         # Static data (metrics.ts)
+│   │
+│   ├── utils/                        # Utility functions
+│   │   ├── costCalculator.ts         # Barrel — re-exports from:
+│   │   │   ├── costCalculator-pricing.ts   # Provider pricing constants
+│   │   │   └── costCalculator-functions.ts # Calculation logic
+│   │   ├── exportUtils.ts
+│   │   ├── countryFlags.ts
+│   │   ├── freedomEducationUtils.ts
+│   │   ├── invideoPromptBuilder.ts
+│   │   └── toast.tsx
+│   │
+│   ├── types/                        # TypeScript types (21 files)
+│   │   ├── index.ts                  # Master barrel
+│   │   ├── database.ts               # Barrel — re-exports from:
+│   │   │   ├── database-core.ts      #   UserTier, Profile, UserPreferences
+│   │   │   ├── database-features.ts  #   SavedComparison, metadata
+│   │   │   ├── database-jobs.ts      #   Job, Notification, NotifyChannel
+│   │   │   ├── database-reports.ts   #   GammaReport, JudgeReportRecord
+│   │   │   └── database-costs.ts     #   ApiCostRecord, CostSummary
+│   │   ├── olivia.ts                 # Barrel — re-exports from:
+│   │   │   ├── olivia-chat.ts        #   OliviaMessage, Conversation, Response
+│   │   │   ├── olivia-state.ts       #   OliviaContext, UIState
+│   │   │   ├── olivia-actions.ts     #   OliviaAction, Command
+│   │   │   └── olivia-avatar.ts      #   OliviaAvatarConfig, State
+│   │   ├── metrics.ts
+│   │   ├── enhancedComparison.ts
+│   │   ├── judge.ts
+│   │   ├── avatar.ts
+│   │   ├── grokVideo.ts
+│   │   ├── gamma.ts
+│   │   ├── freedomEducation.ts
+│   │   ├── apiUsage.ts
+│   │   └── presenter.ts
+│   │
+│   └── data/                         # Static data (split into category files)
+│       ├── metrics.ts                # Barrel — re-exports from:
+│       │   ├── metrics-personal-freedom.ts
+│       │   ├── metrics-housing-property.ts
+│       │   ├── metrics-business-work.ts
+│       │   ├── metrics-transportation.ts
+│       │   ├── metrics-policing-legal.ts
+│       │   └── metrics-speech-lifestyle.ts
+│       ├── fieldKnowledge.ts         # Barrel — re-exports from:
+│       │   ├── fieldKnowledge-personal-freedom.ts
+│       │   ├── fieldKnowledge-housing-property.ts
+│       │   ├── fieldKnowledge-business-work.ts
+│       │   ├── fieldKnowledge-transportation.ts
+│       │   ├── fieldKnowledge-policing-legal.ts
+│       │   └── fieldKnowledge-speech-lifestyle.ts
+│       ├── metricTooltips.ts
+│       └── metros.ts
 │
 ├── supabase/                         # Database migrations (32 files)
 │   └── migrations/
@@ -1401,8 +1560,10 @@ LIFE SCORE evaluates cities across **100 metrics** in **6 categories**:
 ## Document Info
 
 - **Generated by:** Claude Opus 4.6
-- **For:** LIFE SCORE Ask Emelia Help System
-- **Last Updated:** 2026-02-17
+- **For:** LIFE SCORE Ask Emilia Help System
+- **Last Updated:** 2026-02-27
 - **Verified Against:** ~280 commits
-- **Total Codebase:** 44 API endpoints, 47 components, 18 hooks, 16 services, 12 type files, 21 DB tables, 61 env vars
+- **Total Codebase:** 44 API endpoints, 47 components, 18 hooks, 16 services, 21 type files, 21 DB tables, 61 env vars
+- **2026-02-27 Update (b):** Added `src/shared/metricDisplayNames.ts` to file tree — single source of truth for 100-metric display name map, used by opusJudge, EvidencePanel, AdvancedVisuals, exportUtils, gammaService.
+- **2026-02-27 Update:** Updated file structure to reflect 22-file refactoring (31,494 lines split into 78 domain files with barrel re-exports). Updated type definitions (12→21 files), utility functions, shared API utilities, and full file tree.
 - **2026-02-17 Update:** Gamma export URL expiration fix — new `pdf_storage_path`/`pptx_storage_path` columns on `gamma_reports` and `reports` tables, `/api/gamma` endpoint now persists exports to Supabase Storage on completion

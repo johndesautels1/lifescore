@@ -11,7 +11,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -45,8 +45,8 @@ const MANUAL_TITLES: Record<string, string> = {
 // Manuals that require admin authorization
 const RESTRICTED_MANUALS = ['csm', 'tech', 'legal', 'schema', 'equations', 'prompts'];
 
-// Hardcoded admin emails (fallback if table doesn't exist yet)
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
+// Admin emails from shared auth module (reads DEV_BYPASS_EMAILS env var)
+const ADMIN_EMAILS = getAdminEmails();
 
 // ============================================================================
 // EMBEDDED CONTENT (Fallback)
@@ -56,7 +56,7 @@ const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.7 | **Updated:** 2026-02-17
+**Version:** 3.9 | **Updated:** 2026-02-27
 
 ## Getting Started
 
@@ -83,7 +83,7 @@ If you've forgotten your password:
 
 2. **Choose Comparison Mode**
    - **Standard Mode**: Uses Claude Sonnet for fast, accurate analysis
-   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-4o, Gemini 3 Pro, Grok 4, Perplexity Sonar) with consensus scoring
+   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) with consensus scoring
 
 3. **Run the Comparison**
    - Click "Compare Cities"
@@ -203,7 +203,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.6 | **Updated:** 2026-02-17
+**Version:** 3.8 | **Updated:** 2026-02-27
 
 ## Support Overview
 
@@ -340,7 +340,7 @@ If you've forgotten your password:
 
   tech: `# Technical Support Manual
 
-**Version:** 4.9 | **Updated:** 2026-02-17
+**Version:** 5.1 | **Updated:** 2026-02-27
 
 ## System Architecture
 
@@ -387,7 +387,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 ### AI Providers
 - **Claude Sonnet 4.5**: Primary evaluator
 - **GPT-4o**: Enhanced mode evaluator
-- **Gemini 3 Pro**: Enhanced mode evaluator
+- **Gemini 3.1 Pro**: Enhanced mode evaluator
 - **Grok 4**: Enhanced mode evaluator
 - **Perplexity Sonar**: Enhanced mode evaluator
 - **Claude Opus 4.5**: Judge (consensus)
@@ -435,6 +435,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - **HEYGEN_AVATAR_LOOK_ID** controls Cristiano's physical appearance variant (suit, setting). This is NOT used by Olivia.
 - **Pre-render validation** checks all 3 env vars (avatar ID, voice ID, look ID) before spending HeyGen credits.
 - Results cached in Supabase. Status polling via same endpoint (action: 'status').
+- Video playback uses \`preload="auto"\` for smoother start and a buffering spinner overlay if the video stalls mid-stream.
 
 ### Cristiano API Endpoints
 - POST /api/cristiano/storyboard — Generate 7-scene storyboard JSON (Stage 1)
@@ -459,6 +460,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - Resolution: 1920×1080 (16:9)
 - Background: #0a1628 (dark branded LIFE SCORE theme)
 - Multi-scene: script auto-split at ~1500 char paragraph boundaries
+- Pre-rendered video player uses \`preload="auto"\` for immediate playback readiness
 
 ### Key Files
 - api/olivia/avatar/heygen.ts (HeyGen streaming avatar endpoint)
@@ -486,6 +488,8 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - Expired replicate URLs auto-detected via HEAD check
 - Dead URLs tracked in state; shows regenerate placeholder
 - Progress bar: scales smoothly to 95% during generation
+- All video elements use \`preload="auto"\` for smooth playback (browser pre-buffers the full video before user presses play)
+- Buffering spinner overlay appears automatically when video stalls mid-playback (\`onWaiting\`/\`onPlaying\` events)
 
 ### Video Caching
 - HEAD validation on replicate.delivery URLs (expire ~24h)
@@ -581,6 +585,11 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - **Notification click rebooting app** — window.location.href replaced with SPA onNavigate callback threaded App→Header→NotificationBell. Parses notification link query params and maps to setActiveTab(). Supports /?tab=visuals, /?tab=judge, /?cityA=X&cityB=Y.
 - **Auto-save on completion** — Both standard and enhanced comparisons auto-save to localStorage + Supabase when complete. Save button reflects saved state via savedKey prop. 3 files changed (App.tsx, Results.tsx, EnhancedComparison.tsx).
 - **Presenter/Video buttons grayed out on saved reports** — handleViewTabSelect now auto-loads matching comparison via selectedComparisonId so result + resultMatchesViewingReport resolve correctly and presenterAvailable becomes true.
+
+### Resolved Issues (2026-02-27)
+- **Raw metric IDs shown in 7 user-facing locations** — Created \`src/shared/metricDisplayNames.ts\` as single source of truth for 100-metric display name map. Fixed: opusJudge.ts disagreementSummary (cascaded to JudgeTab, Gamma, Olivia narration), EvidencePanel.tsx (4 instances), AdvancedVisuals.tsx (bar chart, line chart, data table), exportUtils.ts (CSV + PDF), api/olivia/context.ts (fallback). Refactored gammaService.ts to import from shared utility. 8 files changed.
+- **Olivia presenter audio overlap** — ReportPresenter.tsx speakTTSFallback() created new Audio objects without stopping the previous one. Added .pause() + null cleanup before creating new Audio.
+- **Olivia context builder raw metric IDs** — api/olivia/context.ts showed raw metric IDs in 6 places. All fixed with getMetricDisplayName(). Enhanced path also missing city2 evidence entirely.
 
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
@@ -783,7 +792,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
-### Video: NewLifeVideos (blob URL playback, error detection)
+### Video: NewLifeVideos (blob URL playback, error detection), GoToMyNewCity (Cristiano Freedom Tour)
+### Video Playback: All video components use \`preload="auto"\` for smooth buffering + buffering spinner overlay on stall
 ### Reports: VisualsTab (2-tab layout: Generate New / View Existing), ReportPresenter (Read/Live Presenter/Generate Video modes), GammaIframe (shared iframe with sandbox + error handling), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
 ### Notifications (Added 2026-02-16): NotificationBell, NotifyMeModal, MobileWarningModal, VideoPhoneWarning
@@ -959,7 +969,7 @@ Cap at 95% while generating
 async function isUserAuthorized(userEmail: string | null): Promise<boolean> {
   if (!userEmail) return false;
 
-  // Check hardcoded admin list first
+  // Check admin email list (from DEV_BYPASS_EMAILS env var)
   if (ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
     return true;
   }
@@ -969,7 +979,7 @@ async function isUserAuthorized(userEmail: string | null): Promise<boolean> {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('[manuals] Supabase not configured, using hardcoded admin list only');
+    console.warn('[manuals] Supabase not configured, using admin email list only');
     return false;
   }
 
@@ -1002,8 +1012,8 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS
-  if (handleCors(req, res, 'open', { methods: 'GET, OPTIONS' })) return;
+  // CORS - restricted to same app (requires auth)
+  if (handleCors(req, res, 'same-app', { methods: 'GET, OPTIONS' })) return;
 
   // Method check
   if (req.method !== 'GET') {
@@ -1067,7 +1077,6 @@ export default async function handler(
 
     res.status(500).json({
       error: 'Failed to load manual',
-      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

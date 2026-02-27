@@ -262,6 +262,17 @@
   gap: 1rem;
 }
 
+.new-city-wrapper .video-buffering-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 5;
+  pointer-events: none;
+}
+
 .new-city-wrapper .lcd-spinner {
   width: 40px;
   height: 40px;

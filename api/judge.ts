@@ -10,6 +10,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
+import { requireAuth } from './shared/auth.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
@@ -486,6 +487,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Require authentication — uses Anthropic Opus credits
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
   // FIX: Extract city1/city2 from request (previously ignored)

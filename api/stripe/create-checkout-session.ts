@@ -69,6 +69,35 @@ interface CheckoutRequest {
   cancelUrl?: string;
 }
 
+// FIX X1: Validate redirect URLs to prevent open redirect attacks
+function isAllowedRedirectUrl(url: string | undefined): boolean {
+  if (!url) return true; // undefined means use default — safe
+  try {
+    const parsed = new URL(url);
+    const allowedOrigins = [
+      'https://lifescore.vercel.app',
+      'https://www.thelifescore.com',
+      'https://thelifescore.com',
+      'capacitor://localhost',
+    ];
+    // Allow the current Vercel deploy URL
+    if (process.env.VERCEL_URL) {
+      allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+    }
+    // Allow custom production domain from env
+    if (process.env.PRODUCTION_URL) {
+      allowedOrigins.push(process.env.PRODUCTION_URL);
+    }
+    // Allow localhost in development
+    if (parsed.hostname === 'localhost' && parsed.protocol === 'http:') {
+      return true;
+    }
+    return allowedOrigins.includes(parsed.origin);
+  } catch {
+    return false; // Malformed URL
+  }
+}
+
 // ============================================================================
 // HANDLER
 // ============================================================================
@@ -129,6 +158,12 @@ export default async function handler(
     // Override userId and userEmail with authenticated values to prevent IDOR
     body.userId = user.id;
     body.userEmail = user.email || body.userEmail;
+
+    // FIX X1: Validate redirect URLs against allowlist
+    if (!isAllowedRedirectUrl(body.successUrl) || !isAllowedRedirectUrl(body.cancelUrl)) {
+      res.status(400).json({ error: 'Invalid redirect URL' });
+      return;
+    }
 
     // Get price ID
     const priceId = PRICE_IDS[body.priceKey];

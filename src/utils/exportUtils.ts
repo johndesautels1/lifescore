@@ -5,6 +5,7 @@
 
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { CATEGORIES } from '../shared/metrics';
+import { getMetricDisplayName } from '../shared/metricDisplayNames';
 
 /**
  * Export comparison result to CSV format
@@ -55,7 +56,7 @@ export function exportToCSV(result: EnhancedComparisonResult): void {
 
       rows.push([
         categoryName,
-        metric.metricId,
+        getMetricDisplayName(metric.metricId),
         Math.round(score1).toString(),
         Math.round(score2).toString(),
         (diff > 0 ? '+' : '') + Math.round(diff).toString(),
@@ -326,7 +327,7 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
 
                   return `
                     <tr>
-                      <td><strong>${metric.metricId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></td>
+                      <td><strong>${getMetricDisplayName(metric.metricId)}</strong></td>
                       <td class="${score1 >= score2 ? 'winner-cell' : 'loser-cell'}">${Math.round(score1)}</td>
                       <td class="${score2 >= score1 ? 'winner-cell' : 'loser-cell'}">${Math.round(score2)}</td>
                       <td style="color: ${diff > 0 ? '#059669' : diff < 0 ? '#dc2626' : '#666'};">${diffStr}</td>

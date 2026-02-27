@@ -1,7 +1,7 @@
 # LIFE SCORE - Mathematical Equations & Scoring Manual
 
-**Version:** 1.2.0
-**Generated:** 2026-02-14
+**Version:** 1.3.0
+**Generated:** 2026-02-26
 **Purpose:** Complete technical reference for all scoring algorithms, equations, and mathematical logic
 
 ---
@@ -413,7 +413,7 @@ Enhanced mode uses **5 LLMs** to evaluate each metric, then builds consensus:
 
 1. **Claude Sonnet 4.5** - Primary evaluator
 2. **GPT-4o** - OpenAI evaluator
-3. **Gemini 3 Pro** - Google evaluator (with Search grounding)
+3. **Gemini 3.1 Pro** - Google evaluator (with Search grounding)
 4. **Grok 4** - xAI evaluator (with X/Twitter search)
 5. **Perplexity Sonar** - Research evaluator (with citations)
 
@@ -497,6 +497,10 @@ function getConfidenceLevel(stdDev) {
 | **moderate** | 12-19 | Some disagreement, interpret carefully |
 | **split** | >= 20 | Significant disagreement, unreliable |
 
+### Disagreement Display Names (Fixed 2026-02-27)
+
+When metrics are flagged as disagreement areas (StdDev >= 20), they are stored as raw metric IDs (e.g., `pf_01_cannabis_legal`). The `disagreementSummary` string in `opusJudge.ts` now maps these IDs through `getMetricDisplayName()` from `src/shared/metricDisplayNames.ts` before displaying to users. This ensures the Judge Tab, Gamma reports, and Olivia narration show human-readable names (e.g., "Cannabis Legality") instead of internal codes.
+
 ### Overall Confidence
 
 ```javascript
@@ -539,12 +543,13 @@ const judgeInput = {
 };
 ```
 
-### Tie Handling (Fixed 2026-02-10)
+### Tie Handling (Fixed 2026-02-10, Victory Text Fix 2026-02-26)
 
 When the comparison results in a tie (score difference < 1 point):
 - The Judge no longer says "winner is TIE" in video scripts
 - Tie verdicts generate a balanced analysis of both cities
 - Video scripts properly reference both cities without declaring a winner
+- **Victory text fix (2026-02-26):** The report verdict text now shows "evenly matched" for ties instead of blank/undefined winner text. Previously, the victory text template had no handler for the tie case (N4 fix).
 
 ### Category Analysis
 
@@ -932,6 +937,7 @@ if total_chars > 10,000:
   - `api/judge-report.ts`
   - `src/hooks/useComparison.ts`
   - `src/hooks/useGrokVideo.ts`
-  - `src/data/metrics.ts`
+  - `src/data/metrics.ts` (barrel — actual data in `metrics-{category}.ts` files)
   - `src/constants/scoringThresholds.ts`
-- **Last Updated:** 2026-02-14
+- **Last Updated:** 2026-02-27
+- **2026-02-27 Update:** Added Disagreement Display Names section (§10) — `opusJudge.ts` now maps raw metric IDs through `getMetricDisplayName()` before user-facing display.

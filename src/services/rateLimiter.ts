@@ -250,14 +250,6 @@ export async function executeBatch<T>(
   // Sort by priority (higher = first)
   const sorted = [...requests].sort((a, b) => b.priority - a.priority);
 
-  // Group by provider to respect rate limits
-  const byProvider = new Map<LLMProvider, BatchRequest<T>[]>();
-  sorted.forEach(req => {
-    const list = byProvider.get(req.provider) || [];
-    list.push(req);
-    byProvider.set(req.provider, list);
-  });
-
   // Execute with concurrency limit
   const executing: Promise<void>[] = [];
 

@@ -1,0 +1,370 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LIFE SCORE™ Ask Olivia - Premium Edition Styles
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Design DNA:
+ * - James Bond: MI6 briefing room, Aston Martin dashboard, Casino Royale
+ * - Airbus A320: Glass cockpit displays, precision instrumentation
+ * - Patek Philippe: Swiss craftsmanship, perfect typography, brushed metals
+ * - London International: The Shard, Savile Row, cosmopolitan wealth
+ *
+ * Color System:
+ * - Midnight Navy:    #0a1628
+ * - Cockpit Blue:     #0d2847
+ * - Brushed Gold:     #c9a227
+ * - Amber Active:     #f59e0b
+ * - British Racing:   #004225
+ * - Ice White:        #f8fafc
+ * - Steel Gray:       #64748b
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROOT VARIABLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.olivia-premium {
+  --midnight: #0a1628;
+  --cockpit-blue: #0d2847;
+  --cockpit-blue-light: #1a3a5c;
+  --brushed-gold: #e6b800; /* FIX: Improved contrast from #c9a227 to meet WCAG 4.5:1 */
+  --gold-glow: #d4af37;
+  --amber-active: #f59e0b;
+  --british-racing: #004225;
+  --ice-white: #f8fafc;
+  --steel-gray: #ffffff;  /* Changed from #64748b to crisp white for readability */
+  --platinum: #ffffff;  /* Changed from #e2e8f0 to crisp white */
+  --error-red: #ef4444;
+  --success-green: #10b981;
+
+  /* Premium gradients */
+  --gradient-midnight: linear-gradient(180deg, #0a1628 0%, #0d2847 100%);
+  --gradient-gold: linear-gradient(135deg, #e6b800 0%, #d4af37 50%, #e6b800 100%);
+  --gradient-cockpit: linear-gradient(135deg, rgba(13, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
+  --gradient-bezel: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+
+  /* Shadows */
+  --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-glow-gold: 0 0 20px rgba(201, 162, 39, 0.3);
+  --shadow-depth: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+  /* Typography */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTAINER - Full Premium Experience
+   ═══════════════════════════════════════════════════════════════════════════ */
+.olivia-premium {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--gradient-midnight);
+  color: var(--ice-white);
+  font-family: var(--font-display);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Subtle background texture */
+.olivia-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(201, 162, 39, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(201, 162, 39, 0.02) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COCKPIT HEADER - A320 Glass Cockpit Inspiration
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cockpit-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--gradient-cockpit);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+  position: relative;
+  z-index: 10;
+}
+
+.cockpit-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brushed-gold), transparent);
+  opacity: 0.5;
+}
+
+/* Status Cluster - Left Side */
+.cockpit-left {
+  display: flex;
+  align-items: center;
+}
+
+.status-cluster {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--success-green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success-green);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--success-green); }
+  50% { opacity: 0.7; box-shadow: 0 0 12px var(--success-green); }
+}
+
+.indicator-icon {
+  color: var(--brushed-gold);
+  font-size: 0.8rem;
+}
+
+.indicator-label {
+  color: var(--steel-gray);
+}
+
+.indicator-value {
+  color: var(--platinum);
+  font-family: var(--font-mono);
+  padding: 0.15rem 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.indicator-value.active {
+  color: var(--success-green);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.indicator-value.fallback {
+  color: var(--amber-active);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Center - Olivia Wordmark */
+.cockpit-center {
+  text-align: center;
+}
+
+.olivia-wordmark {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.wordmark-prefix {
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: var(--steel-gray);
+}
+
+.wordmark-main {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px rgba(201, 162, 39, 0.3);
+}
+
+.wordmark-tagline {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--steel-gray);
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+/* Time Cluster - Right Side */
+.cockpit-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.time-cluster {
+  text-align: right;
+}
+
+.time-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.time-label {
+  font-size: 0.6rem;
+  color: var(--steel-gray);
+  letter-spacing: 0.1em;
+}
+
+.time-value {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--brushed-gold);
+  letter-spacing: 0.05em;
+}
+
+.date-display {
+  margin-top: 0.15rem;
+}
+
+.date-value {
+  font-size: 0.65rem;
+  color: var(--steel-gray);
+  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEWPORT - The Premium TV Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+.viewport-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 50vh;
+}
+
+.viewport-frame {
+  width: 100%;
+  max-width: none;  /* Match width of elements below */
+}
+
+/* Premium Bezel - Like a Luxury Monitor */
+.viewport-bezel {
+  position: relative;
+  background: var(--gradient-bezel);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow:
+    var(--shadow-depth),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Corner accents */
+.bezel-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--brushed-gold);
+  opacity: 0.6;
+}
+
+.bezel-corner.tl { top: 12px; left: 12px; border-right: none; border-bottom: none; border-radius: 4px 0 0 0; }
+.bezel-corner.tr { top: 12px; right: 12px; border-left: none; border-bottom: none; border-radius: 0 4px 0 0; }
+.bezel-corner.bl { bottom: 12px; left: 12px; border-right: none; border-top: none; border-radius: 0 0 0 4px; }
+.bezel-corner.br { bottom: 12px; right: 12px; border-left: none; border-top: none; border-radius: 0 0 4px 0; }
+
+/* The Screen */
+.viewport-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-inset);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   D-ID Streams Video (Option B: Avatar Only, OpenAI is Brain)
+   ═══════════════════════════════════════════════════════════════════ */
+.avatar-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  z-index: 5;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  transform: scale(0.55);
+  transform-origin: center 30%;
+}
+
+/* Hide native video controls */
+.avatar-video::-webkit-media-controls {
+  display: none !important;
+}
+
+.avatar-video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+/* Screen vignette for depth */
+.screen-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+}
+
+/* Speaking indicator waves */
+.speaking-indicator {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 22, 40, 0.9);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+.speaking-waves {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+}
+
+.speaking-waves span {
+  width: 3px;
+  height: 100%;
+  background: var(--brushed-gold);
+  border-radius: 2px;
+  animation: wave 0.8s ease-in-out infinite;
+}
+
+.speaking-waves span:nth-child(1) { animation-delay: 0s; }
+.speaking-waves span:nth-child(2) { animation-delay: 0.1s; }
+.speaking-waves span:nth-child(3) { animation-delay: 0.2s; }
+.speaking-waves span:nth-child(4) { animation-delay: 0.3s; }
+.speaking-waves span:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave {
+  0%, 100% { height: 6px; }
+  50% { height: 20px; }
+}
+

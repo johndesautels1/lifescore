@@ -65,7 +65,7 @@ CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 5 LLMs Used for Evaluation:
 📝 Claude Sonnet 4.5 (Anthropic) - Primary evaluator with web search
 🤖 GPT-4o (OpenAI) - Cross-validation with Tavily search
-💎 Gemini 3 Pro (Google) - Native Google Search grounding
+💎 Gemini 3.1 Pro (Google) - Native Google Search grounding
 𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
 🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
 
@@ -413,7 +413,7 @@ Monthly living costs, tax implications, hidden fees
 <smart-layout variant="solidBoxes">
 <item label="📝 Claude Sonnet 4.5" color="#6B46C1">Primary evaluator</item>
 <item label="🤖 GPT-4o" color="#10B981">Cross-validation</item>
-<item label="💎 Gemini 3 Pro" color="#4285F4">Google grounding</item>
+<item label="💎 Gemini 3.1 Pro" color="#4285F4">Google grounding</item>
 <item label="𝕏 Grok 4" color="#1DA1F2">Real-time data</item>
 <item label="🔮 Sonar Pro" color="#14B8A6">Deep research</item>
 </smart-layout>

@@ -6,14 +6,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth } from './shared/auth.js';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
-import type { ScoreResult } from './shared/metrics.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // Timeout constants (in milliseconds)
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM API calls (OpenAI, Claude, Gemini, etc.)
 const TAVILY_TIMEOUT_MS = 45000; // 45 seconds for Tavily search/research (web APIs should be fast)
+
+// FIX SD1+SD2: Dynamic year for Tavily search queries (prevents stale hardcoded years)
+const CURRENT_YEAR = new Date().getFullYear().toString();
 
 // ============================================================================
 // TAVILY RESEARCH CACHE (In-memory, clears on redeploy)
@@ -560,7 +563,7 @@ async function tavilyResearch(city1: string, city2: string): Promise<TavilyResea
           headers: getTavilyHeaders(apiKey),
           body: JSON.stringify({
             // api_key removed - now using Bearer auth in header per Tavily docs
-            input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on 2024-2025 current laws.`,
+            input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on ${CURRENT_YEAR} current laws.`,
             model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
             citation_format: 'numbered'
           })
@@ -732,23 +735,23 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
     // Step 1: Research API for comprehensive baseline (runs in parallel with searches)
     const searchQueries = [
       // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
       // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations 2025`,
-      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
       // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws 2025`,
-      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
       // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
       // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
-      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
       // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
-      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     ];
 
     // Run Research + Search in parallel for speed
@@ -913,26 +916,27 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
   let tavilyContext = '';
+  let gpt4oTavilyCredits = 0; // FIX B4: replaced var with let
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
       // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
       // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations 2025`,
-      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
       // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws 2025`,
-      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
       // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
       // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
-      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
       // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
-      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     ];
 
     // Run Research + Search in parallel for speed
@@ -942,7 +946,7 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
     ]);
 
     // Track total Tavily credits used for GPT-4o
-    var gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
+    gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
     console.log(`[GPT-4o] Total Tavily credits used: ${gpt4oTavilyCredits}`);
 
     const allResults = searchResults.flatMap(r => r.results);
@@ -970,7 +974,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
     }
   } else {
-    var gpt4oTavilyCredits = 0;
+    // gpt4oTavilyCredits already initialized to 0 above
   }
 
   // GPT-4o SPECIFIC ADDENDUM
@@ -1104,7 +1108,7 @@ Use the Tavily research data provided in the user message to evaluate laws and r
   return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
-// Gemini 3 Pro evaluation (with Google Search grounding)
+// Gemini 3.1 Pro evaluation (with Google Search grounding)
 async function evaluateWithGemini(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -1190,7 +1194,7 @@ ${isLargeCategory ? `
       console.log(`[GEMINI] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
       const response = await fetchWithTimeout(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1341,7 +1345,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 
 ### REAL-TIME DATA STRATEGY
 - Use your native X/Twitter search to bridge "legal theory" vs "enforcement reality"
-- Query pattern: "${city1} OR ${city2} [metric keywords] enforcement experience since:2025-01-01"
+- Query pattern: "${city1} OR ${city2} [metric keywords] enforcement experience since:${CURRENT_YEAR}-01-01"
 - Summarize 5-10 recent posts to inform if enforcement deviates from written law
 - Weight X anecdotes at 20-30% alongside official sources (gov sites, statutes)
 
@@ -1554,23 +1558,23 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
   if (process.env.TAVILY_API_KEY) {
     const searchQueries = [
       // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws 2025`,
+      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
       // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations 2025`,
-      `${city2} property rights zoning HOA land use housing regulations 2025`,
+      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
       // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws 2025`,
-      `${city2} business regulations taxes licensing employment labor laws 2025`,
+      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
       // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws 2025`,
-      `${city2} transportation vehicle regulations transit parking driving laws 2025`,
+      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
       // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties 2025`,
-      `${city2} criminal justice police enforcement legal rights civil liberties 2025`,
+      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
       // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations 2025`,
-      `${city2} freedom speech expression privacy lifestyle regulations 2025`,
+      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     ];
 
     // Run Research + Search in parallel for speed
@@ -1867,6 +1871,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Require authentication — uses LLM API credits (Claude, GPT-4o, Gemini, Tavily)
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
   try {
     const { provider, city1, city2, metrics } = req.body as EvaluationRequest;
 
@@ -1890,7 +1898,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         result = await evaluateWithGPT4o(city1, city2, metrics);
         break;
       case 'gemini-3-pro':
-        console.log('[EVALUATE] Calling Gemini 3 Pro...');
+        console.log('[EVALUATE] Calling Gemini 3.1 Pro...');
         result = await evaluateWithGemini(city1, city2, metrics);
         break;
       case 'grok-4':

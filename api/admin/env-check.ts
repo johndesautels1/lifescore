@@ -18,20 +18,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
-
-// ============================================================================
-// ADMIN CHECK
-// ============================================================================
-
-function getAdminEmails(): string[] {
-  const envEmails = (process.env.DEV_BYPASS_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
-  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
-  return [...new Set([...envEmails, ...fallbackEmails])];
-}
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 
 // ============================================================================
 // ENV VARIABLE REGISTRY — Every env var the app uses, grouped by category
@@ -57,7 +44,7 @@ const ENV_VARS: EnvVarDef[] = [
   // --- LLM Provider Keys ---
   { name: 'ANTHROPIC_API_KEY', description: 'Anthropic — Claude Opus (Judge) + Sonnet', category: 'LLM Providers', side: 'server' },
   { name: 'OPENAI_API_KEY', description: 'OpenAI — GPT-4o evaluator, Olivia assistant, TTS', category: 'LLM Providers', side: 'server' },
-  { name: 'GEMINI_API_KEY', description: 'Google — Gemini 3 Pro evaluator', category: 'LLM Providers', side: 'server' },
+  { name: 'GEMINI_API_KEY', description: 'Google — Gemini 3.1 Pro evaluator', category: 'LLM Providers', side: 'server' },
   { name: 'XAI_API_KEY', description: 'xAI — Grok 4 evaluator', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_KEY', description: 'Alias for XAI_API_KEY', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_URL', description: 'Grok API base URL', category: 'LLM Providers', side: 'server' },
@@ -139,10 +126,11 @@ const ENV_VARS: EnvVarDef[] = [
 // MASK HELPER
 // ============================================================================
 
+// FIX S4: Tighter masking — show only first 3 chars, hide the rest
 function maskValue(val: string): string {
   if (!val) return '';
-  if (val.length <= 8) return val.substring(0, 2) + '***';
-  return val.substring(0, 4) + '***' + val.substring(val.length - 2);
+  if (val.length <= 4) return '***';
+  return val.substring(0, 3) + '***';
 }
 
 // ============================================================================

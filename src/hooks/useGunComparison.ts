@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { getAuthHeaders } from '../lib/supabase';
 
 interface GunLawCategory {
   label: string;
@@ -69,7 +70,7 @@ export function useGunComparison() {
     try {
       const response = await fetch('/api/olivia/gun-comparison', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({ cityA, cityB }),
         signal: abortRef.current.signal,
       });

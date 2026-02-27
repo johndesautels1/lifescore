@@ -11,6 +11,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { notifyJobComplete } from '../shared/notifyJob.js';
 import crypto from 'crypto';
@@ -45,14 +46,12 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
 
-// Developer bypass emails - grants enterprise (SOVEREIGN) access
+// FIX M3: Developer bypass emails from env var only (no hardcoded emails in source)
+// Set DEV_BYPASS_EMAILS in Vercel env vars to grant enterprise (SOVEREIGN) access
 const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
   .split(',')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);
-
-// Hardcoded fallback for developer bypass (in case env var not set in Vercel)
-const HARDCODED_BYPASS_EMAILS = ['brokerpinellas@gmail.com', 'jdes7@aol.com'];
 
 // ============================================================================
 // TYPES
@@ -560,12 +559,8 @@ async function checkUserTierAccess(userId: string): Promise<{
     }
 
     // Developer bypass - grant enterprise (SOVEREIGN) access to specified emails
-    // Check both env var list AND hardcoded fallback for reliability
     const userEmail = profile.email?.toLowerCase() || '';
-    const isDeveloper = userEmail && (
-      DEV_BYPASS_EMAILS.includes(userEmail) ||
-      HARDCODED_BYPASS_EMAILS.includes(userEmail)
-    );
+    const isDeveloper = userEmail && DEV_BYPASS_EMAILS.includes(userEmail);
     if (isDeveloper) {
       console.log('[GROK-VIDEO] 🔓 Developer bypass active for:', profile.email);
     }
@@ -949,12 +944,19 @@ export default async function handler(
     return;
   }
 
+  // Require authentication — uses video generation credits (Kling/Replicate)
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
   const body = req.body as GenerateRequest;
 
-  if (!body.action || !body.userId || !body.comparisonId) {
+  // Override userId with authenticated user to prevent IDOR
+  body.userId = auth.userId;
+
+  if (!body.action || !body.comparisonId) {
     res.status(400).json({
       error: 'Missing required fields',
-      required: ['action', 'userId', 'comparisonId'],
+      required: ['action', 'comparisonId'],
     });
     return;
   }

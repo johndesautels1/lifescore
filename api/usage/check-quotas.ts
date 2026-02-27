@@ -10,17 +10,18 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 import { createClient } from '@supabase/supabase-js';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
-const ALERT_EMAILS = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
+const ALERT_EMAILS = getAdminEmails();
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'cluesnomads@gmail.com';
+const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
 
 // ============================================================================
 // TYPES
@@ -166,7 +167,7 @@ async function sendAlertEmail(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: RESEND_FROM_EMAIL,
+        from: RESEND_FROM,
         to: ALERT_EMAILS,
         subject,
         html,
@@ -211,6 +212,10 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   if (handleCors(req, res, 'same-app')) return;
+
+  // FIX RL2: Require authentication to prevent public access to quota data
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
   try {
     const supabase = getSupabaseAdmin();

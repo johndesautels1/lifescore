@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, getAuthHeaders } from '../lib/supabase';
 import { toastSuccess, toastError } from '../utils/toast';
 import './PromptsManager.css';
 
@@ -70,7 +70,10 @@ const PromptsManager: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/prompts?category=${encodeURIComponent(activeCategory)}`);
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(`/api/prompts?category=${encodeURIComponent(activeCategory)}`, {
+        headers: authHeaders,
+      });
       if (!response.ok) throw new Error('Failed to load prompts');
 
       const data = await response.json();

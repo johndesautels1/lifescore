@@ -86,7 +86,7 @@ async function testGPT4o(): Promise<{ success: boolean; message: string; latency
   }
 }
 
-// Test Gemini 3 Pro
+// Test Gemini 3.1 Pro
 async function testGemini(): Promise<{ success: boolean; message: string; latencyMs: number }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { success: false, message: 'GEMINI_API_KEY not set', latencyMs: 0 };
@@ -94,7 +94,7 @@ async function testGemini(): Promise<{ success: boolean; message: string; latenc
   const startTime = Date.now();
   try {
     const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

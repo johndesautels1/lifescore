@@ -3,7 +3,7 @@
  *
  * Returns whether the authenticated user has admin/developer bypass status.
  * Keeps admin email list server-side only (not in the client JS bundle).
- * Both brokerpinellas@gmail.com and cluesnomads@gmail.com are hardcoded fallbacks.
+ * Admin emails are read from DEV_BYPASS_EMAILS env var via shared getAdminEmails().
  *
  * Requires env var: DEV_BYPASS_EMAILS (comma-separated admin emails)
  *
@@ -16,28 +16,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from './shared/cors.js';
-import { requireAuth } from './shared/auth.js';
-
-// ============================================================================
-// ADMIN EMAIL LIST (server-side only — never sent to the client)
-// ============================================================================
-
-/**
- * Read admin emails from server-side env var (DEV_BYPASS_EMAILS, no VITE_ prefix).
- * Falls back to hardcoded list for reliability.
- */
-function getAdminEmails(): string[] {
-  const envEmails = (process.env.DEV_BYPASS_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
-
-  // Hardcoded fallback — ensures admin access even if env var is missing
-  const fallbackEmails = ['brokerpinellas@gmail.com', 'cluesnomads@gmail.com', 'jdes7@aol.com'];
-
-  // Merge and deduplicate
-  return [...new Set([...envEmails, ...fallbackEmails])];
-}
+import { requireAuth, getAdminEmails } from './shared/auth.js';
 
 // ============================================================================
 // HANDLER

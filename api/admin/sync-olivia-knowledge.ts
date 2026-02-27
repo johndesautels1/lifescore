@@ -8,16 +8,14 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { handleCors } from '../shared/cors.js';
+import { requireAuth, getAdminEmails } from '../shared/auth.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
 const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || 'asst_3wbVjyY629u7fDylaK0s5gsM';
-const ADMIN_EMAILS_ENV = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-const ADMIN_EMAILS = ADMIN_EMAILS_ENV.length > 0
-  ? ADMIN_EMAILS_ENV
-  : ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
+const ADMIN_EMAILS = getAdminEmails();
 
 interface FileObject {
   id: string;
@@ -50,23 +48,6 @@ async function uploadFile(apiKey: string, content: string, filename: string): Pr
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`Failed to upload file: ${error}`);
-  }
-
-  return response.json();
-}
-
-async function getAssistant(apiKey: string): Promise<any> {
-  const response = await fetch(`${OPENAI_API_BASE}/assistants/${ASSISTANT_ID}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'OpenAI-Beta': 'assistants=v2',
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to get assistant: ${error}`);
   }
 
   return response.json();
@@ -128,67 +109,24 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS - restricted to deployment origin only
-  const origin = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'https://lifescore.vercel.app';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (handleCors(req, res, 'same-app', { methods: 'POST, OPTIONS' })) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
+  // Auth + admin check
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
+  if (!ADMIN_EMAILS.includes(auth.email.toLowerCase())) {
+    res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+
   try {
-    // Verify JWT Bearer token
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Authentication required' });
-      return;
-    }
-
-    const token = authHeader.substring(7);
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      res.status(500).json({ error: 'Server configuration error' });
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      res.status(401).json({ error: 'Invalid or expired token' });
-      return;
-    }
-
-    // Verify user has admin role via profile tier
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('tier, email')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    const userEmail = (user.email || profile?.email || '').toLowerCase();
-    const isAdmin = ADMIN_EMAILS.includes(userEmail);
-
-    if (!isAdmin) {
-      res.status(403).json({ error: 'Admin access required' });
-      return;
-    }
-
-    console.log(`[SYNC] Admin request from verified user: ${user.id}`);
+    console.log(`[SYNC] Admin ${auth.email} triggered Olivia knowledge base sync`);
 
     const apiKey = getOpenAIKey();
 

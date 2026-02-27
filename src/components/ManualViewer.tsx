@@ -38,11 +38,15 @@ interface ManualContent {
 // Sanitize HTML to prevent XSS — strip dangerous tags, attributes, and protocols
 // Note: For production-grade sanitization, consider DOMPurify. This covers common vectors.
 function sanitizeHtml(html: string): string {
-  // First, decode HTML entities that could hide dangerous content (&#106;avascript: etc.)
+  // FIX D1: Decode HTML entities without innerHTML (avoids XSS during decode step)
+  // Uses DOMParser which does NOT execute scripts during parsing
   let clean = html.replace(/&#x?[0-9a-f]+;?/gi, (match) => {
-    const el = document.createElement('span');
-    el.innerHTML = match;
-    return el.textContent || '';
+    try {
+      const doc = new DOMParser().parseFromString(`<span>${match}</span>`, 'text/html');
+      return doc.body.textContent || '';
+    } catch {
+      return '';
+    }
   });
   // Remove script tags and their content (including noscript)
   clean = clean.replace(/<\/?(?:script|noscript)[\s\S]*?(?:>|$)/gi, '');
@@ -166,7 +170,7 @@ function parseMarkdownSections(content: string): ManualSection[] {
   return sections;
 }
 
-const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
+const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail: _userEmail }) => {
   const [content, setContent] = useState<ManualContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -225,7 +229,7 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
     };
 
     fetchContent();
-  }, [type, userEmail]);
+  }, [type]);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {

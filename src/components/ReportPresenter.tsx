@@ -137,7 +137,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   const connectHeyGen = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('[ReportPresenter] Creating HeyGen session...');
       const response = await createHeyGenSession();
       if (!response.sessionId) throw new Error('No session ID returned');
 
@@ -162,7 +161,6 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         await pc.setRemoteDescription(response.sdpOffer);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        console.log('[ReportPresenter] WebRTC connected');
       }
       return true;
     } catch (err) {
@@ -177,6 +175,11 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   const speakTTSFallback = useCallback(async (text: string) => {
     try {
+      // Stop any currently playing audio before starting new segment
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current = null;
+      }
       const ttsResponse = await generateTTS(text);
       if (ttsResponse.audioUrl) {
         const audio = new Audio(ttsResponse.audioUrl);
@@ -484,6 +487,7 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
                 className="presenter-video-player"
                 controls
                 autoPlay
+                preload="auto"
                 poster={videoState.thumbnailUrl}
               />
               <div className="presenter-video-actions">
