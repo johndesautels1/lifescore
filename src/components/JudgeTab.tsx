@@ -58,6 +58,7 @@ async function withTimeout<T>(
 import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';
+import MovieGenerator from './MovieGenerator';
 import GoToMyNewCity from './GoToMyNewCity';
 import VideoPhoneWarning from './VideoPhoneWarning';
 import { NotifyMeModal } from './NotifyMeModal';
@@ -1481,6 +1482,51 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     : judgeReport.executiveSummary.recommendation === 'city2' ? city1Name
     : city2Name
     : city2Name;
+  const futureWinnerCountry = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city1Country
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city2Country
+    : city1Country
+    : city1Country;
+  const futureLoserCountry = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city2Country
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city1Country
+    : city2Country
+    : city2Country;
+  const futureWinnerRegion = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city1Region
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city2Region
+    : city1Region
+    : city1Region;
+  const futureLoserRegion = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1' ? city2Region
+    : judgeReport.executiveSummary.recommendation === 'city2' ? city1Region
+    : city2Region
+    : city2Region;
+  const futureWinnerScore = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1'
+      ? judgeReport.summaryOfFindings.city1Score
+      : judgeReport.executiveSummary.recommendation === 'city2'
+      ? judgeReport.summaryOfFindings.city2Score
+      : judgeReport.summaryOfFindings.city1Score
+    : 0;
+  const futureLoserScore = judgeReport
+    ? judgeReport.executiveSummary.recommendation === 'city1'
+      ? judgeReport.summaryOfFindings.city2Score
+      : judgeReport.executiveSummary.recommendation === 'city2'
+      ? judgeReport.summaryOfFindings.city1Score
+      : judgeReport.summaryOfFindings.city2Score
+    : 0;
+  const futureWinnerCategories = judgeReport?.executiveSummary.recommendation === 'city1'
+    ? (comparisonResult as any)?.city1?.categories
+    : judgeReport?.executiveSummary.recommendation === 'city2'
+    ? (comparisonResult as any)?.city2?.categories
+    : (comparisonResult as any)?.city1?.categories;
+  const futureLoserCategories = judgeReport?.executiveSummary.recommendation === 'city1'
+    ? (comparisonResult as any)?.city2?.categories
+    : judgeReport?.executiveSummary.recommendation === 'city2'
+    ? (comparisonResult as any)?.city1?.categories
+    : (comparisonResult as any)?.city2?.categories;
+
   const futureCategoryData: CategoryFreedomData | null = freedomEducation?.categories
     ? getCategoryData(freedomEducation.categories, futureActiveCategory)
     : null;
@@ -2360,16 +2406,31 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
           {openDisplay === 'court-order' && (
             <section className="court-order-section">
+              <MovieGenerator
+                winnerCity={futureWinnerCity}
+                winnerCountry={futureWinnerCountry}
+                winnerRegion={futureWinnerRegion}
+                winnerScore={futureWinnerScore}
+                loserCity={futureLoserCity}
+                loserCountry={futureLoserCountry}
+                loserRegion={futureLoserRegion}
+                loserScore={futureLoserScore}
+                winnerCategories={futureWinnerCategories}
+                loserCategories={futureLoserCategories}
+                categoryWinners={(comparisonResult as any)?.categoryWinners}
+                judgeSummary={judgeReport.executiveSummary.finalVerdict}
+                judgeRecommendation={judgeReport.executiveSummary.recommendation}
+                userName={user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+              />
+              <div className="court-order-divider">
+                <span className="court-order-divider-line" />
+                <span className="court-order-divider-label">or watch the Court Order clip</span>
+                <span className="court-order-divider-line" />
+              </div>
               <CourtOrderVideo
                 comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
                 winnerCity={futureWinnerCity}
-                winnerScore={
-                  judgeReport.executiveSummary.recommendation === 'city1'
-                    ? judgeReport.summaryOfFindings.city1Score
-                    : judgeReport.executiveSummary.recommendation === 'city2'
-                    ? judgeReport.summaryOfFindings.city2Score
-                    : judgeReport.summaryOfFindings.city1Score
-                }
+                winnerScore={futureWinnerScore}
               />
             </section>
           )}

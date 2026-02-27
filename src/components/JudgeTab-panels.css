@@ -225,3 +225,36 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* =======================================================================
+   COURT ORDER SECTION -- MovieGenerator + divider + CourtOrderVideo
+   ======================================================================= */
+
+.court-order-section {
+  margin: 1rem 0;
+  animation: fadeSlideIn 0.35s ease;
+}
+
+.court-order-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 0 1rem;
+}
+
+.court-order-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.5), transparent);
+}
+
+.court-order-divider-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brushed-gold, #e6b800);
+  opacity: 0.7;
+  white-space: nowrap;
+}
