@@ -202,12 +202,12 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | T14 | api/gamma/generate-gamma.ts | 1 | LOW | Unused import | N/A (path changed) |
 | T15 | src/components/TabNavigation.tsx | 1 | LOW | Prop interface overly broad | NOT A BUG — verified 2026-02-27, interface is clean and well-typed |
 | T16 | src/components/HelpBubble.tsx | 1 | LOW | Unused CSS class | NOT A BUG — verified 2026-02-27, all CSS classes used |
-| T17 | api/stripe/webhook.ts | 2 | LOW | event.type switch no default case | OPEN |
+| T17 | api/stripe/webhook.ts | 2 | LOW | event.type switch no default case | NOT A BUG — verified 2026-02-27, default case already exists |
 | T18 | api/user/preferences.ts | 2 | LOW | Missing validation on preference key names | OPEN |
 | T19 | src/hooks/useTierAccess.ts | 2 | LOW | Retry count hardcoded, no backoff | OPEN |
 | T20 | src/components/LoadingState.tsx | 1 | LOW | Inline style objects recreated every render | NOT A BUG — verified 2026-02-27, dynamic width style is intentional |
 | T21 | api/shared/rateLimiter.ts | 2 | LOW | In-memory rate limiter resets on cold start | OPEN |
-| T22 | api/emilia/manuals.ts | 1 | LOW | Error message leaks internal path | OPEN |
+| T22 | api/emilia/manuals.ts | 1 | LOW | Error message leaks internal path | **FIXED** 2026-02-27 — removed message field from 500 response |
 | T23 | src/components/ErrorBoundary.tsx | 1 | LOW | componentDidCatch logs to console only | NOT A BUG — verified 2026-02-27, already calls trackError() |
 | T24 | api/evaluate.ts | 2 | LOW | LLM response not validated against schema | OPEN |
 | T25 | src/hooks/useURLParams.ts | 1 | LOW | URL params not sanitized before use | OPEN |
@@ -290,11 +290,11 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | B10 | vite.config.ts | 2 | LOW | No chunk splitting | **FIXED** |
 | B11 | package.json | 2 | LOW | No lint/typecheck scripts | OPEN |
 | B12 | .env.example | 2 | LOW | Missing API key entries | **FIXED** |
-| B13 | vercel.json | 2 | LOW | No cache headers on static assets | OPEN |
-| B14 | vercel.json | 2 | LOW | No security headers | OPEN |
+| B13 | vercel.json | 2 | LOW | No cache headers on static assets | NOT A BUG — verified 2026-02-27, cache headers already exist for /assets/ |
+| B14 | vercel.json | 2 | LOW | No security headers | **FIXED** 2026-02-27 — added X-Content-Type-Options, X-Frame-Options, Referrer-Policy |
 | B15 | public/sw.js | 2 | LOW | Service worker caches API indefinitely | OPEN |
 | B16 | public/sw.js | 2 | LOW | No cache versioning | OPEN |
-| B17 | public/manifest.json | 2 | LOW | start_url mismatch | OPEN |
+| B17 | public/manifest.json | 2 | LOW | start_url mismatch | NOT A BUG — verified 2026-02-27, start_url "/" is correct for PWAs |
 | B18 | supabase/migrations | 2 | LOW | real vs numeric for scores | OPEN |
 | B19 | supabase/migrations | 2 | LOW | No FK comparisons.user_id | OPEN |
 | B20 | supabase/migrations | 2 | LOW | No FK api_usage_log.user_id | OPEN |
@@ -303,7 +303,7 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | B23 | api/user/delete.ts | 3 | MED | No confirmation email on delete | OPEN |
 | B24 | public/robots.txt | 1 | LOW | Allows crawling /api/ | **FIXED** (commit 597d4d9, 2026-02-27) |
 | B25 | public/index.html | 1 | LOW | Missing OG meta tags | **FIXED** |
-| B26 | package.json | 1 | LOW | No engines field | OPEN |
+| B26 | package.json | 1 | LOW | No engines field | **FIXED** 2026-02-27 — added engines.node >=18.0.0 |
 | B27 | vercel.json | 1 | LOW | No region config | OPEN |
 | B28 | .gitignore | 1 | LOW | Missing .env.local | NOT A BUG — verified 2026-02-27, .env.local already in .gitignore (lines 28+41) |
 | B29 | supabase/migrations | 1 | LOW | Inconsistent naming | OPEN |
@@ -324,12 +324,12 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 | ML4 | src/components/CourtOrderVideo.tsx | 3 | LOW | reset missing from useEffect deps | OPEN |
 | ML5 | src/components/WeightPresets.tsx | 3 | MED | Mount useEffect calls stale callback | OPEN |
 | ML6 | src/components/WeightPresets.tsx | 3 | MED | Save effect overwrites with defaults | OPEN |
-| ML7 | src/components/OliviaChatBubble.tsx | 2 | LOW | setTimeout without cleanup | OPEN |
-| ML8 | src/components/EmiliaChat.tsx | 2 | LOW | setTimeout without cleanup | OPEN |
+| ML7 | src/components/OliviaChatBubble.tsx | 2 | LOW | setTimeout without cleanup | **FIXED** 2026-02-27 — added clearTimeout in useEffect cleanup |
+| ML8 | src/components/EmiliaChat.tsx | 2 | LOW | setTimeout without cleanup | **FIXED** 2026-02-27 — added clearTimeout in useEffect cleanup |
 | ML9 | src/components/CitySelector.tsx | 2 | LOW | getFilteredMetros recomputed every render | OPEN |
-| ML10 | src/components/ManualViewer.tsx | 2 | LOW | userEmail in deps but unused | OPEN |
-| ML11 | src/components/LoginScreen.tsx | 2 | LOW | 3s setTimeout without cleanup | OPEN |
-| ML12 | src/components/ResetPasswordScreen.tsx | 2 | LOW | 2s setTimeout without cleanup | OPEN |
+| ML10 | src/components/ManualViewer.tsx | 2 | LOW | userEmail in deps but unused | **FIXED** 2026-02-27 — removed unused userEmail from useEffect deps |
+| ML11 | src/components/LoginScreen.tsx | 2 | LOW | 3s setTimeout without cleanup | **FIXED** 2026-02-27 — added ref + clearTimeout on unmount |
+| ML12 | src/components/ResetPasswordScreen.tsx | 2 | LOW | 2s setTimeout without cleanup | **FIXED** 2026-02-27 — added ref + clearTimeout on unmount |
 | ML13 | src/hooks/useTTS.ts | 2 | LOW | speed missing from useCallback deps | OPEN |
 | ML14 | src/hooks/useTTS.ts | 2 | LOW | speed missing from play useCallback deps | OPEN |
 

@@ -6,7 +6,7 @@
  * Reuses LoginScreen.css for consistent styling.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
 import './LoginScreen.css';
 
@@ -22,6 +22,14 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ updatePasswor
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup redirect timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+    };
+  }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +59,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ updatePasswor
     } else {
       setSuccess(true);
       // Redirect to main app after short delay
-      setTimeout(() => {
+      redirectTimeoutRef.current = setTimeout(() => {
         clearPasswordRecovery();
       }, 2000);
     }

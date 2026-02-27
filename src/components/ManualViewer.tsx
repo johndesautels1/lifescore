@@ -229,7 +229,7 @@ const ManualViewer: React.FC<ManualViewerProps> = ({ type, userEmail }) => {
     };
 
     fetchContent();
-  }, [type, userEmail]);
+  }, [type]);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {

@@ -1067,7 +1067,6 @@ export default async function handler(
 
     res.status(500).json({
       error: 'Failed to load manual',
-      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

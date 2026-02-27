@@ -5,7 +5,7 @@
  * Clean, professional design.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './LoginScreen.css';
 
@@ -54,6 +54,14 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const signupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup signup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (signupTimeoutRef.current) clearTimeout(signupTimeoutRef.current);
+    };
+  }, []);
 
   // Load saved email on mount (password is handled by browser password manager)
   useEffect(() => {
@@ -156,7 +164,7 @@ const LoginScreen: React.FC = () => {
       setSuccessMessage('Account created! Please check your email (including spam folder) to verify your account before signing in.');
       resetForm();
       // Switch to sign in mode after successful signup
-      setTimeout(() => setMode('signin'), 3000);
+      signupTimeoutRef.current = setTimeout(() => setMode('signin'), 3000);
     }
   }, [email, password, confirmPassword, fullName, signUp, resetForm]);
 
