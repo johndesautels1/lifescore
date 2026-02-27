@@ -1,0 +1,339 @@
+/* ============================================================================
+   ACTION BUTTONS
+   ============================================================================ */
+
+.enhanced-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.enhanced-actions .save-message {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+  color: #059669;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+
+/* SCOPED to .enhanced-results to prevent leaking to other components */
+.enhanced-results .action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.enhanced-results .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all var(--transition-fast);
+  border: 2px solid transparent;
+  min-width: 180px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.enhanced-results .action-btn .btn-icon {
+  font-size: 1.4rem;
+}
+
+.enhanced-results .action-btn.save-btn {
+  background: linear-gradient(135deg, var(--sapphire) 0%, #1a5276 100%);
+  color: white;
+}
+
+.enhanced-results .action-btn.save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 76, 129, 0.3);
+}
+
+.enhanced-results .action-btn.save-btn.saved {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  cursor: default;
+}
+
+/* ADDED 2026-01-25: Saving state animation */
+.enhanced-results .action-btn.save-btn.saving {
+  background: linear-gradient(135deg, var(--sapphire) 0%, var(--sapphire-dark) 100%);
+  cursor: wait;
+  animation: pulse-enhanced-saving 1.5s infinite;
+}
+
+@keyframes pulse-enhanced-saving {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+/* Save message styling for enhanced results */
+.enhanced-actions .save-message.success {
+  color: var(--success);
+}
+
+.enhanced-actions .save-message.error {
+  color: var(--error);
+}
+
+.enhanced-results .action-btn.share-btn {
+  background: white;
+  color: var(--sapphire);
+  border-color: var(--sapphire);
+}
+
+.enhanced-results .action-btn.share-btn:hover {
+  background: var(--sapphire);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.enhanced-results .action-btn.export-btn {
+  background: white;
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+.enhanced-results .action-btn.export-btn:hover {
+  background: var(--orange);
+  color: white;
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================================
+   DARK MODE
+   ============================================================================ */
+
+[data-theme="dark"] .api-key-modal {
+  background: var(--gray-800);
+}
+
+[data-theme="dark"] .api-key-modal h3 {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .api-key-modal .modal-description {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .api-key-group label {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .api-key-group input {
+  background: var(--gray-700);
+  border-color: var(--gray-600);
+  color: var(--gray-100);
+}
+
+[data-theme="dark"] .enhanced-mode-toggle {
+  background: linear-gradient(135deg, rgba(15, 76, 129, 0.15) 0%, rgba(247, 147, 30, 0.15) 100%);
+  border-color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .toggle-text {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .toggle-info {
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .toggle-info p {
+  color: #FFD700;
+}
+
+[data-theme="dark"] .enhanced-progress {
+  background: var(--gray-800);
+}
+
+[data-theme="dark"] .llm-progress-item {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .llm-name {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .progress-bar-container {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .enhanced-score-grid .score-box {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .enhanced-score-grid .score-box h3 {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .consensus-score {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .enhanced-category {
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .enhanced-category .category-name {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .cat-score {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .cat-score .city-name {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .cat-score .score-value {
+  color: #60A5FA !important;
+  -webkit-text-fill-color: #60A5FA !important;
+}
+
+[data-theme="dark"] .category-header-btn {
+  background: linear-gradient(145deg, rgba(55, 65, 81, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%);
+  border-color: rgba(107, 163, 255, 0.15);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .category-header-btn:hover {
+  background: linear-gradient(145deg, rgba(75, 85, 99, 0.95) 0%, rgba(55, 65, 81, 0.9) 100%);
+  border-color: rgba(107, 163, 255, 0.3);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .enhanced-category .category-name {
+  color: #f3f4f6;
+}
+
+[data-theme="dark"] .enhanced-category .category-weight {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .metric-details {
+  background: var(--gray-700);
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .metric-details-header {
+  border-color: var(--gray-600);
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .metric-row {
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .metric-name {
+  color: var(--gray-200);
+}
+
+/* Dark mode - Premium metric scores */
+[data-theme="dark"] .metric-score.winning {
+  background: linear-gradient(145deg, #1a5694 0%, #0d3a6b 50%, #062140 100%);
+  color: #ffffff;
+  box-shadow:
+    0 4px 16px rgba(26, 86, 148, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  border-color: rgba(107, 163, 255, 0.3);
+}
+
+[data-theme="dark"] .metric-score.winning:hover {
+  box-shadow:
+    0 8px 24px rgba(26, 86, 148, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-score:not(.winning) {
+  background: linear-gradient(145deg, #3f1f1f 0%, #2d1414 50%, #1f0f0f 100%);
+  color: #fca5a5;
+  box-shadow:
+    0 2px 8px rgba(220, 38, 38, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+[data-theme="dark"] .metric-score:not(.winning):hover {
+  box-shadow:
+    0 4px 12px rgba(220, 38, 38, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-score::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+}
+
+[data-theme="dark"] .disagreement-card {
+  background: rgba(251, 191, 36, 0.08);
+}
+
+[data-theme="dark"] .disagreement-card h4 {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .disagreement-card p {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .stat {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .stat-label {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .stat-value {
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .timing-details {
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .timing-row {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .enhanced-footer {
+  background: linear-gradient(135deg, #1a3a5c 0%, #0d2840 50%, #051525 100%);
+}
+
+[data-theme="dark"] .enhanced-footer h4 {
+  color: white;
+}
+
+[data-theme="dark"] .enhanced-footer p {
+  color: rgba(255, 255, 255, 0.9);
+}
+

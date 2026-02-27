@@ -1,0 +1,1110 @@
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .enhanced-score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .llm-progress-grid {
+    gap: 0.5rem;
+  }
+
+  .llm-progress-item {
+    min-width: 40px;
+    padding: 0.5rem 0.5rem;
+  }
+
+  .enhanced-winner-hero .winner-score {
+    font-size: 3rem;
+  }
+
+  .enhanced-winner-hero .winner-city {
+    font-size: 1.5rem;
+  }
+
+  /* Mobile dark mode: bright yellow-orange for Consensus Life Score label */
+  [data-theme="dark"] .enhanced-winner-hero .winner-label {
+    color: #FFB627;
+    opacity: 1;
+  }
+
+  /* Mobile: Action buttons */
+  .result-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .enhanced-results .action-btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 67px;
+    padding: 0.75rem 0.35rem;
+    font-size: 0.85rem;
+  }
+
+  /* Mobile: Category headers */
+  .category-header {
+    padding: 1rem;
+  }
+
+  .category-header h4 {
+    font-size: 1rem;
+  }
+
+  /* Mobile: Metric rows */
+  .metric-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .metric-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .metric-scores {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .score-bar-container {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  /* Mobile: Freedom Delta badge */
+  .freedom-delta-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile: Explanation panel */
+  .explanation-panel {
+    padding: 1rem;
+  }
+
+  .explanation-text {
+    font-size: 0.95rem;
+  }
+
+  /* Mobile: Footer */
+  .enhanced-footer {
+    padding: 1.25rem;
+  }
+
+  .enhanced-footer h4 {
+    font-size: 1rem;
+  }
+
+  .enhanced-footer p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .enhanced-winner-hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .enhanced-winner-hero .winner-score {
+    font-size: 2.5rem;
+  }
+
+  .enhanced-winner-hero .winner-city {
+    font-size: 1.25rem;
+  }
+
+  .enhanced-winner-hero .loser-summary {
+    font-size: 0.9rem;
+  }
+
+  /* Small mobile: Action buttons stack */
+  .enhanced-results .action-btn {
+    flex: 1 1 100%;
+  }
+
+  /* Small mobile: Stats grid */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Small mobile: LLM progress */
+  .llm-progress-grid {
+    flex-wrap: wrap;
+  }
+
+  .llm-progress-item {
+    flex: 1 1 calc(33% - 0.5rem);
+    min-width: 47px;
+  }
+
+  /* Small mobile: Section titles */
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  /* Small mobile: Cards */
+  .card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Small mobile: Top differences */
+  .difference-item {
+    padding: 0.75rem;
+  }
+
+  .diff-rank {
+    font-size: 1rem;
+  }
+
+  .diff-name {
+    font-size: 0.85rem;
+  }
+
+  /* Small mobile: Badges */
+  .agreement-badge,
+  .quality-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  /* FIX 2026-02-15: Enhanced score grid + category cards overflow right on mobile vertical */
+  .enhanced-score-grid {
+    gap: 0.75rem;
+  }
+
+  .enhanced-score-grid .score-box {
+    padding: 1rem;
+  }
+
+  .enhanced-score-grid .score-box h3 {
+    font-size: 0.9rem;
+  }
+
+  .consensus-score {
+    font-size: 2.25rem;
+  }
+
+  /* Category header button — prevent % weight + expand icon overflow */
+  .category-header-btn {
+    padding: 0.65rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .category-header {
+    gap: 0.4rem;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .category-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .category-name {
+    font-size: 0.78rem;
+    min-width: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .enhanced-category .category-weight {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .expand-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 1rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+}
+
+/* ============================================================================
+   LAW VS REALITY DUAL SCORING
+   ============================================================================ */
+
+/* Category Header Row */
+.category-header-row {
+  margin-bottom: 0.5rem;
+}
+
+/* Score View Toggle Container - Prominent */
+.score-view-toggle-container {
+  background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.score-view-toggle-container.reality-mode {
+  background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(0, 71, 171, 0.08) 100%);
+  border-color: #F7931E;
+}
+
+.toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.toggle-icon-large {
+  font-size: 1.5rem;
+}
+
+.toggle-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gray-800);
+}
+
+.toggle-buttons-large {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.toggle-btn-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.toggle-btn-large:hover {
+  border-color: var(--gray-400);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn-large.active {
+  border-color: #0047AB;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.1) 0%, rgba(0, 71, 171, 0.05) 100%);
+  box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
+}
+
+.toggle-btn-large.active:nth-child(2) {
+  border-color: #F7931E;
+  background: linear-gradient(135deg, rgba(247, 147, 30, 0.15) 0%, rgba(0, 71, 171, 0.1) 100%);
+  box-shadow: 0 4px 12px rgba(247, 147, 30, 0.3);
+}
+
+.toggle-btn-large .btn-icon {
+  font-size: 1.75rem;
+}
+
+.toggle-btn-large .btn-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gray-800);
+}
+
+.toggle-btn-large .btn-desc {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+.toggle-btn-large.active .btn-label {
+  color: #0047AB;
+}
+
+.toggle-btn-large.active:nth-child(2) .btn-label {
+  color: #F7931E;
+}
+
+/* Mode Indicator */
+.mode-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(247, 147, 30, 0.1);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--gray-700);
+}
+
+.indicator-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.indicator-badge.law {
+  background: rgba(0, 71, 171, 0.15);
+  color: #0047AB;
+}
+
+.indicator-badge.enforce {
+  background: rgba(247, 147, 30, 0.15);
+  color: #F7931E;
+}
+
+.indicator-badge.gap {
+  background: rgba(220, 38, 38, 0.15);
+  color: #DC2626;
+  min-width: 20px;
+}
+
+.indicator-sep {
+  color: var(--gray-400);
+}
+
+/* Dual Score Mode Header */
+.metric-details-header.dual-header {
+  grid-template-columns: 1fr 140px 140px;
+}
+
+.dual-header-city {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dual-header-city .city-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--gray-800);
+}
+
+.dual-labels {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.label-law {
+  color: #0047AB;
+}
+
+.label-enforce {
+  color: #F7931E;
+}
+
+/* Dual Score Mode Row */
+.metric-row.dual-row {
+  grid-template-columns: 1fr 140px 140px;
+}
+
+/* Dual Score Cell */
+.dual-score-cell {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+/* ============================================================================
+   PREMIUM LAW & ENFORCEMENT SCORE PILLS
+   Dual-score view for sophisticated legal analysis
+   ============================================================================ */
+
+.law-score,
+.enforce-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-style: normal;
+  font-family: inherit;
+  min-width: 48px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+/* Law Score - Sapphire theme with glassmorphism */
+.law-score {
+  background: linear-gradient(145deg, rgba(0, 71, 171, 0.15) 0%, rgba(0, 45, 109, 0.22) 100%);
+  color: #0047AB;
+  border: 1px solid rgba(0, 71, 171, 0.3);
+  box-shadow:
+    0 2px 8px rgba(0, 71, 171, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.law-score::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+
+.law-score:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(0, 71, 171, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.law-score.winning {
+  background: linear-gradient(145deg, #0047AB 0%, #002d6d 50%, #001a3d 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 16px rgba(0, 71, 171, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.law-score.winning::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+}
+
+.law-score.winning:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 24px rgba(0, 71, 171, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Enforce Score - Gold/Orange theme with glassmorphism */
+.enforce-score {
+  background: linear-gradient(145deg, rgba(247, 147, 30, 0.15) 0%, rgba(212, 110, 0, 0.22) 100%);
+  color: #b35d00;
+  border: 1px solid rgba(247, 147, 30, 0.3);
+  box-shadow:
+    0 2px 8px rgba(247, 147, 30, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.enforce-score::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+
+.enforce-score:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(247, 147, 30, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.enforce-score.winning {
+  background: linear-gradient(145deg, #F7931E 0%, #c66e00 50%, #8a4d00 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 4px 16px rgba(247, 147, 30, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.enforce-score.winning::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+}
+
+.enforce-score.winning:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 24px rgba(247, 147, 30, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Gap Warning - When enforcement is much lower than law */
+.enforce-score.gap-warning {
+  background: rgba(239, 68, 68, 0.15);
+  color: #DC2626;
+  border-color: rgba(239, 68, 68, 0.3);
+  position: relative;
+}
+
+.enforce-score.gap-warning::after {
+  content: '!';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  background: #DC2626;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark Mode */
+/* Dark Mode - Toggle Container */
+[data-theme="dark"] .score-view-toggle-container {
+  background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 100%);
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .score-view-toggle-container.reality-mode {
+  background: linear-gradient(135deg, rgba(247, 147, 30, 0.15) 0%, rgba(0, 71, 171, 0.15) 100%);
+  border-color: #F7931E;
+}
+
+[data-theme="dark"] .toggle-title {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .toggle-btn-large {
+  background: var(--gray-700);
+  border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .toggle-btn-large:hover {
+  border-color: var(--gray-500);
+}
+
+[data-theme="dark"] .toggle-btn-large.active {
+  background: linear-gradient(135deg, rgba(107, 163, 255, 0.2) 0%, rgba(107, 163, 255, 0.1) 100%);
+  border-color: #6ba3ff;
+}
+
+[data-theme="dark"] .toggle-btn-large.active:nth-child(2) {
+  background: linear-gradient(135deg, rgba(247, 147, 30, 0.2) 0%, rgba(107, 163, 255, 0.15) 100%);
+  border-color: #F7931E;
+}
+
+[data-theme="dark"] .toggle-btn-large .btn-label {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .toggle-btn-large .btn-desc {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .toggle-btn-large.active .btn-label {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .toggle-btn-large.active:nth-child(2) .btn-label {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .mode-indicator {
+  background: rgba(247, 147, 30, 0.15);
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .indicator-badge.law {
+  background: rgba(107, 163, 255, 0.2);
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .indicator-badge.enforce {
+  background: rgba(247, 147, 30, 0.2);
+  color: #F7931E;
+}
+
+[data-theme="dark"] .dual-header-city .city-name {
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .label-law {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .label-enforce {
+  color: #F7931E;
+}
+
+/* Dark mode - Premium law/enforce scores with glassmorphism */
+[data-theme="dark"] .law-score {
+  background: linear-gradient(145deg, rgba(107, 163, 255, 0.18) 0%, rgba(60, 100, 180, 0.25) 100%);
+  color: #93bbff;
+  border-color: rgba(107, 163, 255, 0.4);
+  box-shadow:
+    0 2px 8px rgba(107, 163, 255, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .law-score::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+}
+
+[data-theme="dark"] .law-score:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(107, 163, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .law-score.winning {
+  background: linear-gradient(145deg, #1a5694 0%, #0d3a6b 50%, #082a52 100%);
+  color: #ffffff;
+  border-color: rgba(107, 163, 255, 0.5);
+  box-shadow:
+    0 4px 16px rgba(26, 86, 148, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .law-score.winning::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+}
+
+[data-theme="dark"] .law-score.winning:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 24px rgba(26, 86, 148, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .enforce-score {
+  background: linear-gradient(145deg, rgba(247, 147, 30, 0.18) 0%, rgba(180, 100, 20, 0.25) 100%);
+  color: #ffb347;
+  border-color: rgba(247, 147, 30, 0.4);
+  box-shadow:
+    0 2px 8px rgba(247, 147, 30, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .enforce-score::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+}
+
+[data-theme="dark"] .enforce-score:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(247, 147, 30, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .enforce-score.winning {
+  background: linear-gradient(145deg, #c66e00 0%, #8a4d00 50%, #5c3300 100%);
+  color: #ffffff;
+  border-color: rgba(247, 147, 30, 0.5);
+  box-shadow:
+    0 4px 16px rgba(198, 110, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .enforce-score.winning::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+}
+
+[data-theme="dark"] .enforce-score.winning:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 24px rgba(198, 110, 0, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+  .score-view-toggle-container {
+    padding: 0.75rem;
+  }
+
+  .toggle-buttons-large {
+    gap: 0.5rem;
+  }
+
+  .toggle-btn-large {
+    padding: 0.75rem;
+  }
+
+  .toggle-btn-large .btn-icon {
+    font-size: 1.5rem;
+  }
+
+  .toggle-btn-large .btn-label {
+    font-size: 0.85rem;
+  }
+
+  .toggle-btn-large .btn-desc {
+    font-size: 0.7rem;
+  }
+
+  .mode-indicator {
+    font-size: 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .metric-details-header.dual-header,
+  .metric-row.dual-row {
+    grid-template-columns: 1fr 100px 100px;
+  }
+
+  .dual-score-cell {
+    gap: 0.25rem;
+  }
+
+  .law-score,
+  .enforce-score {
+    min-width: 30px;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  .score-view-toggle-container {
+    padding: 0.6rem;
+  }
+
+  .toggle-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .toggle-icon-large {
+    font-size: 1.25rem;
+  }
+
+  .toggle-title {
+    font-size: 0.9rem;
+  }
+
+  .toggle-buttons-large {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .toggle-btn-large {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .toggle-btn-large .btn-icon {
+    font-size: 1.25rem;
+  }
+
+  .toggle-btn-large .btn-label {
+    font-size: 0.85rem;
+  }
+
+  .toggle-btn-large .btn-desc {
+    display: none;
+  }
+
+  .mode-indicator {
+    font-size: 0.7rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+  }
+
+  .indicator-sep {
+    display: none;
+  }
+
+  .metric-details-header.dual-header,
+  .metric-row.dual-row {
+    grid-template-columns: 1fr 80px 80px;
+  }
+
+  .dual-labels {
+    gap: 0.35rem;
+    font-size: 0.55rem;
+  }
+
+  .law-score,
+  .enforce-score {
+    min-width: 26px;
+    padding: 0.15rem 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .enforce-score.gap-warning::after {
+    width: 12px;
+    height: 12px;
+    font-size: 0.5rem;
+    top: -4px;
+    right: -4px;
+  }
+}
+
+/* ============================================================================
+   CACHE INDICATOR BADGE
+   ============================================================================ */
+
+.cache-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 20px;
+  margin-top: 0.5rem;
+  animation: cachePulse 2s ease-in-out;
+}
+
+@keyframes cachePulse {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.cache-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: cacheDot 1.5s ease-in-out infinite;
+}
+
+@keyframes cacheDot {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================================
+   MOBILE UI FIXES - 2026-01-26
+   Issue #1: TOP 5 DECIDING FACTORS table overflow
+   Issue #2: City A/B tabs overflow
+   Issue #3: Score Display Mode centering
+   Issue #4: Law vs Reality table/header fixes
+   ============================================================================ */
+
+/* Fix #1: TOP 5 DECIDING FACTORS - Prevent horizontal overflow */
+.top-differences {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.differences-header {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  /* Fix #1: Make differences header stack vertically or scroll */
+  .differences-header {
+    display: none; /* Hide header on mobile, data is self-explanatory */
+  }
+
+  .diff-header-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .diff-rank {
+    align-self: flex-start;
+  }
+
+  .diff-metric {
+    width: 100%;
+    text-align: left;
+  }
+
+  .diff-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .diff-delta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Fix #3: Center Score Display Mode title on mobile */
+  .toggle-header {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .toggle-title {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Fix #1: Smaller mobile - further optimizations */
+  .top-differences {
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .difference-item {
+    border-radius: 8px;
+  }
+
+  .diff-header-btn {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .diff-name {
+    font-size: 0.8rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .diff-scores .score-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  /* Fix #2: City A/B toggle buttons - prevent overflow */
+  .toggle-buttons-large {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .toggle-btn-large {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .toggle-btn-large .btn-label {
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  /* Fix #3: Center Score Display Mode on small screens */
+  .score-view-toggle-container {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .toggle-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Fix #4: Law vs Reality - Prevent header overlap */
+  .dual-header-city {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .dual-header-city .city-name {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70px;
+  }
+
+  .metric-details-header.dual-header {
+    gap: 0.25rem;
+  }
+
+  .metric-row.dual-row {
+    gap: 0.25rem;
+  }
+
+  /* Fix #4: Make Law vs Reality table scrollable if needed */
+  .metric-details-table {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dual-labels {
+    flex-direction: column;
+    gap: 0.15rem;
+    align-items: center;
+  }
+
+  .label-law,
+  .label-enforce {
+    font-size: 0.5rem;
+  }
+}
+
+/* B3 Fix: LLM attribution badges on source citations */
+.source-llm-badges {
+  display: inline;
+  margin-right: 6px;
+}
+
+.source-llm-badge {
+  display: inline-block;
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: rgba(99, 102, 241, 0.9);
+  margin-right: 3px;
+  font-weight: 600;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
