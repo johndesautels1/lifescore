@@ -34,13 +34,16 @@ United Kingdom
 | **Registration URL** | https://ico.org.uk/for-organisations/register/ |
 | **Annual Fee** | ~£40-60 | Depends on organization size |
 | **Application Number** | **C1885368** | Submitted 2026-02-28 |
-| **Registration Status** | APPLICATION SUBMITTED | Awaiting confirmation |
+| **Security Number** | **CSN7726118** | Quote this + reference number when contacting ICO |
+| **ICO Helpline** | 0303 123 1113 | Quote security number when calling |
+| **Registration Status** | REGISTERED | Confirmed 2026-02-28 |
 
 **Action Required:**
 1. ~~Go to ico.org.uk~~ DONE
 2. ~~Complete Data Protection Fee registration~~ DONE — Application C1885368
-3. Pay annual fee (upon confirmation)
-4. Display registration number in Privacy Policy (once issued)
+3. ~~Receive security number~~ DONE — CSN7726118
+4. Pay annual fee (upon invoice)
+5. Display registration number in Privacy Policy (once issued)
 
 ### 1.2 EU Representative
 

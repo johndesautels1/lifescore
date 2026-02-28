@@ -88,7 +88,7 @@
 
 | # | Item | Status | Reference | Date |
 |---|------|--------|-----------|------|
-| D1 | ICO Registration (UK) | [x] | Registered at ico.org.uk | 2026-02-28 |
+| D1 | ICO Registration (UK) | [x] | App C1885368 / Security CSN7726118 | 2026-02-28 |
 | D2 | EU Representative Appointed | [x] | N/A — Not required (UK company post-Brexit) | 2026-02-28 |
 | D3 | DUNS Number | [x] | D-U-N-S #: 234489716 | 2026-02-28 |
 
