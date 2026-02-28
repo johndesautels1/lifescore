@@ -150,22 +150,39 @@ These laws only apply when you exceed thresholds:
 
 | State | Law | Revenue Threshold | Consumer Threshold | Status |
 |-------|-----|-------------------|-------------------|--------|
-| California | CCPA/CPRA | $25M+ | 100K+ consumers | DEFERRED |
+| California | CCPA/CPRA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
 | Virginia | VCDPA | $25M+ | 100K+ consumers | DEFERRED |
 | Colorado | CPA | N/A | 100K+ consumers | DEFERRED |
 | Connecticut | CTDPA | $25M+ | 100K+ consumers | DEFERRED |
 | Utah | UCPA | $25M+ | 100K+ consumers | DEFERRED |
 
-**Current Status:** Below all thresholds - compliance deferred
-**Review Trigger:** Revisit at 10K users or $1M ARR
+**Current Status:** CCPA/CPRA compliance proactively implemented (2026-02-28). Other states deferred.
+**Review Trigger:** Revisit other states at 10K users or $1M ARR
 
-### 3.2 When Compliance Required
+### 3.2 CCPA/CPRA Implementation (Completed 2026-02-28)
 
-When you hit thresholds, you must:
-- Add "Do Not Sell My Personal Information" link
-- Honor opt-out requests within 45 days
-- Provide data access/deletion mechanisms
-- Update Privacy Policy with state-specific disclosures
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| "Do Not Sell or Share" link | Footer link → LegalModal 'do-not-sell' page | DONE |
+| Opt-out mechanism | One-click button with localStorage + consent_logs audit trail | DONE |
+| Categories of PI disclosure | Table in Do Not Sell page listing all PI categories | DONE |
+| Right to Know | Account Settings > Download My Data (/api/user/export) | DONE |
+| Right to Delete | Account Settings > Delete Account (/api/user/delete) | DONE |
+| Right to Correct | Account Settings > Edit Profile | DONE |
+| Non-discrimination clause | Stated in Do Not Sell page | DONE |
+| Authorized agent provision | Documented in Do Not Sell page | DONE |
+| 45-day response commitment | Documented in Privacy Policy + Do Not Sell page | DONE |
+| Privacy Policy CCPA disclosures | Updated with full CCPA/CPRA rights table + PI categories | DONE |
+
+**Technical Components:**
+- `src/components/LegalModal.tsx` — DoNotSellContent component with opt-out UI
+- `src/components/Footer.tsx` — "Do Not Sell or Share My Personal Information" link
+- `api/consent/log.ts` — Accepts `ccpa_dns` consent type
+- `supabase/migrations/20260228_ccpa_dns_optout.sql` — Index + reporting view
+- localStorage key: `clues_ccpa_dns_optout`
+- Consent log type: `ccpa_dns` | Actions: `denied` (opt-out) / `granted` (withdraw)
+- Database view: `ccpa_dns_optouts` — for compliance reporting
+- Export helper: `getCcpaDnsOptOut()` from LegalModal.tsx
 
 ---
 

@@ -209,6 +209,17 @@ If you've forgotten your password:
 - Select your desired tier
 - Payment processed via Stripe
 
+## Privacy & Data Rights
+
+### Your Rights
+- **Download My Data** — Account Settings (GDPR Article 20 / CCPA Right to Know)
+- **Delete My Account** — Account Settings (GDPR Article 17 / CCPA Right to Delete)
+- **Cookie Preferences** — "Cookie Settings" link in the footer
+- **Do Not Sell or Share My Personal Information** — Link in the footer (CCPA/CPRA opt-out)
+
+### California Residents (CCPA/CPRA)
+We do not sell your personal information. You can opt out of any sharing by clicking "Do Not Sell or Share My Personal Information" in the site footer. We respond to all verified requests within 45 days. We will not discriminate against you for exercising your privacy rights.
+
 ## Contact Support
 - Email: cluesnomads@gmail.com
 - Response time: 24-48 hours
@@ -361,11 +372,29 @@ If you've forgotten your password:
 - No need to manually click "Save" — results persist to browser + Supabase automatically
 - The Save button immediately reflects the saved state
 
+## Privacy Rights Requests
+
+### CCPA/CPRA (California Residents)
+When a California resident contacts support about privacy:
+1. **Opt-Out of Sale/Sharing** — Direct them to "Do Not Sell or Share My Personal Information" link in the site footer
+2. **Right to Know** — Direct them to Account Settings > Download My Data
+3. **Right to Delete** — Direct them to Account Settings > Delete My Account
+4. **Right to Correct** — Direct them to Account Settings > Edit Profile
+5. **Authorized Agent** — Require written authorization before processing
+6. **Response deadline** — 45 days from verified request
+7. **Non-discrimination** — Never deny service or charge differently for exercising rights
+
+### GDPR (UK/EU Residents)
+- Data export: Account Settings > Download My Data
+- Account deletion: Account Settings > Delete Account
+- Cookie preferences: "Cookie Settings" in footer
+- Response deadline: 30 days from verified request
+
 ## Escalation Path
 
 1. **Tier 1**: Email support (most issues)
 2. **Tier 2**: Technical team (bugs, errors)
-3. **Tier 3**: Management (refunds > $50, legal)
+3. **Tier 3**: Management (refunds > $50, legal, CCPA/GDPR requests)
 `,
 
   tech: `# Technical Support Manual
@@ -774,6 +803,24 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - Database RLS hardening on reports
 - Admin check caching with grace period
 
+## CCPA/CPRA Compliance (Added 2026-02-28)
+
+### Implementation
+- **"Do Not Sell or Share My Personal Information"** link in site footer
+- Opt-out modal at LegalModal 'do-not-sell' page with one-click opt-out button
+- Opt-out stored in localStorage (clues_ccpa_dns_optout) AND logged to consent_logs table
+- Consent type: ccpa_dns | Actions: denied (opt-out) / granted (withdraw opt-out)
+- Categories tracked: sale_of_data, sharing_of_data, targeted_advertising
+- Helper export: getCcpaDnsOptOut() — returns boolean for code that needs to check status
+- Database view: ccpa_dns_optouts — for compliance reporting/audit
+
+### Data Practices
+- We do NOT sell personal data
+- We share with service providers strictly for service operation
+- California residents can opt out at any time via footer link
+- Verified requests responded to within 45 days
+- Non-discrimination guaranteed for exercising rights
+
 ## DPA Status
 
 Signed: Supabase, Stripe, OpenAI, Anthropic, ElevenLabs, Resend, Vercel
@@ -784,7 +831,7 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 - January: DPA Review, Privacy Policy Review
 - April: ICO Fee Renewal
 - July: Security Audit
-- October: Cookie Audit
+- October: Cookie Audit, CCPA Compliance Review
 - December: Data Retention Cleanup
 
 ---
@@ -844,7 +891,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buc
 | gamma_reports | Report URLs + permanent storage paths (pdf_storage_path, pptx_storage_path added 2026-02-17) |
 | user_preferences | Single-row-per-user settings (JSONB columns) |
 | usage_tracking | Monthly usage limits |
-| consent_logs | GDPR consent records |
+| consent_logs | GDPR/CCPA consent records (cookies, analytics, ccpa_dns opt-outs) |
 | judge_reports | Judge verdicts (unique on user_id, report_id) |
 | avatar_videos | Judge video cache |
 | api_cost_records | Cost tracking per provider |

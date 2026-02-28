@@ -156,17 +156,36 @@ You have the right to:
 
 ### 8.2 California Residents (CCPA/CPRA)
 
-You have the right to:
+If you are a California resident, you have the following rights under the California Consumer Privacy Act (CCPA) as amended by the California Privacy Rights Act (CPRA):
 
-- **Know** what personal information we collect and how it's used
-- **Delete** your personal information
-- **Correct** inaccurate personal information
-- **Opt-out** of the sale or sharing of personal information
-- **Non-discrimination** for exercising your rights
+| Right | Description | How to Exercise |
+|-------|-------------|-----------------|
+| **Right to Know** | Request what personal information we collect, use, and disclose | Account Settings > Download My Data or email us |
+| **Right to Delete** | Request deletion of your personal information | Account Settings > Delete Account or email us |
+| **Right to Correct** | Request correction of inaccurate personal information | Account Settings > Edit Profile or email us |
+| **Right to Opt-Out** | Opt out of the sale or sharing of personal information | "Do Not Sell or Share My Personal Information" link in footer |
+| **Right to Limit** | Limit use of sensitive personal information | We do not collect sensitive PI |
+| **Right to Non-Discrimination** | We will not discriminate for exercising your rights | Automatic |
 
-**We do not sell personal information.** If this changes, we will provide a "Do Not Sell or Share My Personal Information" link.
+**We do not sell your personal information.** We do not exchange personal data for monetary or other valuable consideration. We share data with service providers only as necessary to operate the Service (see Section 5).
 
-To exercise your rights, contact: cluesnomads@gmail.com
+To exercise your rights:
+- **Opt-Out:** Click "Do Not Sell or Share My Personal Information" in the site footer
+- **Data Access/Deletion:** Use Account Settings or email cluesnomads@gmail.com
+- **Authorized Agent:** An authorized agent may submit a request on your behalf with written permission
+- **Response Time:** We respond to all verified requests within 45 days
+
+#### Categories of Personal Information Collected (CCPA Disclosure)
+
+| Category | Examples | Sold? | Shared with Service Providers? |
+|----------|----------|-------|-------------------------------|
+| Identifiers | Name, email address | No | Yes — authentication, support |
+| Internet activity | Pages visited, features used | No | Analytics (with consent) |
+| Comparison data | Cities compared, saved reports | No | AI providers (for analysis) |
+| AI conversations | Olivia/Emilia chat content | No | AI providers (for responses) |
+| Payment information | Processed by Stripe | No | Stripe only |
+
+We do not collect: Social Security numbers, driver's license numbers, financial account numbers, precise geolocation, racial/ethnic origin, biometric data, health information, or sexual orientation data.
 
 ### 8.3 Other US States
 

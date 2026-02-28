@@ -515,9 +515,9 @@ Users can modify:
 
 ### 6.3 Data Export
 
-Under GDPR, users can request:
+Under GDPR/CCPA, users can request:
 - Full data export (JSON format)
-- Account deletion (processed within 30 days)
+- Account deletion (GDPR: 30 days, CCPA: 45 days)
 
 **Process:** Settings > Privacy > Request Data Export
 
@@ -530,6 +530,24 @@ Under GDPR, users can request:
 - Subscription cancellation (no refund)
 
 **Process:** Settings > Privacy > Delete Account > Confirm
+
+### 6.5 CCPA/CPRA Privacy Requests (Added 2026-02-28)
+
+When a California resident contacts support about privacy rights:
+
+| Request Type | Action | Deadline |
+|-------------|--------|----------|
+| **Opt-Out of Sale/Sharing** | Direct to "Do Not Sell or Share My Personal Information" link in footer | Immediate |
+| **Right to Know** | Direct to Account Settings > Download My Data | 45 days |
+| **Right to Delete** | Direct to Account Settings > Delete Account | 45 days |
+| **Right to Correct** | Direct to Account Settings > Edit Profile | 45 days |
+| **Authorized Agent** | Require written authorization before processing | 45 days |
+
+**Important:**
+- Never deny service or charge differently for exercising privacy rights
+- Verify identity before processing requests (email confirmation)
+- Log all requests for compliance audit
+- Escalate complex requests to Tier 3 (Management/Legal)
 
 ---
 

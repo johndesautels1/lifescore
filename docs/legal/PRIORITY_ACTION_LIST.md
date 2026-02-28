@@ -15,7 +15,7 @@
 | **NOW** | Send 5 pending DPA emails (xAI, Perplexity, D-ID, Gamma, Tavily) | Free | 1 hour |
 | **Before launch** | Trademark LIFE SCORE + CLUES Intelligence (UK IPO) | ~£340 | 4-6 months processing |
 | **Before EU marketing** | Appoint EU Representative | ~£200/mo | 1 week |
-| **Before US marketing** | CCPA "Do Not Sell" opt-out implementation | Dev time | 1-2 days |
+| ~~Before US marketing~~ | ~~CCPA "Do Not Sell" opt-out implementation~~ | ~~Dev time~~ | **DONE 2026-02-28** |
 | **Before enterprise sales** | Enterprise SaaS Agreement | Lawyer review ~£500-1000 | 2-4 weeks |
 | **Housekeeping** | IP assignment resolution | Free (self-done) | 1 hour |
 
@@ -48,10 +48,16 @@
 - **Why:** Required under EU GDPR for non-EU companies offering services to EU residents
 - **Status:** NOT DONE (compliance checklist item D2)
 
-### 5. CCPA "Do Not Sell" Opt-Out (Before US Marketing)
-- **Why:** California Consumer Privacy Act requires "Do Not Sell My Personal Information" link
-- **Status:** NOT DONE (compliance checklist item F1)
-- **Implementation:** Add opt-out link to footer, cookie consent, and privacy policy
+### 5. CCPA "Do Not Sell" Opt-Out — COMPLETED 2026-02-28
+- **Status:** DONE
+- **What was built:**
+  - "Do Not Sell or Share My Personal Information" link added to site footer
+  - Full CCPA opt-out page in LegalModal with one-click opt-out button
+  - Consent logging extended to support `ccpa_dns` type
+  - Supabase migration with CCPA reporting index + `ccpa_dns_optouts` view
+  - Privacy Policy updated with full CCPA/CPRA disclosure tables
+  - All 5 Emilia manuals updated (User, CS, Tech/Schema, Legal, License)
+  - Compliance checklist item F1 marked complete
 
 ### 6. Enterprise SaaS Agreement (Before Enterprise Sales)
 - **Why:** Enterprise clients will require formal SaaS agreements with SLAs, liability caps, indemnification

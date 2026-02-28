@@ -896,12 +896,30 @@ When visiting LifeScore on a small screen (phone), a **warning modal** appears e
 - **Deletion:** Request complete removal
 - **Correction:** Update incorrect information
 
+### Your Rights — California Residents (CCPA/CPRA) (Added 2026-02-28)
+
+California residents have these additional rights:
+- **Right to Know:** What personal information we collect and how it's used
+- **Right to Delete:** Request deletion of your personal information
+- **Right to Correct:** Request correction of inaccurate information
+- **Right to Opt-Out:** Opt out of sale or sharing of personal information
+- **Right to Non-Discrimination:** We will not discriminate for exercising your rights
+
+**We do not sell your personal information.** To opt out of any sharing, click **"Do Not Sell or Share My Personal Information"** in the site footer.
+
 ### Data Requests
 
 1. Go to **Settings > Privacy**
 2. Click **Request Data Export** or **Delete Account**
 3. Confirm via email
-4. Processed within 30 days
+4. GDPR requests processed within 30 days; CCPA requests within 45 days
+
+### Do Not Sell or Share (CCPA Opt-Out)
+
+1. Scroll to the **site footer**
+2. Click **"Do Not Sell or Share My Personal Information"**
+3. Click the opt-out button to record your preference
+4. Your choice is saved immediately and logged for compliance
 
 ### Security (Updated 2026-02-26)
 

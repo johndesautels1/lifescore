@@ -2,7 +2,7 @@
 
 **Company:** Clues Intelligence LTD (United Kingdom)
 **Markets:** United Kingdom, European Union, United States
-**Last Updated:** January 23, 2026
+**Last Updated:** February 28, 2026
 
 ---
 
@@ -111,7 +111,7 @@
 
 | # | State | Law | Requirements Met | Date |
 |---|-------|-----|------------------|------|
-| F1 | California | CCPA/CPRA | [ ] | - |
+| F1 | California | CCPA/CPRA | [x] | 2026-02-28 |
 | F2 | Virginia | VCDPA | [ ] | - |
 | F3 | Colorado | CPA | [ ] | - |
 | F4 | Connecticut | CTDPA | [ ] | - |
@@ -154,6 +154,7 @@
 | 2026-01-23 | Claude Code | Acceptable Use (A4), Refund Policy (A5) - Section A complete |
 | 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
 | 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
+| 2026-02-28 | Claude Opus 4.6 | CCPA/CPRA compliance (F1): Do Not Sell link, opt-out modal, consent logging, Privacy Policy update, all 5 Emilia manuals updated |
 | 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
 
 ---

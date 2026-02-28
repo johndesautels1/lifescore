@@ -634,22 +634,38 @@ Admin-configurable per-provider API quotas with alert thresholds.
 ### 2.7 Compliance & System Tables
 
 #### `consent_logs`
-GDPR audit trail for user consent actions.
+GDPR/CCPA audit trail for user consent actions.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | UUID | PK | Log ID |
 | user_id | UUID | FK(auth.users), nullable | User (null for anonymous) |
 | anonymous_id | TEXT | | Anonymous tracking ID |
-| consent_type | TEXT | NOT NULL | Consent category |
+| consent_type | TEXT | NOT NULL | Consent category: cookies, marketing, analytics, terms, privacy, **ccpa_dns** |
 | consent_action | TEXT | NOT NULL | 'granted', 'denied', 'withdrawn' |
-| consent_categories | JSONB | DEFAULT '{}' | Category details |
+| consent_categories | JSONB | DEFAULT '{}' | Category details (for ccpa_dns: sale_of_data, sharing_of_data, targeted_advertising) |
 | ip_address | INET | | Client IP |
 | user_agent | TEXT | | Browser info |
 | page_url | TEXT | | Page where consent given |
 | policy_version | TEXT | DEFAULT '1.0' | Policy version |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | expires_at | TIMESTAMPTZ | | Consent expiry |
+
+**Indexes:** user_id, anonymous_id, consent_type, created_at, ccpa_dns (partial index on consent_type='ccpa_dns')
+
+#### `ccpa_dns_optouts` (VIEW — Added 2026-02-28)
+CCPA compliance reporting view. Lists all "Do Not Sell/Share" opt-out and opt-in actions.
+
+| Column | Source | Description |
+|--------|--------|-------------|
+| user_id | consent_logs.user_id | User who opted out (null if anonymous) |
+| anonymous_id | consent_logs.anonymous_id | Anonymous ID if not logged in |
+| consent_action | consent_logs.consent_action | 'denied' = opted out, 'granted' = withdrew opt-out |
+| consent_categories | consent_logs.consent_categories | What was opted out of |
+| created_at | consent_logs.created_at | When the action was taken |
+| ip_address | consent_logs.ip_address | Partial IP for audit |
+
+**Migration:** `supabase/migrations/20260228_ccpa_dns_optout.sql`
 
 ---
 
