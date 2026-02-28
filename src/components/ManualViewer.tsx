@@ -426,6 +426,8 @@ function getManualTitle(type: ManualTabType): string {
       return 'User Manual';
     case 'legal':
       return 'Legal Compliance';
+    case 'license':
+      return 'Software License Agreement';
     case 'schema':
       return 'App Schema & Database';
     case 'equations':
