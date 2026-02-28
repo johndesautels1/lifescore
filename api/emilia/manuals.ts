@@ -137,7 +137,7 @@ If you've forgotten your password:
   1. **Screenplay Generation** — Claude AI writes a 12-scene cinematic screenplay based on your comparison results
   2. **InVideo Rendering** — The screenplay is submitted to InVideo's AI video engine for professional rendering
   3. **Status Polling** — The system checks every 10 seconds (up to 30 minutes) until your movie is ready
-- **7-Act Story Structure**: The movie follows a dramatic arc from life struggles in the losing city, through discovering LIFE SCORE, to arriving and thriving in the winning city
+- **5-Act, 12-Scene Story Structure**: The movie follows a dramatic arc across 5 acts — Struggle (life in the losing city), Discovery (finding CLUES & LIFE SCORE), Revelation (comparison results & verdict), Journey (packing up & traveling), and New Life (arrival, freedom & epilogue)
 - **Court Order Video**: A separate 10-second cinematic "perfect life" scene generated via Kling AI, available from the Judge Tab's Court Order section
 - **Admin VIP Override**: Admins can upload custom InVideo videos for specific cities or comparisons
 - **Tier Access**: Court Order videos require SOVEREIGN tier (admins bypass)
@@ -482,15 +482,13 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 ### Stage 2: InVideo MCP Submission
 - **API**: POST /api/movie/generate (300s timeout)
 - **Process**: buildInVideoPromptFromScreenplay() converts JSON → natural language prompt → InVideo MCP server
-- **Prompt Builder**: src/utils/invideoPromptBuilder.ts buildInVideoPrompt() — 7-Act cinematic structure:
-  - ACT 1 (0:00-1:20): Struggle in loser city
-  - ACT 2 (1:20-2:40): Discovery of CLUES
-  - ACT 3 (2:40-3:50): CLUES ecosystem & modules
-  - ACT 4 (3:50-6:00): LIFE SCORE metric reveal (scores shown ONCE)
-  - ACT 5 (6:00-7:20): Transition/goodbye
-  - ACT 6 (7:20-8:40): Arrival in winner city
-  - ACT 7 (8:40-10:00): Dream life montage
-- **Casting Rule**: SAME couple throughout all 7 acts
+- **Prompt Builder**: api/movie/generate.ts buildInVideoPromptFromScreenplay() — 5-Act, 12-Scene cinematic structure:
+  - ACT 1: STRUGGLE (Scenes 1-2, 0:00-1:40): "The Weight" + "The Search" — life in the losing city
+  - ACT 2: DISCOVERY (Scenes 3-4, 1:40-3:30): "The Discovery" + "The Comparison" — finding CLUES & LIFE SCORE
+  - ACT 3: REVELATION (Scenes 5-7, 3:30-6:10): "The Revelation" + "The Judge's Verdict" + "The Dark Path" — results, verdict, contrast
+  - ACT 4: JOURNEY (Scenes 8-9, 6:10-7:30): "The Decision" + "The Journey" — packing up, traveling
+  - ACT 5: NEW LIFE (Scenes 10-12, 7:30-10:00): "The Arrival" + "The New Life" + "Freedom" — arrival, freedom, epilogue
+- **Casting Rule**: SAME couple throughout all 5 acts
 - **Voice**: ALL 2nd person "you"/"your" (never 3rd person)
 - **City Visuals**: Auto-detected environment type (beach/mountain/urban/desert/european/tropical/general)
 
@@ -517,7 +515,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 ### Movie Pipeline Key Files
 | File | Purpose |
 |------|---------|
-| src/utils/invideoPromptBuilder.ts | 7-Act prompt generator (576 lines) |
+| api/movie/generate.ts:buildInVideoPromptFromScreenplay() | 5-Act, 12-Scene prompt builder (converts screenplay JSON → InVideo prompt) |
 | src/services/movieService.ts | Full orchestration: buildMovieInput, generateScreenplay, submitToInVideo, pollMovieStatus |
 | api/movie/screenplay.ts | Claude screenplay endpoint (310s) |
 | api/movie/generate.ts | InVideo MCP submission + movie record creation (300s) |
