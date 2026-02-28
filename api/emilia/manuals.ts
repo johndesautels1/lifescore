@@ -2,7 +2,7 @@
  * LIFE SCORE - Emilia Manuals API
  * Serves documentation content for the help center
  *
- * GET /api/emilia/manuals?type=user|csm|tech|legal
+ * GET /api/emilia/manuals?type=user|csm|tech|legal|license
  *
  * Access Control:
  * - user: Public (all authenticated users)
@@ -26,6 +26,7 @@ const MANUAL_FILES: Record<string, string> = {
   csm: 'CUSTOMER_SERVICE_MANUAL.md',
   tech: 'TECHNICAL_SUPPORT_MANUAL.md',
   legal: 'LEGAL_COMPLIANCE_MANUAL.md',
+  license: 'LICENSE_MANUAL.md',
   schema: 'APP_SCHEMA_MANUAL.md',
   equations: 'JUDGE_EQUATIONS_MANUAL.md',
   prompts: 'GAMMA_PROMPTS_MANUAL.md',
@@ -37,6 +38,7 @@ const MANUAL_TITLES: Record<string, string> = {
   csm: 'Customer Service Manual',
   tech: 'Technical Support Manual',
   legal: 'Legal Compliance',
+  license: 'Software License Agreement',
   schema: 'App Schema & Database',
   equations: 'Judge Mathematical Equations',
   prompts: 'GAMMA Prompt Templates',
@@ -56,7 +58,7 @@ const ADMIN_EMAILS = getAdminEmails();
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.9 | **Updated:** 2026-02-27
+**Version:** 4.1 | **Updated:** 2026-02-28
 
 ## Getting Started
 
@@ -131,6 +133,17 @@ If you've forgotten your password:
 - Judge verdict video with Court Order option
 - All saved to both browser and cloud
 
+#### InVideo Movie Pipeline (Added 2026-02-28)
+- **10-Minute Cinematic Movie**: Available from the Judge Tab after a comparison completes
+- **3-Stage Process**:
+  1. **Screenplay Generation** — Claude AI writes a 12-scene cinematic screenplay based on your comparison results
+  2. **InVideo Rendering** — The screenplay is submitted to InVideo's AI video engine for professional rendering
+  3. **Status Polling** — The system checks every 10 seconds (up to 30 minutes) until your movie is ready
+- **5-Act, 12-Scene Story Structure**: The movie follows a dramatic arc across 5 acts — Struggle (life in the losing city), Discovery (finding CLUES & LIFE SCORE), Revelation (comparison results & verdict), Journey (packing up & traveling), and New Life (arrival, freedom & epilogue)
+- **Court Order Video**: A separate 10-second cinematic "perfect life" scene generated via Kling AI, available from the Judge Tab's Court Order section
+- **Admin VIP Override**: Admins can upload custom InVideo videos for specific cities or comparisons
+- **Tier Access**: Both Moving Movies AND Court Order videos require SOVEREIGN tier. Non-SOVEREIGN users receive a 403 "Access denied" response. Admin emails in DEV_BYPASS_EMAILS bypass the tier check.
+
 #### Saved Comparisons (Updated 2026-02-17)
 - Comparisons **auto-save on completion** to both localStorage and Supabase — no need to manually click "Save"
 - The Save button immediately reflects saved state after auto-save
@@ -196,6 +209,17 @@ If you've forgotten your password:
 - Select your desired tier
 - Payment processed via Stripe
 
+## Privacy & Data Rights
+
+### Your Rights
+- **Download My Data** — Account Settings (GDPR Article 20 / CCPA Right to Know)
+- **Delete My Account** — Account Settings (GDPR Article 17 / CCPA Right to Delete)
+- **Cookie Preferences** — "Cookie Settings" link in the footer
+- **Do Not Sell or Share My Personal Information** — Link in the footer (CCPA/CPRA opt-out)
+
+### California Residents (CCPA/CPRA)
+We do not sell your personal information. You can opt out of any sharing by clicking "Do Not Sell or Share My Personal Information" in the site footer. We respond to all verified requests within 45 days. We will not discriminate against you for exercising your privacy rights.
+
 ## Contact Support
 - Email: cluesnomads@gmail.com
 - Response time: 24-48 hours
@@ -203,7 +227,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.8 | **Updated:** 2026-02-27
+**Version:** 4.0 | **Updated:** 2026-02-28
 
 ## Support Overview
 
@@ -221,6 +245,7 @@ If you've forgotten your password:
 | Judge Verdict Videos | No | 1/month | 1/month |
 | Gamma Reports | No | 1/month | 1/month |
 | Grok/Kling Mood Videos | No | No | 1/month |
+| InVideo Movies | No | No | 1/month |
 | Cloud Sync | No | Yes | Yes |
 
 ## Common Issues
@@ -242,6 +267,22 @@ If you've forgotten your password:
 - Click "SEE YOUR NEW LIFE!" to regenerate
 - Download button works independently
 - Each video plays independently (one failing won't block other)
+
+### "My InVideo movie is taking forever" (Added 2026-02-28)
+- InVideo movies are 10 minutes long and can take up to 30 minutes to render
+- The system polls every 10 seconds automatically — the user does NOT need to refresh
+- If the screenplay generation times out (>5 min), ask the user to retry
+- If InVideo rendering fails, the screenplay is saved and the user can retry without regenerating it
+- SOVEREIGN tier required for movie generation — non-SOVEREIGN users get "Access denied" (403)
+- Admin emails bypass the tier check (DEV_BYPASS_EMAILS env var)
+
+### "Court Order video not playing" (Added 2026-02-28)
+- Court Order uses Kling AI (primary) with Replicate fallback
+- Kling/Replicate CDN URLs expire after ~24 hours
+- After 3 failed playback attempts, the system auto-clears broken URLs
+- Click "SEE COURT ORDER" to regenerate a fresh video
+- Admin VIP override videos (InVideo) take priority over Kling-generated ones
+- Check that user has SOVEREIGN tier (non-admins) or is an admin
 
 ### "I was charged incorrectly"
 - Verify transaction in Stripe dashboard
@@ -331,16 +372,34 @@ If you've forgotten your password:
 - No need to manually click "Save" — results persist to browser + Supabase automatically
 - The Save button immediately reflects the saved state
 
+## Privacy Rights Requests
+
+### CCPA/CPRA (California Residents)
+When a California resident contacts support about privacy:
+1. **Opt-Out of Sale/Sharing** — Direct them to "Do Not Sell or Share My Personal Information" link in the site footer
+2. **Right to Know** — Direct them to Account Settings > Download My Data
+3. **Right to Delete** — Direct them to Account Settings > Delete My Account
+4. **Right to Correct** — Direct them to Account Settings > Edit Profile
+5. **Authorized Agent** — Require written authorization before processing
+6. **Response deadline** — 45 days from verified request
+7. **Non-discrimination** — Never deny service or charge differently for exercising rights
+
+### GDPR (UK/EU Residents)
+- Data export: Account Settings > Download My Data
+- Account deletion: Account Settings > Delete Account
+- Cookie preferences: "Cookie Settings" in footer
+- Response deadline: 30 days from verified request
+
 ## Escalation Path
 
 1. **Tier 1**: Email support (most issues)
 2. **Tier 2**: Technical team (bugs, errors)
-3. **Tier 3**: Management (refunds > $50, legal)
+3. **Tier 3**: Management (refunds > $50, legal, CCPA/GDPR requests)
 `,
 
   tech: `# Technical Support Manual
 
-**Version:** 5.1 | **Updated:** 2026-02-27
+**Version:** 5.3 | **Updated:** 2026-02-28
 
 ## System Architecture
 
@@ -440,6 +499,90 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 ### Cristiano API Endpoints
 - POST /api/cristiano/storyboard — Generate 7-scene storyboard JSON (Stage 1)
 - POST /api/cristiano/render — Submit to HeyGen Video Agent + poll status (Stage 2)
+
+## CRITICAL: InVideo Movie Pipeline Architecture (Added 2026-02-28)
+
+**Complete 3-stage pipeline for generating 10-minute cinematic movies from comparison data.**
+
+### Tier Gating (Added 2026-02-28)
+- **Both endpoints** (screenplay + generate) require SOVEREIGN (enterprise) tier
+- **Check pattern**: Same as api/video/grok-generate.ts — queries profiles table for tier + email
+- **Admin bypass**: DEV_BYPASS_EMAILS env var grants enterprise access regardless of tier
+- **Non-SOVEREIGN response**: 403 { error: "Access denied", reason, tier, upgradeRequired: true }
+- **Frontend handling**: MovieGenerator.tsx error handling displays the 403 message to the user
+
+### Stage 1: Screenplay Generation
+- **API**: POST /api/movie/screenplay (310s timeout)
+- **Provider**: Claude AI
+- **Input**: MovieComparisonInput (cities, scores, categories, judge summary)
+- **Output**: 12-scene JSON screenplay
+- **Tier check**: checkMovieTierAccess(auth.userId) after requireAuth()
+- **Orchestrated by**: src/services/movieService.ts buildMovieInput() + generateScreenplay()
+
+### Stage 2: InVideo MCP Submission
+- **API**: POST /api/movie/generate (300s timeout)
+- **Tier check**: checkMovieTierAccess(auth.userId) after requireAuth() — gates both POST and GET
+- **Process**: buildInVideoPromptFromScreenplay() converts JSON → natural language prompt → InVideo MCP server
+- **Prompt Builder**: api/movie/generate.ts buildInVideoPromptFromScreenplay() — 5-Act, 12-Scene cinematic structure:
+  - ACT 1: STRUGGLE (Scenes 1-2, 0:00-1:40): "The Weight" + "The Search" — life in the losing city
+  - ACT 2: DISCOVERY (Scenes 3-4, 1:40-3:30): "The Discovery" + "The Comparison" — finding CLUES & LIFE SCORE
+  - ACT 3: REVELATION (Scenes 5-7, 3:30-6:10): "The Revelation" + "The Judge's Verdict" + "The Dark Path" — results, verdict, contrast
+  - ACT 4: JOURNEY (Scenes 8-9, 6:10-7:30): "The Decision" + "The Journey" — packing up, traveling
+  - ACT 5: NEW LIFE (Scenes 10-12, 7:30-10:00): "The Arrival" + "The New Life" + "Freedom" — arrival, freedom, epilogue
+- **Casting Rule**: SAME couple throughout all 5 acts
+- **Voice**: ALL 2nd person "you"/"your" (never 3rd person)
+- **City Visuals**: Auto-detected environment type (beach/mountain/urban/desert/european/tropical/general)
+
+### Stage 3: Status Polling
+- **Poll interval**: 10s | **Max attempts**: 180 (30 minutes)
+- **Status progression**: screenplay_ready → submitting_to_invideo → rendering → completed
+- **Database**: movie_videos table (Supabase)
+
+### Court Order Video (Kling AI Short)
+- **Trigger**: "SEE COURT ORDER" button in JudgeTab → CourtOrderVideo.tsx
+- **Provider**: Kling AI (primary) → Replicate Minimax (fallback)
+- **Duration**: 10-second cinematic "perfect life" scene
+- **Polling**: Every 3s for up to 120 attempts (6 minutes)
+- **Permanent Storage**: court-order-videos Supabase bucket (50MB, MP4/WebM)
+- **CDN Expiry Handling**: Kling/Replicate URLs expire ~24h; auto-reset after 3 failed loads (FIX #48)
+
+### InVideo Admin Override System
+- **API**: GET/POST/DELETE /api/video/invideo-override
+- **Database**: invideo_overrides table (comparison-specific or city-level defaults)
+- **Lookup Priority**: comparison override > city default > null
+- **Admin Panel**: Visible in CourtOrderVideo.tsx when isAdmin=true (lines 778-839)
+- **Auth**: verifyAdmin() checks admin email list
+
+### Movie Pipeline Key Files
+| File | Purpose |
+|------|---------|
+| api/movie/generate.ts:buildInVideoPromptFromScreenplay() | 5-Act, 12-Scene prompt builder (converts screenplay JSON → InVideo prompt) |
+| src/services/movieService.ts | Full orchestration: buildMovieInput, generateScreenplay, submitToInVideo, pollMovieStatus |
+| api/movie/screenplay.ts | Claude screenplay endpoint (310s) |
+| api/movie/generate.ts | InVideo MCP submission + movie record creation (300s) |
+| src/components/CourtOrderVideo.tsx | Court Order UI: generate, upload, play, save, download, share (887 lines) |
+| src/services/grokVideoService.ts | Kling/Replicate video API wrapper + detectCityType() |
+| src/hooks/useGrokVideo.ts | React hook: generation state, polling, progress interpolation |
+| api/video/grok-generate.ts | Kling AI + Replicate fallback endpoint (240s) |
+| api/video/grok-status.ts | Video status polling endpoint (30s) |
+| api/video/invideo-override.ts | Admin VIP video override CRUD |
+
+### Movie Pipeline Env Vars
+- **INVIDEO_MCP_URL**: InVideo MCP server endpoint
+- **INVIDEO_API_KEY**: InVideo API authentication
+- **KLING_VIDEO_API_KEY / KLING_VIDEO_SECRET**: Kling AI JWT auth (HS256)
+- **REPLICATE_API_TOKEN**: Fallback video provider
+
+### Movie Pipeline Timeouts
+| Component | Timeout | Notes |
+|-----------|---------|-------|
+| movieService SCREENPLAY_TIMEOUT_MS | 310s | Slightly over Vercel 300s to catch server timeout |
+| movieService GENERATE_TIMEOUT_MS | 310s | InVideo submission |
+| movieService STATUS_TIMEOUT_MS | 30s | Per-poll request |
+| api/movie/generate maxDuration | 300s | Vercel function limit |
+| submitToInVideoMCP | 280s | MCP request timeout |
+| grokVideoService VIDEO_GENERATE_TIMEOUT | 240s | Sequential Kling generation |
+| grokVideoService VIDEO_STATUS_TIMEOUT | 30s | Status check |
 
 ## Olivia Video Presenter (Updated 2026-02-15)
 
@@ -591,6 +734,32 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - **Olivia presenter audio overlap** — ReportPresenter.tsx speakTTSFallback() created new Audio objects without stopping the previous one. Added .pause() + null cleanup before creating new Audio.
 - **Olivia context builder raw metric IDs** — api/olivia/context.ts showed raw metric IDs in 6 places. All fixed with getMetricDisplayName(). Enhanced path also missing city2 evidence entirely.
 
+## Automated Test Infrastructure (Added 2026-02-28)
+
+### Test Runner
+- **Framework**: Vitest (paired with Vite build system)
+- **Config**: vitest.config.ts (separate from vite.config.ts — zero impact on production build)
+- **Commands**: \`npm test\` (single run), \`npm run test:watch\` (watch mode)
+- **Test location**: tests/ directory (top-level, not inside src/)
+
+### Test Coverage (100 tests, 7 files)
+
+| Test File | Module Under Test | Tests | What It Validates |
+|-----------|-------------------|-------|-------------------|
+| costCalculator.test.ts | src/utils/costCalculator-functions.ts | 31 | LLM cost math (Opus, GPT-4o, Gemini, Sonnet), Tavily credits, TTS (ElevenLabs/OpenAI/HD), Avatar (Replicate/D-ID/Simli/HeyGen), Kling per-image, Gamma per-generation, formatCost, createCostBreakdown, finalizeCostBreakdown totals |
+| scoring.test.ts | src/api/scoring.ts | 26 | normalizeScore for boolean/range/scale/categorical metrics, lower_is_better inversion, clamping, string parsing, createComparison winner/tie/category logic |
+| scoringThresholds.test.ts | src/constants/scoringThresholds.ts | 9 | Confidence levels (unanimous/strong/moderate/split), boundary values, isDisagreementArea threshold |
+| rateLimit.test.ts | api/shared/rateLimit.ts | 18 | Preset values (heavy/standard/light/health), rateLimiter.check tracking, blocking after max, independent IP/endpoint tracking, getClientIP header extraction |
+| fetchWithTimeout.test.ts | src/lib/fetchWithTimeout.ts | 5 | Successful fetch, timeout error, non-abort error propagation, options passthrough |
+| countryFlags.test.ts | src/utils/countryFlags.ts | 4 | Flag URL generation for 34 countries, fallback behavior, URL format validation |
+| metricDisplayNames.test.ts | src/shared/metricDisplayNames.ts | 7 | All 100 metrics present, correct prefixes (pf/hp/bw), no empty names, no underscores in display names |
+
+### Key Design Principles
+- **Zero risk**: Only NEW files added — no existing source code modified
+- **Pure functions only**: Tests target stateless calculation/utility functions with no side effects
+- **No mocking of app state**: Tests don't depend on React, Supabase, or browser APIs (except fetchWithTimeout which mocks globalThis.fetch)
+- **Fast execution**: Full suite runs in <1 second
+
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
 - Supabase Dashboard > Logs
@@ -634,6 +803,40 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - Database RLS hardening on reports
 - Admin check caching with grace period
 
+## CCPA/CPRA Compliance (Added 2026-02-28)
+
+### Implementation
+- **"Do Not Sell or Share My Personal Information"** link in site footer
+- Opt-out modal at LegalModal 'do-not-sell' page with one-click opt-out button
+- **Logged-in users:** Opt-out persisted to user_preferences.ccpa_dns_optout (Supabase) — survives device changes
+- **Anonymous users:** Opt-out stored in localStorage (clues_ccpa_dns_optout) as fallback
+- All actions logged to consent_logs table (audit trail)
+- Consent type: ccpa_dns | Actions: denied (opt-out) / granted (withdraw opt-out)
+- Categories tracked: sale_of_data, sharing_of_data, targeted_advertising
+- Helper export: getCcpaDnsOptOut() — returns boolean for non-React contexts
+- For React components: use useAuth().preferences?.ccpa_dns_optout
+- Database view: ccpa_dns_optouts — for compliance reporting/audit
+
+### Data Practices
+- We do NOT sell personal data
+- We share with service providers strictly for service operation
+- California residents can opt out at any time via footer link
+- Verified requests responded to within 45 days
+- Non-discrimination guaranteed for exercising rights
+
+## IP Assignment (Completed 2026-02-28)
+
+A formal **Deed of Assignment of Intellectual Property** assigns all IP from sole founder John E. Desautels II to Clues Intelligence LTD:
+- All software, source code, APIs, and database schemas
+- All 20 product names (LIFE SCORE + 19 planned "[NAME] SCORE" variations)
+- All AI personas: Olivia, Cristiano, Emilia (names, knowledge bases, prompts)
+- The 100-metric scoring methodology and multi-LLM evaluation pipeline
+- All documentation, designs, and branding materials
+- Future works automatically assigned upon creation
+- Moral rights waived under CDPA 1988
+- **Action required:** Print, sign in wet ink, have witnessed by independent adult
+- **Document:** \`docs/legal/IP_ASSIGNMENT_DEED.md\`
+
 ## DPA Status
 
 Signed: Supabase, Stripe, OpenAI, Anthropic, ElevenLabs, Resend, Vercel
@@ -644,7 +847,7 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 - January: DPA Review, Privacy Policy Review
 - April: ICO Fee Renewal
 - July: Security Audit
-- October: Cookie Audit
+- October: Cookie Audit, CCPA Compliance Review
 - December: Data Retention Cleanup
 
 ---
@@ -653,7 +856,7 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.5.0 | **Updated:** 2026-02-17
+**Version:** 2.7.0 | **Updated:** 2026-02-28
 
 ---
 
@@ -690,7 +893,7 @@ profiles, user_preferences, comparisons, olivia_conversations, gamma_reports, ju
 
 ## 2. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buckets**.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buckets**.
 
 ### 2.1 All Tables
 
@@ -704,7 +907,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 | gamma_reports | Report URLs + permanent storage paths (pdf_storage_path, pptx_storage_path added 2026-02-17) |
 | user_preferences | Single-row-per-user settings (JSONB columns) |
 | usage_tracking | Monthly usage limits |
-| consent_logs | GDPR consent records |
+| consent_logs | GDPR/CCPA consent records (cookies, analytics, ccpa_dns opt-outs) |
 | judge_reports | Judge verdicts (unique on user_id, report_id) |
 | avatar_videos | Judge video cache |
 | api_cost_records | Cost tracking per provider |
@@ -715,7 +918,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 | authorized_manual_access | Manual access control |
 | court_orders | Court Order video saves (with video_storage_path) |
 | app_prompts | 50 system prompts (6 categories) |
-| invideo_overrides | Admin cinematic prompt overrides |
+| invideo_overrides | Admin cinematic video overrides (comparison-specific or city-level defaults) |
+| movie_videos | InVideo 10-minute movie records (screenplay, status, video URL, edit URL) |
 | report_shares | Shared report links |
 | jobs | Persistent job queue for long-running tasks (Added 2026-02-16) |
 | notifications | In-app bell + email notification records (Added 2026-02-16) |
@@ -730,7 +934,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 2. API Endpoints (46 total)
+## 2. API Endpoints (49 total)
 
 ### Core
 | Endpoint | Method | Description |
@@ -756,6 +960,15 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 | /api/olivia/avatar/heygen | POST | HeyGen Live Presenter streaming avatar (create, speak, interrupt, close) |
 | /api/olivia/avatar/heygen-video | POST/GET | HeyGen pre-rendered video generation + status polling |
 | /api/olivia/avatar/streams | POST | D-ID cockpit avatar for Ask Olivia page (create, speak, destroy) |
+
+### Movie (InVideo Pipeline — Added 2026-02-28)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/movie/screenplay | POST | Generate 12-scene screenplay from comparison (Claude, 310s) — SOVEREIGN tier required |
+| /api/movie/generate | POST/GET | Submit screenplay to InVideo MCP + create movie record / check status (300s) — SOVEREIGN tier required |
+| /api/video/invideo-override | GET/POST/DELETE | Admin VIP video override CRUD |
+
+**Tier gating**: Both screenplay and generate endpoints run checkMovieTierAccess() after requireAuth(). Non-SOVEREIGN users get 403 with upgradeRequired: true. Admin bypass via DEV_BYPASS_EMAILS env var.
 
 ### Cristiano
 | Endpoint | Method | Description |
@@ -792,7 +1005,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
-### Video: NewLifeVideos (blob URL playback, error detection), GoToMyNewCity (Cristiano Freedom Tour)
+### Video: NewLifeVideos (blob URL playback, error detection), GoToMyNewCity (Cristiano Freedom Tour), MovieGenerator (InVideo 10-min cinema pipeline)
 ### Video Playback: All video components use \`preload="auto"\` for smooth buffering + buffering spinner overlay on stall
 ### Reports: VisualsTab (2-tab layout: Generate New / View Existing), ReportPresenter (Read/Live Presenter/Generate Video modes), GammaIframe (shared iframe with sandbox + error handling), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
@@ -816,7 +1029,24 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 5. Tier System
+## 5. Automated Tests (Added 2026-02-28)
+
+- **Framework**: Vitest | **Config**: vitest.config.ts | **Commands**: \`npm test\`, \`npm run test:watch\`
+- **Location**: tests/ directory (7 test files, 100 tests total)
+
+| Test File | Tests | Coverage |
+|-----------|------:|----------|
+| costCalculator.test.ts | 31 | LLM/Tavily/TTS/Avatar/Kling/Gamma cost calculations |
+| scoring.test.ts | 26 | Score normalization (boolean/range/scale/categorical), comparisons |
+| rateLimit.test.ts | 18 | Rate limiter presets, IP extraction, request blocking |
+| scoringThresholds.test.ts | 9 | Confidence levels, disagreement detection |
+| metricDisplayNames.test.ts | 7 | All 100 metric display names validated |
+| fetchWithTimeout.test.ts | 5 | Timeout behavior, error propagation |
+| countryFlags.test.ts | 4 | Flag URL generation for 34 countries |
+
+---
+
+## 6. Tier System
 
 **SOURCE OF TRUTH:** src/hooks/useTierAccess.ts
 
@@ -832,7 +1062,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 6. Environment Variables (61 total)
+## 7. Environment Variables (63 total)
 
 ### Required (Production)
 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
@@ -841,7 +1071,7 @@ VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_K
 ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
 
 ### Optional
-GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, KV_REST_API_URL, KV_REST_API_TOKEN
+GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, INVIDEO_MCP_URL, INVIDEO_API_KEY, KV_REST_API_URL, KV_REST_API_TOKEN
 
 ### Voice & Avatar Wiring (IMPORTANT)
 - **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
@@ -959,6 +1189,103 @@ Cap at 95% while generating
 ---
 
 *Full manual: docs/manuals/JUDGE_EQUATIONS_MANUAL.md*
+`,
+
+  license: `# LIFE SCORE — Software License Agreement
+
+**Effective Date:** February 28, 2026 | **Last Updated:** February 28, 2026
+
+---
+
+## 1. Grant of License
+
+Subject to the terms of this agreement and your applicable subscription plan, Clues Intelligence LTD ("Company") grants you a **limited, non-exclusive, non-transferable, revocable license** to access and use the LIFE SCORE platform solely for your personal or internal business purposes through the hosted web application.
+
+This license does **NOT** grant you any rights to the source code, underlying algorithms, scoring methodologies, database schemas, AI prompts, or proprietary evaluation frameworks.
+
+---
+
+## 2. Ownership & Intellectual Property
+
+The Software, including all source code, documentation, designs, algorithms, scoring models, data structures, AI/LLM prompts, trade secrets, and associated intellectual property, is the **sole and exclusive property of Clues Intelligence LTD**.
+
+All code was authored by **John E. Desautels II, Founder & CEO**, with the assistance of AI development tools. No third-party freelancers, contractors, or external developers contributed to the codebase. All intellectual property rights are fully vested in Clues Intelligence LTD.
+
+**IP Assignment Deed:** A formal Deed of Assignment of Intellectual Property has been executed, assigning all IP from the sole founder (John E. Desautels II) to Clues Intelligence LTD. This covers all software, product names, AI personas (Olivia, Cristiano, Emilia), scoring methodologies, documentation, and future works. The deed includes a moral rights waiver under the Copyright, Designs and Patents Act 1988. See \`docs/legal/IP_ASSIGNMENT_DEED.md\`.
+
+**Trademarks & Trade Names:**
+- LIFE SCORE™
+- CLUES Intelligence™
+- Olivia™ (Client-Facing AI Expert — Voice Avatar, Report Analyst & Product Ambassador)
+- Cristiano™ (AI Opus Judge — Verdict Renderer, Recommendation Engine & Cinematic Presenter)
+- Emilia™ (AI Architect & Troubleshooter — Codebase Brain, User/Admin Support & Legal-Schema Compliance)
+- All "[NAME] SCORE" product variations
+
+---
+
+## 3. Restrictions
+
+You may **NOT**:
+
+- Copy, reproduce, distribute, or create derivative works of the Software
+- Reverse engineer, decompile, or disassemble the Software
+- Modify, adapt, translate, or create derivative works based on the Software
+- Sublicense, lease, rent, loan, sell, or transfer the Software
+- Remove or alter any proprietary notices, labels, or marks
+- Use the Software to build a competing product or service
+- Scrape, harvest, or extract data by automated means
+- Use the Software in violation of any applicable law
+
+---
+
+## 4. Subscription & Access
+
+The Software is offered under subscription plans as described on the Company's website and Terms of Service. Access to features, data, and services varies by plan tier. The Company reserves the right to modify plans and pricing with reasonable notice.
+
+---
+
+## 5. Data & Privacy
+
+Your use is subject to the Company's **Privacy Policy** and **Terms of Service**. The Company processes personal data in accordance with UK GDPR, EU GDPR, and applicable US state privacy laws (CCPA/CPRA).
+
+---
+
+## 6. Disclaimer of Warranties
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. City scores, comparisons, and AI-generated evaluations are for **informational purposes only** and do not constitute legal, financial, immigration, or professional advice.
+
+---
+
+## 7. Limitation of Liability
+
+IN NO EVENT SHALL CLUES INTELLIGENCE LTD BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. THE COMPANY'S TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT PAID BY YOU IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
+
+---
+
+## 8. Termination
+
+The Company may terminate your license at any time if you breach any term. Upon termination, you must cease all use of the Software.
+
+---
+
+## 9. Governing Law
+
+This agreement is governed by the laws of **England and Wales**. Disputes are subject to the exclusive jurisdiction of the courts of England and Wales, except where mandatory consumer protection laws provide otherwise.
+
+---
+
+## 10. Contact
+
+For licensing inquiries, permissions, or legal questions:
+
+**Clues Intelligence LTD**
+167-169 Great Portland Street, 5th Floor
+London W1W 5PF, United Kingdom
+Email: cluesnomads@gmail.com
+
+---
+
+*Copyright (c) 2026 Clues Intelligence LTD. All rights reserved.*
 `,
 };
 

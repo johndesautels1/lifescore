@@ -29,11 +29,18 @@
 
 This manual provides customer service representatives with comprehensive guidance for supporting LifeScore users. It covers product features, common issues, troubleshooting steps, and escalation procedures.
 
-### 1.2 Company Mission
+### 1.2 Company Information
+
+**Company:** Clues Intelligence LTD
+**Company Number:** 16966151
+**D-U-N-S Number:** 234489716
+**Address:** 167-169 Great Portland Street, 5th Floor, London W1W 5PF, UK
+
+### 1.3 Company Mission
 
 LifeScore helps users make informed decisions about where to live by comparing cities across 100 freedom-focused metrics. Our AI-powered platform evaluates legal frameworks and real-world enforcement to provide actionable insights.
 
-### 1.3 Support Channels
+### 1.4 Support Channels
 
 | Channel | Availability | Response Time |
 |---------|--------------|---------------|
@@ -515,9 +522,9 @@ Users can modify:
 
 ### 6.3 Data Export
 
-Under GDPR, users can request:
+Under GDPR/CCPA, users can request:
 - Full data export (JSON format)
-- Account deletion (processed within 30 days)
+- Account deletion (GDPR: 30 days, CCPA: 45 days)
 
 **Process:** Settings > Privacy > Request Data Export
 
@@ -530,6 +537,69 @@ Under GDPR, users can request:
 - Subscription cancellation (no refund)
 
 **Process:** Settings > Privacy > Delete Account > Confirm
+
+### 6.5 CCPA/CPRA Privacy Requests (Added 2026-02-28)
+
+When a California resident contacts support about privacy rights:
+
+| Request Type | Action | Deadline |
+|-------------|--------|----------|
+| **Opt-Out of Sale/Sharing** | Direct to "Do Not Sell or Share My Personal Information" link in footer | Immediate |
+| **Right to Know** | Direct to Account Settings > Download My Data | 45 days |
+| **Right to Delete** | Direct to Account Settings > Delete Account | 45 days |
+| **Right to Correct** | Direct to Account Settings > Edit Profile | 45 days |
+| **Authorized Agent** | Require written authorization before processing | 45 days |
+
+**Important:**
+- Never deny service or charge differently for exercising privacy rights
+- Verify identity before processing requests (email confirmation)
+- Log all requests for compliance audit
+- Escalate complex requests to Tier 3 (Management/Legal)
+
+### 6.6 US State Privacy Requests — VA, CO, CT, UT (Added 2026-02-28)
+
+When a resident of Virginia, Colorado, Connecticut, or Utah contacts support about privacy rights, handle the same way as CCPA requests. The rights are nearly identical:
+
+| State | Law | Key Rights | Appeal Required? |
+|-------|-----|-----------|-----------------|
+| Virginia | VCDPA | Access, Correct, Delete, Portability, Opt-Out | Yes — 60 days (email subject: "VCDPA Appeal") |
+| Colorado | CPA | Access, Correct, Delete, Portability, Opt-Out | Yes — refer to CO Attorney General if unsatisfied |
+| Connecticut | CTDPA | Access, Correct, Delete, Portability, Opt-Out | Yes — 60 days, then CT Attorney General |
+| Utah | UCPA | Access, Delete, Portability, Opt-Out | No appeal required |
+
+**How to handle:**
+- Direct users to **"US State Privacy Rights"** link in the site footer for full details
+- Opt-Out requests: same "Do Not Sell" button as CCPA
+- Data requests: same Account Settings tools (Download My Data, Delete Account, Edit Profile)
+- Response deadline: **45 days** for all states
+- If a user appeals a denied request, escalate to Tier 3 (Management/Legal) immediately
+- **Colorado:** We honor Global Privacy Control (GPC) browser signals — if a user mentions GPC, confirm it's recognized
+
+### 6.7 Intellectual Property & Trademark Inquiries (Added 2026-02-28)
+
+If a customer or third party contacts us about intellectual property or trademarks:
+
+**Our Trademarks:**
+
+| Mark | Type | Status |
+|------|------|--------|
+| CLUES | Umbrella brand | ™ (common law) |
+| LIFE SCORE | Flagship product | ™ (common law) |
+| SMART | Proprietary technology | ™ (common law) |
+| All [X] SCORE modules | Product names | ™ (common law) |
+| Olivia, Cristiano, Emilia | AI persona names | Protected via IP Assignment |
+
+**Common Scenarios:**
+
+| Scenario | Response |
+|----------|----------|
+| "Can I use the LIFE SCORE name?" | No — LIFE SCORE is a trademark of Clues Intelligence LTD. Unauthorized use is prohibited. |
+| "Who owns the CLUES technology?" | All IP is owned by Clues Intelligence LTD. |
+| "I want to license your technology" | Escalate to admin (cluesnomads@gmail.com) |
+| "Someone is copying your product" | Thank the reporter, escalate to admin immediately |
+| "Are your trademarks registered?" | Our marks are protected under common law. Formal registration is in progress. |
+
+**Escalation:** All IP/trademark inquiries beyond simple FAQ answers should be escalated to admin at cluesnomads@gmail.com.
 
 ---
 

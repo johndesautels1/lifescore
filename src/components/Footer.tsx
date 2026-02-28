@@ -85,6 +85,14 @@ const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
             Refunds
           </button>
           <span className="legal-separator">|</span>
+          <button type="button" className="legal-link ccpa-dns-link" onClick={handleLegalClick('do-not-sell')}>
+            Do Not Sell or Share My Personal Information
+          </button>
+          <span className="legal-separator">|</span>
+          <button type="button" className="legal-link" onClick={handleLegalClick('state-privacy')}>
+            US State Privacy Rights
+          </button>
+          <span className="legal-separator">|</span>
           <button
             type="button"
             className="legal-link cookie-settings-btn"

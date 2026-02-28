@@ -24,12 +24,12 @@ For each processor:
 | **OpenAI** | Olivia AI, GPT-4o | [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum) | [x] Form submitted | 2026-01-23 | 2027-01-23 |
 | **Anthropic** | Claude Sonnet/Opus | [anthropic.com/legal/commercial-terms](https://www.anthropic.com/legal/commercial-terms) | [x] Signed | 2026-01-23 | 2027-01-23 |
 | **Google (Gemini)** | LLM Evaluation | [cloud.google.com/terms/data-processing-addendum](https://cloud.google.com/terms/data-processing-addendum) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
-| **xAI (Grok)** | LLM Evaluation | Contact sales | [ ] Pending - Email required | - | - |
-| **Perplexity** | LLM Evaluation | [perplexity.ai/privacy](https://www.perplexity.ai/privacy) | [ ] Pending - Email required | - | - |
-| **D-ID** | Video Avatar | [d-id.com/privacy-policy](https://www.d-id.com/privacy-policy) | [ ] Pending - Email required | - | - |
-| **Gamma** | Report Generation | Contact support | [ ] Pending - Email required | - | - |
+| **xAI (Grok)** | LLM Evaluation | Contact sales | [~] Requested via email | 2026-02-28 | - |
+| **Perplexity** | LLM Evaluation | Trust Center: Enterprise DPA | [~] Requested / downloading | 2026-02-28 | - |
+| **D-ID** | Video Avatar | [d-id.com/privacy-policy](https://www.d-id.com/privacy-policy) | [~] Requested via email | 2026-02-28 | - |
+| **Gamma** | Report Generation | Contact support | [~] Requested via email | 2026-02-28 | - |
 | **Stripe** | Payments | [stripe.com/legal/dpa](https://stripe.com/legal/dpa) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
-| **Tavily** | Web Search | Contact support | [ ] Pending - Email required | - | - |
+| **Tavily** | Web Search | Contact support | [~] Requested via email | 2026-02-28 | - |
 
 ---
 

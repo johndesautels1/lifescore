@@ -20,13 +20,16 @@ export const config = {
 
 // Types
 interface ConsentLogRequest {
-  consentType: 'cookies' | 'marketing' | 'analytics' | 'terms' | 'privacy';
+  consentType: 'cookies' | 'marketing' | 'analytics' | 'terms' | 'privacy' | 'ccpa_dns';
   consentAction: 'granted' | 'denied' | 'withdrawn';
   consentCategories?: {
     essential?: boolean;
     functional?: boolean;
     analytics?: boolean;
     marketing?: boolean;
+    sale_of_data?: boolean;
+    sharing_of_data?: boolean;
+    targeted_advertising?: boolean;
   };
   anonymousId?: string;
   pageUrl?: string;
@@ -60,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Validate consentType
-    const validTypes = ['cookies', 'marketing', 'analytics', 'terms', 'privacy'];
+    const validTypes = ['cookies', 'marketing', 'analytics', 'terms', 'privacy', 'ccpa_dns'];
     if (!validTypes.includes(body.consentType)) {
       return res.status(400).json({
         error: 'INVALID_CONSENT_TYPE',

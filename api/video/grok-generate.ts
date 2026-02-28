@@ -231,7 +231,8 @@ function getCityDetails(cityName: string): CityDetails {
 }
 
 function detectCityType(cityName: string): CityType {
-  const nameLower = cityName.toLowerCase();
+  // Normalize: lowercase and strip periods to handle "St. Lucia" vs "St Lucia" variants
+  const nameLower = cityName.toLowerCase().replace(/\./g, '');
 
   // First check if it's a known European city - use 'european' type for perfect_life
   const europeanCities = [
@@ -248,7 +249,7 @@ function detectCityType(cityName: string): CityType {
   // Tropical destinations
   const tropicalCities = [
     'honolulu', 'hawaii', 'cancun', 'puerto vallarta', 'cabo', 'bahamas', 'jamaica',
-    'barbados', 'aruba', 'curacao', 'st. lucia', 'turks', 'caicos', 'bali', 'phuket',
+    'barbados', 'aruba', 'curacao', 'st lucia', 'turks', 'caicos', 'bali', 'phuket',
     'maldives', 'fiji', 'tahiti', 'mauritius', 'seychelles', 'caribbean', 'key west'
   ];
 
@@ -278,12 +279,12 @@ function detectCityType(cityName: string): CityType {
       'downtown', 'metro', 'city center', 'skyline', 'metropolitan', 'midtown',
       'new york', 'chicago', 'los angeles', 'san francisco', 'seattle', 'boston',
       'philadelphia', 'washington', 'atlanta', 'dallas', 'houston', 'detroit',
-      'minneapolis', 'st. louis', 'baltimore', 'cleveland', 'pittsburgh', 'charlotte'
+      'minneapolis', 'st louis', 'baltimore', 'cleveland', 'pittsburgh', 'charlotte'
     ],
     desert: [
       'desert', 'arid', 'southwest', 'canyon', 'mesa',
       'phoenix', 'vegas', 'tucson', 'scottsdale', 'albuquerque', 'sedona',
-      'palm springs', 'joshua tree', 'death valley', 'moab', 'st. george'
+      'palm springs', 'joshua tree', 'death valley', 'moab', 'st george'
     ],
   };
 

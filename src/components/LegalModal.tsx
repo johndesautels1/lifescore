@@ -3,10 +3,11 @@
  * Displays Privacy Policy, Terms of Service, Cookie Policy
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import './LegalModal.css';
 
-export type LegalPage = 'privacy' | 'terms' | 'cookies' | 'acceptable-use' | 'refunds' | null;
+export type LegalPage = 'privacy' | 'terms' | 'cookies' | 'acceptable-use' | 'refunds' | 'do-not-sell' | 'state-privacy' | null;
 
 interface LegalModalProps {
   page: LegalPage;
@@ -22,6 +23,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
     cookies: 'Cookie Policy',
     'acceptable-use': 'Acceptable Use Policy',
     refunds: 'Refund Policy',
+    'do-not-sell': 'Do Not Sell or Share My Personal Information',
+    'state-privacy': 'US State Privacy Rights',
   };
 
   return (
@@ -39,6 +42,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
           {page === 'cookies' && <CookiesContent />}
           {page === 'acceptable-use' && <AcceptableUseContent />}
           {page === 'refunds' && <RefundContent />}
+          {page === 'do-not-sell' && <DoNotSellContent />}
+          {page === 'state-privacy' && <StatePrivacyContent />}
         </div>
         <div className="legal-modal-footer">
           <p>Clues Intelligence LTD &bull; United Kingdom</p>
@@ -98,8 +103,28 @@ const PrivacyContent: React.FC = () => (
 
     <h3>6. Your Rights</h3>
     <p><strong>UK/EU Residents (GDPR):</strong> Access, rectification, erasure, portability, restriction, and objection rights.</p>
-    <p><strong>California Residents (CCPA):</strong> Know, delete, correct, and opt-out rights.</p>
-    <p>Exercise rights via Account Settings or email cluesnomads@gmail.com</p>
+    <p><strong>California Residents (CCPA/CPRA):</strong></p>
+    <ul>
+      <li><strong>Right to Know</strong> what personal information we collect and how it's used</li>
+      <li><strong>Right to Delete</strong> your personal information</li>
+      <li><strong>Right to Correct</strong> inaccurate personal information</li>
+      <li><strong>Right to Opt-Out</strong> of the sale or sharing of personal information</li>
+      <li><strong>Right to Non-Discrimination</strong> for exercising your rights</li>
+    </ul>
+    <p>
+      <strong>We do not sell your personal information.</strong> To opt out of sharing,
+      click "Do Not Sell or Share My Personal Information" in the site footer.
+    </p>
+    <p>Exercise other rights via Account Settings or email cluesnomads@gmail.com</p>
+
+    <p><strong>Virginia, Colorado, Connecticut & Utah Residents:</strong> You have similar rights under your
+      state's privacy law, including the right to access, correct, delete, and opt out of the sale of your
+      personal data and targeted advertising. See our{' '}
+      <button type="button" className="legal-inline-link" style={{ background: 'none', border: 'none', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit' }}>
+        US State Privacy Rights
+      </button>{' '}
+      page for full details, or contact cluesnomads@gmail.com.
+    </p>
 
     <h3>7. Data Retention</h3>
     <p>
@@ -382,5 +407,378 @@ const RefundContent: React.FC = () => (
     <p className="legal-version">Document Version 1.0</p>
   </div>
 );
+
+// CCPA "Do Not Sell or Share My Personal Information" Content
+const DNS_STORAGE_KEY = 'clues_ccpa_dns_optout';
+
+const DoNotSellContent: React.FC = () => {
+  const { isAuthenticated, preferences, updatePreferences } = useAuth();
+  const [optedOut, setOptedOut] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  // Load opt-out state: Supabase for logged-in users, localStorage for anonymous
+  useEffect(() => {
+    if (isAuthenticated && preferences) {
+      // Logged-in: read from Supabase (source of truth)
+      setOptedOut(preferences.ccpa_dns_optout === true);
+      // Sync localStorage to match Supabase
+      if (preferences.ccpa_dns_optout) {
+        localStorage.setItem(DNS_STORAGE_KEY, JSON.stringify({ optedOut: true, timestamp: new Date().toISOString() }));
+      } else {
+        localStorage.removeItem(DNS_STORAGE_KEY);
+      }
+    } else {
+      // Anonymous: read from localStorage
+      const stored = localStorage.getItem(DNS_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setOptedOut(parsed.optedOut === true);
+        } catch { /* ignore */ }
+      }
+    }
+  }, [isAuthenticated, preferences]);
+
+  const logConsentAction = (action: 'denied' | 'granted') => {
+    const anonymousId = localStorage.getItem('clues_anonymous_id') || `anon_${Date.now()}`;
+    fetch('/api/consent/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        consentType: 'ccpa_dns',
+        consentAction: action,
+        consentCategories: {
+          sale_of_data: action === 'granted',
+          sharing_of_data: action === 'granted',
+          targeted_advertising: action === 'granted',
+        },
+        anonymousId,
+        pageUrl: window.location.href,
+        policyVersion: '1.0',
+      }),
+    }).catch(() => { /* Silent fail — opt-out still works locally */ });
+  };
+
+  const handleOptOut = async () => {
+    setSubmitting(true);
+    try {
+      // Always persist to localStorage (works for everyone)
+      localStorage.setItem(DNS_STORAGE_KEY, JSON.stringify({
+        optedOut: true,
+        timestamp: new Date().toISOString(),
+      }));
+
+      // Persist to Supabase if logged in (survives device changes)
+      if (isAuthenticated) {
+        await updatePreferences({ ccpa_dns_optout: true });
+      }
+
+      setOptedOut(true);
+      setConfirmed(true);
+
+      // Log audit trail (non-blocking)
+      logConsentAction('denied');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOptIn = async () => {
+    setSubmitting(true);
+    try {
+      localStorage.removeItem(DNS_STORAGE_KEY);
+
+      if (isAuthenticated) {
+        await updatePreferences({ ccpa_dns_optout: false });
+      }
+
+      setOptedOut(false);
+      setConfirmed(false);
+
+      logConsentAction('granted');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="legal-content">
+      <p className="legal-effective">Effective Date: February 28, 2026</p>
+
+      <h3>Your Rights Under California Law</h3>
+      <p>
+        Under the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA),
+        California residents have the right to opt out of the sale or sharing of their personal information.
+      </p>
+
+      <h3>Our Data Practices</h3>
+      <p>
+        <strong>Clues Intelligence LTD does not sell your personal information.</strong> We do not exchange
+        your personal data for monetary or other valuable consideration.
+      </p>
+      <p>
+        We may share limited data with service providers (such as AI providers, hosting, and payment processing)
+        strictly to operate the Service. Under CCPA definitions, some of this sharing for cross-context behavioral
+        advertising could be considered "sharing" even without a sale.
+      </p>
+
+      <h3>Categories of Personal Information</h3>
+      <table className="legal-table">
+        <thead>
+          <tr><th>Category</th><th>Collected</th><th>Sold</th><th>Shared</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Identifiers (name, email)</td><td>Yes</td><td>No</td><td>Service providers only</td></tr>
+          <tr><td>Internet activity (usage data)</td><td>Yes</td><td>No</td><td>Analytics (with consent)</td></tr>
+          <tr><td>Geolocation (city-level only)</td><td>No</td><td>No</td><td>No</td></tr>
+          <tr><td>Professional information</td><td>No</td><td>No</td><td>No</td></tr>
+          <tr><td>Sensitive personal information</td><td>No</td><td>No</td><td>No</td></tr>
+          <tr><td>AI conversation content</td><td>Yes</td><td>No</td><td>AI providers (for responses)</td></tr>
+          <tr><td>Payment information</td><td>Via Stripe</td><td>No</td><td>Stripe only</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Opt-Out of Sale and Sharing</h3>
+      <p>
+        Even though we do not currently sell your data, you may submit an opt-out request below.
+        This ensures that if our practices ever change, your preference is already recorded and will
+        be honored immediately.
+      </p>
+
+      <div style={{
+        background: optedOut ? '#f0fdf4' : '#fefce8',
+        border: `2px solid ${optedOut ? '#16a34a' : '#ca8a04'}`,
+        borderRadius: '12px',
+        padding: '1.5rem',
+        margin: '1.5rem 0',
+        textAlign: 'center',
+      }}>
+        {optedOut ? (
+          <>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#16a34a', margin: '0 0 0.5rem' }}>
+              You have opted out of the sale and sharing of your personal information.
+            </p>
+            <p style={{ fontSize: '0.875rem', color: '#4b5563', margin: '0 0 1rem' }}>
+              Your preference is recorded and will be honored. You may change this at any time.
+            </p>
+            <button
+              type="button"
+              onClick={handleOptIn}
+              disabled={submitting}
+              style={{
+                padding: '0.5rem 1.5rem',
+                background: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: submitting ? 'wait' : 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              {submitting ? 'Processing...' : 'Withdraw Opt-Out'}
+            </button>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#92400e', margin: '0 0 0.5rem' }}>
+              You have not opted out.
+            </p>
+            <p style={{ fontSize: '0.875rem', color: '#4b5563', margin: '0 0 1rem' }}>
+              Click below to opt out of the sale or sharing of your personal information.
+            </p>
+            <button
+              type="button"
+              onClick={handleOptOut}
+              disabled={submitting}
+              style={{
+                padding: '0.75rem 2rem',
+                background: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: submitting ? 'wait' : 'pointer',
+                fontSize: '1rem',
+                fontWeight: 600,
+              }}
+            >
+              {submitting ? 'Processing...' : 'Do Not Sell or Share My Personal Information'}
+            </button>
+          </>
+        )}
+        {confirmed && (
+          <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#16a34a', fontWeight: 500 }}>
+            Your opt-out has been recorded. A confirmation has been logged for compliance purposes.
+          </p>
+        )}
+      </div>
+
+      <h3>Your Additional CCPA/CPRA Rights</h3>
+      <ul>
+        <li><strong>Right to Know:</strong> Request what personal information we collect, use, and disclose</li>
+        <li><strong>Right to Delete:</strong> Request deletion of your personal information (Account Settings)</li>
+        <li><strong>Right to Correct:</strong> Request correction of inaccurate personal information</li>
+        <li><strong>Right to Opt-Out:</strong> Opt out of the sale or sharing of personal information (this page)</li>
+        <li><strong>Right to Limit Use of Sensitive Information:</strong> We do not collect sensitive personal information</li>
+        <li><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising your rights</li>
+      </ul>
+
+      <h3>How to Submit a Request</h3>
+      <ul>
+        <li><strong>Opt-Out:</strong> Use the button above or email cluesnomads@gmail.com</li>
+        <li><strong>Data Access/Deletion:</strong> Account Settings or email cluesnomads@gmail.com</li>
+        <li><strong>Authorized Agent:</strong> An authorized agent may submit a request on your behalf with written permission</li>
+      </ul>
+      <p>
+        We will verify your identity before processing requests. We respond to all verified requests within 45 days.
+      </p>
+
+      <h3>Contact for Privacy Inquiries</h3>
+      <p>
+        Email: cluesnomads@gmail.com<br />
+        Clues Intelligence LTD<br />
+        167-169 Great Portland Street, 5th Floor<br />
+        London W1W 5PF, United Kingdom
+      </p>
+
+      <p className="legal-version">Document Version 1.0</p>
+    </div>
+  );
+};
+
+// US State Privacy Rights Content
+const StatePrivacyContent: React.FC = () => (
+  <div className="legal-content">
+    <p className="legal-effective">Effective Date: February 28, 2026</p>
+
+    <h3>Your Privacy Rights by State</h3>
+    <p>
+      In addition to our general Privacy Policy and California-specific rights (CCPA/CPRA),
+      residents of the following US states have specific privacy rights under their state laws.
+      Clues Intelligence LTD honors all applicable state privacy rights.
+    </p>
+    <p>
+      <strong>We do not sell your personal data.</strong> We do not use your data for targeted advertising
+      or profiling in furtherance of decisions that produce legal or similarly significant effects.
+    </p>
+
+    <h3>Virginia (VCDPA)</h3>
+    <p>The Virginia Consumer Data Protection Act provides Virginia residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Correct</td><td>Correct inaccuracies in your personal data</td></tr>
+        <tr><td>Delete</td><td>Request deletion of your personal data</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising, sale of data, or profiling</td></tr>
+        <tr><td>Non-Discrimination</td><td>We will not discriminate against you for exercising rights</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Appeal:</strong> You may appeal any decision by emailing cluesnomads@gmail.com
+      with subject line "VCDPA Appeal." We will respond within 60 days.
+    </p>
+
+    <h3>Colorado (CPA)</h3>
+    <p>The Colorado Privacy Act provides Colorado residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Correct</td><td>Correct inaccuracies in your personal data</td></tr>
+        <tr><td>Delete</td><td>Request deletion of your personal data</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising, sale of data, or profiling</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Universal Opt-Out:</strong> We honor universal opt-out mechanisms (e.g., Global Privacy
+      Control signals) as required by Colorado law.
+    </p>
+    <p>
+      <strong>Appeal:</strong> You may appeal any decision by emailing cluesnomads@gmail.com
+      with subject line "CPA Appeal." If unsatisfied, contact the Colorado Attorney General.
+    </p>
+
+    <h3>Connecticut (CTDPA)</h3>
+    <p>The Connecticut Data Privacy Act provides Connecticut residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Correct</td><td>Correct inaccuracies in your personal data</td></tr>
+        <tr><td>Delete</td><td>Request deletion of your personal data</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising, sale of data, or profiling</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Appeal:</strong> You may appeal any decision by emailing cluesnomads@gmail.com
+      with subject line "CTDPA Appeal." We will respond within 60 days. If unsatisfied,
+      contact the Connecticut Attorney General.
+    </p>
+
+    <h3>Utah (UCPA)</h3>
+    <p>The Utah Consumer Privacy Act provides Utah residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Delete</td><td>Request deletion of data you provided to us</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising or sale of personal data</td></tr>
+      </tbody>
+    </table>
+
+    <h3>How to Exercise Your Rights</h3>
+    <ul>
+      <li><strong>Access / Download:</strong> Account Settings &gt; Download My Data</li>
+      <li><strong>Correct:</strong> Account Settings &gt; Edit Profile</li>
+      <li><strong>Delete:</strong> Account Settings &gt; Delete Account</li>
+      <li><strong>Opt Out:</strong> Click "Do Not Sell or Share My Personal Information" in the site footer</li>
+      <li><strong>Email:</strong> cluesnomads@gmail.com</li>
+    </ul>
+    <p>We respond to all verified requests within 45 days.</p>
+
+    <h3>Other States</h3>
+    <p>
+      Residents of other US states with applicable privacy laws have similar rights as described above.
+      Contact cluesnomads@gmail.com to exercise your rights. We will process your request in accordance
+      with the applicable law in your state of residence.
+    </p>
+
+    <h3>Contact for Privacy Inquiries</h3>
+    <p>
+      Email: cluesnomads@gmail.com<br />
+      Clues Intelligence LTD<br />
+      167-169 Great Portland Street, 5th Floor<br />
+      London W1W 5PF, United Kingdom
+    </p>
+
+    <p className="legal-version">Document Version 1.0</p>
+  </div>
+);
+
+// Export helper to check CCPA opt-out status (localStorage — for non-React contexts)
+// For React components, use useAuth().preferences?.ccpa_dns_optout instead
+export const getCcpaDnsOptOut = (): boolean => {
+  const stored = localStorage.getItem(DNS_STORAGE_KEY);
+  if (!stored) return false;
+  try {
+    const parsed = JSON.parse(stored);
+    return parsed.optedOut === true;
+  } catch {
+    return false;
+  }
+};
 
 export default LegalModal;

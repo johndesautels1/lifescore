@@ -2,7 +2,7 @@
 
 **Clues Intelligence LTD**
 **Effective Date:** January 23, 2026
-**Last Updated:** January 23, 2026
+**Last Updated:** February 28, 2026
 
 ---
 
@@ -156,21 +156,106 @@ You have the right to:
 
 ### 8.2 California Residents (CCPA/CPRA)
 
-You have the right to:
+If you are a California resident, you have the following rights under the California Consumer Privacy Act (CCPA) as amended by the California Privacy Rights Act (CPRA):
 
-- **Know** what personal information we collect and how it's used
-- **Delete** your personal information
-- **Correct** inaccurate personal information
-- **Opt-out** of the sale or sharing of personal information
-- **Non-discrimination** for exercising your rights
+| Right | Description | How to Exercise |
+|-------|-------------|-----------------|
+| **Right to Know** | Request what personal information we collect, use, and disclose | Account Settings > Download My Data or email us |
+| **Right to Delete** | Request deletion of your personal information | Account Settings > Delete Account or email us |
+| **Right to Correct** | Request correction of inaccurate personal information | Account Settings > Edit Profile or email us |
+| **Right to Opt-Out** | Opt out of the sale or sharing of personal information | "Do Not Sell or Share My Personal Information" link in footer |
+| **Right to Limit** | Limit use of sensitive personal information | We do not collect sensitive PI |
+| **Right to Non-Discrimination** | We will not discriminate for exercising your rights | Automatic |
 
-**We do not sell personal information.** If this changes, we will provide a "Do Not Sell or Share My Personal Information" link.
+**We do not sell your personal information.** We do not exchange personal data for monetary or other valuable consideration. We share data with service providers only as necessary to operate the Service (see Section 5).
 
-To exercise your rights, contact: cluesnomads@gmail.com
+To exercise your rights:
+- **Opt-Out:** Click "Do Not Sell or Share My Personal Information" in the site footer
+- **Data Access/Deletion:** Use Account Settings or email cluesnomads@gmail.com
+- **Authorized Agent:** An authorized agent may submit a request on your behalf with written permission
+- **Response Time:** We respond to all verified requests within 45 days
 
-### 8.3 Other US States
+#### Categories of Personal Information Collected (CCPA Disclosure)
 
-Residents of Virginia, Colorado, Connecticut, Utah, and other states with privacy laws have similar rights. Contact us to exercise them.
+| Category | Examples | Sold? | Shared with Service Providers? |
+|----------|----------|-------|-------------------------------|
+| Identifiers | Name, email address | No | Yes — authentication, support |
+| Internet activity | Pages visited, features used | No | Analytics (with consent) |
+| Comparison data | Cities compared, saved reports | No | AI providers (for analysis) |
+| AI conversations | Olivia/Emilia chat content | No | AI providers (for responses) |
+| Payment information | Processed by Stripe | No | Stripe only |
+
+We do not collect: Social Security numbers, driver's license numbers, financial account numbers, precise geolocation, racial/ethnic origin, biometric data, health information, or sexual orientation data.
+
+### 8.3 Virginia Residents (VCDPA)
+
+If you are a Virginia resident, the Virginia Consumer Data Protection Act (VCDPA) provides you with the following rights:
+
+| Right | Description | How to Exercise |
+|-------|-------------|-----------------|
+| **Right to Access** | Confirm whether we process your data and access it | Account Settings > Download My Data or email us |
+| **Right to Correct** | Correct inaccuracies in your personal data | Account Settings > Edit Profile or email us |
+| **Right to Delete** | Request deletion of your personal data | Account Settings > Delete Account or email us |
+| **Right to Data Portability** | Obtain a copy of your data in a portable format | Account Settings > Download My Data |
+| **Right to Opt Out** | Opt out of targeted advertising, sale of data, or profiling | "Do Not Sell or Share My Personal Information" link in footer |
+| **Right to Non-Discrimination** | We will not discriminate against you for exercising your rights | Automatic |
+
+**We do not sell your personal data or use it for targeted advertising or profiling in furtherance of decisions that produce legal or similarly significant effects.**
+
+You may appeal any decision we make regarding your rights request by emailing cluesnomads@gmail.com with the subject line "VCDPA Appeal." We will respond within 60 days.
+
+### 8.4 Colorado Residents (CPA)
+
+If you are a Colorado resident, the Colorado Privacy Act (CPA) provides you with the following rights:
+
+| Right | Description | How to Exercise |
+|-------|-------------|-----------------|
+| **Right to Access** | Confirm whether we process your data and access it | Account Settings > Download My Data or email us |
+| **Right to Correct** | Correct inaccuracies in your personal data | Account Settings > Edit Profile or email us |
+| **Right to Delete** | Request deletion of your personal data | Account Settings > Delete Account or email us |
+| **Right to Data Portability** | Obtain your data in a portable, readily usable format | Account Settings > Download My Data |
+| **Right to Opt Out** | Opt out of targeted advertising, sale of data, or profiling | "Do Not Sell or Share My Personal Information" link in footer |
+
+**We do not sell your personal data.** We do not use your data for targeted advertising or profiling in furtherance of decisions that produce legal or similarly significant effects.
+
+**Universal Opt-Out:** We honor universal opt-out mechanisms (e.g., Global Privacy Control signals) as required by Colorado law.
+
+You may appeal any decision we make regarding your rights request by emailing cluesnomads@gmail.com with the subject line "CPA Appeal." If you are not satisfied with our appeal response, you may contact the Colorado Attorney General at coag.gov.
+
+### 8.5 Connecticut Residents (CTDPA)
+
+If you are a Connecticut resident, the Connecticut Data Privacy Act (CTDPA) provides you with the following rights:
+
+| Right | Description | How to Exercise |
+|-------|-------------|-----------------|
+| **Right to Access** | Confirm whether we process your data and access it | Account Settings > Download My Data or email us |
+| **Right to Correct** | Correct inaccuracies in your personal data | Account Settings > Edit Profile or email us |
+| **Right to Delete** | Request deletion of your personal data | Account Settings > Delete Account or email us |
+| **Right to Data Portability** | Obtain your data in a portable, readily usable format | Account Settings > Download My Data |
+| **Right to Opt Out** | Opt out of targeted advertising, sale of data, or profiling | "Do Not Sell or Share My Personal Information" link in footer |
+
+**We do not sell your personal data or use it for targeted advertising.** We do not engage in profiling in furtherance of decisions that produce legal or similarly significant effects.
+
+You may appeal any decision we make regarding your rights request by emailing cluesnomads@gmail.com with the subject line "CTDPA Appeal." We will respond within 60 days. If you are not satisfied, you may contact the Connecticut Attorney General at portal.ct.gov/ag.
+
+### 8.6 Utah Residents (UCPA)
+
+If you are a Utah resident, the Utah Consumer Privacy Act (UCPA) provides you with the following rights:
+
+| Right | Description | How to Exercise |
+|-------|-------------|-----------------|
+| **Right to Access** | Confirm whether we process your data and access it | Account Settings > Download My Data or email us |
+| **Right to Delete** | Request deletion of data you provided to us | Account Settings > Delete Account or email us |
+| **Right to Data Portability** | Obtain your data in a portable, readily usable format | Account Settings > Download My Data |
+| **Right to Opt Out** | Opt out of targeted advertising or sale of personal data | "Do Not Sell or Share My Personal Information" link in footer |
+
+**We do not sell your personal data or use it for targeted advertising.**
+
+**Response Time:** We respond to all verified requests within 45 days.
+
+### 8.7 Other US States
+
+Residents of other states with applicable privacy laws have similar rights as described above. Contact cluesnomads@gmail.com to exercise your rights. We will process your request in accordance with the applicable law in your state of residence.
 
 ---
 
@@ -250,6 +335,6 @@ Additional comparison products (FAITH SCORE, VOTE SCORE, PLAY SCORE, etc.) will 
 
 *This Privacy Policy is provided in English. Translations may be available but the English version prevails in case of conflict.*
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Classification:** Public
 

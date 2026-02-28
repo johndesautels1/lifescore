@@ -1,7 +1,7 @@
 # LIFE SCORE - Legal Compliance Manual
 
-**Document Version:** 1.3
-**Last Updated:** February 26, 2026
+**Document Version:** 1.5
+**Last Updated:** February 28, 2026
 **Classification:** INTERNAL - Admin Access Only
 
 ---
@@ -19,6 +19,7 @@ London W1W 5PF
 United Kingdom
 
 **Company Type:** UK Limited Company
+**D-U-N-S Number:** 234489716
 **Admin Contact:** cluesnomads@gmail.com
 
 ---
@@ -32,13 +33,17 @@ United Kingdom
 | **Registration Required** | YES | UK-based company processing personal data |
 | **Registration URL** | https://ico.org.uk/for-organisations/register/ |
 | **Annual Fee** | ~£40-60 | Depends on organization size |
-| **Registration Status** | NOT STARTED | Complete before launch |
+| **Application Number** | **C1885368** | Submitted 2026-02-28 |
+| **Security Number** | **CSN7726118** | Quote this + reference number when contacting ICO |
+| **ICO Helpline** | 0303 123 1113 | Quote security number when calling |
+| **Registration Status** | REGISTERED | Confirmed 2026-02-28 |
 
 **Action Required:**
-1. Go to ico.org.uk
-2. Complete Data Protection Fee registration
-3. Pay annual fee
-4. Display registration number in Privacy Policy
+1. ~~Go to ico.org.uk~~ DONE
+2. ~~Complete Data Protection Fee registration~~ DONE — Application C1885368
+3. ~~Receive security number~~ DONE — CSN7726118
+4. Pay annual fee (upon invoice)
+5. Display registration number in Privacy Policy (once issued)
 
 ### 1.2 EU Representative
 
@@ -51,8 +56,9 @@ United Kingdom
 
 | Item | Status | Details |
 |------|--------|---------|
-| **Required** | NO | Only needed for US govt contracts or enterprise B2B |
-| **Notes** | N/A | Revisit if pursuing enterprise sales |
+| **D-U-N-S Number** | **234489716** | Registered with Dun & Bradstreet |
+| **Status** | OBTAINED | Active |
+| **Use Cases** | Enterprise B2B, business credit, vendor verification | Not required for consumer SaaS but good to have |
 
 ---
 
@@ -150,22 +156,70 @@ These laws only apply when you exceed thresholds:
 
 | State | Law | Revenue Threshold | Consumer Threshold | Status |
 |-------|-----|-------------------|-------------------|--------|
-| California | CCPA/CPRA | $25M+ | 100K+ consumers | DEFERRED |
-| Virginia | VCDPA | $25M+ | 100K+ consumers | DEFERRED |
-| Colorado | CPA | N/A | 100K+ consumers | DEFERRED |
-| Connecticut | CTDPA | $25M+ | 100K+ consumers | DEFERRED |
-| Utah | UCPA | $25M+ | 100K+ consumers | DEFERRED |
+| California | CCPA/CPRA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
+| Virginia | VCDPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
+| Colorado | CPA | N/A | 100K+ consumers | **IMPLEMENTED** |
+| Connecticut | CTDPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
+| Utah | UCPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
 
-**Current Status:** Below all thresholds - compliance deferred
-**Review Trigger:** Revisit at 10K users or $1M ARR
+**Current Status:** All 5 state privacy laws proactively implemented (2026-02-28). No registration fees — these are compliance-only laws.
+**Review Trigger:** Monitor for new state privacy laws annually
 
-### 3.2 When Compliance Required
+### 3.2 CCPA/CPRA Implementation (Completed 2026-02-28)
 
-When you hit thresholds, you must:
-- Add "Do Not Sell My Personal Information" link
-- Honor opt-out requests within 45 days
-- Provide data access/deletion mechanisms
-- Update Privacy Policy with state-specific disclosures
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| "Do Not Sell or Share" link | Footer link → LegalModal 'do-not-sell' page | DONE |
+| Opt-out mechanism | One-click button with localStorage + consent_logs audit trail | DONE |
+| Categories of PI disclosure | Table in Do Not Sell page listing all PI categories | DONE |
+| Right to Know | Account Settings > Download My Data (/api/user/export) | DONE |
+| Right to Delete | Account Settings > Delete Account (/api/user/delete) | DONE |
+| Right to Correct | Account Settings > Edit Profile | DONE |
+| Non-discrimination clause | Stated in Do Not Sell page | DONE |
+| Authorized agent provision | Documented in Do Not Sell page | DONE |
+| 45-day response commitment | Documented in Privacy Policy + Do Not Sell page | DONE |
+| Privacy Policy CCPA disclosures | Updated with full CCPA/CPRA rights table + PI categories | DONE |
+
+**Technical Components:**
+- `src/components/LegalModal.tsx` — DoNotSellContent component with opt-out UI
+- `src/components/Footer.tsx` — "Do Not Sell or Share My Personal Information" link
+- `api/consent/log.ts` — Accepts `ccpa_dns` consent type
+- `supabase/migrations/20260228_ccpa_dns_optout.sql` — Column + index + reporting view
+- **Logged-in users:** Persisted to `user_preferences.ccpa_dns_optout` (Supabase) — survives device/browser changes
+- **Anonymous users:** localStorage key `clues_ccpa_dns_optout` as fallback
+- All actions logged to `consent_logs` audit trail (consent type: `ccpa_dns`)
+- Database view: `ccpa_dns_optouts` — for compliance reporting
+- Export helper: `getCcpaDnsOptOut()` for non-React contexts; React components use `useAuth().preferences?.ccpa_dns_optout`
+
+### 3.3 Virginia, Colorado, Connecticut & Utah Implementation (Completed 2026-02-28)
+
+All four state privacy laws were implemented simultaneously. These laws do **not** require registration or fees — they are compliance-only laws that require proper disclosures and consumer rights mechanisms.
+
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| Privacy Policy disclosures | Full state-specific sections in Privacy Policy (Sections 8.3–8.6) | DONE |
+| Consumer rights (access, delete, correct) | Already implemented via GDPR/CCPA features | DONE |
+| Opt-out mechanism | Shared "Do Not Sell" button (same as CCPA) | DONE |
+| Appeal process | Email-based appeal for VA, CO, CT (documented in each section) | DONE |
+| Universal opt-out (Colorado) | GPC signal recognition documented | DONE |
+| "US State Privacy Rights" page | New `state-privacy` page in LegalModal | DONE |
+| Footer link | "US State Privacy Rights" link added to footer | DONE |
+
+**Technical Components:**
+- `src/components/LegalModal.tsx` — New `StatePrivacyContent` component + `state-privacy` page type
+- `src/components/Footer.tsx` — "US State Privacy Rights" link added alongside existing legal links
+- `docs/legal/PRIVACY_POLICY.md` — Sections 8.3 (Virginia), 8.4 (Colorado), 8.5 (Connecticut), 8.6 (Utah), 8.7 (Other States)
+- Existing CCPA opt-out mechanism (`Do Not Sell` button, consent logging) covers all state opt-out requirements
+
+**Key Differences Between States:**
+
+| Feature | VA (VCDPA) | CO (CPA) | CT (CTDPA) | UT (UCPA) |
+|---------|------------|----------|------------|-----------|
+| Right to Correct | Yes | Yes | Yes | No |
+| Appeal Process | Required (60 days) | Required (AG referral) | Required (60 days, AG referral) | Not required |
+| Universal Opt-Out | Not required | **Required (GPC)** | Not required | Not required |
+| Cure Period | 30 days (until 2025) | None | 60 days (until 2025) | 30 days |
+| Non-Discrimination | Yes | Yes | Yes | Not explicit |
 
 ---
 
@@ -288,6 +342,74 @@ London W1W 5PF
 
 ---
 
+## Section 7B: Trademark Strategy
+
+### 7B.1 Current Status
+
+All marks are currently used with the ™ symbol (unregistered common law rights). No marks have been formally registered with any trademark office. The site footer states: *"CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD."*
+
+**Full strategy document:** `docs/legal/TRADEMARK_STRATEGY.md`
+
+### 7B.2 Marks Requiring Registration
+
+**Tier 1 — Core Brand (Register Immediately):**
+
+| Mark | Type | Status |
+|------|------|--------|
+| **CLUES** | Word mark — umbrella brand | NOT FILED |
+| **LIFE SCORE** | Word mark — flagship product | NOT FILED |
+| **SMART** | Word mark — proprietary technology | NOT FILED |
+
+**Tier 2 — Acronym Expansions (When Budget Allows):**
+
+| Mark | Full Form | Status |
+|------|-----------|--------|
+| **CLUES** | Comprehensive Location Utility & Evaluation System | NOT FILED |
+| **SMART** | Strategic Market Assessment & Rating Technology | NOT FILED |
+| **LIFE SCORE** | Legal Independence & Freedom Evaluation | NOT FILED |
+
+**Tier 3 — Product Module Names (19 modules — file at each product launch):**
+FAITH SCORE, VOTE SCORE, PLAY SCORE, GREEN SCORE, WORK SCORE, LEARN SCORE, HEALTH SCORE, SAFE SCORE, COST SCORE, CONNECT SCORE, CULTURE SCORE, FOOD SCORE, TRANSIT SCORE, WEATHER SCORE, SOCIAL SCORE, STARTUP SCORE, RETIRE SCORE, FAMILY SCORE, EXPAT SCORE
+
+**Tier 4 — AI Persona Names (Consider Later):**
+Olivia, Cristiano, Emilia — common names are harder to register; protected via IP Assignment Deed in the interim.
+
+### 7B.3 Filing Priority
+
+| Phase | Marks | Jurisdiction | Est. Cost |
+|-------|-------|-------------|-----------|
+| **Phase 1 (Now)** | CLUES, LIFE SCORE, SMART | UK IPO | £660 (3 marks × 2 classes) |
+| **Phase 2 (Revenue)** | CLUES, LIFE SCORE, SMART | USPTO | $1,500 (3 marks × 2 classes) |
+| **Phase 3 (Budget)** | Acronym expansions | UK + US | £660 + $1,500 |
+| **Phase 4 (Per Launch)** | Each [X] SCORE module | UK + US | ~£620 per module |
+
+**Nice Classes:** Class 9 (software) + Class 42 (SaaS) minimum.
+
+### 7B.4 ™ vs ® Usage
+
+| Symbol | Meaning | Current Use |
+|--------|---------|-------------|
+| ™ | Unregistered trademark (common law) | **In use now** — footer, branding |
+| ® | Registered trademark | **DO NOT USE** until registration granted |
+
+### 7B.5 Key Prerequisite
+
+The **IP Assignment Deed** (`docs/legal/IP_ASSIGNMENT_DEED.md`) must be signed **before** filing any trademark applications. The company (Clues Intelligence LTD) — not the individual — should be the trademark applicant. This deed assigns all IP from John E. Desautels II to the company.
+
+**Status:** READY TO SIGN (requires wet-ink signature + witness)
+
+### 7B.6 Existing IP Protection
+
+| Protection | Status |
+|-----------|--------|
+| IP Assignment Deed | Ready to sign |
+| Terms of Service IP clause | Active |
+| Footer trademark notice (™) | Active |
+| Copyright in source code | Automatic (UK law) |
+| Common law / passing off rights | Active through commercial use |
+
+---
+
 ## Section 8: Legal Documents Checklist
 
 ### 8.1 Required Documents
@@ -298,11 +420,17 @@ London W1W 5PF
 | Terms of Service | `/legal/terms` | ACTIVE |
 | Cookie Policy | `/legal/cookies` | ACTIVE |
 | Refund Policy | `/legal/refunds` | ACTIVE |
+| IP Assignment Deed | `docs/legal/IP_ASSIGNMENT_DEED.md` | READY TO SIGN |
+| Trademark Strategy | `docs/legal/TRADEMARK_STRATEGY.md` | ACTIVE |
 
 ### 8.2 Document Update Log
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-28 | Trademark Strategy | Created comprehensive trademark strategy — 4 tiers of marks (core brand, acronym expansions, module names, AI personas), filing jurisdictions (UK/US/EU), cost estimates, Nice classification, phased registration plan | Claude Opus 4.6 |
+| 2026-02-28 | Legal Compliance | US State Privacy Rights: VA (VCDPA), CO (CPA), CT (CTDPA), UT (UCPA) — full disclosures in Privacy Policy, new StatePrivacyContent component in LegalModal, footer link, appeal processes documented | Claude Opus 4.6 |
+| 2026-02-28 | Legal Compliance | ICO Registration application number C1885368 logged — status updated from NOT STARTED to APPLICATION SUBMITTED | Claude Opus 4.6 |
+| 2026-02-28 | IP Assignment Deed | Created IP Assignment Deed — founder-to-company assignment of all IP (software, product names, AI personas, methodologies). Requires wet-ink signature + witness. | Claude Opus 4.6 |
 | 2026-02-26 | All 6 Manuals | **Major security audit:** 47 fixes — 20+ endpoints authenticated (total 38+), IDOR vulnerability fixed, CORS hardened, XSS patched, 87 debug console.log removed, admin emails centralized, API key leak fixed, tie victory text fixed, dynamic year, dead code cleanup. GDPR Article 32 compliance strengthened. | Claude Opus 4.6 |
 | 2026-02-14 | Legal, App Schema, Judge Equations, User, CS, Tech | Comprehensive update for 40 commits — collapsible panels, cost dashboard fix, video URL expiration, GoToMyNewCity, 200MB storage limit, GDPR timeout safety, HeyGen reliability, Supabase resilience | Claude Opus 4.6 |
 | 2026-02-13 | All Manuals | Comprehensive update for ~200 commits of changes | Claude Opus 4.6 |
@@ -427,6 +555,9 @@ To add new authorized users:
 ### 10.2 Important Links
 
 - ICO Registration: https://ico.org.uk/for-organisations/register/
+- UK IPO (Trademarks): https://www.gov.uk/apply-for-a-trade-mark
+- USPTO (US Trademarks): https://www.uspto.gov/trademarks
+- EUIPO (EU Trademarks): https://euipo.europa.eu
 - Supabase Dashboard: https://supabase.com/dashboard
 - Vercel Dashboard: https://vercel.com/dashboard
 - Stripe Dashboard: https://dashboard.stripe.com

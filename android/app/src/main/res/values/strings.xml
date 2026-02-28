@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LIFE SCORE</string>
+    <string name="title_activity_main">LIFE SCORE</string>
+    <string name="package_name">com.cluesintelligence.lifescore</string>
+    <string name="custom_url_scheme">com.cluesintelligence.lifescore</string>
+</resources>

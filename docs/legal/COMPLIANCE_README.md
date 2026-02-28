@@ -2,7 +2,7 @@
 
 **Company:** Clues Intelligence LTD (United Kingdom)
 **Markets:** United Kingdom, European Union, United States
-**Last Updated:** January 23, 2026
+**Last Updated:** February 28, 2026
 
 ---
 
@@ -70,6 +70,7 @@
 | B2 | Data Breach Response Plan | [x] | `DATA_BREACH_RESPONSE_PLAN.md` | `_____` | 2026-01-23 |
 | B3 | Employee Data Handling Policy | [x] | `EMPLOYEE_DATA_HANDLING_POLICY.md` | `_____` | 2026-01-23 |
 | B4 | Subprocessor Management Policy | [x] | `SUBPROCESSOR_MANAGEMENT_POLICY.md` | `_____` | 2026-01-23 |
+| B5 | IP Assignment Deed (Founder → Company) | [x] | `IP_ASSIGNMENT_DEED.md` | `_____` | 2026-02-28 |
 
 ### Section C: Technical Implementation
 
@@ -87,9 +88,9 @@
 
 | # | Item | Status | Reference | Date |
 |---|------|--------|-----------|------|
-| D1 | ICO Registration (UK) | [ ] | Registration #: _______ | - |
-| D2 | EU Representative Appointed | [ ] | Company: _______ | - |
-| D3 | DUNS Number | [ ] | #: _______ | - |
+| D1 | ICO Registration (UK) | [x] | App C1885368 / Security CSN7726118 | 2026-02-28 |
+| D2 | EU Representative Appointed | [x] | N/A — Not required (UK company post-Brexit) | 2026-02-28 |
+| D3 | DUNS Number | [x] | D-U-N-S #: 234489716 | 2026-02-28 |
 
 ### Section E: Third-Party Agreements (DPAs)
 
@@ -100,22 +101,39 @@
 | E3 | OpenAI | Olivia AI Assistant | [x] | [x] | 2026-01-23 |
 | E4 | Anthropic | Claude LLM Evaluation | [x] | [x] | 2026-01-23 |
 | E5 | Google (Gemini) | LLM Evaluation | [x] | [x] | 2026-01-23 |
-| E6 | xAI (Grok) | LLM Evaluation | [ ] | [ ] | - |
-| E7 | Perplexity | LLM Evaluation | [ ] | [ ] | - |
-| E8 | D-ID | Video Avatar | [ ] | [ ] | - |
-| E9 | Gamma | Report Generation | [ ] | [ ] | - |
+| E6 | xAI (Grok) | LLM Evaluation | [~] | [ ] | Requested 2026-02-28 |
+| E7 | Perplexity | LLM Evaluation | [~] | [ ] | Requested 2026-02-28 |
+| E8 | D-ID | Video Avatar | [~] | [ ] | Requested 2026-02-28 |
+| E9 | Gamma | Report Generation | [~] | [ ] | Requested 2026-02-28 |
 | E10 | Stripe | Payments | [x] | [x] | 2026-01-23 |
-| E11 | Tavily | Web Search | [ ] | [ ] | - |
+| E11 | Tavily | Web Search | [~] | [ ] | Requested 2026-02-28 |
 
 ### Section F: US State Compliance
 
 | # | State | Law | Requirements Met | Date |
 |---|-------|-----|------------------|------|
-| F1 | California | CCPA/CPRA | [ ] | - |
-| F2 | Virginia | VCDPA | [ ] | - |
-| F3 | Colorado | CPA | [ ] | - |
-| F4 | Connecticut | CTDPA | [ ] | - |
-| F5 | Utah | UCPA | [ ] | - |
+| F1 | California | CCPA/CPRA | [x] | 2026-02-28 |
+| F2 | Virginia | VCDPA | [x] | 2026-02-28 |
+| F3 | Colorado | CPA | [x] | 2026-02-28 |
+| F4 | Connecticut | CTDPA | [x] | 2026-02-28 |
+| F5 | Utah | UCPA | [x] | 2026-02-28 |
+
+### Section G: Intellectual Property & Trademarks
+
+| # | Item | Status | File/Reference | Date |
+|---|------|--------|----------------|------|
+| G1 | IP Assignment Deed (Founder → Company) | [x] | `IP_ASSIGNMENT_DEED.md` (READY TO SIGN) | 2026-02-28 |
+| G2 | Trademark: CLUES | [ ] | UK IPO — Not filed | — |
+| G3 | Trademark: LIFE SCORE | [ ] | UK IPO — Not filed | — |
+| G4 | Trademark: SMART | [ ] | UK IPO — Not filed | — |
+| G5 | Trademark: CLUES (US) | [ ] | USPTO — Not filed | — |
+| G6 | Trademark: LIFE SCORE (US) | [ ] | USPTO — Not filed | — |
+| G7 | Trademark: SMART (US) | [ ] | USPTO — Not filed | — |
+| G8 | Trademark Strategy Document | [x] | `TRADEMARK_STRATEGY.md` | 2026-02-28 |
+
+**Full strategy:** `docs/legal/TRADEMARK_STRATEGY.md`
+**Priority:** File G2–G4 (UK) first (~£660 total), then G5–G7 (US) when revenue starts (~$1,500 total)
+**Prerequisite:** Sign IP Assignment Deed (G1) before filing any trademark applications
 
 ---
 
@@ -154,6 +172,10 @@
 | 2026-01-23 | Claude Code | Acceptable Use (A4), Refund Policy (A5) - Section A complete |
 | 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
 | 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
+| 2026-02-28 | Claude Opus 4.6 | CCPA/CPRA compliance (F1): Do Not Sell link, opt-out modal, consent logging, Privacy Policy update, all 5 Emilia manuals updated |
+| 2026-02-28 | Claude Opus 4.6 | US State Privacy Rights (F2-F5): VA/CO/CT/UT full disclosures in Privacy Policy, new StatePrivacyContent in LegalModal, footer link, Legal Compliance Manual updated |
+| 2026-02-28 | Claude Opus 4.6 | Trademark Strategy (G2-G8): Full trademark strategy doc, Section G added to checklist, Legal Compliance Manual Section 7B, CS Manual Section 6.7 |
+| 2026-02-28 | Claude Opus 4.6 | IP Assignment Deed (B5): Founder-to-company IP assignment, all products/personas/code covered |
 | 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
 
 ---
