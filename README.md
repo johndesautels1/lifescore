@@ -1,897 +1,508 @@
-# CLUES LIFE SCORE
+# LIFE SCORE
 
 **Legal Independence & Freedom Evaluation**
 
-Compare cities across 100 freedom metrics in 6 categories. Part of the CLUES (Comprehensive Location & Utility Evaluation System) platform.
+Compare cities across **100 freedom metrics** in **6 categories** using multi-AI consensus scoring. Part of the **CLUES** (Comprehensive Location & Utility Evaluation System) platform by **Clues Intelligence LTD**.
 
----
-## 🚨 CRITICAL: Performance Audit - February 2, 2026 🚨
-
-**READ:** `docs/PERFORMANCE_AUDIT_20260202.md`
-
-Site takes 1-3 minutes to load. Bundle is 1.36MB (should be <500KB). Full audit with fix recommendations in the linked document.
+**Live:** [lifescore.app](https://lifescore.app) | **Stack:** React 19 + TypeScript + Vite + Vercel + Supabase
 
 ---
 
-## 🚨 HANDOFF: PRICING TIER FIX (January 28, 2026) 🚨
+## Overview
 
-**Session ID:** `LS-20260128-002`
-**Status:** AUDIT COMPLETE - 20+ Files Need Fixing
+LIFE SCORE evaluates and compares cities on 100 legal freedom metrics spanning personal autonomy, housing, business regulation, transportation, policing, and speech/lifestyle. Users select two cities, choose Standard (1 AI) or Enhanced (5 AI) mode, and receive a detailed comparison with scores, evidence, AI judge verdict, visual reports, cinematic videos, and AI assistant analysis.
 
-### Completed This Session
-1. ✅ Built Emilia Help Widget (floating teal bubble, modal with 3 tabs, AI chat)
-2. ✅ Added voice INPUT (microphone button) to Emilia chat
-3. ✅ Fixed link handling (internal anchors stay in modal, external links open new tabs)
-4. ✅ Audited ALL tier/pricing references across codebase
-5. ✅ Created `docs/PRICING_TIER_AUDIT.md` with correct values
+---
 
-### CRITICAL: Files to Fix (Priority Order)
+## Architecture
 
-1. **`src/hooks/useTierAccess.ts`** - SOURCE OF TRUTH for tier limits
-2. **`src/components/PricingModal.tsx`** - User-facing pricing display
-3. **`src/components/PricingPage.tsx`** - Pricing page
-4. **`src/components/FeatureGate.tsx`** - Feature gating logic
-5. **`docs/manuals/USER_MANUAL.md`** - ✅ DONE (uses NAVIGATOR)
-6. **`docs/manuals/CUSTOMER_SERVICE_MANUAL.md`** - ✅ DONE (uses NAVIGATOR)
-7. **`docs/manuals/TECHNICAL_SUPPORT_MANUAL.md`** - Fix limits
-8. **`api/emilia/manuals.ts`** - Fix EMBEDDED_MANUALS content (lines 36-300)
-
-### Correct Values (All Per Month)
-
-| Tier | Internal | Price | LLMs | Comparisons | Olivia | Gamma |
-|------|----------|-------|------|-------------|--------|-------|
-| FREE | `free` | $0 | 1 | 1 | NO | NO |
-| NAVIGATOR | `pro` | $29/$249 | 1 | 1 | 15min | 1 |
-| SOVEREIGN | `enterprise` | $99/$899 | 5 | 1 (5 LLMs) | 60min | 1 (5 LLMs) |
-
-### Start Command
 ```
-Read D:\lifescore\docs\PRICING_TIER_AUDIT.md
+Frontend (React 19 + TypeScript + Vite)
+    │
+    ├── 55 Components  ·  21 Hooks  ·  18 Services
+    │
+    ▼
+Vercel Serverless Functions (Node.js 20)
+    │
+    ├── 52 API Endpoints  ·  15 Shared Modules
+    │
+    ▼
+Supabase (PostgreSQL)
+    │
+    ├── 26 Tables  ·  6 Storage Buckets  ·  45 Migrations
+    │
+    ▼
+External Services
+    ├── AI Evaluators:  Claude Sonnet 4.5 · GPT-4o · Gemini 3.1 Pro · Grok 4 · Perplexity Sonar
+    ├── AI Judge:       Claude Opus 4.5 (consensus analysis)
+    ├── Web Research:   Tavily API
+    ├── Payments:       Stripe
+    ├── Reports:        Gamma (PDF/PPTX generation)
+    ├── Video:          Kling AI · Replicate · InVideo · HeyGen
+    ├── Voice/Avatar:   ElevenLabs · OpenAI TTS · D-ID · Simli
+    └── Email:          Resend
 ```
 
 ---
 
-## AVATAR SYSTEM - SIMLI + REPLICATE (January 24, 2026)
+## Scoring System
 
-**Conversation ID:** `LIFESCORE-AVATAR-20260124`
-**Status:** IMPLEMENTATION COMPLETE - TESTING REQUIRED
-
-### Overview
-
-Replaced expensive D-ID/HeyGen ($500+/month) with cost-effective solution:
-- **Olivia (Interactive Chat):** Simli AI - Real-time photorealistic streaming avatar
-- **Cristiano (Judge Videos):** Replicate Wav2Lip - Fast lip-sync video generation (~6 sec)
-
-**Monthly Cost: ~$50-55 (vs $500+ previously) = 90% savings**
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    OLIVIA (Interactive Chat)                        │
-│  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  User speaks/types → GPT responds → Simli streams video      │  │
-│  │  • Real-time WebRTC streaming (<500ms latency)               │  │
-│  │  • Your Olivia photo → photorealistic avatar                 │  │
-│  │  • User can interrupt mid-speech                             │  │
-│  │  • Cost: $49/mo Pro plan (1000 min shared)                   │  │
-│  └───────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                 CRISTIANO (Judge Video Reports)                    │
-│  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  Judge verdict → Replicate Wav2Lip → MP4 video               │  │
-│  │  • Fast video generation (~6 seconds)                        │  │
-│  │  • Your Cristiano photo → professional presenter            │  │
-│  │  • Cached results (same comparison = same video)             │  │
-│  │  • Cost: ~$0.005 per video                                   │  │
-│  └───────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Environment Variables Required
-
-```bash
-# Simli AI (Olivia interactive chat)
-SIMLI_API_KEY=simli_xxxxxxxx
-SIMLI_FACE_ID=olivia-face-id        # Created after uploading Olivia image
-
-# Replicate (Cristiano judge videos)
-REPLICATE_API_TOKEN=r8_xxxxxxxx
-
-# ElevenLabs (TTS for Cristiano - optional, can use free browser TTS)
-ELEVENLABS_API_KEY=xi_xxxxxxxx       # Optional
-ELEVENLABS_VOICE_ID=cristiano-voice # Optional
-```
-
-### API Endpoints
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/avatar/simli-session` | POST | Create Simli streaming session for Olivia |
-| `/api/avatar/simli-speak` | POST | Send text for Olivia to speak |
-| `/api/avatar/generate-judge-video` | POST | Generate Cristiano video via Replicate |
-| `/api/avatar/video-status` | GET | Check video generation status |
-
-### Database Schema
-
-```sql
--- Video cache table (prevents regenerating same videos)
-CREATE TABLE IF NOT EXISTS public.avatar_videos (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  comparison_id TEXT NOT NULL,           -- Hash of city pair + verdict
-  video_url TEXT NOT NULL,               -- Replicate output URL
-  script TEXT NOT NULL,                  -- Judge script used
-  duration_seconds INTEGER,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  expires_at TIMESTAMPTZ,                -- For cleanup
-  UNIQUE(comparison_id)
-);
-```
-
-### Components
-
-| Component | File | Purpose |
-|-----------|------|---------|
-| `OliviaAvatar` | `src/components/OliviaAvatar.tsx` | Simli streaming video player |
-| `JudgeVideo` | `src/components/JudgeVideo.tsx` | Replicate video player |
-| `useSimli` | `src/hooks/useSimli.ts` | Simli session management |
-| `useJudgeVideo` | `src/hooks/useJudgeVideo.ts` | Video generation & caching |
-
-### Types
-
-```typescript
-// src/types/avatar.ts
-interface SimliSession {
-  sessionId: string;
-  streamUrl: string;
-  faceId: string;
-  status: 'connecting' | 'connected' | 'speaking' | 'idle' | 'error';
-}
-
-interface JudgeVideo {
-  id: string;
-  comparisonId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  videoUrl?: string;
-  script: string;
-  error?: string;
-}
-```
-
-### Integration Points
-
-| Existing Component | Integration |
-|--------------------|-------------|
-| `AskOlivia.tsx` | Replace D-ID with `OliviaAvatar` component |
-| `JudgeTab.tsx` | Add `JudgeVideo` component for verdict presentations |
-
-### Cost Comparison
-
-| Solution | Olivia (Chat) | Cristiano (Videos) | Total/Month |
-|----------|---------------|---------------------|-------------|
-| **D-ID (old)** | N/A | $2,700+ | $2,700+ |
-| **HeyGen (old)** | N/A | $500+ | $500+ |
-| **Simli + Replicate (new)** | $49 | $2-5 | **$51-54** |
-
-### Setup Steps
-
-1. **Simli Setup:**
-   - Sign up at https://simli.com
-   - Upload Olivia image to create face
-   - Copy API key and face ID to Vercel env vars
-
-2. **Replicate Setup:**
-   - Sign up at https://replicate.com
-   - Get API token from account settings
-   - Add to Vercel env vars
-
-3. **Run Database Migration:**
-   ```bash
-   # Run migration for video caching
-   supabase db push
-   ```
-
-4. **Test:**
-   - Olivia: Open Ask Olivia tab, should see streaming avatar
-   - Cristiano: Generate judge report, video should appear
-
-### Files Created This Session
-
-```
-api/avatar/simli-session.ts      # Simli session creation
-api/avatar/simli-speak.ts        # Text-to-speech streaming
-api/avatar/generate-judge-video.ts # Replicate video generation
-api/avatar/video-status.ts       # Check generation status
-src/components/OliviaAvatar.tsx  # Olivia streaming component
-src/components/OliviaAvatar.css  # Styling
-src/components/JudgeVideo.tsx    # Cristiano video component
-src/components/JudgeVideo.css    # Styling
-src/hooks/useSimli.ts            # Simli hook
-src/hooks/useJudgeVideo.ts       # Video generation hook
-src/types/avatar.ts              # Type definitions
-supabase/migrations/003_avatar_videos.sql # Video cache table
-```
-
-### Files Modified This Session
-
-```
-src/components/AskOlivia.tsx     # Integrated OliviaAvatar
-src/components/JudgeTab.tsx      # Integrated JudgeVideo
-README.md                        # This documentation
-```
-
----
-
-## PREMIUM PRICING SYSTEM (Updated January 28, 2026)
-
-**Conversation ID:** `LIFESCORE-PRICING-20260128`
-**Status:** AUDIT COMPLETE - Implementation Pending
-
-### Pricing Tiers (CONFIRMED)
-
-| Internal ID | Display Name | Monthly | Annual |
-|-------------|--------------|---------|--------|
-| `free` | **FREE** | $0 | $0 |
-| `pro` | **NAVIGATOR** | $29 | $249 |
-| `enterprise` | **SOVEREIGN** | $99 | $899 |
-
-### Feature Matrix (CONFIRMED - All Limits Per Month)
-
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|------|-----------|-----------|
-| **LLM Providers** | 1 | 1 (simple) | 5 (enhanced) |
-| **Comparisons** | 1/month | 1/month | 1/month (all 5 LLMs) |
-| **Olivia AI** | NO | 15 min (3×5min) | 60 min |
-| **Gamma Reports** | NO | 1/month | 1/month (all 5 LLMs) |
-| **Comparison Images** | NO | 1 set/month | 1 set/month |
-| **Judge Verdict** | NO | 1/month (video+summary+details+court order) | 1/month |
-| **Comparison Shorts** | NO | 1 set/month | 1 set/month |
-| **Customer Support** | NO | Chat only | Phone + Video + 60min tech |
-| **Enhanced Mode** | NO | NO | YES |
-
-### ⚠️ CRITICAL: Tier Information Needs Fixing
-
-**See:** `docs/PRICING_TIER_AUDIT.md` for complete list of 20+ files with incorrect tier information.
-
-**Status (2026-02-02):** ✅ All tier naming standardized
-- Manuals use "NAVIGATOR" (not "PIONEER")
-- Pricing shows "$29/$99"
-- All tiers show "1 comparison/month"
-- Olivia uses "15 min/month" or "60 min/month"
-
-### Stripe Integration
-
-**Environment Variables Required:**
-```
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_NAVIGATOR_MONTHLY=price_...
-STRIPE_PRICE_NAVIGATOR_ANNUAL=price_...
-STRIPE_PRICE_SOVEREIGN_MONTHLY=price_...
-STRIPE_PRICE_SOVEREIGN_ANNUAL=price_...
-```
-
-**API Endpoints:**
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/stripe/create-checkout-session` | POST | Start Stripe checkout |
-| `/api/stripe/webhook` | POST | Handle Stripe events |
-| `/api/stripe/create-portal-session` | POST | Open billing portal |
-| `/api/stripe/get-subscription` | GET | Get current subscription |
-
-**Database Migration:**
-Run `supabase/migrations/002_subscriptions_and_usage.sql` to create:
-- `subscriptions` table (Stripe subscription data)
-- `usage_tracking` table (monthly feature limits)
-
-### Components
-
-| Component | Purpose |
-|-----------|---------|
-| `PricingPage.tsx` | Premium pricing cards with Stripe checkout |
-| `FeatureGate.tsx` | Lock overlay for gated features |
-| `useTierAccess.ts` | Hook for checking tier limits |
-
----
-
-## COMPLIANCE REMINDER (Before Launch)
-
-| Task | Priority | Status | Action |
-|------|----------|--------|--------|
-| ICO Registration (UK) | **HIGH** | Pending | https://ico.org.uk/for-organisations/register/ |
-| EU Representative | **HIGH** | Pending | Sign up with GDPR-Rep.eu (~€100-500/yr) |
-| 5 DPA Emails | LOW | Pending | Templates in `docs/legal/COMPLIANCE_README.md` |
-
-**Full compliance checklist:** `docs/legal/COMPLIANCE_README.md`
-
----
-
-## CODEBASE AUDIT STATUS (January 23, 2026)
-
-**Conversation ID:** `LIFESCORE-AUDIT-20260123-001`
-
-### Completed Fixes (11 items)
-- [x] Missing Vercel timeout configs (7 endpoints) → `a606537`
-- [x] Rate limiting on all 11 API endpoints → `0914b8c`
-- [x] CORS extraction to shared helper → `0dd3bbb`
-- [x] `as any` type escapes (4 instances) → `ef587fc`
-- [x] Empty catch handlers (10 instances) → `845e4b6`
-- [x] fetchWithTimeout extraction (12→2 copies, -179 lines) → `0edce29`
-- [x] Static OG image for social sharing → `1527edc`
-- [x] Company name standardization → `2de0f27`
-- [x] PostgrestBuilder TypeScript fix → `ff36bbc`
-- [x] Undefined vars in streams.ts → `5ebb26f`
-- [x] Dead Code folder excluded from git → `16bc391`
-
-### Optional Remaining (1 item - low priority)
-
-| # | Issue | Effort | Recommendation |
-|---|-------|--------|----------------|
-| 1 | **Metrics consolidation** (5,000+ lines duplicate in 3 files) | 2-3 hrs | Optional - low priority refactor |
-
-### ✅ AUDIT COMPLETE
-All critical and recommended items have been addressed. The metrics consolidation is optional tech debt that can be tackled in a future session if desired.
-
----
-
-## CURRENT STATUS (January 22, 2026)
-
-### Latest Session: 2026-01-22
-**Conversation ID:** `LIFESCORE-OLIVIA-2026-0122-S2`
-
----
-
-## 🚨 HANDOFF: ASK OLIVIA - ENHANCED CONTEXT BUILDER 🚨
-
-**Date:** 2026-01-22
-**Status:** D-ID VIDEO AVATAR COMPLETE - NEED ENHANCED CONTEXT
-
-### What's Working
-- D-ID video avatar in Ask Olivia TV viewport (`data-mode="full"`)
-- OpenAI Assistant brain for intelligent responses
-- Voice input and transcript replay
-- OliviaChatBubble (text chat) on all other pages
-
-### Immediate Tasks for Next Session
-
-1. **BUG FIX:** Letter "C" not typing in Ask Olivia text input
-
-2. **IMPLEMENT OPTION A: Enhanced Context Builder**
-   - File: `api/olivia/context.ts`
-   - Include ALL 100 metrics (not just top 10)
-   - Increase token limit: 8000 → 16000
-   - Add metric display names from `gammaService.ts`
-   - Generate text summary of comparison for richer context
-
-3. **Goal:** Olivia can answer ANY question about the user's specific LIFE SCORE report with full detail
-
-### Start Next Session With:
-```
-Read D:\LifeScore\HANDOFF_2026_0122_SESSION2.md
-```
-
----
-
-## Previous Handoff: PROMPT UNIFICATION & SCORING STANDARDIZATION
-
-**Date:** 2026-01-21
-**Status:** PLANNING COMPLETE - READY FOR IMPLEMENTATION
-
-### Problem Statement
-
-All 6 LLMs were consulted about prompt issues. They identified critical conflicts:
-1. **buildBasePrompt()** uses A-E letter grades
-2. **All addendums + system prompts** use 0-100 numeric
-3. **Perplexity system prompt** uses different JSON keys (`city1LegalScore` vs `city1Legal`)
-4. LLMs receive 2-4 conflicting instructions per call
-
-### Consensus from 6 LLM Consultations
-
-| LLM | Recommendation |
-|-----|----------------|
-| Sonnet | Use 0-100, fix string vs number bug in parseResponse |
-| GPT-4o | Use 0-100 with anchored bands (95-100, 85-94, 70-84, 50-69, 30-49, 10-29, 0-9) |
-| Gemini | Use 0-100, define scale once in system prompt |
-| Grok | Use 0-100, standardize temp to 0.3, add retry logic |
-| Perplexity | Use 0-100 or A-E but NOT both |
-| Opus | Use 0-100, maps naturally to percentages |
-
-### Approved Implementation Plan
-
-**FILE: `api/evaluate.ts` (ONLY file that needs changes)**
-
-1. **Remove A-E from buildBasePrompt() (lines 231-298)**
-   - Replace letter grade tables with 5 anchor bands
-   - Keep JSON keys as `city1Legal` (no suffix)
-
-2. **Add Anchor Bands (5 buckets per user preference)**
-   ```
-   90-100: Fully legal/unrestricted (most free)
-   70-89:  Generally permissive with limitations
-   50-69:  Moderate restrictions
-   30-49:  Significant restrictions
-   0-29:   Prohibited/heavily restricted (least free)
-   ```
-
-3. **Fix parseResponse() string vs number bug (lines 389-397)**
-   - Add `Number()` coercion for safety
-   - Current: `const s = numeric ?? 50` (fails if string)
-   - Fixed: `const s = Number(numeric) || 50`
-
-4. **Remove duplicate scale definitions**
-   - Keep scale ONLY in system prompt (not in addendums)
-   - Addendums reference system prompt instead
-
-5. **Add explicit metric count after metric list**
-   - Add: "There are exactly N metrics. Return exactly N evaluations."
-
-6. **Standardize JSON keys to `city1Legal` (no suffix)**
-   - Fix Perplexity system prompt (line 1220) to use `city1Legal` not `city1LegalScore`
-
-### Files Verified - No Hidden Files Missed
-
-| Category | Files | Status |
-|----------|-------|--------|
-| Prompts/Parsing | `api/evaluate.ts` | ⚠️ NEEDS CHANGES |
-| Score Handling | `src/services/llmEvaluators.ts`, `src/services/opusJudge.ts` | ✅ Already correct |
-| Hooks | `src/hooks/useComparison.ts` | ✅ No letter grades |
-| Scoring | `src/api/scoring.ts` | ✅ Just 0-100 output |
-| Judge | `api/judge.ts` | ✅ Uses correct keys |
-| All other 28 .ts files | N/A | ✅ No scoring logic |
-
-### What NOT to Change
-
-| Item | Reason |
-|------|--------|
-| max_tokens (16384) | User directive |
-| timeout (240000ms) | User directive |
-| Batching logic | Already correct (6 batches by category) |
-| Tavily search queries | Working correctly |
-| parseResponse() flexibility | Keep handling both formats during transition |
-
-### Verification After Implementation
-
-Must verify:
-1. [ ] All 5 LLMs return 0-100 scores
-2. [ ] parseResponse() handles string "75" and number 75
-3. [ ] No duplicate scale definitions
-4. [ ] Explicit metric count in prompts
-5. [ ] JSON keys consistent across all prompts
-6. [ ] TypeScript compiles without errors
-7. [ ] Build succeeds
-
----
-
-## 🚨 HANDOFF: GROK OPTIMIZATION (DEFERRED ITEMS) 🚨
-
-**Date:** 2026-01-21
-**Status:** PARTIAL IMPLEMENTATION - SAFE CHANGES ONLY
-
-### What Was Implemented This Session
-
-| Change | Status | Notes |
-|--------|--------|-------|
-| Temperature 0.3 → 0.2 | ✅ DONE | More deterministic outputs |
-| Updated grokAddendum | ✅ DONE | Grok's recommended format |
-| Date/recency requirements | ✅ DONE | Explicit year, "last 12 months" |
-| X search query patterns | ✅ DONE | Enforcement sentiment guidance |
-| JSON validation with retry | ✅ DONE | 3 attempts with backoff |
-
-### DEFERRED TO NEXT SESSION (Require More Testing)
-
-| # | Item | Risk Level | Why Deferred |
-|---|------|------------|--------------|
-| 11 | Change `search: true` to selective per metric | 🟡 MEDIUM | Could break working metrics; needs metric-by-metric analysis |
-| 12 | Major prompt restructuring | 🟡 MEDIUM | Grok already returning data; risk vs reward unclear |
-
-### Grok's Own Recommendations (From Consultation)
-
-**Selective Search Strategy (Item #11):**
-- Enable `search: true` automatically for metrics prone to change (cannabis, abortion, firearms)
-- Disable for static metrics (historical zoning laws) to save tokens/latency
-- Add conditional: "If metric involves time-sensitive laws, perform real-time web search"
-- Each search adds ~5-10 seconds; selective approach optimizes for 300s Vercel timeout
-
-**Implementation Approach When Ready:**
-```typescript
-// In evaluateWithGrok(), determine search need per metric category
-const dynamicCategories = ['personal_freedom', 'policing_legal'];
-const needsSearch = metrics.some(m => dynamicCategories.includes(m.categoryId));
-// Then: search: needsSearch (instead of search: true)
-```
-
-### What NOT to Change (Per User Directive)
-
-| Setting | Value | Reason |
-|---------|-------|--------|
-| max_tokens | 16384 | User explicitly wants NO reduction |
-| timeout | 240000ms | Court order: no timeout changes |
-| Tavily pre-fetch | NOT added to Grok | Risk of 65-130s added latency causing timeouts |
-
-### Files Changed This Session
-
-- `api/evaluate.ts` - Lines 932-1016 (evaluateWithGrok function only)
-- `README.md` - This handoff section
-
-### Next Session TODO
-
-1. Test selective `search: true` on staging with different metric categories
-2. Measure latency difference between search: true vs false
-3. If safe, implement metric-category-based search toggle
-4. Consider Grok's "Dynamic Category Augmentation" idea for Opus review
-
----
-
-## 🚨 HANDOFF: INCREMENTAL LLM ADDITION FEATURE 🚨
-
-**Date:** 2026-01-20
-**Issue:** User cannot add more LLMs after initial results display
-**Status:** DESIGN COMPLETE, IMPLEMENTATION PENDING
-
-### Problem Statement
-
-After running Enhanced Mode comparison:
-1. User selects cities → clicks LLM(s) → results appear
-2. App auto-switches to Results tab
-3. **LLMSelector disappears** - only exists on Compare tab
-4. User cannot add more LLMs without starting over
-5. Completed LLM states are lost when switching tabs
-6. No visual indication of which LLMs contributed to current results
-
-### CRITICAL: Gamma Timing Issue
-
-⚠️ **Gamma reports cost money per generation** ⚠️
-
-If we allow incremental LLM addition:
-- Adding each new LLM could trigger a new Gamma report
-- This would be EXTREMELY expensive
-- Need explicit user control over when Gamma generates
-
-**Proposed Solution:**
-1. Do NOT auto-trigger Gamma on LLM completion
-2. Add explicit "Generate Report" button on Results tab
-3. Only call Gamma when user clicks that button
-4. Show clear indicator: "Report will include results from X LLMs"
-
-### Affected Files (MORE than initially thought)
-
-| File | Impact | Changes Needed |
-|------|--------|----------------|
-| `src/App.tsx` | HIGH | Lift `llmStates` to App level, pass to Results tab |
-| `src/components/EnhancedComparison.tsx` | HIGH | Extract `AddMoreLLMs` component, modify `LLMSelector` |
-| `src/components/EnhancedResults.tsx` (inside EnhancedComparison.tsx) | HIGH | Add "Add More Models" section |
-| `src/services/llmEvaluators.ts` | MEDIUM | May need to expose state merging logic |
-| `src/services/opusJudge.ts` | LOW | Judge already re-runs when more LLMs complete |
-| `src/components/VisualsTab.tsx` | HIGH | **MUST NOT auto-trigger Gamma** |
-| `src/services/gammaService.ts` | LOW | No change, but timing matters |
-| `api/gamma.ts` | LOW | No change needed |
-
-### State That Needs Lifting to App.tsx
-
-Currently in `LLMSelector` (local state):
-```typescript
-const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>()
-const [judgeResult, setJudgeResult] = useState<JudgeOutput | null>(null)
-const [lastJudgedCount, setLastJudgedCount] = useState(0)
-```
-
-This state MUST be lifted to `App.tsx` so it persists across tab switches.
-
-### Proposed UX Flow
-
-1. **Compare Tab:** User runs initial LLM(s)
-2. **Results Tab:** Shows results with "Evaluated by: [icons]" section
-3. **Results Tab:** Below icons, show "+ Add More Models" button
-4. **Click "+":** Expands mini-selector showing remaining LLMs
-5. **Run new LLM:** Merges with existing, judge re-runs
-6. **Results update:** In-place, no page refresh
-7. **Gamma:** ONLY generates when user clicks explicit "Generate Report" button
-
-### Implementation Order
-
-1. Lift `llmStates`, `judgeResult`, `lastJudgedCount` to App.tsx
-2. Pass as props to both Compare and Results tabs
-3. Create `AddMoreLLMs` component (simplified LLMSelector)
-4. Add to EnhancedResults component
-5. Ensure VisualsTab does NOT auto-trigger Gamma
-6. Add explicit "Generate Report" button with confirmation
-
-### Testing Requirements
-
-- [ ] Can add LLM after initial results
-- [ ] Completed LLM buttons stay "lit" when returning to Compare tab
-- [ ] Judge re-runs with combined results
-- [ ] Results update in-place
-- [ ] Gamma does NOT auto-generate
-- [ ] Gamma only generates on explicit button click
-- [ ] No duplicate Gamma calls
-
----
-
-## 🚨 HANDOFF: PERPLEXITY FIX DEPLOYED 🚨
-
-**Date:** 2026-01-20
-**Commit:** `f3a9dd1`
-**Issue:** Perplexity only returning 3-4 of 6 categories, hero scores nearly identical
-
-### Root Cause Analysis
-
-**Why Perplexity was failing:**
-1. Claude and GPT-4o get **Tavily pre-fetch** (12 searches + Research API report)
-2. Gemini has **Google Search grounding**
-3. Grok has **native X search**
-4. Perplexity had **NOTHING** - relied entirely on Sonar web search during inference
-5. With 6 category calls, later waves were timing out
-
-**Why hero scores were similar:**
-1. When category times out, it returns empty
-2. Empty categories default to score 50 in `opusJudge.ts:86`
-3. If 2-3 categories = 50 for ALL cities, scores converge
-
-### Fix Applied
-
-Added same Tavily pre-fetch to Perplexity that Claude/GPT-4o have:
-- 12 category searches (6 categories × 2 cities)
-- Tavily Research API baseline report
-- Prepended to prompt as context
-
-**File changed:** `api/evaluate.ts` (lines 1015-1093)
-**No other files affected**
-
-### Web Search Matrix (Updated)
-
-| LLM | Web Search Method |
-|-----|-------------------|
-| Claude Sonnet | Tavily pre-fetch ✅ |
-| GPT-4o | Tavily pre-fetch ✅ |
-| Gemini 3.1 Pro | Google Search grounding |
-| Grok 4 | Native X search |
-| Perplexity | Tavily pre-fetch ✅ + Sonar |
-
-### Testing Needed
-
-- [ ] Perplexity now returns all 6 categories
-- [ ] Hero scores now vary appropriately between city pairs
-- [ ] No timeout errors in Vercel logs
-
----
-
-## Previous Session: 2026-01-19
-**Conversation ID:** `LIFESCORE-2026-0120-GAMMA`
-
-### Gamma Integration Status
-| Step | Status |
-|------|--------|
-| GAMMA_API_KEY in Vercel | ✅ DONE |
-| GAMMA_THEME_ID in Vercel | ✅ DONE (optional) |
-| GAMMA_TEMPLATE_ID in Vercel | ✅ DONE (`g_ceert739ynnkueg`) |
-| Master template in Gamma app | ✅ DONE (10-card LIFE SCORE template) |
-| src/types/gamma.ts | ✅ DONE |
-| src/services/gammaService.ts | ✅ DONE |
-| api/gamma.ts | ✅ DONE |
-| src/components/VisualsTab.tsx | ✅ DONE |
-| App.tsx integration | ✅ DONE |
-| End-to-end testing | ⏳ PENDING |
-
-### What Was Fixed This Session
-
-| Issue | Fix | Commit | Lines |
-|-------|-----|--------|-------|
-| #5 Per-metric evidence hardcoded | Wired to `metric.llmScores[].evidence[]` | 427baa4 | +34 |
-| #6 Identical Law/Reality scores | Dual category prompt + parsing | 14340ef | +35 |
-| #9 Duplicate Judge code | Removed from opusJudge.ts | 9d2caae | -417 |
-| #10 Dead client code | Removed evaluator functions | 1568773 | -1,548 |
-| #11 opusJudge divergence | Covered by #9 | - | - |
-| #13 Hardcoded evidence | Covered by #5 | - | - |
-
-**Total dead code removed: ~2,000 lines**
-
-### Codebase Now Clean:
-- `llmEvaluators.ts`: 333 lines (was 1,493)
-- `enhancedComparison.ts`: 69 lines (was 349)
-- `opusJudge.ts`: 212 lines (was 629)
-- `EnhancedComparison.tsx`: 1,614 lines (was 1,701)
-
-### Still Needs Testing
-| Item | Status |
-|------|--------|
-| GPT-4o evaluation | NEEDS TEST |
-| Perplexity evaluation | NEEDS TEST |
-| Law vs Enforcement scores now different | NEEDS TEST |
-| Per-metric evidence displays correctly | NEEDS TEST |
-
-### Next Session - Remaining Items
-See Master Issue Table below for items #23-52:
-- ~~#19: Saved button persistence~~ **FIXED** (commit 1e94321)
-- ~~#23-29: Branding to "Clues Intelligence LTD"~~ **FIXED** (commit 3ae6461)
-- #30-36: Olivia AI features
-- #37-39: Reports (Gamma API)
-- #40-46: User/Payment (Stripe)
-- #47-49: Database caching
-- #50-52: Mobile (Vite Capacitor)
-
----
-
-## GAMMA API INTEGRATION (#37-39) - VISUAL REPORTS
-
-**CRITICAL:** This is the visual heart of Clues. Transforms raw data into beautiful storybook presentations.
-
-**Documentation Files:**
-- `GAMMA_API_INTEGRATION.md` - Complete API reference (500+ lines)
-- `HANDOFF_GAMMA_INTEGRATION.md` - Implementation guide & handoff
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  5 LLMs → Opus Judge → Raw Data → Gamma API → Visual Storybook     │
-│                                       ↓                             │
-│                    ┌──────────────────┴──────────────────┐          │
-│                    │                                     │          │
-│               Visuals Tab                          Ask Olivia       │
-│               (Gamma Embed)                        (D-ID/HeyGen)    │
-│                    │                                     │          │
-│               PDF/PPTX Export                    Summary & Plan     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### API Endpoints
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/v1.0/generations` | POST | Create from scratch |
-| `/v1.0/generations/from-template` | POST | **Create from template (RECOMMENDED)** |
-| `/v1.0/generations/{id}` | GET | Check status / get result |
-| `/v1.0/themes` | GET | List available themes |
-| `/v1.0/folders` | GET | List storage folders |
-
-### Two Approaches
-
-| Approach | Use Case | Consistency |
-|----------|----------|-------------|
-| Regular API | Custom one-offs | Variable |
-| **Templates API (Beta)** | **Uniform branded reports** | **Identical every time** |
-
-**LIFE SCORE should use Templates API** for consistent branding.
-
-### Template Approach (Recommended)
-
-```json
-{
-  "gammaId": "g_lifescore_template_v1",
-  "prompt": "Austin vs Miami: Winner Austin (72 vs 65)...",
-  "exportAs": "pdf"
-}
-```
-
-### 10-Card Report Structure
-
-1. **Hero** - Winner declaration, city images
-2. **Radar Chart** - All 6 categories visualized
-3. **Personal Freedom** - Scores + evidence
-4. **Housing & Property** - Scores + evidence
-5. **Business & Work** - Scores + evidence
-6. **Transportation** - Scores + evidence
-7. **Policing & Courts** - Scores + evidence
-8. **Speech & Lifestyle** - Scores + evidence
-9. **Winner Summary** - Final verdict
-10. **Clues CTA** - Ask Olivia, ecosystem links
-
-### Implementation Order
-
-1. Create master template in Gamma app (manual)
-2. Add `GAMMA_API_KEY` to Vercel
-3. Create `src/types/gamma.ts`
-4. Create `src/services/gammaService.ts`
-5. Create `api/gamma.ts`
-6. Create `src/components/VisualsTab.tsx`
-7. Update `TabNavigation.tsx` with new tabs
-8. Test end-to-end
-
-### New Environment Variables
-
-```
-GAMMA_API_KEY=sk-gamma-xxxxxxxx
-GAMMA_TEMPLATE_ID=[from Gamma app after creating template]
-GAMMA_FOLDER_ID=[optional - for organizing reports]
-```
-
-### New Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/types/gamma.ts` | Type definitions |
-| `src/services/gammaService.ts` | API integration |
-| `api/gamma.ts` | Serverless endpoint |
-| `src/components/VisualsTab.tsx` | Report viewer |
-| `src/components/AskOliviaTab.tsx` | AI assistant |
-
----
-
-## COURT ORDER INJUNCTION - CLAUDE CODE RESTRICTIONS
-
-**CLAUDE CODE IS FORBIDDEN FROM MAKING THE FOLLOWING CHANGES WITHOUT DIRECT OWNER APPROVAL:**
-
-1. **TIMEOUT VALUES** - Any modification to timeout constants
-2. **API MODEL NAMES** - Any changes to LLM model identifiers
-3. **API KEY NAMES** - Any changes to environment variable names
-
-**VIOLATION OF THIS INJUNCTION WILL RESULT IN IMMEDIATE TERMINATION OF CLAUDE CODE SESSION.**
-
----
-
-## TIMEOUT AUDIT (Updated 2026-01-19)
-
-**Vercel Pro Limit: 300 seconds**
-
-| Layer | Constant | Value | File |
-|-------|----------|-------|------|
-| Vercel Hard Limit | `maxDuration` | 300s | vercel.json |
-| Server LLM Calls | `LLM_TIMEOUT_MS` | 240s | api/evaluate.ts |
-| Server Opus Judge | `OPUS_TIMEOUT_MS` | 240s | api/judge.ts |
-| Client Fetch | `CLIENT_TIMEOUT_MS` | 240s | src/services/llmEvaluators.ts |
-
----
-
-## API CONFIGURATION
-
-### LLM Model Identifiers
-| Provider | Model ID | API Endpoint |
-|----------|----------|--------------|
-| Claude Sonnet | `claude-sonnet-4-5-20250929` | api.anthropic.com |
-| Claude Opus | `claude-opus-4-5-20251101` | api.anthropic.com |
-| GPT-4o | `gpt-4o` | api.openai.com |
-| Gemini | `gemini-3.1-pro-preview` | generativelanguage.googleapis.com |
-| Grok | `grok-4` | api.x.ai |
-| Perplexity | `sonar-reasoning-pro` | api.perplexity.ai |
-
-### Environment Variables (Vercel)
-```
-ANTHROPIC_API_KEY    # Claude Sonnet & Opus
-OPENAI_API_KEY       # GPT-4o
-GEMINI_API_KEY       # Gemini 3.1 Pro
-XAI_API_KEY          # Grok 4
-PERPLEXITY_API_KEY   # Perplexity Sonar
-TAVILY_API_KEY       # Web search for Claude/GPT
-```
-
-### Web Search Integration (Updated 2026-01-20)
-| LLM | Web Search Method |
-|-----|-------------------|
-| Claude Sonnet | Tavily API (prepended to prompt) |
-| GPT-4o | Tavily API (prepended to prompt) |
-| Gemini 3.1 Pro | Google Search Grounding (google_search tool) |
-| Grok 4 | Native (`search: true`) |
-| Perplexity | Tavily API + Native Sonar (commit f3a9dd1) |
-
----
-
-## FEATURES
-
-- 100 Freedom Metrics across 6 categories
-- City-to-city comparison
-- Multi-LLM Consensus (5 LLMs + Claude Opus Judge)
-- Real-time web search integration
-- Modern React + TypeScript + Vite stack
-- Vercel deployment
-
-## Categories
+### 100 Metrics in 6 Categories
 
 | Category | Metrics | Weight |
-|----------|---------|--------|
-| Personal Freedom & Morality | 15 | 20% |
-| Housing, Property & HOA Control | 20 | 20% |
-| Business & Work Regulation | 25 | 20% |
-| Transportation & Daily Movement | 15 | 15% |
-| Policing, Courts & Enforcement | 15 | 15% |
-| Speech, Lifestyle & Culture | 10 | 10% |
+|----------|--------:|-------:|
+| Personal Autonomy | 15 | 20% |
+| Housing & Property | 20 | 20% |
+| Business & Work | 25 | 20% |
+| Transportation | 15 | 15% |
+| Policing & Legal | 15 | 15% |
+| Speech & Lifestyle | 10 | 10% |
+
+### Dual-Score System
+
+Each metric produces 4 raw scores (0-100): Legal and Enforcement for each city.
+
+```
+normalizedScore = (legalScore × lawWeight + enforcementScore × livedWeight) / 100
+Default: 50/50 weighting (adjustable via Law vs Lived Reality slider)
+Worst-Case Mode: MIN(legalScore, enforcementScore)
+```
+
+### Comparison Modes
+
+| Mode | AI Providers | Web Research | Use Case |
+|------|:---:|---|---|
+| **Standard** | 1 (Claude Sonnet) | Tavily pre-fetch | Fast, accurate (2-3 min) |
+| **Enhanced** | 5 (Claude, GPT-4o, Gemini, Grok, Perplexity) | Tavily + Google + X + Sonar | Consensus scoring (5-8 min) |
+
+### Web Research Integration
+
+| Provider | Research Method |
+|----------|----------------|
+| Claude Sonnet | Tavily API pre-fetch |
+| GPT-4o | Tavily API pre-fetch |
+| Gemini 3.1 Pro | Google Search Grounding |
+| Grok 4 | Native X search |
+| Perplexity Sonar | Tavily API + Native Sonar search |
+
+### The Judge
+
+Claude Opus 4.5 serves as the impartial Judge, analyzing all provider scores to produce:
+- Consensus scoring with disagreement detection
+- Category-by-category analysis with trend identification
+- Final verdict with winner declaration
+- Confidence levels: unanimous / strong / moderate / split
 
 ---
 
-## QUICK START
+## Subscription Tiers
+
+| Feature | FREE | NAVIGATOR ($29/mo) | SOVEREIGN ($99/mo) |
+|---------|:----:|:-------------------:|:-------------------:|
+| Standard Comparisons | 1/mo | 1/mo | 1/mo |
+| Enhanced Mode (5 AIs) | - | - | 1/mo |
+| Olivia AI Minutes | - | 15/mo | 60/mo |
+| Judge Verdict | - | 1/mo | 1/mo |
+| Gamma Reports | - | 1/mo | 1/mo |
+| Grok/Kling Videos | - | - | 1/mo |
+| InVideo Movies | - | - | 1/mo |
+| Cloud Sync | - | Yes | Yes |
+
+Annual pricing: NAVIGATOR $249/yr, SOVEREIGN $899/yr. Payments via Stripe.
+
+**Source of truth:** `src/hooks/useTierAccess.ts`
+
+---
+
+## Key Features
+
+### Olivia AI Assistant (5 Independent Systems)
+
+| System | Service | Purpose |
+|--------|---------|---------|
+| Ask Olivia Chat | OpenAI Assistants API | Intelligent Q&A about comparisons |
+| Olivia Voice (TTS) | ElevenLabs → OpenAI fallback | Cloned voice for chat responses |
+| Live Presenter | HeyGen Streaming v1 (WebRTC) | Real-time avatar over Gamma reports |
+| Video Presenter | HeyGen Video v2 | Pre-rendered MP4 narration |
+| Cockpit Avatar | D-ID Streams (WebRTC) | Ask Olivia page TV viewport |
+
+### Cristiano "Go To My New City" Video
+
+HeyGen Video Agent V2 cinematic tour. 2-stage pipeline: Claude generates 7-scene storyboard, HeyGen renders with B-roll and transitions.
+
+### Visual Reports (Gamma)
+
+Two-tab layout: Generate New Report / View Existing Report. Three view modes: Read (iframe), Live Presenter (HeyGen streaming), Generate Video (HeyGen MP4). PDF/PPTX exports permanently stored in Supabase.
+
+### InVideo Movie Pipeline (SOVEREIGN Tier)
+
+10-minute cinematic movie from comparison data. 3-stage process:
+1. **Screenplay** — Claude writes 12-scene, 5-act screenplay
+2. **Rendering** — InVideo AI renders the movie
+3. **Polling** — Status checks every 10s (up to 30 min)
+
+### Court Order Video (SOVEREIGN Tier)
+
+10-second "perfect life" cinematic scene via Kling AI (Replicate Minimax fallback). Admin VIP override system for custom videos.
+
+### New Life Videos
+
+AI-generated Freedom vs Imprisonment contrast videos via Kling AI / Replicate.
+
+### Notification System
+
+Bell icon with unread badge, "Notify Me & Go" modal for long-running tasks, email via Resend (alerts@lifescore.app), 30-second polling.
+
+---
+
+## Database Schema
+
+### 26 Tables
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User accounts (id, email, tier) |
+| `comparisons` | Saved comparison results |
+| `subscriptions` | Stripe billing records |
+| `usage_tracking` | Monthly feature limits |
+| `olivia_conversations` | Olivia chat threads |
+| `olivia_messages` | Olivia chat messages |
+| `gamma_reports` | Report URLs + permanent storage paths |
+| `judge_reports` | Judge verdicts (unique on user_id, report_id) |
+| `avatar_videos` | Judge video cache |
+| `grok_videos` | Kling/Replicate video cache |
+| `cristiano_city_videos` | Cristiano city tour video cache |
+| `movie_videos` | InVideo 10-min movie records |
+| `invideo_overrides` | Admin cinematic video overrides |
+| `report_shares` | Shared report links |
+| `report_access_logs` | Report view tracking |
+| `reports` | HTML reports per user |
+| `contrast_image_cache` | Olivia contrast images |
+| `user_preferences` | Per-user settings (JSONB) |
+| `consent_logs` | GDPR consent records |
+| `app_prompts` | 50 system prompts (6 categories) |
+| `api_cost_records` | Cost tracking per provider |
+| `api_quota_settings` | Admin quota limits (16 providers) |
+| `api_quota_alert_log` | Quota email alert history |
+| `authorized_manual_access` | Help manual access control |
+| `jobs` | Persistent job queue |
+| `notifications` | In-app + email notification records |
+
+### 6 Storage Buckets
+
+| Bucket | Size Limit | Purpose |
+|--------|-----------|---------|
+| `reports` | 200 MB | HTML reports (private, RLS) |
+| `user-videos` | 100 MB | User-uploaded Court Order videos |
+| `contrast-images` | 5 MB | Contrast image copies |
+| `judge-videos` | 50 MB | Judge avatar videos |
+| `court-order-videos` | 50 MB | Court Order videos |
+| `gamma-exports` | 50 MB | Gamma PDF/PPTX (public) |
+
+---
+
+## API Endpoints (52)
+
+### Core
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/evaluate` | POST | City evaluation (Tavily + LLM) |
+| `/api/judge-report` | POST | Judge analysis |
+| `/api/judge` | POST | Opus consensus builder |
+| `/api/judge-video` | POST | Judge video generation |
+| `/api/health` | GET | Health check |
+| `/api/warmup` | GET | Cold start warmup |
+| `/api/test-llm` | POST | LLM connectivity test |
+| `/api/kv-cache` | GET/POST | KV cache operations |
+
+### Video
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/video/grok-generate` | POST | Kling/Replicate video generation |
+| `/api/video/grok-status` | GET | Video status polling |
+| `/api/video/invideo-override` | GET/POST/DELETE | Admin VIP video overrides |
+
+### Movie (SOVEREIGN Tier Required)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/movie/screenplay` | POST | 12-scene screenplay (Claude, 310s) |
+| `/api/movie/generate` | POST/GET | InVideo submission + status (300s) |
+
+### Olivia
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/olivia/chat` | POST | Chat (OpenAI Assistants API) |
+| `/api/olivia/context` | POST | Comparison data → Olivia context |
+| `/api/olivia/tts` | POST | ElevenLabs TTS + OpenAI fallback |
+| `/api/olivia/field-evidence` | POST | Metric source evidence |
+| `/api/olivia/gun-comparison` | POST | Standalone gun rights comparison |
+| `/api/olivia/contrast-images` | POST | AI contrast images (Flux) |
+| `/api/olivia/avatar/heygen` | POST | HeyGen Live Presenter streaming |
+| `/api/olivia/avatar/heygen-video` | POST/GET | HeyGen pre-rendered video |
+| `/api/olivia/avatar/streams` | POST | D-ID cockpit avatar |
+| `/api/olivia/avatar/did` | POST | D-ID Agents (deprecated) |
+
+### Cristiano
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/cristiano/storyboard` | POST | 7-scene storyboard (Claude) |
+| `/api/cristiano/render` | POST | HeyGen Video Agent V2 |
+
+### Emilia (Help Center)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/emilia/thread` | POST | Create thread (JWT auth) |
+| `/api/emilia/message` | POST | Send message |
+| `/api/emilia/speak` | POST | Emilia TTS |
+| `/api/emilia/manuals` | GET | Documentation (JWT auth) |
+
+### Stripe
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/stripe/create-checkout-session` | POST | Start checkout |
+| `/api/stripe/webhook` | POST | Handle events |
+| `/api/stripe/create-portal-session` | POST | Billing portal |
+| `/api/stripe/get-subscription` | GET | Current subscription |
+
+### Avatar
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/avatar/simli-session` | POST | Simli streaming session |
+| `/api/avatar/simli-speak` | POST | Simli text-to-speech |
+| `/api/avatar/generate-judge-video` | POST | Replicate video |
+| `/api/avatar/video-status` | GET | Video generation status |
+| `/api/avatar/video-webhook` | POST | Video completion webhook |
+| `/api/simli-config` | GET | Simli configuration |
+
+### Admin
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin-check` | GET | Admin status verification |
+| `/api/admin/env-check` | GET | Environment variable audit |
+| `/api/admin/new-signup` | POST | New user signup notification |
+| `/api/admin/sync-emilia-knowledge` | POST | Sync Emilia knowledge base |
+| `/api/admin/sync-olivia-knowledge` | POST | Sync Olivia knowledge base |
+
+### Other
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/gamma` | POST/GET | Visual report generation |
+| `/api/prompts` | GET/POST/PUT | System prompts (admin) |
+| `/api/notify` | POST | In-app + email notification |
+| `/api/consent/log` | POST | GDPR consent logging |
+| `/api/usage/check-quotas` | GET | API quota monitoring |
+| `/api/usage/elevenlabs` | GET | ElevenLabs usage stats |
+| `/api/user/delete` | POST | GDPR account deletion |
+| `/api/user/export` | GET | GDPR data export |
+
+---
+
+## Frontend Components (55)
+
+### Core
+`App` · `Header` · `Footer` · `LoginScreen` · `ResetPasswordScreen` · `TabNavigation` · `ThemeToggle` · `ErrorBoundary` · `LoadingState`
+
+### Comparison
+`CitySelector` · `EnhancedComparison` · `Results` · `SavedComparisons` · `FreedomCategoryTabs` · `FreedomMetricsList` · `FreedomHeroFooter` · `DealbreakersPanel` · `DealbreakersWarning` · `WeightPresets` · `EvidencePanel` · `AdvancedVisuals` · `ScoreMethodology` · `DataSourcesModal` · `ContrastDisplays`
+
+### AI Assistants
+`AskOlivia` · `OliviaChatBubble` · `OliviaAvatar` · `EmiliaChat` · `HelpBubble` · `HelpModal` · `ManualViewer`
+
+### Judge & Video
+`JudgeTab` · `JudgeVideo` · `CourtOrderVideo` · `NewLifeVideos` · `GoToMyNewCity` · `MovieGenerator` · `VideoPhoneWarning`
+
+### Reports
+`VisualsTab` · `ReportPresenter` · `GammaIframe` · `AboutClues`
+
+### Settings & Billing
+`SettingsModal` · `CostDashboard` · `PricingModal` · `PricingPage` · `FeatureGate` · `UsageWarningBanner` · `PromptsManager` · `EnvConfigPanel`
+
+### Notifications & Modals
+`NotificationBell` · `NotifyMeModal` · `MobileWarningModal` · `CookieConsent` · `LegalModal` · `GunComparisonModal`
+
+---
+
+## Hooks (21)
+
+| Hook | Purpose |
+|------|---------|
+| `useTierAccess` | Tier limits (SOURCE OF TRUTH) |
+| `useComparison` | Comparison state machine |
+| `useGrokVideo` | Video generation + polling |
+| `useOliviaChat` | Olivia conversation |
+| `useSimli` | WebRTC avatar session |
+| `useTTS` | Text-to-speech |
+| `useEmilia` | Emilia help widget |
+| `useNotifications` | Notification polling (30s) |
+| `useJobTracker` | Job creation + status |
+| `useCristianoVideo` | Freedom tour video |
+| `useContrastImages` | AI contrast images |
+| `useGunComparison` | Gun rights comparison |
+| `useJudgeVideo` | Judge video generation |
+| `useAvatarProvider` | Avatar provider selection |
+| `useDIDStream` | D-ID streaming |
+| `useDraggable` | Draggable UI elements |
+| `useFocusTrap` | Modal focus trapping |
+| `useVoiceRecognition` | Speech-to-text input |
+| `useApiUsageMonitor` | API quota monitoring |
+| `useOGMeta` | Open Graph meta tags |
+| `useURLParams` | URL parameter parsing |
+
+---
+
+## Services (18)
+
+| Service | Purpose |
+|---------|---------|
+| `movieService` | InVideo movie orchestration |
+| `llmEvaluators` | Multi-LLM evaluation runner |
+| `opusJudge` | Opus consensus builder |
+| `gammaService` | Gamma report generation |
+| `grokVideoService` | Kling/Replicate video API |
+| `cristianoVideoService` | HeyGen city tour video |
+| `presenterService` | Narration script generator |
+| `presenterVideoService` | Video orchestration + polling |
+| `oliviaService` | Olivia API integration |
+| `contrastImageService` | AI contrast images |
+| `savedComparisons` | Local + cloud save/load |
+| `databaseService` | Supabase operations |
+| `reportStorageService` | Report persistence |
+| `videoStorageService` | Video persistence |
+| `enhancedComparison` | Enhanced mode orchestration |
+| `judgePregenService` | Judge pre-generation |
+| `rateLimiter` | Client-side rate limiting |
+| `cache` | Client-side caching |
+
+---
+
+## Authentication
+
+**Provider:** Supabase Auth (GoTrue)
+
+**Sign-in methods:** Email/Password, Google OAuth, GitHub OAuth, Magic Link
+
+**Password reset flow:**
+LoginScreen → `resetPasswordForEmail()` → email with recovery JWT (1hr TTL) → `/auth/callback` → PASSWORD_RECOVERY event → ResetPasswordScreen → `updateUser({ password })` → main app
+
+---
+
+## Test Infrastructure
+
+**Framework:** Vitest | **Location:** `tests/` | **Suite:** 100 tests across 7 files
+
+| Test File | Tests | Coverage |
+|-----------|------:|----------|
+| `costCalculator.test.ts` | 31 | LLM/TTS/Avatar/Video cost calculations |
+| `scoring.test.ts` | 26 | Score normalization, comparisons |
+| `rateLimit.test.ts` | 18 | Rate limiter presets, blocking |
+| `scoringThresholds.test.ts` | 9 | Confidence levels, disagreement |
+| `metricDisplayNames.test.ts` | 7 | All 100 metric display names |
+| `fetchWithTimeout.test.ts` | 5 | Timeout behavior |
+| `countryFlags.test.ts` | 4 | Flag URLs for 34 countries |
+
+```bash
+npm test          # Single run
+npm run test:watch # Watch mode
+```
+
+---
+
+## Environment Variables
+
+### Required (Production)
+```
+VITE_SUPABASE_URL              SUPABASE_URL
+VITE_SUPABASE_ANON_KEY         SUPABASE_SERVICE_ROLE_KEY
+ANTHROPIC_API_KEY              OPENAI_API_KEY
+TAVILY_API_KEY                 STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET          RESEND_API_KEY
+```
+
+### Required (Features)
+```
+ELEVENLABS_API_KEY             ELEVENLABS_OLIVIA_VOICE_ID
+SIMLI_API_KEY                  KLING_VIDEO_API_KEY
+KLING_VIDEO_SECRET             REPLICATE_API_TOKEN
+GAMMA_API_KEY                  EMILIA_ASSISTANT_ID
+OPENAI_ASSISTANT_ID
+```
+
+### Optional
+```
+GEMINI_API_KEY                 GROK_API_KEY
+PERPLEXITY_API_KEY             DID_API_KEY
+HEYGEN_API_KEY                 HEYGEN_OLIVIA_AVATAR_ID
+HEYGEN_OLIVIA_VOICE_ID         HEYGEN_CRISTIANO_AVATAR_ID
+HEYGEN_CRISTIANO_VOICE_ID      HEYGEN_AVATAR_LOOK_ID
+INVIDEO_MCP_URL                INVIDEO_API_KEY
+KV_REST_API_URL                KV_REST_API_TOKEN
+DEV_BYPASS_EMAILS
+```
+
+---
+
+## Project Structure
+
+```
+lifescore/
+├── api/                    # Vercel serverless functions (52 endpoints)
+│   ├── shared/             # Shared modules (auth, cors, rate limit, metrics)
+│   ├── olivia/             # Olivia AI endpoints (chat, TTS, avatars)
+│   ├── emilia/             # Emilia help center endpoints
+│   ├── cristiano/          # Cristiano city tour video
+│   ├── movie/              # InVideo movie pipeline
+│   ├── video/              # Kling/Replicate video generation
+│   ├── stripe/             # Payment endpoints
+│   ├── avatar/             # Simli/Replicate avatar endpoints
+│   ├── admin/              # Admin tools
+│   ├── usage/              # Quota monitoring
+│   ├── user/               # GDPR endpoints (export, delete)
+│   └── consent/            # Consent logging
+├── src/                    # React frontend
+│   ├── components/         # 55 React components
+│   ├── hooks/              # 21 custom hooks
+│   ├── services/           # 18 service modules
+│   ├── contexts/           # AuthContext, ThemeContext
+│   ├── types/              # TypeScript type definitions
+│   ├── shared/             # Shared utilities (metricDisplayNames)
+│   ├── constants/          # Scoring thresholds, config
+│   ├── data/               # Metrics definitions
+│   ├── lib/                # fetchWithTimeout
+│   ├── api/                # Client-side API helpers
+│   └── utils/              # Utility functions
+├── supabase/               # 45 SQL migrations
+├── tests/                  # 7 test files (100 tests)
+├── docs/                   # Documentation
+│   ├── manuals/            # 7 support manuals
+│   └── legal/              # Legal compliance docs + DPAs
+├── public/                 # Static assets
+└── scripts/                # Build/utility scripts
+```
+
+---
+
+## Codebase Statistics
+
+| Metric | Count |
+|--------|------:|
+| **Total lines of code** | ~125,000 |
+| Frontend (src/) | 95,000 |
+| Backend (api/) | 23,500 |
+| Database (supabase/) | 6,100 |
+| React components | 55 |
+| Custom hooks | 21 |
+| Service modules | 18 |
+| API endpoints | 52 |
+| Shared API modules | 15 |
+| Database tables | 26 |
+| Storage buckets | 6 |
+| SQL migrations | 45 |
+| CSS files | 110 |
+| Test files | 7 (100 tests) |
+
+---
+
+## Development
 
 ### Local Development
 ```bash
@@ -899,275 +510,43 @@ npm install
 npm run dev
 ```
 
-### Production Build
+### Deployment
+Vercel auto-deploys from `main` branch. No local builds needed.
+
 ```bash
-npm run build
-npm run preview
+git add <files>
+git commit -m "description"
+git push origin main
+```
+
+### Testing
+```bash
+npm test
 ```
 
 ---
 
-## DEBUG LOGGING
+## Security
 
-### Vercel Logs - What to Look For
-
-**Evaluate endpoint (api/evaluate.ts):**
-```
-[PARSE] claude raw response (first 500): ...
-[PARSE] claude format: categories=bool, letters=bool, numbers=bool
-[PARSE] claude returned N evaluations
-```
-
-**Judge endpoint (api/judge.ts):**
-```
-[JUDGE] Evaluator results: N successful LLMs (names), N total scores
-[JUDGE] Disagreement metrics: N (list...)
-[JUDGE] hasActualScores=bool, anthropicKey=bool, city1=X, city2=Y
-[JUDGE] Calling Opus API with prompt length: N chars
-[JUDGE] Opus response received, content length: N chars
-[JUDGE] Opus judgments parsed: N judgments
-```
+- JWT authentication on all sensitive endpoints
+- Supabase Row Level Security (RLS) on all tables
+- Admin authorization via `authorized_manual_access` table + `DEV_BYPASS_EMAILS`
+- Rate limiting on all API endpoints (heavy/standard/light/health presets)
+- CORS restricted to same-app origin
+- GDPR: data export (`/api/user/export`), account deletion (`/api/user/delete`), consent logging
 
 ---
 
-## ARCHITECTURE
+## Legal & Compliance
 
-### Data Flow
-```
-User clicks "Compare LIFE SCORES"
-    ↓
-App.tsx sets enhancedStatus='running'
-    ↓
-LLMSelector renders with 5 LLM buttons
-    ↓
-User clicks LLM button
-    ↓
-POST /api/evaluate (Vercel serverless)
-    ↓
-LLM returns scores → parseResponse()
-    ↓
-After 1+ LLMs complete → POST /api/judge
-    ↓
-Opus builds consensus → EnhancedResults displayed
-```
+**Company:** Clues Intelligence LTD
+**Address:** 167-169 Great Portland Street, 5th Floor, London W1W 5PF, United Kingdom
+**ICO Registration:** Required (UK data controller)
 
-### File Structure
-```
-api/
-├── evaluate.ts      # LLM evaluations (all 5 providers)
-├── judge.ts         # Claude Opus consensus builder
-├── health.ts        # Health check endpoint
-└── shared/          # Shared metrics module
-    └── metrics.ts
-
-src/
-├── components/      # React components
-├── services/        # Client-side services
-├── types/           # TypeScript types
-├── data/            # Metrics definitions
-└── hooks/           # Custom React hooks
-```
+DPA status, compliance checklist, and legal policies in `docs/legal/`.
 
 ---
 
-## RECENT COMMITS (Last 20)
+## License
 
-```
-3114a40 Fix GPT-4o, Perplexity failures + add Judge debug logging
-7733f99 Improve Evidence Panel: match category progress height & styling
-9a6c999 Auto-switch to Results tab on standard mode completion
-a6f1fc0 Fix TypeScript errors in api/evaluate.ts
-97dfade Fix scoring system: Port prompts from client to server
-cb911f1 Add handoff document for next session
-6a7617a Add detailed fix plan for scoring system
-31beebc CRITICAL: Document all scoring system issues
-8ffd14b Trigger redeploy
-c7059d7 Fix Gemini API: googleSearchRetrieval → google_search
-30a7da6 Add .js extensions to ESM imports for Vercel
-55928c4 Fix includeFiles path to api/shared/**
-13c09d1 Trigger redeploy for USE_CATEGORY_SCORING env var
-db40057 Create standalone api/shared module for Vercel serverless
-9be1ffe Update README and handoff docs
-ea7537c Fix Vercel serverless import issue
-57c1bd5 Update handoff document with critical fix status
-02367fa Document critical API fix needed
-7916568 Fix TypeScript errors in cache.ts and metrics.ts
-1e6e82f Remove obsolete Phase 2/4 documentation files
-```
-
----
-
-## MANDATORY DEVELOPMENT RULES
-
-### NO DEMO MODE ALLOWED
-- No `demoMode` parameters or flags
-- No fake/simulated data generators
-- All data MUST come from real API calls
-
-### AI ASSISTANT (Claude) MANDATORY RULES
-1. **ATTESTATION REQUIREMENT**: Must verify ALL file locations before stating work is complete
-2. **TYPESCRIPT VERIFICATION**: Must run `npx tsc --noEmit` before stating build is complete
-3. **NO ALTERNATIVE CODE BLOCKS**: No duplicate functionality without permission
-4. **NO CODE ROLLBACKS**: No rollbacks without explicit permission
-5. **MODEL CONSISTENCY**: Never change LLM model IDs without permission
-
----
-
-## KNOWN ISSUES TO INVESTIGATE
-
-| Issue | Status | Notes |
-|-------|--------|-------|
-| GPT-4o fails | FIX DEPLOYED | Removed false web search claim |
-| Perplexity fails | FIX DEPLOYED | Removed strict JSON schema |
-| Opus runs too fast | DEBUG ADDED | Check [JUDGE] logs |
-| Only ~25% metrics returned | MONITORING | Added debug logging |
-| **#5 Per-metric evidence hardcoded** | ✅ FIXED | Wired to `metric.llmScores[].evidence[]` - commit 427baa4 |
-| **#6 Identical Law/Reality scores** | ✅ FIXED | Dual category prompt + parsing - commit 14340ef |
-| **#9 Duplicate Judge code** | ✅ FIXED | Removed ~417 lines from opusJudge.ts - commit 9d2caae |
-| **#10 Client prompts out of sync** | ✅ FIXED | Dead code removed (~1,548 lines) - commit 1568773 |
-| **#11 opusJudge.ts divergence** | ✅ FIXED | Covered by #9 - duplicate code removed |
-| **#12 LLMProvider type** | NO ISSUE | Type is correct |
-| **#13 EnhancedComparison hardcoded** | ✅ FIXED | Covered by #5 fix - commit 427baa4 |
-| **#19 Saved button persistence** | ✅ FIXED | Deterministic IDs based on city pair - commit 1e94321 |
-| **#23-29 Rebrand to Clues Intelligence LTD** | ✅ FIXED | 14 files updated - commit 3ae6461 |
-
----
-
-## ISSUE #6: Identical Law/Reality Scores - DETAILED ANALYSIS
-
-**Root Cause Identified: 2026-01-20**
-
-### Problem Chain
-1. When `USE_CATEGORY_SCORING=true` (Vercel env var), `buildCategoryPrompt()` asks for only ONE category per city
-2. Prompt returns: `city1Category`, `city2Category` (single values)
-3. `parseResponse()` at lines 402-405 duplicates the value:
-   ```javascript
-   city1LegalScore: city1Score,
-   city1EnforcementScore: city1Score,  // ← BUG: Same value!
-   ```
-
-### Files Affected
-- `api/evaluate.ts:297-340` - `buildCategoryPrompt()` needs dual categories
-- `api/evaluate.ts:395-412` - `parseResponse()` needs to parse both fields
-
-### Chosen Fix: Option A - Expand Categories for Dual Scoring
-
-**Changes Required:**
-1. Update `buildCategoryPrompt()` to ask for:
-   - `city1LegalCategory` - What the law says
-   - `city1EnforcementCategory` - How it's enforced
-   - `city2LegalCategory`
-   - `city2EnforcementCategory`
-
-2. Update `parseResponse()` to parse all 4 fields:
-   ```javascript
-   city1LegalScore: getCategoryScore(e.metricId, e.city1LegalCategory),
-   city1EnforcementScore: getCategoryScore(e.metricId, e.city1EnforcementCategory),
-   ```
-
-3. Consider whether enforcement needs different category options or can reuse legal scale
-
-**Priority:** HIGH - Core differentiator of LifeScore product
-
----
-
-## ISSUE #9: Duplicate Judge Code - DETAILED ANALYSIS
-
-**Root Cause Identified: 2026-01-20**
-
-### Problem: Two Separate Judge Implementations
-
-| Path | File | How Called | Lines |
-|------|------|------------|-------|
-| Server | `api/judge.ts` | `fetch('/api/judge')` | ~500 |
-| Client | `src/services/opusJudge.ts` | `runOpusJudge()` direct | ~629 |
-
-### Duplicated Functions (~600 lines)
-- `fetchWithTimeout()`
-- `calculateMean/StdDev/Median()`
-- `buildMetricConsensus()`
-- `aggregateScoresByMetric()` variants
-- `JUDGE_PROMPT_TEMPLATE`
-- `parseOpusResponse()`
-- `mergeOpusJudgments()`
-
-### Current Usage
-- `EnhancedComparison.tsx:195` → calls `/api/judge` (server)
-- `enhancedComparison.ts:218` → calls `runOpusJudge()` (client direct)
-
-### Chosen Fix: Option A - Server-Only Judge
-
-**Changes Required:**
-1. Modify `src/services/opusJudge.ts`:
-   - Remove duplicate logic (fetchWithTimeout, stats functions, API call)
-   - Replace `runOpusJudge()` to call `/api/judge` endpoint instead
-   - Keep `buildCategoryConsensuses()` (needed client-side for result building)
-   - Keep `buildEnhancedResultFromJudge()` (needed client-side for result building)
-
-2. Ensure `api/judge.ts` returns all data needed by client
-
-3. Update `src/services/enhancedComparison.ts:218` to use new pattern
-
-### Files to Modify
-- `src/services/opusJudge.ts` - Major refactor
-- `src/services/enhancedComparison.ts` - Update call pattern
-- `api/judge.ts` - Verify response shape
-
-### Testing Requirements (MANDATORY)
-- [ ] TypeScript compiles with zero errors (`npx tsc --noEmit`)
-- [ ] All 5 LLM buttons work in EnhancedComparison UI
-- [ ] enhancedComparison.ts service flow works
-- [ ] Judge returns correct consensus scores
-- [ ] No runtime errors in browser console
-- [ ] Vercel deployment succeeds
-- [ ] Full attestation required before merge
-
-**Priority:** MEDIUM - Tech debt, risk of code drift
-
----
-
-## ISSUE #10: Client Prompts Out of Sync - DETAILED ANALYSIS
-
-**Root Cause Identified: 2026-01-20**
-
-### Problem: Dead Code with Duplicate Prompts
-
-`src/services/llmEvaluators.ts` contains ~1000 lines of functions that call LLM APIs directly:
-- `evaluateWithClaude()` - lines ~300-500
-- `evaluateWithGPT4o()` - lines ~500-600
-- `evaluateWithGemini()` - lines ~600-700
-- `evaluateWithGrok()` - lines ~700-800
-- `evaluateWithPerplexity()` - lines ~800-1000
-
-These have their **own prompts** that may be out of sync with `api/evaluate.ts`.
-
-### Current Usage
-
-| Function | What it calls | Used by |
-|----------|---------------|---------|
-| `runSingleEvaluatorBatched()` | `/api/evaluate` (server) | EnhancedComparison.tsx (LLM buttons) |
-| `runAllEvaluators()` | Direct LLM APIs (client) | enhancedComparison.ts (service) |
-
-### Risk Assessment: LOW
-- The LLM buttons UI (main user flow) uses the correct server path
-- The old `runAllEvaluators()` is only called by `enhancedComparison.ts`
-- That service is used by `EnhancedComparisonContainer` but the primary flow is the button UI
-
-### Recommended Fix (when time permits)
-1. Delete the direct API call functions (~1000 lines)
-2. Update `runAllEvaluators()` to use `/api/evaluate` like `runSingleEvaluatorBatched()` does
-3. Or: Delete `runAllEvaluators()` entirely if not needed
-
-**Priority:** LOW - Dead code, not actively causing bugs
-
----
-
-## LICENSE
-
-UNLICENSED - Clues Intelligence LTD
-
- 
-.
-# 
-!
-
+UNLICENSED - Clues Intelligence LTD. All rights reserved.
