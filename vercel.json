@@ -65,6 +65,14 @@
     },
     "api/warmup.ts": {
       "maxDuration": 30
+    },
+    "api/movie/generate.ts": {
+      "maxDuration": 300,
+      "includeFiles": "api/shared/**"
+    },
+    "api/movie/screenplay.ts": {
+      "maxDuration": 300,
+      "includeFiles": "api/shared/**"
     }
   },
   "buildCommand": "npm run build",

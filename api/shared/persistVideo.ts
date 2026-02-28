@@ -20,8 +20,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 const DEFAULT_STORAGE_BUCKET = 'judge-videos';
-const DOWNLOAD_TIMEOUT_MS = 30000; // 30s to download from provider CDN
-const UPLOAD_TIMEOUT_MS = 30000;   // 30s to upload to Supabase
+const DOWNLOAD_TIMEOUT_MS = 120000; // 120s to download large video files from provider CDN
+const UPLOAD_TIMEOUT_MS = 120000;   // 120s to upload large video files to Supabase
 
 /**
  * Download video from a provider CDN and upload to Supabase Storage.

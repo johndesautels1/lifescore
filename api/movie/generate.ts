@@ -175,7 +175,7 @@ async function submitToInVideoMCP(
         },
         body: JSON.stringify(mcpRequest),
       },
-      120000 // 2 min timeout for MCP call
+      280000 // 280s — just under Vercel Pro 300s limit for MCP submission
     );
 
     if (!response.ok) {

@@ -19,8 +19,8 @@ import { getAuthHeaders } from '../lib/supabase';
 // CONSTANTS
 // ============================================================================
 
-const SCREENPLAY_TIMEOUT_MS = 240000;  // 4 min — LLM may retry
-const GENERATE_TIMEOUT_MS = 180000;    // 3 min — MCP submission
+const SCREENPLAY_TIMEOUT_MS = 310000;  // 310s — slightly over Vercel 300s so server times out first with real error
+const GENERATE_TIMEOUT_MS = 310000;    // 310s — slightly over Vercel 300s so server times out first with real error
 const STATUS_TIMEOUT_MS = 30000;       // 30s for status checks
 const POLL_INTERVAL_MS = 10000;        // 10s between polls
 const MAX_POLL_ATTEMPTS = 180;         // 30 minutes max

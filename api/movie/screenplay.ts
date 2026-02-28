@@ -30,7 +30,7 @@ export const config = {
 // CONSTANTS
 // ============================================================================
 
-const LLM_TIMEOUT_MS = 120000;  // 120 seconds for screenplay generation
+const LLM_TIMEOUT_MS = 280000;  // 280s — just under Vercel Pro 300s limit (LLM may retry)
 
 // ============================================================================
 // TYPES
