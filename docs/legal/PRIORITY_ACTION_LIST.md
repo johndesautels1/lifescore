@@ -3,7 +3,7 @@
 **Company:** Clues Intelligence LTD (United Kingdom)
 **Owner:** John E. Desautels II
 **Created:** 2026-02-28
-**Last Updated:** 2026-02-28
+**Last Updated:** February 28, 2026
 
 ---
 
@@ -17,7 +17,7 @@
 | **Before EU marketing** | Appoint EU Representative | ~£200/mo | 1 week |
 | ~~Before US marketing~~ | ~~CCPA "Do Not Sell" opt-out implementation~~ | ~~Dev time~~ | **DONE 2026-02-28** |
 | **Before enterprise sales** | Enterprise SaaS Agreement | Lawyer review ~£500-1000 | 2-4 weeks |
-| **Housekeeping** | IP assignment resolution | Free (self-done) | 1 hour |
+| ~~Housekeeping~~ | ~~IP assignment resolution~~ | ~~Free (self-done)~~ | **DONE 2026-02-28** |
 
 ---
 
@@ -63,10 +63,16 @@
 - **Why:** Enterprise clients will require formal SaaS agreements with SLAs, liability caps, indemnification
 - **Recommended:** Have a lawyer review before offering to enterprise customers
 
-### 7. IP Assignment Resolution (Housekeeping)
-- **Why:** Ensure all IP created by sole founder is formally assigned to Clues Intelligence LTD
-- **How:** Self-executed IP assignment deed (sole founder to company)
-- **Cost:** Free if self-done
+### 7. IP Assignment Resolution — COMPLETED 2026-02-28
+- **Status:** DONE
+- **What was created:**
+  - Full IP Assignment Deed at `docs/legal/IP_ASSIGNMENT_DEED.md`
+  - Covers all software, product names, AI personas, methodologies, documentation, and future works
+  - Includes moral rights waiver under CDPA 1988
+  - Covers all 20 "[NAME] SCORE" products (active + planned)
+  - Covers Olivia, Cristiano, and Emilia personas
+  - Includes schedule of assigned IP inventory
+- **Action required by John:** Print, sign in wet ink, have witnessed by an independent adult, retain signed original
 
 ---
 

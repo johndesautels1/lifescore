@@ -70,6 +70,7 @@
 | B2 | Data Breach Response Plan | [x] | `DATA_BREACH_RESPONSE_PLAN.md` | `_____` | 2026-01-23 |
 | B3 | Employee Data Handling Policy | [x] | `EMPLOYEE_DATA_HANDLING_POLICY.md` | `_____` | 2026-01-23 |
 | B4 | Subprocessor Management Policy | [x] | `SUBPROCESSOR_MANAGEMENT_POLICY.md` | `_____` | 2026-01-23 |
+| B5 | IP Assignment Deed (Founder → Company) | [x] | `IP_ASSIGNMENT_DEED.md` | `_____` | 2026-02-28 |
 
 ### Section C: Technical Implementation
 
@@ -155,6 +156,7 @@
 | 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
 | 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
 | 2026-02-28 | Claude Opus 4.6 | CCPA/CPRA compliance (F1): Do Not Sell link, opt-out modal, consent logging, Privacy Policy update, all 5 Emilia manuals updated |
+| 2026-02-28 | Claude Opus 4.6 | IP Assignment Deed (B5): Founder-to-company IP assignment, all products/personas/code covered |
 | 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
 
 ---

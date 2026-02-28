@@ -824,6 +824,19 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - Verified requests responded to within 45 days
 - Non-discrimination guaranteed for exercising rights
 
+## IP Assignment (Completed 2026-02-28)
+
+A formal **Deed of Assignment of Intellectual Property** assigns all IP from sole founder John E. Desautels II to Clues Intelligence LTD:
+- All software, source code, APIs, and database schemas
+- All 20 product names (LIFE SCORE + 19 planned "[NAME] SCORE" variations)
+- All AI personas: Olivia, Cristiano, Emilia (names, knowledge bases, prompts)
+- The 100-metric scoring methodology and multi-LLM evaluation pipeline
+- All documentation, designs, and branding materials
+- Future works automatically assigned upon creation
+- Moral rights waived under CDPA 1988
+- **Action required:** Print, sign in wet ink, have witnessed by independent adult
+- **Document:** \`docs/legal/IP_ASSIGNMENT_DEED.md\`
+
 ## DPA Status
 
 Signed: Supabase, Stripe, OpenAI, Anthropic, ElevenLabs, Resend, Vercel
@@ -1197,6 +1210,8 @@ This license does **NOT** grant you any rights to the source code, underlying al
 The Software, including all source code, documentation, designs, algorithms, scoring models, data structures, AI/LLM prompts, trade secrets, and associated intellectual property, is the **sole and exclusive property of Clues Intelligence LTD**.
 
 All code was authored by **John E. Desautels II, Founder & CEO**, with the assistance of AI development tools. No third-party freelancers, contractors, or external developers contributed to the codebase. All intellectual property rights are fully vested in Clues Intelligence LTD.
+
+**IP Assignment Deed:** A formal Deed of Assignment of Intellectual Property has been executed, assigning all IP from the sole founder (John E. Desautels II) to Clues Intelligence LTD. This covers all software, product names, AI personas (Olivia, Cristiano, Emilia), scoring methodologies, documentation, and future works. The deed includes a moral rights waiver under the Copyright, Designs and Patents Act 1988. See \`docs/legal/IP_ASSIGNMENT_DEED.md\`.
 
 **Trademarks & Trade Names:**
 - LIFE SCORE™

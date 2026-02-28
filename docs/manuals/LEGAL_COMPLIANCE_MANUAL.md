@@ -316,11 +316,13 @@ London W1W 5PF
 | Terms of Service | `/legal/terms` | ACTIVE |
 | Cookie Policy | `/legal/cookies` | ACTIVE |
 | Refund Policy | `/legal/refunds` | ACTIVE |
+| IP Assignment Deed | `docs/legal/IP_ASSIGNMENT_DEED.md` | READY TO SIGN |
 
 ### 8.2 Document Update Log
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-28 | IP Assignment Deed | Created IP Assignment Deed — founder-to-company assignment of all IP (software, product names, AI personas, methodologies). Requires wet-ink signature + witness. | Claude Opus 4.6 |
 | 2026-02-26 | All 6 Manuals | **Major security audit:** 47 fixes — 20+ endpoints authenticated (total 38+), IDOR vulnerability fixed, CORS hardened, XSS patched, 87 debug console.log removed, admin emails centralized, API key leak fixed, tie victory text fixed, dynamic year, dead code cleanup. GDPR Article 32 compliance strengthened. | Claude Opus 4.6 |
 | 2026-02-14 | Legal, App Schema, Judge Equations, User, CS, Tech | Comprehensive update for 40 commits — collapsible panels, cost dashboard fix, video URL expiration, GoToMyNewCity, 200MB storage limit, GDPR timeout safety, HeyGen reliability, Supabase resilience | Claude Opus 4.6 |
 | 2026-02-13 | All Manuals | Comprehensive update for ~200 commits of changes | Claude Opus 4.6 |
