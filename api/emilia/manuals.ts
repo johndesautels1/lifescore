@@ -56,7 +56,7 @@ const ADMIN_EMAILS = getAdminEmails();
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 3.9 | **Updated:** 2026-02-27
+**Version:** 4.0 | **Updated:** 2026-02-28
 
 ## Getting Started
 
@@ -131,6 +131,17 @@ If you've forgotten your password:
 - Judge verdict video with Court Order option
 - All saved to both browser and cloud
 
+#### InVideo Movie Pipeline (Added 2026-02-28)
+- **10-Minute Cinematic Movie**: Available from the Judge Tab after a comparison completes
+- **3-Stage Process**:
+  1. **Screenplay Generation** — Claude AI writes a 12-scene cinematic screenplay based on your comparison results
+  2. **InVideo Rendering** — The screenplay is submitted to InVideo's AI video engine for professional rendering
+  3. **Status Polling** — The system checks every 10 seconds (up to 30 minutes) until your movie is ready
+- **7-Act Story Structure**: The movie follows a dramatic arc from life struggles in the losing city, through discovering LIFE SCORE, to arriving and thriving in the winning city
+- **Court Order Video**: A separate 10-second cinematic "perfect life" scene generated via Kling AI, available from the Judge Tab's Court Order section
+- **Admin VIP Override**: Admins can upload custom InVideo videos for specific cities or comparisons
+- **Tier Access**: Court Order videos require SOVEREIGN tier (admins bypass)
+
 #### Saved Comparisons (Updated 2026-02-17)
 - Comparisons **auto-save on completion** to both localStorage and Supabase — no need to manually click "Save"
 - The Save button immediately reflects saved state after auto-save
@@ -203,7 +214,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.8 | **Updated:** 2026-02-27
+**Version:** 3.9 | **Updated:** 2026-02-28
 
 ## Support Overview
 
@@ -221,6 +232,7 @@ If you've forgotten your password:
 | Judge Verdict Videos | No | 1/month | 1/month |
 | Gamma Reports | No | 1/month | 1/month |
 | Grok/Kling Mood Videos | No | No | 1/month |
+| InVideo Movies | No | No | 1/month |
 | Cloud Sync | No | Yes | Yes |
 
 ## Common Issues
@@ -242,6 +254,21 @@ If you've forgotten your password:
 - Click "SEE YOUR NEW LIFE!" to regenerate
 - Download button works independently
 - Each video plays independently (one failing won't block other)
+
+### "My InVideo movie is taking forever" (Added 2026-02-28)
+- InVideo movies are 10 minutes long and can take up to 30 minutes to render
+- The system polls every 10 seconds automatically — the user does NOT need to refresh
+- If the screenplay generation times out (>5 min), ask the user to retry
+- If InVideo rendering fails, the screenplay is saved and the user can retry without regenerating it
+- SOVEREIGN tier required for movie generation
+
+### "Court Order video not playing" (Added 2026-02-28)
+- Court Order uses Kling AI (primary) with Replicate fallback
+- Kling/Replicate CDN URLs expire after ~24 hours
+- After 3 failed playback attempts, the system auto-clears broken URLs
+- Click "SEE COURT ORDER" to regenerate a fresh video
+- Admin VIP override videos (InVideo) take priority over Kling-generated ones
+- Check that user has SOVEREIGN tier (non-admins) or is an admin
 
 ### "I was charged incorrectly"
 - Verify transaction in Stripe dashboard
@@ -340,7 +367,7 @@ If you've forgotten your password:
 
   tech: `# Technical Support Manual
 
-**Version:** 5.1 | **Updated:** 2026-02-27
+**Version:** 5.2 | **Updated:** 2026-02-28
 
 ## System Architecture
 
@@ -440,6 +467,83 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 ### Cristiano API Endpoints
 - POST /api/cristiano/storyboard — Generate 7-scene storyboard JSON (Stage 1)
 - POST /api/cristiano/render — Submit to HeyGen Video Agent + poll status (Stage 2)
+
+## CRITICAL: InVideo Movie Pipeline Architecture (Added 2026-02-28)
+
+**Complete 3-stage pipeline for generating 10-minute cinematic movies from comparison data.**
+
+### Stage 1: Screenplay Generation
+- **API**: POST /api/movie/screenplay (310s timeout)
+- **Provider**: Claude AI
+- **Input**: MovieComparisonInput (cities, scores, categories, judge summary)
+- **Output**: 12-scene JSON screenplay
+- **Orchestrated by**: src/services/movieService.ts buildMovieInput() + generateScreenplay()
+
+### Stage 2: InVideo MCP Submission
+- **API**: POST /api/movie/generate (300s timeout)
+- **Process**: buildInVideoPromptFromScreenplay() converts JSON → natural language prompt → InVideo MCP server
+- **Prompt Builder**: src/utils/invideoPromptBuilder.ts buildInVideoPrompt() — 7-Act cinematic structure:
+  - ACT 1 (0:00-1:20): Struggle in loser city
+  - ACT 2 (1:20-2:40): Discovery of CLUES
+  - ACT 3 (2:40-3:50): CLUES ecosystem & modules
+  - ACT 4 (3:50-6:00): LIFE SCORE metric reveal (scores shown ONCE)
+  - ACT 5 (6:00-7:20): Transition/goodbye
+  - ACT 6 (7:20-8:40): Arrival in winner city
+  - ACT 7 (8:40-10:00): Dream life montage
+- **Casting Rule**: SAME couple throughout all 7 acts
+- **Voice**: ALL 2nd person "you"/"your" (never 3rd person)
+- **City Visuals**: Auto-detected environment type (beach/mountain/urban/desert/european/tropical/general)
+
+### Stage 3: Status Polling
+- **Poll interval**: 10s | **Max attempts**: 180 (30 minutes)
+- **Status progression**: screenplay_ready → submitting_to_invideo → rendering → completed
+- **Database**: movie_videos table (Supabase)
+
+### Court Order Video (Kling AI Short)
+- **Trigger**: "SEE COURT ORDER" button in JudgeTab → CourtOrderVideo.tsx
+- **Provider**: Kling AI (primary) → Replicate Minimax (fallback)
+- **Duration**: 10-second cinematic "perfect life" scene
+- **Polling**: Every 3s for up to 120 attempts (6 minutes)
+- **Permanent Storage**: court-order-videos Supabase bucket (50MB, MP4/WebM)
+- **CDN Expiry Handling**: Kling/Replicate URLs expire ~24h; auto-reset after 3 failed loads (FIX #48)
+
+### InVideo Admin Override System
+- **API**: GET/POST/DELETE /api/video/invideo-override
+- **Database**: invideo_overrides table (comparison-specific or city-level defaults)
+- **Lookup Priority**: comparison override > city default > null
+- **Admin Panel**: Visible in CourtOrderVideo.tsx when isAdmin=true (lines 778-839)
+- **Auth**: verifyAdmin() checks admin email list
+
+### Movie Pipeline Key Files
+| File | Purpose |
+|------|---------|
+| src/utils/invideoPromptBuilder.ts | 7-Act prompt generator (576 lines) |
+| src/services/movieService.ts | Full orchestration: buildMovieInput, generateScreenplay, submitToInVideo, pollMovieStatus |
+| api/movie/screenplay.ts | Claude screenplay endpoint (310s) |
+| api/movie/generate.ts | InVideo MCP submission + movie record creation (300s) |
+| src/components/CourtOrderVideo.tsx | Court Order UI: generate, upload, play, save, download, share (887 lines) |
+| src/services/grokVideoService.ts | Kling/Replicate video API wrapper + detectCityType() |
+| src/hooks/useGrokVideo.ts | React hook: generation state, polling, progress interpolation |
+| api/video/grok-generate.ts | Kling AI + Replicate fallback endpoint (240s) |
+| api/video/grok-status.ts | Video status polling endpoint (30s) |
+| api/video/invideo-override.ts | Admin VIP video override CRUD |
+
+### Movie Pipeline Env Vars
+- **INVIDEO_MCP_URL**: InVideo MCP server endpoint
+- **INVIDEO_API_KEY**: InVideo API authentication
+- **KLING_VIDEO_API_KEY / KLING_VIDEO_SECRET**: Kling AI JWT auth (HS256)
+- **REPLICATE_API_TOKEN**: Fallback video provider
+
+### Movie Pipeline Timeouts
+| Component | Timeout | Notes |
+|-----------|---------|-------|
+| movieService SCREENPLAY_TIMEOUT_MS | 310s | Slightly over Vercel 300s to catch server timeout |
+| movieService GENERATE_TIMEOUT_MS | 310s | InVideo submission |
+| movieService STATUS_TIMEOUT_MS | 30s | Per-poll request |
+| api/movie/generate maxDuration | 300s | Vercel function limit |
+| submitToInVideoMCP | 280s | MCP request timeout |
+| grokVideoService VIDEO_GENERATE_TIMEOUT | 240s | Sequential Kling generation |
+| grokVideoService VIDEO_STATUS_TIMEOUT | 30s | Status check |
 
 ## Olivia Video Presenter (Updated 2026-02-15)
 
@@ -591,6 +695,32 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 - **Olivia presenter audio overlap** — ReportPresenter.tsx speakTTSFallback() created new Audio objects without stopping the previous one. Added .pause() + null cleanup before creating new Audio.
 - **Olivia context builder raw metric IDs** — api/olivia/context.ts showed raw metric IDs in 6 places. All fixed with getMetricDisplayName(). Enhanced path also missing city2 evidence entirely.
 
+## Automated Test Infrastructure (Added 2026-02-28)
+
+### Test Runner
+- **Framework**: Vitest (paired with Vite build system)
+- **Config**: vitest.config.ts (separate from vite.config.ts — zero impact on production build)
+- **Commands**: \`npm test\` (single run), \`npm run test:watch\` (watch mode)
+- **Test location**: tests/ directory (top-level, not inside src/)
+
+### Test Coverage (100 tests, 7 files)
+
+| Test File | Module Under Test | Tests | What It Validates |
+|-----------|-------------------|-------|-------------------|
+| costCalculator.test.ts | src/utils/costCalculator-functions.ts | 31 | LLM cost math (Opus, GPT-4o, Gemini, Sonnet), Tavily credits, TTS (ElevenLabs/OpenAI/HD), Avatar (Replicate/D-ID/Simli/HeyGen), Kling per-image, Gamma per-generation, formatCost, createCostBreakdown, finalizeCostBreakdown totals |
+| scoring.test.ts | src/api/scoring.ts | 26 | normalizeScore for boolean/range/scale/categorical metrics, lower_is_better inversion, clamping, string parsing, createComparison winner/tie/category logic |
+| scoringThresholds.test.ts | src/constants/scoringThresholds.ts | 9 | Confidence levels (unanimous/strong/moderate/split), boundary values, isDisagreementArea threshold |
+| rateLimit.test.ts | api/shared/rateLimit.ts | 18 | Preset values (heavy/standard/light/health), rateLimiter.check tracking, blocking after max, independent IP/endpoint tracking, getClientIP header extraction |
+| fetchWithTimeout.test.ts | src/lib/fetchWithTimeout.ts | 5 | Successful fetch, timeout error, non-abort error propagation, options passthrough |
+| countryFlags.test.ts | src/utils/countryFlags.ts | 4 | Flag URL generation for 34 countries, fallback behavior, URL format validation |
+| metricDisplayNames.test.ts | src/shared/metricDisplayNames.ts | 7 | All 100 metrics present, correct prefixes (pf/hp/bw), no empty names, no underscores in display names |
+
+### Key Design Principles
+- **Zero risk**: Only NEW files added — no existing source code modified
+- **Pure functions only**: Tests target stateless calculation/utility functions with no side effects
+- **No mocking of app state**: Tests don't depend on React, Supabase, or browser APIs (except fetchWithTimeout which mocks globalThis.fetch)
+- **Fast execution**: Full suite runs in <1 second
+
 ## Debugging
 - Vercel Dashboard > Deployments > Functions
 - Supabase Dashboard > Logs
@@ -653,7 +783,7 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.5.0 | **Updated:** 2026-02-17
+**Version:** 2.6.0 | **Updated:** 2026-02-28
 
 ---
 
@@ -690,7 +820,7 @@ profiles, user_preferences, comparisons, olivia_conversations, gamma_reports, ju
 
 ## 2. Database Schema
 
-LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buckets**.
+LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buckets**.
 
 ### 2.1 All Tables
 
@@ -715,7 +845,8 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 | authorized_manual_access | Manual access control |
 | court_orders | Court Order video saves (with video_storage_path) |
 | app_prompts | 50 system prompts (6 categories) |
-| invideo_overrides | Admin cinematic prompt overrides |
+| invideo_overrides | Admin cinematic video overrides (comparison-specific or city-level defaults) |
+| movie_videos | InVideo 10-minute movie records (screenplay, status, video URL, edit URL) |
 | report_shares | Shared report links |
 | jobs | Persistent job queue for long-running tasks (Added 2026-02-16) |
 | notifications | In-app bell + email notification records (Added 2026-02-16) |
@@ -730,7 +861,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 2. API Endpoints (46 total)
+## 2. API Endpoints (49 total)
 
 ### Core
 | Endpoint | Method | Description |
@@ -756,6 +887,13 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 | /api/olivia/avatar/heygen | POST | HeyGen Live Presenter streaming avatar (create, speak, interrupt, close) |
 | /api/olivia/avatar/heygen-video | POST/GET | HeyGen pre-rendered video generation + status polling |
 | /api/olivia/avatar/streams | POST | D-ID cockpit avatar for Ask Olivia page (create, speak, destroy) |
+
+### Movie (InVideo Pipeline — Added 2026-02-28)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/movie/screenplay | POST | Generate 12-scene screenplay from comparison (Claude, 310s) |
+| /api/movie/generate | POST/GET | Submit screenplay to InVideo MCP + create movie record / check status (300s) |
+| /api/video/invideo-override | GET/POST/DELETE | Admin VIP video override CRUD |
 
 ### Cristiano
 | Endpoint | Method | Description |
@@ -792,7 +930,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo
-### Video: NewLifeVideos (blob URL playback, error detection), GoToMyNewCity (Cristiano Freedom Tour)
+### Video: NewLifeVideos (blob URL playback, error detection), GoToMyNewCity (Cristiano Freedom Tour), MovieGenerator (InVideo 10-min cinema pipeline)
 ### Video Playback: All video components use \`preload="auto"\` for smooth buffering + buffering spinner overlay on stall
 ### Reports: VisualsTab (2-tab layout: Generate New / View Existing), ReportPresenter (Read/Live Presenter/Generate Video modes), GammaIframe (shared iframe with sandbox + error handling), AboutClues
 ### Settings: SettingsModal, CostDashboard, PricingModal, FeatureGate
@@ -816,7 +954,24 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 5. Tier System
+## 5. Automated Tests (Added 2026-02-28)
+
+- **Framework**: Vitest | **Config**: vitest.config.ts | **Commands**: \`npm test\`, \`npm run test:watch\`
+- **Location**: tests/ directory (7 test files, 100 tests total)
+
+| Test File | Tests | Coverage |
+|-----------|------:|----------|
+| costCalculator.test.ts | 31 | LLM/Tavily/TTS/Avatar/Kling/Gamma cost calculations |
+| scoring.test.ts | 26 | Score normalization (boolean/range/scale/categorical), comparisons |
+| rateLimit.test.ts | 18 | Rate limiter presets, IP extraction, request blocking |
+| scoringThresholds.test.ts | 9 | Confidence levels, disagreement detection |
+| metricDisplayNames.test.ts | 7 | All 100 metric display names validated |
+| fetchWithTimeout.test.ts | 5 | Timeout behavior, error propagation |
+| countryFlags.test.ts | 4 | Flag URL generation for 34 countries |
+
+---
+
+## 6. Tier System
 
 **SOURCE OF TRUTH:** src/hooks/useTierAccess.ts
 
@@ -832,7 +987,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **23 tables** and **6 storage buc
 
 ---
 
-## 6. Environment Variables (61 total)
+## 7. Environment Variables (63 total)
 
 ### Required (Production)
 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
@@ -841,7 +996,7 @@ VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_K
 ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
 
 ### Optional
-GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, KV_REST_API_URL, KV_REST_API_TOKEN
+GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, INVIDEO_MCP_URL, INVIDEO_API_KEY, KV_REST_API_URL, KV_REST_API_TOKEN
 
 ### Voice & Avatar Wiring (IMPORTANT)
 - **ELEVENLABS_OLIVIA_VOICE_ID** → Olivia chat TTS (cloned voice), falls back to OpenAI "nova"
