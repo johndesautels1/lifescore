@@ -549,6 +549,25 @@ When a California resident contacts support about privacy rights:
 - Log all requests for compliance audit
 - Escalate complex requests to Tier 3 (Management/Legal)
 
+### 6.6 US State Privacy Requests — VA, CO, CT, UT (Added 2026-02-28)
+
+When a resident of Virginia, Colorado, Connecticut, or Utah contacts support about privacy rights, handle the same way as CCPA requests. The rights are nearly identical:
+
+| State | Law | Key Rights | Appeal Required? |
+|-------|-----|-----------|-----------------|
+| Virginia | VCDPA | Access, Correct, Delete, Portability, Opt-Out | Yes — 60 days (email subject: "VCDPA Appeal") |
+| Colorado | CPA | Access, Correct, Delete, Portability, Opt-Out | Yes — refer to CO Attorney General if unsatisfied |
+| Connecticut | CTDPA | Access, Correct, Delete, Portability, Opt-Out | Yes — 60 days, then CT Attorney General |
+| Utah | UCPA | Access, Delete, Portability, Opt-Out | No appeal required |
+
+**How to handle:**
+- Direct users to **"US State Privacy Rights"** link in the site footer for full details
+- Opt-Out requests: same "Do Not Sell" button as CCPA
+- Data requests: same Account Settings tools (Download My Data, Delete Account, Edit Profile)
+- Response deadline: **45 days** for all states
+- If a user appeals a denied request, escalate to Tier 3 (Management/Legal) immediately
+- **Colorado:** We honor Global Privacy Control (GPC) browser signals — if a user mentions GPC, confirm it's recognized
+
 ---
 
 ## 7. Billing & Payments

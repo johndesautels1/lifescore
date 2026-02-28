@@ -914,12 +914,25 @@ California residents have these additional rights:
 3. Confirm via email
 4. GDPR requests processed within 30 days; CCPA requests within 45 days
 
-### Do Not Sell or Share (CCPA Opt-Out)
+### Your Rights — Virginia, Colorado, Connecticut & Utah Residents (Added 2026-02-28)
+
+If you live in Virginia, Colorado, Connecticut, or Utah, your state privacy law gives you rights similar to California:
+- **Access, Delete, Portability:** Use Account Settings (same tools as above)
+- **Opt-Out:** Use the "Do Not Sell or Share My Personal Information" link in the footer
+- **Correct:** Edit your profile in Account Settings (Virginia, Colorado, Connecticut)
+- **Appeal:** If we deny a request, email cluesnomads@gmail.com with subject "VCDPA Appeal," "CPA Appeal," or "CTDPA Appeal" — we respond within 60 days
+
+For full details, click **"US State Privacy Rights"** in the site footer.
+
+**We do not sell your personal data or use it for targeted advertising.**
+
+### Do Not Sell or Share (CCPA/State Privacy Opt-Out)
 
 1. Scroll to the **site footer**
 2. Click **"Do Not Sell or Share My Personal Information"**
 3. Click the opt-out button to record your preference
 4. Your choice is saved immediately and logged for compliance
+5. This opt-out covers California, Virginia, Colorado, Connecticut, and Utah requirements
 
 ### Security (Updated 2026-02-26)
 

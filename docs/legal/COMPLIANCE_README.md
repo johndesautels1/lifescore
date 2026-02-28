@@ -89,8 +89,8 @@
 | # | Item | Status | Reference | Date |
 |---|------|--------|-----------|------|
 | D1 | ICO Registration (UK) | [x] | Registered at ico.org.uk | 2026-02-28 |
-| D2 | EU Representative Appointed | [ ] | Company: _______ | - |
-| D3 | DUNS Number | [ ] | #: _______ | - |
+| D2 | EU Representative Appointed | [x] | N/A — Not required (UK company post-Brexit) | 2026-02-28 |
+| D3 | DUNS Number | [x] | N/A — Not required (consumer SaaS, no govt contracts) | 2026-02-28 |
 
 ### Section E: Third-Party Agreements (DPAs)
 
