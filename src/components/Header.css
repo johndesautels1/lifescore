@@ -518,6 +518,14 @@
   }
 }
 
+/* Mobile landscape (widescreen) — shrink right toolbar 25% to avoid overlapping centered heading */
+@media (orientation: landscape) and (max-height: 500px) {
+  .header-right {
+    transform: scale(0.75);
+    transform-origin: top right;
+  }
+}
+
 /* Very small phones — prevent header overlap */
 @media (max-width: 360px) {
   .header-left,
