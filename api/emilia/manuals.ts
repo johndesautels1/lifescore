@@ -1153,7 +1153,7 @@ All code was authored by **John E. Desautels II, Founder & CEO**, with the assis
 - CLUES Intelligence™
 - Olivia™ (Client-Facing AI Expert — Voice Avatar, Report Analyst & Product Ambassador)
 - Cristiano™ (AI Opus Judge — Verdict Renderer, Recommendation Engine & Cinematic Presenter)
-- Emilia™ (Internal AI Architect — Codebase Brain, Tech Support & Help Center)
+- Emilia™ (AI Architect & Troubleshooter — Codebase Brain, User/Admin Support & Legal-Schema Compliance)
 - All "[NAME] SCORE" product variations
 
 ---
