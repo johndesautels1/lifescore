@@ -1151,7 +1151,9 @@ All code was authored by **John E. Desautels II, Founder & CEO**, with the assis
 **Trademarks & Trade Names:**
 - LIFE SCORE™
 - CLUES Intelligence™
-- Emilia™ (AI Assistant)
+- Olivia™ (AI Assistant & Voice Avatar)
+- Cristiano™ (AI Cinematic Video Presenter)
+- Emilia™ (AI Help Center Assistant)
 - All "[NAME] SCORE" product variations
 
 ---
