@@ -32,13 +32,14 @@ United Kingdom
 | **Registration Required** | YES | UK-based company processing personal data |
 | **Registration URL** | https://ico.org.uk/for-organisations/register/ |
 | **Annual Fee** | ~£40-60 | Depends on organization size |
-| **Registration Status** | NOT STARTED | Complete before launch |
+| **Application Number** | **C1885368** | Submitted 2026-02-28 |
+| **Registration Status** | APPLICATION SUBMITTED | Awaiting confirmation |
 
 **Action Required:**
-1. Go to ico.org.uk
-2. Complete Data Protection Fee registration
-3. Pay annual fee
-4. Display registration number in Privacy Policy
+1. ~~Go to ico.org.uk~~ DONE
+2. ~~Complete Data Protection Fee registration~~ DONE — Application C1885368
+3. Pay annual fee (upon confirmation)
+4. Display registration number in Privacy Policy (once issued)
 
 ### 1.2 EU Representative
 
@@ -322,6 +323,7 @@ London W1W 5PF
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-28 | Legal Compliance | ICO Registration application number C1885368 logged — status updated from NOT STARTED to APPLICATION SUBMITTED | Claude Opus 4.6 |
 | 2026-02-28 | IP Assignment Deed | Created IP Assignment Deed — founder-to-company assignment of all IP (software, product names, AI personas, methodologies). Requires wet-ink signature + witness. | Claude Opus 4.6 |
 | 2026-02-26 | All 6 Manuals | **Major security audit:** 47 fixes — 20+ endpoints authenticated (total 38+), IDOR vulnerability fixed, CORS hardened, XSS patched, 87 debug console.log removed, admin emails centralized, API key leak fixed, tie victory text fixed, dynamic year, dead code cleanup. GDPR Article 32 compliance strengthened. | Claude Opus 4.6 |
 | 2026-02-14 | Legal, App Schema, Judge Equations, User, CS, Tech | Comprehensive update for 40 commits — collapsible panels, cost dashboard fix, video URL expiration, GoToMyNewCity, 200MB storage limit, GDPR timeout safety, HeyGen reliability, Supabase resilience | Claude Opus 4.6 |
