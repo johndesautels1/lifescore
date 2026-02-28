@@ -56,7 +56,7 @@ const ADMIN_EMAILS = getAdminEmails();
 const EMBEDDED_MANUALS: Record<string, string> = {
   user: `# LifeScore User Manual
 
-**Version:** 4.0 | **Updated:** 2026-02-28
+**Version:** 4.1 | **Updated:** 2026-02-28
 
 ## Getting Started
 
@@ -140,7 +140,7 @@ If you've forgotten your password:
 - **5-Act, 12-Scene Story Structure**: The movie follows a dramatic arc across 5 acts — Struggle (life in the losing city), Discovery (finding CLUES & LIFE SCORE), Revelation (comparison results & verdict), Journey (packing up & traveling), and New Life (arrival, freedom & epilogue)
 - **Court Order Video**: A separate 10-second cinematic "perfect life" scene generated via Kling AI, available from the Judge Tab's Court Order section
 - **Admin VIP Override**: Admins can upload custom InVideo videos for specific cities or comparisons
-- **Tier Access**: Court Order videos require SOVEREIGN tier (admins bypass)
+- **Tier Access**: Both Moving Movies AND Court Order videos require SOVEREIGN tier. Non-SOVEREIGN users receive a 403 "Access denied" response. Admin emails in DEV_BYPASS_EMAILS bypass the tier check.
 
 #### Saved Comparisons (Updated 2026-02-17)
 - Comparisons **auto-save on completion** to both localStorage and Supabase — no need to manually click "Save"
@@ -214,7 +214,7 @@ If you've forgotten your password:
 
   csm: `# Customer Service Manual
 
-**Version:** 3.9 | **Updated:** 2026-02-28
+**Version:** 4.0 | **Updated:** 2026-02-28
 
 ## Support Overview
 
@@ -260,7 +260,8 @@ If you've forgotten your password:
 - The system polls every 10 seconds automatically — the user does NOT need to refresh
 - If the screenplay generation times out (>5 min), ask the user to retry
 - If InVideo rendering fails, the screenplay is saved and the user can retry without regenerating it
-- SOVEREIGN tier required for movie generation
+- SOVEREIGN tier required for movie generation — non-SOVEREIGN users get "Access denied" (403)
+- Admin emails bypass the tier check (DEV_BYPASS_EMAILS env var)
 
 ### "Court Order video not playing" (Added 2026-02-28)
 - Court Order uses Kling AI (primary) with Replicate fallback
@@ -367,7 +368,7 @@ If you've forgotten your password:
 
   tech: `# Technical Support Manual
 
-**Version:** 5.2 | **Updated:** 2026-02-28
+**Version:** 5.3 | **Updated:** 2026-02-28
 
 ## System Architecture
 
@@ -472,15 +473,24 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 
 **Complete 3-stage pipeline for generating 10-minute cinematic movies from comparison data.**
 
+### Tier Gating (Added 2026-02-28)
+- **Both endpoints** (screenplay + generate) require SOVEREIGN (enterprise) tier
+- **Check pattern**: Same as api/video/grok-generate.ts — queries profiles table for tier + email
+- **Admin bypass**: DEV_BYPASS_EMAILS env var grants enterprise access regardless of tier
+- **Non-SOVEREIGN response**: 403 { error: "Access denied", reason, tier, upgradeRequired: true }
+- **Frontend handling**: MovieGenerator.tsx error handling displays the 403 message to the user
+
 ### Stage 1: Screenplay Generation
 - **API**: POST /api/movie/screenplay (310s timeout)
 - **Provider**: Claude AI
 - **Input**: MovieComparisonInput (cities, scores, categories, judge summary)
 - **Output**: 12-scene JSON screenplay
+- **Tier check**: checkMovieTierAccess(auth.userId) after requireAuth()
 - **Orchestrated by**: src/services/movieService.ts buildMovieInput() + generateScreenplay()
 
 ### Stage 2: InVideo MCP Submission
 - **API**: POST /api/movie/generate (300s timeout)
+- **Tier check**: checkMovieTierAccess(auth.userId) after requireAuth() — gates both POST and GET
 - **Process**: buildInVideoPromptFromScreenplay() converts JSON → natural language prompt → InVideo MCP server
 - **Prompt Builder**: api/movie/generate.ts buildInVideoPromptFromScreenplay() — 5-Act, 12-Scene cinematic structure:
   - ACT 1: STRUGGLE (Scenes 1-2, 0:00-1:40): "The Weight" + "The Search" — life in the losing city
@@ -781,7 +791,7 @@ Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replica
 
   schema: `# LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.6.0 | **Updated:** 2026-02-28
+**Version:** 2.7.0 | **Updated:** 2026-02-28
 
 ---
 
@@ -889,9 +899,11 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buc
 ### Movie (InVideo Pipeline — Added 2026-02-28)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/movie/screenplay | POST | Generate 12-scene screenplay from comparison (Claude, 310s) |
-| /api/movie/generate | POST/GET | Submit screenplay to InVideo MCP + create movie record / check status (300s) |
+| /api/movie/screenplay | POST | Generate 12-scene screenplay from comparison (Claude, 310s) — SOVEREIGN tier required |
+| /api/movie/generate | POST/GET | Submit screenplay to InVideo MCP + create movie record / check status (300s) — SOVEREIGN tier required |
 | /api/video/invideo-override | GET/POST/DELETE | Admin VIP video override CRUD |
+
+**Tier gating**: Both screenplay and generate endpoints run checkMovieTierAccess() after requireAuth(). Non-SOVEREIGN users get 403 with upgradeRequired: true. Admin bypass via DEV_BYPASS_EMAILS env var.
 
 ### Cristiano
 | Endpoint | Method | Description |
