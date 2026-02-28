@@ -88,7 +88,7 @@
 
 | # | Item | Status | Reference | Date |
 |---|------|--------|-----------|------|
-| D1 | ICO Registration (UK) | [ ] | Registration #: _______ | - |
+| D1 | ICO Registration (UK) | [x] | Registered at ico.org.uk | 2026-02-28 |
 | D2 | EU Representative Appointed | [ ] | Company: _______ | - |
 | D3 | DUNS Number | [ ] | #: _______ | - |
 
@@ -101,12 +101,12 @@
 | E3 | OpenAI | Olivia AI Assistant | [x] | [x] | 2026-01-23 |
 | E4 | Anthropic | Claude LLM Evaluation | [x] | [x] | 2026-01-23 |
 | E5 | Google (Gemini) | LLM Evaluation | [x] | [x] | 2026-01-23 |
-| E6 | xAI (Grok) | LLM Evaluation | [ ] | [ ] | - |
-| E7 | Perplexity | LLM Evaluation | [ ] | [ ] | - |
-| E8 | D-ID | Video Avatar | [ ] | [ ] | - |
-| E9 | Gamma | Report Generation | [ ] | [ ] | - |
+| E6 | xAI (Grok) | LLM Evaluation | [~] | [ ] | Requested 2026-02-28 |
+| E7 | Perplexity | LLM Evaluation | [~] | [ ] | Requested 2026-02-28 |
+| E8 | D-ID | Video Avatar | [~] | [ ] | Requested 2026-02-28 |
+| E9 | Gamma | Report Generation | [~] | [ ] | Requested 2026-02-28 |
 | E10 | Stripe | Payments | [x] | [x] | 2026-01-23 |
-| E11 | Tavily | Web Search | [ ] | [ ] | - |
+| E11 | Tavily | Web Search | [~] | [ ] | Requested 2026-02-28 |
 
 ### Section F: US State Compliance
 
