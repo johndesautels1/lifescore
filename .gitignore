@@ -40,5 +40,14 @@ nul
 .vercel
 .env*.local
 
+# Capacitor Android build artifacts
+android/app/build/
+android/.gradle/
+android/build/
+android/app/release/
+*.apk
+*.aab
+*.keystore
+
 # Archived code (kept locally for reference)
 Dead Code/
