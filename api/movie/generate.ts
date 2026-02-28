@@ -86,7 +86,6 @@ WORD COUNT: ~${meta.totalWordCount} words voiceover
 
 WINNER CITY: ${winnerCity}
 LOSER CITY: ${loserCity}
-${meta.userName ? `VIEWER NAME: ${meta.userName}` : ''}
 
 STYLE: Cinematic, emotional, documentary-style
 ASPECT RATIO: 16:9 (landscape)
@@ -100,7 +99,7 @@ VOICE: Warm, professional narrator — ALL 2ND PERSON ("you" / "your")
 3. ALL narration is 2nd person. NEVER use "they" or "the couple."
 4. City-specific visuals — real landmarks, recognizable locations. NOT generic.
 5. FREEDOM is the theme — weave it throughout every scene.
-${meta.userName ? `6. Address viewer as "${meta.userName}" at key emotional moments.` : ''}
+6. NEVER use the viewer's real name — always say "you" / "your" (stock footage actors, not the real person).
 
 ================================================================================
 SCENE-BY-SCENE SCREENPLAY
@@ -288,7 +287,7 @@ export default async function handler(
 
   try {
     const { screenplay, winnerCity, loserCity, winnerCountry, loserCountry,
-            winnerScore, loserScore, userName } = req.body;
+            winnerScore, loserScore } = req.body;
 
     if (!screenplay || !winnerCity || !loserCity) {
       res.status(400).json({ error: 'screenplay, winnerCity, and loserCity are required' });
@@ -361,7 +360,6 @@ export default async function handler(
         screenplay,
         screenplay_word_count: screenplay.meta?.totalWordCount || null,
         generation_prompt: generationPrompt,
-        user_name: userName || null,
         generated_by: auth.userId,
         status: 'submitting_to_invideo',
       })

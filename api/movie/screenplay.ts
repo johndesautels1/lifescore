@@ -137,7 +137,7 @@ OUTPUT: Return ONLY valid JSON matching the schema. No markdown, no backticks, n
 
 NARRATIVE RULES:
 1. ALL narration is 2ND PERSON — "you" / "your" / address viewer directly.
-2. If a userName is provided, use it at key emotional beats (opening, score reveal, departure, final shot).
+2. NEVER use the viewer's real name. Always say "you" or "your" — the video uses stock footage of actors, so naming a real person while showing a stranger is jarring and breaks immersion.
 3. The story has a clear emotional arc: melancholy → curiosity → excitement → awe → bittersweet → joy → fulfillment.
 4. FREEDOM is the central theme — weave it throughout every scene.
 5. Same couple/protagonist throughout all 12 scenes — casting continuity is essential.
