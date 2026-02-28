@@ -542,7 +542,7 @@ npm test
 
 **Company:** Clues Intelligence LTD
 **Address:** 167-169 Great Portland Street, 5th Floor, London W1W 5PF, United Kingdom
-**ICO Registration:** Required (UK data controller)
+**ICO Registration:** Application C1885368 submitted (UK data controller)
 
 DPA status, compliance checklist, and legal policies in `docs/legal/`.
 
