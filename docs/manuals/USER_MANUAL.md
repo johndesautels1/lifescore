@@ -951,6 +951,10 @@ We use:
 - **AI Providers:** Analysis (data not stored)
 - **Vercel:** Hosting
 
+### Trademarks & Intellectual Property
+
+CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD. All content, scoring methodologies, AI personas (Olivia, Cristiano, Emilia), and software are the intellectual property of Clues Intelligence LTD. Unauthorized use, reproduction, or distribution of our trademarks or proprietary technology is prohibited. See the Terms of Service for full details.
+
 ---
 
 ## 14. Frequently Asked Questions

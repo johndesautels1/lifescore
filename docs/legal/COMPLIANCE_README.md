@@ -118,6 +118,23 @@
 | F4 | Connecticut | CTDPA | [x] | 2026-02-28 |
 | F5 | Utah | UCPA | [x] | 2026-02-28 |
 
+### Section G: Intellectual Property & Trademarks
+
+| # | Item | Status | File/Reference | Date |
+|---|------|--------|----------------|------|
+| G1 | IP Assignment Deed (Founder → Company) | [x] | `IP_ASSIGNMENT_DEED.md` (READY TO SIGN) | 2026-02-28 |
+| G2 | Trademark: CLUES | [ ] | UK IPO — Not filed | — |
+| G3 | Trademark: LIFE SCORE | [ ] | UK IPO — Not filed | — |
+| G4 | Trademark: SMART | [ ] | UK IPO — Not filed | — |
+| G5 | Trademark: CLUES (US) | [ ] | USPTO — Not filed | — |
+| G6 | Trademark: LIFE SCORE (US) | [ ] | USPTO — Not filed | — |
+| G7 | Trademark: SMART (US) | [ ] | USPTO — Not filed | — |
+| G8 | Trademark Strategy Document | [x] | `TRADEMARK_STRATEGY.md` | 2026-02-28 |
+
+**Full strategy:** `docs/legal/TRADEMARK_STRATEGY.md`
+**Priority:** File G2–G4 (UK) first (~£660 total), then G5–G7 (US) when revenue starts (~$1,500 total)
+**Prerequisite:** Sign IP Assignment Deed (G1) before filing any trademark applications
+
 ---
 
 ## Quick Reference: User Rights by Jurisdiction
@@ -157,6 +174,7 @@
 | 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
 | 2026-02-28 | Claude Opus 4.6 | CCPA/CPRA compliance (F1): Do Not Sell link, opt-out modal, consent logging, Privacy Policy update, all 5 Emilia manuals updated |
 | 2026-02-28 | Claude Opus 4.6 | US State Privacy Rights (F2-F5): VA/CO/CT/UT full disclosures in Privacy Policy, new StatePrivacyContent in LegalModal, footer link, Legal Compliance Manual updated |
+| 2026-02-28 | Claude Opus 4.6 | Trademark Strategy (G2-G8): Full trademark strategy doc, Section G added to checklist, Legal Compliance Manual Section 7B, CS Manual Section 6.7 |
 | 2026-02-28 | Claude Opus 4.6 | IP Assignment Deed (B5): Founder-to-company IP assignment, all products/personas/code covered |
 | 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
 

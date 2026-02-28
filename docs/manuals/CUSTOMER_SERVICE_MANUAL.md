@@ -575,6 +575,32 @@ When a resident of Virginia, Colorado, Connecticut, or Utah contacts support abo
 - If a user appeals a denied request, escalate to Tier 3 (Management/Legal) immediately
 - **Colorado:** We honor Global Privacy Control (GPC) browser signals — if a user mentions GPC, confirm it's recognized
 
+### 6.7 Intellectual Property & Trademark Inquiries (Added 2026-02-28)
+
+If a customer or third party contacts us about intellectual property or trademarks:
+
+**Our Trademarks:**
+
+| Mark | Type | Status |
+|------|------|--------|
+| CLUES | Umbrella brand | ™ (common law) |
+| LIFE SCORE | Flagship product | ™ (common law) |
+| SMART | Proprietary technology | ™ (common law) |
+| All [X] SCORE modules | Product names | ™ (common law) |
+| Olivia, Cristiano, Emilia | AI persona names | Protected via IP Assignment |
+
+**Common Scenarios:**
+
+| Scenario | Response |
+|----------|----------|
+| "Can I use the LIFE SCORE name?" | No — LIFE SCORE is a trademark of Clues Intelligence LTD. Unauthorized use is prohibited. |
+| "Who owns the CLUES technology?" | All IP is owned by Clues Intelligence LTD. |
+| "I want to license your technology" | Escalate to admin (cluesnomads@gmail.com) |
+| "Someone is copying your product" | Thank the reporter, escalate to admin immediately |
+| "Are your trademarks registered?" | Our marks are protected under common law. Formal registration is in progress. |
+
+**Escalation:** All IP/trademark inquiries beyond simple FAQ answers should be escalated to admin at cluesnomads@gmail.com.
+
 ---
 
 ## 7. Billing & Payments

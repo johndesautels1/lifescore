@@ -1,6 +1,6 @@
 # LIFE SCORE - Legal Compliance Manual
 
-**Document Version:** 1.4
+**Document Version:** 1.5
 **Last Updated:** February 28, 2026
 **Classification:** INTERNAL - Admin Access Only
 
@@ -342,6 +342,74 @@ London W1W 5PF
 
 ---
 
+## Section 7B: Trademark Strategy
+
+### 7B.1 Current Status
+
+All marks are currently used with the ™ symbol (unregistered common law rights). No marks have been formally registered with any trademark office. The site footer states: *"CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD."*
+
+**Full strategy document:** `docs/legal/TRADEMARK_STRATEGY.md`
+
+### 7B.2 Marks Requiring Registration
+
+**Tier 1 — Core Brand (Register Immediately):**
+
+| Mark | Type | Status |
+|------|------|--------|
+| **CLUES** | Word mark — umbrella brand | NOT FILED |
+| **LIFE SCORE** | Word mark — flagship product | NOT FILED |
+| **SMART** | Word mark — proprietary technology | NOT FILED |
+
+**Tier 2 — Acronym Expansions (When Budget Allows):**
+
+| Mark | Full Form | Status |
+|------|-----------|--------|
+| **CLUES** | Comprehensive Location Utility & Evaluation System | NOT FILED |
+| **SMART** | Strategic Market Assessment & Rating Technology | NOT FILED |
+| **LIFE SCORE** | Legal Independence & Freedom Evaluation | NOT FILED |
+
+**Tier 3 — Product Module Names (19 modules — file at each product launch):**
+FAITH SCORE, VOTE SCORE, PLAY SCORE, GREEN SCORE, WORK SCORE, LEARN SCORE, HEALTH SCORE, SAFE SCORE, COST SCORE, CONNECT SCORE, CULTURE SCORE, FOOD SCORE, TRANSIT SCORE, WEATHER SCORE, SOCIAL SCORE, STARTUP SCORE, RETIRE SCORE, FAMILY SCORE, EXPAT SCORE
+
+**Tier 4 — AI Persona Names (Consider Later):**
+Olivia, Cristiano, Emilia — common names are harder to register; protected via IP Assignment Deed in the interim.
+
+### 7B.3 Filing Priority
+
+| Phase | Marks | Jurisdiction | Est. Cost |
+|-------|-------|-------------|-----------|
+| **Phase 1 (Now)** | CLUES, LIFE SCORE, SMART | UK IPO | £660 (3 marks × 2 classes) |
+| **Phase 2 (Revenue)** | CLUES, LIFE SCORE, SMART | USPTO | $1,500 (3 marks × 2 classes) |
+| **Phase 3 (Budget)** | Acronym expansions | UK + US | £660 + $1,500 |
+| **Phase 4 (Per Launch)** | Each [X] SCORE module | UK + US | ~£620 per module |
+
+**Nice Classes:** Class 9 (software) + Class 42 (SaaS) minimum.
+
+### 7B.4 ™ vs ® Usage
+
+| Symbol | Meaning | Current Use |
+|--------|---------|-------------|
+| ™ | Unregistered trademark (common law) | **In use now** — footer, branding |
+| ® | Registered trademark | **DO NOT USE** until registration granted |
+
+### 7B.5 Key Prerequisite
+
+The **IP Assignment Deed** (`docs/legal/IP_ASSIGNMENT_DEED.md`) must be signed **before** filing any trademark applications. The company (Clues Intelligence LTD) — not the individual — should be the trademark applicant. This deed assigns all IP from John E. Desautels II to the company.
+
+**Status:** READY TO SIGN (requires wet-ink signature + witness)
+
+### 7B.6 Existing IP Protection
+
+| Protection | Status |
+|-----------|--------|
+| IP Assignment Deed | Ready to sign |
+| Terms of Service IP clause | Active |
+| Footer trademark notice (™) | Active |
+| Copyright in source code | Automatic (UK law) |
+| Common law / passing off rights | Active through commercial use |
+
+---
+
 ## Section 8: Legal Documents Checklist
 
 ### 8.1 Required Documents
@@ -353,11 +421,13 @@ London W1W 5PF
 | Cookie Policy | `/legal/cookies` | ACTIVE |
 | Refund Policy | `/legal/refunds` | ACTIVE |
 | IP Assignment Deed | `docs/legal/IP_ASSIGNMENT_DEED.md` | READY TO SIGN |
+| Trademark Strategy | `docs/legal/TRADEMARK_STRATEGY.md` | ACTIVE |
 
 ### 8.2 Document Update Log
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-28 | Trademark Strategy | Created comprehensive trademark strategy — 4 tiers of marks (core brand, acronym expansions, module names, AI personas), filing jurisdictions (UK/US/EU), cost estimates, Nice classification, phased registration plan | Claude Opus 4.6 |
 | 2026-02-28 | Legal Compliance | US State Privacy Rights: VA (VCDPA), CO (CPA), CT (CTDPA), UT (UCPA) — full disclosures in Privacy Policy, new StatePrivacyContent component in LegalModal, footer link, appeal processes documented | Claude Opus 4.6 |
 | 2026-02-28 | Legal Compliance | ICO Registration application number C1885368 logged — status updated from NOT STARTED to APPLICATION SUBMITTED | Claude Opus 4.6 |
 | 2026-02-28 | IP Assignment Deed | Created IP Assignment Deed — founder-to-company assignment of all IP (software, product names, AI personas, methodologies). Requires wet-ink signature + witness. | Claude Opus 4.6 |
@@ -485,6 +555,9 @@ To add new authorized users:
 ### 10.2 Important Links
 
 - ICO Registration: https://ico.org.uk/for-organisations/register/
+- UK IPO (Trademarks): https://www.gov.uk/apply-for-a-trade-mark
+- USPTO (US Trademarks): https://www.uspto.gov/trademarks
+- EUIPO (EU Trademarks): https://euipo.europa.eu
 - Supabase Dashboard: https://supabase.com/dashboard
 - Vercel Dashboard: https://vercel.com/dashboard
 - Stripe Dashboard: https://dashboard.stripe.com
