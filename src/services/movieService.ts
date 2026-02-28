@@ -150,7 +150,8 @@ export function buildMovieInput(params: {
   }
 
   return {
-    userName: params.userName,
+    // userName intentionally omitted — InVideo uses stock footage actors,
+    // so naming a real person while showing a stranger breaks immersion.
     winnerCity: params.winnerCity,
     winnerCountry: params.winnerCountry,
     winnerRegion: params.winnerRegion,
@@ -333,7 +334,6 @@ export async function generateMovie(
       loserCountry: comparisonInput.loserCountry,
       winnerScore: comparisonInput.winnerScore,
       loserScore: comparisonInput.loserScore,
-      userName: comparisonInput.userName,
     });
 
     // Cache hit

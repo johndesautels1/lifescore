@@ -33,17 +33,63 @@ const POLL_INTERVAL = 3000; // 3 seconds between polls
 // ============================================================================
 
 /**
- * Detect city type from city name for prompt selection
+ * Detect city type from city name for prompt selection.
+ * Must match server-side detection in api/video/grok-generate.ts.
  */
 export function detectCityType(cityName: string): CityType {
   const nameLower = cityName.toLowerCase();
 
-  // Import keywords from types (re-defined here to avoid circular deps)
+  // European cities — check first (more specific than generic keywords)
+  const europeanCities = [
+    'london', 'paris', 'amsterdam', 'barcelona', 'madrid', 'rome', 'milan', 'florence',
+    'venice', 'berlin', 'munich', 'vienna', 'prague', 'budapest', 'lisbon', 'porto',
+    'dublin', 'edinburgh', 'copenhagen', 'stockholm', 'oslo', 'helsinki', 'zurich',
+    'geneva', 'brussels', 'athens', 'nice', 'monaco', 'dubrovnik', 'krakow', 'warsaw',
+  ];
+  if (europeanCities.some(city => nameLower.includes(city))) {
+    return 'european';
+  }
+
+  // Tropical destinations
+  const tropicalCities = [
+    'honolulu', 'hawaii', 'cancun', 'puerto vallarta', 'cabo', 'bahamas', 'jamaica',
+    'barbados', 'aruba', 'curacao', 'st. lucia', 'turks', 'caicos', 'bali', 'phuket',
+    'maldives', 'fiji', 'tahiti', 'mauritius', 'seychelles', 'caribbean', 'key west',
+  ];
+  if (tropicalCities.some(city => nameLower.includes(city))) {
+    return 'tropical';
+  }
+
+  // Greek islands — treat as beach
+  if (nameLower.includes('santorini') || nameLower.includes('mykonos') || nameLower.includes('crete')) {
+    return 'beach';
+  }
+
+  // Standard keyword-based detection
   const keywords = {
-    beach: ['beach', 'coast', 'ocean', 'shore', 'tropical', 'island', 'bay', 'harbor', 'pier', 'seaside', 'miami', 'san diego', 'honolulu', 'santa monica', 'malibu'],
-    mountain: ['mountain', 'alpine', 'ski', 'elevation', 'rocky', 'peak', 'summit', 'valley', 'highland', 'denver', 'boulder', 'aspen', 'vail', 'park city', 'salt lake'],
-    urban: ['downtown', 'metro', 'city center', 'skyline', 'metropolitan', 'urban', 'midtown', 'new york', 'chicago', 'los angeles', 'san francisco', 'seattle', 'boston'],
-    desert: ['desert', 'arid', 'southwest', 'canyon', 'mesa', 'dry', 'phoenix', 'vegas', 'tucson', 'scottsdale', 'albuquerque', 'sedona'],
+    beach: [
+      'beach', 'coast', 'ocean', 'shore', 'seaside', 'bay', 'harbor', 'pier',
+      'miami', 'san diego', 'santa monica', 'malibu', 'tampa', 'clearwater',
+      'fort lauderdale', 'naples', 'sarasota', 'jacksonville', 'virginia beach',
+      'outer banks', 'hilton head', 'myrtle beach', 'galveston', 'corpus christi',
+    ],
+    mountain: [
+      'mountain', 'alpine', 'ski', 'rocky', 'peak', 'summit', 'valley', 'highland',
+      'denver', 'boulder', 'aspen', 'vail', 'park city', 'salt lake', 'telluride',
+      'breckenridge', 'steamboat', 'jackson hole', 'big sky', 'lake tahoe', 'reno',
+      'flagstaff', 'santa fe', 'taos', 'asheville', 'gatlinburg', 'pigeon forge',
+    ],
+    urban: [
+      'downtown', 'metro', 'city center', 'skyline', 'metropolitan', 'midtown',
+      'new york', 'chicago', 'los angeles', 'san francisco', 'seattle', 'boston',
+      'philadelphia', 'washington', 'atlanta', 'dallas', 'houston', 'detroit',
+      'minneapolis', 'st. louis', 'baltimore', 'cleveland', 'pittsburgh', 'charlotte',
+    ],
+    desert: [
+      'desert', 'arid', 'southwest', 'canyon', 'mesa',
+      'phoenix', 'vegas', 'tucson', 'scottsdale', 'albuquerque', 'sedona',
+      'palm springs', 'joshua tree', 'death valley', 'moab', 'st. george',
+    ],
   };
 
   for (const [type, words] of Object.entries(keywords)) {
@@ -399,6 +445,8 @@ export function generateVideoPrompt(
       mountain: `Cozy cabin overlooking lush green valley and pristine lake, person enjoying hot chocolate on deck, snow-capped peaks in distance, ${cityName} mountain serenity, fresh air and freedom. 10 seconds, cinematic 4K quality.`,
       urban: `Rooftop bar at sunset overlooking ${cityName} skyline, person toasting to success, city lights beginning to glow, vibrant nightlife energy, cosmopolitan freedom and opportunity. 10 seconds, cinematic 4K quality.`,
       desert: `Desert sunset with dramatic red rock formations near ${cityName}, person on scenic overlook, wide open spaces, endless horizon, ultimate freedom and adventure. 10 seconds, cinematic 4K quality.`,
+      european: `Charming cobblestone street at golden hour in ${cityName}, person at outdoor café with espresso, genuinely content smile. Historic architecture, flowers in window boxes, church bells ringing softly. Old world charm meets modern freedom. 10 seconds, cinematic 4K quality.`,
+      tropical: `Lush tropical paradise in ${cityName}, person in private villa with infinity pool overlooking jungle and ocean. Exotic birds, waterfalls nearby, warm breeze. Complete escape, genuine relaxation. 10 seconds, cinematic 4K quality.`,
       general: `Beautiful scenic view of ${cityName} at golden hour, person enjoying the moment of freedom and new beginnings, peaceful atmosphere, cinematic quality. 10 seconds.`,
     },
   };

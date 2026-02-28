@@ -86,7 +86,6 @@ WORD COUNT: ~${meta.totalWordCount} words voiceover
 
 WINNER CITY: ${winnerCity}
 LOSER CITY: ${loserCity}
-${meta.userName ? `VIEWER NAME: ${meta.userName}` : ''}
 
 STYLE: Cinematic, emotional, documentary-style
 ASPECT RATIO: 16:9 (landscape)
@@ -100,7 +99,7 @@ VOICE: Warm, professional narrator — ALL 2ND PERSON ("you" / "your")
 3. ALL narration is 2nd person. NEVER use "they" or "the couple."
 4. City-specific visuals — real landmarks, recognizable locations. NOT generic.
 5. FREEDOM is the theme — weave it throughout every scene.
-${meta.userName ? `6. Address viewer as "${meta.userName}" at key emotional moments.` : ''}
+6. NEVER use the viewer's real name — always say "you" / "your" (stock footage actors, not the real person).
 
 ================================================================================
 SCENE-BY-SCENE SCREENPLAY
@@ -150,6 +149,8 @@ async function submitToInVideoMCP(
 
   try {
     // MCP protocol: Send a tools/call request
+    // InVideo's generate-video-from-script requires ALL 5 parameters:
+    // script, topic, vibe, targetAudience, platform
     const mcpRequest = {
       jsonrpc: '2.0',
       id: `lifescore-movie-${Date.now()}`,
@@ -160,6 +161,8 @@ async function submitToInVideoMCP(
           script: fullPrompt,
           topic: `Freedom journey: ${winnerCity} vs ${loserCity} — LIFE SCORE 100 freedom metrics comparison`,
           vibe: 'cinematic, emotional, documentary, orchestral music, 2nd person narration, premium 4K quality',
+          targetAudience: 'Adults 25-55 considering relocation, digital nomads, remote workers, freedom-seekers comparing cities for quality of life and personal liberty',
+          platform: 'youtube',
         },
       },
     };
@@ -204,11 +207,17 @@ async function submitToInVideoMCP(
     };
   } catch (error) {
     console.error('[MOVIE-GENERATE] InVideo MCP connection failed:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
 
     // Return the prompt for manual use — the system is designed to work
-    // even when InVideo MCP is unavailable
+    // even when InVideo MCP is unavailable.
+    // Log the specific error so admins can diagnose (env vars, network, etc.)
+    console.warn('[MOVIE-GENERATE] Falling back to screenplay_ready. Error:', errorMsg);
+    console.warn('[MOVIE-GENERATE] Check: INVIDEO_MCP_URL and INVIDEO_API_KEY env vars');
+
     return {
       status: 'prompt_ready',
+      error: errorMsg,
     };
   }
 }
@@ -278,7 +287,7 @@ export default async function handler(
 
   try {
     const { screenplay, winnerCity, loserCity, winnerCountry, loserCountry,
-            winnerScore, loserScore, userName } = req.body;
+            winnerScore, loserScore } = req.body;
 
     if (!screenplay || !winnerCity || !loserCity) {
       res.status(400).json({ error: 'screenplay, winnerCity, and loserCity are required' });
@@ -351,7 +360,6 @@ export default async function handler(
         screenplay,
         screenplay_word_count: screenplay.meta?.totalWordCount || null,
         generation_prompt: generationPrompt,
-        user_name: userName || null,
         generated_by: auth.userId,
         status: 'submitting_to_invideo',
       })
@@ -388,6 +396,7 @@ export default async function handler(
       status: newStatus,
       invideo_video_id: invideoResult.videoId || null,
       invideo_edit_url: invideoResult.editUrl || null,
+      error: invideoResult.error || null,
     };
 
     if (invideoResult.videoUrl) {

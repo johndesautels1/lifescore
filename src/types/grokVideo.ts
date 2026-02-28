@@ -21,7 +21,7 @@ export type GrokVideoStatus =
   | 'completed'
   | 'failed';
 
-export type CityType = 'beach' | 'mountain' | 'urban' | 'desert' | 'general';
+export type CityType = 'beach' | 'mountain' | 'urban' | 'desert' | 'european' | 'tropical' | 'general';
 
 export type VideoProvider = 'grok' | 'replicate';
 
@@ -188,6 +188,8 @@ export interface VideoPromptTemplates {
     mountain: string;
     urban: string;
     desert: string;
+    european: string;
+    tropical: string;
     general: string;
   };
 }
@@ -205,6 +207,10 @@ export const VIDEO_PROMPT_TEMPLATES: VideoPromptTemplates = {
     urban: `Rooftop bar at sunset overlooking [CITY_NAME] skyline, person toasting to success, city lights beginning to glow, vibrant nightlife energy, cosmopolitan freedom and opportunity. 10 seconds, cinematic 4K quality.`,
 
     desert: `Desert sunset with dramatic red rock formations near [CITY_NAME], person on scenic overlook, wide open spaces, endless horizon, ultimate freedom and adventure. 10 seconds, cinematic 4K quality.`,
+
+    european: `Charming cobblestone street at golden hour in [CITY_NAME], person at outdoor café with espresso, genuinely content smile. Historic architecture, flowers in window boxes, church bells ringing softly. Old world charm meets modern freedom. 10 seconds, cinematic 4K quality.`,
+
+    tropical: `Lush tropical paradise in [CITY_NAME], person in private villa with infinity pool overlooking jungle and ocean. Exotic birds, waterfalls nearby, warm breeze. Complete escape, genuine relaxation. 10 seconds, cinematic 4K quality.`,
 
     general: `Beautiful scenic view of [CITY_NAME] at golden hour, person enjoying the moment of freedom and new beginnings, peaceful atmosphere, cinematic quality. 10 seconds.`,
   },
