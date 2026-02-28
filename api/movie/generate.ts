@@ -223,7 +223,7 @@ async function submitToInVideoMCP(
 
     return {
       status: 'prompt_ready',
-      error: errorMsg,
+      error: 'Video service temporarily unavailable',
     };
   }
 }

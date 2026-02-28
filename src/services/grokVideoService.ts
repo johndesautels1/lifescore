@@ -37,7 +37,8 @@ const POLL_INTERVAL = 3000; // 3 seconds between polls
  * Must match server-side detection in api/video/grok-generate.ts.
  */
 export function detectCityType(cityName: string): CityType {
-  const nameLower = cityName.toLowerCase();
+  // Normalize: lowercase and strip periods to handle "St. Lucia" vs "St Lucia" variants
+  const nameLower = cityName.toLowerCase().replace(/\./g, '');
 
   // European cities — check first (more specific than generic keywords)
   const europeanCities = [
@@ -53,7 +54,7 @@ export function detectCityType(cityName: string): CityType {
   // Tropical destinations
   const tropicalCities = [
     'honolulu', 'hawaii', 'cancun', 'puerto vallarta', 'cabo', 'bahamas', 'jamaica',
-    'barbados', 'aruba', 'curacao', 'st. lucia', 'turks', 'caicos', 'bali', 'phuket',
+    'barbados', 'aruba', 'curacao', 'st lucia', 'turks', 'caicos', 'bali', 'phuket',
     'maldives', 'fiji', 'tahiti', 'mauritius', 'seychelles', 'caribbean', 'key west',
   ];
   if (tropicalCities.some(city => nameLower.includes(city))) {
@@ -83,12 +84,12 @@ export function detectCityType(cityName: string): CityType {
       'downtown', 'metro', 'city center', 'skyline', 'metropolitan', 'midtown',
       'new york', 'chicago', 'los angeles', 'san francisco', 'seattle', 'boston',
       'philadelphia', 'washington', 'atlanta', 'dallas', 'houston', 'detroit',
-      'minneapolis', 'st. louis', 'baltimore', 'cleveland', 'pittsburgh', 'charlotte',
+      'minneapolis', 'st louis', 'baltimore', 'cleveland', 'pittsburgh', 'charlotte',
     ],
     desert: [
       'desert', 'arid', 'southwest', 'canyon', 'mesa',
       'phoenix', 'vegas', 'tucson', 'scottsdale', 'albuquerque', 'sedona',
-      'palm springs', 'joshua tree', 'death valley', 'moab', 'st. george',
+      'palm springs', 'joshua tree', 'death valley', 'moab', 'st george',
     ],
   };
 
