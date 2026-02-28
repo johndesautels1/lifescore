@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './LegalModal.css';
 
-export type LegalPage = 'privacy' | 'terms' | 'cookies' | 'acceptable-use' | 'refunds' | 'do-not-sell' | null;
+export type LegalPage = 'privacy' | 'terms' | 'cookies' | 'acceptable-use' | 'refunds' | 'do-not-sell' | 'state-privacy' | null;
 
 interface LegalModalProps {
   page: LegalPage;
@@ -24,6 +24,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
     'acceptable-use': 'Acceptable Use Policy',
     refunds: 'Refund Policy',
     'do-not-sell': 'Do Not Sell or Share My Personal Information',
+    'state-privacy': 'US State Privacy Rights',
   };
 
   return (
@@ -42,6 +43,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
           {page === 'acceptable-use' && <AcceptableUseContent />}
           {page === 'refunds' && <RefundContent />}
           {page === 'do-not-sell' && <DoNotSellContent />}
+          {page === 'state-privacy' && <StatePrivacyContent />}
         </div>
         <div className="legal-modal-footer">
           <p>Clues Intelligence LTD &bull; United Kingdom</p>
@@ -114,6 +116,15 @@ const PrivacyContent: React.FC = () => (
       click "Do Not Sell or Share My Personal Information" in the site footer.
     </p>
     <p>Exercise other rights via Account Settings or email cluesnomads@gmail.com</p>
+
+    <p><strong>Virginia, Colorado, Connecticut & Utah Residents:</strong> You have similar rights under your
+      state's privacy law, including the right to access, correct, delete, and opt out of the sale of your
+      personal data and targeted advertising. See our{' '}
+      <button type="button" className="legal-inline-link" style={{ background: 'none', border: 'none', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit' }}>
+        US State Privacy Rights
+      </button>{' '}
+      page for full details, or contact cluesnomads@gmail.com.
+    </p>
 
     <h3>7. Data Retention</h3>
     <p>
@@ -634,6 +645,128 @@ const DoNotSellContent: React.FC = () => {
     </div>
   );
 };
+
+// US State Privacy Rights Content
+const StatePrivacyContent: React.FC = () => (
+  <div className="legal-content">
+    <p className="legal-effective">Effective Date: February 28, 2026</p>
+
+    <h3>Your Privacy Rights by State</h3>
+    <p>
+      In addition to our general Privacy Policy and California-specific rights (CCPA/CPRA),
+      residents of the following US states have specific privacy rights under their state laws.
+      Clues Intelligence LTD honors all applicable state privacy rights.
+    </p>
+    <p>
+      <strong>We do not sell your personal data.</strong> We do not use your data for targeted advertising
+      or profiling in furtherance of decisions that produce legal or similarly significant effects.
+    </p>
+
+    <h3>Virginia (VCDPA)</h3>
+    <p>The Virginia Consumer Data Protection Act provides Virginia residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Correct</td><td>Correct inaccuracies in your personal data</td></tr>
+        <tr><td>Delete</td><td>Request deletion of your personal data</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising, sale of data, or profiling</td></tr>
+        <tr><td>Non-Discrimination</td><td>We will not discriminate against you for exercising rights</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Appeal:</strong> You may appeal any decision by emailing cluesnomads@gmail.com
+      with subject line "VCDPA Appeal." We will respond within 60 days.
+    </p>
+
+    <h3>Colorado (CPA)</h3>
+    <p>The Colorado Privacy Act provides Colorado residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Correct</td><td>Correct inaccuracies in your personal data</td></tr>
+        <tr><td>Delete</td><td>Request deletion of your personal data</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising, sale of data, or profiling</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Universal Opt-Out:</strong> We honor universal opt-out mechanisms (e.g., Global Privacy
+      Control signals) as required by Colorado law.
+    </p>
+    <p>
+      <strong>Appeal:</strong> You may appeal any decision by emailing cluesnomads@gmail.com
+      with subject line "CPA Appeal." If unsatisfied, contact the Colorado Attorney General.
+    </p>
+
+    <h3>Connecticut (CTDPA)</h3>
+    <p>The Connecticut Data Privacy Act provides Connecticut residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Correct</td><td>Correct inaccuracies in your personal data</td></tr>
+        <tr><td>Delete</td><td>Request deletion of your personal data</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising, sale of data, or profiling</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Appeal:</strong> You may appeal any decision by emailing cluesnomads@gmail.com
+      with subject line "CTDPA Appeal." We will respond within 60 days. If unsatisfied,
+      contact the Connecticut Attorney General.
+    </p>
+
+    <h3>Utah (UCPA)</h3>
+    <p>The Utah Consumer Privacy Act provides Utah residents with the following rights:</p>
+    <table className="legal-table">
+      <thead>
+        <tr><th>Right</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Access</td><td>Confirm whether we process your data and obtain a copy</td></tr>
+        <tr><td>Delete</td><td>Request deletion of data you provided to us</td></tr>
+        <tr><td>Data Portability</td><td>Obtain your data in a portable, readily usable format</td></tr>
+        <tr><td>Opt Out</td><td>Opt out of targeted advertising or sale of personal data</td></tr>
+      </tbody>
+    </table>
+
+    <h3>How to Exercise Your Rights</h3>
+    <ul>
+      <li><strong>Access / Download:</strong> Account Settings &gt; Download My Data</li>
+      <li><strong>Correct:</strong> Account Settings &gt; Edit Profile</li>
+      <li><strong>Delete:</strong> Account Settings &gt; Delete Account</li>
+      <li><strong>Opt Out:</strong> Click "Do Not Sell or Share My Personal Information" in the site footer</li>
+      <li><strong>Email:</strong> cluesnomads@gmail.com</li>
+    </ul>
+    <p>We respond to all verified requests within 45 days.</p>
+
+    <h3>Other States</h3>
+    <p>
+      Residents of other US states with applicable privacy laws have similar rights as described above.
+      Contact cluesnomads@gmail.com to exercise your rights. We will process your request in accordance
+      with the applicable law in your state of residence.
+    </p>
+
+    <h3>Contact for Privacy Inquiries</h3>
+    <p>
+      Email: cluesnomads@gmail.com<br />
+      Clues Intelligence LTD<br />
+      167-169 Great Portland Street, 5th Floor<br />
+      London W1W 5PF, United Kingdom
+    </p>
+
+    <p className="legal-version">Document Version 1.0</p>
+  </div>
+);
 
 // Export helper to check CCPA opt-out status (localStorage — for non-React contexts)
 // For React components, use useAuth().preferences?.ccpa_dns_optout instead

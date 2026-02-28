@@ -113,10 +113,10 @@
 | # | State | Law | Requirements Met | Date |
 |---|-------|-----|------------------|------|
 | F1 | California | CCPA/CPRA | [x] | 2026-02-28 |
-| F2 | Virginia | VCDPA | [ ] | - |
-| F3 | Colorado | CPA | [ ] | - |
-| F4 | Connecticut | CTDPA | [ ] | - |
-| F5 | Utah | UCPA | [ ] | - |
+| F2 | Virginia | VCDPA | [x] | 2026-02-28 |
+| F3 | Colorado | CPA | [x] | 2026-02-28 |
+| F4 | Connecticut | CTDPA | [x] | 2026-02-28 |
+| F5 | Utah | UCPA | [x] | 2026-02-28 |
 
 ---
 
@@ -156,6 +156,7 @@
 | 2026-01-23 | Claude Code | Breach Plan (B2), Employee Policy (B3), Subprocessor (B4) - Section B complete |
 | 2026-01-23 | Claude Code | Consent Logging (C4) - Section C complete |
 | 2026-02-28 | Claude Opus 4.6 | CCPA/CPRA compliance (F1): Do Not Sell link, opt-out modal, consent logging, Privacy Policy update, all 5 Emilia manuals updated |
+| 2026-02-28 | Claude Opus 4.6 | US State Privacy Rights (F2-F5): VA/CO/CT/UT full disclosures in Privacy Policy, new StatePrivacyContent in LegalModal, footer link, Legal Compliance Manual updated |
 | 2026-02-28 | Claude Opus 4.6 | IP Assignment Deed (B5): Founder-to-company IP assignment, all products/personas/code covered |
 | 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
 

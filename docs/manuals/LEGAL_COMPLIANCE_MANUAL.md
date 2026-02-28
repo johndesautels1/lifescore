@@ -1,7 +1,7 @@
 # LIFE SCORE - Legal Compliance Manual
 
-**Document Version:** 1.3
-**Last Updated:** February 26, 2026
+**Document Version:** 1.4
+**Last Updated:** February 28, 2026
 **Classification:** INTERNAL - Admin Access Only
 
 ---
@@ -152,13 +152,13 @@ These laws only apply when you exceed thresholds:
 | State | Law | Revenue Threshold | Consumer Threshold | Status |
 |-------|-----|-------------------|-------------------|--------|
 | California | CCPA/CPRA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
-| Virginia | VCDPA | $25M+ | 100K+ consumers | DEFERRED |
-| Colorado | CPA | N/A | 100K+ consumers | DEFERRED |
-| Connecticut | CTDPA | $25M+ | 100K+ consumers | DEFERRED |
-| Utah | UCPA | $25M+ | 100K+ consumers | DEFERRED |
+| Virginia | VCDPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
+| Colorado | CPA | N/A | 100K+ consumers | **IMPLEMENTED** |
+| Connecticut | CTDPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
+| Utah | UCPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
 
-**Current Status:** CCPA/CPRA compliance proactively implemented (2026-02-28). Other states deferred.
-**Review Trigger:** Revisit other states at 10K users or $1M ARR
+**Current Status:** All 5 state privacy laws proactively implemented (2026-02-28). No registration fees — these are compliance-only laws.
+**Review Trigger:** Monitor for new state privacy laws annually
 
 ### 3.2 CCPA/CPRA Implementation (Completed 2026-02-28)
 
@@ -185,6 +185,36 @@ These laws only apply when you exceed thresholds:
 - All actions logged to `consent_logs` audit trail (consent type: `ccpa_dns`)
 - Database view: `ccpa_dns_optouts` — for compliance reporting
 - Export helper: `getCcpaDnsOptOut()` for non-React contexts; React components use `useAuth().preferences?.ccpa_dns_optout`
+
+### 3.3 Virginia, Colorado, Connecticut & Utah Implementation (Completed 2026-02-28)
+
+All four state privacy laws were implemented simultaneously. These laws do **not** require registration or fees — they are compliance-only laws that require proper disclosures and consumer rights mechanisms.
+
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| Privacy Policy disclosures | Full state-specific sections in Privacy Policy (Sections 8.3–8.6) | DONE |
+| Consumer rights (access, delete, correct) | Already implemented via GDPR/CCPA features | DONE |
+| Opt-out mechanism | Shared "Do Not Sell" button (same as CCPA) | DONE |
+| Appeal process | Email-based appeal for VA, CO, CT (documented in each section) | DONE |
+| Universal opt-out (Colorado) | GPC signal recognition documented | DONE |
+| "US State Privacy Rights" page | New `state-privacy` page in LegalModal | DONE |
+| Footer link | "US State Privacy Rights" link added to footer | DONE |
+
+**Technical Components:**
+- `src/components/LegalModal.tsx` — New `StatePrivacyContent` component + `state-privacy` page type
+- `src/components/Footer.tsx` — "US State Privacy Rights" link added alongside existing legal links
+- `docs/legal/PRIVACY_POLICY.md` — Sections 8.3 (Virginia), 8.4 (Colorado), 8.5 (Connecticut), 8.6 (Utah), 8.7 (Other States)
+- Existing CCPA opt-out mechanism (`Do Not Sell` button, consent logging) covers all state opt-out requirements
+
+**Key Differences Between States:**
+
+| Feature | VA (VCDPA) | CO (CPA) | CT (CTDPA) | UT (UCPA) |
+|---------|------------|----------|------------|-----------|
+| Right to Correct | Yes | Yes | Yes | No |
+| Appeal Process | Required (60 days) | Required (AG referral) | Required (60 days, AG referral) | Not required |
+| Universal Opt-Out | Not required | **Required (GPC)** | Not required | Not required |
+| Cure Period | 30 days (until 2025) | None | 60 days (until 2025) | 30 days |
+| Non-Discrimination | Yes | Yes | Yes | Not explicit |
 
 ---
 
@@ -323,6 +353,7 @@ London W1W 5PF
 
 | Date | Document | Change | Author |
 |------|----------|--------|--------|
+| 2026-02-28 | Legal Compliance | US State Privacy Rights: VA (VCDPA), CO (CPA), CT (CTDPA), UT (UCPA) — full disclosures in Privacy Policy, new StatePrivacyContent component in LegalModal, footer link, appeal processes documented | Claude Opus 4.6 |
 | 2026-02-28 | Legal Compliance | ICO Registration application number C1885368 logged — status updated from NOT STARTED to APPLICATION SUBMITTED | Claude Opus 4.6 |
 | 2026-02-28 | IP Assignment Deed | Created IP Assignment Deed — founder-to-company assignment of all IP (software, product names, AI personas, methodologies). Requires wet-ink signature + witness. | Claude Opus 4.6 |
 | 2026-02-26 | All 6 Manuals | **Major security audit:** 47 fixes — 20+ endpoints authenticated (total 38+), IDOR vulnerability fixed, CORS hardened, XSS patched, 87 debug console.log removed, admin emails centralized, API key leak fixed, tie victory text fixed, dynamic year, dead code cleanup. GDPR Article 32 compliance strengthened. | Claude Opus 4.6 |
