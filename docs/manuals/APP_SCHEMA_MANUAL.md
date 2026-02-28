@@ -223,6 +223,7 @@ User customization settings. Single-row-per-user design.
 | default_view | TEXT | DEFAULT 'grid' | 'grid', 'list', 'table' |
 | olivia_auto_speak | BOOLEAN | DEFAULT true | Auto-play Olivia TTS |
 | olivia_voice_enabled | BOOLEAN | DEFAULT true | Enable voice output |
+| ccpa_dns_optout | BOOLEAN | DEFAULT false | CCPA "Do Not Sell/Share" opt-out (true = opted out) |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | updated_at | TIMESTAMPTZ | | |
 

@@ -6,6 +6,12 @@
 -- Created: 2026-02-28
 -- ============================================================================
 
+-- Add ccpa_dns_optout column to user_preferences for persistent opt-out
+ALTER TABLE public.user_preferences
+  ADD COLUMN IF NOT EXISTS ccpa_dns_optout BOOLEAN NOT NULL DEFAULT FALSE;
+
+COMMENT ON COLUMN public.user_preferences.ccpa_dns_optout IS 'CCPA Do Not Sell/Share opt-out preference. TRUE = user has opted out.';
+
 -- Update consent_logs table comment to reflect CCPA support
 COMMENT ON TABLE consent_logs IS 'GDPR and CCPA compliance: Audit trail of user consent actions including Do Not Sell opt-outs';
 

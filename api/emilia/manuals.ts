@@ -808,10 +808,13 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 ### Implementation
 - **"Do Not Sell or Share My Personal Information"** link in site footer
 - Opt-out modal at LegalModal 'do-not-sell' page with one-click opt-out button
-- Opt-out stored in localStorage (clues_ccpa_dns_optout) AND logged to consent_logs table
+- **Logged-in users:** Opt-out persisted to user_preferences.ccpa_dns_optout (Supabase) — survives device changes
+- **Anonymous users:** Opt-out stored in localStorage (clues_ccpa_dns_optout) as fallback
+- All actions logged to consent_logs table (audit trail)
 - Consent type: ccpa_dns | Actions: denied (opt-out) / granted (withdraw opt-out)
 - Categories tracked: sale_of_data, sharing_of_data, targeted_advertising
-- Helper export: getCcpaDnsOptOut() — returns boolean for code that needs to check status
+- Helper export: getCcpaDnsOptOut() — returns boolean for non-React contexts
+- For React components: use useAuth().preferences?.ccpa_dns_optout
 - Database view: ccpa_dns_optouts — for compliance reporting/audit
 
 ### Data Practices

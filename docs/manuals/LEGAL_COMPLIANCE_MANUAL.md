@@ -178,11 +178,12 @@ These laws only apply when you exceed thresholds:
 - `src/components/LegalModal.tsx` — DoNotSellContent component with opt-out UI
 - `src/components/Footer.tsx` — "Do Not Sell or Share My Personal Information" link
 - `api/consent/log.ts` — Accepts `ccpa_dns` consent type
-- `supabase/migrations/20260228_ccpa_dns_optout.sql` — Index + reporting view
-- localStorage key: `clues_ccpa_dns_optout`
-- Consent log type: `ccpa_dns` | Actions: `denied` (opt-out) / `granted` (withdraw)
+- `supabase/migrations/20260228_ccpa_dns_optout.sql` — Column + index + reporting view
+- **Logged-in users:** Persisted to `user_preferences.ccpa_dns_optout` (Supabase) — survives device/browser changes
+- **Anonymous users:** localStorage key `clues_ccpa_dns_optout` as fallback
+- All actions logged to `consent_logs` audit trail (consent type: `ccpa_dns`)
 - Database view: `ccpa_dns_optouts` — for compliance reporting
-- Export helper: `getCcpaDnsOptOut()` from LegalModal.tsx
+- Export helper: `getCcpaDnsOptOut()` for non-React contexts; React components use `useAuth().preferences?.ccpa_dns_optout`
 
 ---
 

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import './LegalModal.css';
 
 export type LegalPage = 'privacy' | 'terms' | 'cookies' | 'acceptable-use' | 'refunds' | 'do-not-sell' | null;
@@ -400,50 +401,73 @@ const RefundContent: React.FC = () => (
 const DNS_STORAGE_KEY = 'clues_ccpa_dns_optout';
 
 const DoNotSellContent: React.FC = () => {
+  const { isAuthenticated, preferences, updatePreferences } = useAuth();
   const [optedOut, setOptedOut] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
+  // Load opt-out state: Supabase for logged-in users, localStorage for anonymous
   useEffect(() => {
-    const stored = localStorage.getItem(DNS_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setOptedOut(parsed.optedOut === true);
-      } catch { /* ignore */ }
+    if (isAuthenticated && preferences) {
+      // Logged-in: read from Supabase (source of truth)
+      setOptedOut(preferences.ccpa_dns_optout === true);
+      // Sync localStorage to match Supabase
+      if (preferences.ccpa_dns_optout) {
+        localStorage.setItem(DNS_STORAGE_KEY, JSON.stringify({ optedOut: true, timestamp: new Date().toISOString() }));
+      } else {
+        localStorage.removeItem(DNS_STORAGE_KEY);
+      }
+    } else {
+      // Anonymous: read from localStorage
+      const stored = localStorage.getItem(DNS_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setOptedOut(parsed.optedOut === true);
+        } catch { /* ignore */ }
+      }
     }
-  }, []);
+  }, [isAuthenticated, preferences]);
+
+  const logConsentAction = (action: 'denied' | 'granted') => {
+    const anonymousId = localStorage.getItem('clues_anonymous_id') || `anon_${Date.now()}`;
+    fetch('/api/consent/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        consentType: 'ccpa_dns',
+        consentAction: action,
+        consentCategories: {
+          sale_of_data: action === 'granted',
+          sharing_of_data: action === 'granted',
+          targeted_advertising: action === 'granted',
+        },
+        anonymousId,
+        pageUrl: window.location.href,
+        policyVersion: '1.0',
+      }),
+    }).catch(() => { /* Silent fail — opt-out still works locally */ });
+  };
 
   const handleOptOut = async () => {
     setSubmitting(true);
     try {
-      // Record opt-out in localStorage
-      const record = {
+      // Always persist to localStorage (works for everyone)
+      localStorage.setItem(DNS_STORAGE_KEY, JSON.stringify({
         optedOut: true,
         timestamp: new Date().toISOString(),
-      };
-      localStorage.setItem(DNS_STORAGE_KEY, JSON.stringify(record));
+      }));
+
+      // Persist to Supabase if logged in (survives device changes)
+      if (isAuthenticated) {
+        await updatePreferences({ ccpa_dns_optout: true });
+      }
+
       setOptedOut(true);
       setConfirmed(true);
 
-      // Log to server for audit trail (non-blocking)
-      const anonymousId = localStorage.getItem('clues_anonymous_id') || `anon_${Date.now()}`;
-      fetch('/api/consent/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consentType: 'ccpa_dns',
-          consentAction: 'denied',
-          consentCategories: {
-            sale_of_data: false,
-            sharing_of_data: false,
-            targeted_advertising: false,
-          },
-          anonymousId,
-          pageUrl: window.location.href,
-          policyVersion: '1.0',
-        }),
-      }).catch(() => { /* Silent fail — opt-out still works locally */ });
+      // Log audit trail (non-blocking)
+      logConsentAction('denied');
     } finally {
       setSubmitting(false);
     }
@@ -453,26 +477,15 @@ const DoNotSellContent: React.FC = () => {
     setSubmitting(true);
     try {
       localStorage.removeItem(DNS_STORAGE_KEY);
+
+      if (isAuthenticated) {
+        await updatePreferences({ ccpa_dns_optout: false });
+      }
+
       setOptedOut(false);
       setConfirmed(false);
 
-      const anonymousId = localStorage.getItem('clues_anonymous_id') || `anon_${Date.now()}`;
-      fetch('/api/consent/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consentType: 'ccpa_dns',
-          consentAction: 'granted',
-          consentCategories: {
-            sale_of_data: true,
-            sharing_of_data: true,
-            targeted_advertising: true,
-          },
-          anonymousId,
-          pageUrl: window.location.href,
-          policyVersion: '1.0',
-        }),
-      }).catch(() => {});
+      logConsentAction('granted');
     } finally {
       setSubmitting(false);
     }
@@ -622,7 +635,8 @@ const DoNotSellContent: React.FC = () => {
   );
 };
 
-// Export helper to check CCPA opt-out status
+// Export helper to check CCPA opt-out status (localStorage — for non-React contexts)
+// For React components, use useAuth().preferences?.ccpa_dns_optout instead
 export const getCcpaDnsOptOut = (): boolean => {
   const stored = localStorage.getItem(DNS_STORAGE_KEY);
   if (!stored) return false;

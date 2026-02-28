@@ -111,6 +111,7 @@ export interface UserPreferences {
   default_view: DefaultView;
   olivia_auto_speak: boolean;
   olivia_voice_enabled: boolean;
+  ccpa_dns_optout: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -232,6 +233,7 @@ export interface UserPreferencesInsert {
   default_view?: DefaultView;
   olivia_auto_speak?: boolean;
   olivia_voice_enabled?: boolean;
+  ccpa_dns_optout?: boolean;
 }
 
 export interface SubscriptionInsert {
@@ -305,6 +307,7 @@ export interface UserPreferencesUpdate {
   default_view?: DefaultView;
   olivia_auto_speak?: boolean;
   olivia_voice_enabled?: boolean;
+  ccpa_dns_optout?: boolean;
 }
 
 // ============================================================================
