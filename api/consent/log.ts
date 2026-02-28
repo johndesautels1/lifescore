@@ -27,6 +27,9 @@ interface ConsentLogRequest {
     functional?: boolean;
     analytics?: boolean;
     marketing?: boolean;
+    sale_of_data?: boolean;
+    sharing_of_data?: boolean;
+    targeted_advertising?: boolean;
   };
   anonymousId?: string;
   pageUrl?: string;
