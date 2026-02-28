@@ -269,6 +269,10 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       // Check usage limits before generating Grok video
       const usageResult = await checkUsage('grokVideos');
       if (!usageResult.allowed) {
+        const tierMsg = usageResult.upgradeRequired
+          ? `Court Order videos require SOVEREIGN tier. Please upgrade to access this feature.`
+          : `Court Order video limit reached (${usageResult.used}/${usageResult.limit} this month).`;
+        toastError(tierMsg);
         return;
       }
 

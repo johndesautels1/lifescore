@@ -150,6 +150,8 @@ async function submitToInVideoMCP(
 
   try {
     // MCP protocol: Send a tools/call request
+    // InVideo's generate-video-from-script requires ALL 5 parameters:
+    // script, topic, vibe, targetAudience, platform
     const mcpRequest = {
       jsonrpc: '2.0',
       id: `lifescore-movie-${Date.now()}`,
@@ -160,6 +162,8 @@ async function submitToInVideoMCP(
           script: fullPrompt,
           topic: `Freedom journey: ${winnerCity} vs ${loserCity} — LIFE SCORE 100 freedom metrics comparison`,
           vibe: 'cinematic, emotional, documentary, orchestral music, 2nd person narration, premium 4K quality',
+          targetAudience: 'Adults 25-55 considering relocation, digital nomads, remote workers, freedom-seekers comparing cities for quality of life and personal liberty',
+          platform: 'youtube',
         },
       },
     };
@@ -204,11 +208,17 @@ async function submitToInVideoMCP(
     };
   } catch (error) {
     console.error('[MOVIE-GENERATE] InVideo MCP connection failed:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
 
     // Return the prompt for manual use — the system is designed to work
-    // even when InVideo MCP is unavailable
+    // even when InVideo MCP is unavailable.
+    // Log the specific error so admins can diagnose (env vars, network, etc.)
+    console.warn('[MOVIE-GENERATE] Falling back to screenplay_ready. Error:', errorMsg);
+    console.warn('[MOVIE-GENERATE] Check: INVIDEO_MCP_URL and INVIDEO_API_KEY env vars');
+
     return {
       status: 'prompt_ready',
+      error: errorMsg,
     };
   }
 }
@@ -388,6 +398,7 @@ export default async function handler(
       status: newStatus,
       invideo_video_id: invideoResult.videoId || null,
       invideo_edit_url: invideoResult.editUrl || null,
+      error: invideoResult.error || null,
     };
 
     if (invideoResult.videoUrl) {
