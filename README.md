@@ -29,7 +29,7 @@ Vercel Serverless Functions (Node.js 20)
     ▼
 Supabase (PostgreSQL)
     │
-    ├── 26 Tables  ·  6 Storage Buckets  ·  45 Migrations
+    ├── 27 Tables  ·  6 Storage Buckets  ·  45 Migrations
     │
     ▼
 External Services
@@ -157,7 +157,7 @@ Bell icon with unread badge, "Notify Me & Go" modal for long-running tasks, emai
 
 ## Database Schema
 
-### 26 Tables
+### 27 Tables
 
 | Table | Purpose |
 |-------|---------|
@@ -174,6 +174,7 @@ Bell icon with unread badge, "Notify Me & Go" modal for long-running tasks, emai
 | `cristiano_city_videos` | Cristiano city tour video cache |
 | `movie_videos` | InVideo 10-min movie records |
 | `invideo_overrides` | Admin cinematic video overrides |
+| `court_orders` | Court Order video saves |
 | `report_shares` | Shared report links |
 | `report_access_logs` | Report view tracking |
 | `reports` | HTML reports per user |
@@ -494,7 +495,7 @@ lifescore/
 | Service modules | 18 |
 | API endpoints | 52 |
 | Shared API modules | 15 |
-| Database tables | 26 |
+| Database tables | 27 |
 | Storage buckets | 6 |
 | SQL migrations | 45 |
 | CSS files | 110 |
@@ -549,4 +550,6 @@ DPA status, compliance checklist, and legal policies in `docs/legal/`.
 
 ## License
 
-UNLICENSED - Clues Intelligence LTD. All rights reserved.
+Copyright (c) 2026 Clues Intelligence LTD. All rights reserved.
+
+This is proprietary software. No part of this codebase may be reproduced, distributed, or transmitted in any form without the prior written permission of Clues Intelligence LTD.
