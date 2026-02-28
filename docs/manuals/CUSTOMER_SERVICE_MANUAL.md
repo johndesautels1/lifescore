@@ -377,6 +377,18 @@ Currently, LifeScore supports **200 metropolitan areas**:
 - A buffering spinner overlay appears automatically if the video stalls mid-playback (instead of appearing frozen)
 - Applies to: Judge Video, Court Order, Freedom Tour (Cristiano), and Olivia Video Presenter
 
+### 5.4a InVideo Moving Movie Issues (Added 2026-02-27)
+
+| Issue | Solution |
+|-------|----------|
+| Movie stuck on "Generating screenplay" | Allow up to 5 minutes — the AI generates a 12-scene screenplay with QA validation and up to 2 retries |
+| Movie stuck on "Rendering" | InVideo renders can take up to 15 minutes. The system polls every 10 seconds. Allow at least 15 minutes before assuming failure. |
+| "Movie submission failed" | InVideo MCP may be temporarily unavailable. The screenplay is saved — user can copy the prompt and paste it directly into InVideo manually. |
+| "Request timed out after 280 seconds" | Server-side timeout reached. Retry — transient network issues between server and InVideo. |
+| Movie shows "screenplay_ready" status | InVideo MCP was unavailable at submission time. The prompt is ready for manual paste into InVideo. |
+
+**Note (Updated 2026-02-28):** Movie pipeline timeouts increased from 2 minutes to 280 seconds (server) / 310 seconds (client) to accommodate the full InVideo submission flow under the Vercel Pro 5-minute function limit.
+
 ### 5.5 Gamma Report Issues
 
 | Issue | Solution |

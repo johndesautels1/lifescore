@@ -1021,6 +1021,9 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 | **HeyGen Avatar** | speak | 60s | oliviaService.ts:191 |
 | **Video Generate** | grokGenerate | 120s | grokVideoService.ts:26 |
 | **Video Status** | checkStatus | 30s | grokVideoService.ts:27 |
+| **Movie Screenplay** | generateScreenplay | 310s | movieService.ts:22 |
+| **Movie Generate** | submitToInVideo | 310s | movieService.ts:23 |
+| **Movie Status** | checkMovieStatus | 30s | movieService.ts:24 |
 | **GitHub Gist** | all operations | 60s | savedComparisons.ts:89 |
 | **Vercel KV Cache** | get/set/delete | 10s | cache.ts:33 |
 
@@ -1489,6 +1492,79 @@ Judge report loaded → GoToMyNewCity component mounts →
 → Displays video with poster image and CTA to Cluesnomads.com
 ```
 
+### 9.10a InVideo Moving Movie Pipeline (Added 2026-02-27)
+
+Full 12-scene, 10-minute cinematic movie generation comparing two cities' freedom scores.
+
+**Architecture — 2-Stage Pipeline:**
+```
+Stage 1: Screenplay (Claude Sonnet 4.5) → 12-scene JSON
+Stage 2: InVideo MCP (generate-video-from-script) → 10-minute 4K movie
+```
+
+**Files:**
+| File | Purpose |
+|------|---------|
+| `api/movie/screenplay.ts` | Stage 1 — LLM generates 12-scene JSON screenplay with QA validation + up to 2 retries |
+| `api/movie/generate.ts` | Stage 2 — Submits screenplay to InVideo MCP; falls back to prompt-ready mode if MCP unavailable |
+| `src/services/movieService.ts` | Client orchestration — screenplay → submit → poll for completion (10s intervals, 30 min max) |
+| `src/components/MovieGenerator.tsx` | UI component — progress tracking through all stages with scene title display |
+| `src/components/MovieGenerator.css` | Styling for movie generator (544 lines) |
+| `supabase/migrations/20260227_create_movie_videos.sql` | Database table + cached movie lookup RPC |
+
+**Screenplay Structure (12 scenes, 600s total):**
+- Act 1: The Struggle (Scenes 1-2) — life in old city
+- Act 2: The Discovery (Scenes 3-4) — finding CLUES & LIFE SCORE
+- Act 3: The Revelation (Scenes 5-7) — scores, verdict, contrast
+- Act 4: The Journey (Scenes 8-9) — packing up, traveling
+- Act 5: The New Life (Scenes 10-12) — arrival, freedom, epilogue
+
+**QA Validation:** Screenplay is validated for scene count (12), total duration (580-620s), word count (1000-2200), and required fields before submission.
+
+**Database Table:** `movie_videos` — stores screenplay JSON, generation prompt, InVideo video ID/URL, status tracking, and city pair caching.
+
+**Integration with JudgeTab (Added 2026-02-27):**
+MovieGenerator is wired into the court-order section of JudgeTab with a visual divider. It appears below the Court Order video player when comparison data is available.
+
+### 9.10b executiveSummary Property Fix (Fixed 2026-02-28)
+
+`JudgeTab.tsx` was referencing `executivesummary` (lowercase) and `user` (undefined variable) in the judge report display. Fixed to use correct property name `executiveSummary` (camelCase) and `auth.userId`.
+
+### 9.10c Mobile Landscape Header Overlap (Fixed 2026-02-28)
+
+**Problem:** On phones rotated to landscape, the header-right toolbar items (user login, API cost modal, settings) overlapped the centered "CLUES INTELLIGENCE LTD" heading.
+
+**Fix:** Added media query to `Header.css`:
+```css
+@media (orientation: landscape) and (max-height: 500px) {
+  .header-right {
+    transform: scale(0.75);
+    transform-origin: top right;
+  }
+}
+```
+Shrinks the right toolbar group by 25% only on landscape mobile (short viewport + landscape orientation). Desktop and portrait mobile are unaffected.
+
+### 9.10d Movie Pipeline Timeout Fix (Fixed 2026-02-28)
+
+All movie pipeline timeouts were increased to match Vercel Pro 300s limit:
+
+| File | Old Timeout | New Timeout | Reason |
+|------|------------|-------------|--------|
+| `api/movie/generate.ts` | 120s (2 min) | 280s | Just under Vercel Pro 300s cap |
+| `api/movie/screenplay.ts` | 120s (2 min) | 280s | Just under Vercel Pro 300s cap |
+| `src/services/movieService.ts` (screenplay) | 240s (4 min) | 310s | Slightly over Vercel so server errors first with real message |
+| `src/services/movieService.ts` (generate) | 180s (3 min) | 310s | Slightly over Vercel so server errors first with real message |
+| `api/shared/persistVideo.ts` (download) | 30s | 120s | Large video file downloads |
+| `api/shared/persistVideo.ts` (upload) | 30s | 120s | Large video file uploads |
+| `vercel.json` (movie/generate) | missing (60s default) | 300s | Added explicit entry |
+| `vercel.json` (movie/screenplay) | missing (60s default) | 300s | Added explicit entry |
+
+**Design:** Client timeouts (310s) are intentionally set slightly higher than server timeouts (280s) so the Vercel function times out first and returns a real error message, rather than the client aborting with a generic timeout error.
+
+**Polling:** The existing client polling loop (10s intervals, 180 attempts = 30 min max) handles the full 15-minute InVideo render — the timeout fixes ensure the initial submission succeeds within the Vercel function limit.
+```
+
 **Key Features:**
 - HeyGen Video Generate v2 API with multi-scene storyboard
 - Script length validation against HeyGen's 10,000 character limit (error code 400175)
@@ -1741,12 +1817,18 @@ User clicks Judge tab (JudgeTab.tsx)
 ### 12.1 Vercel Configuration
 
 ```json
-// vercel.json
+// vercel.json — per-endpoint maxDuration (Vercel Pro: 300s max)
 {
   "functions": {
-    "api/**/*.ts": {
-      "maxDuration": 300  // 5 minutes max
-    }
+    "api/evaluate.ts":              { "maxDuration": 300 },
+    "api/judge.ts":                 { "maxDuration": 300 },
+    "api/movie/generate.ts":       { "maxDuration": 300 },
+    "api/movie/screenplay.ts":     { "maxDuration": 300 },
+    "api/video/grok-generate.ts":  { "maxDuration": 240 },
+    "api/gamma.ts":                { "maxDuration": 120 },
+    "api/olivia/chat.ts":          { "maxDuration": 120 },
+    "api/video/grok-status.ts":    { "maxDuration": 60 },
+    "api/warmup.ts":               { "maxDuration": 30 }
   }
 }
 ```
@@ -2008,6 +2090,12 @@ npm run preview
 | Olivia context builder raw metric IDs | `api/olivia/context.ts` was showing raw metric IDs (e.g. `pf_01_cannabis_legal`) instead of display names (e.g. `Cannabis Legality`) in 6 places: (1) enhanced top metrics per category, (2) enhanced evidence metricName, (3) enhanced disagreement names, (4) standard evidence city1 metricName, (5) standard evidence city2 metricName. Also (6) enhanced path only collected evidence from city1 — city2 evidence was missing entirely. All 6 fixed to use `getMetricDisplayName()` and both cities now included. | 2026-02-27 |
 | **Raw metric IDs shown in 7 user-facing locations** | Created `src/shared/metricDisplayNames.ts` as single source of truth for the 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab hover card, Gamma reports, Olivia narration), `EvidencePanel.tsx` (4× `metricName: metric.metricId`), `AdvancedVisuals.tsx` (bar chart `.replace()` hack, line chart `.split()` hack, data table raw ID), `exportUtils.ts` (CSV raw ID + PDF `.replace()` hack), `api/olivia/context.ts` (one remaining fallback). Refactored `gammaService.ts` to import from shared utility instead of maintaining duplicate map. 8 files changed. | 2026-02-27 |
 | Olivia presenter audio overlap (double playback) | `ReportPresenter.tsx` `speakTTSFallback()` created new `Audio` objects without stopping the previous one. When segment timer fired before audio finished, two audio streams played simultaneously. Added `.pause()` + null cleanup before creating new Audio — same pattern used in skip/pause handlers. | 2026-02-27 |
+| Gemini model 3.0 → 3.1 Pro Preview | Upgraded Gemini model from `gemini-2.0-flash` (3.0) to `gemini-2.5-pro-preview-05-06` (3.1 Pro Preview) across entire codebase — evaluate.ts, test-llm.ts, emilia/manuals.ts, gammaService.ts, costCalculator-pricing.ts, docs | 2026-02-27 |
+| Video players stuttering on first play | Added `preload="auto"` to all video players (JudgeVideo, CourtOrderVideo, GoToMyNewCity, ReportPresenter) + buffering spinner overlay when video pauses to buffer mid-playback | 2026-02-27 |
+| InVideo Moving Movie pipeline added | Full 2-stage pipeline: Claude Sonnet 4.5 screenplay → InVideo MCP 10-minute 4K movie. 6 new files (api/movie/generate.ts, screenplay.ts, movieService.ts, MovieGenerator.tsx/.css, DB migration). Wired into JudgeTab court-order section. | 2026-02-27 |
+| executiveSummary property name wrong in JudgeTab | `executivesummary` (lowercase) → `executiveSummary` (camelCase); `user` → `auth.userId` — judge report display was broken | 2026-02-28 |
+| Mobile landscape: header toolbar overlaps heading | Added `@media (orientation: landscape) and (max-height: 500px)` to Header.css — scales `.header-right` to 75% on landscape phones | 2026-02-28 |
+| Movie pipeline timeouts too short (120s) | Increased all movie timeouts: server 120s→280s, client 180-240s→310s, persistVideo 30s→120s. Added movie endpoints to vercel.json at maxDuration 300. | 2026-02-28 |
 
 ---
 

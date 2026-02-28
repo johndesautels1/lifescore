@@ -105,6 +105,7 @@ The `/api/user/delete` GDPR Right to Erasure endpoint now includes a timeout saf
 | Tavily | Web Search | PENDING | Email required |
 | ElevenLabs | Text-to-Speech | SIGNED | Via Terms |
 | Gamma | Report Generation | PENDING | Email required |
+| InVideo | Moving Movie Generation (10-min cinematic via MCP) | PENDING | Email required |
 | Kling AI | Video Generation | PENDING | Email required |
 | Replicate | Video Generation (Minimax fallback) | PENDING | Email required |
 | Simli | Avatar Video (WebRTC) | PENDING | Email required |

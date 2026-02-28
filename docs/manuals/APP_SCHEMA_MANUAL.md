@@ -516,6 +516,35 @@ Admin-uploaded cinematic video replacements for Court Order videos.
 
 **Lookup Priority:** comparison-specific > city-wide > none.
 
+#### `movie_videos` (Added 2026-02-27)
+
+InVideo Moving Movie generation records.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK | Movie record ID |
+| winner_city | TEXT | NOT NULL | Winning city (lowercase) |
+| loser_city | TEXT | NOT NULL | Losing city (lowercase) |
+| winner_country | TEXT | | Winner country |
+| loser_country | TEXT | | Loser country |
+| winner_score | NUMERIC | | Winner LIFE SCORE |
+| loser_score | NUMERIC | | Loser LIFE SCORE |
+| screenplay | JSONB | | 12-scene screenplay JSON |
+| screenplay_word_count | INTEGER | | Voiceover word count |
+| generation_prompt | TEXT | | Full InVideo-ready prompt |
+| user_name | TEXT | | Viewer personalization name |
+| generated_by | UUID | | User who triggered generation |
+| status | TEXT | NOT NULL | generating_screenplay, screenplay_ready, submitting_to_invideo, rendering, completed, failed |
+| invideo_video_id | TEXT | | InVideo's video identifier |
+| invideo_edit_url | TEXT | | InVideo editor URL |
+| video_url | TEXT | | Final rendered video URL |
+| thumbnail_url | TEXT | | Video thumbnail |
+| duration_seconds | NUMERIC | | Video length |
+| completed_at | TIMESTAMPTZ | | When rendering finished |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+
+**RPC:** `find_cached_movie(p_winner_city, p_loser_city)` — returns cached completed movie for same city pair (< 7 days old).
+
 ---
 
 ### 2.6 Usage & Cost Tracking
@@ -756,10 +785,13 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | POST | `/api/judge` | Yes (JWT) | Claude Opus consensus builder computing final scores from evaluator results |
 | POST | `/api/judge-report` | Yes (JWT) | Claude Opus comprehensive analysis with holistic freedom analysis and recommendations |
 
-### 3.2 Video Generation (7)
+### 3.2 Video Generation (9)
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
+| POST | `/api/movie/screenplay` | Yes (JWT) | Stage 1: Claude Sonnet 4.5 generates 12-scene JSON screenplay with QA validation (maxDuration: 300s) |
+| POST | `/api/movie/generate` | Yes (JWT) | Stage 2: Submit screenplay to InVideo MCP for 10-min 4K movie rendering (maxDuration: 300s) |
+| GET | `/api/movie/generate?movieId=X` | Yes (JWT) | Check movie generation status / get video URL |
 | POST | `/api/video/grok-generate` | Yes (JWT) | Generate videos via Kling AI (primary) with Replicate fallback. **IDOR fix 2026-02-26:** userId overridden with auth user ID |
 | GET, POST | `/api/video/grok-status` | Yes (JWT) | Check video generation status; POST supports cache checking |
 | GET, POST, DELETE | `/api/video/invideo-override` | Yes (JWT) + Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
@@ -909,6 +941,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | `GoToMyNewCity.tsx` | HeyGen multi-scene relocation video at bottom of Judge page (storyboard-based, validated per-scene) |
 | `JudgeVideo.tsx` | Cristiano judge video player with Replicate progress tracking |
 | `CourtOrderVideo.tsx` | Court Order LCD player with InVideo override + user upload |
+| `MovieGenerator.tsx` | InVideo Moving Movie generator — 2-stage pipeline UI (screenplay → InVideo MCP → polling) with scene progress display |
 | `NewLifeVideos.tsx` | Side-by-side winner/loser videos with blob URL CORS bypass |
 | `FreedomCategoryTabs.tsx` | 6-tab navigation for Court Order Freedom Education |
 | `FreedomHeroFooter.tsx` | AI-generated hero statement per category tab |
@@ -1028,6 +1061,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | `databaseService.ts` | Unified Supabase operations for conversations, preferences, sync |
 | `gammaService.ts` | Client-side Gamma API wrapper for report generation |
 | `grokVideoService.ts` | Client-side wrapper for Grok/Kling video generation + polling |
+| `movieService.ts` | InVideo Moving Movie orchestration — screenplay generation (310s), MCP submission (310s), status polling (10s intervals, 30 min max) |
 | `oliviaService.ts` | Client-side wrapper for Olivia chat, TTS, context, and HeyGen video generation |
 | `presenterService.ts` | Client-side narration script generator from comparison data (no API call) |
 | `presenterVideoService.ts` | HeyGen video generation orchestration with 5s polling, 10-min timeout |
@@ -1079,7 +1113,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | `api/shared/metrics-data-policing-legal.ts` | Policing & Legal metrics (15 metrics) |
 | `api/shared/metrics-data-speech-lifestyle.ts` | Speech & Lifestyle metrics (10 metrics) |
 | `api/shared/notifyJob.ts` | Job completion notification helper |
-| `api/shared/persistVideo.ts` | Video persistence to Supabase Storage |
+| `api/shared/persistVideo.ts` | Video persistence to Supabase Storage (download: 120s, upload: 120s) |
 | `api/shared/types.ts` | Shared TypeScript types |
 
 ---
