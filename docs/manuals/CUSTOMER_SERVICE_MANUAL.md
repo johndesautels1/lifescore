@@ -29,11 +29,18 @@
 
 This manual provides customer service representatives with comprehensive guidance for supporting LifeScore users. It covers product features, common issues, troubleshooting steps, and escalation procedures.
 
-### 1.2 Company Mission
+### 1.2 Company Information
+
+**Company:** Clues Intelligence LTD
+**Company Number:** 16966151
+**D-U-N-S Number:** 234489716
+**Address:** 167-169 Great Portland Street, 5th Floor, London W1W 5PF, UK
+
+### 1.3 Company Mission
 
 LifeScore helps users make informed decisions about where to live by comparing cities across 100 freedom-focused metrics. Our AI-powered platform evaluates legal frameworks and real-world enforcement to provide actionable insights.
 
-### 1.3 Support Channels
+### 1.4 Support Channels
 
 | Channel | Availability | Response Time |
 |---------|--------------|---------------|

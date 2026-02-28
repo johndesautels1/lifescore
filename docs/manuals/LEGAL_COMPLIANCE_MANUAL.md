@@ -19,6 +19,7 @@ London W1W 5PF
 United Kingdom
 
 **Company Type:** UK Limited Company
+**D-U-N-S Number:** 234489716
 **Admin Contact:** cluesnomads@gmail.com
 
 ---
@@ -52,8 +53,9 @@ United Kingdom
 
 | Item | Status | Details |
 |------|--------|---------|
-| **Required** | NO | Only needed for US govt contracts or enterprise B2B |
-| **Notes** | N/A | Revisit if pursuing enterprise sales |
+| **D-U-N-S Number** | **234489716** | Registered with Dun & Bradstreet |
+| **Status** | OBTAINED | Active |
+| **Use Cases** | Enterprise B2B, business credit, vendor verification | Not required for consumer SaaS but good to have |
 
 ---
 
