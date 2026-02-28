@@ -17,6 +17,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
@@ -25,6 +26,18 @@ import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 export const config = {
   maxDuration: 300,  // Vercel Pro: 5 min — LLM screenplay can retry
 };
+
+// Supabase admin client (for tier check)
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
+);
+
+// Developer bypass emails from env var (same as grok-generate.ts)
+const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 // ============================================================================
 // CONSTANTS
@@ -394,6 +407,52 @@ Return ONLY valid JSON matching the schema. No markdown, no backticks, no explan
 }
 
 // ============================================================================
+// TIER ACCESS CHECK — Moving Movies require SOVEREIGN tier
+// (Same pattern as api/video/grok-generate.ts)
+// ============================================================================
+
+async function checkMovieTierAccess(userId: string): Promise<{
+  allowed: boolean;
+  tier: string;
+  reason?: string;
+}> {
+  try {
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('tier, email')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      console.warn('[MOVIE-SCREENPLAY] Could not fetch user profile:', profileError?.message);
+      return { allowed: false, tier: 'free', reason: 'Could not verify user tier' };
+    }
+
+    // Developer bypass — grant enterprise (SOVEREIGN) access to specified emails
+    const userEmail = profile.email?.toLowerCase() || '';
+    const isDeveloper = userEmail && DEV_BYPASS_EMAILS.includes(userEmail);
+    if (isDeveloper) {
+      console.log('[MOVIE-SCREENPLAY] Developer bypass active for:', profile.email);
+      return { allowed: true, tier: 'enterprise' };
+    }
+
+    const tier = profile.tier || 'free';
+    if (tier !== 'enterprise') {
+      return {
+        allowed: false,
+        tier,
+        reason: `Moving Movies require SOVEREIGN tier. Current tier: ${tier.toUpperCase()}`,
+      };
+    }
+
+    return { allowed: true, tier };
+  } catch (error) {
+    console.error('[MOVIE-SCREENPLAY] Tier check error:', error);
+    return { allowed: false, tier: 'unknown', reason: 'Tier check failed' };
+  }
+}
+
+// ============================================================================
 // REQUEST HANDLER
 // ============================================================================
 
@@ -411,6 +470,20 @@ export default async function handler(
 
   const auth = await requireAuth(req, res);
   if (!auth) return;
+
+  // ── TIER GATING: SOVEREIGN only ──────────────────────────────────────
+  const tierAccess = await checkMovieTierAccess(auth.userId);
+  if (!tierAccess.allowed) {
+    console.log('[MOVIE-SCREENPLAY] Access denied for user:', auth.userId, tierAccess.reason);
+    res.status(403).json({
+      error: 'Access denied',
+      reason: tierAccess.reason,
+      tier: tierAccess.tier,
+      upgradeRequired: true,
+    });
+    return;
+  }
+  console.log('[MOVIE-SCREENPLAY] Access granted, tier:', tierAccess.tier);
 
   try {
     const { comparisonInput } = req.body as { comparisonInput: MovieComparisonInput };
