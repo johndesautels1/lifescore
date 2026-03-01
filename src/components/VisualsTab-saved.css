@@ -189,7 +189,7 @@
 .report-view-toggle {
   display: flex;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
@@ -202,7 +202,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
 }
 
 .view-toggle-btn:first-child {

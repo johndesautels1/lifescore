@@ -111,8 +111,10 @@
 }
 
 @media (max-width: 768px) {
+  /* Stack status above time — prevents "VERDICT READY" from overlapping "LOCAL"
+     on any screen narrower than 768px */
   .judge-header {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 0.5rem;
     text-align: center;
     padding: 0.75rem 1rem;

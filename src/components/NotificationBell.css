@@ -217,22 +217,18 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════ */
-/* Mobile: center dropdown on screen.
-   Cannot use position: fixed because ancestor .user-account has backdrop-filter
-   which creates a containing block. Use position: absolute instead and calculate
-   offsets to visually center within the viewport. */
+/* Mobile: center dropdown horizontally on screen.
+   Header.css removes backdrop-filter from .user-account at 480px so that
+   position: fixed works relative to the viewport (not the filtered ancestor). */
 @media (max-width: 480px) {
   .notification-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100vw - 24px);
-    max-width: calc(100vw - 24px);
+    position: fixed;
+    top: 56px;
+    left: 12px;
+    right: 12px;
+    width: auto;
     max-height: 350px;
-    /* Override the base animation so translateX(-50%) is preserved */
-    animation: notifSlideInCentered 0.15s ease-out;
+    animation: notifSlideIn 0.15s ease-out;
   }
 
   .notification-bell-btn {
@@ -246,15 +242,10 @@
   }
 }
 
-@keyframes notifSlideInCentered {
-  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
 @media (max-width: 360px) {
   .notification-dropdown {
-    width: calc(100vw - 16px);
-    max-width: calc(100vw - 16px);
+    left: 8px;
+    right: 8px;
   }
 }
 
