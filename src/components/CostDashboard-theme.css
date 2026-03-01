@@ -59,6 +59,10 @@
   color: #ffffff;
 }
 
+[data-theme="dark"] .provider-pct {
+  color: #FFD700;  /* Keep yellow in dark mode */
+}
+
 [data-theme="dark"] .profitability {
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
 }
