@@ -476,6 +476,13 @@
     transform: none;
   }
 
+  /* Remove backdrop-filter on mobile so it does not create a containing block
+     that breaks position: fixed on the notification dropdown */
+  .user-account {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .header-right button,
   .header-right a {
     min-height: 28px;
