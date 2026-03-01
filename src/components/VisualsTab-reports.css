@@ -373,6 +373,7 @@
 
   .report-view-toggle {
     width: 100%;
+    overflow: visible;
   }
 
   .view-toggle-btn {
@@ -380,14 +381,18 @@
     font-size: 0.7rem;
     flex: 1;
     min-height: 36px;
+    white-space: normal;
   }
 }
 
-/* Portrait mobile: ensure Read / Live Presenter / Watch Video all fit */
+/* Portrait mobile: ensure Read / Live Presenter / Watch Video all fit.
+   Remove white-space: nowrap so text can wrap within each button.
+   Remove overflow: hidden from parent so nothing gets clipped. */
 @media (max-width: 480px) and (orientation: portrait) {
   .report-view-toggle {
     width: 100%;
     justify-content: center;
+    overflow: visible;
   }
 
   .view-toggle-btn {
@@ -396,6 +401,7 @@
     flex: 1;
     min-height: 32px;
     text-align: center;
+    white-space: normal;
   }
 }
 

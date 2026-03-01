@@ -155,7 +155,9 @@
 }
 
 .display-screen-btn-label {
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  word-break: break-word;
 }
 
 @media (max-width: 600px) {
@@ -196,7 +198,10 @@
   }
 
   .display-screen-btn-label {
-    white-space: nowrap;
+    white-space: normal;
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.2;
   }
 }
 
@@ -282,5 +287,6 @@
   text-transform: uppercase;
   color: var(--brushed-gold, #e6b800);
   opacity: 0.7;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
 }
