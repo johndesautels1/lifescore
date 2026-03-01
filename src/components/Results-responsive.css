@@ -75,7 +75,7 @@
     font-size: 2.25rem;
   }
 
-  /* Fix #2: Category header button overflow — weight badge + expand icon */
+  /* Fix #2: Category header button — mobile portrait text wrapping fix */
   .category-breakdown {
     padding: 1rem;
   }
@@ -86,8 +86,9 @@
   }
 
   .category-header {
-    gap: 0.4rem;
+    flex: 1;
     min-width: 0;
+    gap: 0.25rem 0.4rem;
     flex-wrap: wrap;
   }
 
@@ -97,17 +98,15 @@
   }
 
   .results .category-name {
-    font-size: 0.78rem;
-    min-width: 0;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    font-size: 0.85rem;
+    flex: 1 1 auto;
+    min-width: 60%;
   }
 
   .category-weight {
     font-size: 0.6rem;
     padding: 0.15rem 0.35rem;
     white-space: nowrap;
-    flex-shrink: 0;
   }
 
   .results .expand-icon {

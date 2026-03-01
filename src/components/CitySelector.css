@@ -627,3 +627,11 @@
     font-size: 0.85rem;
   }
 }
+
+/* Mobile portrait: shrink city dropdowns to 75% and center */
+@media (max-width: 768px) and (orientation: portrait) {
+  .metro-dropdown {
+    width: 75%;
+    margin: 0 auto;
+  }
+}

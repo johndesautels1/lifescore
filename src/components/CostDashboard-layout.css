@@ -157,8 +157,6 @@
 
 .provider-row.highlight {
   background: rgba(212, 175, 55, 0.1);
-  margin: 0 -1rem;
-  padding: 0.75rem 1rem;
   border-radius: 6px;
 }
 
@@ -169,6 +167,7 @@
 
 .provider-name {
   flex: 1;
+  min-width: 0;
   font-weight: 600;
   color: #F7931E;  /* FIX #62: Golden orange provider names */
 }
@@ -177,13 +176,17 @@
   font-weight: 700;
   color: #1a1a1a;
   min-width: 80px;
+  width: 80px;
+  flex-shrink: 0;
   text-align: right;
 }
 
 .provider-pct {
   min-width: 50px;
+  width: 50px;
+  flex-shrink: 0;
   text-align: right;
-  color: #FFD700;  /* FIX #60: Crisp yellow percentage text */
+  color: #dc2626;  /* Red in light mode for visibility on white */
   font-size: 0.85rem;
   font-weight: 600;
 }

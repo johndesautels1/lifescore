@@ -102,7 +102,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DISPLAY SCREEN BUTTONS — Glassmorphic toggle buttons at bottom
-   Left: Court Order Video | Right: My New City
+   Left: Freedom Journey Movie | Right: My New City
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .display-screen-buttons {
@@ -171,6 +171,32 @@
 
   .display-screen-btn-icon {
     font-size: 1.3rem;
+  }
+}
+
+/* Portrait mobile: reduce buttons by 1/3, center on screen */
+@media (max-width: 480px) and (orientation: portrait) {
+  .display-screen-buttons {
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .display-screen-btn {
+    flex: 0 1 auto;
+    padding: 0.65rem 0.4rem;
+    min-height: 54px;
+    font-size: 0.5rem;
+    gap: 0.3rem;
+    border-radius: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .display-screen-btn-icon {
+    font-size: 0.9rem;
+  }
+
+  .display-screen-btn-label {
+    white-space: nowrap;
   }
 }
 

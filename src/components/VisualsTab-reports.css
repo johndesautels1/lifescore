@@ -383,3 +383,19 @@
   }
 }
 
+/* Portrait mobile: ensure Read / Live Presenter / Watch Video all fit */
+@media (max-width: 480px) and (orientation: portrait) {
+  .report-view-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-toggle-btn {
+    padding: 5px 4px;
+    font-size: 0.6rem;
+    flex: 1;
+    min-height: 32px;
+    text-align: center;
+  }
+}
+

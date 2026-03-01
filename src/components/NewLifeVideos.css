@@ -77,6 +77,27 @@
   .vs-divider {
     margin: 0.25rem 0;
   }
+
+  /* FIX: Prevent score badge overflow on narrow mobile portrait */
+  .panel-header {
+    padding: 0.6rem 0.65rem;
+    gap: 0.35rem;
+  }
+
+  .winner-badge,
+  .loser-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.35rem;
+  }
+
+  .score-badge {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.35rem;
+  }
+
+  .city-name {
+    font-size: 0.85rem;
+  }
 }
 
 /* ============================================================================
@@ -196,6 +217,7 @@
   font-size: 0.85rem;
   color: #fff;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .hero-icon {
@@ -218,6 +240,7 @@
   font-size: 0.85rem;
   color: #fff;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .alert-icon {
@@ -234,6 +257,7 @@
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(8px);
   gap: 0.5rem;
+  overflow: hidden;
 }
 
 .city-name {
@@ -241,6 +265,11 @@
   font-size: 1rem;
   color: #ffffff !important;  /* FIX #65: Crisp white city text */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);  /* Better contrast */
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .winner-badge,
@@ -250,6 +279,8 @@
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   text-transform: uppercase;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Winner badge - green verified style */
@@ -273,6 +304,8 @@
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.85);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Video Viewport */

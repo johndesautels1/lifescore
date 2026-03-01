@@ -292,6 +292,12 @@
     font-size: 0.8rem;
   }
 
+  /* FIX: Prevent SPEAK/TRANSCRIPT buttons from visually expanding on tap.
+     The :focus box-shadow bleeds outside the container on mobile portrait. */
+  .control-item:focus {
+    box-shadow: none;
+  }
+
   .olivia-premium .btn-text {
     font-size: 0.7rem;
   }
@@ -474,5 +480,15 @@
 
   .video-control-btn .control-icon {
     font-size: 0.75rem;
+  }
+
+  /* FIX: Resume/Pause buttons inside video overlay were oversized on mobile portrait.
+     .olivia-premium .resume-btn/.pause-btn have higher specificity than .video-control-btn,
+     so they overrode the reduced mobile sizing. Force them to match Stop Video. */
+  .olivia-premium .video-control-btn.resume-btn,
+  .olivia-premium .video-control-btn.pause-btn {
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    border-radius: 4px;
   }
 }

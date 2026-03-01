@@ -26,7 +26,7 @@ OUTPUT FORMAT: Return ONLY valid JSON that matches the schema provided below. No
 HARD RULES:
 - Total scenes: 7
 - Total duration: 105–120 seconds
-- Total voiceover: 220–270 words
+- Total voiceover: 200–250 words (HARD CAP: never exceed 300)
 - Scenes 1 and 7 are A-ROLL (Cristiano on camera speaking)
 - Scenes 2–6 are B-ROLL (cinematic city footage with captions)
 - Every scene must specify one primary freedom category (from the 6)

@@ -63,11 +63,9 @@ function getStatusMessage(status: string, progress: number): string {
     case 'building_storyboard':
       return 'Building your cinematic storyboard...';
     case 'storyboard_ready':
-      return 'Storyboard ready. Submitting to HeyGen...';
+      return 'Storyboard ready. Rendering your video...';
     case 'rendering':
-      return progress > 25
-        ? `Cristiano is filming your Freedom Tour... ${progress}%`
-        : 'Submitting to HeyGen Video Agent...';
+      return `Cristiano is filming your Freedom Tour... ${progress}%`;
     case 'processing':
       return `Rendering cinematic video... ${progress}%`;
     default:
@@ -80,9 +78,9 @@ function getSubstatusMessage(status: string): string {
     case 'building_storyboard':
       return '7-scene cinematic storyboard via AI';
     case 'rendering':
-      return '105-120s Freedom Tour with B-roll';
+      return 'Your Freedom Tour will take 10-15 mins to produce';
     case 'processing':
-      return 'HeyGen Video Agent assembling your video';
+      return 'Assembling your cinematic video';
     default:
       return '';
   }
@@ -336,25 +334,10 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
     setVideoErrorCount(0);
   }, [comparisonId, reset]);
 
-  // Download video
-  const handleDownload = async () => {
+  // Download video — open in new tab (cross-origin HeyGen URLs block fetch/blob)
+  const handleDownload = () => {
     if (!effectiveVideoUrl) return;
-    const filename = `go-to-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-freedom-tour.mp4`;
-    try {
-      const response = await fetch(effectiveVideoUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error('[GoToMyNewCity] Download error:', err);
-      toastError('Failed to download video.');
-    }
+    window.open(effectiveVideoUrl, '_blank');
   };
 
   // Share video
@@ -436,7 +419,8 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                           alt="CLUES"
                           className="poster-logo"
                         />
-                        <div className="poster-title">CLUES FREEDOM TOUR</div>
+                        <div className="poster-brand">CLUES</div>
+                        <div className="poster-title">Narrative Cinematic Freedom Tour</div>
                         <div className="poster-city">{winnerCity}</div>
                         <div className="poster-cta">TAP TO PLAY</div>
                       </div>
@@ -622,7 +606,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
       onWaitHere={handleTourWaitHere}
       onNotifyMe={handleTourNotifyMe}
       taskLabel="Freedom Tour Video"
-      estimatedSeconds={120}
+      estimatedSeconds={600}
     />
     </>
   );

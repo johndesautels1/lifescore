@@ -389,3 +389,21 @@
   }
 }
 
+/* Mobile portrait: stack Judge Status above LOCAL time to prevent
+   "ANALYZING" / "VERDICT READY" text overlapping the time cluster */
+@media (max-width: 480px) and (orientation: portrait) {
+  .judge-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .judge-header .header-left,
+  .judge-header .header-right {
+    justify-content: center;
+  }
+
+  .judge-header .time-display {
+    justify-content: center;
+  }
+}
+

@@ -2334,7 +2334,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
       {/* ═══════════════════════════════════════════════════════════════════
           DISPLAY SCREEN BUTTONS — Three glassmorphic buttons at the bottom
-          Left: Your Future | Center: Court Order Video | Right: My New City
+          Left: [City] Advantages | Center: Freedom Journey Movie | Right: My New City
           Click to expand the screen below. Click again to collapse.
       ═══════════════════════════════════════════════════════════════════ */}
       {judgeReport && (
@@ -2345,21 +2345,21 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               onClick={() => setOpenDisplay(openDisplay === 'your-future' ? null : 'your-future')}
             >
               <span className="display-screen-btn-icon">&#9878;</span>
-              <span className="display-screen-btn-label">YOUR FUTURE</span>
+              <span className="display-screen-btn-label">{(freedomEducation?.winnerCity || futureWinnerCity).toUpperCase()} ADVANTAGES</span>
             </button>
             <button
               className={`display-screen-btn${openDisplay === 'court-order' ? ' active' : ''}`}
               onClick={() => setOpenDisplay(openDisplay === 'court-order' ? null : 'court-order')}
             >
               <span className="display-screen-btn-icon">&#127909;</span>
-              <span className="display-screen-btn-label">COURT ORDER VIDEO</span>
+              <span className="display-screen-btn-label">FREEDOM JOURNEY MOVIE</span>
             </button>
             <button
               className={`display-screen-btn${openDisplay === 'freedom-tour' ? ' active' : ''}`}
               onClick={() => setOpenDisplay(openDisplay === 'freedom-tour' ? null : 'freedom-tour')}
             >
               <span className="display-screen-btn-icon">&#127757;</span>
-              <span className="display-screen-btn-label">MY NEW CITY</span>
+              <span className="display-screen-btn-label">{(freedomEducation?.winnerCity || futureWinnerCity).toUpperCase()} CINEMATIC NARRATIVE PRESENTATION</span>
             </button>
           </div>
 
@@ -2370,7 +2370,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 <div className="your-future-header">
                   <h4 className="your-future-title">
                     <span className="gavel-icon">&#9878;</span>
-                    COURT ORDER
+                    {(freedomEducation?.winnerCity || futureWinnerCity).toUpperCase()} ADVANTAGES
                   </h4>
                   <p className="your-future-subtitle">
                     Your future in {freedomEducation.winnerCity || futureWinnerCity}
@@ -2424,7 +2424,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               />
               <div className="court-order-divider">
                 <span className="court-order-divider-line" />
-                <span className="court-order-divider-label">or watch the Court Order clip</span>
+                <span className="court-order-divider-label">or watch a movie clip of your journey</span>
                 <span className="court-order-divider-line" />
               </div>
               <CourtOrderVideo

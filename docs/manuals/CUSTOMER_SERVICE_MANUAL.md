@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.7
-**Last Updated:** February 26, 2026
+**Version:** 3.8
+**Last Updated:** March 1, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -135,7 +135,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Dual-Storage (local + cloud) | ❌ | ✅ | ✅ |
 | Comparison History | Local | Cloud | Cloud |
 
-**Dual-Storage System (Added 2026-02-05):** All user data now saves to BOTH localStorage (offline-first, instant access) AND Supabase (cloud backup, cross-device sync). This covers comparisons, Gamma reports, Judge reports, Court Order videos, weight presets, law/lived preferences, excluded categories, and dealbreakers. If cloud sync fails, data is still safely stored locally.
+**Dual-Storage System (Added 2026-02-05):** All user data now saves to BOTH localStorage (offline-first, instant access) AND Supabase (cloud backup, cross-device sync). This covers comparisons, Gamma reports, Judge reports, Freedom Video Clips, weight presets, law/lived preferences, excluded categories, and dealbreakers. If cloud sync fails, data is still safely stored locally.
 
 ### 3.7 Technical & API Features
 
@@ -226,7 +226,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 ### 4.5 "Where did the Judge page content go? It looks different."
 
 **Expected Response:**
-"We've redesigned the Judge page with collapsible panels to reduce clutter. Your content is all still there — it's organized into three panels: Media (video player), Evidence (findings and category analysis), and Verdict (executive summary and Court Order). Click any panel's header bar to expand or collapse it. The Media panel is open by default; the Evidence and Verdict panels are collapsed."
+"We've redesigned the Judge page with collapsible panels to reduce clutter. Your content is all still there — it's organized into three panels: Media (video player), Evidence (findings and category analysis), and Verdict (executive summary and Freedom Video Clip). Click any panel's header bar to expand or collapse it. The Media panel is open by default; the Evidence and Verdict panels are collapsed."
 
 **Actions:**
 1. Explain the three-panel layout (Media, Evidence, Verdict)
@@ -356,7 +356,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Video freezes or stutters mid-play | Normal — a buffering spinner will appear while the video loads; ensure stable internet connection |
 | Download works but playback doesn't | Try clicking play again; blob URLs load asynchronously |
 | Video disappeared after tab switch | Fixed — videos now auto-restore from Supabase on tab re-entry |
-| Court Order video broken/expired | Fixed — Court Order videos no longer use expiring provider CDN URLs |
+| Freedom Video Clip broken/expired | Fixed — Freedom Video Clip videos no longer use expiring provider CDN URLs |
 | Audio played during phone call | Expected — a phone call audio warning (added 2026-02-16) now appears on all video displays to alert users |
 | HeyGen presenter video expired | Fixed — HeyGen URLs now validated before display; auto re-fetched if expired |
 | Browser crashed with quota error | Fixed — localStorage quota overflow is now caught gracefully |
@@ -374,7 +374,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 - **HEAD request validation:** Cached video URLs are tested with a HEAD request before being shown to the user
 - **Auto re-fetch:** Expired URLs trigger automatic re-generation — no manual user action needed
 - **localStorage quota protection:** Large video caches no longer crash the browser; quota errors are caught gracefully
-- **Court Order videos:** Fixed issue where Court Order videos used expiring provider CDN URLs
+- **Freedom Video Clips:** Fixed issue where Freedom Video Clips used expiring provider CDN URLs
 - **HeyGen URLs:** Fixed HeyGen video URL expiration that caused broken presenter videos
 - **Storyboard progress bar:** New real-time progress bar during video generation with word-count QA validation
 - **Cristiano video:** Added "Visit Cluesnomads.com" CTA, poster image, and logo overlay; fixed 422 storyboard/render alignment error
@@ -382,7 +382,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 **Note (Updated 2026-02-27):** Video playback smoothness improved:
 - All video players now use `preload="auto"` so the browser pre-buffers the entire video before the user presses play
 - A buffering spinner overlay appears automatically if the video stalls mid-playback (instead of appearing frozen)
-- Applies to: Judge Video, Court Order, Freedom Tour (Cristiano), and Olivia Video Presenter
+- Applies to: Judge Video, Freedom Video Clip, Freedom Tour, and Olivia Video Presenter
 
 ### 5.4a InVideo Moving Movie Issues (Added 2026-02-27)
 
@@ -431,7 +431,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Videos disappeared after tab switch | Fixed — videos auto-restore from Supabase on tab re-entry |
 | Judge dropdown selector feels slow | Fixed — response time reduced from 354ms to ~50ms |
 | Judge report missing after cache clear | Fixed — system falls back to Supabase when localStorage is empty |
-| GoToMyNewCity video not appearing | Only shows when a judge report is loaded; check Verdict panel |
+| Freedom Tour video not appearing | Only shows when a judge report is loaded; check Verdict panel |
 | Judge tab showing stale data after switching comparisons | Fixed (2026-02-16) — Judge tab now resets state when switching between different comparisons |
 
 ### 5.7 Cost Dashboard Issues (Added 2026-02-14)
@@ -675,7 +675,7 @@ The Judge page now uses a **collapsible panel layout** with three sections:
 |-------|---------|----------|
 | **Media Panel** | Open | Video viewport + action buttons |
 | **Evidence Panel** | Collapsed | Summary of Findings + all 6 category analysis sections |
-| **Verdict Panel** | Collapsed | Executive Summary + Court Order + GoToMyNewCity video |
+| **Verdict Panel** | Collapsed | Executive Summary + Freedom Video Clip + Freedom Tour video |
 
 Each panel header shows live summary stats (video status, scores, winner name). Users click the header bar to expand/collapse.
 
@@ -726,29 +726,34 @@ A toggle in the standard Results view that shows an AI-generated narrative expla
 
 **Common support issue:** If users ask "Why did X win?" — direct them to the "Explain the Winner" toggle below the score cards.
 
-### 8.7 GoToMyNewCity Video (Added 2026-02-14)
+### 8.7 Freedom Tour Video (Added 2026-02-14, Renamed 2026-03-01)
 
-A personalized multi-scene cinematic relocation video for the winning city, displayed at the bottom of the Judge Verdict panel:
-- Generated by HeyGen with multiple storyboard scenes
-- Features intro, city showcase scenes, and call-to-action with Cluesnomads.com branding
+A personalized multi-scene cinematic relocation video for the winning city ("CLUES Narrative Cinematic Freedom Tour"), displayed at the bottom of the Judge Verdict panel. Accessed via the **"[City] Cinematic Narrative Presentation"** button:
+- Features intro, city showcase scenes, and call-to-action with CLUES branding
 - Only appears when a judge report is loaded
+- Production takes approximately 10-15 minutes
 - SOVEREIGN tier only
+
+> **Note:** Previously called "Go To My New City". Renamed on 2026-03-01.
 
 **Common support issues:**
 | Issue | Solution |
 |-------|----------|
-| GoToMyNewCity video not showing | Ensure a judge report is loaded first — video only appears with an active verdict |
-| Video generation stuck | Allow up to 10 minutes; HeyGen multi-scene videos take longer than single-scene |
+| Freedom Tour video not showing | Ensure a judge report is loaded first — video only appears with an active verdict |
+| Video generation stuck | Allow up to 15 minutes; multi-scene videos take longer than single-scene |
 
-### 8.8 Court Order Videos (Updated 2026-02-14)
+### 8.8 Freedom Video Clip (Updated 2026-02-14, Renamed 2026-03-01)
 
-Saved Court Order videos from the Judge's verdict:
+Saved Freedom Video Clips from the Judge's verdict:
 - Generated by Kling AI (primary) for the winning city's "perfect life" scenario
 - Saved to both localStorage and Supabase (cloud backup)
 - Videos can be uploaded to permanent cloud storage (user-videos bucket)
 - Accessible from the Visual Reports / Saved tab
-- **URL expiration fix (2026-02-14):** Court Order videos previously used expiring provider CDN URLs. Now validated with HEAD requests before display; expired URLs trigger automatic re-fetch
+- User sees **"SEE VIDEO CLIP"** button and **"FREEDOM VIDEO CLIP"** card header
+- **URL expiration fix (2026-02-14):** Freedom Video Clips previously used expiring provider CDN URLs. Now validated with HEAD requests before display; expired URLs trigger automatic re-fetch
 - SOVEREIGN tier only
+
+> **Note:** Previously called "Court Order Videos". Renamed on 2026-03-01.
 
 ### 8.9 Olivia Video Presenter (Updated 2026-02-14)
 
@@ -831,7 +836,7 @@ In-app notification bell with optional email alerts for long-running tasks:
 - Bell icon polls for new notifications every 30 seconds
 - Email sent via Resend API (fire-and-forget, non-blocking)
 
-**Integrated into:** CitySelector (Compare), JudgeTab (Judge Verdict), VisualsTab (Gamma), CourtOrderVideo, GoToMyNewCity (Freedom Tour), Grok video generation
+**Integrated into:** CitySelector (Compare), JudgeTab (Judge Verdict), VisualsTab (Gamma), Freedom Video Clip, Freedom Tour, Grok video generation
 
 ---
 
@@ -1021,8 +1026,10 @@ A: The Judge page was redesigned with collapsible panels (2026-02-14). Content i
 **Q: My Judge report only shows the executive summary, where are the categories?**
 A: This was a bug fixed on 2026-02-14. All 6 freedom category sections now load correctly when viewing saved judge verdicts. Ask the customer to refresh or reload their saved report.
 
-**Q: What is the "Go To My New City" video?**
-A: A new personalized multi-scene cinematic video (added 2026-02-14) showing the winning city as a relocation destination. It appears at the bottom of the Judge Verdict panel when a report is loaded. Features Cluesnomads.com branding. SOVEREIGN tier only.
+**Q: What is the Freedom Tour video?**
+A: A personalized multi-scene cinematic video (the "CLUES Narrative Cinematic Freedom Tour") showing the winning city as a relocation destination. Access it via the "[City] Cinematic Narrative Presentation" button at the bottom of the Judge Verdict panel when a report is loaded. Features CLUES branding. SOVEREIGN tier only. Production takes approximately 10-15 minutes.
+
+> **Note:** Previously called "Go To My New City". Renamed on 2026-03-01.
 
 **Q: My Cost Dashboard shows $0.00 for some services**
 A: This was a display bug fixed on 2026-02-14. Costs for Gamma, Olivia, TTS, Avatar, and Perplexity were not captured because the database saved before those services ran. The fix merges data from multiple sources. Ask the customer to run a new comparison — the fix applies automatically.
@@ -1082,7 +1089,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **TTS** | Text-to-Speech - converts text to spoken audio |
 | **Kling AI** | Primary video generation provider for Judge lifestyle videos |
 | **Annual Subscription** | Yearly billing option with discounted rates (NAVIGATOR $249/yr, SOVEREIGN $899/yr) |
-| **Court Order** | Judge verdict video saved for the winning city (Grok/Kling AI) |
+| **Freedom Video Clip** | Judge verdict video saved for the winning city (Grok/Kling AI). Previously called "Court Order". |
 | **Dual-Storage** | Save architecture writing to both localStorage and Supabase simultaneously |
 | **Score Methodology** | 5-stage pipeline explainer card shown in results view |
 | **App Prompts** | 50 system prompts across 6 categories, viewable/editable by admins in Help Modal > Prompts tab |
@@ -1093,7 +1100,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | **Pre-Rendered Video** | Polished MP4 video of Olivia presenting report, generated by HeyGen |
 | **PIP (Picture-in-Picture)** | Small avatar overlay that appears on top of the report iframe |
 | **Collapsible Panel** | Expandable/collapsible UI section on the Judge page (Media, Evidence, Verdict) |
-| **GoToMyNewCity** | Multi-scene cinematic relocation video for the winning city, shown in Judge Verdict panel |
+| **Freedom Tour** | Multi-scene cinematic relocation video for the winning city ("CLUES Narrative Cinematic Freedom Tour"), shown in Judge Verdict panel. Previously called "GoToMyNewCity". |
 | **HEAD Request Validation** | Server check to verify a video URL is still valid before displaying it to the user |
 | **Voice Wave Indicator** | Animated visual feedback on PIP player showing when audio is actively playing |
 | **Storyboard QA** | Word count and content validation step before video rendering begins |
