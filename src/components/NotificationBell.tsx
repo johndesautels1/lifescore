@@ -112,6 +112,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
                 Mark all read
               </button>
             )}
+            <button
+              className="notification-close-btn"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close notifications"
+              type="button"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="notification-list">
