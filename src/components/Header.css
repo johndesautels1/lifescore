@@ -181,6 +181,46 @@
   position: relative;
 }
 
+/* Desktop: grid layout keeps title centered between left/right toolbars
+   without overlap — fixes "D" in LTD being clipped by toolbar on wide screens */
+@media (min-width: 769px) {
+  .header-container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .header-left {
+    position: static;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .company-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .header-right {
+    position: static;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+  }
+
+  .clues-branding,
+  .header-contact,
+  .life-score-title {
+    grid-column: 1 / -1;
+  }
+
+  .user-account {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    UPGRADE BUTTON
    ═══════════════════════════════════════════════════════════════════════════ */
