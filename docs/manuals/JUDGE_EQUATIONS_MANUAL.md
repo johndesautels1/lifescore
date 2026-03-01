@@ -891,9 +891,9 @@ Previously, QA validation and render validation used different thresholds, causi
 
 ---
 
-## Appendix E: GoToMyNewCity Multi-Scene Storyboard Structure (Added 2026-02-14)
+## Appendix E: Freedom Tour (GoToMyNewCity) Multi-Scene Storyboard Structure (Added 2026-02-14, Renamed 2026-03-01)
 
-The `GoToMyNewCity` component generates a HeyGen multi-scene relocation video displayed at the bottom of the Judge page.
+The `GoToMyNewCity` component generates the "CLUES Narrative Cinematic Freedom Tour" multi-scene relocation video displayed at the bottom of the Judge page. User-facing button: "[City] Cinematic Narrative Presentation".
 
 ### Storyboard Structure
 

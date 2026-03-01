@@ -74,7 +74,7 @@ United Kingdom
 | City comparisons | Service delivery | Contract performance | Until account deletion |
 | Olivia conversations | AI advisor chat history | Contract performance | Until account deletion |
 | Emilia help chat | Help assistant sessions | Contract performance | Session-based (browser only) |
-| Court Order videos | Judge verdict videos (Supabase Storage) | Contract performance | Until account deletion |
+| Freedom Video Clips | Judge verdict videos (Supabase Storage) | Contract performance | Until account deletion |
 | App prompts | System prompt references (admin-editable) | Legitimate interest | Permanent |
 | Payment info | Billing (via Stripe) | Contract performance | Per Stripe retention |
 | IP address | Security, rate limiting | Legitimate interest | 90 days |
@@ -494,7 +494,7 @@ This is the most significant security update in the application's history. All c
 
 ### 8.4 New Storage Bucket
 
-A `user-videos` Supabase Storage bucket was added (2026-02-11) for Court Order video uploads:
+A `user-videos` Supabase Storage bucket was added (2026-02-11) for Freedom Video Clip uploads:
 - 100 MB max file size
 - Public read access for sharing
 - RLS: users can only upload to their own path (`user-videos/{userId}/`)
@@ -513,7 +513,7 @@ The `reports` Supabase Storage bucket now has a **200MB file size limit** enforc
 | Bucket | Max File Size | Purpose |
 |--------|--------------|---------|
 | `reports` | **200MB** | HTML reports per user folder |
-| `user-videos` | 100MB | Court Order video uploads |
+| `user-videos` | 100MB | Freedom Video Clip uploads |
 | `contrast-images` | 5MB | AI contrast image copies |
 
 ---

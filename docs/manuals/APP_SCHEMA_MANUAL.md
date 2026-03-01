@@ -1,7 +1,7 @@
 # LIFE SCORE - Complete Application Schema Manual
 
-**Version:** 2.6.0
-**Last Updated:** 2026-02-26
+**Version:** 2.7.0
+**Last Updated:** 2026-03-01
 **Purpose:** Comprehensive technical reference for Emilia help system and developers
 **Auto-Generated From:** Codebase introspection of ~250 commits ahead of main
 
@@ -955,12 +955,12 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | Component | Purpose |
 |-----------|---------|
 | `JudgeTab.tsx` | THE JUDGE tab with Claude Opus analysis, video, recommendations — 3 collapsible panels: Media, Evidence, Verdict |
-| `GoToMyNewCity.tsx` | HeyGen multi-scene relocation video at bottom of Judge page (storyboard-based, validated per-scene) |
+| `GoToMyNewCity.tsx` | Freedom Tour multi-scene relocation video at bottom of Judge page ("CLUES Narrative Cinematic Freedom Tour"). Button: "[City] Cinematic Narrative Presentation". HeyGen Video Generate v2 API with storyboard. |
 | `JudgeVideo.tsx` | Cristiano judge video player with Replicate progress tracking |
-| `CourtOrderVideo.tsx` | Court Order LCD player with InVideo override + user upload |
-| `MovieGenerator.tsx` | InVideo Moving Movie generator — 2-stage pipeline UI (screenplay → InVideo MCP → polling) with scene progress display |
+| `CourtOrderVideo.tsx` | Freedom Video Clip LCD player (user-facing: "FREEDOM VIDEO CLIP" / "SEE VIDEO CLIP") with InVideo override + user upload |
+| `MovieGenerator.tsx` | Freedom Journey movie generator (user-facing: "Watch your Freedom Journey") — 2-stage pipeline UI (screenplay → InVideo MCP → polling) with scene progress display |
 | `NewLifeVideos.tsx` | Side-by-side winner/loser videos with blob URL CORS bypass |
-| `FreedomCategoryTabs.tsx` | 6-tab navigation for Court Order Freedom Education |
+| `FreedomCategoryTabs.tsx` | 6-tab navigation for Freedom Video Clip Freedom Education |
 | `FreedomHeroFooter.tsx` | AI-generated hero statement per category tab |
 | `FreedomMetricsList.tsx` | Winning metrics with scores and real-world examples |
 | `VisualsTab.tsx` | Gamma report viewer with saved reports library + Read/Listen to Presenter toggle |

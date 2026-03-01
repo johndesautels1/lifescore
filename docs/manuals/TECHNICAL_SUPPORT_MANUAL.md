@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 4.9
-**Last Updated:** February 26, 2026
+**Version:** 5.2
+**Last Updated:** March 1, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -398,9 +398,9 @@ Group related styles with headers:
 | Component | What It Does |
 |-----------|-------------|
 | `JudgeTab.tsx` | AI judge that renders a legal-style verdict. Generates analysis, creates avatar video, shows verdict with reasoning. Features 3 collapsible panels (Media, Evidence, Verdict) with live stats in headers. |
-| `GoToMyNewCity.tsx` | HeyGen multi-scene relocation video at bottom of JudgeTab. Uses HeyGen Video Generate v2 API with storyboard. Validates against 10K char limit. Poster image + CTA to Cluesnomads.com. |
+| `GoToMyNewCity.tsx` | Freedom Tour multi-scene relocation video at bottom of JudgeTab ("CLUES Narrative Cinematic Freedom Tour"). Button label: "[City] Cinematic Narrative Presentation". Uses HeyGen Video Generate v2 API with storyboard. Validates against 10K char limit. Poster image + CTA to Cluesnomads.com. |
 | `JudgeVideo.tsx` | Video player for pre-rendered judge avatar videos. |
-| `CourtOrderVideo.tsx` | Formatted court-order-style video report with legal styling. |
+| `CourtOrderVideo.tsx` | Freedom Video Clip player (user-facing label: "FREEDOM VIDEO CLIP" / "SEE VIDEO CLIP"). Previously displayed as "Court Order". |
 | `GunComparisonModal.tsx` | Dedicated modal for comparing gun rights between jurisdictions. |
 
 #### Visual Reports
@@ -1475,9 +1475,9 @@ The Judge page now features 3 collapsible panels to reduce visual clutter and im
 **Why `display: none` instead of conditional rendering:**
 Conditional unmount would destroy video elements, abort in-flight fetches, and reset internal component state. `display: none` preserves the entire DOM subtree and React fiber tree while hiding content visually.
 
-### 9.9 GoToMyNewCity Video System v2 (Added 2026-02-14)
+### 9.9 Freedom Tour Video System (GoToMyNewCity) v2 (Added 2026-02-14, Renamed 2026-03-01)
 
-New component for HeyGen multi-scene relocation video generation.
+Multi-scene cinematic relocation video ("CLUES Narrative Cinematic Freedom Tour"). User-facing button: "[City] Cinematic Narrative Presentation". HeyGen branding removed from all user-facing text (2026-03-01). Production time: 10-15 minutes.
 
 **Location:** Bottom of JudgeTab, appears when a judge report is loaded.
 
@@ -1524,7 +1524,7 @@ Stage 2: InVideo MCP (generate-video-from-script) → 10-minute 4K movie
 **Database Table:** `movie_videos` — stores screenplay JSON, generation prompt, InVideo video ID/URL, status tracking, and city pair caching.
 
 **Integration with JudgeTab (Added 2026-02-27):**
-MovieGenerator is wired into the court-order section of JudgeTab with a visual divider. It appears below the Court Order video player when comparison data is available.
+MovieGenerator is wired into the Freedom Video Clip section of JudgeTab with a visual divider (user sees "Watch your Freedom Journey" header). It appears below the Freedom Video Clip player when comparison data is available.
 
 ### 9.10b executiveSummary Property Fix (Fixed 2026-02-28)
 
@@ -2734,6 +2734,7 @@ Server-side notifications triggered in:
 | 4.9 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§14.2): Asset materialization pattern — `api/gamma.ts` persists PDF/PPTX exports to Supabase Storage on completion. New DB columns `pdf_storage_path`/`pptx_storage_path`. Iframe error detection on all 4 embed locations. 11 files, 35 changes. |
 | 5.0 | 2026-02-27 | Claude Opus 4.6 | Olivia context builder fix (§14.2): 6 bugs in `api/olivia/context.ts` — raw metric IDs shown instead of display names in enhanced top metrics, evidence, and disagreements; standard evidence also affected; enhanced path missing city2 evidence entirely. All fixed with `getMetricDisplayName()`. |
 | 5.1 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix across 7 user-facing locations (§14.2): Created `src/shared/metricDisplayNames.ts` as single source of truth for 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab, Gamma, Olivia narration), `EvidencePanel.tsx` (4 instances), `AdvancedVisuals.tsx` (bar chart, line chart, data table), `exportUtils.ts` (CSV + PDF), `api/olivia/context.ts` (fallback). Refactored `gammaService.ts` to import from shared utility. Audio overlap fix: `ReportPresenter.tsx` `speakTTSFallback()` now stops previous audio before starting new segment (§9.7). |
+| 5.2 | 2026-03-01 | Claude Opus 4.6 | Major terminology rename across user-facing labels: "Court Order" → "Freedom Video Clip" (CourtOrderVideo.tsx), "Go To My New City" → "[City] Cinematic Narrative Presentation" (GoToMyNewCity.tsx), "Your Future" → "[City] Advantages", "Moving Movie" → "Freedom Journey". Freedom Tour poster: "CLUES Narrative Cinematic Freedom Tour". HeyGen branding removed from user-facing text. Wait time: 10-15 min. Download button opens new tab (CORS). 15+ mobile portrait layout fixes. Updated §9.9 Freedom Tour, component descriptions, MovieGenerator integration notes. |
 
 ---
 
