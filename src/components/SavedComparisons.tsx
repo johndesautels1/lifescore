@@ -62,8 +62,8 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
   const [gitHubToken, setGitHubToken] = useState('');
   const [syncStatus, setSyncStatus] = useState(getSyncStatus());
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [editingNickname, setEditingNickname] = useState<string | null>(null);
-  const [nicknameValue, setNicknameValue] = useState('');
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteValue, setNoteValue] = useState('');
 
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -276,14 +276,14 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
     }
   };
 
-  const handleEditNickname = (id: string, currentNickname?: string) => {
-    setEditingNickname(id);
-    setNicknameValue(currentNickname || '');
+  const handleEditNote = (id: string, currentNote?: string) => {
+    setEditingNote(id);
+    setNoteValue(currentNote || '');
   };
 
-  const handleSaveNickname = (id: string) => {
-    updateNicknameLocal(id, nicknameValue);
-    setEditingNickname(null);
+  const handleSaveNote = (id: string) => {
+    updateNicknameLocal(id, noteValue);
+    setEditingNote(null);
     loadComparisons();
   };
 
@@ -505,22 +505,22 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                   >
                     <div className="saved-item-main">
                       <div className="saved-item-cities">
-                        {editingNickname === comparison.id ? (
-                          <div className="nickname-edit">
+                        {editingNote === comparison.id ? (
+                          <div className="note-edit">
                             <input
                               type="text"
-                              value={nicknameValue}
-                              onChange={(e) => setNicknameValue(e.target.value)}
-                              placeholder="Add a nickname..."
+                              value={noteValue}
+                              onChange={(e) => setNoteValue(e.target.value)}
+                              placeholder="Add a note..."
                               autoFocus
                             />
-                            <button onClick={() => handleSaveNickname(comparison.id)}>✓</button>
-                            <button onClick={() => setEditingNickname(null)}>✕</button>
+                            <button onClick={() => handleSaveNote(comparison.id)}>✓</button>
+                            <button onClick={() => setEditingNote(null)}>✕</button>
                           </div>
                         ) : (
                           <>
                             {comparison.nickname && (
-                              <span className="saved-nickname">{comparison.nickname}</span>
+                              <span className="saved-note">{comparison.nickname}</span>
                             )}
                             <span className="saved-cities-text">
                               {comparison.result.city1.city} vs {comparison.result.city2.city}
@@ -572,8 +572,8 @@ const SavedComparisons: React.FC<SavedComparisonsProps> = ({
                       </button>
                       <button
                         className="action-btn edit-btn"
-                        onClick={() => handleEditNickname(comparison.id, comparison.nickname)}
-                        title="Edit nickname"
+                        onClick={() => handleEditNote(comparison.id, comparison.nickname)}
+                        title="Edit note"
                       >
                         ✏️
                       </button>

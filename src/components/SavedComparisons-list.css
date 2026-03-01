@@ -297,7 +297,7 @@
   margin-bottom: 0.5rem;
 }
 
-.saved-nickname {
+.saved-note {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--orange);
@@ -426,14 +426,14 @@
   border: 1px solid rgba(56, 189, 248, 0.4);
 }
 
-/* Nickname Edit */
-.nickname-edit {
+/* Note Edit */
+.note-edit {
   display: flex;
   gap: 0.375rem;
   align-items: center;
 }
 
-.nickname-edit input {
+.note-edit input {
   padding: 0.375rem 0.5rem;
   border: 1px solid var(--sapphire);
   border-radius: var(--radius-sm);
@@ -442,7 +442,7 @@
   max-width: 200px;
 }
 
-.nickname-edit button {
+.note-edit button {
   padding: 0.375rem 0.5rem;
   background: var(--gray-100);
   border: 1px solid var(--gray-200);
@@ -451,11 +451,11 @@
   font-size: 0.875rem;
 }
 
-.nickname-edit button:first-of-type {
+.note-edit button:first-of-type {
   color: var(--success);
 }
 
-.nickname-edit button:last-of-type {
+.note-edit button:last-of-type {
   color: var(--error);
 }
 
