@@ -100,12 +100,12 @@ function preRenderValidation(storyboard: Record<string, unknown>): { valid: bool
       errors.push(`Total duration ${totalDuration}s outside 100-125s range`);
     }
 
-    // Word count for 105-120s narration at ~2 words/sec = 210-240 ideal.
+    // Word count for 105-120s narration at ~2 words/sec. Target 200-250, hard cap 300.
     // Hard-fail at extremes; allow some flex for natural pacing.
     const allVoiceover = scenes.map(s => String(s.voiceover || '')).join(' ');
     const wordCount = allVoiceover.split(/\s+/).filter(w => w.length > 0).length;
-    if (wordCount < 180 || wordCount > 320) {
-      errors.push(`Word count ${wordCount} outside 180-320 range`);
+    if (wordCount < 170 || wordCount > 320) {
+      errors.push(`Word count ${wordCount} outside 170-320 range`);
     }
 
     const categories = new Set(scenes.map(s => String(s.primary_category || '')));

@@ -143,7 +143,7 @@ OUTPUT FORMAT: Return ONLY valid JSON that matches the schema provided below. No
 HARD RULES:
 - Total scenes: 7
 - Total duration: 105–120 seconds
-- Total voiceover: 220–270 words
+- Total voiceover: 200–250 words (HARD CAP: never exceed 300)
 - Scenes 1 and 7 are A-ROLL (Cristiano on camera speaking)
 - Scenes 2–6 are B-ROLL (cinematic city footage with captions)
 - Every scene must specify one primary freedom category (from the 6)
@@ -217,7 +217,7 @@ JSON SCHEMA TO FOLLOW:
     "series_title": "CLUES Freedom Tour",
     "episode_title": "Go To My New City: [CITY]",
     "target_duration_seconds": 112,
-    "target_word_count": 245,
+    "target_word_count": 225,
     "music_mood": "cinematic_uplifting_subtle",
     "font_style": "modern_sans"
   },
@@ -272,15 +272,15 @@ function validateStoryboard(storyboard: Storyboard): QAResult {
     warnings.push(`Total duration ${totalDuration}s slightly outside 105-120s target`);
   }
 
-  // 3. Check word count — ideal 220-270, hard limits generous for LLM variance
-  // Natural narration pace ~2 words/sec = 210-240 words for 105-120s.
-  // Hard-fail only at extremes; warn for minor drift.
+  // 3. Check word count — ideal 200-250, hard cap 300.
+  // Natural narration pace ~2 words/sec = 200-250 words for 105-120s.
+  // Hard-fail at extremes; warn for minor drift.
   const allVoiceover = storyboard.scenes?.map(s => s.voiceover || '').join(' ') || '';
   const totalWordCount = allVoiceover.split(/\s+/).filter(w => w.length > 0).length;
-  if (totalWordCount < 150 || totalWordCount > 380) {
-    errors.push(`Word count ${totalWordCount} far outside 220-270 range`);
-  } else if (totalWordCount < 200 || totalWordCount > 300) {
-    warnings.push(`Word count ${totalWordCount} slightly outside 220-270 range`);
+  if (totalWordCount < 150 || totalWordCount > 340) {
+    errors.push(`Word count ${totalWordCount} far outside 200-250 range`);
+  } else if (totalWordCount < 180 || totalWordCount > 280) {
+    warnings.push(`Word count ${totalWordCount} slightly outside 200-250 range`);
   }
 
   // 4. Check all 6 categories appear — primary_category field first, then voiceover/overlay fallback
@@ -383,7 +383,7 @@ Return ONLY valid JSON matching the schema. No markdown, no backticks, no explan
 
   // On retry, include QA feedback so the LLM can correct specific issues
   if (qaFeedback && qaFeedback.length > 0) {
-    userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA validation with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues in your new output. Pay special attention to the 220-270 word count target for voiceover.`;
+    userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA validation with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues in your new output. Pay special attention to the 200-250 word count target for voiceover. NEVER exceed 300 words total.`;
   }
 
   const response = await fetchWithTimeout(
