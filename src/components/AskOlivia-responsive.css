@@ -292,6 +292,12 @@
     font-size: 0.8rem;
   }
 
+  /* FIX: Prevent SPEAK/TRANSCRIPT buttons from visually expanding on tap.
+     The :focus box-shadow bleeds outside the container on mobile portrait. */
+  .control-item:focus {
+    box-shadow: none;
+  }
+
   .olivia-premium .btn-text {
     font-size: 0.7rem;
   }
