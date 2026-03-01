@@ -217,15 +217,22 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Mobile: center dropdown on screen.
+   Cannot use position: fixed because ancestor .user-account has backdrop-filter
+   which creates a containing block. Use position: absolute instead and calculate
+   offsets to visually center within the viewport. */
 @media (max-width: 480px) {
   .notification-dropdown {
-    position: fixed;
-    top: 56px;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: auto;
     left: 50%;
     transform: translateX(-50%);
-    right: auto;
     width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
     max-height: 350px;
+    /* Override the base animation so translateX(-50%) is preserved */
+    animation: notifSlideInCentered 0.15s ease-out;
   }
 
   .notification-bell-btn {
@@ -239,9 +246,15 @@
   }
 }
 
+@keyframes notifSlideInCentered {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 @media (max-width: 360px) {
   .notification-dropdown {
     width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
   }
 }
 

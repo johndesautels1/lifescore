@@ -268,10 +268,30 @@
     padding-right: 0.75rem;
   }
 
-  /* Fix: Tighter header spacing on small phones */
+  /* Fix: Stack status above time on small phones to prevent
+     "VERDICT READY" from overlapping "LOCAL" */
   .judge-header {
+    grid-template-columns: 1fr;
     gap: 0.5rem;
     padding: 0.75rem;
+    text-align: center;
+  }
+
+  .judge-header .header-left,
+  .judge-header .header-right {
+    justify-content: center;
+  }
+
+  .judge-header .time-display {
+    justify-content: center;
+  }
+
+  .judge-header .time-cluster {
+    text-align: center;
+  }
+
+  .judge-header .status-indicator {
+    justify-content: center;
   }
 
   .indicator-label,

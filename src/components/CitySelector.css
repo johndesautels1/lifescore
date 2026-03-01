@@ -628,10 +628,16 @@
   }
 }
 
-/* Mobile portrait: keep dropdowns full-width within container, prevent overflow */
+/* Mobile portrait: keep dropdowns full-width within container.
+   overflow: visible is required so position: absolute dropdown menus are not clipped. */
 @media (max-width: 768px) and (orientation: portrait) {
   .city-selector-card {
-    overflow: hidden;
+    overflow: visible;
+  }
+
+  .city-inputs {
+    position: relative;
+    overflow: visible;
   }
 
   .metro-dropdown {

@@ -249,7 +249,14 @@
   word-wrap: break-word;
 }
 
-.emilia-message.assistant .message-content {
+/* Ensure ALL assistant message text is bright (#faf8f1), not faded gray.
+   Apply to .message-content and all descendants so rendered HTML elements
+   (p, li, span, etc.) inherit the correct color. */
+.emilia-message.assistant .message-content,
+.emilia-message.assistant .message-content p,
+.emilia-message.assistant .message-content li,
+.emilia-message.assistant .message-content span,
+.emilia-message.assistant .message-content div {
   color: #faf8f1;
 }
 
