@@ -250,7 +250,7 @@
 }
 
 .emilia-message.assistant .message-content {
-  color: #e2e8f0;
+  color: #faf8f1;
 }
 
 .emilia-message.user .message-content {
@@ -619,6 +619,7 @@
 
 .md-rendered {
   white-space: normal;
+  color: #faf8f1;
 }
 
 .md-rendered p {
@@ -630,13 +631,13 @@
 }
 
 .md-rendered strong {
-  color: #f1f5f9;
+  color: #faf8f1;
   font-weight: 600;
 }
 
 .md-rendered em {
   font-style: italic;
-  color: #cbd5e1;
+  color: #faf8f1;
 }
 
 .md-rendered .md-h3,
@@ -674,7 +675,7 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.5;
-  color: #e2e8f0;
+  color: #faf8f1;
 }
 
 .md-rendered .md-code-block code {
