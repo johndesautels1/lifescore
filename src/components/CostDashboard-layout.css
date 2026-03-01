@@ -169,6 +169,7 @@
 
 .provider-name {
   flex: 1;
+  min-width: 0;
   font-weight: 600;
   color: #F7931E;  /* FIX #62: Golden orange provider names */
 }
