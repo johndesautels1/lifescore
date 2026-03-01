@@ -434,7 +434,8 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
                           alt="CLUES"
                           className="poster-logo"
                         />
-                        <div className="poster-title">CLUES FREEDOM TOUR</div>
+                        <div className="poster-brand">CLUES</div>
+                        <div className="poster-title">Narrative Cinematic Freedom Tour</div>
                         <div className="poster-city">{winnerCity}</div>
                         <div className="poster-cta">TAP TO PLAY</div>
                       </div>
