@@ -161,7 +161,7 @@ export default function MovieGenerator(props: MovieGeneratorProps) {
       <div className="movie-generator">
         <div className="movie-hero">
           <div className="movie-film-strip" />
-          <h2 className="movie-title">Your Moving Movie</h2>
+          <h2 className="movie-title">Watch your Freedom Journey</h2>
           <p className="movie-subtitle">
             A 10-minute cinematic film of your freedom journey — from {loserCity} to {winnerCity}
           </p>
@@ -334,7 +334,7 @@ export default function MovieGenerator(props: MovieGeneratorProps) {
     return (
       <div className="movie-generator">
         <div className="movie-player-container">
-          <h2 className="movie-title">Your Moving Movie</h2>
+          <h2 className="movie-title">Watch your Freedom Journey</h2>
           <p className="movie-subtitle">
             {userName ? `${userName}'s` : 'Your'} freedom journey from {loserCity} to {winnerCity}
           </p>

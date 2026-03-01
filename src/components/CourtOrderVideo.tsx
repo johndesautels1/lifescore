@@ -577,7 +577,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         <div className="court-order-header">
           <h4 className="court-order-title">
             <span className="gavel-icon">🎥</span>
-            COURT ORDER VIDEO
+            FREEDOM VIDEO CLIP
           </h4>
           <p className="court-order-subtitle">
             Your cinematic freedom journey
@@ -733,7 +733,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
               disabled={isGenerating || !user?.id}
             >
               <span className="btn-icon">👁️</span>
-              <span className="btn-text">SEE COURT ORDER</span>
+              <span className="btn-text">SEE VIDEO CLIP</span>
             </button>
           )}
 
