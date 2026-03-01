@@ -1,6 +1,6 @@
 # LifeScore Technical Support Manual
 
-**Version:** 5.2
+**Version:** 5.3
 **Last Updated:** March 1, 2026
 **Document ID:** LS-TSM-001
 
@@ -2096,6 +2096,15 @@ npm run preview
 | executiveSummary property name wrong in JudgeTab | `executivesummary` (lowercase) → `executiveSummary` (camelCase); `user` → `auth.userId` — judge report display was broken | 2026-02-28 |
 | Mobile landscape: header toolbar overlaps heading | Added `@media (orientation: landscape) and (max-height: 500px)` to Header.css — scales `.header-right` to 75% on landscape phones | 2026-02-28 |
 | Movie pipeline timeouts too short (120s) | Increased all movie timeouts: server 120s→280s, client 180-240s→310s, persistVideo 30s→120s. Added movie endpoints to vercel.json at maxDuration 300. | 2026-02-28 |
+| Mobile: City dropdown menus clipped | `overflow: hidden` on `.city-selector-card` was clipping absolutely-positioned dropdown menus. Changed to `overflow: visible` in CitySelector.css | 2026-03-01 |
+| Mobile: Judge header status overlapping time | 768px media query kept `grid-template-columns: 1fr 1fr` for 481-768px screens — "VERDICT READY" overlapped "LOCAL" time. Changed to `1fr` so header stacks vertically at all widths ≤768px in JudgeTab-footer.css | 2026-03-01 |
+| Mobile: Cancel video button too small | CSS specificity issue — base styles overrode mobile portrait reduction. Increased specificity to `.judge-tab .cancel-video-btn` in JudgeTab-video.css | 2026-03-01 |
+| Mobile: View toggle "Watch Video" text clipped | `VisualsTab-saved.css` had `white-space: nowrap` (same specificity, later file wins over reports.css). Removed nowrap from saved.css; changed `overflow: hidden` to `overflow: visible` on `.report-view-toggle` | 2026-03-01 |
+| Mobile: Notification dropdown off-center | `.user-account` had `backdrop-filter: blur(10px)` which creates a CSS containing block, making `position: fixed` calculate relative to parent instead of viewport. Fix: removed backdrop-filter at ≤480px in Header.css; used `position: fixed` with `left: 12px; right: 12px` in NotificationBell.css | 2026-03-01 |
+| Emilia chat assistant text color inconsistent | Assistant message text inside `.message-content` had inconsistent colors. Applied `#faf8f1` to all descendant elements (p, li, span, div) in EmiliaChat.css | 2026-03-01 |
+| Mobile: Display screen button labels overflow | `white-space: nowrap` on `.display-screen-btn-label` caused long labels like "[City] CINEMATIC NARRATIVE PRESENTATION" to overflow. Changed to `white-space: normal` in JudgeTab-panels.css | 2026-03-01 |
+| Mobile: Court order divider label overflow | `white-space: nowrap` on `.court-order-divider-label` caused "OR WATCH A MOVIE CLIP OF YOUR JOURNEY" to overflow. Changed to `white-space: normal` in JudgeTab-panels.css | 2026-03-01 |
+| Desktop: Header company name off-center | Added `justify-self: center` to `.company-name` in desktop grid layout in Header.css | 2026-03-01 |
 
 ---
 

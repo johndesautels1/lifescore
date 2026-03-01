@@ -1,6 +1,6 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.8
+**Version:** 3.9
 **Last Updated:** March 1, 2026
 **Document ID:** LS-CSM-001
 
@@ -433,6 +433,10 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Judge report missing after cache clear | Fixed — system falls back to Supabase when localStorage is empty |
 | Freedom Tour video not appearing | Only shows when a judge report is loaded; check Verdict panel |
 | Judge tab showing stale data after switching comparisons | Fixed (2026-02-16) — Judge tab now resets state when switching between different comparisons |
+| Judge header "VERDICT READY" overlaps time on tablets | Fixed (2026-03-01) — status and time text now stack vertically on all screens ≤768px wide |
+| Display screen button labels cut off on mobile | Fixed (2026-03-01) — long labels like "[City] CINEMATIC NARRATIVE PRESENTATION" now wrap instead of overflowing |
+| "OR WATCH A MOVIE CLIP" text cut off | Fixed (2026-03-01) — court order divider label now wraps on narrow screens |
+| Cancel video button hard to tap on mobile | Fixed (2026-03-01) — button sizing corrected for mobile portrait orientation |
 
 ### 5.7 Cost Dashboard Issues (Added 2026-02-14)
 
@@ -478,9 +482,14 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Judge page elements too large | Fixed — doormat, retry button, and Sovereign badge reduced for mobile |
 | CONNECTED button off-screen in Settings | Fixed — account status wraps properly on narrow screens |
 | User confused by mobile layout issues | A mobile warning modal (added 2026-02-16) now informs small-screen visitors that the app is optimized for desktop/tablet |
+| City dropdown menus not appearing on mobile | Fixed (2026-03-01) — dropdown menus were clipped by container overflow; now display correctly |
+| "Watch Video" button text cut off | Fixed (2026-03-01) — view toggle button text (Read/Live Presenter/Watch Video) no longer clips on mobile |
+| Notification dropdown misaligned on mobile | Fixed (2026-03-01) — dropdown now centers correctly on mobile screens (see §5.11) |
+| Emilia chat assistant text hard to read | Fixed (2026-03-01) — assistant message text color now consistent across all elements |
+| Header company name off-center on desktop | Fixed (2026-03-01) — company name now properly centered in desktop header layout |
 
 **Response template:**
-"Thank you for reporting the mobile display issue. We deployed fixes for 9 mobile layout problems on February 15, 2026, and added a mobile warning modal on February 16, 2026 to set expectations for phone users. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
+"Thank you for reporting the mobile display issue. We have deployed multiple rounds of mobile layout fixes — most recently on March 1, 2026, addressing city dropdown menus, Judge page elements, view toggle buttons, notification dropdown positioning, and Emilia chat text visibility. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
 
 ### 5.11 Notification Issues (Added 2026-02-16) <!-- was 5.10 -->
 
@@ -491,6 +500,7 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Email notification not received | Check spam/junk for email from **alerts@lifescore.app**; email is only sent if user opted in |
 | Unread count not updating | Notifications poll every 30 seconds; try refreshing the page |
 | Old notifications still showing | Notifications persist in the database; this is by design for history |
+| Notification dropdown off-center on mobile phones | Fixed (2026-03-01) — dropdown now uses viewport-relative positioning for proper centering on small screens |
 
 **Response template:**
 "LifeScore now includes a notification system (added February 16, 2026). When you start a long-running task like a comparison or video generation, a modal asks if you'd like to 'Wait Here' or 'Notify Me & Go.' If you choose Notify Me, you'll receive an in-app notification (bell icon in the header) and optionally an email when the task completes. If you're not seeing notifications, please make sure you selected 'Notify Me & Go' when starting the task."
@@ -1133,6 +1143,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.6 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§5.5): PDF/PPTX exports now persisted to permanent Supabase Storage. Iframe error detection added to all 4 embed locations. New troubleshooting entries and response template for expired export URLs. |
 | 3.7 | 2026-02-26 | Claude Opus 4.6 | Security audit update: 47-fix session documented. New customer inquiries §4.10 (data security), §4.11 (copyright year), §4.12 (tie case). All API endpoints now authenticated (38+). IDOR fix, CORS hardening, XSS patches, 87 debug console.log removed, admin emails centralized. New glossary terms: JWT, IDOR, CORS, XSS, getAdminEmails(). |
 | 3.8 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix: New §5.9 Metric Display & Export Issues — 7 user-facing locations now show proper names instead of codes (Evidence Panel, charts, CSV, PDF, Judge summary). Presenter audio overlap fix added to §8.9 Common Issues table. Section renumbering: §5.10→5.10, §5.11→5.11. |
+| 3.9 | 2026-03-01 | Claude Opus 4.6 | 9 mobile/CSS fixes: City dropdown menus clipped (§5.10), Judge header overlap on tablets (§5.6), cancel video button sizing (§5.6), view toggle text clipping (§5.10), notification dropdown off-center (§5.11), Emilia chat text color (§5.10), display screen button label overflow (§5.6), court order divider text overflow (§5.6), header company name centering (§5.10). Updated response template for §5.10. |
 
 ---
 
