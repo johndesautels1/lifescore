@@ -235,6 +235,43 @@
   }
 }
 
+/* Mobile portrait ONLY: scale Winner/Loser score cards to 65% and center */
+@media (max-width: 480px) and (orientation: portrait) {
+  .enhanced-score-grid {
+    max-width: 65%;
+    margin-left: auto;
+    margin-right: auto;
+    gap: 0.5rem;
+  }
+
+  .enhanced-score-grid .score-box {
+    padding: 0.65rem;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .enhanced-score-grid .score-box h3 {
+    font-size: 0.75rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .enhanced-score-grid .consensus-score {
+    font-size: 1.5rem;
+  }
+
+  .enhanced-score-grid .agreement-label {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .enhanced-score-grid .agreement-meter {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
 /* ============================================================================
    LAW VS REALITY DUAL SCORING
    ============================================================================ */
