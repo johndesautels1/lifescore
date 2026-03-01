@@ -216,7 +216,7 @@
   }
 
   .user-account {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
   }
 }
@@ -558,11 +558,63 @@
   }
 }
 
-/* Mobile landscape (widescreen) — shrink right toolbar 25% to avoid overlapping centered heading */
+/* Mobile landscape (widescreen) — reduce actual sizes to avoid overlapping centered heading.
+   Do NOT use scale() — it only visually shrinks while the layout box stays full-size. */
 @media (orientation: landscape) and (max-height: 500px) {
   .header-right {
-    transform: scale(0.75);
-    transform-origin: top right;
+    gap: 0.25rem;
+    font-size: 0.6rem;
+  }
+
+  .upgrade-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.55rem;
+  }
+
+  .tier-badge {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.55rem;
+  }
+
+  .admin-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+  }
+
+  .settings-btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.55rem;
+  }
+
+  .settings-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .user-avatar {
+    width: 20px;
+    height: 20px;
+    font-size: 0.6rem;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .user-account {
+    padding: 0.2rem 0.3rem;
+    gap: 0.2rem;
+  }
+
+  .logout-btn {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logout-btn svg {
+    width: 11px;
+    height: 11px;
   }
 }
 
