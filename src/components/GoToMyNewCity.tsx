@@ -334,25 +334,10 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
     setVideoErrorCount(0);
   }, [comparisonId, reset]);
 
-  // Download video
-  const handleDownload = async () => {
+  // Download video — open in new tab (cross-origin HeyGen URLs block fetch/blob)
+  const handleDownload = () => {
     if (!effectiveVideoUrl) return;
-    const filename = `go-to-${winnerCity.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-freedom-tour.mp4`;
-    try {
-      const response = await fetch(effectiveVideoUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error('[GoToMyNewCity] Download error:', err);
-      toastError('Failed to download video.');
-    }
+    window.open(effectiveVideoUrl, '_blank');
   };
 
   // Share video
