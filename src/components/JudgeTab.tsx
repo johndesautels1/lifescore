@@ -2359,7 +2359,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               onClick={() => setOpenDisplay(openDisplay === 'freedom-tour' ? null : 'freedom-tour')}
             >
               <span className="display-screen-btn-icon">&#127757;</span>
-              <span className="display-screen-btn-label">MY NEW CITY</span>
+              <span className="display-screen-btn-label">{(freedomEducation?.winnerCity || futureWinnerCity).toUpperCase()} CINEMATIC NARRATIVE PRESENTATION</span>
             </button>
           </div>
 
