@@ -63,11 +63,9 @@ function getStatusMessage(status: string, progress: number): string {
     case 'building_storyboard':
       return 'Building your cinematic storyboard...';
     case 'storyboard_ready':
-      return 'Storyboard ready. Submitting to HeyGen...';
+      return 'Storyboard ready. Rendering your video...';
     case 'rendering':
-      return progress > 25
-        ? `Cristiano is filming your Freedom Tour... ${progress}%`
-        : 'Submitting to HeyGen Video Agent...';
+      return `Cristiano is filming your Freedom Tour... ${progress}%`;
     case 'processing':
       return `Rendering cinematic video... ${progress}%`;
     default:
@@ -80,9 +78,9 @@ function getSubstatusMessage(status: string): string {
     case 'building_storyboard':
       return '7-scene cinematic storyboard via AI';
     case 'rendering':
-      return '105-120s Freedom Tour with B-roll';
+      return 'Your Freedom Tour will take 10-15 mins to produce';
     case 'processing':
-      return 'HeyGen Video Agent assembling your video';
+      return 'Assembling your cinematic video';
     default:
       return '';
   }
@@ -622,7 +620,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
       onWaitHere={handleTourWaitHere}
       onNotifyMe={handleTourNotifyMe}
       taskLabel="Freedom Tour Video"
-      estimatedSeconds={120}
+      estimatedSeconds={600}
     />
     </>
   );
