@@ -76,8 +76,8 @@ function isAllowedRedirectUrl(url: string | undefined): boolean {
     const parsed = new URL(url);
     const allowedOrigins = [
       'https://lifescore.vercel.app',
-      'https://www.thelifescore.com',
-      'https://thelifescore.com',
+      'https://www.clueslifescore.com',
+      'https://clueslifescore.com',
       'capacitor://localhost',
     ];
     // Allow the current Vercel deploy URL
