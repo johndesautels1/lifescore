@@ -80,7 +80,7 @@
   "installCommand": "npm install",
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
   ],
