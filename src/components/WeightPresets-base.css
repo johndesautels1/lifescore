@@ -63,15 +63,100 @@
   animation: slideDown 0.3s ease;
 }
 
-.presets-description {
-  color: var(--gray-600);
+/* Instructions Box */
+.presets-instructions {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.06) 0%, rgba(212, 175, 55, 0.06) 100%);
+  border: 2px solid rgba(0, 71, 171, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.instructions-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0047AB;
+  margin: 0 0 0.5rem 0;
+}
+
+.instructions-lead {
+  color: var(--gray-700);
   font-size: 0.95rem;
-  margin-bottom: 1.25rem;
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+}
+
+.instructions-lead strong {
+  color: #0047AB;
+}
+
+.instructions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instructions-list li {
+  position: relative;
+  padding-left: 1.25rem;
+  color: var(--gray-600);
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.presets-description strong {
-  color: #0047AB;
+.instructions-list li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: #D4AF37;
+  font-weight: 800;
+}
+
+.instructions-list li strong {
+  color: #1a1a1a;
+}
+
+.instructions-note {
+  color: var(--gray-500);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+}
+
+[data-theme="dark"] .presets-instructions {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.15) 0%, rgba(212, 175, 55, 0.08) 100%);
+  border-color: rgba(107, 163, 255, 0.3);
+}
+
+[data-theme="dark"] .instructions-title {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .instructions-lead {
+  color: #d0d0d8;
+}
+
+[data-theme="dark"] .instructions-lead strong {
+  color: #6ba3ff;
+}
+
+[data-theme="dark"] .instructions-list li {
+  color: #b0b0c0;
+}
+
+[data-theme="dark"] .instructions-list li::before {
+  color: #F7931E;
+}
+
+[data-theme="dark"] .instructions-list li strong {
+  color: #e0e0e8;
+}
+
+[data-theme="dark"] .instructions-note {
+  color: #8080a0;
 }
 
 /* Preset Grid */

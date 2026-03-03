@@ -857,6 +857,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           CONTROL PANEL - Clean Row Layout
       ═══════════════════════════════════════════════════════════════════ */}
       <section className="control-panel">
+        {/* Instructional text — help users understand the report selector */}
+        {!hasComparisonData && (
+          <div className="no-data-notice" style={{ marginBottom: '0.75rem' }}>
+            <span className="notice-icon">ℹ</span>
+            <span>Select a saved city comparison from the dropdown below, or choose &quot;General Chat&quot; to talk with Olivia without comparison data.</span>
+          </div>
+        )}
+
         {/* Row 1: SELECT REPORT | SPEAK | TRANSCRIPT - 3 buttons */}
         <div className="control-row">
           {/* 1. Report Dropdown */}

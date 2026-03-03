@@ -422,10 +422,23 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
 
       {isExpanded && (
         <div className="presets-content">
-          <p className="presets-description">
-            Choose a preset or customize weights to match <strong>your priorities</strong>.
-            The score will recalculate based on what matters most to you.
-          </p>
+          <div className="presets-instructions">
+            <h4 className="instructions-title">Your Score, Your Priorities</h4>
+            <p className="instructions-lead">
+              Every person values freedom differently. Customize how LIFE SCORE weights each category
+              so the results reflect <strong>what matters most to you</strong>.
+            </p>
+            <ul className="instructions-list">
+              <li><strong>Pick a preset persona</strong> below (Balanced, Digital Nomad, Entrepreneur, etc.) to instantly apply a curated weighting profile.</li>
+              <li><strong>Drag any category slider</strong> from <strong>0% to 50%</strong> to increase or decrease its importance. The other categories auto-adjust so everything totals 100%.</li>
+              <li><strong>Exclude entire categories</strong> by unchecking them &mdash; their weight redistributes to the remaining categories automatically.</li>
+              <li><strong>Adjust Law vs Lived Reality</strong> to control whether your score emphasizes what the law says on paper or how things actually work day-to-day (0&ndash;100% slider).</li>
+              <li><strong>Enable Worst-Case Mode</strong> to use whichever score is lower (law or lived) for each metric &mdash; showing your true floor of freedom.</li>
+            </ul>
+            <p className="instructions-note">
+              All preferences are saved automatically and apply to every comparison you run.
+            </p>
+          </div>
 
           {/* Preset Buttons */}
           <div className="preset-grid">

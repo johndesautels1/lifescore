@@ -111,7 +111,11 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     remaining: number;
   } | null>(null);
   const [isLimited, setIsLimited] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(`lifescore_gate_dismissed_${feature}`) === 'true';
+    } catch { return false; }
+  });
 
   // Determine the required tier
   const actualRequiredTier = requiredTier || getRequiredTier(feature);
@@ -159,9 +163,12 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     }
   };
 
-  // Handle dismiss button click
+  // Handle dismiss button click — persist to localStorage per feature
   const handleDismiss = () => {
     setIsDismissed(true);
+    try {
+      localStorage.setItem(`lifescore_gate_dismissed_${feature}`, 'true');
+    } catch { /* localStorage unavailable */ }
     onDismiss?.();
   };
 

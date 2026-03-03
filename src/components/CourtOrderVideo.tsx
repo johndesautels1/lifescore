@@ -19,7 +19,7 @@ import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import { supabase, getAuthHeaders } from '../lib/supabase';
 import { uploadUserVideo, validateVideoFile } from '../services/videoStorageService';
 import VideoPhoneWarning from './VideoPhoneWarning';
-import { NotifyMeModal } from './NotifyMeModal';
+import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import type { NotifyChannel } from '../types/database';
 import './CourtOrderVideo.css';
@@ -251,10 +251,19 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
     }
   };
 
-  // Handle video generation — show notify modal first
+  // Handle video generation — show notify modal first (skip if user saved preference)
   const handleGenerateVideo = () => {
     if (!user?.id) {
       console.warn('[CourtOrderVideo] No user ID available');
+      return;
+    }
+    const saved = getSavedNotifyPreference();
+    if (saved) {
+      if (saved.choice === 'wait') {
+        handleVideoWaitHere();
+      } else {
+        handleVideoNotifyMe(saved.channels);
+      }
       return;
     }
     setShowNotifyModal(true);

@@ -57,7 +57,7 @@ import NewLifeVideos from './NewLifeVideos';
 import ReportPresenter from './ReportPresenter';
 import GammaIframe from './GammaIframe';
 import FeatureGate from './FeatureGate';
-import { NotifyMeModal } from './NotifyMeModal';
+import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { toastInfo } from '../utils/toast';
@@ -913,7 +913,18 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
               <button
                 type="button"
                 className="generate-btn primary-btn"
-                onClick={() => setShowNotifyModal(true)}
+                onClick={() => {
+                  const saved = getSavedNotifyPreference();
+                  if (saved) {
+                    if (saved.choice === 'wait') {
+                      handleGenerateReport();
+                    } else {
+                      handleGammaNotifyMe(saved.channels);
+                    }
+                    return;
+                  }
+                  setShowNotifyModal(true);
+                }}
               >
                 {reportType === 'enhanced' ? 'Generate Enhanced Report' : 'Generate Report'}
               </button>
