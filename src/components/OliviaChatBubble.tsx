@@ -42,6 +42,14 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   // FIX: Add tier access for Olivia usage gating
   const { checkUsage, incrementUsage, isUnlimited, isAdmin } = useTierAccess();
 
+  // FIX: Detect mobile to swap drag positioning from transform to right/bottom
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 480);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 480);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
   const refreshComparisons = useCallback(() => setComparisonsRefreshKey(k => k + 1), []);
@@ -299,7 +307,10 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   return (
     <div
       className={`olivia-bubble-container ${isOpen ? 'open' : ''} ${isMinimized ? 'minimized' : ''} ${isDragging ? 'dragging' : ''}`}
-      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+      style={isMobile
+        ? { right: `${16 - position.x}px`, bottom: `${16 - position.y}px` }
+        : { transform: `translate(${position.x}px, ${position.y}px)` }
+      }
     >
       {/* Expanded Chat Panel */}
       {isOpen && !isMinimized && (
