@@ -189,7 +189,7 @@ When a free user encounters a premium feature, an upgrade overlay appears. Users
 | NAVIGATOR | SOVEREIGN |
 | SOVEREIGN | N/A (highest tier) |
 
-### 3.10 Comparison Types
+### 3.12 Comparison Types
 
 **Standard Comparison:**
 - Uses Claude Sonnet 4.5 only
@@ -201,14 +201,6 @@ When a free user encounters a premium feature, an upgrade overlay appears. Users
 - Consensus scoring with judge evaluation
 - Detailed evidence from all sources
 - Takes longer (~5-8 minutes)
-
-### 3.3 Upgrade Paths
-
-| Current Tier | Available Upgrades |
-|--------------|-------------------|
-| FREE | NAVIGATOR, SOVEREIGN |
-| NAVIGATOR | SOVEREIGN |
-| SOVEREIGN | N/A (highest tier) |
 
 ---
 
