@@ -22,6 +22,29 @@ interface NotifyMeModalProps {
 
 const REMEMBER_KEY = 'lifescore_notify_preference';
 
+/**
+ * Check if the user has a saved notify preference with "remember" enabled.
+ * Returns the saved preference if found, or null if the modal should be shown.
+ * Parent components call this before showing the modal to skip it
+ * when the user previously checked "Remember my preference".
+ */
+export function getSavedNotifyPreference(): {
+  choice: 'wait' | 'notify';
+  channels: NotifyChannel[];
+} | null {
+  try {
+    const saved = localStorage.getItem(REMEMBER_KEY);
+    if (!saved) return null;
+    const pref = JSON.parse(saved);
+    if (!pref.remember || !pref.choice) return null;
+    const channels: NotifyChannel[] = [];
+    if (pref.inApp) channels.push('in_app');
+    if (pref.email) channels.push('email');
+    if (channels.length === 0) channels.push('in_app');
+    return { choice: pref.choice, channels };
+  } catch { return null; }
+}
+
 export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   isOpen,
   onClose,
@@ -50,7 +73,22 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Save preference to localStorage whenever "Remember" is checked
+  const savePreferenceIfRequested = (choice: 'wait' | 'notify') => {
+    if (rememberPreference) {
+      try {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({
+          email: emailChecked,
+          inApp: inAppChecked,
+          remember: true,
+          choice,
+        }));
+      } catch { /* ignore */ }
+    }
+  };
+
   const handleWaitHere = () => {
+    savePreferenceIfRequested('wait');
     onWaitHere();
     onClose();
   };
@@ -59,20 +97,9 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
     const channels: NotifyChannel[] = [];
     if (inAppChecked) channels.push('in_app');
     if (emailChecked) channels.push('email');
-    // Always include in_app as fallback
     if (channels.length === 0) channels.push('in_app');
 
-    // Save preference if requested
-    if (rememberPreference) {
-      try {
-        localStorage.setItem(REMEMBER_KEY, JSON.stringify({
-          email: emailChecked,
-          inApp: inAppChecked,
-          remember: true,
-        }));
-      } catch { /* ignore */ }
-    }
-
+    savePreferenceIfRequested('notify');
     onNotifyMe(channels);
     onClose();
   };

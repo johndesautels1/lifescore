@@ -61,7 +61,7 @@ import CourtOrderVideo from './CourtOrderVideo';
 import MovieGenerator from './MovieGenerator';
 import GoToMyNewCity from './GoToMyNewCity';
 import VideoPhoneWarning from './VideoPhoneWarning';
-import { NotifyMeModal } from './NotifyMeModal';
+import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJudgeVideo } from '../hooks/useJudgeVideo';
 import { useJobTracker } from '../hooks/useJobTracker';
 import { useTierAccess } from '../hooks/useTierAccess';
@@ -771,9 +771,18 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   // Client timeout must exceed server's 240s timeout for Opus
   const JUDGE_API_TIMEOUT_MS = 300000; // 5 minutes
 
-  // Show notify modal before generating
+  // Show notify modal before generating (skip if user saved preference)
   const handleGenerateReportClick = () => {
     if (!comparisonResult || isGenerating) return;
+    const saved = getSavedNotifyPreference();
+    if (saved) {
+      if (saved.choice === 'wait') {
+        handleJudgeWaitHere();
+      } else {
+        handleJudgeNotifyMe(saved.channels);
+      }
+      return;
+    }
     setShowNotifyModal(true);
   };
 

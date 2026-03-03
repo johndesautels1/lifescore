@@ -22,7 +22,7 @@ import { useCristianoVideo } from '../hooks/useCristianoVideo';
 import FeatureGate from './FeatureGate';
 import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import { buildWinnerPackage } from '../services/cristianoVideoService';
-import { NotifyMeModal } from './NotifyMeModal';
+import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import { supabase } from '../lib/supabase';
 import type { NotifyChannel } from '../types/database';
@@ -190,10 +190,19 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   const effectiveThumbnailUrl = thumbnailUrl || cachedThumbnailUrl;
   const hasVideo = (isReady && videoUrl) || !!cachedVideoUrl;
 
-  // Handle video generation — show notify modal first
+  // Handle video generation — show notify modal first (skip if user saved preference)
   const handleGenerate = () => {
     if (!user?.id) {
       toastError('Please log in to generate videos.');
+      return;
+    }
+    const saved = getSavedNotifyPreference();
+    if (saved) {
+      if (saved.choice === 'wait') {
+        handleTourWaitHere();
+      } else {
+        handleTourNotifyMe(saved.channels);
+      }
       return;
     }
     setShowNotifyModal(true);

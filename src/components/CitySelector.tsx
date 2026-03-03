@@ -17,7 +17,7 @@ import {
 import { parseURLParams, updateURL } from '../hooks/useURLParams';
 import { DealbreakersPanel } from './DealbreakersPanel';
 import { WeightPresets, type CategoryWeights } from './WeightPresets';
-import { NotifyMeModal } from './NotifyMeModal';
+import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import type { LawLivedRatio, CategoryId } from '../types/metrics';
 import type { NotifyChannel } from '../types/database';
@@ -375,6 +375,17 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
           return;
         }
       } catch { /* sessionStorage unavailable — show modal as normal */ }
+
+      // Skip modal if user saved "Remember my preference"
+      const saved = getSavedNotifyPreference();
+      if (saved) {
+        if (saved.choice === 'wait') {
+          handleWaitHere();
+        } else {
+          handleNotifyMe(saved.channels);
+        }
+        return;
+      }
       setShowNotifyModal(true);
     }
   };
