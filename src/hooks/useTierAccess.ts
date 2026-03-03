@@ -126,6 +126,45 @@ const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
 };
 
 // ============================================================================
+// BETA TESTER CONFIGURATION
+// ============================================================================
+
+/**
+ * Beta tester access config returned from /api/beta-check
+ */
+export interface BetaAccessConfig {
+  paymentBypass: boolean;
+  standardComparisonsLimit: number;
+  enhancedComparisonsLimit: number;
+  reportOrdering: boolean;
+  askEmeiliaCustomerService: boolean;
+  askEmeiliaOtherCategories: boolean;
+  askEmeiliaChat: boolean;
+  askOliviaChatUnlimited: boolean;
+  askOliviaPageInfoUnlimited: boolean;
+  visualsVideoPresenter: boolean;
+  visualsLivePresenter: boolean;
+  judgesFullAccess: boolean;
+}
+
+/**
+ * Default beta tester limits (mapped to TierLimits shape).
+ * Beta testers get: 1 simple + 1 enhanced search, unlimited Olivia,
+ * full judges page, full visuals, no API access, no admin.
+ */
+export const BETA_TESTER_LIMITS: TierLimits = {
+  standardComparisons: 1,
+  enhancedComparisons: 1,
+  oliviaMinutesPerMonth: -1,   // Unlimited
+  judgeVideos: -1,             // Full judges access
+  gammaReports: -1,            // Full visuals access
+  grokVideos: -1,              // Full judges access
+  cristianoVideos: -1,         // Full judges access
+  cloudSync: true,
+  apiAccess: false,
+};
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -146,6 +185,8 @@ export interface TierAccessHook {
   limits: TierLimits;
   isLoading: boolean;
   isAdmin: boolean;  // Admin bypass - unlimited access to everything
+  isBetaTester: boolean;  // Beta tester - custom access profile
+  betaAccess: BetaAccessConfig | null;  // Granular beta access config
   canAccess: (feature: FeatureKey) => boolean;
   checkUsage: (feature: FeatureKey) => Promise<UsageCheckResult>;
   incrementUsage: (feature: FeatureKey) => Promise<boolean>;
@@ -240,6 +281,37 @@ function setCachedAdminStatus(isAdmin: boolean): void {
   } catch { /* localStorage not available */ }
 }
 
+// Beta tester cache — same pattern as admin, 5-min TTL + 1-hour grace
+const BETA_CACHE_KEY = 'lifescore_beta_status';
+
+interface BetaCache {
+  isBetaTester: boolean;
+  access: BetaAccessConfig | null;
+  timestamp: number;
+}
+
+function getCachedBetaStatus(graceMode = false): BetaCache | null {
+  try {
+    const raw = localStorage.getItem(BETA_CACHE_KEY);
+    if (!raw) return null;
+    const parsed: BetaCache = JSON.parse(raw);
+    const age = Date.now() - parsed.timestamp;
+    if (age <= ADMIN_CACHE_TTL_MS) return parsed;
+    if (graceMode && age <= ADMIN_CACHE_GRACE_MS) return parsed;
+    localStorage.removeItem(BETA_CACHE_KEY);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedBetaStatus(isBetaTester: boolean, access: BetaAccessConfig | null): void {
+  try {
+    const entry: BetaCache = { isBetaTester, access, timestamp: Date.now() };
+    localStorage.setItem(BETA_CACHE_KEY, JSON.stringify(entry));
+  } catch { /* localStorage not available */ }
+}
+
 function getCachedTier(): UserTier | null {
   try {
     const cached = localStorage.getItem(TIER_CACHE_KEY);
@@ -327,6 +399,70 @@ export function useTierAccess(): TierAccessHook {
     return () => { cancelled = true; };
   }, [user?.id]);
 
+  // Beta tester status — fetched from server-side /api/beta-check
+  const [isBetaTester, setIsBetaTester] = useState<boolean>(() => {
+    const cached = getCachedBetaStatus();
+    return cached?.isBetaTester ?? false;
+  });
+  const [betaAccess, setBetaAccess] = useState<BetaAccessConfig | null>(() => {
+    const cached = getCachedBetaStatus();
+    return cached?.access ?? null;
+  });
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsBetaTester(false);
+      setBetaAccess(null);
+      return;
+    }
+
+    // Check fresh cache first
+    const cached = getCachedBetaStatus();
+    if (cached !== null) {
+      setIsBetaTester(cached.isBetaTester);
+      setBetaAccess(cached.access);
+      return;
+    }
+
+    // Grace period fallback
+    const graceValue = getCachedBetaStatus(true);
+    if (graceValue?.isBetaTester) {
+      setIsBetaTester(true);
+      setBetaAccess(graceValue.access);
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders.Authorization) return;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const res = await fetch('/api/beta-check', {
+          headers: authHeaders,
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const beta = data.isBetaTester === true;
+        const access = beta ? (data.access as BetaAccessConfig) : null;
+        setCachedBetaStatus(beta, access);
+        if (!cancelled) {
+          setIsBetaTester(beta);
+          setBetaAccess(access);
+        }
+      } catch {
+        if (!cancelled && !graceValue?.isBetaTester) {
+          setIsBetaTester(false);
+          setBetaAccess(null);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
   // Developer bypass ALWAYS gets enterprise, even if profile isn't loaded yet.
   // Everyone else: use cached tier when profile unavailable (Supabase timeout resilience).
   // Only fall back to 'free' for truly new/unknown users (no cache, no profile).
@@ -353,7 +489,10 @@ export function useTierAccess(): TierAccessHook {
   }, [user?.id]);
 
   const tierName = TIER_NAMES[tier];
-  const limits = TIER_LIMITS[tier];
+  // Beta testers get custom limits; admins get enterprise; everyone else gets tier limits
+  const limits = isDeveloper ? TIER_LIMITS.enterprise
+    : isBetaTester ? BETA_TESTER_LIMITS
+    : TIER_LIMITS[tier];
 
   /**
    * Check if user can access a feature (ignoring usage limits)
@@ -587,6 +726,8 @@ export function useTierAccess(): TierAccessHook {
     limits,
     isLoading: authLoading,
     isAdmin: isDeveloper,  // Admin bypass flag - FeatureGate checks this for unlimited access
+    isBetaTester,          // Beta tester flag - custom access profile
+    betaAccess,            // Granular beta access config (Emeilia categories, etc.)
     canAccess,
     checkUsage,
     incrementUsage,
