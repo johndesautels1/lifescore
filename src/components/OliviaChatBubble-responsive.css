@@ -86,10 +86,17 @@
     right: 16px;
   }
 
+  /* FIX: Use position:fixed so panel is not shifted by the draggable
+     container's transform — centers the chat modal on mobile viewport */
   .bubble-chat-panel {
-    width: calc(100vw - 32px);
-    max-width: 360px;
-    bottom: 68px;
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 80px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
   }
 
   .olivia-fab {
