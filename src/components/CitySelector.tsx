@@ -368,11 +368,19 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault();
     if (metro1 && metro2) {
+      // Skip modal if user already chose "Wait Here" this session
+      try {
+        if (sessionStorage.getItem('lifescore-wait-choice') === 'wait') {
+          onCompare(formatMetro(metro1), formatMetro(metro2));
+          return;
+        }
+      } catch { /* sessionStorage unavailable — show modal as normal */ }
       setShowNotifyModal(true);
     }
   };
 
   const handleWaitHere = () => {
+    try { sessionStorage.setItem('lifescore-wait-choice', 'wait'); } catch { /* ignore */ }
     if (metro1 && metro2) {
       onCompare(formatMetro(metro1), formatMetro(metro2));
     }
@@ -448,6 +456,13 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
         </div>
 
       </form>
+
+      {isLoading && (
+        <div className="inline-loading-indicator">
+          <span className="btn-spinner"></span>
+          <span>Comparing {metro1?.city} vs {metro2?.city}...</span>
+        </div>
+      )}
 
       <div className="popular-section">
         <h3>Popular Comparisons</h3>

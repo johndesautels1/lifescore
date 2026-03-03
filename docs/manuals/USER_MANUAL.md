@@ -1,6 +1,6 @@
 # LifeScore User Manual
 
-**Version:** 4.0
+**Version:** 4.1
 **Last Updated:** March 1, 2026
 **Document ID:** LS-UM-001
 
@@ -879,6 +879,15 @@ When visiting LifeScore on a small screen (phone), a **warning modal** appears e
 | Account Settings CONNECTED button | Connected status pushed off-screen | Fixed |
 | Enhanced Mode +/- weight buttons | Buttons pushed off-screen on narrow phones | Fixed (2026-02-16) |
 | Enhanced Mode LLM provider badges | Badge pills overflowing container on mobile | Fixed (2026-02-16) |
+| City dropdown menus | Dropdown menus clipped/hidden on mobile | Fixed (2026-03-01) |
+| Judge header status/time | "VERDICT READY" overlapping time text on tablets | Fixed (2026-03-01) |
+| Cancel video button | Button too small to tap on mobile portrait | Fixed (2026-03-01) |
+| View toggle buttons | "Watch Video" text clipped/cut off | Fixed (2026-03-01) |
+| Notification dropdown | Dropdown off-center on mobile phones | Fixed (2026-03-01) |
+| Emilia chat text | Assistant message text color inconsistent | Fixed (2026-03-01) |
+| Display screen button labels | Long button labels overflowing on mobile | Fixed (2026-03-01) |
+| Court order divider text | "OR WATCH A MOVIE CLIP" text cut off | Fixed (2026-03-01) |
+| Header company name | Company name off-center on desktop | Fixed (2026-03-01) |
 
 **If you still see display issues on mobile:** Try a hard refresh (pull down on mobile, or Ctrl+Shift+R on desktop). If problems persist, contact support with a screenshot and your device/browser info.
 
@@ -1184,3 +1193,4 @@ If you choose "Notify Me & Go":
 | 3.8 | 2026-02-26 | Claude Opus 4.6 | Security audit session (47 fixes): New Security subsection in Privacy & Data (§13) documenting 38+ authenticated endpoints, CORS hardening, debug cleanup. Tie victory text fix in Judge reports (§7). New FAQs for wrong year display and tie case. All user-facing data now requires authentication. |
 | 3.9 | 2026-02-27 | Claude Opus 4.6 | Metric display name fix (§5): Evidence Panel, Advanced Visuals charts, CSV/PDF exports, and Judge disagreement summaries now show proper human-readable metric names (e.g., "Cannabis Legality") instead of internal codes (e.g., "pf_01_cannabis_legal"). Olivia presenter audio overlap fix (§8): segments no longer play over each other. |
 | 4.0 | 2026-03-01 | Claude Opus 4.6 | Major terminology rename: "Court Order" → "Freedom Video Clip", "Go To My New City" → "[City] Cinematic Narrative Presentation", "Your Future" button → "[City] Advantages", "Moving Movie" → "Freedom Journey". Freedom Tour poster rebranded to "CLUES Narrative Cinematic Freedom Tour". HeyGen branding removed from user-facing text. Freedom Tour wait time updated to 10-15 minutes. Download button opens in new tab (CORS fix). 15+ mobile portrait layout fixes. |
+| 4.1 | 2026-03-01 | Claude Opus 4.6 | 9 mobile/CSS fixes added to troubleshooting (§12): City dropdown menus clipped, Judge header overlap on tablets, cancel video button sizing, view toggle button text clipping, notification dropdown off-center, Emilia chat text color, display screen button label overflow, court order divider text overflow, header company name centering. |
