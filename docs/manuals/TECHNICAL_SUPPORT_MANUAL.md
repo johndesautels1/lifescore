@@ -1,7 +1,7 @@
 # LifeScore Technical Support Manual
 
-**Version:** 5.3
-**Last Updated:** March 1, 2026
+**Version:** 5.4
+**Last Updated:** March 3, 2026
 **Document ID:** LS-TSM-001
 
 ---
@@ -419,7 +419,7 @@ Group related styles with headers:
 | `SettingsModal.tsx` | User preferences — theme, default view, comparison settings. |
 | `CostDashboard.tsx` | Shows API usage costs per provider (OpenAI, Tavily, Simli, etc.). Field-by-field merge of localStorage and DB records; auto-syncs patched records back to DB. |
 | `PricingModal.tsx` / `PricingPage.tsx` | Subscription tier display and Stripe checkout trigger. |
-| `FeatureGate.tsx` | Wraps features that require a specific tier. Shows upgrade prompt if locked. |
+| `FeatureGate.tsx` | Wraps features that require a specific tier. Shows upgrade prompt if locked. Dismiss state persisted to localStorage per feature key (updated 2026-03-03). |
 | `CookieConsent.tsx` | GDPR cookie consent banner. |
 
 #### UI Utilities
@@ -800,11 +800,39 @@ PricingModal → POST /api/stripe/create-checkout-session
 ```
 **Rate limit:** standard (30 req/min). Max script: 15,000 chars. Scenes split at ~1,500 chars.
 
+### 4.9 Beta Tester Endpoint (Added 2026-03-03)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/beta-check | POST | Check if authenticated user is a beta tester |
+
+**Authentication:** JWT required.
+
+**Response:**
+```typescript
+{
+  isBetaTester: boolean,
+  access: {
+    bypassPayment: boolean,
+    searchLimitStandard: number,
+    searchLimitEnhanced: number,
+    hasOlivia: boolean,
+    hasJudges: boolean,
+    hasVisuals: boolean,
+    hasEmiliaCs: boolean,
+    hasAdmin: boolean,
+    hasApi: boolean
+  }
+}
+```
+
+**Behavior:** Service role queries `beta_testers` table by user email. 5-minute cache. Fail-safe: returns `{ isBetaTester: false }` on error. Mirrors `/api/admin-check` pattern.
+
 ---
 
 ## 5. Database Schema
 
-### 5.1 Current Tables (21 total)
+### 5.1 Current Tables (22 total)
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
@@ -829,6 +857,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | app_prompts | All 50 system prompts (6 categories: evaluate, judge, olivia, gamma, video, invideo) | category, prompt_key, display_name, prompt_text, last_edited_by |
 | invideo_overrides | Admin cinematic prompt overrides per comparison | comparison_id, custom_prompt, created_by |
 | report_shares | Shared report links | share_token, report_type, expires_at |
+| beta_testers | Beta tester access control (Added 2026-03-03) | email (unique, case-insensitive), is_active, bypass_payment, search_limit_standard, search_limit_enhanced, has_olivia, has_judges, has_visuals, has_emilia_cs, has_admin, has_api |
 
 ### 5.2 Storage Buckets (3 total)
 
@@ -947,10 +976,12 @@ const supabase = createClient(url, anonKey, {
 });
 ```
 
-### 6.4 Tier Enforcement
+### 6.4 Tier Enforcement (Updated 2026-03-03)
 
 **Client-side:** `src/hooks/useTierAccess.ts`
 **Server-side:** `api/shared/tierCheck.ts`
+
+**Access priority:** Admin > Beta Tester > Tier-based
 
 **Developer Bypass (Current):**
 ```typescript
@@ -960,6 +991,31 @@ if (DEVELOPER_EMAILS.includes(userEmail)) {
   return { hasAccess: true, tier: 'SOVEREIGN' };
 }
 ```
+
+**Beta Tester Access (Added 2026-03-03):**
+
+Beta testers are managed via the `beta_testers` database table. The `useTierAccess` hook fetches beta status from `/api/beta-check` with 5-minute cache and fail-safe (returns false on error).
+
+```
+BetaAccessConfig: {
+  isBetaTester: boolean;
+  bypassPayment: boolean;
+  searchLimitStandard: number;  // default: 1
+  searchLimitEnhanced: number;  // default: 1
+  hasOlivia: boolean;           // unlimited
+  hasJudges: boolean;           // full
+  hasVisuals: boolean;          // full
+  hasEmiliaCs: boolean;         // customer service only
+  hasAdmin: boolean;            // no
+  hasApi: boolean;              // no
+}
+```
+
+**API endpoint:** `POST /api/beta-check` — JWT auth required, service role queries `beta_testers` table by email. Returns `{ isBetaTester, access }`.
+
+**Database table:** `beta_testers` — RLS: service role full access, users can read own row by email. Indexes on email (case-insensitive) and is_active. Migration: `supabase/migrations/20260303_create_beta_testers.sql`.
+
+**Hook exports:** `isBetaTester` and `betaAccess` for component-level gating.
 
 ### 6.5 Auth Profile Fetch Retry Storm Fix (Added 2026-02-14)
 
@@ -2105,6 +2161,20 @@ npm run preview
 | Mobile: Display screen button labels overflow | `white-space: nowrap` on `.display-screen-btn-label` caused long labels like "[City] CINEMATIC NARRATIVE PRESENTATION" to overflow. Changed to `white-space: normal` in JudgeTab-panels.css | 2026-03-01 |
 | Mobile: Court order divider label overflow | `white-space: nowrap` on `.court-order-divider-label` caused "OR WATCH A MOVIE CLIP OF YOUR JOURNEY" to overflow. Changed to `white-space: normal` in JudgeTab-panels.css | 2026-03-01 |
 | Desktop: Header company name off-center | Added `justify-self: center` to `.company-name` in desktop grid layout in Header.css | 2026-03-01 |
+| Mobile: Olivia chat modal off-center | Chat panel used `position: absolute` relative to draggable bubble container. Container's `transform` from drag offsets caused panel to shift. Fix: `position: fixed` on mobile (<480px) with `left/right: 16px` for viewport-relative centering. `OliviaChatBubble-responsive.css` | 2026-03-03 |
+| Mobile: Chat panel centering (transform containing block) | CSS `transform` on parent creates a containing block for `position: fixed` children. Fix: on mobile, container uses `right/bottom` CSS properties for drag instead of `transform`. Desktop unchanged. `OliviaChatBubble.tsx`, `OliviaChatBubble-responsive.css` | 2026-03-03 |
+| Mobile: City dropdown buttons overflow container | `box-sizing: content-box` (default) with `width: 100%` plus padding/border made buttons ~38px wider than container. Added `box-sizing: border-box`. Also replaced `transition: all` with specific properties to prevent layout shifting on disabled state. `CitySelector.css` | 2026-03-03 |
+| Mobile: Region filter tabs cramped | Reduced font-size to 0.7rem and padding on mobile portrait so All/N.America/Europe tabs have breathing room. `CitySelector.css` | 2026-03-03 |
+| Mobile: City name truncation | Reduced button font-size to 0.875rem and shrunk country badge on mobile, giving more space for city names before ellipsis. `CitySelector.css` | 2026-03-03 |
+| Mobile: Compare button buried below scroll | Made `.compare-actions` sticky at `bottom: 0` on mobile portrait with glassmorphic background matching the card. Falls back to normal scroll if sticky unsupported. `CitySelector.css` | 2026-03-03 |
+| Mobile: No loading feedback visible | Added `.inline-loading-indicator` div between city inputs and Popular Comparisons, rendered when `isLoading=true`. Hidden on desktop where existing `LoadingState` component is visible. `CitySelector.tsx`, `CitySelector.css` | 2026-03-03 |
+| NotifyMe modal fires every comparison (session) | Used `sessionStorage` to remember "Wait Here" choice. Subsequent comparisons in same session skip the modal. "Notify Me" users still see modal. Falls back to showing modal if sessionStorage unavailable. `CitySelector.tsx` | 2026-03-03 |
+| NotifyMe "Remember" only saved on "Notify Me" path | `savePreferenceIfRequested()` now called from both `handleWaitHere` and `handleNotifyMe`. Previously only called from notify path. Saved preference now includes `choice` field. `NotifyMeModal.tsx` | 2026-03-03 |
+| NotifyMe modal keeps reappearing despite "Remember" | All 5 parent components (CitySelector, JudgeTab, VisualsTab, CourtOrderVideo, GoToMyNewCity) now import `getSavedNotifyPreference()` and check it before showing the modal. Auto-applies saved preference. `NotifyMeModal.tsx` exports helper, 5 parent components updated. | 2026-03-03 |
+| FeatureGate dismiss not persistent | `isDismissed` state used `useState(false)` — resets on page reload. Changed to lazy initializer reading from `localStorage`. `handleDismiss` now writes `lifescore_gate_dismissed_${feature}` to localStorage. Per-feature persistence. `FeatureGate.tsx` | 2026-03-03 |
+| Ask Olivia no guidance when no comparison loaded | Added instructional text above control panel when `!hasComparisonData`: "Select a saved city comparison from the dropdown below, or choose 'General Chat' to talk with Olivia without comparison data." `AskOlivia.tsx` | 2026-03-03 |
+| Persona Weights no instructional text | Added styled instructions box above preset buttons explaining 5 customization options (preset personas, slider range, exclude categories, law vs lived, worst-case mode). `WeightPresets.tsx`, `WeightPresets-base.css` | 2026-03-03 |
+| Beta tester access system | New `beta_testers` table (migration `20260303_create_beta_testers.sql`), API endpoint (`api/beta-check.ts`), `useTierAccess` hook integration with `BetaAccessConfig` interface and `BETA_TESTER_LIMITS` constant. Priority: admin > beta > tier. 5-minute cache with fail-safe. | 2026-03-03 |
 
 ---
 
@@ -2572,7 +2642,7 @@ User triggers task → NotifyMeModal → "Wait Here" or "Notify Me & Go"
 | Component | Purpose |
 |-----------|---------|
 | `NotificationBell.tsx` + `.css` | Bell icon in header with unread badge + dropdown |
-| `NotifyMeModal.tsx` + `.css` | "Wait Here" vs "Notify Me & Go" modal |
+| `NotifyMeModal.tsx` + `.css` | "Wait Here" vs "Notify Me & Go" modal with "Remember my preference" |
 
 ### 24.5 Custom Hooks
 
@@ -2581,14 +2651,28 @@ User triggers task → NotifyMeModal → "Wait Here" or "Notify Me & Go"
 | `useNotifications.ts` | Polls `notifications` table every 30 seconds for unread count |
 | `useJobTracker.ts` | Creates jobs, updates status, triggers notification on completion |
 
-### 24.6 Integration Points
+### 24.6 Integration Points (Updated 2026-03-03)
 
 NotifyMeModal is integrated into:
-- `CitySelector.tsx` — Compare button (comparison jobs)
+- `CitySelector.tsx` — Compare button (comparison jobs) + sessionStorage "Wait Here" session skip
 - `JudgeTab.tsx` — Judge Verdict generation
 - `VisualsTab.tsx` — Gamma report generation
-- `CourtOrderVideo.tsx` — Court Order video generation
+- `CourtOrderVideo.tsx` — Freedom Video Clip video generation
 - `GoToMyNewCity.tsx` — Freedom Tour video generation
+
+**Preference Auto-Apply (Added 2026-03-03):**
+
+All 5 parent components now import `getSavedNotifyPreference()` from `NotifyMeModal.tsx` and check it **before** showing the modal. If a saved preference exists (user checked "Remember my preference"), the modal is skipped and the saved choice is applied automatically:
+- `choice === 'wait'` → calls the component's wait handler directly
+- `choice === 'notify'` → calls the component's notify handler with saved channels
+
+**localStorage key:** `lifescore_notify_preference`
+**Stored format:** `{ email: boolean, inApp: boolean, remember: boolean, choice: 'wait' | 'notify' }`
+**Helper function:** `getSavedNotifyPreference()` exported from `NotifyMeModal.tsx` — returns `{ choice, channels }` or `null`
+
+**Bug fixes (2026-03-03):**
+- `savePreferenceIfRequested()` now called from **both** `handleWaitHere` and `handleNotifyMe` (previously only called from `handleNotifyMe`)
+- Saved preference includes the `choice` field so the helper knows which path to take
 
 Server-side notifications triggered in:
 - `api/judge-report.ts` — on Judge report completion
@@ -2744,6 +2828,7 @@ Server-side notifications triggered in:
 | 5.0 | 2026-02-27 | Claude Opus 4.6 | Olivia context builder fix (§14.2): 6 bugs in `api/olivia/context.ts` — raw metric IDs shown instead of display names in enhanced top metrics, evidence, and disagreements; standard evidence also affected; enhanced path missing city2 evidence entirely. All fixed with `getMetricDisplayName()`. |
 | 5.1 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix across 7 user-facing locations (§14.2): Created `src/shared/metricDisplayNames.ts` as single source of truth for 100-metric display name map. Fixed: `opusJudge.ts` disagreementSummary (cascaded to JudgeTab, Gamma, Olivia narration), `EvidencePanel.tsx` (4 instances), `AdvancedVisuals.tsx` (bar chart, line chart, data table), `exportUtils.ts` (CSV + PDF), `api/olivia/context.ts` (fallback). Refactored `gammaService.ts` to import from shared utility. Audio overlap fix: `ReportPresenter.tsx` `speakTTSFallback()` now stops previous audio before starting new segment (§9.7). |
 | 5.2 | 2026-03-01 | Claude Opus 4.6 | Major terminology rename across user-facing labels: "Court Order" → "Freedom Video Clip" (CourtOrderVideo.tsx), "Go To My New City" → "[City] Cinematic Narrative Presentation" (GoToMyNewCity.tsx), "Your Future" → "[City] Advantages", "Moving Movie" → "Freedom Journey". Freedom Tour poster: "CLUES Narrative Cinematic Freedom Tour". HeyGen branding removed from user-facing text. Wait time: 10-15 min. Download button opens new tab (CORS). 15+ mobile portrait layout fixes. Updated §9.9 Freedom Tour, component descriptions, MovieGenerator integration notes. |
+| 5.3 | 2026-03-03 | Claude Opus 4.6 | 8 commits, 15 resolved issues: Beta tester access system (§4.9, §5.1, §6.4) — new `beta_testers` table (22 total), `/api/beta-check` endpoint, `useTierAccess` hook integration with `BetaAccessConfig`. FeatureGate dismiss persistence to localStorage (§14.2). NotifyMeModal "Remember" saves on both paths + `getSavedNotifyPreference()` helper exported (§24.4, §24.6). All 5 parent components auto-apply saved preference (§24.6). CitySelector sessionStorage "Wait Here" skip (§14.2). 7 mobile CitySelector fixes (§14.2): dropdown button overflow, region tabs, city name truncation, sticky compare button, inline loading indicator. 2 Olivia chat bubble centering fixes (§14.2). Persona Weights instructional text (§14.2). Ask Olivia instructional guidance (§14.2). |
 
 ---
 

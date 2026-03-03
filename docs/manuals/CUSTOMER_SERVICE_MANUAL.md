@@ -1,7 +1,7 @@
 # LifeScore Customer Service Manual
 
-**Version:** 3.9
-**Last Updated:** March 1, 2026
+**Version:** 4.0
+**Last Updated:** March 3, 2026
 **Document ID:** LS-CSM-001
 
 ---
@@ -156,7 +156,32 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Video Support | ❌ | ❌ | ✅ |
 | Tech Support Time | 0 | 0 | 60 min/month |
 
-### 3.9 Upgrade Paths
+### 3.9 Beta Tester Access (Added 2026-03-03)
+
+Beta testers are invited users who receive special access between FREE and paid tiers:
+
+| Feature | Beta Tester Access |
+|---------|-------------------|
+| Standard Comparisons | 1 (can purchase more) |
+| Enhanced Comparisons | 1 (can purchase more) |
+| Olivia AI | Unlimited minutes |
+| Judge Verdicts | Full access |
+| Visuals | Full access |
+| Emilia Help | Customer service only |
+| Admin Access | ❌ |
+| API Access | ❌ |
+
+Beta access is managed via the `beta_testers` database table and tied to the user's email address. Admins can enable/disable beta access per user.
+
+**If a customer asks about beta access:** Beta testing is by invitation only. Direct interested users to contact cluesnomads@gmail.com.
+
+### 3.10 Feature Gate Dismiss (Updated 2026-03-03)
+
+When a free user encounters a premium feature, an upgrade overlay appears. Users can click **"Continue with free features"** to dismiss it. This dismiss is now **persistent across page reloads** — the overlay won't reappear until the user clears their browser storage. Each feature's dismiss state is saved independently.
+
+**If a customer reports the upgrade popup keeps appearing:** This was fixed on 2026-03-03. Ask the user to try a hard refresh. If still occurring, ask them to clear localStorage for the site.
+
+### 3.11 Upgrade Paths
 
 | Current Tier | Available Upgrades |
 |--------------|-------------------|
@@ -487,11 +512,17 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Notification dropdown misaligned on mobile | Fixed (2026-03-01) — dropdown now centers correctly on mobile screens (see §5.11) |
 | Emilia chat assistant text hard to read | Fixed (2026-03-01) — assistant message text color now consistent across all elements |
 | Header company name off-center on desktop | Fixed (2026-03-01) — company name now properly centered in desktop header layout |
+| City dropdown buttons overflowing on mobile | Fixed (2026-03-03) — box-sizing and transition properties corrected to prevent buttons from jumping outside card container |
+| Region filter tabs cramped on mobile | Fixed (2026-03-03) — reduced font-size and padding so All/N.America/Europe tabs have breathing room |
+| City names truncated too aggressively | Fixed (2026-03-03) — reduced button font-size and country badge size on mobile for more city name space |
+| Compare button buried on mobile | Fixed (2026-03-03) — Compare button is now sticky at bottom of screen on mobile portrait |
+| No loading feedback on mobile | Fixed (2026-03-03) — inline loading indicator now appears between city inputs and Popular Comparisons on mobile |
+| Olivia chat bubble off-center on mobile | Fixed (2026-03-03) — chat panel now uses position:fixed with viewport-relative positioning instead of transform-based positioning |
 
 **Response template:**
-"Thank you for reporting the mobile display issue. We have deployed multiple rounds of mobile layout fixes — most recently on March 1, 2026, addressing city dropdown menus, Judge page elements, view toggle buttons, notification dropdown positioning, and Emilia chat text visibility. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
+"Thank you for reporting the mobile display issue. We have deployed multiple rounds of mobile layout fixes — most recently on March 3, 2026, addressing city dropdown buttons, region filter tabs, city name truncation, compare button visibility, loading indicators, and Olivia chat bubble positioning. Please try a hard refresh on your phone (pull down to refresh, or close and reopen your browser tab). If you're still experiencing display issues, please send us a screenshot along with your phone model and browser name so we can investigate."
 
-### 5.11 Notification Issues (Added 2026-02-16) <!-- was 5.10 -->
+### 5.11 Notification Issues (Added 2026-02-16, Updated 2026-03-03) <!-- was 5.10 -->
 
 | Issue | Solution |
 |-------|----------|
@@ -501,9 +532,11 @@ Currently, LifeScore supports **200 metropolitan areas**:
 | Unread count not updating | Notifications poll every 30 seconds; try refreshing the page |
 | Old notifications still showing | Notifications persist in the database; this is by design for history |
 | Notification dropdown off-center on mobile phones | Fixed (2026-03-01) — dropdown now uses viewport-relative positioning for proper centering on small screens |
+| "Notify Me" modal keeps appearing every time | Fixed (2026-03-03) — if user checked "Remember my preference," the modal is now skipped and saved choice auto-applied. If still appearing, ask user to check "Remember my preference" checkbox |
+| "Remember" only saved on "Notify Me" path | Fixed (2026-03-03) — preference now saves correctly on both "Wait Here" and "Notify Me & Go" paths |
 
 **Response template:**
-"LifeScore now includes a notification system (added February 16, 2026). When you start a long-running task like a comparison or video generation, a modal asks if you'd like to 'Wait Here' or 'Notify Me & Go.' If you choose Notify Me, you'll receive an in-app notification (bell icon in the header) and optionally an email when the task completes. If you're not seeing notifications, please make sure you selected 'Notify Me & Go' when starting the task."
+"LifeScore now includes a notification system (added February 16, 2026). When you start a long-running task like a comparison or video generation, a modal asks if you'd like to 'Wait Here' or 'Notify Me & Go.' If you choose Notify Me, you'll receive an in-app notification (bell icon in the header) and optionally an email when the task completes. You can check 'Remember my preference' so the modal won't appear again — your saved choice will be applied automatically. If you're not seeing notifications, please make sure you selected 'Notify Me & Go' when starting the task. To reset your saved preference, clear your browser's local storage for the site."
 
 ---
 
@@ -664,13 +697,15 @@ If a customer or third party contacts us about intellectual property or trademar
 - Comprehensive evidence from all sources
 - Best for important decisions
 
-### 8.2 Olivia AI Assistant
+### 8.2 Olivia AI Assistant (Updated 2026-03-03)
 
 Olivia is an AI assistant that can:
 - Answer questions about comparison results
 - Explain specific metrics
 - Provide recommendations based on user priorities
 - Generate spoken responses (voice mode)
+
+**Instructional Guidance (Added 2026-03-03):** When users visit the Ask Olivia page without any comparison data loaded, a guidance message now appears above the control panel. It directs users to either select a saved city comparison from the dropdown or choose "General Chat" to talk with Olivia without comparison data. This reduces confusion about why Olivia isn't providing comparison-specific answers.
 
 **Limitations:**
 - Cannot access external websites
@@ -718,6 +753,18 @@ AI-generated lifestyle videos powered by **Kling AI** (primary) with **Replicate
 - Generation takes up to 3 minutes
 - City type auto-detection (beach, mountain, urban, desert, european, tropical) for optimized prompts
 - Cached for instant replay on subsequent views; expired URLs auto-detected
+
+### 8.5a Persona Weights & Customization (Updated 2026-03-03)
+
+Users can customize how categories are weighted via the "Customize Priorities" panel. **A new instructional guide** (added 2026-03-03) now appears above the preset buttons explaining all five customization options:
+
+1. **Preset Personas** — Choose from profiles (Balanced, Digital Nomad, Entrepreneur, Family, Libertarian, Investor)
+2. **Category Sliders** — Drag any slider from 0% to 50%; other categories auto-adjust to total 100%
+3. **Exclude Categories** — Uncheck categories to remove them; weights redistribute automatically
+4. **Law vs Lived Reality** — Slider controlling written law vs actual enforcement emphasis (0-100%)
+5. **Worst-Case Mode** — Toggle to use whichever score is lower (law or lived) for each metric
+
+**If a customer doesn't know about customization:** Direct them to the "Customize Priorities" panel (gear icon below the city selectors). The new instructions explain everything inline.
 
 ### 8.6 Score Methodology Explainer (Added 2026-02-05)
 
@@ -829,7 +876,7 @@ Emilia is the in-app help widget (separate from Olivia):
 | Voice not playing | Check browser audio permissions |
 | Wrong answers | Emilia is for app help, redirect to Olivia for comparison questions |
 
-### 8.12 Notification System (Added 2026-02-16)
+### 8.12 Notification System (Added 2026-02-16, Updated 2026-03-03)
 
 In-app notification bell with optional email alerts for long-running tasks:
 
@@ -839,6 +886,12 @@ In-app notification bell with optional email alerts for long-running tasks:
 3. If user selects "Notify Me & Go," they can navigate freely
 4. On task completion, a notification appears on the bell icon in the header
 5. If opted in, an email is also sent from alerts@lifescore.app via Resend
+
+**"Remember My Preference" (Updated 2026-03-03):**
+- Users can check "Remember my preference" to save their choice
+- Preference now correctly saves on **both** "Wait Here" and "Notify Me & Go" paths (previously only saved on "Notify Me & Go")
+- When a saved preference exists, all 5 parent components (CitySelector, JudgeTab, VisualsTab, CourtOrderVideo, GoToMyNewCity) **automatically apply it** and skip the modal entirely
+- "Wait Here" during a comparison is also remembered for the session (sessionStorage) so subsequent comparisons skip the modal
 
 **Architecture:**
 - `jobs` table tracks task status (pending → processing → completed/failed)
@@ -1144,6 +1197,7 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | 3.7 | 2026-02-26 | Claude Opus 4.6 | Security audit update: 47-fix session documented. New customer inquiries §4.10 (data security), §4.11 (copyright year), §4.12 (tie case). All API endpoints now authenticated (38+). IDOR fix, CORS hardening, XSS patches, 87 debug console.log removed, admin emails centralized. New glossary terms: JWT, IDOR, CORS, XSS, getAdminEmails(). |
 | 3.8 | 2026-02-27 | Claude Opus 4.6 | Raw metric ID display fix: New §5.9 Metric Display & Export Issues — 7 user-facing locations now show proper names instead of codes (Evidence Panel, charts, CSV, PDF, Judge summary). Presenter audio overlap fix added to §8.9 Common Issues table. Section renumbering: §5.10→5.10, §5.11→5.11. |
 | 3.9 | 2026-03-01 | Claude Opus 4.6 | 9 mobile/CSS fixes: City dropdown menus clipped (§5.10), Judge header overlap on tablets (§5.6), cancel video button sizing (§5.6), view toggle text clipping (§5.10), notification dropdown off-center (§5.11), Emilia chat text color (§5.10), display screen button label overflow (§5.6), court order divider text overflow (§5.6), header company name centering (§5.10). Updated response template for §5.10. |
+| 4.0 | 2026-03-03 | Claude Opus 4.6 | 8 commits: Beta tester access system (§3.9) with database table, API endpoint, and hook integration. FeatureGate dismiss persistence (§3.10). NotifyMeModal "Remember" saves on both paths + all 5 parent components auto-apply saved preference (§5.11, §8.12). Persona Weights instructional guide (§8.5a). Olivia instructional text when no comparison data (§8.2). 7 mobile CitySelector fixes (§5.10): dropdown button overflow, region tabs cramped, city name truncation, sticky compare button, inline loading indicator, Olivia chat bubble off-center. Updated response templates for §5.10 and §5.11. |
 
 ---
 
