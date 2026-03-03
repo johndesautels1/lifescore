@@ -1,7 +1,7 @@
 # LifeScore User Manual
 
-**Version:** 4.1
-**Last Updated:** March 1, 2026
+**Version:** 4.2
+**Last Updated:** March 3, 2026
 **Document ID:** LS-UM-001
 
 ---
@@ -183,9 +183,15 @@ Your dashboard shows:
 - The toggle **glows/illuminates when active** to make the active state clearly visible
 - Overrides the Law vs Lived slider with MIN(law, lived) for each metric
 
-**Category Weights:**
+**Category Weights (Persona Weights):**
 - Customize which categories matter most to you
 - Use preset personas or create custom weights
+- **Instructional Guide (Added 2026-03-03):** A styled instructions box above the preset buttons now explains all five customization options:
+  1. **Preset Personas** — Choose from predefined weight profiles (Digital Nomad, Entrepreneur, etc.)
+  2. **Custom Category Weights** — Adjust the 0-50% slider for each of the 6 freedom categories
+  3. **Exclude Categories** — Uncheck categories you don't care about
+  4. **Law vs Lived Reality** — Tune how much written law vs actual enforcement matters
+  5. **Worst-Case Mode** — Use the lower of Law and Lived scores for each metric
 
 **Dealbreakers Panel:**
 - Mark specific metrics as dealbreakers (must-haves)
@@ -194,8 +200,8 @@ Your dashboard shows:
 
 ### Step 4: Run Comparison
 
-1. Click **Compare Cities**
-2. Watch the progress indicator
+1. Click **Compare Cities** — on mobile, the Compare button is now **sticky at the bottom** of the screen so it's always visible while scrolling (Added 2026-03-03)
+2. Watch the progress indicator — on mobile, an inline loading indicator appears between the city inputs and Popular Comparisons (Added 2026-03-03)
 3. Results appear automatically when complete
 4. The page **auto-scrolls to the top** so you immediately see the score cards
 
@@ -287,6 +293,7 @@ Olivia is your AI assistant who can:
 
 1. Click the **Ask Olivia** tab
 2. Or click the Olivia icon in the corner
+3. **Instructional Guidance (Added 2026-03-03):** When no comparison data is loaded, a guidance message now appears above the control panel explaining that you can select a saved city comparison from the dropdown, or choose "General Chat" to talk with Olivia without comparison data
 
 ### Using Olivia
 
@@ -747,6 +754,20 @@ For Enhanced mode with your own keys:
 
 ---
 
+### Beta Tester Access (Added 2026-03-03)
+
+Invited beta testers receive special access that sits between FREE and paid tiers:
+- **1 Standard + 1 Enhanced comparison** (can purchase more)
+- **Unlimited Olivia AI** minutes
+- **Full Judge verdicts and Visuals** access
+- **Emilia customer service** help
+- No admin access; no API access
+- Beta access is tied to your email address and can be enabled/disabled by admins
+
+### Feature Gate Dismiss (Updated 2026-03-03)
+
+When a premium feature shows the **upgrade prompt overlay**, you can click **"Continue with free features"** to dismiss it. This dismiss is now **persistent** — the overlay will not reappear after a page reload. Your dismiss preference is saved per feature in your browser.
+
 ### Upgrading Your Plan
 
 1. Go to **Settings > Subscription**
@@ -888,6 +909,12 @@ When visiting LifeScore on a small screen (phone), a **warning modal** appears e
 | Display screen button labels | Long button labels overflowing on mobile | Fixed (2026-03-01) |
 | Court order divider text | "OR WATCH A MOVIE CLIP" text cut off | Fixed (2026-03-01) |
 | Header company name | Company name off-center on desktop | Fixed (2026-03-01) |
+| City dropdown buttons | Dropdown buttons overflowing card container on mobile | Fixed (2026-03-03) |
+| Region filter tabs | Region tabs (All/N.America/Europe) cramped on mobile portrait | Fixed (2026-03-03) |
+| City name truncation | Long city names truncated too aggressively on mobile | Fixed (2026-03-03) |
+| Compare button hidden | Compare button buried below scroll on mobile | Fixed (2026-03-03) |
+| Loading indicator on mobile | No loading feedback visible on mobile during comparison | Fixed (2026-03-03) |
+| Olivia chat bubble off-center | Olivia chat panel shifted off-center on mobile vertical | Fixed (2026-03-03) |
 
 **If you still see display issues on mobile:** Try a hard refresh (pull down on mobile, or Ctrl+Shift+R on desktop). If problems persist, contact support with a screenshot and your device/browser info.
 
@@ -1129,6 +1156,17 @@ When you start a task that takes time (comparisons, Judge verdicts, video genera
 | **Wait Here** | Stay on the page and watch the progress bar |
 | **Notify Me & Go** | Navigate away freely — you'll get a notification when it's done |
 
+**"Remember My Preference" (Updated 2026-03-03):**
+- Check the **"Remember my preference"** checkbox to save your choice
+- When remembered, the modal will **not appear again** — your saved preference is automatically applied
+- Preference saves correctly on **both** "Wait Here" and "Notify Me & Go" paths
+- Your preference is stored locally and persists across page reloads
+- To change your preference, clear your browser's local storage for the site
+
+**Session Memory for "Wait Here" (Added 2026-03-03):**
+- If you choose "Wait Here" during a comparison, subsequent comparisons in the **same browser session** will skip the modal and go directly to wait mode
+- This session-level memory resets when you close the browser tab
+
 If you choose "Notify Me & Go":
 1. The task continues running in the background
 2. When complete, the bell icon updates with a new unread notification
@@ -1194,3 +1232,4 @@ If you choose "Notify Me & Go":
 | 3.9 | 2026-02-27 | Claude Opus 4.6 | Metric display name fix (§5): Evidence Panel, Advanced Visuals charts, CSV/PDF exports, and Judge disagreement summaries now show proper human-readable metric names (e.g., "Cannabis Legality") instead of internal codes (e.g., "pf_01_cannabis_legal"). Olivia presenter audio overlap fix (§8): segments no longer play over each other. |
 | 4.0 | 2026-03-01 | Claude Opus 4.6 | Major terminology rename: "Court Order" → "Freedom Video Clip", "Go To My New City" → "[City] Cinematic Narrative Presentation", "Your Future" button → "[City] Advantages", "Moving Movie" → "Freedom Journey". Freedom Tour poster rebranded to "CLUES Narrative Cinematic Freedom Tour". HeyGen branding removed from user-facing text. Freedom Tour wait time updated to 10-15 minutes. Download button opens in new tab (CORS fix). 15+ mobile portrait layout fixes. |
 | 4.1 | 2026-03-01 | Claude Opus 4.6 | 9 mobile/CSS fixes added to troubleshooting (§12): City dropdown menus clipped, Judge header overlap on tablets, cancel video button sizing, view toggle button text clipping, notification dropdown off-center, Emilia chat text color, display screen button label overflow, court order divider text overflow, header company name centering. |
+| 4.2 | 2026-03-03 | Claude Opus 4.6 | 8 commits: (1) Olivia chat bubble off-center on mobile fixed (§12). (2) 5 mobile CitySelector UX fixes — region tabs cramped, city name truncation, sticky compare button, inline loading indicator, NotifyMe session skip (§4, §12). (3) City dropdown button overflow fix (§12). (4) Persona Weights instructional guide added (§4). (5) Beta tester access program (§11). (6) FeatureGate dismiss persistence — upgrade gate stays dismissed across reloads (§11). (7) NotifyMeModal "Remember my preference" saves on both paths, all 5 parent components auto-apply saved preference (§17). (8) Ask Olivia instructional text when no comparison loaded (§6). |
