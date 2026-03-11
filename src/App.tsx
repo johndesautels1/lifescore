@@ -255,7 +255,7 @@ function enhancedReducer(state: EnhancedState, action: EnhancedAction): Enhanced
 
 // Main app content (requires auth)
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session, refreshProfile } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
   const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const { completeJobAndNotify } = useJobTracker();
@@ -333,6 +333,56 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     warmUpSupabase();
   }, []);
+
+  // Handle Stripe checkout redirect — refresh profile to pick up new tier
+  // The webhook updates the DB, but the React state still has the old tier cached.
+  // Also handles webhook race condition: retry profile refresh after a delay
+  // if the tier hasn't updated yet (webhook may lag behind the redirect).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const checkoutStatus = params.get('checkout');
+
+    if (!checkoutStatus) return;
+
+    // Clean URL immediately (remove checkout params)
+    window.history.replaceState({}, '', '/');
+
+    if (checkoutStatus === 'canceled') {
+      toastInfo('Checkout canceled. You can upgrade anytime from the pricing page.');
+      return;
+    }
+
+    if (checkoutStatus !== 'success') return;
+
+    const refreshAndVerify = async (attempt: number) => {
+      try {
+        await refreshProfile();
+        // After first refresh, show success toast
+        if (attempt === 1) {
+          toastSuccess('Payment successful! Your subscription is now active.');
+        }
+      } catch (err) {
+        console.error('[App] Post-checkout profile refresh failed:', err);
+        if (attempt === 1) {
+          toastSuccess('Payment received! Your features will unlock shortly.');
+        }
+      }
+    };
+
+    // First refresh immediately
+    refreshAndVerify(1);
+
+    // Retry after 3s in case webhook hasn't fired yet (Vercel cold start + network)
+    const retryTimer = setTimeout(() => refreshAndVerify(2), 3000);
+
+    // Final retry at 8s for slow webhooks
+    const finalTimer = setTimeout(() => refreshAndVerify(3), 8000);
+
+    return () => {
+      clearTimeout(retryTimer);
+      clearTimeout(finalTimer);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- runs once on mount after redirect
 
   // Update saved count on mount and when savedKey changes
   // FIX: Read from correct localStorage keys (was 'lifescore_comparisons' which doesn't exist)
