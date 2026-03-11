@@ -17,10 +17,10 @@ export const API_PRICING = {
     name: 'Claude Opus 4.5',
     icon: '🧠'
   },
-  'claude-sonnet-4-5': {
+  'claude-sonnet-4-6': {
     input: 3.00,     // $3 per 1M input tokens
     output: 15.00,   // $15 per 1M output tokens
-    name: 'Claude Sonnet 4.5',
+    name: 'Claude Sonnet 4.6',
     icon: '🎵'
   },
 

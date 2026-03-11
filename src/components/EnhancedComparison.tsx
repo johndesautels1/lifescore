@@ -523,7 +523,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, anthropic: e.target.value })}
               placeholder="sk-ant-..."
             />
-            <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4.5</span>
+            <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4.6</span>
           </div>
 
           <div className="api-key-group">

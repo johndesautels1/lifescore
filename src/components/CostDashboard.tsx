@@ -61,7 +61,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       city2: record.city2_name,
       mode: record.mode,
       timestamp: new Date(record.created_at).getTime(),
-      claudeSonnet: makeCallCost('claude-sonnet', 'claude-sonnet-4-5', record.claude_sonnet_total, 'evaluation'),
+      claudeSonnet: makeCallCost('claude-sonnet', 'claude-sonnet-4-6', record.claude_sonnet_total, 'evaluation'),
       gpt4o: makeCallCost('gpt-4o', 'gpt-4o', record.gpt4o_total, 'evaluation'),
       gemini: makeCallCost('gemini-3-pro', 'gemini-3-pro', record.gemini_total, 'evaluation'),
       grok: makeCallCost('grok-4', 'grok-4', record.grok_total, 'evaluation'),
@@ -452,7 +452,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">🎵</span>
-                <span className="provider-name">Claude Sonnet 4.5</span>
+                <span className="provider-name">Claude Sonnet 4.6</span>
                 <span className="provider-cost">{formatCost(summary.claudeSonnetCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.claudeSonnetCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -613,7 +613,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td>$75.00</td>
                   </tr>
                   <tr>
-                    <td>🎵 Claude Sonnet 4.5</td>
+                    <td>🎵 Claude Sonnet 4.6</td>
                     <td>$3.00</td>
                     <td>$15.00</td>
                   </tr>

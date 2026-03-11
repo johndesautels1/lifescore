@@ -85,7 +85,7 @@ If you've forgotten your password:
 
 2. **Choose Comparison Mode**
    - **Standard Mode**: Uses Claude Sonnet for fast, accurate analysis
-   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.5, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) with consensus scoring
+   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.6, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) with consensus scoring
 
 3. **Run the Comparison**
    - Click "Compare Cities"
@@ -444,7 +444,7 @@ When a California resident contacts support about privacy:
 Password reset ONLY modifies auth.users.encrypted_password and auth.users.recovery_token. Zero impact on profiles, comparisons, subscriptions, or any other application table.
 
 ### AI Providers
-- **Claude Sonnet 4.5**: Primary evaluator
+- **Claude Sonnet 4.6**: Primary evaluator
 - **GPT-4o**: Enhanced mode evaluator
 - **Gemini 3.1 Pro**: Enhanced mode evaluator
 - **Grok 4**: Enhanced mode evaluator

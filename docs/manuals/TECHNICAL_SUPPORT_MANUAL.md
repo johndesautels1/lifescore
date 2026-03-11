@@ -605,7 +605,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 
 | Provider | Type ID | Model | Use Case |
 |----------|---------|-------|----------|
-| Anthropic | `claude-sonnet` | claude-sonnet-4-5-20250929 | Primary evaluator |
+| Anthropic | `claude-sonnet` | claude-sonnet-4-6 | Primary evaluator |
 | Anthropic | `claude-opus` | claude-opus-4-5-20251101 | Judge/consensus |
 | OpenAI | `gpt-4o` | gpt-4o | Secondary evaluator |
 | Google | `gemini-3-pro` | gemini-3.1-pro-preview | Evaluator with Google Search |
@@ -1094,7 +1094,7 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 
 | Provider | Input (per 1M) | Output (per 1M) |
 |----------|---------------|-----------------|
-| Claude Sonnet 4.5 | $3.00 | $15.00 |
+| Claude Sonnet 4.6 | $3.00 | $15.00 |
 | Claude Opus 4.5 | $15.00 | $75.00 |
 | GPT-4o | $2.50 | $10.00 |
 | Gemini 3.1 Pro | $1.25 | $5.00 |
@@ -1554,7 +1554,7 @@ Full 12-scene, 10-minute cinematic movie generation comparing two cities' freedo
 
 **Architecture — 2-Stage Pipeline:**
 ```
-Stage 1: Screenplay (Claude Sonnet 4.5) → 12-scene JSON
+Stage 1: Screenplay (Claude Sonnet 4.6) → 12-scene JSON
 Stage 2: InVideo MCP (generate-video-from-script) → 10-minute 4K movie
 ```
 
@@ -2148,7 +2148,7 @@ npm run preview
 | Olivia presenter audio overlap (double playback) | `ReportPresenter.tsx` `speakTTSFallback()` created new `Audio` objects without stopping the previous one. When segment timer fired before audio finished, two audio streams played simultaneously. Added `.pause()` + null cleanup before creating new Audio — same pattern used in skip/pause handlers. | 2026-02-27 |
 | Gemini model 3.0 → 3.1 Pro Preview | Upgraded Gemini model from `gemini-2.0-flash` (3.0) to `gemini-2.5-pro-preview-05-06` (3.1 Pro Preview) across entire codebase — evaluate.ts, test-llm.ts, emilia/manuals.ts, gammaService.ts, costCalculator-pricing.ts, docs | 2026-02-27 |
 | Video players stuttering on first play | Added `preload="auto"` to all video players (JudgeVideo, CourtOrderVideo, GoToMyNewCity, ReportPresenter) + buffering spinner overlay when video pauses to buffer mid-playback | 2026-02-27 |
-| InVideo Moving Movie pipeline added | Full 2-stage pipeline: Claude Sonnet 4.5 screenplay → InVideo MCP 10-minute 4K movie. 6 new files (api/movie/generate.ts, screenplay.ts, movieService.ts, MovieGenerator.tsx/.css, DB migration). Wired into JudgeTab court-order section. | 2026-02-27 |
+| InVideo Moving Movie pipeline added | Full 2-stage pipeline: Claude Sonnet 4.6 screenplay → InVideo MCP 10-minute 4K movie. 6 new files (api/movie/generate.ts, screenplay.ts, movieService.ts, MovieGenerator.tsx/.css, DB migration). Wired into JudgeTab court-order section. | 2026-02-27 |
 | executiveSummary property name wrong in JudgeTab | `executivesummary` (lowercase) → `executiveSummary` (camelCase); `user` → `auth.userId` — judge report display was broken | 2026-02-28 |
 | Mobile landscape: header toolbar overlaps heading | Added `@media (orientation: landscape) and (max-height: 500px)` to Header.css — scales `.header-right` to 75% on landscape phones | 2026-02-28 |
 | Movie pipeline timeouts too short (120s) | Increased all movie timeouts: server 120s→280s, client 180-240s→310s, persistVideo 30s→120s. Added movie endpoints to vercel.json at maxDuration 300. | 2026-02-28 |
@@ -2346,7 +2346,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 
 | Provider Key | Display Name | Icon | Quota Type | Default Limit | Pricing |
 |--------------|--------------|------|------------|---------------|---------|
-| `anthropic_sonnet` | Claude Sonnet 4.5 | 🎵 | dollars | $50.00 | $3/1M input, $15/1M output |
+| `anthropic_sonnet` | Claude Sonnet 4.6 | 🎵 | dollars | $50.00 | $3/1M input, $15/1M output |
 | `anthropic_opus` | Claude Opus 4.5 | 🧠 | dollars | $100.00 | $15/1M input, $75/1M output |
 | `openai_gpt4o` | GPT-4o | 🤖 | dollars | $50.00 | $2.50/1M input, $10/1M output |
 | `openai_olivia` | GPT-4 Turbo (Olivia) | 💬 | dollars | $30.00 | $10/1M input, $30/1M output |

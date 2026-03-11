@@ -691,7 +691,7 @@ When data is unavailable:
 
 LIFE SCORE uses 5 different AI models evaluating independently to reduce bias:
 
-**1. Claude Sonnet 4.5 (Anthropic)**
+**1. Claude Sonnet 4.6 (Anthropic)**
 - Specialization: Nuanced legal interpretation
 - Strength: Distinguishes law text vs. enforcement reality
 - Web Search: Tavily Research API
@@ -1775,7 +1775,7 @@ When a comparison runs, each of the 5 LLMs performs independent web searches and
   "city": "Austin",
   "evaluations": [
     {
-      "llm": "Claude Sonnet 4.5",
+      "llm": "Claude Sonnet 4.6",
       "legal_score": 35,
       "enforcement_score": 55,
       "reasoning": "Texas prohibits recreational cannabis...",
@@ -3523,7 +3523,7 @@ interface MetricResult {
 }
 
 interface LLMEvaluation {
-  llm_name: string;            // "Claude Sonnet 4.5"
+  llm_name: string;            // "Claude Sonnet 4.6"
   legal_score: number;
   enforcement_score: number;
   reasoning: string;

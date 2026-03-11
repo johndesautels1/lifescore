@@ -119,7 +119,7 @@ const TAVILY_HEADERS = {
 - **Per Comparison:** 48 credits total (Claude Sonnet + GPT-4o)
 
 ### LLMs Using Tavily:
-- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
+- Claude Sonnet 4.6 (claude-sonnet-4-6)
 - GPT-4o
 
 ### LLMs NOT Using Tavily (have native search):

@@ -173,7 +173,7 @@ John E. Desautels II & Associates © 2025
 ### API Integration Requirements
 
 Each metric has `searchQueries` arrays for Claude API + Web Search verification:
-- Model: `claude-sonnet-4-5-20250929` (required for web search)
+- Model: `claude-sonnet-4-6` (required for web search)
 - Tool: `web_search_20250305`
 - Queries use `{city}`, `{state}`, `{country}` placeholders
 

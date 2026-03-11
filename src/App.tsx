@@ -920,7 +920,7 @@ const AppContent: React.FC = () => {
                               llmResults.forEach((evalResult, provider) => {
                                 if (evalResult.usage?.tokens) {
                                   const { inputTokens, outputTokens } = evalResult.usage.tokens;
-                                  const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-4-5' :
+                                  const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-4-6' :
                                                      provider === 'gpt-4o' ? 'gpt-4o' :
                                                      provider === 'gemini-3-pro' ? 'gemini-3-pro' :
                                                      provider === 'grok-4' ? 'grok-4' :

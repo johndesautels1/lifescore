@@ -372,7 +372,7 @@ Return ONLY valid JSON matching the schema. No markdown, no backticks, no explan
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         max_tokens: 16384,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],

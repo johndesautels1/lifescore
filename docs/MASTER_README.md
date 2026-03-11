@@ -241,7 +241,7 @@ D:\LifeScore\
 
 | Provider | Type ID | Model | Web Search |
 |----------|---------|-------|------------|
-| Claude Sonnet 4.5 | `claude-sonnet` | claude-sonnet-4-5-20250929 | Tavily |
+| Claude Sonnet 4.6 | `claude-sonnet` | claude-sonnet-4-6 | Tavily |
 | GPT-4o | `gpt-4o` | gpt-4o | Tavily |
 | Gemini 3.1 Pro | `gemini-3-pro` | gemini-3.1-pro-preview | Google |
 | Grok 4 | `grok-4` | grok-4 | Native |

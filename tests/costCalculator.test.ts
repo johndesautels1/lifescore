@@ -47,7 +47,7 @@ describe('calculateLLMCost', () => {
   });
 
   it('returns zero for zero tokens', () => {
-    const result = calculateLLMCost('claude-sonnet-4-5', 0, 0);
+    const result = calculateLLMCost('claude-sonnet-4-6', 0, 0);
     expect(result.inputCost).toBe(0);
     expect(result.outputCost).toBe(0);
     expect(result.totalCost).toBe(0);

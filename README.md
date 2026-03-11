@@ -33,7 +33,7 @@ Supabase (PostgreSQL)
     │
     ▼
 External Services
-    ├── AI Evaluators:  Claude Sonnet 4.5 · GPT-4o · Gemini 3.1 Pro · Grok 4 · Perplexity Sonar
+    ├── AI Evaluators:  Claude Sonnet 4.6 · GPT-4o · Gemini 3.1 Pro · Grok 4 · Perplexity Sonar
     ├── AI Judge:       Claude Opus 4.5 (consensus analysis)
     ├── Web Research:   Tavily API
     ├── Payments:       Stripe

@@ -806,7 +806,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/movie/screenplay` | Yes (JWT) | Stage 1: Claude Sonnet 4.5 generates 12-scene JSON screenplay with QA validation (maxDuration: 300s) |
+| POST | `/api/movie/screenplay` | Yes (JWT) | Stage 1: Claude Sonnet 4.6 generates 12-scene JSON screenplay with QA validation (maxDuration: 300s) |
 | POST | `/api/movie/generate` | Yes (JWT) | Stage 2: Submit screenplay to InVideo MCP for 10-min 4K movie rendering (maxDuration: 300s) |
 | GET | `/api/movie/generate?movieId=X` | Yes (JWT) | Check movie generation status / get video URL |
 | POST | `/api/video/grok-generate` | Yes (JWT) | Generate videos via Kling AI (primary) with Replicate fallback. **IDOR fix 2026-02-26:** userId overridden with auth user ID |
@@ -1142,7 +1142,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | Provider | Purpose | Models Used |
 |----------|---------|-------------|
 | **OpenAI** | Olivia chat, Emilia help, evaluation | GPT-4o, GPT-4o-mini |
-| **Anthropic** | THE JUDGE, enhanced evaluation | Claude Opus 4.5, Claude Sonnet 4.5 |
+| **Anthropic** | THE JUDGE, enhanced evaluation | Claude Opus 4.5, Claude Sonnet 4.6 |
 | **Google** | Multi-LLM consensus | Gemini 3.1 Pro |
 | **xAI** | Enhanced evaluation | Grok 4 |
 | **Perplexity** | Real-time web search evaluation | Sonar models |
