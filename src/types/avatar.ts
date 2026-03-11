@@ -173,10 +173,13 @@ export interface UseSimliReturn {
   status: SimliSessionStatus;
   isConnected: boolean;
   isSpeaking: boolean;
+  isPaused: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   speak: (text: string, options?: Partial<SimliSpeakRequest>) => Promise<void>;
   interrupt: () => void;
+  pause: () => void;
+  resume: () => void;
   error: string | null;
 }
 
