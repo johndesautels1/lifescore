@@ -1,17 +1,23 @@
 /**
- * LIFE SCORE - useSimli Hook
+ * LIFE SCORE - useSimli Hook (v3 SDK)
  *
  * React hook for managing Simli AI sessions for Olivia avatar.
- * Uses official simli-client SDK for WebRTC connection.
+ * Uses simli-client v3 SDK for WebRTC connection.
  *
- * Reference: https://docs.simli.com/api-reference/javascript
+ * v3 Migration (2026-03-11):
+ * - Session token generated server-side (API key never leaves server)
+ * - Constructor takes session_token + ICE servers directly
+ * - Initialize() removed, close() renamed to stop()
+ * - LogLevel replaces enableConsoleLogs boolean
+ *
+ * Reference: https://docs.simli.com/api-reference/simli-client
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { SimliClient } from 'simli-client';
+import { SimliClient, LogLevel } from 'simli-client';
 import { getAuthHeaders } from '../lib/supabase';
 
 // ============================================================================
@@ -97,7 +103,12 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   const isSpeaking = status === 'speaking';
 
   /**
-   * Connect to Simli via official SDK
+   * Connect to Simli via v3 SDK
+   *
+   * Flow:
+   * 1. POST /api/simli-config → server generates session token + ICE servers
+   * 2. Create SimliClient with token, video/audio elements, and ICE servers
+   * 3. Call start() to establish WebRTC connection
    */
   const connect = useCallback(async () => {
     if (simliClientRef.current) {
@@ -109,9 +120,14 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     setError(null);
 
     try {
-      // Fetch credentials from server (keeps API key out of static JS bundle)
+      // Fetch session token + ICE servers from server
+      // (API key stays server-side — only token + ICE servers returned)
       const authHeaders = await getAuthHeaders();
-      const configRes = await fetch('/api/simli-config', { headers: authHeaders });
+      const configRes = await fetch('/api/simli-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+      });
+
       if (!configRes.ok) {
         const errorMsg = 'Simli not configured or auth failed.';
         console.error('[useSimli]', errorMsg);
@@ -120,7 +136,17 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         onErrorRef.current?.(errorMsg);
         return;
       }
-      const { apiKey, faceId } = await configRes.json();
+
+      const { sessionToken, iceServers } = await configRes.json();
+
+      if (!sessionToken) {
+        const errorMsg = 'No session token received from server';
+        console.error('[useSimli]', errorMsg);
+        setError(errorMsg);
+        setStatus('error');
+        onErrorRef.current?.(errorMsg);
+        return;
+      }
 
       // Validate refs
       if (!videoRef?.current) {
@@ -141,38 +167,24 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         return;
       }
 
-      console.log('[useSimli] Initializing SimliClient...');
+      console.log('[useSimli] Creating SimliClient v3 with session token...');
 
-      // Create SimliClient instance
-      const simliClient = new SimliClient();
+      // v3 SDK: Constructor takes all config directly — no Initialize() call
+      const simliClient = new SimliClient(
+        sessionToken,
+        videoRef.current,
+        audioRef.current,
+        iceServers,
+        LogLevel.INFO,      // was enableConsoleLogs: true
+        'p2p',              // transport mode (with auto-fallback to livekit after 2 retries)
+        'websockets',       // signaling mode
+        'wss://api.simli.ai', // WebSocket URL
+      );
+
       simliClientRef.current = simliClient;
+      console.log('[useSimli] SimliClient v3 created');
 
-      // Initialize with configuration
-      const simliConfig = {
-        apiKey,
-        faceID: faceId,
-        handleSilence: true,
-        maxSessionLength: 3600,
-        maxIdleTime: 600,
-        videoRef: videoRef.current,
-        audioRef: audioRef.current,
-        session_token: '',
-        SimliURL: '',
-        maxRetryAttempts: 5,
-        retryDelay_ms: 2000,
-        videoReceivedTimeout: 15000,
-        enableSFU: true,
-        // Leave empty to use SDK default ('fasttalk')
-        // 'fasttalk' = server-side buffering (Trinity + legacy)
-        // 'artalk' = client-side pacing required (tested: worse on legacy)
-        model: '' as const,
-        enableConsoleLogs: true,
-      };
-
-      simliClient.Initialize(simliConfig);
-      console.log('[useSimli] SimliClient initialized');
-
-      // Start the session
+      // Start the session (establishes WebRTC connection)
       await simliClient.start();
       console.log('[useSimli] SimliClient started');
 
@@ -193,12 +205,12 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       setStatus('error');
       onErrorRef.current?.(message);
 
-      // Cleanup on error
+      // Cleanup on error — v3 uses stop() instead of close()
       if (simliClientRef.current) {
         try {
-          simliClientRef.current.close();
+          await simliClientRef.current.stop();
         } catch {
-          // Ignore close errors
+          // Ignore stop errors during cleanup
         }
         simliClientRef.current = null;
       }
@@ -206,7 +218,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
   }, [videoRef, audioRef]);
 
   /**
-   * Disconnect from Simli
+   * Disconnect from Simli — v3 uses stop() instead of close()
    */
   const disconnect = useCallback(() => {
     console.log('[useSimli] Disconnecting...');
@@ -217,14 +229,13 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
       speakingTimeoutRef.current = null;
     }
 
-    // Close SimliClient
+    // v3 SDK: stop() is async — use .catch() since disconnect is synchronous
     if (simliClientRef.current) {
-      try {
-        simliClientRef.current.close();
-      } catch (err) {
-        console.warn('[useSimli] Error closing client:', err);
-      }
-      simliClientRef.current = null;
+      const client = simliClientRef.current;
+      simliClientRef.current = null; // Clear ref immediately to prevent double-stop
+      client.stop().catch((err: unknown) => {
+        console.warn('[useSimli] Error stopping client:', err);
+      });
     }
 
     setSession(null);
@@ -376,7 +387,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
    */
   const pause = useCallback(() => {
     if (pausedRef.current) return; // Already paused
-    console.log('[useSimli] ⏸ PAUSE - Freezing audio/video');
+    console.log('[useSimli] PAUSE - Freezing audio/video');
     pausedRef.current = true;
     setIsPaused(true);
 
@@ -393,7 +404,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
    */
   const resume = useCallback(() => {
     if (!pausedRef.current) return; // Not paused
-    console.log('[useSimli] ▶ RESUME - Unfreezing audio/video');
+    console.log('[useSimli] RESUME - Unfreezing audio/video');
     pausedRef.current = false;
     setIsPaused(false);
 
@@ -412,7 +423,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     // Also clear pause state on interrupt
     pausedRef.current = false;
     setIsPaused(false);
-    console.log('[useSimli] 🛑 INTERRUPT - Stopping all audio');
+    console.log('[useSimli] INTERRUPT - Stopping all audio');
 
     // CRITICAL: Set interrupt flag to stop audio chunk loop
     interruptedRef.current = true;
@@ -424,7 +435,6 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
     }
 
     // Use SDK ClearBuffer to flush server-side audio queue
-    // (avoids sending silence data that could accumulate and desync lip timing)
     if (simliClientRef.current) {
       simliClientRef.current.ClearBuffer();
     }

@@ -30,7 +30,8 @@ export interface SimliSession {
 }
 
 export interface SimliConfig {
-  apiKey: string;
+  sessionToken: string;
+  iceServers: RTCIceServer[];
   faceId: string;
   voiceId?: string;
   language?: string;
