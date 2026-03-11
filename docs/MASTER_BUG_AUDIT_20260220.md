@@ -1,7 +1,7 @@
 # LIFE SCORE — Grand Master Bug List (Single Source of Truth)
 
 **Audit Date:** 2026-02-20
-**Last Status Update:** 2026-03-11
+**Last Status Update:** 2026-02-26
 **Branch:** claude/coding-session-Jh27y
 **Scope:** Full codebase — 25 categories across 5 parallel agents
 **Total bugs found:** 110 (deduplicated from technical audit)
@@ -10,7 +10,7 @@
 
 ---
 
-## PART 1: BUGS FIXED IN OUR SESSIONS (49 total)
+## PART 1: BUGS FIXED IN OUR SESSIONS (47 total)
 
 All committed and pushed to `claude/coding-session-Jh27y`.
 
@@ -60,8 +60,6 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 | 42 | CL4 | e25e0e4 | 7 debug console.log removed from AskOlivia |
 | 43 | CL5 | 50e1d9d | 5 debug console.log removed from SavedComparisons |
 | 44-47 | CL6 | b2e96e3 | 11 debug console.log removed from 5 smaller components |
-| 48 | NEW-1 | 2c7c93f | **Stripe post-payment blocking** — After checkout success redirect, app never called refreshProfile(). Users stayed on free tier until manual page refresh. Added useEffect in App.tsx to detect ?checkout=success, call refreshProfile() with retry (3s + 8s for webhook race condition), show toast, clean URL. Also handles ?checkout=canceled. |
-| 49 | SIMLI-1 | (branch) | Simli v2→v3 SDK migration — Updated simli-client to v3 API, fixed session creation, added missing isPaused/pause/resume to UseSimliReturn type |
 
 ---
 
