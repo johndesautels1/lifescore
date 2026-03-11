@@ -117,7 +117,7 @@ Gemini 3.1 Pro uses Google Search grounding.
 Grok 4 brings real-time social data from X.
 Perplexity Sonar Pro provides citation-backed research.
 
-The Judge: Claude Opus 4.5 reviews disagreements when the standard deviation exceeds fifteen and provides the final ruling.
+The Judge: Claude Opus 4.6 reviews disagreements when the standard deviation exceeds fifteen and provides the final ruling.
 
 ---
 

@@ -116,7 +116,7 @@ These often differ dramatically! A city might have strict laws on paper (low leg
 - Evaluates **100 distinct FREEDOM metrics** across **6 categories**
 - Measures BOTH legal status (what the law says) AND enforcement (how it's actually applied)
 - Uses 5 independent AI evaluators with live web search
-- Final consensus built by Claude Opus 4.5 ("The Judge")
+- Final consensus built by Claude Opus 4.6 ("The Judge")
 - Generates 30-page visual reports via Gamma AI
 
 **What LIFE SCORE Measures - Two Dimensions Per Metric:**
@@ -718,13 +718,13 @@ LIFE SCORE uses 5 different AI models evaluating independently to reduce bias:
 - Strength: Built-in web search with numbered citations
 - Approach: Authoritative, verified sources with full attribution
 
-## 5.2 The Judge: Claude Opus 4.5
+## 5.2 The Judge: Claude Opus 4.6
 
 After the 5 evaluators complete their assessments:
 
 1. **Statistical Consensus:** Calculate median and standard deviation for each metric
 2. **Disagreement Detection:** Flag metrics where standard deviation > 15
-3. **Opus Review:** Claude Opus 4.5 reviews high-disagreement metrics
+3. **Opus Review:** Claude Opus 4.6 reviews high-disagreement metrics
 4. **Final Judgment:** Opus provides reasoned overrides or accepts consensus
 
 **Confidence Levels (based on standard deviation):**

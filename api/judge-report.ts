@@ -1,6 +1,6 @@
 /**
  * LIFE SCORE™ Judge Report API
- * Vercel Serverless Function - Claude Opus 4.5 comprehensive analysis
+ * Vercel Serverless Function - Claude Opus 4.6 comprehensive analysis
  *
  * This endpoint generates THE JUDGE's comprehensive verdict including:
  * - Holistic freedom analysis across all metrics
@@ -253,7 +253,7 @@ function buildJudgePrompt(
     ? `\n## EVIDENCE FROM EVALUATOR LLMs\n${allEvidence.slice(0, 30).join('\n')}\n`
     : '';
 
-  return `You are Claude Opus 4.5, THE JUDGE for LIFE SCORE™ - the final arbiter of freedom comparisons.
+  return `You are Claude Opus 4.6, THE JUDGE for LIFE SCORE™ - the final arbiter of freedom comparisons.
 
 ## YOUR ROLE
 You are not just analyzing scores - you are THE JUDGE who must:
@@ -477,7 +477,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const prompt = buildJudgePrompt(city1, city2, comparisonResult);
     console.log(`[JUDGE-REPORT] Prompt length: ${prompt.length} chars`);
 
-    // Call Claude Opus 4.5
+    // Call Claude Opus 4.6
     const response = await fetchWithTimeout(
       'https://api.anthropic.com/v1/messages',
       {
@@ -488,7 +488,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-opus-4-5-20251101',
+          model: 'claude-opus-4-6',
           max_tokens: 8192,
           messages: [{ role: 'user', content: prompt }]
         })

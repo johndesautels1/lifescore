@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE™ Judge Tab - The Final Verdict
  *
- * Claude Opus 4.5 serves as THE JUDGE - providing holistic freedom analysis,
+ * Claude Opus 4.6 serves as THE JUDGE - providing holistic freedom analysis,
  * future trend forecasting, and executive recommendations.
  *
  * Features:
@@ -1297,7 +1297,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   <div class="footer">
     <p>LIFE SCORE™ - The Judge's Verdict<br>
-    Powered by Claude Opus 4.5<br>
+    Powered by Claude Opus 4.6<br>
     © 2025-2026 Clues Intelligence LTD</p>
   </div>
 </body>
@@ -1716,7 +1716,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="generating-ring delay-2"></div>
                       <div className="generating-text">ANALYZING EVIDENCE</div>
                       <div className="generating-subtext">
-                        Claude Opus 4.5 is reviewing all metrics and sources...
+                        Claude Opus 4.6 is reviewing all metrics and sources...
                       </div>
                       <div className="progress-bar-container">
                         <div
@@ -2315,7 +2315,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               <div className="pending-gavel">⚖️</div>
               <h3 className="pending-title">Verdict Pending</h3>
               <p className="pending-description">
-                Click "Generate Judge's Verdict" above to receive Claude Opus 4.5's comprehensive analysis,
+                Click "Generate Judge's Verdict" above to receive Claude Opus 4.6's comprehensive analysis,
                 including future trend forecasting and executive recommendation.
               </p>
               <div className="pending-features">
@@ -2512,7 +2512,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           </div>
         </div>
         <div className="footer-right">
-          <span className="footer-model">Powered by Claude Opus 4.5</span>
+          <span className="footer-model">Powered by Claude Opus 4.6</span>
         </div>
       </footer>
 

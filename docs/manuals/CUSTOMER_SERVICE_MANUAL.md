@@ -1101,7 +1101,7 @@ A: Fixed on 2026-02-14. Judge reports now fall back to Supabase when localStorag
 A: Law scores reflect written legislation. Lived scores reflect actual enforcement. A city may have strict laws rarely enforced, or lenient laws strictly enforced.
 
 **Q: What AI providers does LifeScore use?**
-A: Claude Sonnet 4.6 (Anthropic), GPT-4o (OpenAI), Gemini 3.1 Pro (Google), Grok 4 (xAI), and Perplexity Sonar (Perplexity). Enhanced mode uses all five providers for consensus, with Claude Opus 4.5 as the final Judge.
+A: Claude Sonnet 4.6 (Anthropic), GPT-4o (OpenAI), Gemini 3.1 Pro (Google), Grok 4 (xAI), and Perplexity Sonar (Perplexity). Enhanced mode uses all five providers for consensus, with Claude Opus 4.6 as the final Judge.
 
 **Q: How long does a comparison take?**
 A: Standard: 2-3 minutes. Enhanced: 5-8 minutes. Video generation: 90-180 seconds.
@@ -1173,12 +1173,12 @@ A: You'll receive an email notification. Access continues for 7 days while we re
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
-| 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, support channels, tier limits |
-| 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§8.6), Emilia (§8.7), Quota Template (§10.5), glossary terms |
-| 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Kling AI docs, video timing fix, annual pricing, live chat clarification |
-| 2.3 | 2026-02-02 | Claude Opus 4.5 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
-| 2.4 | 2026-02-04 | Claude Opus 4.5 | Fixed #48 video auto-reset, #49 Gemini retry, #50 cost tracking; updated §5.2 and §5.4 troubleshooting |
-| 2.5 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-storage save system, Tavily timeout fix, Gamma generationId fix, Score Methodology (§8.6), Court Orders (§8.7), updated AI model names, new glossary entries |
+| 2.0 | 2026-01-30 | Claude Opus 4.6 | Phase 1 fixes: domain names, support channels, tier limits |
+| 2.1 | 2026-01-30 | Claude Opus 4.6 | Phase 2: Added Cost Dashboard (§8.6), Emilia (§8.7), Quota Template (§10.5), glossary terms |
+| 2.2 | 2026-01-30 | Claude Opus 4.6 | Phase 3: Kling AI docs, video timing fix, annual pricing, live chat clarification |
+| 2.3 | 2026-02-02 | Claude Opus 4.6 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
+| 2.4 | 2026-02-04 | Claude Opus 4.6 | Fixed #48 video auto-reset, #49 Gemini retry, #50 cost tracking; updated §5.2 and §5.4 troubleshooting |
+| 2.5 | 2026-02-05 | Claude Opus 4.6 | Session 9: Dual-storage save system, Tavily timeout fix, Gamma generationId fix, Score Methodology (§8.6), Court Orders (§8.7), updated AI model names, new glossary entries |
 | 3.0 | 2026-02-13 | Claude Opus 4.6 | Video playback overhaul: blob URLs, sequential generation, expired URL detection, independent playback, progress bar fix (§5.4). Court Order permanent storage (§8.7). Grok Videos detail (§8.5). New glossary terms. |
 | 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8.8): live avatar + pre-rendered video mode with troubleshooting. New glossary terms (Olivia Presenter, Live Presenter, Pre-Rendered Video, PIP). Section renumbering (§8.9→8.10, §8.9→8.11). |
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Gamma trophy 🏆 now placed on winner not loser (§5.5), (2) Gamma persistence — foreign key fix (§5.5), (3) backdrop-filter blur removed from 8 CSS files for INP, (4) Login input 247ms INP delay fixed (§5.1), (5) "Watch Presenter" → "Listen to Presenter" rename. |

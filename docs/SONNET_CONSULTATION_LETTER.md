@@ -4,7 +4,7 @@
 
 We are building **LIFE SCORE** - a city freedom comparison tool that evaluates 100 legal freedom metrics across 6 categories. We've identified a critical scoring problem and have consulted 4 LLMs so far:
 
-- **Claude Opus 4.5**: Architecture analysis, root cause identification
+- **Claude Opus 4.6**: Architecture analysis, root cause identification
 - **GPT-4o**: Full prompt rewrite, implementation blueprint
 - **Gemini 3.1 Pro**: 4-phase methodology
 - **Grok 4**: Real-time data strategy, novel ideas

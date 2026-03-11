@@ -69,7 +69,7 @@ CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
 🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
 
-Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
+Final Judge: 🎭 Claude Opus 4.6 (Anthropic) - Synthesizes all 5 evaluations
 
 ================================================================================
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):
@@ -129,7 +129,7 @@ prompt="dramatic cityscape comparison, ${city1Name} and ${city2Name}, modern sky
 <labels>
 <label variant="solid" color="#10B981">📊 100 Metrics Analyzed</label>
 <label variant="solid" color="#6B46C1">🤖 5 AI Models Verified</label>
-<label variant="solid" color="#14B8A6">⚖️ Judge: Claude Opus 4.5</label>
+<label variant="solid" color="#14B8A6">⚖️ Judge: Claude Opus 4.6</label>
 </labels>
 
 **Generated:** ${generatedAt}
@@ -152,7 +152,7 @@ prompt="dramatic cityscape comparison, ${city1Name} and ${city2Name}, modern sky
 
 <blockquote>
 "${judgeQuote}"
-— Claude Opus 4.5, Final Judge
+— Claude Opus 4.6, Final Judge
 </blockquote>
 
 ---
@@ -510,7 +510,7 @@ We capture how laws are actually applied in daily life
 5 independent AI models research each metric
 </item>
 <item label="🎭 Expert Judgment" color="#7C3AED">
-Claude Opus 4.5 synthesizes all data
+Claude Opus 4.6 synthesizes all data
 </item>
 </smart-layout>
 

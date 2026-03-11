@@ -34,7 +34,7 @@ Supabase (PostgreSQL)
     ▼
 External Services
     ├── AI Evaluators:  Claude Sonnet 4.6 · GPT-4o · Gemini 3.1 Pro · Grok 4 · Perplexity Sonar
-    ├── AI Judge:       Claude Opus 4.5 (consensus analysis)
+    ├── AI Judge:       Claude Opus 4.6 (consensus analysis)
     ├── Web Research:   Tavily API
     ├── Payments:       Stripe
     ├── Reports:        Gamma (PDF/PPTX generation)
@@ -87,7 +87,7 @@ Worst-Case Mode: MIN(legalScore, enforcementScore)
 
 ### The Judge
 
-Claude Opus 4.5 serves as the impartial Judge, analyzing all provider scores to produce:
+Claude Opus 4.6 serves as the impartial Judge, analyzing all provider scores to produce:
 - Consensus scoring with disagreement detection
 - Category-by-category analysis with trend identification
 - Final verdict with winner declaration

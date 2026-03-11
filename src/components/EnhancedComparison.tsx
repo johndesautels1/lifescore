@@ -460,8 +460,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         <div className={`judge-status ${judgeResult ? 'complete' : isJudging ? 'running' : 'ready'}`}>
           <span className="judge-icon">🎭</span>
           <span className="judge-text">
-            {isJudging && !judgeResult && 'Claude Opus 4.5 is building initial consensus...'}
-            {isJudging && judgeResult && `Claude Opus 4.5 is updating consensus with ${completedCount} LLMs...`}
+            {isJudging && !judgeResult && 'Claude Opus 4.6 is building initial consensus...'}
+            {isJudging && judgeResult && `Claude Opus 4.6 is updating consensus with ${completedCount} LLMs...`}
             {judgeResult && !isJudging && (lastJudgedCount > 1
               ? `Consensus from ${lastJudgedCount} LLMs • Agreement: ${judgeResult.overallAgreement}%`
               : `Evaluated by 1 LLM • Confidence: ${judgeResult.overallAgreement}%`)}
@@ -523,7 +523,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, anthropic: e.target.value })}
               placeholder="sk-ant-..."
             />
-            <span className="key-models">Claude Opus 4.5 (Judge), Sonnet 4.6</span>
+            <span className="key-models">Claude Opus 4.6 (Judge), Sonnet 4.6</span>
           </div>
 
           <div className="api-key-group">
@@ -878,7 +878,7 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
               )}
             </div>
             <span className="summary-detail">
-              Based on {result.llmsUsed.length} AI models with Claude Opus 4.5 as final judge
+              Based on {result.llmsUsed.length} AI models with Claude Opus 4.6 as final judge
             </span>
           </div>
 

@@ -449,7 +449,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - **Gemini 3.1 Pro**: Enhanced mode evaluator
 - **Grok 4**: Enhanced mode evaluator
 - **Perplexity Sonar**: Enhanced mode evaluator
-- **Claude Opus 4.5**: Judge (consensus)
+- **Claude Opus 4.6**: Judge (consensus)
 - **Tavily**: Web research (45s timeout)
 
 ### External Services
@@ -1169,7 +1169,7 @@ Capped at 100
 
 ## 9. THE JUDGE Analysis (Updated 2026-02-13)
 
-Claude Opus 4.5 provides:
+Claude Opus 4.6 provides:
 - **Trend Analysis**: values normalized to 'improving' (not 'rising') for DB constraint
 - **Score Passing**: Judge receives actual scores in both standard and enhanced mode (fixed)
 - **Tie Handling**: No more "winner is TIE" in video scripts (fixed)

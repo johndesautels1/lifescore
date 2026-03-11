@@ -606,7 +606,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Provider | Type ID | Model | Use Case |
 |----------|---------|-------|----------|
 | Anthropic | `claude-sonnet` | claude-sonnet-4-6 | Primary evaluator |
-| Anthropic | `claude-opus` | claude-opus-4-5-20251101 | Judge/consensus |
+| Anthropic | `claude-opus` | claude-opus-4-6 | Judge/consensus |
 | OpenAI | `gpt-4o` | gpt-4o | Secondary evaluator |
 | Google | `gemini-3-pro` | gemini-3.1-pro-preview | Evaluator with Google Search |
 | xAI | `grok-4` | grok-4 | Evaluator with X search |
@@ -1095,7 +1095,7 @@ const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
 | Provider | Input (per 1M) | Output (per 1M) |
 |----------|---------------|-----------------|
 | Claude Sonnet 4.6 | $3.00 | $15.00 |
-| Claude Opus 4.5 | $15.00 | $75.00 |
+| Claude Opus 4.6 | $15.00 | $75.00 |
 | GPT-4o | $2.50 | $10.00 |
 | Gemini 3.1 Pro | $1.25 | $5.00 |
 | Grok 4 | $3.00 | $15.00 (estimated) |
@@ -2347,7 +2347,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | Provider Key | Display Name | Icon | Quota Type | Default Limit | Pricing |
 |--------------|--------------|------|------------|---------------|---------|
 | `anthropic_sonnet` | Claude Sonnet 4.6 | 🎵 | dollars | $50.00 | $3/1M input, $15/1M output |
-| `anthropic_opus` | Claude Opus 4.5 | 🧠 | dollars | $100.00 | $15/1M input, $75/1M output |
+| `anthropic_opus` | Claude Opus 4.6 | 🧠 | dollars | $100.00 | $15/1M input, $75/1M output |
 | `openai_gpt4o` | GPT-4o | 🤖 | dollars | $50.00 | $2.50/1M input, $10/1M output |
 | `openai_olivia` | GPT-4 Turbo (Olivia) | 💬 | dollars | $30.00 | $10/1M input, $30/1M output |
 | `gemini` | Gemini 3.1 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
@@ -2810,10 +2810,10 @@ Server-side notifications triggered in:
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
 | 2.0 | 2026-01-30 | AI Assistant | Added API Quota Monitoring (§16) and TTS Fallback (§17) |
-| 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Fixed Simli=PRIMARY (§2.4), Added Emilia (§3.4), Usage/Quota (§3.5), Avatar (§3.6) endpoints |
-| 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: Version sync with User/CS manuals |
-| 2.3 | 2026-02-04 | Claude Opus 4.5 | LLM retry logic (§6.6), cost tracking auto-sync (§6.7), video error handling (§8.5), resolved issues |
-| 2.4 | 2026-02-05 | Claude Opus 4.5 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections, AI model names updated, Tavily timeout fix, 8 resolved issues |
+| 2.1 | 2026-01-30 | Claude Opus 4.6 | Phase 2: Fixed Simli=PRIMARY (§2.4), Added Emilia (§3.4), Usage/Quota (§3.5), Avatar (§3.6) endpoints |
+| 2.2 | 2026-01-30 | Claude Opus 4.6 | Phase 3: Version sync with User/CS manuals |
+| 2.3 | 2026-02-04 | Claude Opus 4.6 | LLM retry logic (§6.6), cost tracking auto-sync (§6.7), video error handling (§8.5), resolved issues |
+| 2.4 | 2026-02-05 | Claude Opus 4.6 | Session 9: Dual-Storage Architecture (§18), court_orders table (§4), schema corrections, AI model names updated, Tavily timeout fix, 8 resolved issues |
 | 3.0 | 2026-02-12 | Claude Opus 4.6 | Integrated Coding Standards & Developer Guide as §2 (comment standards, naming conventions, component/service/hook/type guides, data flow diagrams, quick reference). Upgraded §1.3 directory tree. Renumbered §§2-18 to §§3-19. |
 | 4.0 | 2026-02-13 | Claude Opus 4.6 | Major update: 21 DB tables (was 18), 3 storage buckets, new app_prompts/invideo_overrides tables, sequential video generation, blob URL playback, expired URL detection, Promise.allSettled, progress bar fix, 12 new resolved issues, JWT auth on 8+ endpoints, admin check caching, Prompts system (§20), new env vars, deprecated VITE_* vars |
 | 4.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§9.7): HeyGen pre-rendered video pipeline + live presenter PIP overlay. New API endpoint (§4.8), new services (presenterService, presenterVideoService), new types (presenter.ts), new component (ReportPresenter), VisualsTab Read/Listen toggle |

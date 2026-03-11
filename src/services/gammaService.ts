@@ -741,7 +741,7 @@ prompt="dramatic split cityscape view of ${city1Name} and ${city2Name}, cinemati
 
 <display size="lg" color="${result.winner === 'city1' ? '#FFD700' : '#1E90FF'}">${winner}</display>
 
-**Claude Opus 4.5 Recommendation:**
+**Claude Opus 4.6 Recommendation:**
 
 <blockquote>
 ${judgeReport?.executiveSummary?.rationale || `Based on comprehensive analysis of 100 freedom metrics across 6 categories, ${winner} demonstrates superior overall freedom scores. The ${scoreDiff}-point margin reflects meaningful differences in how laws are written AND enforced in daily life.`}
@@ -1222,7 +1222,7 @@ function formatSection5LLMConsensus(
 </table>
 
 **Final Judge:**
-<labels><label variant="solid" color="#7C3AED">🎭 Claude Opus 4.5 (Anthropic)</label></labels>
+<labels><label variant="solid" color="#7C3AED">🎭 Claude Opus 4.6 (Anthropic)</label></labels>
 
 Synthesizes all 5 evaluations into final scores and recommendation.
 
@@ -1306,7 +1306,7 @@ Each LLM provides Legal + Enforcement scores per metric
 Statistical analysis to identify agreement, outliers, confidence
 </item>
 <item label="5. Final Judgment">
-Claude Opus 4.5 synthesizes all data into verdicts and recommendations
+Claude Opus 4.6 synthesizes all data into verdicts and recommendations
 </item>
 <item label="6. Report Generation">
 Gamma AI transforms data into this visual presentation
@@ -1452,7 +1452,7 @@ We capture how laws are actually applied in daily life, not just what's written
 5 independent AI models research each metric, reducing single-source bias
 </item>
 <item label="🎭 Expert Judgment" color="#7C3AED">
-Claude Opus 4.5 synthesizes all data into actionable recommendations
+Claude Opus 4.6 synthesizes all data into actionable recommendations
 </item>
 </smart-layout>
 
@@ -2570,7 +2570,7 @@ CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
 🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
 
-Final Judge: 🎭 Claude Opus 4.5 (Anthropic) - Synthesizes all 5 evaluations
+Final Judge: 🎭 Claude Opus 4.6 (Anthropic) - Synthesizes all 5 evaluations
 
 ================================================================================
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):

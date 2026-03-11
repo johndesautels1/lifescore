@@ -10,7 +10,7 @@
 **LIFE SCORE™** - Legal Independence & Freedom Evaluation
 - Compares legal & lived freedom metrics between 200 metropolitan areas (100 NA + 100 EU)
 - Uses 5 LLMs with web search to evaluate 100 metrics across 6 categories
-- Claude Opus 4.5 serves as final judge ("The Judge") for consensus
+- Claude Opus 4.6 serves as final judge ("The Judge") for consensus
 - Gamma AI generates 30-page visual reports
 - Ask Olivia AI assistant with D-ID/HeyGen avatar integration
 - Ask Emilia help system with 6-tab documentation modal + AI chat
@@ -246,7 +246,7 @@ D:\LifeScore\
 | Gemini 3.1 Pro | `gemini-3-pro` | gemini-3.1-pro-preview | Google |
 | Grok 4 | `grok-4` | grok-4 | Native |
 | Perplexity | `perplexity` | sonar-reasoning-pro | Native |
-| **Judge** | `claude-opus` | claude-opus-4-5-20251101 | N/A |
+| **Judge** | `claude-opus` | claude-opus-4-6 | N/A |
 
 ### API Keys
 All configured in Vercel. **DO NOT ask user to configure.**

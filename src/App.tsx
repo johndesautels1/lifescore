@@ -951,10 +951,10 @@ const AppContent: React.FC = () => {
 
                               if (effectiveJudgeResult?.usage?.opusTokens) {
                                 const { inputTokens, outputTokens } = effectiveJudgeResult.usage.opusTokens;
-                                const judgeCosts = calculateLLMCost('claude-opus-4-5', inputTokens, outputTokens);
+                                const judgeCosts = calculateLLMCost('claude-opus-4-6', inputTokens, outputTokens);
                                 costBreakdown.opusJudge = {
                                   provider: 'claude-opus',
-                                  model: 'claude-opus-4-5',
+                                  model: 'claude-opus-4-6',
                                   inputTokens,
                                   outputTokens,
                                   inputCost: judgeCosts.inputCost,

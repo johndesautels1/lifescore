@@ -515,7 +515,7 @@ function calculateOverallConfidence(evaluationRate) {
 
 ## 11. THE JUDGE Analysis
 
-THE JUDGE (Claude Opus 4.5) provides final analysis beyond raw scores:
+THE JUDGE (Claude Opus 4.6) provides final analysis beyond raw scores:
 
 ### Trend Analysis
 
