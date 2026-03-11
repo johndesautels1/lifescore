@@ -308,7 +308,7 @@ F → 0 (Same as E)
 ---
 TABLE 5: Complete LLM Configuration Comparison
 Setting: Model
-Claude: claude-sonnet-4-5-20250929
+Claude: claude-sonnet-4-6
 GPT-4o: gpt-4o
 Gemini: gemini-3-pro-preview
 Grok: grok-4

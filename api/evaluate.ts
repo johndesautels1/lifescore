@@ -688,7 +688,7 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
   }
 }
 
-// Claude Sonnet 4.5 evaluation (with optional Tavily web search)
+// Claude Sonnet 4.6 evaluation (with optional Tavily web search)
 async function evaluateWithClaude(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -824,7 +824,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-sonnet-4-6',
             max_tokens: 16384,
             messages: [{ role: 'user', content: prompt }]
           })

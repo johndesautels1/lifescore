@@ -200,12 +200,12 @@ Metric: LGBTQ+ Rights
 
 | Component | Role | Model | Web Search |
 |-----------|------|-------|------------|
-| **Evaluator 1** | Score metrics | Claude Sonnet 4.5 | Native ✅ |
+| **Evaluator 1** | Score metrics | Claude Sonnet 4.6 | Native ✅ |
 | **Evaluator 2** | Score metrics | Perplexity Sonar Pro | Native ✅ |
 | **Evaluator 3** | Score metrics | Gemini 3.1 Pro (`gemini-3.1-pro-preview`) | Native ✅ |
 | **Evaluator 4** | Score metrics | GPT-4o | Tavily ✅ |
 | **Evaluator 5** | Score metrics | Grok | Tavily ✅ |
-| **Final Judge** | Synthesize consensus | Claude Opus 4.5 | None (judges evaluators) |
+| **Final Judge** | Synthesize consensus | Claude Opus 4.6 | None (judges evaluators) |
 
 **Key Insight:** 5 evaluators run in parallel, Opus synthesizes their scores into final determination.
 
@@ -263,7 +263,7 @@ Metric: LGBTQ+ Rights
 │              ▼                                              │
 │     ┌────────────────┐                                      │
 │     │  Opus Judge    │  ← Synthesizes all 5 scores         │
-│     │  (Opus 4.5)    │                                      │
+│     │  (Opus 4.6)    │                                      │
 │     └───────┬────────┘                                      │
 │             │                                               │
 │             ▼                                               │
@@ -743,7 +743,7 @@ Metric: LGBTQ+ Rights
 
 | Item | Note |
 |------|------|
-| Opus model string | `claude-opus-4-5-20251101` (verified correct) |
+| Opus model string | `claude-opus-4-6` (verified correct) |
 | console.log syntax error | `console.log\`` should be `console.log(\`` in enhancedComparison.ts |
 | Tavily free tier | 1000 calls/month — may need paid tier at scale |
 | Claude Sonnet service | Not provided — need to create `services/llm/claudeSonnet.ts` |

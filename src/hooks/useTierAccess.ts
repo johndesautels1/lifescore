@@ -623,7 +623,36 @@ export function useTierAccess(): TierAccessHook {
         requiredTier: allowed ? tier : getRequiredTier(feature),
       };
     } catch (error) {
-      console.error('[useTierAccess] Usage check error:', error);
+      console.warn('[useTierAccess] Usage check error, retrying once:', error);
+      // Retry once before fail-closed denial
+      try {
+        const periodStart = getCurrentPeriodStart();
+        const column = FEATURE_TO_COLUMN[feature];
+        if (column) {
+          const { data: retryData } = await withTimeout(() =>
+            supabase
+              .from('usage_tracking')
+              .select('*')
+              .eq('user_id', userId)
+              .eq('period_start', periodStart)
+              .maybeSingle()
+          );
+          const retryUsage = retryData as Record<string, number> | null;
+          const used = retryUsage?.[column] ?? 0;
+          const remaining = limit - used;
+          const allowed = remaining > 0;
+          return {
+            allowed,
+            used,
+            limit,
+            remaining: Math.max(0, remaining),
+            upgradeRequired: !allowed,
+            requiredTier: allowed ? tier : getRequiredTier(feature),
+          };
+        }
+      } catch (retryError) {
+        console.error('[useTierAccess] Retry also failed:', retryError);
+      }
       // Fail-closed: deny on error to prevent unlimited free access when DB is down
       return {
         allowed: false,

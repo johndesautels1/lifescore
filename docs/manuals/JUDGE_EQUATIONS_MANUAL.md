@@ -411,7 +411,7 @@ Enhanced mode uses **5 LLMs** to evaluate each metric, then builds consensus:
 
 ### LLM Providers
 
-1. **Claude Sonnet 4.5** - Primary evaluator
+1. **Claude Sonnet 4.6** - Primary evaluator
 2. **GPT-4o** - OpenAI evaluator
 3. **Gemini 3.1 Pro** - Google evaluator (with Search grounding)
 4. **Grok 4** - xAI evaluator (with X/Twitter search)
@@ -515,7 +515,7 @@ function calculateOverallConfidence(evaluationRate) {
 
 ## 11. THE JUDGE Analysis
 
-THE JUDGE (Claude Opus 4.5) provides final analysis beyond raw scores:
+THE JUDGE (Claude Opus 4.6) provides final analysis beyond raw scores:
 
 ### Trend Analysis
 

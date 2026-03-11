@@ -58,8 +58,9 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   const [inAppChecked, setInAppChecked] = useState(true);
   const [rememberPreference, setRememberPreference] = useState(false);
 
-  // Load saved preference
+  // Load saved preference each time the modal opens
   useEffect(() => {
+    if (!isOpen) return;
     try {
       const saved = localStorage.getItem(REMEMBER_KEY);
       if (saved) {
@@ -67,9 +68,14 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
         if (pref.email !== undefined) setEmailChecked(pref.email);
         if (pref.inApp !== undefined) setInAppChecked(pref.inApp);
         if (pref.remember) setRememberPreference(true);
+      } else {
+        // Reset to defaults when no saved preference
+        setEmailChecked(true);
+        setInAppChecked(true);
+        setRememberPreference(false);
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -110,7 +116,20 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
 
   return (
     <div className="notify-modal-overlay" onClick={onClose}>
-      <div className="notify-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div
+        className="notify-modal"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => {
+          if (e.key === 'Backspace' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+            e.preventDefault();
+          }
+          if (e.key === 'Escape') {
+            onClose();
+          }
+        }}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="notify-modal-header">
           <h3>How should we notify you?</h3>
           <button className="notify-modal-close" onClick={onClose} aria-label="Close">

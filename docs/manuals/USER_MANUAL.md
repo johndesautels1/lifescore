@@ -1050,7 +1050,7 @@ A: Currently web-only. The site is mobile-responsive.
 A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
 
 **Q: What is Enhanced Mode and how does it work?**
-A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.5, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.5 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
+A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.6, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.6 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
 
 **Q: Why would I use Enhanced Mode over Standard Mode?**
 A: Enhanced Mode provides multi-LLM consensus scoring, which reduces individual AI bias and catches edge cases a single model might miss. The Judge feature highlights where AI providers disagree and explains the reasoning. Best for important relocation decisions.
@@ -1214,12 +1214,12 @@ If you choose "Notify Me & Go":
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-28 | AI Assistant | Initial creation |
-| 2.0 | 2026-01-30 | Claude Opus 4.5 | Phase 1 fixes: domain names, password requirements, tier limits |
-| 2.1 | 2026-01-30 | Claude Opus 4.5 | Phase 2: Added Cost Dashboard (§15), Emilia Help Assistant (§16) |
-| 2.2 | 2026-01-30 | Claude Opus 4.5 | Phase 3: TTS fallback info, Kling AI docs, video timing fix, annual pricing |
-| 2.3 | 2026-02-02 | Claude Opus 4.5 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
-| 2.4 | 2026-02-02 | Claude Opus 4.5 | Added comprehensive feature tables: 8 categories, 30+ features with detailed tier breakdown |
-| 2.5 | 2026-02-05 | Claude Opus 4.5 | Session 9: Score Methodology explainer (§5), Judge report cloud save (§7), dual-storage data sync (§9, §11), video auto-reset troubleshooting (§12), updated AI model names (§14), retry/timeout notes |
+| 2.0 | 2026-01-30 | Claude Opus 4.6 | Phase 1 fixes: domain names, password requirements, tier limits |
+| 2.1 | 2026-01-30 | Claude Opus 4.6 | Phase 2: Added Cost Dashboard (§15), Emilia Help Assistant (§16) |
+| 2.2 | 2026-01-30 | Claude Opus 4.6 | Phase 3: TTS fallback info, Kling AI docs, video timing fix, annual pricing |
+| 2.3 | 2026-02-02 | Claude Opus 4.6 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
+| 2.4 | 2026-02-02 | Claude Opus 4.6 | Added comprehensive feature tables: 8 categories, 30+ features with detailed tier breakdown |
+| 2.5 | 2026-02-05 | Claude Opus 4.6 | Session 9: Score Methodology explainer (§5), Judge report cloud save (§7), dual-storage data sync (§9, §11), video auto-reset troubleshooting (§12), updated AI model names (§14), retry/timeout notes |
 | 3.0 | 2026-02-13 | Claude Opus 4.6 | Court Order videos (§7), blob URL video playback, video troubleshooting rewrite (§12), city selector with country badges (§4), Emilia help tabs detail (§16), Prompts tab documentation, Judge tie handling fix |
 | 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8): Read/Listen toggle, Live PIP avatar presenter, pre-rendered HeyGen video with download. Presenter troubleshooting (§12). |
 | 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Trophy 🏆 now correctly placed on winner not loser in Gamma reports (§9), (2) Gamma reports persistence fix — foreign key constraint resolved (§7, §9), (3) backdrop-filter blur removed from 8 CSS files for INP performance, (4) 247ms INP fix on login email input, (5) "Watch Presenter" renamed to "Listen to Presenter" (§8). |

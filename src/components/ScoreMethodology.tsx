@@ -176,12 +176,12 @@ const ScoreMethodology: React.FC<ScoreMethodologyProps> = ({ result }) => {
               <span className="stage-number">3</span>
               <div>
                 <h4 className="stage-title">The Opus Judge</h4>
-                <p className="stage-label">Advanced Arbitration by Claude Opus 4.5</p>
+                <p className="stage-label">Advanced Arbitration by Claude Opus 4.6</p>
               </div>
             </div>
             <div className="stage-content">
               <p>
-                After consensus scores are established, <strong>Claude Opus 4.5</strong> &mdash; the most
+                After consensus scores are established, <strong>Claude Opus 4.6</strong> &mdash; the most
                 advanced reasoning model available &mdash; reviews the entire scoring landscape.
                 The Opus Judge does not blindly re-score everything. Instead, it applies
                 <strong> targeted arbitration</strong>: it identifies metrics where the AI

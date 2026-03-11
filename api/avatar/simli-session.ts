@@ -1,12 +1,13 @@
 /**
- * LIFE SCORE - Simli Session API
+ * LIFE SCORE - Simli Session API (v3 SDK)
  *
- * Returns Simli session info for WebRTC session establishment.
- * Requires authentication — API key is NOT returned to the client.
- * The actual WebRTC connection is handled client-side using useSimli hook
- * with credentials from /api/simli-config.
+ * Returns Simli session status/info. The actual session token is now
+ * generated server-side by /api/simli-config (v3 token flow).
+ * This endpoint provides session metadata only.
  *
- * Reference: https://docs.simli.com/api-reference/simli-webrtc
+ * POST /api/avatar/simli-session
+ *
+ * Migrated from v2 on 2026-03-11. Removed deprecated wsUrl endpoint.
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -32,7 +33,7 @@ export default async function handler(
     return;
   }
 
-  // FIX S1: Require authentication — prevent unauthenticated access
+  // Require authentication
   const auth = await requireAuth(req, res);
   if (!auth) return;
 
@@ -47,16 +48,14 @@ export default async function handler(
   }
 
   try {
-    console.log('[SIMLI-SESSION] Session created for user:', auth.userId, 'faceId:', faceId);
+    console.log('[SIMLI-SESSION] Session info requested by user:', auth.userId, 'faceId:', faceId);
 
-    // Return session info WITHOUT the API key
-    // Client should use /api/simli-config for credentials
+    // Return session metadata (token generation is handled by /api/simli-config)
     res.status(200).json({
       success: true,
       session: {
         sessionId: `simli_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         faceId: faceId,
-        wsUrl: 'wss://api.simli.ai/startWebRTCSession',
         status: 'ready',
         createdAt: new Date().toISOString(),
       },

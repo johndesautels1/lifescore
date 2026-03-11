@@ -28,7 +28,7 @@ async function testClaude(): Promise<{ success: boolean; message: string; latenc
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-sonnet-4-6',
           max_tokens: 10,
           messages: [{ role: 'user', content: 'Say "ok"' }]
         })

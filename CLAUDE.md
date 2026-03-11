@@ -124,3 +124,47 @@ If a git command fails, say so honestly — do not fabricate a number.
 - Include `Co-Authored-By: Claude` footer
 - Don't commit .env files or temp files
 - **ALWAYS push to GitHub after committing. Every commit gets pushed.**
+
+---
+
+## Claude API Model IDs & Configuration (Updated 2026-03-11)
+
+### Model IDs — No Date Suffix
+- **Opus:** `claude-opus-4-6`
+- **Sonnet:** `claude-sonnet-4-6`
+- **Haiku:** `claude-haiku-4-5-20251001`
+
+Old date-suffixed IDs (e.g. `claude-sonnet-4-5-20250929`) are deprecated.
+
+### Extended Thinking — Adaptive (New)
+The old `thinking: {type: "enabled", budget_tokens: N}` syntax is deprecated.
+Use adaptive thinking with the `effort` parameter instead:
+
+```javascript
+// Opus 4.6 — complex reasoning
+{
+  model: "claude-opus-4-6",
+  max_tokens: 16000,
+  thinking: { type: "adaptive" },
+  effort: "high",  // "high" | "medium" | "low" | "max" (Opus only)
+  messages: [{ role: "user", content: "..." }]
+}
+
+// Sonnet 4.6 — web search calls
+{
+  model: "claude-sonnet-4-6",
+  max_tokens: 1000,
+  thinking: { type: "adaptive" },
+  effort: "medium",
+  tools: [{ type: "web_search_20250305", name: "web_search" }],
+  messages: [{ role: "user", content: "..." }]
+}
+```
+
+No beta header required — adaptive thinking is GA.
+
+### IMPORTANT: Opus 4.6 Prefilled Assistant Restriction
+**Opus 4.6 does NOT support prefilled assistant messages.** Requests with
+prefilled assistant messages return a 400 error. If any Opus calls use
+prefilled assistant content, they must be refactored to use system prompts
+or user messages instead.

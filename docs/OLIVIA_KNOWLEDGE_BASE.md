@@ -116,7 +116,7 @@ These often differ dramatically! A city might have strict laws on paper (low leg
 - Evaluates **100 distinct FREEDOM metrics** across **6 categories**
 - Measures BOTH legal status (what the law says) AND enforcement (how it's actually applied)
 - Uses 5 independent AI evaluators with live web search
-- Final consensus built by Claude Opus 4.5 ("The Judge")
+- Final consensus built by Claude Opus 4.6 ("The Judge")
 - Generates 30-page visual reports via Gamma AI
 
 **What LIFE SCORE Measures - Two Dimensions Per Metric:**
@@ -691,7 +691,7 @@ When data is unavailable:
 
 LIFE SCORE uses 5 different AI models evaluating independently to reduce bias:
 
-**1. Claude Sonnet 4.5 (Anthropic)**
+**1. Claude Sonnet 4.6 (Anthropic)**
 - Specialization: Nuanced legal interpretation
 - Strength: Distinguishes law text vs. enforcement reality
 - Web Search: Tavily Research API
@@ -718,13 +718,13 @@ LIFE SCORE uses 5 different AI models evaluating independently to reduce bias:
 - Strength: Built-in web search with numbered citations
 - Approach: Authoritative, verified sources with full attribution
 
-## 5.2 The Judge: Claude Opus 4.5
+## 5.2 The Judge: Claude Opus 4.6
 
 After the 5 evaluators complete their assessments:
 
 1. **Statistical Consensus:** Calculate median and standard deviation for each metric
 2. **Disagreement Detection:** Flag metrics where standard deviation > 15
-3. **Opus Review:** Claude Opus 4.5 reviews high-disagreement metrics
+3. **Opus Review:** Claude Opus 4.6 reviews high-disagreement metrics
 4. **Final Judgment:** Opus provides reasoned overrides or accepts consensus
 
 **Confidence Levels (based on standard deviation):**
@@ -1775,7 +1775,7 @@ When a comparison runs, each of the 5 LLMs performs independent web searches and
   "city": "Austin",
   "evaluations": [
     {
-      "llm": "Claude Sonnet 4.5",
+      "llm": "Claude Sonnet 4.6",
       "legal_score": 35,
       "enforcement_score": 55,
       "reasoning": "Texas prohibits recreational cannabis...",
@@ -3523,7 +3523,7 @@ interface MetricResult {
 }
 
 interface LLMEvaluation {
-  llm_name: string;            // "Claude Sonnet 4.5"
+  llm_name: string;            // "Claude Sonnet 4.6"
   legal_score: number;
   enforcement_score: number;
   reasoning: string;

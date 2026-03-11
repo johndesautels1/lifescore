@@ -68,31 +68,31 @@ const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
           <button type="button" className="legal-link" onClick={handleLegalClick('privacy')}>
             Privacy
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('terms')}>
             Terms
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('cookies')}>
             Cookies
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('acceptable-use')}>
             Acceptable Use
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('refunds')}>
             Refunds
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button type="button" className="legal-link ccpa-dns-link" onClick={handleLegalClick('do-not-sell')}>
             Do Not Sell or Share My Personal Information
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button type="button" className="legal-link" onClick={handleLegalClick('state-privacy')}>
             US State Privacy Rights
           </button>
-          <span className="legal-separator">|</span>
+          <span className="legal-separator" aria-hidden="true">|</span>
           <button
             type="button"
             className="legal-link cookie-settings-btn"

@@ -11,16 +11,16 @@
 
 export const API_PRICING = {
   // Anthropic Claude
-  'claude-opus-4-5': {
+  'claude-opus-4-6': {
     input: 15.00,    // $15 per 1M input tokens
     output: 75.00,   // $75 per 1M output tokens
-    name: 'Claude Opus 4.5',
+    name: 'Claude Opus 4.6',
     icon: '🧠'
   },
-  'claude-sonnet-4-5': {
+  'claude-sonnet-4-6': {
     input: 3.00,     // $3 per 1M input tokens
     output: 15.00,   // $15 per 1M output tokens
-    name: 'Claude Sonnet 4.5',
+    name: 'Claude Sonnet 4.6',
     icon: '🎵'
   },
 

@@ -10,8 +10,8 @@ import type { MetricScore, CategoryId } from './metrics';
 // ============================================================================
 
 export type LLMProvider =
-  | 'claude-opus'      // Anthropic Claude Opus 4.5 (Primary Judge)
-  | 'claude-sonnet'    // Anthropic Claude Sonnet 4.5
+  | 'claude-opus'      // Anthropic Claude Opus 4.6 (Primary Judge)
+  | 'claude-sonnet'    // Anthropic Claude Sonnet 4.6
   | 'gpt-4o'           // OpenAI GPT-4o (with Tavily web search)
   | 'gemini-3-pro'     // Google Gemini 3.1 Pro
   | 'grok-4'           // xAI Grok 4
@@ -44,7 +44,7 @@ export interface LLMConfig {
 export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   'claude-opus': {
     id: 'claude-opus',
-    name: 'Claude Opus 4.5',
+    name: 'Claude Opus 4.6',
     shortName: 'Opus',
     vendor: 'Anthropic',
     supportsWebSearch: true,
@@ -54,7 +54,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
-    name: 'Claude Sonnet 4.5',
+    name: 'Claude Sonnet 4.6',
     shortName: 'Sonnet',
     vendor: 'Anthropic',
     supportsWebSearch: true,

@@ -70,12 +70,12 @@ The prompt is NOT stored in the database. It is constructed in-memory from the `
 
 | Model | Role | Provider |
 |-------|------|----------|
-| Claude Sonnet 4.5 | Evaluator #1 | Anthropic |
+| Claude Sonnet 4.6 | Evaluator #1 | Anthropic |
 | GPT-4o | Evaluator #2 | OpenAI |
 | Gemini 3.1 Pro | Evaluator #3 | Google |
 | Grok 4 | Evaluator #4 | xAI |
 | Perplexity Sonar Pro | Evaluator #5 | Perplexity |
-| Claude Opus 4.5 | Final Judge | Anthropic |
+| Claude Opus 4.6 | Final Judge | Anthropic |
 
 ---
 

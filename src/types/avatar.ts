@@ -30,7 +30,8 @@ export interface SimliSession {
 }
 
 export interface SimliConfig {
-  apiKey: string;
+  sessionToken: string;
+  iceServers: RTCIceServer[];
   faceId: string;
   voiceId?: string;
   language?: string;
@@ -172,10 +173,13 @@ export interface UseSimliReturn {
   status: SimliSessionStatus;
   isConnected: boolean;
   isSpeaking: boolean;
+  isPaused: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   speak: (text: string, options?: Partial<SimliSpeakRequest>) => Promise<void>;
   interrupt: () => void;
+  pause: () => void;
+  resume: () => void;
   error: string | null;
 }
 
