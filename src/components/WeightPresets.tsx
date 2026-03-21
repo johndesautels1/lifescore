@@ -194,6 +194,9 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
   // Category exclusion state
   const [excludedCategories, setExcludedCategories] = useState<Set<CategoryId>>(new Set());
 
+  // Category lock state — locked categories keep their % when other sliders are adjusted
+  const [lockedCategories, setLockedCategories] = useState<Set<CategoryId>>(new Set());
+
   // Base weights before redistribution (used when toggling exclusions)
   const [baseWeights, setBaseWeights] = useState<CategoryWeights>(PRESETS[0].weights);
 
@@ -299,6 +302,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
     setSelectedPreset(preset.id);
     setBaseWeights(preset.weights);
     setIsCustom(false);
+    setLockedCategories(new Set()); // Clear locks when switching presets
 
     // Redistribute weights based on current exclusions
     const redistributed = redistributeWeights(preset.weights, excludedCategories);
@@ -357,35 +361,49 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
     onConservativeModeChange?.(enabled);
   };
 
-  const handleSliderChange = (categoryId: CategoryId, value: number) => {
-    // Update base weights (before redistribution)
-    const newBaseWeights = { ...baseWeights };
-    const currentTotal = Object.values(baseWeights).reduce((a, b) => a + b, 0);
-    const otherTotal = currentTotal - (baseWeights[categoryId] || 0);
-    const newOtherTotal = 100 - value;
+  const handleLockToggle = (categoryId: CategoryId) => {
+    const newLocked = new Set(lockedCategories);
+    if (newLocked.has(categoryId)) {
+      newLocked.delete(categoryId);
+    } else {
+      newLocked.add(categoryId);
+    }
+    setLockedCategories(newLocked);
+  };
 
+  const handleSliderChange = (categoryId: CategoryId, value: number) => {
+    const newBaseWeights = { ...baseWeights };
     newBaseWeights[categoryId] = value;
 
-    // Adjust other active (non-excluded) weights proportionally
-    if (otherTotal > 0 && newOtherTotal >= 0) {
-      const ratio = newOtherTotal / otherTotal;
-      Object.keys(newBaseWeights).forEach(key => {
-        if (key !== categoryId && !excludedCategories.has(key as CategoryId)) {
-          newBaseWeights[key as CategoryId] = Math.round((newBaseWeights[key as CategoryId] || 0) * ratio);
-        }
-      });
+    // Calculate how much weight is left for adjustable (non-excluded, non-locked, not current) categories
+    const lockedTotal = Array.from(lockedCategories)
+      .filter(id => id !== categoryId && !excludedCategories.has(id))
+      .reduce((sum, id) => sum + (newBaseWeights[id] || 0), 0);
+
+    const adjustableKeys = Object.keys(newBaseWeights).filter(
+      k => k !== categoryId && !excludedCategories.has(k as CategoryId) && !lockedCategories.has(k as CategoryId)
+    ) as CategoryId[];
+
+    const remainingForAdjustable = 100 - value - lockedTotal;
+    const oldAdjustableTotal = adjustableKeys.reduce((sum, k) => sum + (baseWeights[k] || 0), 0);
+
+    if (adjustableKeys.length > 0 && remainingForAdjustable >= 0) {
+      if (oldAdjustableTotal > 0) {
+        const ratio = remainingForAdjustable / oldAdjustableTotal;
+        adjustableKeys.forEach(key => {
+          newBaseWeights[key] = Math.round((baseWeights[key] || 0) * ratio);
+        });
+      } else {
+        const each = Math.floor(remainingForAdjustable / adjustableKeys.length);
+        adjustableKeys.forEach(key => { newBaseWeights[key] = each; });
+      }
     }
 
-    // Fix rounding errors
+    // Fix rounding errors — adjust first adjustable category
     const newTotal = Object.values(newBaseWeights).reduce((a, b) => a + b, 0);
-    if (newTotal !== 100) {
+    if (newTotal !== 100 && adjustableKeys.length > 0) {
       const diff = 100 - newTotal;
-      const firstOther = Object.keys(newBaseWeights).find(
-        k => k !== categoryId && !excludedCategories.has(k as CategoryId)
-      ) as CategoryId;
-      if (firstOther) {
-        newBaseWeights[firstOther] += diff;
-      }
+      newBaseWeights[adjustableKeys[0]] += diff;
     }
 
     setBaseWeights(newBaseWeights);
@@ -469,8 +487,9 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
 
             {CATEGORIES.map(category => {
               const isExcluded = excludedCategories.has(category.id);
+              const isLocked = lockedCategories.has(category.id);
               return (
-                <div key={category.id} className={`slider-row ${isExcluded ? 'excluded' : ''}`}>
+                <div key={category.id} className={`slider-row ${isExcluded ? 'excluded' : ''} ${isLocked ? 'locked' : ''}`}>
                   <div className="slider-label">
                     <label className="exclusion-checkbox" title={isExcluded ? 'Click to include' : 'Click to exclude'}>
                       <input
@@ -493,7 +512,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
                       value={customWeights[category.id] || 0}
                       onChange={(e) => handleSliderChange(category.id, parseInt(e.target.value))}
                       className="weight-slider"
-                      disabled={isExcluded}
+                      disabled={isExcluded || isLocked}
                       aria-label={`${category.name} weight`}
                       aria-valuemin={0}
                       aria-valuemax={50}
@@ -503,6 +522,19 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
                     <span className={`slider-value ${isExcluded ? 'excluded' : ''}`}>
                       {isExcluded ? '—' : `${customWeights[category.id] || 0}%`}
                     </span>
+                    {!isExcluded && (
+                      <label className="lock-checkbox" title={isLocked ? 'Unlock adjustment' : 'Lock adjustment %'}>
+                        <input
+                          type="checkbox"
+                          checked={isLocked}
+                          onChange={() => handleLockToggle(category.id)}
+                          className="lock-input"
+                        />
+                        <span className={`lock-icon ${isLocked ? 'locked' : ''}`}>
+                          {isLocked ? '🔒' : '🔓'}
+                        </span>
+                      </label>
+                    )}
                   </div>
                 </div>
               );

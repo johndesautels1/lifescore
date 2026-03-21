@@ -329,6 +329,49 @@
   flex-shrink: 0;
 }
 
+/* Lock Checkbox — keeps slider % fixed during other adjustments */
+.lock-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.lock-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.lock-icon {
+  font-size: 0.9rem;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.lock-icon.locked {
+  opacity: 1;
+}
+
+.lock-checkbox:hover .lock-icon {
+  opacity: 0.8;
+}
+
+.weight-presets .slider-row.locked {
+  background: rgba(212, 175, 55, 0.06);
+  border-radius: 8px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.weight-presets .slider-row.locked .weight-slider {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* Dark Mode */
 [data-theme="dark"] .presets-toggle {
   background: linear-gradient(135deg, rgba(0, 71, 171, 0.3) 0%, rgba(0, 71, 171, 0.15) 100%);
@@ -394,6 +437,10 @@
 
 [data-theme="dark"] .weight-presets .slider-row {
   border-bottom-color: #2d2d44;
+}
+
+[data-theme="dark"] .weight-presets .slider-row.locked {
+  background: rgba(212, 175, 55, 0.08);
 }
 
 [data-theme="dark"] .weight-presets .slider-name {
