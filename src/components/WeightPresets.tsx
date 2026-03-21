@@ -512,7 +512,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
                       value={customWeights[category.id] || 0}
                       onChange={(e) => handleSliderChange(category.id, parseInt(e.target.value))}
                       className="weight-slider"
-                      disabled={isExcluded || isLocked}
+                      disabled={isExcluded}
                       aria-label={`${category.name} weight`}
                       aria-valuemin={0}
                       aria-valuemax={50}

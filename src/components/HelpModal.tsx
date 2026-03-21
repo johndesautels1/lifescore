@@ -43,7 +43,7 @@ const ALL_TABS: { id: ManualTabType; label: string; icon: string; adminOnly: boo
 ];
 
 // Admin emails that can access restricted manuals
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
+const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com', 'johndesau7@gmail.com'];
 
 const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<ManualTabType>('user');

@@ -233,6 +233,14 @@ function getCurrentPeriodStart(): string {
 // HOOK
 // ============================================================================
 
+// Hardcoded admin emails — guaranteed full access even if /api/admin-check fails
+const HARDCODED_ADMIN_EMAILS = [
+  'cluesnomads@gmail.com',
+  'brokerpinellas@gmail.com',
+  'jdes7@aol.com',
+  'johndesau7@gmail.com',
+];
+
 // Admin status cache key — server-side /api/admin-check result cached in localStorage
 const ADMIN_CACHE_KEY = 'lifescore_admin_status';
 const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -339,14 +347,22 @@ function clearCachedTier(): void {
 export function useTierAccess(): TierAccessHook {
   const { profile, user, isLoading: authLoading } = useAuth();
 
-  // Admin status — fetched from server-side /api/admin-check (no emails in client bundle)
+  // Admin status — hardcoded emails always pass, then falls back to /api/admin-check
+  const isHardcodedAdmin = !!user?.email && HARDCODED_ADMIN_EMAILS.includes(user.email.toLowerCase());
   const [isDeveloper, setIsDeveloper] = useState<boolean>(() => {
-    // Initialize from cache for instant rendering (avoids flash of wrong tier)
+    if (isHardcodedAdmin) return true;
     const cached = getCachedAdminStatus();
     return cached ?? false;
   });
 
   useEffect(() => {
+    // Hardcoded admin emails — always admin, skip API call entirely
+    if (isHardcodedAdmin) {
+      setIsDeveloper(true);
+      setCachedAdminStatus(true);
+      return;
+    }
+
     if (!user?.id) {
       setIsDeveloper(false);
       return;

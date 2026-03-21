@@ -40,7 +40,7 @@ const PROMPT_CATEGORIES: { id: string; label: string; icon: string }[] = [
   { id: 'invideo', label: 'InVideo', icon: '🎬' },
 ];
 
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com'];
+const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com', 'johndesau7@gmail.com'];
 
 // ============================================================================
 // COMPONENT

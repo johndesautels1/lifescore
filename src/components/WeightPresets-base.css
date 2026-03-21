@@ -367,11 +367,6 @@
   padding-right: 0.5rem;
 }
 
-.weight-presets .slider-row.locked .weight-slider {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 /* Dark Mode */
 [data-theme="dark"] .presets-toggle {
   background: linear-gradient(135deg, rgba(0, 71, 171, 0.3) 0%, rgba(0, 71, 171, 0.15) 100%);
