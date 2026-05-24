@@ -1,5 +1,5 @@
-/**
- * LIFE SCORE™ Judge Report API
+﻿/**
+ * LIFE SCOREâ„¢ Judge Report API
  * Vercel Serverless Function - Claude Opus 4.6 comprehensive analysis
  *
  * This endpoint generates THE JUDGE's comprehensive verdict including:
@@ -9,7 +9,7 @@
  * - Political/cultural shift analysis
  *
  * Clues Intelligence LTD
- * © 2025-2026 All Rights Reserved
+ * Â© 2025-2026 All Rights Reserved
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -224,7 +224,7 @@ function buildJudgePrompt(
       const confidence = (m.confidenceLevel ?? 'moderate').toUpperCase();
       const m1Score = getMetricScore(m);
       const m2Score = m2 ? getMetricScore(m2) : 'N/A';
-      catSummary += `- ${m.metricId}: ${city1}=${m1Score} (Legal:${m.legalScore ?? 'N/A'}/Enf:${m.enforcementScore ?? 'N/A'}) | ${city2}=${m2Score} [${confidence}, σ=${m.standardDeviation ?? 0}]\n`;
+      catSummary += `- ${m.metricId}: ${city1}=${m1Score} (Legal:${m.legalScore ?? 'N/A'}/Enf:${m.enforcementScore ?? 'N/A'}) | ${city2}=${m2Score} [${confidence}, Ïƒ=${m.standardDeviation ?? 0}]\n`;
 
       // Collect evidence (only exists in enhanced results)
       if (m.llmScores) {
@@ -253,7 +253,7 @@ function buildJudgePrompt(
     ? `\n## EVIDENCE FROM EVALUATOR LLMs\n${allEvidence.slice(0, 30).join('\n')}\n`
     : '';
 
-  return `You are Claude Opus 4.6, THE JUDGE for LIFE SCORE™ - the final arbiter of freedom comparisons.
+  return `You are Claude Opus 4.6, THE JUDGE for LIFE SCOREâ„¢ - the final arbiter of freedom comparisons.
 
 ## YOUR ROLE
 You are not just analyzing scores - you are THE JUDGE who must:
@@ -322,7 +322,7 @@ Provide a comprehensive Judge's Report in the following JSON format:
           {
             "metricId": "cannabis_legality",
             "metricName": "Cannabis Legality",
-            "metricIcon": "🌿",
+            "metricIcon": "ðŸŒ¿",
             "winnerScore": 85,
             "loserScore": 40,
             "realWorldExample": "Picture yourself walking into a sleek, legal dispensary on a Saturday afternoon, choosing from artisanal strains like you're browsing a wine shop - while your friends back in the other city are still looking over their shoulders for something that should never have been illegal."
@@ -338,7 +338,7 @@ Provide a comprehensive Judge's Report in the following JSON format:
 
 ## CRITICAL INSTRUCTIONS
 1. You MUST provide analysis for ALL 6 categories: personal_freedom, housing_property, business_work, transportation, policing_legal, speech_lifestyle
-2. **WINNER DETERMINATION**: The city with the HIGHER score in the CURRENT SCORES section above MUST be your recommendation. The scores were computed by multiple LLM evaluators across 100 metrics and represent the definitive ranking. You MUST NOT override the winner. Your role is to EXPLAIN why the winning city scored higher, add trend context, and provide rich analysis — NOT to second-guess the computed scores. If scores are tied, you may choose either.
+2. **WINNER DETERMINATION**: The city with the HIGHER score in the CURRENT SCORES section above MUST be your recommendation. The scores were computed by multiple LLM evaluators across 100 metrics and represent the definitive ranking. You MUST NOT override the winner. Your role is to EXPLAIN why the winning city scored higher, add trend context, and provide rich analysis â€” NOT to second-guess the computed scores. If scores are tied, you may choose either.
 3. Be specific - cite particular laws, recent changes, or enforcement patterns you know about
 4. The keyFactors should be the 5 most important considerations, not just a summary of categories
 5. Consider the user's likely priorities: personal autonomy, property rights, business freedom, mobility, legal protection, self-expression
@@ -349,7 +349,7 @@ Provide a comprehensive Judge's Report in the following JSON format:
 8. heroStatement: This is YOUR moment to inspire. Write like you're the narrator in a movie trailer about freedom. Be BOLD, slightly provocative, a touch witty. Paint a vision of an amazing life. This section should tell a DIFFERENT story than the other parts of the report - focus on the FEELING and VISION of freedom, not just the metrics. Make the user's heart race with possibility.
 9. AVOID: Dry, bureaucratic language. Repeating exact phrases from other sections. Generic statements. Being too clever or preachy.
 10. EMBRACE: Vivid imagery. Emotional impact. Specific scenarios. The joy of liberation. A slight edge of rebellion against overreach.
-11. Use appropriate emojis for metricIcon (e.g., 🌿 cannabis, 🍺 alcohol, 🏠 housing, 💼 business, 🚗 vehicles, ⚖️ legal)
+11. Use appropriate emojis for metricIcon (e.g., ðŸŒ¿ cannabis, ðŸº alcohol, ðŸ  housing, ðŸ’¼ business, ðŸš— vehicles, âš–ï¸ legal)
 
 Return ONLY the JSON object, no other text.`;
 }
@@ -488,7 +488,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-opus-4-6',
+          model: 'claude-opus-4-7',
           max_tokens: 8192,
           messages: [{ role: 'user', content: prompt }]
         })
@@ -585,12 +585,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let freedomEducation: FreedomEducationOutput | undefined;
     if (opusResult.freedomEducation?.categories) {
       const categoryIcons: Record<string, string> = {
-        'personal_freedom': '🗽',
-        'housing_property': '🏠',
-        'business_work': '💼',
-        'transportation': '🚇',
-        'policing_legal': '⚖️',
-        'speech_lifestyle': '🎭'
+        'personal_freedom': 'ðŸ—½',
+        'housing_property': 'ðŸ ',
+        'business_work': 'ðŸ’¼',
+        'transportation': 'ðŸš‡',
+        'policing_legal': 'âš–ï¸',
+        'speech_lifestyle': 'ðŸŽ­'
       };
       const categoryNames: Record<string, string> = {
         'personal_freedom': 'Personal Freedom',
@@ -605,11 +605,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categories: opusResult.freedomEducation.categories.map(cat => ({
           categoryId: cat.categoryId,
           categoryName: categoryNames[cat.categoryId] || cat.categoryId,
-          categoryIcon: categoryIcons[cat.categoryId] || '📊',
+          categoryIcon: categoryIcons[cat.categoryId] || 'ðŸ“Š',
           winningMetrics: (cat.winningMetrics || []).map(m => ({
             metricId: m.metricId,
             metricName: m.metricName,
-            metricIcon: m.metricIcon || '📈',
+            metricIcon: m.metricIcon || 'ðŸ“ˆ',
             winnerScore: m.winnerScore,
             loserScore: m.loserScore,
             realWorldExample: m.realWorldExample

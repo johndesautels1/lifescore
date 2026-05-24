@@ -1,9 +1,9 @@
-/**
- * LIFE SCORE™ Main Application
+﻿/**
+ * LIFE SCOREâ„¢ Main Application
  * Legal Independence & Freedom Evaluation
  *
  * Clues Intelligence LTD
- * © 2025-2026 All Rights Reserved
+ * Â© 2025-2026 All Rights Reserved
  */
 
 import React, { useState, useCallback, useEffect, useReducer, useRef, Suspense } from 'react';
@@ -262,13 +262,13 @@ const AppContent: React.FC = () => {
   const pendingComparisonJobRef = useRef<{ jobId: string; city1: string; city2: string } | null>(null);
   const [savedKey, setSavedKey] = useState(0);
 
-  // PERF #1: Modal/UI state — single reducer instead of 8 useState
+  // PERF #1: Modal/UI state â€” single reducer instead of 8 useState
   const [modals, dispatchModal] = useReducer(modalReducer, modalInitialState);
 
-  // PERF #1: Enhanced comparison state — single reducer instead of 11 useState
+  // PERF #1: Enhanced comparison state â€” single reducer instead of 11 useState
   const [enhanced, dispatchEnhanced] = useReducer(enhancedReducer, enhancedInitialState);
 
-  // API keys (read once from localStorage — keys now managed via Vercel env vars)
+  // API keys (read once from localStorage â€” keys now managed via Vercel env vars)
   const [apiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys);
 
   // LIFTED STATE from LLMSelector (Map type doesn't work well in reducers)
@@ -276,13 +276,13 @@ const AppContent: React.FC = () => {
     new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
   );
 
-  // Scoring preferences (kept as useState — set independently by CitySelector)
+  // Scoring preferences (kept as useState â€” set independently by CitySelector)
   const [dealbreakers, setDealbreakers] = useState<string[]>([]);
   const [customWeights, setCustomWeights] = useState<Record<string, number> | null>(null);
   const [lawLivedRatio, setLawLivedRatio] = useState<LawLivedRatio>({ law: 50, lived: 50 });
   const [conservativeMode, setConservativeMode] = useState(false);
 
-  // Gamma visual report state (kept separate — set by VisualsTab child)
+  // Gamma visual report state (kept separate â€” set by VisualsTab child)
   const [gammaReportState, setGammaReportState] = useState<VisualReportState>({ status: 'idle' });
   const [gammaExportFormat, setGammaExportFormat] = useState<'pdf' | 'pptx'>('pdf');
   const [showGammaEmbedded, setShowGammaEmbedded] = useState(false);
@@ -334,7 +334,7 @@ const AppContent: React.FC = () => {
     warmUpSupabase();
   }, []);
 
-  // Handle Stripe checkout redirect — refresh profile to pick up new tier
+  // Handle Stripe checkout redirect â€” refresh profile to pick up new tier
   // The webhook updates the DB, but the React state still has the old tier cached.
   // Also handles webhook race condition: retry profile refresh after a delay
   // if the tier hasn't updated yet (webhook may lag behind the redirect).
@@ -560,13 +560,13 @@ const AppContent: React.FC = () => {
     // FIX 2026-01-26: Add defensive checks to prevent crashes when loading saved comparisons
     if (!result) {
       console.error('[App] handleLoadSavedComparison called with null/undefined result');
-      toastError('Failed to load comparison — data is missing');
+      toastError('Failed to load comparison â€” data is missing');
       return;
     }
 
     if (!result.city1 || !result.city2) {
       console.error('[App] handleLoadSavedComparison: result missing city data', result);
-      toastError('Failed to load comparison — city data is incomplete');
+      toastError('Failed to load comparison â€” city data is incomplete');
       return;
     }
 
@@ -619,7 +619,7 @@ const AppContent: React.FC = () => {
 
         if (!usageResult.allowed) {
           // User has hit their limit - show pricing modal
-          toastInfo('Enhanced comparison limit reached — upgrade for more');
+          toastInfo('Enhanced comparison limit reached â€” upgrade for more');
           dispatchModal({ type: 'OPEN_PRICING', highlight: {
             feature: 'enhancedComparisons',
             tier: usageResult.requiredTier,
@@ -642,7 +642,7 @@ const AppContent: React.FC = () => {
 
         if (!usageResult.allowed) {
           // User has hit their limit - show pricing modal
-          toastInfo('Comparison limit reached — upgrade for more');
+          toastInfo('Comparison limit reached â€” upgrade for more');
           dispatchModal({ type: 'OPEN_PRICING', highlight: {
             feature: 'standardComparisons',
             tier: usageResult.requiredTier,
@@ -664,11 +664,11 @@ const AppContent: React.FC = () => {
     }
   }, [enhancedMode, isAdmin, checkUsage, incrementUsage, compare, lawLivedRatio, conservativeMode, customWeights]);
 
-  // PERF #1: handleReset was 10 separate setState calls → now 1 dispatch + 1 setState + 1 reset
+  // PERF #1: handleReset was 10 separate setState calls â†’ now 1 dispatch + 1 setState + 1 reset
   const handleReset = useCallback(() => {
     reset();
     dispatchEnhanced({ type: 'FULL_RESET' });
-    // Reset lifted LLM state (Map — kept as useState)
+    // Reset lifted LLM state (Map â€” kept as useState)
     setLLMStates(new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }])));
     resetOGMetaTags();
   }, [reset]);
@@ -699,14 +699,14 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      // Comparison deep-link: /?cityA=...&cityB=...  → go to results tab
+      // Comparison deep-link: /?cityA=...&cityB=...  â†’ go to results tab
       if (url.searchParams.get('cityA') && url.searchParams.get('cityB')) {
         setActiveTab('results');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
     } catch {
-      // Malformed link — fall through to full reload
+      // Malformed link â€” fall through to full reload
     }
 
     // Fallback for unrecognised links
@@ -761,7 +761,7 @@ const AppContent: React.FC = () => {
         <div className="container">
           {/* Live Badge - Always visible */}
           <div className="live-badge" role="status">
-            ⚡ LIVE - 100 Freedom Metrics | Real-Time LLM Evaluation
+            âš¡ LIVE - 100 Freedom Metrics | Real-Time LLM Evaluation
           </div>
 
           {/* ============================================================
@@ -951,10 +951,10 @@ const AppContent: React.FC = () => {
 
                               if (effectiveJudgeResult?.usage?.opusTokens) {
                                 const { inputTokens, outputTokens } = effectiveJudgeResult.usage.opusTokens;
-                                const judgeCosts = calculateLLMCost('claude-opus-4-6', inputTokens, outputTokens);
+                                const judgeCosts = calculateLLMCost('claude-opus-4-7', inputTokens, outputTokens);
                                 costBreakdown.opusJudge = {
                                   provider: 'claude-opus',
-                                  model: 'claude-opus-4-6',
+                                  model: 'claude-opus-4-7',
                                   inputTokens,
                                   outputTokens,
                                   inputCost: judgeCosts.inputCost,
@@ -1047,7 +1047,7 @@ const AppContent: React.FC = () => {
                             // === END AUTO-SAVE ===
                           } catch (buildError) {
                             console.error('[App] Error building enhanced result:', buildError);
-                            toastError('Error building results — showing partial data');
+                            toastError('Error building results â€” showing partial data');
                             // FIX: Still set a minimal result so results page shows
                             dispatchEnhanced({ type: 'SET_RESULT', result: {
                               city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
@@ -1067,7 +1067,7 @@ const AppContent: React.FC = () => {
                           }
                         }).catch(importError => {
                           console.error('Error importing opusJudge module:', importError);
-                          toastError('Error loading result module — showing partial data');
+                          toastError('Error loading result module â€” showing partial data');
                           // FIX: Set minimal result so results page shows
                           dispatchEnhanced({ type: 'SET_RESULT', result: {
                             city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
@@ -1105,7 +1105,7 @@ const AppContent: React.FC = () => {
                       } else if (llmResults.size > 0 && !judgeResult) {
                         // FIX: Judge failed but we have LLM results - build partial result
                         console.warn('[App] Judge failed but LLM results available - building partial result from', llmResults.size, 'LLMs');
-                        toastInfo('Judge unavailable — showing results from ' + llmResults.size + ' LLMs');
+                        toastInfo('Judge unavailable â€” showing results from ' + llmResults.size + ' LLMs');
                         buildAndSetResult(null, true);
                       }
                     }}
@@ -1123,7 +1123,7 @@ const AppContent: React.FC = () => {
               {/* Category Failures Warning - Require acknowledgment before showing results */}
               {enhancedMode && enhancedStatus === 'complete' && hasCategoryFailures && !failuresAcknowledged && (
                 <div className="category-failures-warning" role="alert">
-                  <div className="warning-icon">⚠️</div>
+                  <div className="warning-icon">âš ï¸</div>
                   <h3>Some Data May Be Incomplete</h3>
                   <p>
                     One or more metric categories did not return complete data.
@@ -1159,7 +1159,7 @@ const AppContent: React.FC = () => {
                       setActiveTab('results');
                     }}
                   >
-                    I Understand — SEE RESULTS
+                    I Understand â€” SEE RESULTS
                   </button>
                 </div>
               )}
@@ -1167,7 +1167,7 @@ const AppContent: React.FC = () => {
               {/* Error State */}
               {state.status === 'error' && (
                 <div className="error-card card" role="alert">
-                  <div className="error-icon">❌</div>
+                  <div className="error-icon">âŒ</div>
                   <h3>Analysis Failed</h3>
                   <p>{state.error}</p>
                   <button className="btn btn-primary" onClick={handleReset}>
@@ -1198,7 +1198,7 @@ const AppContent: React.FC = () => {
                   {pendingCities && (
                     <div className="add-more-models card">
                       <h3 className="section-title">
-                        <span className="section-icon">🤖</span>
+                        <span className="section-icon">ðŸ¤–</span>
                         Add More AI Models
                       </h3>
                       <p className="section-description">
@@ -1227,9 +1227,9 @@ const AppContent: React.FC = () => {
                               <span className="llm-icon">{config.icon}</span>
                               <span className="llm-name">{config.shortName}</span>
                               <span className="llm-status-indicator">
-                                {isCompleted && '✓'}
-                                {isRunning && '⏳'}
-                                {isFailed && '✗'}
+                                {isCompleted && 'âœ“'}
+                                {isRunning && 'â³'}
+                                {isFailed && 'âœ—'}
                                 {!isCompleted && !isRunning && !isFailed && '+'}
                               </span>
                             </button>
@@ -1244,7 +1244,7 @@ const AppContent: React.FC = () => {
                   
                   <div className="new-comparison">
                     <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
-                      ← New Comparison
+                      â† New Comparison
                     </button>
                   </div>
                 </>
@@ -1256,7 +1256,7 @@ const AppContent: React.FC = () => {
                   <Results result={state.result} onSaved={handleSaved} customWeights={customWeights} savedKey={savedKey} />
                   <div className="new-comparison">
                     <button className="btn btn-secondary" onClick={() => { handleReset(); setActiveTab('compare'); }}>
-                      ← New Comparison
+                      â† New Comparison
                     </button>
                   </div>
                 </>
@@ -1265,15 +1265,15 @@ const AppContent: React.FC = () => {
               {/* FIX #55: No results yet - with helpful navigation options */}
               {!hasResults && !(state.status === 'success' && state.result) && (
                 <div className="no-results card">
-                  <div className="no-results-icon">📊</div>
+                  <div className="no-results-icon">ðŸ“Š</div>
                   <h3>No Results Yet</h3>
                   <p>Run a new comparison or load a saved one to see results</p>
                   <div className="no-results-actions">
                     <button className="btn btn-primary" onClick={() => setActiveTab('compare')}>
-                      🔍 New Comparison
+                      ðŸ” New Comparison
                     </button>
                     <button className="btn btn-secondary" onClick={() => setActiveTab('saved')}>
-                      💾 Load Saved
+                      ðŸ’¾ Load Saved
                     </button>
                   </div>
                 </div>
@@ -1346,7 +1346,7 @@ const AppContent: React.FC = () => {
           )}
 
           {/* ============================================================
-              ABOUT TAB — Two top-level sub-tabs: LifeScore / Clues
+              ABOUT TAB â€” Two top-level sub-tabs: LifeScore / Clues
               ============================================================ */}
           {activeTab === 'about' && (
             <div className="about-tab-wrapper">
@@ -1358,7 +1358,7 @@ const AppContent: React.FC = () => {
                   role="tab"
                   aria-selected={activeAboutTab === 'lifescore'}
                 >
-                  <span className="about-top-tab-icon" aria-hidden="true">⚖️</span>
+                  <span className="about-top-tab-icon" aria-hidden="true">âš–ï¸</span>
                   <span>About LifeScore</span>
                 </button>
                 <button
@@ -1367,12 +1367,12 @@ const AppContent: React.FC = () => {
                   role="tab"
                   aria-selected={activeAboutTab === 'clues'}
                 >
-                  <span className="about-top-tab-icon" aria-hidden="true">🌍</span>
+                  <span className="about-top-tab-icon" aria-hidden="true">ðŸŒ</span>
                   <span>About Clues</span>
                 </button>
               </div>
 
-              {/* About LifeScore — existing content */}
+              {/* About LifeScore â€” existing content */}
               {activeAboutTab === 'lifescore' && (
                 <div className="about-section card">
                   <button
@@ -1380,15 +1380,15 @@ const AppContent: React.FC = () => {
                     onClick={() => dispatchModal({ type: 'TOGGLE_ABOUT' })}
                     aria-expanded={showAboutSection}
                   >
-                    <h3 className="section-title">About LIFE SCORE™</h3>
-                    <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`} aria-hidden="true">▼</span>
+                    <h3 className="section-title">About LIFE SCOREâ„¢</h3>
+                    <span className={`toggle-arrow ${showAboutSection ? 'expanded' : ''}`} aria-hidden="true">â–¼</span>
                   </button>
 
                   {showAboutSection && (
                     <>
                       <div className="about-content">
                         <p>
-                          <strong>LIFE SCORE™ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
+                          <strong>LIFE SCOREâ„¢ (Legal Independence & Freedom Evaluation)</strong> is a comprehensive
                           framework developed by Clues Intelligence LTD that analyzes both <em>legal freedom</em> (written law)
                           and <em>lived freedom</em> (enforcement reality) across
                           <span className="highlight"> 100 specific metrics</span> in six key categories:
@@ -1396,7 +1396,7 @@ const AppContent: React.FC = () => {
 
                         <div className="category-summary">
                           <div className="category-item">
-                            <span className="cat-icon">🗽</span>
+                            <span className="cat-icon">ðŸ—½</span>
                             <div className="cat-info">
                               <strong>Personal Autonomy</strong>
                               <span>15 metrics - Vice laws, substance policies, personal choices</span>
@@ -1404,7 +1404,7 @@ const AppContent: React.FC = () => {
                           </div>
 
                           <div className="category-item">
-                            <span className="cat-icon">🏠</span>
+                            <span className="cat-icon">ðŸ </span>
                             <div className="cat-info">
                               <strong>Housing & Property Rights</strong>
                               <span>20 metrics - HOA restrictions, property taxes, zoning</span>
@@ -1412,7 +1412,7 @@ const AppContent: React.FC = () => {
                           </div>
 
                           <div className="category-item">
-                            <span className="cat-icon">💼</span>
+                            <span className="cat-icon">ðŸ’¼</span>
                             <div className="cat-info">
                               <strong>Business & Work Regulation</strong>
                               <span>25 metrics - Licensing, employment laws, regulatory burden</span>
@@ -1420,7 +1420,7 @@ const AppContent: React.FC = () => {
                           </div>
 
                           <div className="category-item">
-                            <span className="cat-icon">🚇</span>
+                            <span className="cat-icon">ðŸš‡</span>
                             <div className="cat-info">
                               <strong>Transportation & Movement</strong>
                               <span>15 metrics - Car dependency, public transit, mobility freedom</span>
@@ -1428,7 +1428,7 @@ const AppContent: React.FC = () => {
                           </div>
 
                           <div className="category-item">
-                            <span className="cat-icon">⚖️</span>
+                            <span className="cat-icon">âš–ï¸</span>
                             <div className="cat-info">
                               <strong>Policing & Legal System</strong>
                               <span>15 metrics - Enforcement, incarceration, legal costs</span>
@@ -1436,7 +1436,7 @@ const AppContent: React.FC = () => {
                           </div>
 
                           <div className="category-item">
-                            <span className="cat-icon">🎭</span>
+                            <span className="cat-icon">ðŸŽ­</span>
                             <div className="cat-info">
                               <strong>Speech & Lifestyle</strong>
                               <span>10 metrics - Free expression, cultural norms, privacy</span>
@@ -1445,14 +1445,14 @@ const AppContent: React.FC = () => {
                         </div>
 
                         <p className="methodology">
-                          Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCORE™ uses Multiple LLMs
+                          Unlike other "freedom indexes" that rely on subjective ratings, LIFE SCOREâ„¢ uses Multiple LLMs
                           with our proprietary weighted average LIFE score technology to verify each metric with actual laws, regulations, and current data.
                           <span className="highlight"> No fabricated data.</span> Every score
                           is backed by verifiable sources.
                         </p>
 
                         <p className="part-of">
-                          This tool is part of the <strong className="brand-text">CLUES™</strong> (Comprehensive
+                          This tool is part of the <strong className="brand-text">CLUESâ„¢</strong> (Comprehensive
                           Location & Utility Evaluation System) platform, helping individuals make informed decisions
                           about international relocation based on real data, not assumptions.
                         </p>
@@ -1468,7 +1468,7 @@ const AppContent: React.FC = () => {
                           <span className="count-label">Categories</span>
                         </div>
                         <div className="count-box">
-                          <span className="count-number">∞</span>
+                          <span className="count-number">âˆž</span>
                           <span className="count-label">Cities Comparable</span>
                         </div>
                       </div>
@@ -1477,7 +1477,7 @@ const AppContent: React.FC = () => {
                 </div>
               )}
 
-              {/* About Clues — new component */}
+              {/* About Clues â€” new component */}
               {activeAboutTab === 'clues' && (
                 <Suspense fallback={<div className="tab-loading">Loading About Clues...</div>}>
                   <AboutClues />
@@ -1503,7 +1503,7 @@ const AppContent: React.FC = () => {
       {/* Cookie Consent Banner */}
       <CookieConsent />
 
-      {/* Mobile Warning Modal — one-time warning for mobile visitors */}
+      {/* Mobile Warning Modal â€” one-time warning for mobile visitors */}
       <MobileWarningModal />
 
       {/* Emilia Help Bubble - Shows on all pages */}

@@ -127,23 +127,28 @@ If a git command fails, say so honestly — do not fabricate a number.
 
 ---
 
-## Claude API Model IDs & Configuration (Updated 2026-03-11)
+## Claude API Model IDs & Configuration (Updated 2026-05-25)
 
 ### Model IDs — No Date Suffix
-- **Opus:** `claude-opus-4-6`
+- **Opus:** `claude-opus-4-7`  *(bumped from 4-6 on 2026-05-25 to align
+  with London Tech Map + Olivia Brain — see backport commit on lifescore
+  main branch)*
 - **Sonnet:** `claude-sonnet-4-6`
 - **Haiku:** `claude-haiku-4-5-20251001`
 
 Old date-suffixed IDs (e.g. `claude-sonnet-4-5-20250929`) are deprecated.
+Old `claude-opus-4-6` is also deprecated — retained in
+`src/utils/costCalculator-pricing.ts` only so historical Supabase rows
+(model='claude-opus-4-6') still resolve to a price.
 
 ### Extended Thinking — Adaptive (New)
 The old `thinking: {type: "enabled", budget_tokens: N}` syntax is deprecated.
 Use adaptive thinking with the `effort` parameter instead:
 
 ```javascript
-// Opus 4.6 — complex reasoning
+// Opus 4.7 — complex reasoning
 {
-  model: "claude-opus-4-6",
+  model: "claude-opus-4-7",
   max_tokens: 16000,
   thinking: { type: "adaptive" },
   effort: "high",  // "high" | "medium" | "low" | "max" (Opus only)
@@ -163,8 +168,8 @@ Use adaptive thinking with the `effort` parameter instead:
 
 No beta header required — adaptive thinking is GA.
 
-### IMPORTANT: Opus 4.6 Prefilled Assistant Restriction
-**Opus 4.6 does NOT support prefilled assistant messages.** Requests with
-prefilled assistant messages return a 400 error. If any Opus calls use
-prefilled assistant content, they must be refactored to use system prompts
-or user messages instead.
+### IMPORTANT: Opus Prefilled Assistant Restriction
+**Opus (4.6 and 4.7) does NOT support prefilled assistant messages.**
+Requests with prefilled assistant messages return a 400 error. If any
+Opus calls use prefilled assistant content, they must be refactored to
+use system prompts or user messages instead.

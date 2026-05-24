@@ -1,5 +1,5 @@
-/**
- * LIFE SCORE™ Opus Judge API
+﻿/**
+ * LIFE SCOREâ„¢ Opus Judge API
  * Vercel Serverless Function - Claude Opus 4.6 consensus builder
  *
  * FIX: Now properly computes consensus scores from evaluator results
@@ -47,7 +47,7 @@ const OPUS_TIMEOUT_MS = 240000;
 // Opus API types
 // FIX #2: Add legalScore/enforcementScore fields to match opusJudge.ts
 // FIX: Removed confidence field - confidenceLevel must ONLY be derived from stdDev
-//      Opus overriding confidence caused mismatch with displayed variance (e.g., σ=47 showing "Strong")
+//      Opus overriding confidence caused mismatch with displayed variance (e.g., Ïƒ=47 showing "Strong")
 interface OpusJudgment {
   metricId: string;
   city1ConsensusScore: number;
@@ -254,13 +254,13 @@ function buildMetricConsensus(
 
   let explanation = `Consensus from ${uniqueProviders.length} LLM${uniqueProviders.length > 1 ? 's' : ''}: `;
   if (confidenceLevel === 'unanimous') {
-    explanation += `Strong agreement (σ=${stdDev.toFixed(1)}).`;
+    explanation += `Strong agreement (Ïƒ=${stdDev.toFixed(1)}).`;
   } else if (confidenceLevel === 'strong') {
-    explanation += `Good agreement (σ=${stdDev.toFixed(1)}).`;
+    explanation += `Good agreement (Ïƒ=${stdDev.toFixed(1)}).`;
   } else if (confidenceLevel === 'moderate') {
-    explanation += `Some disagreement (σ=${stdDev.toFixed(1)}).`;
+    explanation += `Some disagreement (Ïƒ=${stdDev.toFixed(1)}).`;
   } else {
-    explanation += `Significant disagreement (σ=${stdDev.toFixed(1)}).`;
+    explanation += `Significant disagreement (Ïƒ=${stdDev.toFixed(1)}).`;
   }
 
   return {
@@ -379,7 +379,7 @@ function buildOpusPrompt(
     ? `\n## SCORING CRITERIA FOR DISAGREEMENT METRICS\nThese metrics use category-based scoring. Use this context to resolve disagreements:\n${categoryContext.join('\n')}\n`
     : '';
 
-  return `You are Claude Opus 4.6, the final judge for LIFE SCORE™ city comparisons.
+  return `You are Claude Opus 4.6, the final judge for LIFE SCOREâ„¢ city comparisons.
 
 ## CITIES
 - City 1: ${city1}
@@ -389,7 +389,7 @@ function buildOpusPrompt(
 ${summaries.slice(0, 30).join('\n')}
 ${categorySection}
 ## TASK
-Review these evaluations and for metrics marked [HIGH DISAGREEMENT] (σ>15), provide your judgment.
+Review these evaluations and for metrics marked [HIGH DISAGREEMENT] (Ïƒ>15), provide your judgment.
 ${USE_CATEGORY_SCORING ? 'Use the scoring criteria above to determine the correct category and score.' : ''}
 Return JSON with ONLY metrics you want to override:
 {
@@ -456,7 +456,7 @@ function mergeOpusJudgments(
       c1.legalScore = clampScore(judgment.city1LegalScore, c1.legalScore);
       c1.enforcementScore = clampScore(judgment.city1EnforcementScore, c1.enforcementScore);
       // FIX: Do NOT override confidenceLevel - it must always match stdDev
-      // Opus was causing σ=47 to show "Strong" instead of "Split"
+      // Opus was causing Ïƒ=47 to show "Strong" instead of "Split"
       c1.judgeExplanation = judgment.explanation || c1.judgeExplanation;
     }
 
@@ -488,7 +488,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Require authentication — uses Anthropic Opus credits
+  // Require authentication â€” uses Anthropic Opus credits
   const auth = await requireAuth(req, res);
   if (!auth) return;
 
@@ -531,7 +531,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-opus-4-6',
+            model: 'claude-opus-4-7',
             max_tokens: 4096,
             messages: [{ role: 'user', content: prompt }]
           })

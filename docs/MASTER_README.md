@@ -246,7 +246,7 @@ D:\LifeScore\
 | Gemini 3.1 Pro | `gemini-3-pro` | gemini-3.1-pro-preview | Google |
 | Grok 4 | `grok-4` | grok-4 | Native |
 | Perplexity | `perplexity` | sonar-reasoning-pro | Native |
-| **Judge** | `claude-opus` | claude-opus-4-6 | N/A |
+| **Judge** | `claude-opus` | claude-opus-4-7 | N/A |
 
 ### API Keys
 All configured in Vercel. **DO NOT ask user to configure.**

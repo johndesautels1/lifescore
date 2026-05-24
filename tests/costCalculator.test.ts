@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LIFE SCORE - Cost Calculator Unit Tests
  * Tests pure calculation functions with zero side effects
  */
@@ -24,7 +24,7 @@ describe('calculateLLMCost', () => {
   it('calculates Claude Opus cost correctly', () => {
     // 1000 input tokens, 500 output tokens
     // Opus: $15/1M input, $75/1M output
-    const result = calculateLLMCost('claude-opus-4-6', 1000, 500);
+    const result = calculateLLMCost('claude-opus-4-7', 1000, 500);
     expect(result.inputCost).toBeCloseTo(0.015, 5);
     expect(result.outputCost).toBeCloseTo(0.0375, 5);
     expect(result.totalCost).toBeCloseTo(0.0525, 5);
@@ -55,7 +55,7 @@ describe('calculateLLMCost', () => {
 
   it('handles large token counts', () => {
     // 1 million tokens each
-    const result = calculateLLMCost('claude-opus-4-6', 1_000_000, 1_000_000);
+    const result = calculateLLMCost('claude-opus-4-7', 1_000_000, 1_000_000);
     expect(result.inputCost).toBeCloseTo(15.0, 2);
     expect(result.outputCost).toBeCloseTo(75.0, 2);
     expect(result.totalCost).toBeCloseTo(90.0, 2);

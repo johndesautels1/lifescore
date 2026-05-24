@@ -743,7 +743,7 @@ Metric: LGBTQ+ Rights
 
 | Item | Note |
 |------|------|
-| Opus model string | `claude-opus-4-6` (verified correct) |
+| Opus model string | `claude-opus-4-7` (verified correct; bumped from 4-6 on 2026-05-25 to align with LTM + OB) |
 | console.log syntax error | `console.log\`` should be `console.log(\`` in enhancedComparison.ts |
 | Tavily free tier | 1000 calls/month — may need paid tier at scale |
 | Claude Sonnet service | Not provided — need to create `services/llm/claudeSonnet.ts` |

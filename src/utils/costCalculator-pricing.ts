@@ -11,10 +11,22 @@
 
 export const API_PRICING = {
   // Anthropic Claude
-  'claude-opus-4-6': {
+  // Note 2026-05-25: Opus bumped to 4.7 to align with LTM + OB. The
+  // 4.6 entry is retained as a deprecated record so historical
+  // Supabase cost rows (judge_reports.opus_judge_total recorded with
+  // model='claude-opus-4-6') still resolve to a price in the
+  // CostDashboard fallback path. Pricing tier is identical — Anthropic
+  // hasn't differentiated Opus 4.6 vs 4.7 input/output rates.
+  'claude-opus-4-7': {
     input: 15.00,    // $15 per 1M input tokens
     output: 75.00,   // $75 per 1M output tokens
-    name: 'Claude Opus 4.6',
+    name: 'Claude Opus 4.7',
+    icon: '🧠'
+  },
+  'claude-opus-4-6': {
+    input: 15.00,    // $15 per 1M input tokens — deprecated, retained for historical records
+    output: 75.00,   // $75 per 1M output tokens — deprecated
+    name: 'Claude Opus 4.6 (deprecated)',
     icon: '🧠'
   },
   'claude-sonnet-4-6': {

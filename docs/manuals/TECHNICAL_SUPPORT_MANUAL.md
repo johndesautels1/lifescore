@@ -606,7 +606,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Provider | Type ID | Model | Use Case |
 |----------|---------|-------|----------|
 | Anthropic | `claude-sonnet` | claude-sonnet-4-6 | Primary evaluator |
-| Anthropic | `claude-opus` | claude-opus-4-6 | Judge/consensus |
+| Anthropic | `claude-opus` | claude-opus-4-7 | Judge/consensus |
 | OpenAI | `gpt-4o` | gpt-4o | Secondary evaluator |
 | Google | `gemini-3-pro` | gemini-3.1-pro-preview | Evaluator with Google Search |
 | xAI | `grok-4` | grok-4 | Evaluator with X search |
