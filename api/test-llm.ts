@@ -28,7 +28,7 @@ async function testClaude(): Promise<{ success: boolean; message: string; latenc
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
+          model: 'claude-sonnet-5',
           max_tokens: 10,
           messages: [{ role: 'user', content: 'Say "ok"' }]
         })
@@ -65,7 +65,7 @@ async function testGPT4o(): Promise<{ success: boolean; message: string; latency
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'gpt-5.5',
           messages: [{ role: 'user', content: 'Say "ok"' }],
           max_tokens: 10
         })
@@ -94,7 +94,7 @@ async function testGemini(): Promise<{ success: boolean; message: string; latenc
   const startTime = Date.now();
   try {
     const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,7 +135,7 @@ async function testGrok(): Promise<{ success: boolean; message: string; latencyM
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'grok-4',
+          model: 'grok-4.5',
           messages: [{ role: 'user', content: 'Say "ok"' }],
           max_tokens: 10
         })
@@ -172,7 +172,7 @@ async function testPerplexity(): Promise<{ success: boolean; message: string; la
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'sonar-reasoning-pro',
+          model: 'sonar-pro',
           messages: [{ role: 'user', content: 'Say "ok"' }],
           max_tokens: 10
         })

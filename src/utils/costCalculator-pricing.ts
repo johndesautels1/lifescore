@@ -17,10 +17,18 @@ export const API_PRICING = {
   // model='claude-opus-4-6') still resolve to a price in the
   // CostDashboard fallback path. Pricing tier is identical — Anthropic
   // hasn't differentiated Opus 4.6 vs 4.7 input/output rates.
+  // 2026-07 refresh: current judge model. Older versioned keys are retained
+  // below so historical Supabase cost rows still resolve to a price.
+  'claude-opus-4-8': {
+    input: 15.00,    // $15 per 1M input tokens
+    output: 75.00,   // $75 per 1M output tokens
+    name: 'Claude Opus 4.8',
+    icon: '🧠'
+  },
   'claude-opus-4-7': {
     input: 15.00,    // $15 per 1M input tokens
     output: 75.00,   // $75 per 1M output tokens
-    name: 'Claude Opus 4.7',
+    name: 'Claude Opus 4.7 (deprecated)',
     icon: '🧠'
   },
   'claude-opus-4-6': {
@@ -29,22 +37,41 @@ export const API_PRICING = {
     name: 'Claude Opus 4.6 (deprecated)',
     icon: '🧠'
   },
+  'claude-sonnet-5': {
+    input: 3.00,     // $3 per 1M input tokens
+    output: 15.00,   // $15 per 1M output tokens
+    name: 'Claude Sonnet 5',
+    icon: '🎵'
+  },
   'claude-sonnet-4-6': {
     input: 3.00,     // $3 per 1M input tokens
     output: 15.00,   // $15 per 1M output tokens
-    name: 'Claude Sonnet 4.6',
+    name: 'Claude Sonnet 4.6 (deprecated)',
     icon: '🎵'
   },
 
   // OpenAI
+  'gpt-5.5': {
+    input: 5.00,     // $5 per 1M input tokens
+    output: 30.00,   // $30 per 1M output tokens
+    name: 'GPT-5.5',
+    icon: '🤖'
+  },
   'gpt-4o': {
-    input: 2.50,     // $2.50 per 1M input tokens
+    input: 2.50,     // $2.50 per 1M input tokens — retained for historical rows
     output: 10.00,   // $10 per 1M output tokens
-    name: 'GPT-4o',
+    name: 'GPT-4o (deprecated)',
     icon: '🤖'
   },
 
   // Google Gemini
+  'gemini-3.1-pro': {
+    input: 1.25,     // $1.25 per 1M input tokens
+    output: 5.00,    // $5 per 1M output tokens
+    name: 'Gemini 3.1 Pro',
+    icon: '💎'
+  },
+  // Internal provider-id key (kept: cost tracking + rate limiter key on this id).
   'gemini-3-pro': {
     input: 1.25,     // $1.25 per 1M input tokens
     output: 5.00,    // $5 per 1M output tokens
@@ -53,6 +80,13 @@ export const API_PRICING = {
   },
 
   // xAI Grok
+  'grok-4.5': {
+    input: 3.00,     // $3 per 1M input tokens (estimated)
+    output: 15.00,   // $15 per 1M output tokens (estimated)
+    name: 'Grok 4.5',
+    icon: '🚀'
+  },
+  // Internal provider-id key (kept: cost tracking + rate limiter key on this id).
   'grok-4': {
     input: 3.00,     // $3 per 1M input tokens (estimated)
     output: 15.00,   // $15 per 1M output tokens (estimated)
@@ -60,7 +94,14 @@ export const API_PRICING = {
     icon: '🚀'
   },
 
-  // Perplexity
+  // Perplexity — Sonar Pro (web-grounded evaluator)
+  'sonar-pro': {
+    input: 3.00,     // $3 per 1M input tokens
+    output: 15.00,   // $15 per 1M output tokens
+    name: 'Perplexity Sonar Pro',
+    icon: '🔍'
+  },
+  // Internal provider-id key (kept: cost tracking keys perplexity on this id).
   'perplexity-sonar': {
     input: 1.00,     // $1 per 1M input tokens
     output: 5.00,    // $5 per 1M output tokens

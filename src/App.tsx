@@ -920,11 +920,11 @@ const AppContent: React.FC = () => {
                               llmResults.forEach((evalResult, provider) => {
                                 if (evalResult.usage?.tokens) {
                                   const { inputTokens, outputTokens } = evalResult.usage.tokens;
-                                  const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-4-6' :
-                                                     provider === 'gpt-4o' ? 'gpt-4o' :
-                                                     provider === 'gemini-3-pro' ? 'gemini-3-pro' :
-                                                     provider === 'grok-4' ? 'grok-4' :
-                                                     provider === 'perplexity' ? 'perplexity-sonar' : null;
+                                  const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-5' :
+                                                     provider === 'gpt-4o' ? 'gpt-5.5' :
+                                                     provider === 'gemini-3-pro' ? 'gemini-3.1-pro' :
+                                                     provider === 'grok-4' ? 'grok-4.5' :
+                                                     provider === 'perplexity' ? 'sonar-pro' : null;
 
                                   if (pricingKey) {
                                     const costs = calculateLLMCost(pricingKey as any, inputTokens, outputTokens);
@@ -951,10 +951,10 @@ const AppContent: React.FC = () => {
 
                               if (effectiveJudgeResult?.usage?.opusTokens) {
                                 const { inputTokens, outputTokens } = effectiveJudgeResult.usage.opusTokens;
-                                const judgeCosts = calculateLLMCost('claude-opus-4-7', inputTokens, outputTokens);
+                                const judgeCosts = calculateLLMCost('claude-opus-4-8', inputTokens, outputTokens);
                                 costBreakdown.opusJudge = {
                                   provider: 'claude-opus',
-                                  model: 'claude-opus-4-7',
+                                  model: 'claude-opus-4-8',
                                   inputTokens,
                                   outputTokens,
                                   inputCost: judgeCosts.inputCost,

@@ -130,16 +130,27 @@ If a git command fails, say so honestly — do not fabricate a number.
 ## Claude API Model IDs & Configuration (Updated 2026-05-25)
 
 ### Model IDs — No Date Suffix
-- **Opus:** `claude-opus-4-7`  *(bumped from 4-6 on 2026-05-25 to align
-  with London Tech Map + Olivia Brain — see backport commit on lifescore
-  main branch)*
-- **Sonnet:** `claude-sonnet-4-6`
+*(2026-07 cascade refresh — bumped every provider to current models.)*
+- **Opus:** `claude-opus-4-8`  *(judge + judge-report; bumped from 4-7 on 2026-07)*
+- **Sonnet:** `claude-sonnet-5`  *(evaluator + Olivia/movie/Cristiano storyboards)*
 - **Haiku:** `claude-haiku-4-5-20251001`
 
+Non-Anthropic evaluators (the enhanced-comparison cascade), refreshed 2026-07:
+- **OpenAI:** `gpt-5.5`  *(was `gpt-4o`)*
+- **Google:** `gemini-3.1-pro`  *(GA; was `gemini-3.1-pro-preview`)*
+- **xAI:** `grok-4.5`  *(was `grok-4`)*
+- **Perplexity:** `sonar-pro`  *(was `sonar-reasoning-pro` — the reasoning variant)*
+
+NOTE: the internal provider IDs (`claude-sonnet`, `gpt-4o`, `gemini-3-pro`,
+`grok-4`, `perplexity`) are IDENTIFIERS used as keys across the type unions,
+rate limiter, and cost tracker — they are deliberately NOT renamed. Only the
+wire `model:` strings sent to each API were bumped.
+
 Old date-suffixed IDs (e.g. `claude-sonnet-4-5-20250929`) are deprecated.
-Old `claude-opus-4-6` is also deprecated — retained in
-`src/utils/costCalculator-pricing.ts` only so historical Supabase rows
-(model='claude-opus-4-6') still resolve to a price.
+Deprecated model keys (`claude-opus-4-7`, `claude-opus-4-6`, `claude-sonnet-4-6`,
+`gpt-4o`, `grok-4`, `gemini-3-pro`, `perplexity-sonar`) are retained in
+`src/utils/costCalculator-pricing.ts` only so historical Supabase cost rows
+still resolve to a price.
 
 ### Extended Thinking — Adaptive (New)
 The old `thinking: {type: "enabled", budget_tokens: N}` syntax is deprecated.

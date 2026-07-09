@@ -824,7 +824,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
+            model: 'claude-sonnet-5',
             max_tokens: 16384,
             messages: [{ role: 'user', content: prompt }]
           })
@@ -1012,7 +1012,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-5.5',
             messages: [
               // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
               { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
@@ -1194,7 +1194,7 @@ ${isLargeCategory ? `
       console.log(`[GEMINI] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
       const response = await fetchWithTimeout(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1394,7 +1394,7 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: 'grok-4',
+            model: 'grok-4.5',
             messages: [
               {
                 role: 'system',
@@ -1660,7 +1660,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: 'sonar-reasoning-pro',
+            model: 'sonar-pro',
             messages: [
               {
                 role: 'system',
