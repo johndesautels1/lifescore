@@ -691,6 +691,21 @@ Cached AI-generated contrast images for Olivia.
 
 ---
 
+#### `tavily_context_cache`
+One set of Tavily web research per city pair, shared by every evaluation of that pair for 30 minutes (`api/shared/tavilyCache.ts`). The first call claims the pair and searches; later calls wait for it or read it. Server only (RLS on, no policies); no personal data.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| pair_key | TEXT | PK | Both city names, lower-cased and sorted |
+| status | TEXT | NOT NULL, 'pending' or 'ready' | Pending while the first call searches |
+| data | JSONB | | Research report (or the id of one still running) and each search's results |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Reuse ends 30 minutes after this |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Last write (a claim older than 50 s is abandoned) |
+
+**Migration:** `supabase/migrations/20261003_tavily_context_cache.sql`
+
+---
+
 #### `app_prompts`
 Admin-editable prompts for all AI interactions.
 

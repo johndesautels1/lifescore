@@ -681,7 +681,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 }
 ```
 
-**Tavily** (`api/shared/tavily.ts`): a research report is ordered and collected within 45 seconds, alongside twelve searches. If it isn't ready by then, the evaluation goes ahead without it.
+**Tavily** (`api/shared/tavily.ts`, shared through `api/shared/tavilyCache.ts`): once per city pair, a research report is ordered and collected within 45 seconds, alongside twelve searches. Every category, model and half-batch of that pair then reuses them for 30 minutes (table `tavily_context_cache`). A report not ready in time is left out, and the next evaluation asks Tavily for it once more. If the database can't be reached, each evaluation searches for itself.
 
 **Time limit:** 300 seconds (`vercel.json`); each model call allows 240 seconds.
 

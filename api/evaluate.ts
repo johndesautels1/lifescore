@@ -19,7 +19,18 @@ import { AI_MODELS } from './shared/models.js';
 const STANDARD_COMPARISON_PROVIDER = 'claude-sonnet';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
-import { tavilyResearch, tavilySearch, type TavilyResearchOutcome, type TavilyResearchReport } from './shared/tavily.js';
+import { checkResearchOnce, tavilyResearch, tavilySearch } from './shared/tavily.js';
+import {
+  claimTavilyContext,
+  fillTavilyContext,
+  releaseTavilyContext,
+  searchKey,
+  tavilyPairKey,
+  updateTavilyContext,
+  worthSharing,
+  type CachedSearch,
+  type TavilyContextData,
+} from './shared/tavilyCache.js';
 
 // Timeout constants (in milliseconds)
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM API calls (OpenAI, Claude, Gemini, etc.)
@@ -27,52 +38,6 @@ const TAVILY_TIMEOUT_MS = 45000; // 45 seconds for Tavily search/research (web A
 
 // FIX SD1+SD2: Dynamic year for Tavily search queries (prevents stale hardcoded years)
 const CURRENT_YEAR = new Date().getFullYear().toString();
-
-// ============================================================================
-// TAVILY RESEARCH CACHE (In-memory, clears on redeploy)
-// Added 2026-02-03 - Reduces duplicate Research API calls across LLM providers
-// ============================================================================
-interface CachedResearch {
-  data: TavilyResearchReport;
-  timestamp: number;
-}
-const tavilyResearchCache = new Map<string, CachedResearch>();
-const RESEARCH_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes (within single comparison session)
-const RESEARCH_CACHE_MAX_ENTRIES = 50; // Cap to prevent unbounded memory growth
-
-function pruneResearchCache(): void {
-  if (tavilyResearchCache.size <= RESEARCH_CACHE_MAX_ENTRIES) return;
-  const now = Date.now();
-  // Remove expired entries first
-  for (const [key, entry] of tavilyResearchCache) {
-    if (now - entry.timestamp >= RESEARCH_CACHE_TTL_MS) {
-      tavilyResearchCache.delete(key);
-    }
-  }
-  // If still over limit, remove oldest entries
-  if (tavilyResearchCache.size > RESEARCH_CACHE_MAX_ENTRIES) {
-    const sorted = [...tavilyResearchCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
-    const toRemove = sorted.length - RESEARCH_CACHE_MAX_ENTRIES;
-    for (let i = 0; i < toRemove; i++) {
-      tavilyResearchCache.delete(sorted[i][0]);
-    }
-  }
-}
-
-// Stats tracking for logging
-const tavilyStats = {
-  researchCacheHits: 0,
-  researchCacheMisses: 0,
-  searchCalls: 0,
-  reset() {
-    this.researchCacheHits = 0;
-    this.researchCacheMisses = 0;
-    this.searchCalls = 0;
-  },
-  log(context: string) {
-    console.log(`[TAVILY STATS - ${context}] Research: ${this.researchCacheHits} hits, ${this.researchCacheMisses} misses | Searches: ${this.searchCalls} calls`);
-  }
-};
 
 // Phase 2: Environment variable toggle for gradual rollout
 const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
@@ -549,44 +514,8 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
 }
 
 // Tavily: research baseline + category searches, through the one Tavily
-// connection (api/shared/tavily.ts). The research report is ordered and
-// collected within TAVILY_TIMEOUT_MS, alongside the searches.
-
-// Cached research - checks the in-memory cache first. A cache hit orders nothing.
-async function getCachedTavilyResearch(city1: string, city2: string): Promise<TavilyResearchOutcome> {
-  // Normalize cache key (alphabetical order for consistent hits)
-  const [a, b] = [city1.toLowerCase(), city2.toLowerCase()].sort();
-  const cacheKey = `${a}:${b}`;
-
-  // Check cache
-  const cached = tavilyResearchCache.get(cacheKey);
-  if (cached && (Date.now() - cached.timestamp) < RESEARCH_CACHE_TTL_MS) {
-    tavilyStats.researchCacheHits++;
-    console.log(`[TAVILY RESEARCH CACHE HIT] ${city1} vs ${city2} (key: ${cacheKey})`);
-    return { report: cached.data, ordered: false, credits: null };
-  }
-
-  // Cache miss - order and collect the report
-  tavilyStats.researchCacheMisses++;
-  console.log(`[TAVILY RESEARCH CACHE MISS] ${city1} vs ${city2} - ordering...`);
-
-  const outcome = await tavilyResearch(
-    `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on ${CURRENT_YEAR} current laws.`,
-    { deadlineMs: TAVILY_TIMEOUT_MS, label: `${city1} vs ${city2}` },
-  );
-
-  // Store in cache if a report was collected
-  if (outcome.report) {
-    pruneResearchCache();
-    tavilyResearchCache.set(cacheKey, {
-      data: outcome.report,
-      timestamp: Date.now()
-    });
-    console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min, cache size: ${tavilyResearchCache.size})`);
-  }
-
-  return outcome;
-}
+// connection (api/shared/tavily.ts), done ONCE per city pair and shared by every
+// category, model and half-batch for 30 minutes (api/shared/tavilyCache.ts).
 
 /** The Tavily context block for an evaluator's prompt, and what it cost. */
 interface TavilyContext {
@@ -595,14 +524,12 @@ interface TavilyContext {
   usage: TavilyUsage;
 }
 
-/**
- * Research baseline + the twelve category searches, in parallel. Returns null
- * when Tavily is not configured. Never throws.
- */
-async function gatherTavilyContext(city1: string, city2: string, closingLine: string): Promise<TavilyContext | null> {
-  if (!process.env.TAVILY_API_KEY) return null;
+/** No Tavily call made by this evaluation (it used the shared research). */
+const NO_TAVILY_COST: TavilyUsage = { researchCredits: 0, searchCredits: 0, totalCredits: 0, researchUnreported: 0, searchUnreported: 0 };
 
-  const searchQueries = [
+/** The twelve searches: each of the six categories, for each city. */
+function tavilySearchQueries(city1: string, city2: string): string[] {
+  return [
     // personal_freedom (15 metrics)
     `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
     `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
@@ -622,25 +549,95 @@ async function gatherTavilyContext(city1: string, city2: string, closingLine: st
     `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
     `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
   ];
+}
 
-  // Run Research + Search in parallel for speed
-  tavilyStats.searchCalls += searchQueries.length;
+/** Runs the research order and the twelve searches, in parallel, and counts what they cost. */
+async function searchTavily(city1: string, city2: string, queries: string[]): Promise<{ data: TavilyContextData; usage: TavilyUsage }> {
   const [research, ...searchResults] = await Promise.all([
-    getCachedTavilyResearch(city1, city2),
-    ...searchQueries.map(q => tavilySearch(q, 5, TAVILY_TIMEOUT_MS)),
+    tavilyResearch(
+      `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on ${CURRENT_YEAR} current laws.`,
+      { deadlineMs: TAVILY_TIMEOUT_MS, label: `${city1} vs ${city2}` },
+    ),
+    ...queries.map(q => tavilySearch(q, 5, TAVILY_TIMEOUT_MS)),
   ]);
 
+  const searches: Record<string, CachedSearch> = {};
+  queries.forEach((q, i) => {
+    searches[searchKey(q)] = { results: searchResults[i].results, answer: searchResults[i].answer };
+  });
+
+  const researchCredits = research.ordered ? (research.credits ?? 0) : 0;
+  const searchCredits = searchResults.reduce((sum, r) => sum + (r.credits ?? 0), 0);
+  return {
+    data: { research: research.report, researchRequestId: research.requestId, searches },
+    usage: {
+      researchCredits,
+      searchCredits,
+      totalCredits: researchCredits + searchCredits,
+      researchUnreported: research.ordered && research.credits === null ? 1 : 0,
+      searchUnreported: searchResults.filter(r => r.credits === null).length,
+    },
+  };
+}
+
+/** A shared copy whose report was not ready in time: ask Tavily once whether it is now. */
+async function completeLateResearch(key: string, data: TavilyContextData): Promise<TavilyContextData> {
+  if (data.research || !data.researchRequestId) return data;
+  const status = await checkResearchOnce(data.researchRequestId, 5000);
+  if (status?.status === 'completed' && status.text) {
+    const updated: TavilyContextData = { ...data, research: { text: status.text, sources: status.sources }, researchRequestId: undefined };
+    await updateTavilyContext(key, updated);
+    console.log('[TAVILY] Late research report collected for', key);
+    return updated;
+  }
+  if (status?.status === 'failed') {
+    const updated: TavilyContextData = { ...data, researchRequestId: undefined };
+    await updateTavilyContext(key, updated);
+    return updated;
+  }
+  return data;
+}
+
+/**
+ * The Tavily context for one evaluation: the city pair's shared research when
+ * another call has it (or is fetching it), else this call searches and shares.
+ * Returns null when Tavily is not configured. Never throws.
+ */
+async function gatherTavilyContext(city1: string, city2: string, closingLine: string): Promise<TavilyContext | null> {
+  if (!process.env.TAVILY_API_KEY) return null;
+
+  const queries = tavilySearchQueries(city1, city2);
+  const key = tavilyPairKey(city1, city2);
+  const claim = await claimTavilyContext(key);
+
+  let data: TavilyContextData;
+  let usage: TavilyUsage;
+  if (claim.kind === 'hit') {
+    data = await completeLateResearch(key, claim.data);
+    usage = NO_TAVILY_COST;
+  } else {
+    const fresh = await searchTavily(city1, city2, queries);
+    data = fresh.data;
+    usage = fresh.usage;
+    if (claim.kind === 'claimed') {
+      if (worthSharing(data)) await fillTavilyContext(key, data);
+      else await releaseTavilyContext(key);
+    }
+  }
+
+  // This evaluation's own query order (the cities may be the other way round).
+  const searchResults = queries.map(q => data.searches[searchKey(q)] ?? { results: [] });
   const allResults = searchResults.flatMap(r => r.results);
   const answers = searchResults.map(r => r.answer).filter(Boolean);
 
   // Build context: Research report first, then category searches
   const contextParts: string[] = [];
 
-  if (research.report) {
+  if (data.research) {
     contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
-${research.report.text}
+${data.research.text}
 
-**Sources:** ${research.report.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
+**Sources:** ${data.research.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
 `);
   }
 
@@ -651,16 +648,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 `);
   }
 
-  const researchCredits = research.ordered ? (research.credits ?? 0) : 0;
-  const searchCredits = searchResults.reduce((sum, r) => sum + (r.credits ?? 0), 0);
-  const usage: TavilyUsage = {
-    researchCredits,
-    searchCredits,
-    totalCredits: researchCredits + searchCredits,
-    researchUnreported: research.ordered && research.credits === null ? 1 : 0,
-    searchUnreported: searchResults.filter(r => r.credits === null).length,
-  };
-  console.log(`[TAVILY] ${city1} vs ${city2}: report ${research.report ? 'used' : 'not available'}, ${allResults.length} search results, credits reported ${usage.totalCredits} (unreported: ${usage.researchUnreported} research, ${usage.searchUnreported} searches)`);
+  console.log(`[TAVILY] ${city1} vs ${city2}: ${claim.kind === 'hit' ? 'shared research reused' : claim.kind === 'claimed' ? 'searched and shared' : 'searched (no shared copy)'}, report ${data.research ? 'used' : 'not available'}, ${allResults.length} search results, credits reported ${usage.totalCredits} (unreported: ${usage.researchUnreported} research, ${usage.searchUnreported} searches)`);
 
   return {
     context: contextParts.length > 0 ? contextParts.join('\n') + closingLine : '',
@@ -1625,8 +1613,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error(`[EVALUATE] ${provider} failed: ${result.error}`);
     }
 
-    // Log Tavily usage stats for this evaluation
-    tavilyStats.log(`${provider} - ${city1} vs ${city2}`);
+    // Tavily use for this evaluation is logged by gatherTavilyContext ("[TAVILY] …").
 
     // Surface warnings for partial failures
     const warnings: string[] = result.warnings || [];

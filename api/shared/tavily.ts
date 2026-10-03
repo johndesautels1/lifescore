@@ -61,6 +61,8 @@ export interface TavilyResearchOutcome {
   ordered: boolean;
   /** Credits Tavily reported for it; null when it reported none (not collected, or no usage sent). */
   credits: number | null;
+  /** Set when the report was ordered but not ready in time, so it can be collected later. */
+  requestId?: string;
 }
 
 /** A research status, as read from GET /research/{request_id}. */
@@ -177,37 +179,62 @@ export async function tavilyResearch(
   while (remaining() > 0) {
     await sleep(Math.min(pollIntervalMs, remaining()));
     if (remaining() <= 0) break;
-    try {
-      const response = await fetchWithTimeout(
-        `${TAVILY_API_URL}/research/${encodeURIComponent(requestId)}`,
-        { headers: headers(apiKey) },
-        Math.max(1, remaining()),
-      );
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unable to read error');
-        console.error(`${tag} Status error ${response.status}: ${errorText.slice(0, 300)}`);
-        if (response.status < 500) return { report: null, ordered: true, credits: null };
-        continue;
-      }
-      const status = readResearchStatus(await response.json().catch(() => null));
-      if (status.status === 'completed') {
-        console.log(`${tag} Collected after ${Date.now() - startedAt} ms - report length: ${status.text.length}, sources: ${status.sources.length}, credits: ${status.credits ?? 'not reported'}`);
-        return {
-          report: status.text ? { text: status.text, sources: status.sources } : null,
-          ordered: true,
-          credits: status.credits,
-        };
-      }
-      if (status.status === 'failed') {
-        console.error(`${tag} Tavily reports the research failed`);
-        return { report: null, ordered: true, credits: status.credits };
-      }
-    } catch (error) {
-      console.error(`${tag} Status check exception:`, error instanceof Error ? error.message : error);
+    const answer = await askResearchStatus(apiKey, requestId, Math.max(1, remaining()), tag);
+    if (answer.kind === 'refused') return { report: null, ordered: true, credits: null };
+    if (answer.kind === 'error') continue;
+    const status = answer.status;
+    if (status.status === 'completed') {
+      console.log(`${tag} Collected after ${Date.now() - startedAt} ms - report length: ${status.text.length}, sources: ${status.sources.length}, credits: ${status.credits ?? 'not reported'}`);
+      return {
+        report: status.text ? { text: status.text, sources: status.sources } : null,
+        ordered: true,
+        credits: status.credits,
+      };
+    }
+    if (status.status === 'failed') {
+      console.error(`${tag} Tavily reports the research failed`);
+      return { report: null, ordered: true, credits: status.credits };
     }
   }
   console.warn(`${tag} Not ready within ${options.deadlineMs} ms; the evaluation goes ahead without it`);
-  return { report: null, ordered: true, credits: null };
+  return { report: null, ordered: true, credits: null, requestId };
+}
+
+/** One GET /research/{request_id}: Tavily's answer, a refusal (4xx), or an error. */
+async function askResearchStatus(
+  apiKey: string,
+  requestId: string,
+  timeoutMs: number,
+  tag: string,
+): Promise<{ kind: 'status'; status: TavilyResearchStatus } | { kind: 'refused' } | { kind: 'error' }> {
+  try {
+    const response = await fetchWithTimeout(
+      `${TAVILY_API_URL}/research/${encodeURIComponent(requestId)}`,
+      { headers: headers(apiKey) },
+      timeoutMs,
+    );
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unable to read error');
+      console.error(`${tag} Status error ${response.status}: ${errorText.slice(0, 300)}`);
+      return response.status < 500 ? { kind: 'refused' } : { kind: 'error' };
+    }
+    return { kind: 'status', status: readResearchStatus(await response.json().catch(() => null)) };
+  } catch (error) {
+    console.error(`${tag} Status check exception:`, error instanceof Error ? error.message : error);
+    return { kind: 'error' };
+  }
+}
+
+/**
+ * Asks once about a report ordered earlier and left uncollected (a later
+ * evaluation of the same city pair picks it up when it is ready). Returns the
+ * status, or null when Tavily cannot be asked or refuses. Never throws.
+ */
+export async function checkResearchOnce(requestId: string, timeoutMs: number): Promise<TavilyResearchStatus | null> {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return null;
+  const answer = await askResearchStatus(apiKey, requestId, timeoutMs, '[TAVILY RESEARCH later check]');
+  return answer.kind === 'status' ? answer.status : null;
 }
 
 /**

@@ -11,6 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  checkResearchOnce,
   readResearchOrder,
   readResearchStatus,
   readSearchReply,
@@ -94,11 +95,23 @@ describe('tavilyResearch orders the report and collects it', () => {
     expect(calls).toEqual(['POST /research', 'GET /research/req-1', 'GET /research/req-1', 'GET /research/req-1']);
   });
 
-  it('stops at the deadline: charged, not collected, credits unknown', async () => {
+  it('stops at the deadline: charged, not collected, credits unknown, id kept for a later check', async () => {
     const pending = Array.from({ length: 200 }, () => json(202, { status: 'pending' }));
     scriptedTavily({ '/research': [json(201, { request_id: 'slow' })], '/research/slow': pending });
     const outcome = await tavilyResearch('compare', { deadlineMs: 60, pollIntervalMs: 5, label: 'test' });
-    expect(outcome).toEqual({ report: null, ordered: true, credits: null });
+    expect(outcome).toEqual({ report: null, ordered: true, credits: null, requestId: 'slow' });
+  });
+
+  it('a later check collects a report that has since finished', async () => {
+    scriptedTavily({ '/research/slow': [json(200, { status: 'completed', content: 'Late report', sources: [], usage: { credits: 9 } })] });
+    const status = await checkResearchOnce('slow', 2000);
+    expect(status?.status).toBe('completed');
+    expect(status?.text).toBe('Late report');
+  });
+
+  it('a later check that Tavily refuses gives null', async () => {
+    scriptedTavily({ '/research/gone': [json(404, { detail: 'not found' })] });
+    expect(await checkResearchOnce('gone', 2000)).toBeNull();
   });
 
   it('a failed report is charged and has no text', async () => {

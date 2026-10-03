@@ -49,7 +49,7 @@
 |---|---|---|
 | Consent records (`consent_logs`: choice, time, IP address, browser) | Proof of what was consented to | `consent_logs.user_id` is set to null; the record keeps no account link |
 | Payment and invoice records | Tax and accounting law | Held by Stripe in its own systems, not by us |
-| Shared caches: city comparisons, contrast images, Cristiano city films, Moving Movies | Reused for every user; hold no personal data | The starter's id is set to null (`cristiano_city_videos`, `movie_videos`) |
+| Shared caches: city comparisons, contrast images, Cristiano city films, Moving Movies, web research per city pair | Reused for every user; hold no personal data | The starter's id is set to null (`cristiano_city_videos`, `movie_videos`); `tavily_context_cache` holds no id at all |
 | Database backups | Disaster recovery | Held by Supabase and expire on its backup schedule |
 
 ### 2.3 Never held by us
@@ -109,7 +109,7 @@ Suppliers process data on our instructions under their data processing terms; th
 
 | Item | Why it matters | Status |
 |---|---|---|
-| Purge expired rows in the shared caches (`global_comparison_cache`, `contrast_image_cache`, `cristiano_city_videos`, `movie_videos`) | They carry an `expires_at` but nothing deletes expired rows; only the Cristiano film reader ignores expired films. No personal data is held, so this is housekeeping, not a privacy risk. | Not built |
+| Purge expired rows in the shared caches (`global_comparison_cache`, `contrast_image_cache`, `cristiano_city_videos`, `movie_videos`, `tavily_context_cache`) | They carry an `expires_at` (or, for `tavily_context_cache`, a 30-minute life from `created_at`) but nothing deletes expired rows; only the Cristiano film reader ignores expired films, and a `tavily_context_cache` row is replaced when its city pair is next compared. No personal data is held, so this is housekeeping, not a privacy risk. | Not built |
 | A stated backup period | Supabase's backup retention depends on the plan; record the plan's period here | To confirm |
 | Annual review reminder | Section 8 | Not scheduled |
 
