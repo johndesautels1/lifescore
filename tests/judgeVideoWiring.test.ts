@@ -55,4 +55,16 @@ describe('primary and back-up', () => {
     expect(heygen).toBeGreaterThan(0);
     expect(replicate).toBeGreaterThan(heygen);
   });
+
+  it("Olivia's recorded video tries HeyGen v3 before the v2 back-up, and only with her own look", () => {
+    const route = readFileSync('api/olivia/avatar/heygen-video.ts', 'utf8');
+    const v3 = route.indexOf('await submitOnV3(');
+    const v2 = route.indexOf('await generateVideo(apiKey');
+    expect(v3).toBeGreaterThan(0);
+    expect(v2).toBeGreaterThan(v3);
+    // The look check runs before any v3 submission, so the shared wiring's
+    // self-repair can never put another presenter's face on her words.
+    expect(route.indexOf('looks.some((look) => look.id === avatarId)')).toBeGreaterThan(0);
+    expect(route.indexOf('looks.some((look) => look.id === avatarId)')).toBeLessThan(route.indexOf('await submitVideo('));
+  });
 });

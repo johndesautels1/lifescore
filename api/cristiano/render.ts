@@ -3,10 +3,13 @@
  * Stage 2 of the 2-stage video pipeline.
  *
  * Takes the validated 7-scene storyboard JSON from Stage 1 (storyboard.ts),
- * formats it into a comprehensive prompt for the HeyGen Video Agent V2,
+ * formats it into a comprehensive prompt for HeyGen's v3 video agent,
  * and submits for rendering. Supports status polling and Supabase caching.
  *
- * Endpoint: POST https://api.heygen.com/v1/video_agent/generate
+ * Endpoints (api/shared/heygen/videoAgent.ts, the questionnaire engine's wiring):
+ *   POST https://api.heygen.com/v3/video-agents            → a session
+ *   GET  https://api.heygen.com/v3/video-agents/{session}  → the video id, once planned
+ *   GET  https://api.heygen.com/v3/videos/{video_id}        → status and the finished film
  * The Video Agent auto-assembles B-roll, overlays, and transitions from
  * the creative instructions in the prompt. This is what produces the
  * premium cinematic city tour with stock footage.
