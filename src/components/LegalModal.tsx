@@ -3,13 +3,26 @@
  * Shows the seven legal pages. Their words live in ONE place —
  * src/legal/legalContent.ts — which also generates docs/legal/*.md, so the
  * pop-up and the documents can never disagree (rewritten 2026-10-03).
- * The "Do Not Sell or Share" opt-out box and the supplier register are drawn
- * from code beneath the words they belong to.
+ *
+ * The look follows the questionnaire engine's legal pages (John, 2026-10-03:
+ * "use those but adopt them to this repo"): the pages as tabs, a "Legal"
+ * eyebrow over a gradient title, an "On this page" contents card, gold-square
+ * bullets, the supplier register as cards, and the company card at the end —
+ * in LIFE SCORE's own sapphire and gold, with light and dark faces
+ * (LegalModal.css). The "Do Not Sell or Share" opt-out box works as before.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { legalPage, parseBody, type LegalSlug, type LegalWidget, type TextRun } from '../legal/legalContent';
+import {
+  LEGAL_SLUGS,
+  legalPage,
+  parseBody,
+  type LegalSection,
+  type LegalSlug,
+  type LegalWidget,
+  type TextRun,
+} from '../legal/legalContent';
 import { LEGAL_EFFECTIVE, LEGAL_FACTS } from '../legal/legalFacts';
 import { LAST_UPDATED, SUB_PROCESSORS } from '../legal/subProcessors';
 import './LegalModal.css';
@@ -21,37 +34,118 @@ interface LegalModalProps {
   onClose: () => void;
 }
 
+/** Opened from the footer; each opening starts on the page that was clicked. */
 const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
   if (!page) return null;
-  const words = legalPage(page);
+  return <LegalDialog key={page} initial={page} onClose={onClose} />;
+};
+
+const LegalDialog: React.FC<{ initial: LegalSlug; onClose: () => void }> = ({ initial, onClose }) => {
+  const [slug, setSlug] = useState<LegalSlug>(initial);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const words = legalPage(slug);
+
+  // Escape closes the dialog, as every dialog in the app should.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const choosePage = (next: LegalSlug) => {
+    setSlug(next);
+    contentRef.current?.scrollTo({ top: 0 });
+  };
+
+  const jumpTo = (sectionId: string) => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    document
+      .getElementById(`legal-${slug}-${sectionId}`)
+      ?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  };
 
   return (
-    <div className="legal-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Legal Information">
-      <div className="legal-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="legal-modal-header">
-          <h2>{words.title}</h2>
-          <button className="legal-modal-close" onClick={onClose} aria-label="Close">
+    <div className="legal-modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="legal-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="legal-title"
+      >
+        <div className="legal-modal-bar">
+          <span className="legal-eyebrow">Legal</span>
+          <button type="button" className="legal-modal-close" onClick={onClose} aria-label="Close">
             &times;
           </button>
         </div>
-        <div className="legal-modal-content">
-          <div className="legal-content">
-            <p className="legal-effective">Effective Date: {words.effective}</p>
-            {words.sections.map((section) => (
-              <section key={section.id} id={`legal-${section.id}`}>
-                <h3>{section.heading}</h3>
-                <LegalBody body={section.body} />
-                {section.widget && <Widget widget={section.widget} />}
-              </section>
+
+        <div className="legal-modal-content" ref={contentRef}>
+          <nav className="legal-pills" aria-label="Legal pages">
+            {LEGAL_SLUGS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`legal-pill${s === slug ? ' current' : ''}`}
+                aria-current={s === slug ? 'page' : undefined}
+                onClick={() => choosePage(s)}
+              >
+                {legalPage(s).title}
+              </button>
             ))}
+          </nav>
+
+          <h1 id="legal-title" className="legal-title">
+            <span className="legal-gradient-text">{words.title}</span>
+          </h1>
+          <p className="legal-meta">
+            Effective {words.effective} · {LEGAL_FACTS.company}
+          </p>
+
+          <nav className="legal-toc legal-card" aria-label="On this page">
+            <div className="legal-eyebrow">On this page</div>
+            <ol>
+              {words.sections.map((section, index) => (
+                <li key={section.id}>
+                  <button type="button" onClick={() => jumpTo(section.id)}>
+                    <span className="legal-toc-number" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span>{section.heading}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
+
+          {words.sections.map((section) => (
+            <Section key={section.id} slug={slug} section={section} />
+          ))}
+
+          <div className="legal-company legal-card">
+            <div className="legal-company-name">{LEGAL_FACTS.company}</div>
+            <p>
+              {LEGAL_FACTS.address}
+              <br />
+              <a href={`mailto:${LEGAL_FACTS.contact}`}>{LEGAL_FACTS.contact}</a>
+            </p>
           </div>
-        </div>
-        <div className="legal-modal-footer">
-          <p>{LEGAL_FACTS.company} &bull; {LEGAL_FACTS.address}</p>
-          <p>Contact: {LEGAL_FACTS.contact}</p>
         </div>
       </div>
     </div>
+  );
+};
+
+const Section: React.FC<{ slug: LegalSlug; section: LegalSection }> = ({ slug, section }) => {
+  const id = `legal-${slug}-${section.id}`;
+  return (
+    <section id={id} className="legal-section" aria-labelledby={`${id}-h`}>
+      <h2 id={`${id}-h`}>{section.heading}</h2>
+      <LegalBody body={section.body} />
+      {section.widget && <Widget widget={section.widget} />}
+    </section>
   );
 };
 
@@ -64,7 +158,7 @@ const Runs: React.FC<{ runs: readonly TextRun[] }> = ({ runs }) => (
   </>
 );
 
-/** Paragraphs and bullet lists from a section's body. */
+/** Paragraphs, and lists with the gold square. */
 const LegalBody: React.FC<{ body: string }> = ({ body }) => (
   <>
     {parseBody(body).map((block, i) =>
@@ -73,10 +167,13 @@ const LegalBody: React.FC<{ body: string }> = ({ body }) => (
           <Runs runs={block.runs} />
         </p>
       ) : (
-        <ul key={i}>
+        <ul key={i} className="legal-bullets">
           {block.items.map((runs, j) => (
             <li key={j}>
-              <Runs runs={runs} />
+              <span className="legal-bullet-mark" aria-hidden="true" />
+              <span>
+                <Runs runs={runs} />
+              </span>
             </li>
           ))}
         </ul>
@@ -98,28 +195,21 @@ const Widget: React.FC<{ widget: LegalWidget }> = ({ widget }) => {
   }
 };
 
-/** The supplier register (src/legal/subProcessors.ts). */
+/** The supplier register (src/legal/subProcessors.ts), one card per supplier. */
 const ProcessorRegister: React.FC = () => (
-  <>
-    <div className="legal-table-wrap" style={{ overflowX: 'auto' }}>
-      <table className="legal-table">
-        <thead>
-          <tr><th>Supplier</th><th>What it does</th><th>What it receives</th><th>Where</th></tr>
-        </thead>
-        <tbody>
-          {SUB_PROCESSORS.map((p) => (
-            <tr key={p.name}>
-              <td>{p.name}</td>
-              <td>{p.role}</td>
-              <td>{p.data}</td>
-              <td>{p.jurisdiction}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <p className="legal-version">Supplier list last updated {LAST_UPDATED}</p>
-  </>
+  <div className="legal-processors">
+    {SUB_PROCESSORS.map((p) => (
+      <div key={p.name} className="legal-processor legal-card">
+        <div className="legal-processor-name">{p.name}</div>
+        <div>{p.role}</div>
+        <div className="legal-processor-data">
+          <strong>What it receives:</strong> {p.data}
+        </div>
+        <div className="legal-processor-where">{p.jurisdiction}</div>
+      </div>
+    ))}
+    <p className="legal-meta">Supplier list last updated {LAST_UPDATED}. Material changes are notified before they apply.</p>
+  </div>
 );
 
 // CCPA "Do Not Sell or Share My Personal Information" — the opt-out box
