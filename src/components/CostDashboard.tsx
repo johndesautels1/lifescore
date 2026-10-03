@@ -12,6 +12,9 @@ import {
   storeCostBreakdown,
   formatCost,
   toApiCostRecordInsert,
+  TAVILY_PLAN_MONTHLY_CREDITS,
+  TAVILY_PLAN_PER_CREDIT,
+  TAVILY_OVERAGE_PER_CREDIT,
   type APICallCost,
   type ComparisonCostBreakdown,
   type CostSummary
@@ -628,7 +631,9 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   ))}
                   <tr>
                     <td>🔎 Tavily</td>
-                    <td colSpan={2}>~$0.01/credit (varies by plan)</td>
+                    <td colSpan={2}>
+                      {`$${TAVILY_PLAN_PER_CREDIT}/credit on the monthly plan; $${TAVILY_OVERAGE_PER_CREDIT}/credit after its ${TAVILY_PLAN_MONTHLY_CREDITS.toLocaleString('en-US')} credits`}
+                    </td>
                   </tr>
                   <tr>
                     <td>📊 Gamma</td>

@@ -16,6 +16,12 @@ import {
   createCostBreakdown,
   finalizeCostBreakdown,
 } from '../src/utils/costCalculator-functions';
+import {
+  API_PRICING,
+  TAVILY_OVERAGE_PER_CREDIT,
+  TAVILY_PLAN_MONTHLY_CREDITS,
+  TAVILY_PLAN_PER_CREDIT,
+} from '../src/utils/costCalculator-pricing';
 import { AI_MODELS } from '../api/shared/models';
 
 // ============================================================================
@@ -75,12 +81,20 @@ describe('calculateLLMCost', () => {
 
 describe('calculateTavilyCost', () => {
   it('calculates research credit cost', () => {
-    // $0.01 per credit
-    expect(calculateTavilyCost('research', 30)).toBeCloseTo(0.30, 4);
+    // $0.0075 per credit: the 8,000-credit monthly plan (John, 3 Oct 2026)
+    expect(calculateTavilyCost('research', 30)).toBeCloseTo(0.225, 4);
   });
 
   it('calculates search credit cost', () => {
-    expect(calculateTavilyCost('search', 3)).toBeCloseTo(0.03, 4);
+    expect(calculateTavilyCost('search', 2)).toBeCloseTo(0.015, 4);
+  });
+
+  it('prices every Tavily credit at the plan rate, from one constant', () => {
+    expect(API_PRICING['tavily-research'].perCredit).toBe(TAVILY_PLAN_PER_CREDIT);
+    expect(API_PRICING['tavily-search'].perCredit).toBe(TAVILY_PLAN_PER_CREDIT);
+    expect(TAVILY_PLAN_PER_CREDIT).toBe(0.0075);
+    expect(TAVILY_OVERAGE_PER_CREDIT).toBe(0.008);
+    expect(TAVILY_PLAN_MONTHLY_CREDITS).toBe(8000);
   });
 
   it('returns zero for zero credits', () => {

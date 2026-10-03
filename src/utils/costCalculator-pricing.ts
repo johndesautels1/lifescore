@@ -9,6 +9,19 @@
 // API PRICING CONFIGURATION (per 1M tokens unless noted)
 // ============================================================================
 
+/**
+ * Tavily, as LifeScore pays it (John, 3 Oct 2026): a monthly plan of 8,000
+ * credits for about $60, then pay-as-you-go. Tavily's credits page
+ * (docs.tavily.com/documentation/api-credits, read 3 Oct 2026) puts the
+ * Project plan at $0.0075 a credit and pay-as-you-go, once a plan's credits
+ * are used up, at $0.008.
+ */
+export const TAVILY_PLAN_MONTHLY_CREDITS = 8000;
+/** Price of a credit inside the monthly plan. */
+export const TAVILY_PLAN_PER_CREDIT = 0.0075;
+/** Price of a credit after the plan's monthly credits are used. */
+export const TAVILY_OVERAGE_PER_CREDIT = 0.008;
+
 export const API_PRICING = {
   // TODAY'S MODELS ARE NOT LISTED HERE: their ids and published prices live in
   // api/shared/models.ts and are priced with calculateModelCost(). The ids below are
@@ -90,7 +103,7 @@ export const API_PRICING = {
 
   // Tavily (credit-based pricing)
   'tavily-research': {
-    perCredit: 0.01,  // $0.01 per credit (estimated from $50/5000 credits)
+    perCredit: TAVILY_PLAN_PER_CREDIT,  // the monthly plan's rate (see TAVILY_PLAN_PER_CREDIT)
     minCredits: 4,    // mini report: 4–110 credits (docs.tavily.com/documentation/api-credits, read 3 Oct 2026)
     maxCredits: 110,
     avgCredits: 30,   // our typical-figure guess; used only for a report Tavily gave no credit count for
@@ -98,7 +111,7 @@ export const API_PRICING = {
     icon: '📚'
   },
   'tavily-search': {
-    perCredit: 0.01,  // $0.01 per credit
+    perCredit: TAVILY_PLAN_PER_CREDIT,  // the monthly plan's rate (see TAVILY_PLAN_PER_CREDIT)
     minCredits: 1,
     maxCredits: 10,
     avgCredits: 2,    // an advanced search costs 2 credits (docs.tavily.com/documentation/api-credits, read 3 Oct 2026); used only when Tavily gave no count

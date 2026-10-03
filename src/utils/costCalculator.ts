@@ -6,7 +6,12 @@
  */
 
 // Pricing data + type definitions
-export { API_PRICING } from './costCalculator-pricing';
+export {
+  API_PRICING,
+  TAVILY_PLAN_MONTHLY_CREDITS,
+  TAVILY_PLAN_PER_CREDIT,
+  TAVILY_OVERAGE_PER_CREDIT,
+} from './costCalculator-pricing';
 export type {
   TokenUsage,
   APICallCost,

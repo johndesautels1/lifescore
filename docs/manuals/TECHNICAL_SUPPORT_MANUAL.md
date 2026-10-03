@@ -2358,7 +2358,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | `gemini` | Gemini 3.1 Pro | 💎 | dollars | $25.00 | $1.25/1M input, $5/1M output |
 | `grok` | Grok 4 | 🚀 | dollars | $30.00 | $3/1M input, $15/1M output |
 | `perplexity` | Perplexity Sonar | 🔍 | dollars | $25.00 | $1/1M input, $5/1M output |
-| `tavily` | Tavily Research | 🔎 | credits | 5,000 | ~$0.01/credit |
+| `tavily` | Tavily Research | 🔎 | credits | 5,000 | $0.0075/credit on the 8,000-credit monthly plan; $0.008/credit after it |
 | `elevenlabs` | ElevenLabs TTS | 🔊 | characters | 100,000 | $0.18/1K chars |
 | `openai_tts` | OpenAI TTS | 🗣️ | dollars | $10.00 | $0.015/1K chars |
 | `simli` | Simli Avatar | 🎭 | seconds | 3,600 | $0.02/sec |
