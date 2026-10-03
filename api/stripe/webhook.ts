@@ -28,6 +28,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type Stripe from 'stripe';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
+import { readRawBody } from '../shared/rawBody.js';
 import {
   bestTier,
   getStripe,
@@ -241,18 +242,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-}
-
-/**
- * The exact bytes Stripe signed. Chunks are joined as bytes — joining them as
- * text could split a multi-byte character and break the signature.
- */
-async function readRawBody(req: VercelRequest): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : Buffer.from(chunk as Uint8Array));
-  }
-  return Buffer.concat(chunks);
 }
 
 // Disable body parsing - we need raw body for signature verification

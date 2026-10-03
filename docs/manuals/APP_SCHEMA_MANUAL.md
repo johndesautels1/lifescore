@@ -814,7 +814,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | GET, POST, DELETE | `/api/video/invideo-override` | Yes (JWT) + Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
 | POST | `/api/avatar/generate-judge-video` | Yes (JWT) | Generate Cristiano judge videos via Replicate Wav2Lip |
 | GET | `/api/avatar/video-status` | Yes (JWT) | Check judge video generation status |
-| POST | `/api/avatar/video-webhook` | No (webhook) | Replicate webhook callback for video completion |
+| POST | `/api/avatar/video-webhook` | Replicate's signature (`api/shared/replicateWebhook.ts`) | Replicate webhook callback for video completion; unsigned calls get 401 |
 | POST | `/api/judge-video` | Yes (JWT) | D-ID fallback avatar endpoint for Judge verdict |
 
 ### 3.3 Avatar & Streaming (5)

@@ -13,11 +13,18 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serviceDb } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { readRawBody } from '../shared/rawBody.js';
+import { replicateWebhookHeaders, replicateWebhookSecret, verifyReplicateWebhook } from '../shared/replicateWebhook.js';
+import { readReplicatePrediction } from '../shared/videoReplies.js';
 
 const TIMEOUT_MS = 45000; // 45s — required for DB + video download from Replicate CDN + upload to Supabase Storage
 
 export const config = {
   maxDuration: 60, // Increased from 30s to allow video download+upload to Supabase Storage
+  // Replicate's signature covers the body as sent, so it is read raw (api/shared/rawBody.ts).
+  api: {
+    bodyParser: false,
+  },
 };
 
 const supabaseAdmin = serviceDb;
@@ -37,18 +44,6 @@ async function withTimeout<T>(
   ]);
 }
 
-interface ReplicateWebhook {
-  id: string;
-  status: 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled';
-  output?: string | string[];
-  error?: string;
-  created_at: string;
-  completed_at?: string;
-  metrics?: {
-    predict_time?: number; // seconds
-  };
-}
-
 // Wav2Lip costs ~$0.0014/sec on L40S GPU, typically ~6 seconds = ~$0.005/run
 const WAV2LIP_COST_PER_RUN = 0.005;
 
@@ -63,7 +58,30 @@ export default async function handler(
     return;
   }
 
-  const webhook = req.body as ReplicateWebhook;
+  // Only Replicate may report a judge video finished: anyone else could swap in
+  // any video, which every user comparing the same two cities would then see.
+  const secret = await replicateWebhookSecret();
+  if (!secret) {
+    console.error('[VIDEO-WEBHOOK] Cannot check the signature: no signing secret (REPLICATE_API_TOKEN, or Replicate unreachable)');
+    res.status(503).json({ error: 'Webhook verification unavailable' });
+    return;
+  }
+  const rawBody = await readRawBody(req);
+  const check = verifyReplicateWebhook(replicateWebhookHeaders(req.headers), rawBody, secret, Math.floor(Date.now() / 1000));
+  if (!check.ok) {
+    console.warn('[VIDEO-WEBHOOK] Refused an unverified call:', check.reason);
+    res.status(401).json({ error: 'Invalid webhook signature' });
+    return;
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(rawBody.toString('utf8'));
+  } catch {
+    res.status(400).json({ error: 'Invalid JSON body' });
+    return;
+  }
+  const webhook = readReplicatePrediction(body);
 
   console.log('[VIDEO-WEBHOOK] Received:', {
     id: webhook.id,

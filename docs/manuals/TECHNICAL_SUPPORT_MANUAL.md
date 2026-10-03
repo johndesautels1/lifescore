@@ -2287,7 +2287,7 @@ Nearly all API endpoints now require JWT authentication headers. The 2026-02-26 
 | Endpoint | Reason |
 |----------|--------|
 | `POST /api/stripe/webhook` | Uses Stripe signature verification instead |
-| `POST /api/avatar/video-webhook` | Replicate webhook callback |
+| `POST /api/avatar/video-webhook` | Replicate webhook callback (Replicate's signature checked; unsigned calls get 401) |
 | `GET /api/health` | Public health check |
 | `GET /api/simli-config` | Returns sanitized config only |
 

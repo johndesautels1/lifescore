@@ -375,7 +375,7 @@ lifescore/
 | `/api/avatar/simli-speak` | POST | Sends text to Simli for avatar speech synthesis. |
 | `/api/avatar/generate-judge-video` | POST | Triggers Wav2Lip video generation on Replicate. |
 | `/api/avatar/video-status` | GET | Polls video generation progress. |
-| `/api/avatar/video-webhook` | POST | Receives completion callback from Replicate/Simli. |
+| `/api/avatar/video-webhook` | POST | Receives Replicate's completion callback; checks Replicate's signature first. |
 | `/api/video/grok-generate` | POST | Generates city comparison video via Grok. |
 | `/api/video/grok-status` | GET | Polls Grok video generation status. |
 
