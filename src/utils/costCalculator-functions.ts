@@ -4,6 +4,7 @@
  */
 
 import { API_PRICING } from './costCalculator-pricing';
+import type { AiModel } from '../../api/shared/models';
 import type {
   ComparisonCostBreakdown,
   CostSummary,
@@ -20,7 +21,22 @@ import type {
 // ============================================================================
 
 /**
- * Calculate cost for an LLM API call
+ * Cost of a call to one of today's models, priced from the model registry
+ * (api/shared/models.ts) — the one place a model's published price is written.
+ */
+export function calculateModelCost(
+  model: Pick<AiModel, 'inputPerM' | 'outputPerM'>,
+  inputTokens: number,
+  outputTokens: number
+): { inputCost: number; outputCost: number; totalCost: number } {
+  const inputCost = (inputTokens / 1_000_000) * model.inputPerM;
+  const outputCost = (outputTokens / 1_000_000) * model.outputPerM;
+  return { inputCost, outputCost, totalCost: inputCost + outputCost };
+}
+
+/**
+ * Cost of a call by price-table key — older model ids and non-token services
+ * (historical cost rows). Today's models use calculateModelCost.
  */
 export function calculateLLMCost(
   provider: keyof typeof API_PRICING,

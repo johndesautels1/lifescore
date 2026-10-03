@@ -9,25 +9,12 @@
 // API PRICING CONFIGURATION (per 1M tokens unless noted)
 // ============================================================================
 
-import { AI_MODELS } from '../../api/shared/models';
-
 export const API_PRICING = {
-  // Anthropic Claude — the CURRENT models come from api/shared/models.ts (the one place a
-  // model id and its published price are written). Older ids stay below so historical
-  // Supabase cost rows still resolve, at Anthropic's real published rates (they were
-  // listed here at $15/$75, a price these models never had).
-  [AI_MODELS.judge.id]: {
-    input: AI_MODELS.judge.inputPerM,
-    output: AI_MODELS.judge.outputPerM,
-    name: AI_MODELS.judge.name,
-    icon: '🧠'
-  },
-  [AI_MODELS.claudeEvaluator.id]: {
-    input: AI_MODELS.claudeEvaluator.inputPerM,
-    output: AI_MODELS.claudeEvaluator.outputPerM,
-    name: AI_MODELS.claudeEvaluator.name,
-    icon: '🎵'
-  },
+  // TODAY'S MODELS ARE NOT LISTED HERE: their ids and published prices live in
+  // api/shared/models.ts and are priced with calculateModelCost(). The ids below are
+  // older ones, kept so historical Supabase cost rows still resolve.
+  // Anthropic Claude — at Anthropic's real published rates (they were listed here at
+  // $15/$75, a price these models never had).
   'claude-opus-4-8': { input: 5.00, output: 25.00, name: 'Claude Opus 4.8 (retired here)', icon: '🧠' },
   'claude-opus-4-7': { input: 5.00, output: 25.00, name: 'Claude Opus 4.7 (retired here)', icon: '🧠' },
   'claude-opus-4-6': { input: 5.00, output: 25.00, name: 'Claude Opus 4.6 (retired here)', icon: '🧠' },

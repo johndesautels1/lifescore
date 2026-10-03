@@ -129,8 +129,14 @@ If a git command fails, say so honestly — do not fabricate a number.
 
 ## AI models and the Claude connection (updated 2026-10-03)
 
-- **Model ids live in ONE file: `api/shared/models.ts`** (`AI_MODELS`, by job: judge,
-  claudeEvaluator, writer). Never type a model id anywhere else — a test fails if you do.
+- **Model ids and prices live in ONE file: `api/shared/models.ts`** (`AI_MODELS`, by job: judge,
+  claudeEvaluator, writer, gptEvaluator, geminiEvaluator, grokEvaluator, perplexityEvaluator;
+  `PANEL_SEATS` maps the stable seat keys like `gpt-4o` to today's job). Never type a model id
+  anywhere else — a test fails if you do.
+- **One shared connection per AI company:** `api/shared/anthropic.ts`, `openai.ts` (Responses API),
+  `gemini.ts` (key in a header; Gemini 3.1 Pro is only served as `gemini-3.1-pro-preview`), `xai.ts`
+  (Responses API), `perplexity.ts` (Agent API, `preset: "low"` — Perplexity switched chat/completions
+  off on 27 Sep 2026). Routes never call a vendor URL themselves.
 - **Every Claude call goes through `callClaude()` in `api/shared/anthropic.ts`.** No route
   calls `api.anthropic.com` itself. It sets effort, reads every text block of the reply
   (current models put a thinking block first, so `content[0].text` is empty), retries

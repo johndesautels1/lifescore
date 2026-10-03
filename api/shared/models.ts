@@ -39,9 +39,42 @@ export const AI_MODELS = {
   claudeEvaluator: { vendor: 'anthropic', id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5', inputPerM: 2, outputPerM: 10, cachedInputPerM: 0.2 },
   /** Olivia, Emilia, storyboards, screenplays and the gun-law comparison. */
   writer: { vendor: 'anthropic', id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5', inputPerM: 2, outputPerM: 10, cachedInputPerM: 0.2 },
+  /** OpenAI's seat (Responses API; the engine's card of 2026-10-02, short-context line). */
+  gptEvaluator: { vendor: 'openai', id: 'gpt-6.1-sol', name: 'GPT-6.1', inputPerM: 2, outputPerM: 10, cachedInputPerM: 0.1 },
+  /** Google's seat. Served ONLY as the -preview id; prices are the under-200k-token line. */
+  geminiEvaluator: { vendor: 'google', id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', inputPerM: 2, outputPerM: 12 },
+  /** xAI's seat (xAI's own advice 2026-10-02: "Call grok-4.7"; under-200k-token line). */
+  grokEvaluator: { vendor: 'xai', id: 'grok-4.7', name: 'Grok 4.7', inputPerM: 2, outputPerM: 6, cachedInputPerM: 0.5 },
+  /**
+   * Perplexity's seat. Its id is an Agent API PRESET, not a model: Perplexity's own
+   * replacement for Sonar Pro after it switched chat/completions off (27 Sep 2026).
+   * Prices from Perplexity's pricing page (the low preset runs openai/gpt-5.6-luna),
+   * plus $0.0025 per web search, which this per-token row does not include.
+   */
+  perplexityEvaluator: { vendor: 'perplexity', id: 'low', name: 'Perplexity (Agent API)', inputPerM: 0.2, outputPerM: 1.2 },
 } as const satisfies Record<string, AiModel>;
 
 export type AiJob = keyof typeof AI_MODELS;
 
 /** Every model id this app sends to Claude. */
 export type ClaudeModelId = Extract<(typeof AI_MODELS)[AiJob], { vendor: 'anthropic' }>['id'];
+
+/**
+ * The panel's stable seat keys (stored in saved comparisons, cost rows and the
+ * rate limiter, so they never change) and the job each seat does today.
+ */
+export const PANEL_SEATS = {
+  'claude-opus': 'judge',
+  'claude-sonnet': 'claudeEvaluator',
+  'gpt-4o': 'gptEvaluator',
+  'gemini-3-pro': 'geminiEvaluator',
+  'grok-4': 'grokEvaluator',
+  perplexity: 'perplexityEvaluator',
+} as const satisfies Record<string, AiJob>;
+
+export type PanelSeat = keyof typeof PANEL_SEATS;
+
+/** The model a panel seat runs today. */
+export function modelForSeat(seat: PanelSeat): AiModel {
+  return AI_MODELS[PANEL_SEATS[seat]];
+}

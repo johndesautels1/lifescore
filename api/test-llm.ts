@@ -1,189 +1,77 @@
 /**
- * LIFE SCORE™ LLM Test Endpoint
- * Simple endpoint to test each LLM API connection with minimal calls
+ * LIFE SCORE - AI provider check (admins only)
+ * GET /api/test-llm?provider=claude|gpt|gemini|grok|perplexity  (all when omitted)
+ *
+ * Sends one tiny request to each evaluator through the SAME shared connection
+ * and model the real comparison uses (api/shared/*.ts, AI_MODELS), so a green
+ * result proves the real path, not a copy of it.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
-import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 import { requireAdmin } from './shared/entitlements.js';
 import { callClaude } from './shared/anthropic.js';
+import { callOpenAI } from './shared/openai.js';
+import { callGemini } from './shared/gemini.js';
+import { callGrok } from './shared/xai.js';
+import { callPerplexity } from './shared/perplexity.js';
 import { AI_MODELS } from './shared/models.js';
+import type { LlmResult } from './shared/llm.js';
 
-// Quick timeout for test calls (15 seconds)
-const TEST_TIMEOUT_MS = 15000;
+/** Thinking models need a moment even for "Say ok". */
+const TEST_TIMEOUT_MS = 45_000;
+const ASK = 'Reply with the single word: ok';
 
-// Test Claude Sonnet
-async function testClaude(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  // Same call point and model as the real evaluator, so the test proves the real path.
+interface TestResult {
+  success: boolean;
+  model: string;
+  message: string;
+  latencyMs: number;
+}
+
+async function timed(model: string, run: () => Promise<LlmResult>): Promise<TestResult> {
   const startTime = Date.now();
-  const reply = await callClaude({
-    model: AI_MODELS.claudeEvaluator.id,
-    maxTokens: 2000, // the model may think briefly before answering
-    effort: 'low',
-    messages: [{ role: 'user', content: 'Say "ok"' }],
-    timeoutMs: TEST_TIMEOUT_MS,
-    retries: 0,
-    label: 'test-llm',
-  });
+  const reply = await run();
   const latencyMs = Date.now() - startTime;
   return reply.ok
-    ? { success: true, message: `Response from ${reply.servedBy}: ${reply.text}`, latencyMs }
-    : { success: false, message: reply.message.slice(0, 300), latencyMs };
+    ? { success: true, model, message: `Response from ${reply.servedBy}: ${reply.text.slice(0, 50)}`, latencyMs }
+    : { success: false, model, message: reply.message.slice(0, 300), latencyMs };
 }
 
-// Test GPT-4o
-async function testGPT4o(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return { success: false, message: 'OPENAI_API_KEY not set', latencyMs: 0 };
-
-  const startTime = Date.now();
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-5.5',
-          messages: [{ role: 'user', content: 'Say "ok"' }],
-          max_tokens: 10
-        })
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    const latencyMs = Date.now() - startTime;
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, message: `API error ${response.status}: ${errorText.slice(0, 200)}`, latencyMs };
-    }
-
-    const data = await response.json();
-    return { success: true, message: `Response: ${data.choices?.[0]?.message?.content?.slice(0, 50) || 'ok'}`, latencyMs };
-  } catch (error) {
-    return { success: false, message: String(error), latencyMs: Date.now() - startTime };
-  }
-}
-
-// Test Gemini 3.1 Pro
-async function testGemini(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return { success: false, message: 'GEMINI_API_KEY not set', latencyMs: 0 };
-
-  const startTime = Date.now();
-  try {
-    const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Say "ok"' }] }],
-          generationConfig: { maxOutputTokens: 10 }
-        })
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    const latencyMs = Date.now() - startTime;
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, message: `API error ${response.status}: ${errorText.slice(0, 200)}`, latencyMs };
-    }
-
-    const data = await response.json();
-    return { success: true, message: `Response: ${data.candidates?.[0]?.content?.parts?.[0]?.text || 'ok'}`, latencyMs };
-  } catch (error) {
-    return { success: false, message: String(error), latencyMs: Date.now() - startTime };
-  }
-}
-
-// Test Grok 4
-async function testGrok(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) return { success: false, message: 'XAI_API_KEY not set', latencyMs: 0 };
-
-  const startTime = Date.now();
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.x.ai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'grok-4.5',
-          messages: [{ role: 'user', content: 'Say "ok"' }],
-          max_tokens: 10
-        })
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    const latencyMs = Date.now() - startTime;
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, message: `API error ${response.status}: ${errorText.slice(0, 200)}`, latencyMs };
-    }
-
-    const data = await response.json();
-    return { success: true, message: `Response: ${data.choices?.[0]?.message?.content || 'ok'}`, latencyMs };
-  } catch (error) {
-    return { success: false, message: String(error), latencyMs: Date.now() - startTime };
-  }
-}
-
-// Test Perplexity
-async function testPerplexity(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  const apiKey = process.env.PERPLEXITY_API_KEY;
-  if (!apiKey) return { success: false, message: 'PERPLEXITY_API_KEY not set', latencyMs: 0 };
-
-  const startTime = Date.now();
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.perplexity.ai/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'sonar-pro',
-          messages: [{ role: 'user', content: 'Say "ok"' }],
-          max_tokens: 10
-        })
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    const latencyMs = Date.now() - startTime;
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, message: `API error ${response.status}: ${errorText.slice(0, 200)}`, latencyMs };
-    }
-
-    const data = await response.json();
-    // Handle new output[] format or legacy choices[] format
-    const messages = data.output ?? [];
-    const last = messages[messages.length - 1];
-    // Check for both 'text' and 'output_text' content types
-    const textPart = last?.content?.find((c: { type: string }) => c.type === 'text' || c.type === 'output_text');
-    let content = textPart?.text || data.choices?.[0]?.message?.content || 'ok';
-    // Strip <think> tags from reasoning models
-    content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    return { success: true, message: `Response: ${content.slice(0, 50)}`, latencyMs };
-  } catch (error) {
-    return { success: false, message: String(error), latencyMs: Date.now() - startTime };
-  }
-}
+const TESTS: Record<string, () => Promise<TestResult>> = {
+  claude: () =>
+    timed(AI_MODELS.claudeEvaluator.id, async () => {
+      const reply = await callClaude({
+        model: AI_MODELS.claudeEvaluator.id,
+        maxTokens: 2000,
+        effort: 'low',
+        messages: [{ role: 'user', content: ASK }],
+        timeoutMs: TEST_TIMEOUT_MS,
+        retries: 0,
+        label: 'test-claude',
+      });
+      return reply.ok
+        ? { ok: true, text: reply.text, usage: { inputTokens: reply.usage.inputTokens, outputTokens: reply.usage.outputTokens }, citations: [], servedBy: reply.servedBy }
+        : { ok: false, kind: reply.kind, message: reply.message, status: reply.status };
+    }),
+  gpt: () =>
+    timed(AI_MODELS.gptEvaluator.id, () =>
+      callOpenAI({ model: AI_MODELS.gptEvaluator.id, system: 'You are a connectivity check.', user: ASK, maxOutputTokens: 2000, effort: 'low', timeoutMs: TEST_TIMEOUT_MS, retries: 0, label: 'test-gpt' }),
+    ),
+  gemini: () =>
+    timed(AI_MODELS.geminiEvaluator.id, () =>
+      callGemini({ model: AI_MODELS.geminiEvaluator.id, system: 'You are a connectivity check.', user: ASK, maxOutputTokens: 200, temperature: 0.2, googleSearch: false, timeoutMs: TEST_TIMEOUT_MS, retries: 0, label: 'test-gemini' }),
+    ),
+  grok: () =>
+    timed(AI_MODELS.grokEvaluator.id, () =>
+      callGrok({ model: AI_MODELS.grokEvaluator.id, system: 'You are a connectivity check.', user: ASK, maxOutputTokens: 2000, effort: 'low', temperature: 0.2, webSearch: false, timeoutMs: TEST_TIMEOUT_MS, retries: 0, label: 'test-grok' }),
+    ),
+  perplexity: () =>
+    timed(`preset:${AI_MODELS.perplexityEvaluator.id}`, () =>
+      callPerplexity({ preset: AI_MODELS.perplexityEvaluator.id, instructions: 'You are a connectivity check.', input: ASK, maxOutputTokens: 200, timeoutMs: TEST_TIMEOUT_MS, retries: 0, label: 'test-perplexity' }),
+    ),
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS - same app only; this route spends money on every call
@@ -198,36 +86,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
 
-  // Check which LLM to test (default: all)
-  const provider = req.query.provider as string | undefined;
-
-  console.log(`[TEST-LLM] Testing provider: ${provider || 'all'}`);
-
-  const results: Record<string, { success: boolean; message: string; latencyMs: number }> = {};
-
-  if (!provider || provider === 'claude') {
-    results.claude = await testClaude();
-  }
-  if (!provider || provider === 'gpt') {
-    results.gpt = await testGPT4o();
-  }
-  if (!provider || provider === 'gemini') {
-    results.gemini = await testGemini();
-  }
-  if (!provider || provider === 'grok') {
-    results.grok = await testGrok();
-  }
-  if (!provider || provider === 'perplexity') {
-    results.perplexity = await testPerplexity();
+  const provider = typeof req.query.provider === 'string' ? req.query.provider : undefined;
+  if (provider && !(provider in TESTS)) {
+    return res.status(400).json({ error: `provider must be one of: ${Object.keys(TESTS).join(', ')}` });
   }
 
-  const allSuccess = Object.values(results).every(r => r.success);
+  const names = provider ? [provider] : Object.keys(TESTS);
+  const settled = await Promise.all(names.map(async (name) => [name, await TESTS[name]()] as const));
+  const results = Object.fromEntries(settled);
+  const allSuccess = settled.every(([, r]) => r.success);
 
   console.log(`[TEST-LLM] Results: ${JSON.stringify(results)}`);
 
   return res.status(200).json({
     timestamp: new Date().toISOString(),
     allSuccess,
-    results
+    results,
   });
 }

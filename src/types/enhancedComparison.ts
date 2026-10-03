@@ -3,6 +3,8 @@
  * Multi-LLM consensus scoring system
  */
 
+import { modelForSeat } from '../../api/shared/models';
+
 import type { MetricScore, CategoryId } from './metrics';
 
 // ============================================================================
@@ -10,12 +12,12 @@ import type { MetricScore, CategoryId } from './metrics';
 // ============================================================================
 
 export type LLMProvider =
-  | 'claude-opus'      // Anthropic Claude Opus 4.6 (Primary Judge)
-  | 'claude-sonnet'    // Anthropic Claude Sonnet 4.6
-  | 'gpt-4o'           // OpenAI GPT-4o (with Tavily web search)
-  | 'gemini-3-pro'     // Google Gemini 3.1 Pro
-  | 'grok-4'           // xAI Grok 4
-  | 'perplexity'       // Perplexity Sonar Reasoning Pro
+  | 'claude-opus'      // The judge (model: AI_MODELS.judge)
+  | 'claude-sonnet'    // Anthropic's evaluator seat (AI_MODELS.claudeEvaluator)
+  | 'gpt-4o'           // OpenAI's seat (AI_MODELS.gptEvaluator) — the key is a stable seat id, not a model
+  | 'gemini-3-pro'     // Google's seat (AI_MODELS.geminiEvaluator)
+  | 'grok-4'           // xAI's seat (AI_MODELS.grokEvaluator)
+  | 'perplexity'       // Perplexity's seat (AI_MODELS.perplexityEvaluator)
 
 // ============================================================================
 // EVIDENCE TYPE - Citations from LLM web search
@@ -44,7 +46,7 @@ export interface LLMConfig {
 export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   'claude-opus': {
     id: 'claude-opus',
-    name: 'Claude Opus 4.6',
+    name: modelForSeat('claude-opus').name,
     shortName: 'Opus',
     vendor: 'Anthropic',
     supportsWebSearch: true,
@@ -54,7 +56,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
-    name: 'Claude Sonnet 4.6',
+    name: modelForSeat('claude-sonnet').name,
     shortName: 'Sonnet',
     vendor: 'Anthropic',
     supportsWebSearch: true,
@@ -63,8 +65,8 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'gpt-4o': {
     id: 'gpt-4o',
-    name: 'GPT-4o',
-    shortName: 'GPT-4o',
+    name: modelForSeat('gpt-4o').name,
+    shortName: 'GPT',
     vendor: 'OpenAI',
     supportsWebSearch: true,  // Web search via Tavily API
     icon: '🤖',
@@ -72,7 +74,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'gemini-3-pro': {
     id: 'gemini-3-pro',
-    name: 'Gemini 3.1 Pro',
+    name: modelForSeat('gemini-3-pro').name,
     shortName: 'Gemini',
     vendor: 'Google',
     supportsWebSearch: true,
@@ -81,7 +83,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'grok-4': {
     id: 'grok-4',
-    name: 'Grok 4',
+    name: modelForSeat('grok-4').name,
     shortName: 'Grok',
     vendor: 'xAI',
     supportsWebSearch: true,
@@ -90,7 +92,7 @@ export const LLM_CONFIGS: Record<LLMProvider, LLMConfig> = {
   },
   'perplexity': {
     id: 'perplexity',
-    name: 'Sonar Reasoning Pro',
+    name: modelForSeat('perplexity').name,
     shortName: 'Perplexity',
     vendor: 'Perplexity',
     supportsWebSearch: true,

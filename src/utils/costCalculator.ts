@@ -22,6 +22,7 @@ export type {
 
 // Calculation, storage, and utility functions
 export {
+  calculateModelCost,
   calculateLLMCost,
   calculateTavilyCost,
   estimateTokens,

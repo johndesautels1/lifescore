@@ -2,15 +2,17 @@
  * LIFE SCORE - AI model + Claude connection guards (anti-drift).
  *
  * The July 2026 model refresh edited ten files by hand, missed some, and kept a
- * price table that was never true. These tests keep model ids in ONE file
- * (api/shared/models.ts) and Claude calls in ONE file (api/shared/anthropic.ts).
+ * price table that was never true. These tests keep model ids and prices in ONE
+ * file (api/shared/models.ts) and each vendor's calls in ONE shared connection
+ * (api/shared/anthropic.ts, openai.ts, gemini.ts, xai.ts, perplexity.ts).
  */
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { AI_MODELS } from '../api/shared/models';
+import { AI_MODELS, PANEL_SEATS, modelForSeat, type PanelSeat } from '../api/shared/models';
 import { extractJsonObject } from '../api/shared/anthropic';
 import { API_PRICING } from '../src/utils/costCalculator-pricing';
+import { calculateModelCost } from '../src/utils/costCalculator-functions';
 
 function sourceFiles(dir: string): string[] {
   const out: string[] = [];
@@ -40,13 +42,36 @@ describe('model ids live in one place', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('every current model has a price, read from the registry', () => {
+  it('every current model carries its published price, and only the registry states it', () => {
     for (const model of Object.values(AI_MODELS)) {
-      const row = (API_PRICING as Record<string, { input?: number; output?: number }>)[model.id];
-      expect(row, model.id).toBeDefined();
-      expect(row.input).toBe(model.inputPerM);
-      expect(row.output).toBe(model.outputPerM);
+      expect(model.inputPerM, model.id).toBeGreaterThan(0);
+      expect(model.outputPerM, model.id).toBeGreaterThan(0);
+      // the historical price table must not restate a current model (two sources would drift)
+      expect(Object.keys(API_PRICING), model.id).not.toContain(model.id);
     }
+    const judge = calculateModelCost(AI_MODELS.judge, 1_000_000, 1_000_000);
+    expect(judge.totalCost).toBeCloseTo(AI_MODELS.judge.inputPerM + AI_MODELS.judge.outputPerM, 6);
+  });
+
+  it('every panel seat maps to a registered model', () => {
+    for (const seat of Object.keys(PANEL_SEATS) as PanelSeat[]) {
+      expect(modelForSeat(seat).id, seat).toBeTruthy();
+    }
+  });
+
+  it('only the shared connections call the AI vendors for text', () => {
+    const owners: Array<[RegExp, string]> = [
+      [/api\.openai\.com\/v1\/(responses|chat\/completions)/, 'api/shared/openai.ts'],
+      [/generativelanguage\.googleapis\.com/, 'api/shared/gemini.ts'],
+      [/api\.x\.ai\/v1\/(responses|chat\/completions)/, 'api/shared/xai.ts'],
+      [/api\.perplexity\.ai/, 'api/shared/perplexity.ts'],
+    ];
+    const offenders: string[] = [];
+    for (const f of ALL) {
+      const text = readFileSync(f, 'utf8');
+      for (const [pattern, owner] of owners) if (f !== owner && pattern.test(text)) offenders.push(`${f} → ${pattern}`);
+    }
+    expect(offenders).toEqual([]);
   });
 });
 

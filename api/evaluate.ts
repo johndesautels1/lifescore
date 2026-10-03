@@ -8,6 +8,11 @@ import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { requireComparisonGrant } from './shared/entitlements.js';
 import { callClaude } from './shared/anthropic.js';
+import { callOpenAI } from './shared/openai.js';
+import { callGemini } from './shared/gemini.js';
+import { callGrok } from './shared/xai.js';
+import { callPerplexity } from './shared/perplexity.js';
+import { isRetryable } from './shared/llm.js';
 import { AI_MODELS } from './shared/models.js';
 
 /** The one model a standard (single-model) comparison runs on — see src/hooks/useComparison.ts. */
@@ -891,7 +896,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
   return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
-// GPT-4o evaluation (with Tavily web search - same pattern as Claude Sonnet)
+// GPT evaluation — model from AI_MODELS.gptEvaluator (with Tavily web research)
 async function evaluateWithGPT4o(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -989,19 +994,10 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       console.log(`[GPT-4o] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
       // GPT-4o uses standard chat completions API
-      const response = await fetchWithTimeout(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-5.5',
-            messages: [
-              // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
-              { role: 'system', content: `You are an expert legal analyst comparing two cities on freedom metrics.
+      // One shared OpenAI call point (api/shared/openai.ts) — Responses API, model from AI_MODELS.
+      const reply = await callOpenAI({
+        model: AI_MODELS.gptEvaluator.id,
+        system: `You are an expert legal analyst comparing two cities on freedom metrics.
 Use the Tavily research data provided in the user message to evaluate laws and regulations.
 
 ## IMPORTANT
@@ -1011,44 +1007,30 @@ Use the Tavily research data provided in the user message to evaluate laws and r
 - Use the Tavily research data as your primary source
 - If the research doesn't cover a metric, use your knowledge but set confidence="low"
 - Return JSON exactly matching the format requested
-- You MUST evaluate ALL metrics provided` },
-              { role: 'user', content: prompt }
-            ],
-            max_tokens: 16384,
-            temperature: 0.3
-          })
-        },
-        LLM_TIMEOUT_MS
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        lastError = `API error: ${response.status} - ${errorText}`;
-        console.error(`[GPT-4o] Attempt ${attempt} failed: ${lastError}`);
-        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
-        if (response.status >= 400 && response.status < 500) {
+- You MUST evaluate ALL metrics provided`,
+        user: prompt,
+        maxOutputTokens: 32000, // reasoning and the scored JSON share this ceiling
+        effort: 'medium',
+        timeoutMs: LLM_TIMEOUT_MS,
+        retries: 1,
+        label: 'evaluate-gpt',
+      });
+      if (!reply.ok) {
+        lastError = reply.message;
+        console.error(`[GPT] Attempt ${attempt} failed: ${lastError}`);
+        // A request the vendor rejects outright will not succeed on retry
+        if (!isRetryable(reply)) {
           return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
         }
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          console.log(`[GPT-4o] Retrying in ${backoffMs}ms...`);
+          console.log(`[GPT] Retrying in ${backoffMs}ms...`);
           await new Promise(resolve => setTimeout(resolve, backoffMs));
         }
         continue;
       }
 
-      const data = await response.json();
-      // FIX #8: Defensive parsing - handle missing/malformed response
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) {
-        lastError = 'Empty or malformed response from GPT-4o';
-        console.error(`[GPT-4o] Attempt ${attempt}: ${lastError}`);
-        if (attempt < MAX_RETRIES) {
-          const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-        }
-        continue;
-      }
+      const content = reply.text;
 
       const scores = parseResponse(content, 'gpt-4o');
 
@@ -1064,8 +1046,8 @@ Use the Tavily research data provided in the user message to evaluate laws and r
 
       // Extract token usage from OpenAI response
       const usage: TokenUsage = {
-        inputTokens: data?.usage?.prompt_tokens || 0,
-        outputTokens: data?.usage?.completion_tokens || 0
+        inputTokens: reply.usage.inputTokens,
+        outputTokens: reply.usage.outputTokens
       };
 
       console.log(`[GPT-4o] Success on attempt ${attempt}: ${scores.length} scores returned`);
@@ -1094,7 +1076,7 @@ Use the Tavily research data provided in the user message to evaluate laws and r
   return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
-// Gemini 3.1 Pro evaluation (with Google Search grounding)
+// Gemini evaluation — model from AI_MODELS.geminiEvaluator (with Google Search grounding)
 async function evaluateWithGemini(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -1179,40 +1161,25 @@ ${isLargeCategory ? `
     try {
       console.log(`[GEMINI] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
-      const response = await fetchWithTimeout(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction,
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 16384, temperature: 0.2 },  // UPDATED 2026-02-03: Lowered from 0.3 for stricter factual adherence
-            // Safety settings - allow freedom-related content
-            safetySettings: [
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' }
-            ],
-            // Enable Google Search grounding for real-time web data
-            tools: [{
-              google_search: {}
-            }]
-          })
-        },
-        LLM_TIMEOUT_MS
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        lastError = `API error: ${response.status} - ${errorText}`;
+      // One shared Gemini call point (api/shared/gemini.ts) — key in a header, model from AI_MODELS.
+      const reply = await callGemini({
+        model: AI_MODELS.geminiEvaluator.id,
+        system: systemInstruction.parts[0].text,
+        user: prompt,
+        maxOutputTokens: 16384, // the answer only — Gemini's thinking is counted separately
+        temperature: 0.2,       // stricter factual adherence (lowered from 0.3 on 2026-02-03)
+        googleSearch: true,     // Google Search grounding for current law
+        timeoutMs: LLM_TIMEOUT_MS,
+        retries: 1,
+        label: 'evaluate-gemini',
+      });
+      if (!reply.ok) {
+        lastError = reply.message;
         console.error(`[GEMINI] Attempt ${attempt} failed: ${lastError}`);
-        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
-        if (response.status >= 400 && response.status < 500) {
+        // A request the vendor rejects outright will not succeed on retry
+        if (!isRetryable(reply)) {
           return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
         }
-        // Exponential backoff before retry: 1s, 2s, 4s
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
           console.log(`[GEMINI] Retrying in ${backoffMs}ms...`);
@@ -1221,19 +1188,7 @@ ${isLargeCategory ? `
         continue;
       }
 
-      const data = await response.json();
-      // FIX #8: Defensive parsing - handle missing/malformed response
-      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!content) {
-        lastError = 'Empty or malformed response from Gemini';
-        console.error(`[GEMINI] Attempt ${attempt}: ${lastError}`);
-        if (attempt < MAX_RETRIES) {
-          const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-        }
-        continue;
-      }
+      const content = reply.text;
 
       const scores = parseResponse(content, 'gemini-3-pro');
 
@@ -1249,8 +1204,8 @@ ${isLargeCategory ? `
 
       // Extract token usage from Gemini response
       const usage: TokenUsage = {
-        inputTokens: data?.usageMetadata?.promptTokenCount || 0,
-        outputTokens: data?.usageMetadata?.candidatesTokenCount || 0
+        inputTokens: reply.usage.inputTokens,
+        outputTokens: reply.usage.outputTokens
       };
 
       // Success!
@@ -1281,7 +1236,7 @@ ${isLargeCategory ? `
   return { provider: 'gemini-3-pro', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 
-// Grok 4 evaluation (with native X/Twitter search)
+// Grok evaluation — model from AI_MODELS.grokEvaluator (with its own web search)
 async function evaluateWithGrok(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) {
@@ -1371,21 +1326,10 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
     try {
       console.log(`[GROK] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
-      const response = await fetchWithTimeout(
-        'https://api.x.ai/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'grok-4.5',
-            messages: [
-              {
-                role: 'system',
-                // UPDATED 2026-01-21: Removed duplicate scale (canonical scale is in buildBasePrompt)
-                content: `You are an expert legal analyst classifying freedom metrics. Use real-time web search for verification.
+      // One shared xAI call point (api/shared/xai.ts) — Responses API with web search, model from AI_MODELS.
+      const reply = await callGrok({
+        model: AI_MODELS.grokEvaluator.id,
+        system: `You are an expert legal analyst classifying freedom metrics. Use real-time web search for verification.
 
 ## CLASSIFICATION APPROACH
 - For LEGAL score: Classify based on written law text from official sources
@@ -1398,27 +1342,23 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
 - Return ONLY valid JSON matching the requested format
 - Evaluate ALL metrics provided - do not skip any
 - If ambiguous, use closest band and explain in reasoning
-- Sources must be from last 12 months for high confidence`
-              },
-              { role: 'user', content: prompt }
-            ],
-            max_tokens: 16384,
-            temperature: 0.2,  // Grok recommendation: 0.2-0.4 for deterministic classification
-            search: true
-          })
-        },
-        LLM_TIMEOUT_MS
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        lastError = `API error: ${response.status} - ${errorText}`;
+- Sources must be from last 12 months for high confidence`,
+        user: prompt,
+        maxOutputTokens: 16384,
+        effort: 'low',       // xAI's setting for scoring calls (engine grokSeat, 2026-09)
+        temperature: 0.2,    // Grok recommendation: 0.2-0.4 for deterministic classification
+        webSearch: true,
+        timeoutMs: LLM_TIMEOUT_MS,
+        retries: 1,
+        label: 'evaluate-grok',
+      });
+      if (!reply.ok) {
+        lastError = reply.message;
         console.error(`[GROK] Attempt ${attempt} failed: ${lastError}`);
-        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
-        if (response.status >= 400 && response.status < 500) {
+        // A request the vendor rejects outright will not succeed on retry
+        if (!isRetryable(reply)) {
           return { provider: 'grok-4', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
         }
-        // Exponential backoff before retry: 1s, 2s, 4s
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
           console.log(`[GROK] Retrying in ${backoffMs}ms...`);
@@ -1427,20 +1367,8 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
         continue;
       }
 
-      const data = await response.json();
-      const content = data?.choices?.[0]?.message?.content;
+      const content = reply.text;
 
-      if (!content) {
-        lastError = 'Empty or malformed response from Grok';
-        console.error(`[GROK] Attempt ${attempt}: ${lastError}`);
-        if (attempt < MAX_RETRIES) {
-          const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-        }
-        continue;
-      }
-
-      // JSON validation: try to parse before accepting
       const scores = parseResponse(content, 'grok-4');
 
       if (scores.length === 0) {
@@ -1453,10 +1381,10 @@ async function evaluateWithGrok(city1: string, city2: string, metrics: Evaluatio
         continue;
       }
 
-      // Extract token usage from Grok response (same format as OpenAI)
+      // Token usage from Grok's reply
       const usage: TokenUsage = {
-        inputTokens: data?.usage?.prompt_tokens || 0,
-        outputTokens: data?.usage?.completion_tokens || 0
+        inputTokens: reply.usage.inputTokens,
+        outputTokens: reply.usage.outputTokens
       };
 
       // Success!
@@ -1637,120 +1565,69 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     try {
       console.log(`[PERPLEXITY] Attempt ${attempt}/${MAX_RETRIES} for ${metrics.length} metrics`);
 
-      const response = await fetchWithTimeout(
-        'https://api.perplexity.ai/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'sonar-pro',
-            messages: [
-              {
-                role: 'system',
-                content: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
+      // One shared Perplexity call point (api/shared/perplexity.ts) — the Agent API; Perplexity
+      // switched the chat/completions endpoint this route used off on 27 September 2026.
+      const reply = await callPerplexity({
+        preset: AI_MODELS.perplexityEvaluator.id,
+        instructions: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
+
+## SCORING RULES
+- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
+- Use numeric scores 0-100 (integers only)
+- Higher scores = MORE freedom/permissiveness for that metric
+
+## OUTPUT EFFICIENCY RULES
+- "sources": Include 2-3 URLs for reliability and verification
+- "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
+- Keep reasoning brief (1-2 sentences max)
+- IMPORTANT: Minimize your <think> reasoning to conserve output tokens for the JSON response
+
+## CONFIDENCE RULES
+- "high": Clear, current data from official sources
+- "medium": Data exists but may be outdated or sources partially conflict
+- "low": Limited data available; using best available inference
+
+## OUTPUT FORMAT
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id",
+      "city1Legal": 75,
+      "city1Enforcement": 70,
+      "city2Legal": 60,
+      "city2Enforcement": 55,
+      "confidence": "high",
+      "reasoning": "Brief explanation",
+      "sources": ["url1", "url2"],
+      "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
+      "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
+    }
+  ]
+}
+
+You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
+        input: prompt,
+        maxOutputTokens: 16384,
+        timeoutMs: LLM_TIMEOUT_MS,
+        retries: 1,
+        label: 'evaluate-perplexity',
+      });
 
-## SCORING RULES
-- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
-- Use numeric scores 0-100 (integers only)
-- Higher scores = MORE freedom/permissiveness for that metric
-
-## OUTPUT EFFICIENCY RULES
-- "sources": Include 2-3 URLs for reliability and verification
-- "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
-- Keep reasoning brief (1-2 sentences max)
-- IMPORTANT: Minimize your <think> reasoning to conserve output tokens for the JSON response
-
-## CONFIDENCE RULES
-- "high": Clear, current data from official sources
-- "medium": Data exists but may be outdated or sources partially conflict
-- "low": Limited data available; using best available inference
-
-## OUTPUT FORMAT
-Return ONLY valid JSON (no markdown, no explanation):
-{
-  "evaluations": [
-    {
-      "metricId": "metric_id",
-      "city1Legal": 75,
-      "city1Enforcement": 70,
-      "city2Legal": 60,
-      "city2Enforcement": 55,
-      "confidence": "high",
-      "reasoning": "Brief explanation",
-      "sources": ["url1", "url2"],
-      "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
-      "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
-    }
-  ]
-}
-
-You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
-              },
-              { role: 'user', content: prompt }
-            ],
-            // FIX: Increased from 16384 to 32768 — sonar-reasoning-pro <think> tokens
-            // consume part of max_tokens budget, causing JSON output truncation
-            max_tokens: 32768,
-            temperature: 0.3,
-            return_citations: true,
-            stream: false,  // FIX: Explicit non-streaming ensures usage data is returned
-          })
-        },
-        LLM_TIMEOUT_MS
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        // Don't retry 4xx errors (bad request, auth issues)
-        if (response.status >= 400 && response.status < 500) {
-          return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error: ${response.status} - ${errorText}` };
+      if (!reply.ok) {
+        if (!isRetryable(reply)) {
+          return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: reply.message };
         }
-        // Retry 5xx errors with backoff
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          console.warn(`[PERPLEXITY] ${response.status} error, retrying in ${backoffMs}ms...`);
+          console.warn(`[PERPLEXITY] ${reply.message} — retrying in ${backoffMs}ms...`);
           await new Promise(resolve => setTimeout(resolve, backoffMs));
           continue;
         }
-        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `API error after ${MAX_RETRIES} retries: ${response.status} - ${errorText}` };
+        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `${reply.message} (after ${MAX_RETRIES} attempts)` };
       }
 
-      const data = await response.json();
-
-      // Perplexity uses OpenAI-compatible format: choices[0].message.content
-      let rawText = '';
-
-      // Primary format: OpenAI-compatible choices array
-      if (data.choices?.[0]?.message?.content) {
-        rawText = data.choices[0].message.content;
-      }
-
-      // Fallback: output array format
-      if (!rawText && data.output?.length) {
-        const last = data.output[data.output.length - 1];
-        const contentArr = last?.content ?? [];
-        const textPart = contentArr.find((c: any) => c.type === 'text' || c.type === 'output_text');
-        rawText = textPart?.text ?? '';
-      }
-
-      // Fallback: Direct content/text fields
-      if (!rawText && typeof data.content === 'string') rawText = data.content;
-      if (!rawText && typeof data.text === 'string') rawText = data.text;
-
-      if (!rawText) {
-        console.error('[PERPLEXITY] No content found. Keys:', Object.keys(data));
-        console.error('[PERPLEXITY] Full response:', JSON.stringify(data).slice(0, 1000));
-        if (attempt < MAX_RETRIES) {
-          const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          console.warn(`[PERPLEXITY] Empty response, retrying in ${backoffMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-          continue;
-        }
-        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Empty response from Perplexity after retries' };
-      }
+      let rawText = reply.text;
 
       // Strip <think>...</think> blocks from reasoning models
       rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
@@ -1799,16 +1676,10 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`
         }
       }
 
-      // Extract token usage from Perplexity response (same format as OpenAI)
-      // FIX: Log when usage is missing so we can diagnose $0.00 cost tracking
-      if (!data?.usage) {
-        console.warn('[PERPLEXITY] API response missing usage data. Keys:', Object.keys(data));
-      } else {
-        console.log(`[PERPLEXITY] Usage: ${data.usage.prompt_tokens} prompt / ${data.usage.completion_tokens} completion tokens`);
-      }
+      // Token usage from the stream's usage frame
       const usage: TokenUsage = {
-        inputTokens: data?.usage?.prompt_tokens || 0,
-        outputTokens: data?.usage?.completion_tokens || 0
+        inputTokens: reply.usage.inputTokens,
+        outputTokens: reply.usage.outputTokens
       };
       // FIX: If API returned no usage, estimate from prompt + response length
       // so costs aren't silently lost (~4 chars per token)
@@ -1885,23 +1756,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (provider) {
       case 'claude-sonnet':
-        console.log('[EVALUATE] Calling Claude Sonnet...');
+        console.log(`[EVALUATE] Calling ${AI_MODELS.claudeEvaluator.name}...`);
         result = await evaluateWithClaude(city1, city2, metrics);
         break;
       case 'gpt-4o':
-        console.log('[EVALUATE] Calling GPT-4o...');
+        console.log(`[EVALUATE] Calling ${AI_MODELS.gptEvaluator.name}...`);
         result = await evaluateWithGPT4o(city1, city2, metrics);
         break;
       case 'gemini-3-pro':
-        console.log('[EVALUATE] Calling Gemini 3.1 Pro...');
+        console.log(`[EVALUATE] Calling ${AI_MODELS.geminiEvaluator.name}...`);
         result = await evaluateWithGemini(city1, city2, metrics);
         break;
       case 'grok-4':
-        console.log('[EVALUATE] Calling Grok 4...');
+        console.log(`[EVALUATE] Calling ${AI_MODELS.grokEvaluator.name}...`);
         result = await evaluateWithGrok(city1, city2, metrics);
         break;
       case 'perplexity':
-        console.log('[EVALUATE] Calling Perplexity...');
+        console.log(`[EVALUATE] Calling ${AI_MODELS.perplexityEvaluator.name}...`);
         result = await evaluateWithPerplexity(city1, city2, metrics);
         break;
       default:

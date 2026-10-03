@@ -58,7 +58,7 @@ import {
   createCostBreakdown,
   finalizeCostBreakdown,
   storeCostBreakdown,
-  calculateLLMCost,
+  calculateModelCost,
   calculateTavilyCost,
   formatCostBreakdownLog,
   toApiCostRecordInsert,
@@ -67,7 +67,7 @@ import {
 import { saveApiCostRecord } from './services/databaseService';
 import { warmUpSupabase } from './lib/supabase';
 import { startComparison } from './lib/usageGrant';
-import { AI_MODELS } from '../api/shared/models';
+import { AI_MODELS, PANEL_SEATS, modelForSeat, type PanelSeat } from '../api/shared/models';
 import './styles/globals.css';
 import './App.css';
 
@@ -900,17 +900,14 @@ const AppContent: React.FC = () => {
                               llmResults.forEach((evalResult, provider) => {
                                 if (evalResult.usage?.tokens) {
                                   const { inputTokens, outputTokens } = evalResult.usage.tokens;
-                                  const pricingKey = provider === 'claude-sonnet' ? AI_MODELS.claudeEvaluator.id :
-                                                     provider === 'gpt-4o' ? 'gpt-5.5' :
-                                                     provider === 'gemini-3-pro' ? 'gemini-3.1-pro' :
-                                                     provider === 'grok-4' ? 'grok-4.5' :
-                                                     provider === 'perplexity' ? 'sonar-pro' : null;
+                                  // The model each panel seat runs today, priced from the registry
+                                  const seatModel = provider in PANEL_SEATS ? modelForSeat(provider as PanelSeat) : null;
 
-                                  if (pricingKey) {
-                                    const costs = calculateLLMCost(pricingKey as any, inputTokens, outputTokens);
+                                  if (seatModel) {
+                                    const costs = calculateModelCost(seatModel, inputTokens, outputTokens);
                                     const apiCall: APICallCost = {
                                       provider,
-                                      model: pricingKey,
+                                      model: seatModel.id,
                                       inputTokens,
                                       outputTokens,
                                       inputCost: costs.inputCost,
@@ -931,7 +928,7 @@ const AppContent: React.FC = () => {
 
                               if (effectiveJudgeResult?.usage?.opusTokens) {
                                 const { inputTokens, outputTokens } = effectiveJudgeResult.usage.opusTokens;
-                                const judgeCosts = calculateLLMCost(AI_MODELS.judge.id, inputTokens, outputTokens);
+                                const judgeCosts = calculateModelCost(AI_MODELS.judge, inputTokens, outputTokens);
                                 costBreakdown.opusJudge = {
                                   provider: 'claude-opus',
                                   model: AI_MODELS.judge.id,

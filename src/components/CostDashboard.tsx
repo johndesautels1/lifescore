@@ -22,7 +22,7 @@ import {
   deleteAllApiCosts,
 } from '../services/databaseService';
 import { useAuth } from '../contexts/AuthContext';
-import { AI_MODELS } from '../../api/shared/models';
+import { AI_MODELS, modelForSeat } from '../../api/shared/models';
 import { isSupabaseConfigured } from '../lib/supabase';
 import type { ApiCostRecord } from '../types/database';
 import { toastConfirm } from '../utils/toast';
@@ -63,10 +63,10 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       mode: record.mode,
       timestamp: new Date(record.created_at).getTime(),
       claudeSonnet: makeCallCost('claude-sonnet', AI_MODELS.claudeEvaluator.id, record.claude_sonnet_total, 'evaluation'),
-      gpt4o: makeCallCost('gpt-4o', 'gpt-4o', record.gpt4o_total, 'evaluation'),
-      gemini: makeCallCost('gemini-3-pro', 'gemini-3-pro', record.gemini_total, 'evaluation'),
-      grok: makeCallCost('grok-4', 'grok-4', record.grok_total, 'evaluation'),
-      perplexity: makeCallCost('perplexity', 'perplexity-sonar', record.perplexity_total, 'evaluation'),
+      gpt4o: makeCallCost('gpt-4o', modelForSeat('gpt-4o').id, record.gpt4o_total, 'evaluation'),
+      gemini: makeCallCost('gemini-3-pro', modelForSeat('gemini-3-pro').id, record.gemini_total, 'evaluation'),
+      grok: makeCallCost('grok-4', modelForSeat('grok-4').id, record.grok_total, 'evaluation'),
+      perplexity: makeCallCost('perplexity', modelForSeat('perplexity').id, record.perplexity_total, 'evaluation'),
       evaluatorTotal: record.claude_sonnet_total + record.gpt4o_total + record.gemini_total + record.grok_total + record.perplexity_total,
       opusJudge,
       judgeTotal: record.opus_judge_total,

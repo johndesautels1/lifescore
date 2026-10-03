@@ -31,7 +31,7 @@ import {
 } from '../services/databaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
 // FIX #73: Import cost tracking utilities
-import { appendServiceCost, calculateLLMCost } from '../utils/costCalculator';
+import { appendServiceCost, calculateModelCost } from '../utils/costCalculator';
 import { AI_MODELS } from '../../api/shared/models';
 
 // ============================================================================
@@ -254,7 +254,7 @@ export function useOliviaChat(
       // FIX #73: Record Olivia chat cost (her model is AI_MODELS.writer)
       if (response.usage) {
         const { inputTokens, outputTokens } = response.usage;
-        const costs = calculateLLMCost(AI_MODELS.writer.id, inputTokens, outputTokens);
+        const costs = calculateModelCost(AI_MODELS.writer, inputTokens, outputTokens);
         appendServiceCost('olivia', {
           threadId: response.threadId,
           inputTokens,
