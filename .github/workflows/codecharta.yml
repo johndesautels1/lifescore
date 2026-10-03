@@ -1,0 +1,46 @@
+# Builds a CodeCharta 3D city map of this repo on GitHub's machines (never locally).
+# Run it from the Actions tab -> "CodeCharta map" -> "Run workflow", then download the
+# "lifescore-codecharta" file and drop lifescore.cc.json onto https://codecharta.com/visualization/app/index.html
+name: CodeCharta map
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history, so the map can show how often each file changes
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install CodeCharta analysis
+        run: npm install -g codecharta-analysis@2.0.2
+
+      - name: Measure the code (size, complexity per file)
+        run: ccsh unifiedparser . -nc -o "$RUNNER_TEMP/code.cc.json"
+
+      - name: Measure the history (commits, authors, age per file)
+        run: ccsh gitlogparser repo-scan --repo-path . -nc -o "$RUNNER_TEMP/git.cc.json"
+
+      - name: Combine into one map
+        run: ccsh merge "$RUNNER_TEMP/code.cc.json" "$RUNNER_TEMP/git.cc.json" -nc -o "$RUNNER_TEMP/lifescore.cc.json"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lifescore-codecharta
+          path: ${{ runner.temp }}/lifescore.cc.json
+          if-no-files-found: error
