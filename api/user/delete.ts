@@ -11,7 +11,8 @@
  *      from. Stripe keeps its own invoices (financial records, 7 years).
  *   2. Remove the user's own files — `user-videos/{userId}/` (uploaded court
  *      order videos) and `Reports/{userId}/` (saved report pages).
- *   3. Delete the sign-in account. Every table holding the user's data is
+ *   3. Remove the beta invitation (keyed by email, so it does not cascade),
+ *      then delete the sign-in account. Every table holding the user's data is
  *      linked to it ON DELETE CASCADE — or SET NULL for shared city caches and
  *      consent proofs (migration 20261003_account_deletion_foreign_keys) — so
  *      this one call removes the rest.
@@ -165,6 +166,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const subscriptionsCancelled = await cancelBilling(db, userId);
     const filesRemoved = await removeUserFiles(db, userId);
+
+    // The beta invitation is keyed by email, not linked to the account, so it
+    // does not cascade. Removed BEFORE the account, so a failure here leaves
+    // the account in place and the request can simply be retried.
+    if (user.email) {
+      const { error: betaError } = await withTimeout(
+        db.from('beta_testers').delete().eq('email', user.email.toLowerCase()),
+        'Delete beta invitation'
+      );
+      if (betaError) throw new DeletionStepError('account', `beta invitation: ${betaError.message}`);
+    }
 
     const { error: deleteUserError } = await withTimeout(db.auth.admin.deleteUser(userId), 'Delete account');
     if (deleteUserError) throw new DeletionStepError('account', deleteUserError.message);
