@@ -3,12 +3,15 @@
  * Initialize and export the Supabase client for use throughout the app
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { publicSupabaseSettings } from './publicConfig';
 
 const PLACEHOLDER_URL = 'https://placeholder.supabase.co';
 
-type SupabaseBrowserClient = ReturnType<typeof createClient>;
+// The library's own client type with its defaults (any database shape) — the
+// same type createClient() returns when called without type arguments.
+// ReturnType<typeof createClient> would read every table as `never`.
+type SupabaseBrowserClient = SupabaseClient;
 
 let realClient: SupabaseBrowserClient | null = null;
 
