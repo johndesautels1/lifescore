@@ -1,248 +1,124 @@
 # Data Retention Policy
 
-**Clues Intelligence LTD**
-**Effective Date:** January 23, 2026
-**Last Updated:** January 23, 2026
-**Classification:** Internal Policy
+**Clues Intelligence LTD** — LIFE SCORE
+**Effective:** 3 October 2026 (replaces the version of 23 January 2026)
+**Classification:** Internal policy
+
+> Rewritten 2026-10-03 to describe what the code actually does. The January
+> version promised a deletion queue, a 30-day grace period, nightly purges of
+> "unsaved comparisons" and 90-day archiving of Olivia conversations; none of
+> them was ever built. Where something is still only an intention, it is listed
+> under **Open items**, not stated as fact. The public promises are in the
+> Privacy Policy (`PRIVACY_POLICY.md`, generated from `src/legal/legalContent.ts`);
+> this document must never promise less or more than that page.
 
 ---
 
-## 1. Purpose
+## 1. Principles
 
-This policy defines how long Clues Intelligence LTD retains different categories of data, ensuring compliance with UK GDPR, EU GDPR, and other applicable regulations while meeting business and legal requirements.
-
----
-
-## 2. Principles
-
-1. **Minimization:** We only retain data as long as necessary
-2. **Purpose Limitation:** Data is kept only for its original purpose
-3. **Legal Compliance:** We meet all legal retention requirements
-4. **Security:** Retained data is protected; deleted data is securely erased
-5. **Documentation:** Retention decisions are documented and auditable
+1. **Minimisation** — keep only what the service needs, only as long as the account exists.
+2. **Purpose limitation** — data is used only for the purpose it was collected for.
+3. **One deletion path** — deleting the sign-in account removes everything linked to it (section 4).
+4. **Honesty** — this policy states what the system does today; intentions go under Open items.
 
 ---
 
-## 3. Retention Schedule
+## 2. Retention schedule
 
-### 3.1 User Account Data
+### 2.1 Held for the life of the account (deleted with it)
 
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Profile (email, name, avatar) | Account lifetime + 30 days | Account deletion request | Contract |
-| Authentication credentials | Account lifetime | Account deletion | Contract |
-| Account preferences | Account lifetime + 30 days | Account deletion | Legitimate interest |
+| Data | Where | Deleted by |
+|---|---|---|
+| Profile: email, name, profile picture, plan | `profiles` | Account deletion (cascade from the sign-in account) |
+| Preferences: weights, dealbreakers, favourites, display | `user_preferences` | Cascade |
+| Comparisons, notes, nicknames, favourites | `comparisons` | Cascade |
+| Olivia conversations and messages | `olivia_conversations`, `olivia_messages` | Cascade |
+| Visual reports (Gamma) and their files | `gamma_reports` | Cascade |
+| Judge reports | `judge_reports` | Cascade |
+| Saved reports and their share links and view records | `reports`, `report_shares`, `report_access_logs` | Cascade (files in `Reports/{userId}/` removed by the deletion route) |
+| Court orders and uploaded videos | `court_orders`, storage `user-videos/{userId}/` | Cascade; files removed by the deletion route |
+| City videos the user started | `grok_videos` | Cascade |
+| Subscription references, monthly usage | `subscriptions`, `usage_tracking` | Cascade (the Stripe subscription is cancelled first) |
+| Notifications and background jobs | `notifications`, `jobs` | Cascade |
+| Service cost records | `api_cost_records` | Cascade |
+| Beta invitation | `beta_testers` (by email) | Removed by the deletion route before the account |
 
-### 3.2 Comparison Data
+### 2.2 Kept after the account is deleted
 
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Saved comparisons | Account lifetime | Account deletion | Contract |
-| Unsaved comparisons | 24 hours | Last access | Legitimate interest |
-| Comparison history | Account lifetime | Account deletion | Contract |
-| Custom notes | Account lifetime | Account deletion | Contract |
+| Data | Why | How |
+|---|---|---|
+| Consent records (`consent_logs`: choice, time, IP address, browser) | Proof of what was consented to | `consent_logs.user_id` is set to null; the record keeps no account link |
+| Payment and invoice records | Tax and accounting law | Held by Stripe in its own systems, not by us |
+| Shared caches: city comparisons, contrast images, Cristiano city films, Moving Movies | Reused for every user; hold no personal data | The starter's id is set to null (`cristiano_city_videos`, `movie_videos`) |
+| Database backups | Disaster recovery | Held by Supabase and expire on its backup schedule |
 
-### 3.3 AI Conversation Data (Olivia)
+### 2.3 Never held by us
 
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Active conversations | 90 days of inactivity | Last message | Contract |
-| Archived conversations | Account lifetime | Account deletion | Contract |
-| OpenAI thread references | 90 days | Last interaction | Contract |
+- Card details — typed on Stripe's page only.
+- Emilia conversations — kept only in the user's browser tab (session storage).
+- Speech audio — the browser's speech recognition turns speech into text before anything reaches us.
 
-### 3.4 Generated Reports (Gamma)
+### 2.4 Logs
 
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Report metadata | Account lifetime | Account deletion | Contract |
-| PDF/PPTX files | Account lifetime | Account deletion | Contract |
-| Gamma generation IDs | Account lifetime | Account deletion | Contract |
-
-### 3.5 Financial Data
-
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Transaction records | 7 years | Transaction date | Legal (tax) |
-| Invoices | 7 years | Invoice date | Legal (tax) |
-| Subscription history | 7 years | Subscription end | Legal (tax) |
-| Payment method details | NOT STORED | - | - |
-
-**Note:** Payment card details are processed by Stripe and never stored on our systems.
-
-### 3.6 Technical/Operational Data
-
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Server access logs | 90 days | Log creation | Legitimate interest |
-| Error logs | 90 days | Log creation | Legitimate interest |
-| API request logs | 30 days | Request time | Legitimate interest |
-| Security audit logs | 2 years | Event date | Legal (security) |
-
-### 3.7 Marketing Data
-
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Marketing consent | Until withdrawal + 3 years | Withdrawal date | Consent |
-| Email campaign data | 3 years | Campaign date | Legitimate interest |
-| Unsubscribe records | Indefinite | Unsubscribe date | Legal (compliance) |
-
-### 3.8 Support Data
-
-| Data Type | Retention Period | Trigger | Legal Basis |
-|-----------|-----------------|---------|-------------|
-| Support tickets | 3 years | Ticket closure | Legitimate interest |
-| Chat transcripts | 3 years | Chat end | Legitimate interest |
-| Feedback submissions | 3 years | Submission date | Legitimate interest |
+| Log | Held by | Retention |
+|---|---|---|
+| Web and function logs | Vercel | Vercel's standard log period for the project's plan |
+| Database and sign-in logs | Supabase | Supabase's standard log period for the project's plan |
 
 ---
 
-## 4. Data Deletion Procedures
+## 3. Timed jobs
 
-### 4.1 Automatic Deletion
+The only timed job (`vercel.json` → `crons`) is:
 
-The following data is automatically deleted:
+| Job | Schedule | What it does |
+|---|---|---|
+| `/api/warmup` | Every 5 minutes | Keeps the database connection warm; deletes nothing |
 
-| Data | Schedule | Method |
-|------|----------|--------|
-| Unsaved comparisons | Daily at 00:00 UTC | Supabase cron job |
-| Inactive AI conversations | Weekly | Archive then delete after 90 days |
-| Server logs > 90 days | Daily | Log rotation |
-| API logs > 30 days | Daily | Automatic purge |
-
-### 4.2 User-Initiated Deletion
-
-When a user requests account deletion:
-
-1. **Immediate:**
-   - Account access disabled
-   - Authentication tokens invalidated
-   - Email removed from marketing lists
-
-2. **Within 24 hours:**
-   - Profile data queued for deletion
-   - Comparisons queued for deletion
-   - AI conversations queued for deletion
-   - Reports queued for deletion
-
-3. **Within 30 days:**
-   - All queued data permanently deleted
-   - Backups containing user data marked for exclusion
-   - Confirmation sent to user's email (before deletion)
-
-4. **Retained (anonymized or required by law):**
-   - Anonymized usage statistics
-   - Financial records for legal compliance
-   - Security audit logs
-
-### 4.3 Deletion Methods
-
-| Storage Type | Deletion Method | Verification |
-|--------------|-----------------|--------------|
-| Supabase rows | Hard delete with cascade | Query returns empty |
-| File storage | Secure delete API | Storage check |
-| Backups | Exclusion list + expiration | Backup audit |
-| Logs | Overwrite + rotation | Log verification |
-| Third-party (OpenAI, etc.) | API deletion request | Confirmation response |
+**No automatic deletion job runs today.** See Open items.
 
 ---
 
-## 5. Exceptions to Standard Retention
+## 4. Account deletion (user-initiated)
 
-Data may be retained longer than standard periods when:
+Door: **Settings → Data → Delete My Account** (or a request to info@cluesintelligence.com).
+Implementation: `api/user/delete.ts`; specification: `ACCOUNT_DELETION_SPEC.md`.
 
-### 5.1 Legal Hold
+1. Every billable Stripe subscription is cancelled. If Stripe cannot be reached, the account is **not** deleted.
+2. The user's own files are removed (`user-videos/{userId}/`, `Reports/{userId}/`).
+3. The beta invitation (keyed by email) is removed.
+4. The sign-in account is deleted; every table in 2.1 follows by `ON DELETE CASCADE`, and the links in 2.2 are set to null (migration `20261003_account_deletion_foreign_keys`).
 
-- Active litigation or investigation
-- Regulatory inquiry
-- Law enforcement request
-
-**Process:** Legal team issues hold notice; affected data excluded from deletion until lifted.
-
-### 5.2 Legal Requirements
-
-- Tax records: 7 years (UK HMRC requirement)
-- Security incidents: Duration of investigation + 2 years
-- Complaints/disputes: Duration + 6 years (statute of limitations)
-
-### 5.3 User Request
-
-Users may request extended retention of their data (e.g., keeping reports indefinitely). Such requests are documented and honored.
+The route answers "deleted" only when step 4 succeeds. Deletion is immediate — there is no grace period.
 
 ---
 
-## 6. Third-Party Data Retention
+## 5. Exceptions
 
-We cannot directly control retention by third parties but require DPAs that include:
-
-| Processor | Required Retention Terms |
-|-----------|-------------------------|
-| Supabase | Delete on our instruction |
-| OpenAI | 30-day API log retention |
-| Anthropic | Zero retention option |
-| Vercel | Log retention < 90 days |
-| Stripe | As required by payment law |
+Data may be kept longer where the law requires it, or to establish, exercise or defend legal claims, prevent fraud or process refunds. Any such hold is recorded with its reason and lifted when the reason ends.
 
 ---
 
-## 7. Implementation Requirements
+## 6. Third-party retention
 
-### 7.1 Technical Implementation
-
-**Database (Supabase):**
-```sql
--- Example: Auto-delete old unsaved comparisons
-CREATE OR REPLACE FUNCTION delete_old_unsaved_comparisons()
-RETURNS void AS $$
-BEGIN
-  DELETE FROM comparisons
-  WHERE is_saved = false
-  AND updated_at < NOW() - INTERVAL '24 hours';
-END;
-$$ LANGUAGE plpgsql;
-```
-
-**Scheduled Jobs:**
-- Daily: Clean unsaved comparisons
-- Weekly: Archive inactive conversations
-- Monthly: Audit retention compliance
-
-### 7.2 Monitoring
-
-- Monthly retention compliance report
-- Quarterly audit of deletion effectiveness
-- Annual policy review
+Suppliers process data on our instructions under their data processing terms; the list is `src/legal/subProcessors.ts` (shown in the Privacy Policy), and agreement status is tracked in `DPA_TRACKER.md`. Their own retention of what we send (for example, abuse-monitoring logs) is governed by those terms and is reviewed at each annual review.
 
 ---
 
-## 8. Responsibilities
+## 7. Open items (not built yet)
 
-| Role | Responsibilities |
-|------|-----------------|
-| **Engineering** | Implement automated deletion, maintain systems |
-| **Legal/Compliance** | Define requirements, handle legal holds |
-| **Support** | Process user deletion requests |
-| **Management** | Approve policy changes, resource allocation |
-
----
-
-## 9. Policy Review
-
-This policy is reviewed:
-
-- **Annually:** Full review and update
-- **As needed:** When regulations change, new products launch, or incidents occur
+| Item | Why it matters | Status |
+|---|---|---|
+| Purge expired rows in the shared caches (`global_comparison_cache`, `contrast_image_cache`, `cristiano_city_videos`, `movie_videos`) | They carry an `expires_at` but nothing deletes expired rows; only the Cristiano film reader ignores expired films. No personal data is held, so this is housekeeping, not a privacy risk. | Not built |
+| A stated backup period | Supabase's backup retention depends on the plan; record the plan's period here | To confirm |
+| Annual review reminder | Section 8 | Not scheduled |
 
 ---
 
-## 10. Related Documents
+## 8. Review
 
-- [Privacy Policy](PRIVACY_POLICY.md)
-- [Account Deletion Specification](ACCOUNT_DELETION_SPEC.md)
-- [Data Export Specification](DATA_EXPORT_SPEC.md)
+Reviewed once a year, and whenever a supplier, a table or a timed job changes. `tests/complianceDocs.test.ts` fails the build if a timed job is added without being listed in section 3, or if a table that holds user data is missing from section 2.
 
 ---
 
-**Document Version:** 1.0
-**Owner:** Legal & Compliance
-**Next Review:** January 2027
-
+**Owner:** Clues Intelligence LTD · **Contact:** info@cluesintelligence.com · **Next review:** October 2027

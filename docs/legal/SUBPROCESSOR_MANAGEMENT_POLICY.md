@@ -2,8 +2,8 @@
 
 **Clues Intelligence LTD**
 **Document Type:** Internal Policy
-**Version:** 1.0
-**Last Updated:** January 23, 2026
+**Version:** 1.1
+**Last Updated:** 3 October 2026
 **Classification:** Internal
 
 ---
@@ -27,19 +27,15 @@ This policy establishes procedures for managing third-party subprocessors who pr
 
 ## 3. Current Subprocessors
 
-| Subprocessor | Service | Data Processed | Location | DPA Status |
-|--------------|---------|----------------|----------|------------|
-| Supabase | Database, Auth | All user data | US (AWS) | Required |
-| Vercel | Hosting | All data in transit | US/Global | Required |
-| OpenAI | AI Assistant | Conversations | US | Required |
-| Anthropic | AI Evaluation | City queries | US | Required |
-| Google (Gemini) | AI Evaluation | City queries | US | Required |
-| xAI (Grok) | AI Evaluation | City queries | US | Required |
-| Perplexity | AI Evaluation | City queries | US | Required |
-| D-ID | Video Avatar | Voice/text | US/Israel | Required |
-| Gamma | Reports | Report data | US | Required |
-| Stripe | Payments | Payment data | US | Required |
-| Tavily | Web Search | Search queries | US | Required |
+The register is kept in ONE place — `src/legal/subProcessors.ts` — and shown in
+the Privacy Policy (`PRIVACY_POLICY.md`, generated from the same source). Each
+entry states the supplier's job, exactly what it receives (read from the code)
+and where it is based. It is not repeated here: the January table listed 11
+suppliers when the code called 19, and a second copy is how that happened.
+
+`tests/legalContent.test.ts` fails the build if the code calls a supplier the
+register does not name. Agreement (DPA) status for each supplier is tracked in
+`DPA_TRACKER.md`.
 
 ---
 
@@ -186,11 +182,11 @@ Maintain for each subprocessor:
 
 ## 9. Public Subprocessor List
 
-Maintain a public list of subprocessors at:
-- Privacy Policy (summary)
-- Dedicated subprocessor page (if needed for enterprise customers)
-
-Update within 30 days of material changes.
+The public list is the register in the Privacy Policy (footer → Privacy → "Who
+processes it for us"), drawn from `src/legal/subProcessors.ts`. Adding a
+supplier, a new kind of data or a new jurisdiction means: update the register
+and its `LAST_UPDATED`, regenerate the documents (`node scripts/build-legal-docs.mjs`),
+and give notice before the change applies.
 
 ---
 
@@ -241,6 +237,7 @@ Any exception to this policy requires:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-23 | Claude Code | Initial creation |
+| 1.1 | 2026-10-03 | Claude Opus 5.5 | Section 3 and 9 point at the one register (`src/legal/subProcessors.ts`) instead of a second, outdated table |
 
 ---
 

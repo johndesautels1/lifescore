@@ -1,7 +1,7 @@
 # Data Processing Agreement (DPA) Tracker
 
 **Clues Intelligence LTD**
-**Last Updated:** January 23, 2026
+**Last Updated:** 3 October 2026 (suppliers added; signed statuses unchanged)
 
 ---
 
@@ -21,8 +21,8 @@ For each processor:
 |-----------|---------|--------------|--------|-------------|-------------|
 | **Supabase** | Database, Auth | [supabase.com/legal/dpa](https://supabase.com/legal/dpa) | [x] Signed via PandaDoc | 2026-01-23 | 2027-01-23 |
 | **Vercel** | Hosting | [vercel.com/legal/dpa](https://vercel.com/legal/dpa) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
-| **OpenAI** | Olivia AI, GPT-4o | [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum) | [x] Form submitted | 2026-01-23 | 2027-01-23 |
-| **Anthropic** | Claude Sonnet/Opus | [anthropic.com/legal/commercial-terms](https://www.anthropic.com/legal/commercial-terms) | [x] Signed | 2026-01-23 | 2027-01-23 |
+| **OpenAI** | GPT evaluator; back-up voice (Olivia moved to Anthropic, Oct 2026) | [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum) | [x] Form submitted | 2026-01-23 | 2027-01-23 |
+| **Anthropic** | Claude evaluator, judge, Olivia, Emilia | [anthropic.com/legal/commercial-terms](https://www.anthropic.com/legal/commercial-terms) | [x] Signed | 2026-01-23 | 2027-01-23 |
 | **Google (Gemini)** | LLM Evaluation | [cloud.google.com/terms/data-processing-addendum](https://cloud.google.com/terms/data-processing-addendum) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
 | **xAI (Grok)** | LLM Evaluation | Contact sales | [~] Requested via email | 2026-02-28 | - |
 | **Perplexity** | LLM Evaluation | Trust Center: Enterprise DPA | [~] Requested / downloading | 2026-02-28 | - |
@@ -30,6 +30,16 @@ For each processor:
 | **Gamma** | Report Generation | Contact support | [~] Requested via email | 2026-02-28 | - |
 | **Stripe** | Payments | [stripe.com/legal/dpa](https://stripe.com/legal/dpa) | [x] Accepted via ToS | 2026-01-23 | 2027-01-23 |
 | **Tavily** | Web Search | Contact support | [~] Requested via email | 2026-02-28 | - |
+| **HeyGen** (incl. LiveAvatar) | Olivia's live face and videos; Cristiano's videos and films | To locate on the vendor's legal page | [ ] Not recorded | - | - |
+| **ElevenLabs** | Voices | To locate on the vendor's legal page | [ ] Not recorded | - | - |
+| **Simli** | Back-up live face for Olivia | Contact support | [ ] Not recorded | - | - |
+| **Replicate** | Back-up judge videos, city clips and pictures | To locate on the vendor's legal page | [ ] Not recorded | - | - |
+| **Kling AI** | City video clips (no personal data) | Contact support | [ ] Not recorded | - | - |
+| **InVideo** | Moving Movies films (no personal data) | Contact support | [ ] Not recorded | - | - |
+| **Resend** | Email | To locate on the vendor's legal page | [ ] Not recorded | - | - |
+| **Flagpedia** (flagcdn.com) | Flag images fetched by the browser (sees IP address) | flagpedia.net | [ ] Not recorded — likely no DPA available; consider serving flags from our own site | - | - |
+
+> Rows added 2026-10-03 for every supplier the code calls (the register is `src/legal/subProcessors.ts`; `tests/complianceDocs.test.ts` fails if one is missing here). "Not recorded" means no agreement is on file in this folder, not that none exists — update the row when it is signed.
 
 ---
 
@@ -62,6 +72,9 @@ For each processor:
 | `dpas/stripe-dpa.md` | Stripe | 2026-01-23 |
 | `dpas/vercel-dpa.md` | Vercel | 2026-01-23 |
 | `dpas/google-cloud-dpa.md` | Google Cloud | 2026-01-23 |
+| `dpas/Anthropic_DPA_Feb2025.docx` | Anthropic | in folder (recorded 2026-10-03) |
+| `dpas/Data Processing Agreement (Clues Intelligence LTD and OpenAI).pdf` | OpenAI | in folder (recorded 2026-10-03) |
+| `dpas/Supabase User DPA (August 5, 2025).pdf` | Supabase | in folder (recorded 2026-10-03) |
 
 ---
 

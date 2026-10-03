@@ -2,7 +2,7 @@
 
 **Company:** Clues Intelligence LTD (United Kingdom)
 **Markets:** United Kingdom, European Union, United States
-**Last Updated:** February 28, 2026
+**Last Updated:** 3 October 2026
 
 ---
 
@@ -61,15 +61,19 @@
 | A3 | Cookie Policy | [x] | `COOKIE_POLICY.md` | `268ef9f` | 2026-01-23 |
 | A4 | Acceptable Use Policy | [x] | `ACCEPTABLE_USE_POLICY.md` | `_____` | 2026-01-23 |
 | A5 | Refund Policy | [x] | `REFUND_POLICY.md` | `_____` | 2026-01-23 |
+| A6 | Do Not Sell or Share | [x] | `DO_NOT_SELL_OR_SHARE.md` | `4d70286` | 2026-10-03 |
+| A7 | US State Privacy Rights | [x] | `US_STATE_PRIVACY_RIGHTS.md` | `4d70286` | 2026-10-03 |
+
+**Since 2026-10-03 all seven pages (A1–A7) are generated from `src/legal/legalContent.ts`** — the words the app shows — by `node scripts/build-legal-docs.mjs`, effective 3 October 2026 (commit `4d70286`). Never edit those seven files by hand; `tests/legalContent.test.ts` fails if they differ from the app.
 
 ### Section B: Internal Policies
 
 | # | Item | Status | File | Commit | Date |
 |---|------|--------|------|--------|------|
-| B1 | Data Retention Policy | [x] | `DATA_RETENTION_POLICY.md` | `268ef9f` | 2026-01-23 |
+| B1 | Data Retention Policy | [x] | `DATA_RETENTION_POLICY.md` | rewritten to the code | 2026-10-03 |
 | B2 | Data Breach Response Plan | [x] | `DATA_BREACH_RESPONSE_PLAN.md` | `_____` | 2026-01-23 |
 | B3 | Employee Data Handling Policy | [x] | `EMPLOYEE_DATA_HANDLING_POLICY.md` | `_____` | 2026-01-23 |
-| B4 | Subprocessor Management Policy | [x] | `SUBPROCESSOR_MANAGEMENT_POLICY.md` | `_____` | 2026-01-23 |
+| B4 | Subprocessor Management Policy | [x] | `SUBPROCESSOR_MANAGEMENT_POLICY.md` (register: `src/legal/subProcessors.ts`) | v1.1 | 2026-10-03 |
 | B5 | IP Assignment Deed (Founder → Company) | [x] | `IP_ASSIGNMENT_DEED.md` | `_____` | 2026-02-28 |
 
 ### Section C: Technical Implementation
@@ -77,12 +81,17 @@
 | # | Item | Status | File/Location | Commit | Date |
 |---|------|--------|---------------|--------|------|
 | C1 | Cookie Consent Banner | [x] | `src/components/CookieConsent.tsx` | `7391247` | 2026-01-23 |
-| C2 | "Download My Data" Feature | [x] | `api/user/export.ts` | `7391247` | 2026-01-23 |
-| C3 | "Delete My Account" Feature | [x] | `api/user/delete.ts` | `7391247` | 2026-01-23 |
+| C2 | "Download My Data" Feature | [x] | `api/user/export.ts` (every user table) + Settings → Data button | `f617ee5`, `31cafb9` | 2026-10-03 |
+| C3 | "Delete My Account" Feature | [x] | `api/user/delete.ts` (cancels Stripe first, removes files, then the account) + Settings → Data button | `9a3f920`, `31cafb9` | 2026-10-03 |
 | C4 | Consent Logging (DB) | [x] | `supabase/migrations/`, `api/consent/log.ts` | `_____` | 2026-01-23 |
-| C5 | Data Export Endpoint | [x] | `DATA_EXPORT_SPEC.md` | `_____` | 2026-01-23 |
+| C5 | Data Export / Deletion specifications | [x] | `DATA_EXPORT_SPEC.md`, `ACCOUNT_DELETION_SPEC.md` (v2.0, the built design) | rewritten | 2026-10-03 |
 | C6 | Privacy Policy Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
 | C7 | Terms Page in App | [x] | `src/components/LegalModal.tsx` | `46204ba` | 2026-01-23 |
+| C8 | Legal pages from one source, engine look | [x] | `src/legal/*`, `src/components/LegalModal.tsx` | `4d70286`, `89f1dbd` | 2026-10-03 |
+| C9 | Cancel / manage subscription door | [x] | Settings → Subscription → Manage Subscription | `3b714ed` | 2026-10-03 |
+| C10 | Fonts served from our own site (no Google) | [x] | `public/fonts/`, `src/styles/fonts.css` | `29aa3ef` | 2026-10-03 |
+
+**Note (2026-10-03):** C2 and C3 were marked done in January but did not work: the deletion route crashed on every call and never cancelled billing; the export covered six tables; neither had a button. Both now work and are tested (`tests/privacyRoutes.test.ts`).
 
 ### Section D: Regulatory Registration
 
@@ -98,8 +107,8 @@
 |---|-----------|---------|------------|----------|------|
 | E1 | Supabase | Database & Auth | [x] | [x] | 2026-01-23 |
 | E2 | Vercel | Hosting | [x] | [x] | 2026-01-23 |
-| E3 | OpenAI | Olivia AI Assistant | [x] | [x] | 2026-01-23 |
-| E4 | Anthropic | Claude LLM Evaluation | [x] | [x] | 2026-01-23 |
+| E3 | OpenAI | GPT evaluation; back-up voice | [x] | [x] | 2026-01-23 |
+| E4 | Anthropic | Evaluation, judge, Olivia, Emilia | [x] | [x] | 2026-01-23 |
 | E5 | Google (Gemini) | LLM Evaluation | [x] | [x] | 2026-01-23 |
 | E6 | xAI (Grok) | LLM Evaluation | [~] | [ ] | Requested 2026-02-28 |
 | E7 | Perplexity | LLM Evaluation | [~] | [ ] | Requested 2026-02-28 |
@@ -107,6 +116,16 @@
 | E9 | Gamma | Report Generation | [~] | [ ] | Requested 2026-02-28 |
 | E10 | Stripe | Payments | [x] | [x] | 2026-01-23 |
 | E11 | Tavily | Web Search | [~] | [ ] | Requested 2026-02-28 |
+| E12 | HeyGen (incl. LiveAvatar) | Avatar faces, videos, films | [ ] | [ ] | Not recorded |
+| E13 | ElevenLabs | Voices | [ ] | [ ] | Not recorded |
+| E14 | Simli | Back-up live face | [ ] | [ ] | Not recorded |
+| E15 | Replicate | Back-up videos, clips, pictures | [ ] | [ ] | Not recorded |
+| E16 | Kling AI | City clips (no personal data) | [ ] | [ ] | Not recorded |
+| E17 | InVideo | Films (no personal data) | [ ] | [ ] | Not recorded |
+| E18 | Resend | Email | [ ] | [ ] | Not recorded |
+| E19 | Flagpedia (flagcdn.com) | Flag images (sees IP) | [ ] | [ ] | Not recorded |
+
+Full detail and agreement links: `DPA_TRACKER.md`.
 
 ### Section F: US State Compliance
 
@@ -141,12 +160,12 @@
 
 | Right | UK GDPR | EU GDPR | CCPA | Action Required |
 |-------|---------|---------|------|-----------------|
-| Access | Yes | Yes | Yes | Data Export feature |
-| Rectification | Yes | Yes | Yes | Profile edit |
-| Erasure | Yes | Yes | Yes | Account deletion |
+| Access | Yes | Yes | Yes | Settings → Data → Download My Data |
+| Rectification | Yes | Yes | Yes | Settings → Profile |
+| Erasure | Yes | Yes | Yes | Settings → Data → Delete My Account |
 | Portability | Yes | Yes | No | Data Export (JSON) |
 | Opt-out of sale | No | No | Yes | "Do Not Sell" link |
-| Restrict processing | Yes | Yes | No | Account settings |
+| Restrict processing | Yes | Yes | No | Request to the privacy contact |
 | Object to processing | Yes | Yes | No | Contact form |
 
 ---
@@ -155,7 +174,7 @@
 
 - **Data Controller:** Clues Intelligence LTD
 - **Registered Address:** 167-169 Great Portland Street, 5th Floor, London W1W 5PF, UK
-- **Privacy Contact:** cluesnomads@gmail.com
+- **Privacy Contact:** info@cluesintelligence.com (the contact on every legal page — John, 2026-10-03)
 - **Admin Contact:** cluesnomads@gmail.com
 - **DPO:** Not required (below threshold)
 - **EU Representative:** Not required (UK company post-Brexit)
@@ -177,6 +196,7 @@
 | 2026-02-28 | Claude Opus 4.6 | Trademark Strategy (G2-G8): Full trademark strategy doc, Section G added to checklist, Legal Compliance Manual Section 7B, CS Manual Section 6.7 |
 | 2026-02-28 | Claude Opus 4.6 | IP Assignment Deed (B5): Founder-to-company IP assignment, all products/personas/code covered |
 | 2026-01-23 | Claude Code | DPAs: Stripe, Vercel, Google Cloud saved to dpas/ folder |
+| 2026-10-03 | Claude Opus 5.5 | Legal pages from one source (A1–A7), engine look; deletion and export made to work with Settings doors (C2, C3); Manage Subscription door (C9); fonts self-hosted (C10); retention policy and specs rewritten to the code (B1, C5); register in one place (B4); suppliers E12–E19 added |
 
 ---
 
