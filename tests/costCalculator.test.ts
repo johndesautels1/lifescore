@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculateLLMCost,
+  calculateModelCost,
   calculateTavilyCost,
   estimateTokens,
   calculateGammaCost,
@@ -24,7 +25,7 @@ import { AI_MODELS } from '../api/shared/models';
 describe('calculateLLMCost', () => {
   it('prices the current judge model from the model registry', () => {
     // 1000 input tokens, 500 output tokens at the judge's published rate
-    const result = calculateLLMCost(AI_MODELS.judge.id, 1000, 500);
+    const result = calculateModelCost(AI_MODELS.judge, 1000, 500);
     expect(result.inputCost).toBeCloseTo(1000 * AI_MODELS.judge.inputPerM / 1_000_000, 8);
     expect(result.outputCost).toBeCloseTo(500 * AI_MODELS.judge.outputPerM / 1_000_000, 8);
   });
