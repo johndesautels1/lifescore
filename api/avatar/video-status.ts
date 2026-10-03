@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { describeHeyGenFailure, videoState } from '../shared/heygen/heygenVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const TIMEOUT_MS = 45000; // 45s — required for DB + Replicate status check + video download/re-upload to Storage
@@ -204,7 +205,41 @@ export default async function handler(
       return;
     }
 
-    // If still processing, check Replicate
+    // If still processing on HeyGen (the primary judge film), ask HeyGen — the
+    // engine's judge-page poll, verbatim (api/shared/heygen/heygenVideo.ts videoState).
+    if (video.status === 'processing' && video.heygen_video_id) {
+      try {
+        const state = await videoState(video.heygen_video_id);
+        if (state.status === 'completed' && state.videoUrl) {
+          // HeyGen's links expire — keep our own copy, as with the Replicate back-up.
+          const persisted = await persistVideoToStorage(state.videoUrl, video.comparison_id, supabaseAdmin);
+          const videoUrl = persisted?.publicUrl || state.videoUrl;
+          const updatePayload: Record<string, unknown> = {
+            status: 'completed',
+            video_url: videoUrl,
+            completed_at: new Date().toISOString(),
+          };
+          if (persisted?.storagePath) updatePayload.video_storage_path = persisted.storagePath;
+          if (state.seconds !== undefined) updatePayload.duration_seconds = state.seconds;
+          await withTimeout(supabaseAdmin.from('avatar_videos').update(updatePayload).eq('id', video.id));
+          video.status = 'completed';
+          video.video_url = videoUrl;
+          video.completed_at = updatePayload.completed_at;
+          if (state.seconds !== undefined) video.duration_seconds = state.seconds;
+        } else if (state.status === 'failed') {
+          await withTimeout(
+            supabaseAdmin.from('avatar_videos').update({ status: 'failed', error: state.error || 'The render failed.' }).eq('id', video.id)
+          );
+          video.status = 'failed';
+          video.error = state.error || 'The render failed.';
+        }
+      } catch (heygenErr) {
+        console.warn('[VIDEO-STATUS] HeyGen check failed:', describeHeyGenFailure(heygenErr).message);
+        // Continue with existing video data; the next poll asks again
+      }
+    }
+
+    // If still processing on the Replicate back-up, check Replicate
     if (video.status === 'processing' && video.replicate_prediction_id) {
       const replicateToken = process.env.REPLICATE_API_TOKEN;
       if (replicateToken) {
@@ -306,7 +341,8 @@ export default async function handler(
     // attempt to migrate to permanent Supabase Storage. If URL expired, mark as failed.
     if (video.status === 'completed' && video.video_url && !video.video_storage_path) {
       const isTemporaryUrl = video.video_url.includes('replicate.delivery') ||
-                             video.video_url.includes('klingai.com');
+                             video.video_url.includes('klingai.com') ||
+                             video.video_url.includes('heygen');
 
       if (isTemporaryUrl) {
         console.log('[VIDEO-STATUS] Completed video has temporary URL, attempting migration:', video.id);

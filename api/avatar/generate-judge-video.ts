@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { describeHeyGenFailure, submitVideo, videoConfigured } from '../shared/heygen/heygenVideo.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -232,9 +233,10 @@ export default async function handler(
   if (!entitled) return;
   let counted = false;
 
+  // HeyGen is the primary; Replicate is the back-up. Refuse only when neither is set up.
   const replicateToken = process.env.REPLICATE_API_TOKEN;
-  if (!replicateToken) {
-    console.error('[JUDGE-VIDEO] REPLICATE_API_TOKEN not configured');
+  if (!replicateToken && !videoConfigured()) {
+    console.error('[JUDGE-VIDEO] Neither HeyGen nor REPLICATE_API_TOKEN is configured');
     res.status(500).json({
       error: 'Replicate not configured',
       message: 'REPLICATE_API_TOKEN environment variable required',
@@ -363,6 +365,61 @@ export default async function handler(
     counted = true;
 
     console.log('[JUDGE-VIDEO] Starting generation for:', comparisonId);
+
+    // ── PRIMARY: HeyGen, the questionnaire engine's judge-page wiring, verbatim
+    //    (api/shared/heygen/heygenVideo.ts; his look HEYGEN_AVATAR_LOOK_ID and voice
+    //    HEYGEN_CRISTIANO_VOICE_ID, the same settings the engine reads). HeyGen
+    //    speaks for itself: no TTS, no audio upload. Polled by /api/avatar/video-status.
+    // ── BACK-UP: his previous Replicate lip-sync, unchanged, below — used when
+    //    HeyGen is not configured or refuses the submission.
+    if (videoConfigured()) {
+      try {
+        const { videoId: heygenVideoId, avatarUsed } = await submitVideo(body.script, { title: "LIFE SCORE — the judge's film" });
+        console.log('[JUDGE-VIDEO] HeyGen render submitted:', heygenVideoId, 'avatar:', avatarUsed);
+        const { data: heygenRow, error: heygenInsertError } = await supabaseAdmin
+          .from('avatar_videos')
+          .insert({
+            comparison_id: comparisonId,
+            video_url: '',
+            script: body.script,
+            city1: body.city1,
+            city2: body.city2,
+            winner: body.winner,
+            winner_score: body.winnerScore,
+            loser_score: body.loserScore,
+            heygen_video_id: heygenVideoId,
+            status: 'processing',
+          })
+          .select()
+          .single();
+        if (heygenInsertError) console.warn('[JUDGE-VIDEO] HeyGen row insert warning:', heygenInsertError.message);
+        res.status(200).json({
+          success: true,
+          cached: false,
+          provider: 'heygen',
+          video: {
+            id: heygenRow?.id || heygenVideoId,
+            comparisonId,
+            status: 'processing',
+            script: body.script,
+            createdAt: heygenRow?.created_at || new Date().toISOString(),
+          },
+        });
+        return;
+      } catch (heygenError) {
+        const failure = describeHeyGenFailure(heygenError);
+        console.warn('[JUDGE-VIDEO] HeyGen could not take the render, using the Replicate back-up:', failure.status, failure.message);
+      }
+    } else {
+      console.warn('[JUDGE-VIDEO] HeyGen not configured (HEYGEN_API_KEY / HEYGEN_AVATAR_LOOK_ID / HEYGEN_CRISTIANO_VOICE_ID), using the Replicate back-up');
+    }
+
+    if (!replicateToken) {
+      await refundFeature(entitled.auth.userId, 'judgeVideos', entitled.access.limits);
+      counted = false;
+      res.status(503).json({ error: 'The judge video could not be started. Please try again shortly.' });
+      return;
+    }
 
     // Step 1: Generate TTS audio from script
     const { buffer: audioBuffer, duration: audioDuration } = await generateTTSAudio(body.script);
