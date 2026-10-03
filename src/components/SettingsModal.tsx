@@ -60,6 +60,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // Billing: Stripe's own page to change plan, update the card, see invoices or cancel.
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalError, setPortalError] = useState('');
+
   // Calculate localStorage usage
   const calculateStorageUsage = useCallback(() => {
     let totalChars = 0;
@@ -101,6 +105,39 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
     calculateStorageUsage();
     setTimeout(() => setClearSuccess(false), 3000);
   }, [calculateStorageUsage]);
+
+  // Open Stripe's billing page for the user's subscription (/api/stripe/create-portal-session).
+  const handleManageSubscription = useCallback(async () => {
+    setPortalBusy(true);
+    setPortalError('');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+        body: '{}',
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        setPortalError(await readServerMessage(response, 'Could not open the billing page'));
+        return;
+      }
+      const body: unknown = await response.json().catch(() => null);
+      const url = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).url : null;
+      if (typeof url !== 'string' || !url) {
+        setPortalError('Could not open the billing page. Please try again.');
+        return;
+      }
+      window.location.assign(url);
+    } catch (error) {
+      console.error('[Settings] Manage subscription failed:', error);
+      setPortalError('Could not open the billing page. Please try again.');
+    } finally {
+      clearTimeout(timer);
+      setPortalBusy(false);
+    }
+  }, []);
 
   // Download a copy of everything the account holds (/api/user/export).
   const handleDownloadMyData = useCallback(async () => {
@@ -567,6 +604,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
                       </svg>
                       <span>Upgrade Plan</span>
                     </button>
+                  )}
+
+                  {tier !== 'free' && (
+                    <>
+                      <button
+                        type="button"
+                        className="settings-btn secondary"
+                        onClick={handleManageSubscription}
+                        disabled={portalBusy}
+                      >
+                        <span>{portalBusy ? 'Opening…' : 'Manage Subscription'}</span>
+                      </button>
+                      <p className="field-hint">
+                        Change plan, update your card, see invoices or cancel, on Stripe&rsquo;s billing page.
+                      </p>
+                      {portalError && (
+                        <div className="settings-error" role="alert">
+                          <span>{portalError}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
