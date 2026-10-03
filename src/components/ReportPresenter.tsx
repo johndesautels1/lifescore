@@ -33,6 +33,7 @@ import {
   closeHeyGenSession,
   generateTTS,
 } from '../services/oliviaService';
+import { useLiveAvatar } from '../hooks/useLiveAvatar';
 import GammaIframe from './GammaIframe';
 import VideoPhoneWarning from './VideoPhoneWarning';
 import './ReportPresenter.css';
@@ -90,6 +91,16 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
+  // ---- Olivia's live face: HeyGen LiveAvatar first (the engine's wiring, as in her
+  //      chat); this presenter's previous HeyGen streaming session is the back-up. ----
+  const {
+    connect: connectLive,
+    speak: speakLive,
+    disconnect: disconnectLive,
+    interrupt: interruptLive,
+  } = useLiveAvatar({ videoRef, audioRef });
+  const faceRef = useRef<'liveavatar' | 'heygen' | null>(null);
+
   // ---- TTS fallback ----
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -121,6 +132,8 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
       clearTimeout(segmentTimerRef.current);
       segmentTimerRef.current = null;
     }
+    if (faceRef.current === 'liveavatar') disconnectLive();
+    faceRef.current = null;
     if (heygenSessionRef.current) {
       closeHeyGenSession(heygenSessionRef.current.sessionId).catch(() => {});
       heygenSessionRef.current = null;
@@ -133,9 +146,23 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
       ttsAudioRef.current.pause();
       ttsAudioRef.current = null;
     }
-  }, []);
+  }, [disconnectLive]);
+
+  /** Stop whatever the live face is saying (either provider). */
+  const interruptFace = useCallback(() => {
+    if (ttsOnlyRef.current) return;
+    if (faceRef.current === 'liveavatar') interruptLive();
+    else if (heygenSessionRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+  }, [interruptLive]);
 
   const connectHeyGen = useCallback(async (): Promise<boolean> => {
+    // PRIMARY: LiveAvatar (LITE, her ElevenLabs voice)
+    if (await connectLive()) {
+      faceRef.current = 'liveavatar';
+      return true;
+    }
+    console.warn('[ReportPresenter] LiveAvatar could not start; using the HeyGen streaming back-up.');
+    // BACK-UP: the presenter's previous HeyGen streaming session, unchanged
     try {
       const response = await createHeyGenSession();
       if (!response.sessionId) throw new Error('No session ID returned');
@@ -162,12 +189,13 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
       }
+      faceRef.current = 'heygen';
       return true;
     } catch (err) {
       console.warn('[ReportPresenter] HeyGen connection failed:', err);
       return false;
     }
-  }, []);
+  }, [connectLive]);
 
   // ============================================================================
   // SPEAKING (Live Mode)
@@ -192,7 +220,9 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   }, []);
 
   const speakSegment = useCallback(async (segment: PresenterSegment) => {
-    if (heygenSessionRef.current && !ttsOnlyRef.current) {
+    if (faceRef.current === 'liveavatar' && !ttsOnlyRef.current) {
+      await speakLive(segment.narration);
+    } else if (heygenSessionRef.current && !ttsOnlyRef.current) {
       try {
         await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
       } catch (err) {
@@ -202,7 +232,7 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     } else {
       await speakTTSFallback(segment.narration);
     }
-  }, [speakTTSFallback]);
+  }, [speakTTSFallback, speakLive]);
 
   // ============================================================================
   // LIVE PLAYBACK CONTROLS
@@ -217,9 +247,13 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     const segment = segmentsRef.current[currentIndex];
     if (!segment) return;
 
+    // LiveAvatar's speak() returns once the segment's audio has been delivered at
+    // speaking pace, so only a short breath is left; the back-up providers return
+    // at once and need the segment's estimated length.
+    const delay = faceRef.current === 'liveavatar' && !ttsOnlyRef.current ? 800 : segment.durationEstimateMs + 1500;
     segmentTimerRef.current = setTimeout(() => {
       advanceToSegmentRef.current?.(currentIndex + 1);
-    }, segment.durationEstimateMs + 1500);
+    }, delay);
   }, []);
   scheduleNextSegmentRef.current = scheduleNextSegment;
 
@@ -262,10 +296,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   const handlePause = useCallback(() => {
     if (segmentTimerRef.current) { clearTimeout(segmentTimerRef.current); segmentTimerRef.current = null; }
-    if (heygenSessionRef.current && !ttsOnlyRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    interruptFace();
     if (ttsAudioRef.current) ttsAudioRef.current.pause();
     setState((prev) => ({ ...prev, status: 'paused' }));
-  }, []);
+  }, [interruptFace]);
 
   const handleResume = useCallback(async () => {
     setState((prev) => {
@@ -280,23 +314,23 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
 
   const handleSkipForward = useCallback(() => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
-    if (heygenSessionRef.current && !ttsOnlyRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    interruptFace();
     if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
     setState((prev) => {
       advanceToSegmentRef.current?.(prev.currentSegmentIndex + 1);
       return prev;
     });
-  }, []);
+  }, [interruptFace]);
 
   const handleSkipBack = useCallback(() => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
-    if (heygenSessionRef.current && !ttsOnlyRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
+    interruptFace();
     if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
     setState((prev) => {
       advanceToSegmentRef.current?.(Math.max(0, prev.currentSegmentIndex - 1));
       return prev;
     });
-  }, []);
+  }, [interruptFace]);
 
   const handleClose = useCallback(() => { cleanupSession(); onClose(); }, [cleanupSession, onClose]);
 
