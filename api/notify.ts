@@ -13,16 +13,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { serviceDb } from './shared/supabaseAdmin.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // Supabase admin client (service role for inserting notifications)
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
-);
+const supabaseAdmin = serviceDb;
 
 // Resend API
 const RESEND_API_URL = 'https://api.resend.com/emails';

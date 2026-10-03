@@ -16,7 +16,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { serviceDb } from '../shared/supabaseAdmin.js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
@@ -44,10 +44,7 @@ const CRISTIANO_VOICE_ID = (process.env.HEYGEN_CRISTIANO_VOICE_ID ?? '').trim();
 const HEYGEN_ID = /^[A-Za-z0-9_-]{1,128}$/;
 
 // Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
-);
+const supabaseAdmin = serviceDb;
 
 // ============================================================================
 // TYPES

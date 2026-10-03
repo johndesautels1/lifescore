@@ -11,7 +11,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
 
@@ -52,16 +53,7 @@ interface ContrastImageResponse {
 }
 
 // Initialize Supabase for caching + storage
-const getSupabaseClient = () => {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    return null;
-  }
-
-  return createClient(supabaseUrl, supabaseKey);
-};
+const getSupabaseClient = (): SupabaseClient | null => getServiceClient();
 
 // Generate cache key for the image pair
 // Sort cities alphabetically so "Austin vs Denver" and "Denver vs Austin"
@@ -176,7 +168,7 @@ async function checkCache(cacheKey: string): Promise<ContrastImageResponse | nul
 
 // Clean up expired cache entry and its storage files
 async function cleanupCacheEntry(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   cacheKey: string,
   data: { city_a_storage_path?: string; city_b_storage_path?: string }
 ): Promise<void> {

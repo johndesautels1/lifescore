@@ -42,3 +42,26 @@ export function getServiceClient(): SupabaseClient | null {
   }
   return serviceClient;
 }
+
+/** Raised on first use of serviceDb when the service key is missing. */
+export class DatabaseNotConfiguredError extends Error {
+  constructor() {
+    super('Database not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+    this.name = 'DatabaseNotConfiguredError';
+  }
+}
+
+/**
+ * The same service client, for routes that keep it in a module-level constant
+ * (`const supabaseAdmin = serviceDb`). It resolves on first use, inside the
+ * request, so a missing key raises DatabaseNotConfiguredError where the route's
+ * own try/catch answers 500 — instead of crashing the module as it loads.
+ */
+export const serviceDb: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, property) {
+    const client = getServiceClient();
+    if (!client) throw new DatabaseNotConfiguredError();
+    const value: unknown = Reflect.get(client, property, client);
+    return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(client) : value;
+  },
+});

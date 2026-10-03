@@ -9,7 +9,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { checkRateLimit } from '../shared/rateLimit.js';
 
@@ -70,20 +70,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const token = authHeader.substring(7);
 
     // Initialize Supabase client
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = getServiceClient();
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabase) {
       console.error('[EXPORT] Missing Supabase credentials');
       return res.status(500).json({
         error: 'CONFIG_ERROR',
         message: 'Server configuration error.',
       });
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false },
-    });
 
     // Verify the user's token and get their ID
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);

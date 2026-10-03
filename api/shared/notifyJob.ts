@@ -9,12 +9,9 @@
  * Clues Intelligence LTD
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { serviceDb } from './supabaseAdmin.js';
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
-);
+const supabaseAdmin = serviceDb;
 
 interface NotifyJobParams {
   userId: string;

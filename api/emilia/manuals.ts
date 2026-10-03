@@ -14,7 +14,7 @@ import { handleCors } from '../shared/cors.js';
 import { requireAuth, getAdminEmails } from '../shared/auth.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
 
 // ============================================================================
 // CONSTANTS
@@ -1302,16 +1302,14 @@ async function isUserAuthorized(userEmail: string | null): Promise<boolean> {
   }
 
   // Check database for authorized users
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabase = getServiceClient();
 
-  if (!supabaseUrl || !supabaseKey) {
+  if (!supabase) {
     console.warn('[manuals] Supabase not configured, using admin email list only');
     return false;
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
     const { data, error } = await supabase
       .from('authorized_manual_access')
       .select('email')

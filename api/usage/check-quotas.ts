@@ -11,7 +11,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth, getAdminEmails } from '../shared/auth.js';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
 
 // ============================================================================
 // CONFIGURATION
@@ -51,14 +51,11 @@ interface UpdateUsageRequest {
 // ============================================================================
 
 function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
-
-  if (!url || !key) {
+  const client = getServiceClient();
+  if (!client) {
     throw new Error('Supabase not configured');
   }
-
-  return createClient(url, key);
+  return client;
 }
 
 // ============================================================================

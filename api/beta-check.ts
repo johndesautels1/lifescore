@@ -12,7 +12,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from './shared/supabaseAdmin.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 
@@ -35,10 +35,10 @@ export default async function handler(
   const auth = await requireAuth(req, res);
   if (!auth) return;
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  // Service role bypasses RLS
+  const supabase = getServiceClient();
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabase) {
     // Service not configured — not a beta tester
     res.setHeader('Cache-Control', 'private, max-age=300');
     res.status(200).json({ isBetaTester: false });
@@ -46,9 +46,6 @@ export default async function handler(
   }
 
   try {
-    // Use service role to bypass RLS
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     const { data, error } = await supabase
       .from('beta_testers')
       .select('*')

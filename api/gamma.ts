@@ -15,7 +15,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient } from './shared/supabaseAdmin.js';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
@@ -106,15 +107,12 @@ function getTemplateId(): string {
  * Get Supabase admin client for server-side Storage uploads
  */
 function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
+  const client = getServiceClient();
+  if (!client) {
     console.warn('[GAMMA] Supabase not configured for export persistence');
     return null;
   }
-
-  return createClient(url, serviceKey);
+  return client;
 }
 
 // ============================================================================
@@ -132,7 +130,7 @@ async function persistGammaExport(
   exportUrl: string,
   generationId: string,
   format: 'pdf' | 'pptx',
-  supabaseAdmin: ReturnType<typeof createClient>
+  supabaseAdmin: SupabaseClient
 ): Promise<PersistedExport | null> {
   const storagePath = `${generationId}.${format}`;
   const contentType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';

@@ -14,7 +14,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { getAdminEmails } from '../shared/auth.js';
 
 /** A signup alert is sent only for an account created in the last few minutes. */
@@ -30,10 +30,8 @@ function escapeHtml(value: string): string {
  * stops anyone from using it to send alerts about made-up accounts.
  */
 async function isFreshSignup(email: string): Promise<boolean> {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-  if (!url || !key) return false;
-  const db = createClient(url, key, { auth: { persistSession: false } });
+  const db = getServiceClient();
+  if (!db) return false;
   const since = new Date(Date.now() - SIGNUP_WINDOW_MS).toISOString();
   const { data, error } = await db
     .from('profiles')
