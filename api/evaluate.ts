@@ -6,7 +6,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
-import { requireAuth } from './shared/auth.js';
+import { requireComparisonGrant } from './shared/entitlements.js';
+
+/** The one model a standard (single-model) comparison runs on — see src/hooks/useComparison.ts. */
+const STANDARD_COMPARISON_PROVIDER = 'claude-sonnet';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
@@ -1871,20 +1874,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Require authentication — uses LLM API credits (Claude, GPT-4o, Gemini, Tavily)
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
-
   try {
     const { provider, city1, city2, metrics } = req.body as EvaluationRequest;
-
-    console.log(`[EVALUATE] Starting ${provider} evaluation for ${city1} vs ${city2}, ${metrics?.length || 0} metrics`);
-    console.log(`[EVALUATE] USE_CATEGORY_SCORING=${USE_CATEGORY_SCORING}`);
 
     if (!provider || !city1 || !city2 || !metrics) {
       console.error('[EVALUATE] Missing required fields');
       return res.status(400).json({ error: 'Missing required fields: provider, city1, city2, metrics' });
     }
+
+    // Sign-in + a comparison grant for this city pair (counted once at /api/usage/consume).
+    // A standard comparison runs on one model only; every model needs an enhanced grant.
+    const granted = await requireComparisonGrant(req, res, city1, city2, ['standardComparisons', 'enhancedComparisons']);
+    if (!granted) return;
+    if (granted.feature === 'standardComparisons' && provider !== STANDARD_COMPARISON_PROVIDER) {
+      return res.status(403).json({
+        error: 'Comparing with every AI model needs an enhanced comparison.',
+        code: 'upgrade_required',
+        feature: 'enhancedComparisons',
+        requiredTier: 'enterprise',
+      });
+    }
+
+    console.log(`[EVALUATE] Starting ${provider} evaluation for ${city1} vs ${city2}, ${metrics.length} metrics`);
+    console.log(`[EVALUATE] USE_CATEGORY_SCORING=${USE_CATEGORY_SCORING}`);
 
     let result: EvaluationResponse;
 

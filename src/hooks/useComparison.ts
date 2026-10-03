@@ -19,6 +19,7 @@ import type {
   LawLivedRatio
 } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../shared/metrics';
+import { grantHeaders } from '../lib/usageGrant';
 
 // ============================================================================
 // HELPERS
@@ -331,7 +332,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
           const authHeaders = await getAuthHeaders();
           const response = await fetch('/api/evaluate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            headers: { 'Content-Type': 'application/json', ...authHeaders, ...grantHeaders(city1, city2) },
             body: JSON.stringify({
               provider: 'claude-sonnet',
               city1,

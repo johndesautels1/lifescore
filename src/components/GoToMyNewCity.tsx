@@ -101,7 +101,7 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
   comparisonId,
 }) => {
   const { user } = useAuth();
-  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { checkUsage, isAdmin } = useTierAccess();
   const {
     status,
     isGenerating,
@@ -214,13 +214,11 @@ const GoToMyNewCity: React.FC<GoToMyNewCityProps> = ({
 
     // ADMIN BYPASS: Skip usage checks for admin users
     if (!isAdmin) {
-      const usageResult = await checkUsage('cristianoVideos' as any);
+      const usageResult = await checkUsage('cristianoVideos');
       if (!usageResult.allowed) {
         toastError('Monthly Cristiano video limit reached. You get 1 per month on the Sovereign plan.');
         return;
       }
-
-      await incrementUsage('cristianoVideos' as any);
     }
 
     setHasStarted(true);

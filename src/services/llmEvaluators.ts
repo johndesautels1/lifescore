@@ -12,6 +12,7 @@ import type { LLMProvider, LLMAPIKeys, LLMMetricScore } from '../types/enhancedC
 import type { MetricDefinition, CategoryId } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { getAuthHeaders } from '../lib/supabase';
+import { grantHeaders } from '../lib/usageGrant';
 
 // ============================================================================
 // TIMEOUT CONSTANTS
@@ -116,7 +117,7 @@ async function evaluateCategoryBatch(
     const authHeaders = await getAuthHeaders();
     const response = await fetch('/api/evaluate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      headers: { 'Content-Type': 'application/json', ...authHeaders, ...grantHeaders(city1, city2) },
       signal: controller.signal,
       body: JSON.stringify({
         provider,

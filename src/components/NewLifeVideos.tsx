@@ -32,7 +32,7 @@ interface NewLifeVideosProps {
 
 const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
   const { user } = useAuth();
-  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { checkUsage, isAdmin } = useTierAccess();
   const {
     videoPair,
     isGenerating,
@@ -102,9 +102,6 @@ const NewLifeVideos: React.FC<NewLifeVideosProps> = ({ result }) => {
         }
         return;
       }
-
-      // Increment usage counter before starting generation
-      await incrementUsage('grokVideos');
     }
 
     setHasStarted(true);

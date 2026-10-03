@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature } from '../shared/entitlements.js';
 
 // ============================================================================
 // TYPES (inline to avoid import issues in Vercel)
@@ -1390,8 +1390,9 @@ export default async function handler(
   }
 
   // Require authentication
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+  // Sign-in + the plan must include Olivia (NAVIGATOR and up).
+  const entitled = await requireFeature(req, res, 'oliviaMinutesPerMonth');
+  if (!entitled) return;
 
   try {
     const { comparisonResult, includeEvidence = true, maxTokens = 16000 } = req.body || {};

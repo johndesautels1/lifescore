@@ -20,6 +20,7 @@ import type { ComparisonResult } from '../types/metrics';
 import type { JudgeReport } from '../components/JudgeTab';
 import { getAuthHeaders } from '../lib/supabase';
 import { getSavedJudgeReports, type SavedJudgeReport } from './savedComparisons';
+import { grantHeaders } from '../lib/usageGrant';
 
 // ============================================================================
 // TYPES
@@ -59,6 +60,7 @@ export function startBackgroundReportGeneration(
     headers: {
       'Content-Type': 'application/json',
       ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+      ...grantHeaders(comparisonResult.city1.city, comparisonResult.city2.city),
     },
     body: JSON.stringify({
       comparisonResult,

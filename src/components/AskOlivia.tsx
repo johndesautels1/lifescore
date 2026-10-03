@@ -65,7 +65,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   // const hasGreetedRef = useRef(false); // Disabled with auto-greeting
 
   // Tier access for message limits
-  const { checkUsage, incrementUsage, isUnlimited, isAdmin } = useTierAccess();
+  const { checkUsage, isUnlimited, isAdmin } = useTierAccess();
 
   // FIX 7.1: Memoize savedComparisons reads with refresh mechanism
   const [comparisonsRefreshKey, setComparisonsRefreshKey] = useState(0);
@@ -337,15 +337,13 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
         }));
         return;
       }
-      // Increment usage counter
-      await incrementUsage('oliviaMinutesPerMonth');
     }
 
     setInputText('');
     setUsageLimitReached(false);
     // Send to OpenAI (the brain) - response will auto-trigger speak
     await sendMessage(messageText);
-  }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited, isAdmin]);
+  }, [inputText, sendMessage, checkUsage, isUnlimited, isAdmin]);
 
   const handleQuickAction = useCallback((action: OliviaQuickAction) => {
     setShowTextChat(true);

@@ -10,7 +10,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
-import { requireAuth } from './shared/auth.js';
+import { requireComparisonGrant } from './shared/entitlements.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
@@ -488,13 +488,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Require authentication â€” uses Anthropic Opus credits
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
-
   try {
   // FIX: Extract city1/city2 from request (previously ignored)
   const { city1, city2, evaluatorResults } = req.body as JudgeRequest;
+  if (typeof city1 !== 'string' || typeof city2 !== 'string' || !city1 || !city2) {
+    return res.status(400).json({ error: 'city1 and city2 are required' });
+  }
+
+  // Sign-in + an ENHANCED comparison grant for this city pair (the judge only runs
+  // after a multi-model comparison, which was counted at /api/usage/consume).
+  const granted = await requireComparisonGrant(req, res, city1, city2, ['enhancedComparisons']);
+  if (!granted) return;
+
   const startTime = Date.now();
 
   // Step 1: Build statistical consensus from evaluator results

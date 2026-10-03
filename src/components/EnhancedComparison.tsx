@@ -20,6 +20,7 @@ import { GunComparisonModal } from './GunComparisonModal';
 import EvidencePanel from './EvidencePanel';
 import ScoreMethodology from './ScoreMethodology';
 import './EnhancedComparison.css';
+import { grantHeaders } from '../lib/usageGrant';
 
 // Helper: compute median of a sorted number array
 function computeMedian(sorted: number[]): number {
@@ -220,7 +221,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/judge', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        headers: { 'Content-Type': 'application/json', ...authHeaders, ...grantHeaders(city1, city2) },
         body: JSON.stringify({ city1, city2, evaluatorResults })
       });
 

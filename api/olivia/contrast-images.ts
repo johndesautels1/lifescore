@@ -13,7 +13,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature } from '../shared/entitlements.js';
 
 // Replicate API configuration
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -316,9 +316,9 @@ export default async function handler(
     return;
   }
 
-  // JWT auth — reject unauthenticated requests
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+  // Sign-in + the plan must include Olivia (NAVIGATOR and up).
+  const entitled = await requireFeature(req, res, 'oliviaMinutesPerMonth');
+  if (!entitled) return;
 
   try {
     const body = req.body as ContrastImageRequest;

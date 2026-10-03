@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
+import { requireFeature, refundFeature } from './shared/entitlements.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -332,12 +333,8 @@ export default async function handler(
     return; // 429 already sent
   }
 
-  // Require authentication — uses Gamma API credits
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
-
   try {
-    // POST - Create new generation
+    // POST - Create new generation (one Gamma report from this month's allowance)
     if (req.method === 'POST') {
       const { prompt, exportAs } = req.body || {};
 
@@ -351,7 +348,16 @@ export default async function handler(
         return;
       }
 
-      const result = await createFromTemplate(prompt, exportAs);
+      const entitled = await requireFeature(req, res, 'gammaReports', { consume: true });
+      if (!entitled) return;
+
+      let result: Awaited<ReturnType<typeof createFromTemplate>>;
+      try {
+        result = await createFromTemplate(prompt, exportAs);
+      } catch (createError) {
+        await refundFeature(entitled.auth.userId, 'gammaReports', entitled.access.limits);
+        throw createError;
+      }
 
       res.status(200).json({
         generationId: result.generationId,
@@ -366,8 +372,10 @@ export default async function handler(
       return;
     }
 
-    // GET - Check status
+    // GET - Check status (signed-in users only; nothing is counted)
     if (req.method === 'GET') {
+      const auth = await requireAuth(req, res);
+      if (!auth) return;
       const generationId = req.query.generationId as string;
 
       if (!generationId) {

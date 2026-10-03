@@ -54,7 +54,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
 }) => {
   const winnerCity = propWinnerCity;
   const { user } = useAuth();
-  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { checkUsage, isAdmin } = useTierAccess();
   const {
     video,
     isGenerating,
@@ -284,9 +284,6 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         toastError(tierMsg);
         return;
       }
-
-      // Increment usage counter before starting generation
-      await incrementUsage('grokVideos');
     }
 
     setHasStarted(true);

@@ -11,7 +11,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { notifyJobComplete } from '../shared/notifyJob.js';
 import crypto from 'crypto';
@@ -46,12 +46,6 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
 
-// FIX M3: Developer bypass emails from env var only (no hardcoded emails in source)
-// Set DEV_BYPASS_EMAILS in Vercel env vars to grant enterprise (SOVEREIGN) access
-const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || '')
-  .split(',')
-  .map(e => e.trim().toLowerCase())
-  .filter(Boolean);
 
 // ============================================================================
 // TYPES
@@ -514,188 +508,6 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
 }
 
 // ============================================================================
-// TIER ACCESS & USAGE TRACKING
-// ============================================================================
-
-interface TierLimits {
-  grokVideos: number;
-}
-
-const TIER_LIMITS: Record<string, TierLimits> = {
-  free: { grokVideos: 0 },       // No access
-  pro: { grokVideos: 0 },        // No access (Sovereign only)
-  enterprise: { grokVideos: -1 }, // Unlimited
-};
-
-/**
- * Get user's tier and check if they have grok video access
- */
-async function checkUserTierAccess(userId: string): Promise<{
-  allowed: boolean;
-  tier: string;
-  limit: number;
-  used: number;
-  remaining: number;
-  reason?: string;
-}> {
-  try {
-    // Get user profile to check tier AND email (for developer bypass)
-    // FIX 2026-01-29: Use maybeSingle() to avoid "Cannot coerce" error
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('tier, email')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (profileError || !profile) {
-      console.warn('[GROK-VIDEO] Could not fetch user profile:', profileError?.message);
-      return {
-        allowed: false,
-        tier: 'free',
-        limit: 0,
-        used: 0,
-        remaining: 0,
-        reason: 'Could not verify user tier',
-      };
-    }
-
-    // Developer bypass - grant enterprise (SOVEREIGN) access to specified emails
-    const userEmail = profile.email?.toLowerCase() || '';
-    const isDeveloper = userEmail && DEV_BYPASS_EMAILS.includes(userEmail);
-    if (isDeveloper) {
-      console.log('[GROK-VIDEO] 🔓 Developer bypass active for:', profile.email);
-    }
-
-    const tier = isDeveloper ? 'enterprise' : (profile.tier || 'free');
-    const tierLimits = TIER_LIMITS[tier] || TIER_LIMITS.free;
-    const limit = tierLimits.grokVideos;
-
-    // If limit is 0, no access at this tier
-    if (limit === 0) {
-      return {
-        allowed: false,
-        tier,
-        limit: 0,
-        used: 0,
-        remaining: 0,
-        reason: `Grok videos require SOVEREIGN tier. Current tier: ${tier.toUpperCase()}`,
-      };
-    }
-
-    // If limit is -1, unlimited access
-    if (limit === -1) {
-      return {
-        allowed: true,
-        tier,
-        limit: -1,
-        used: 0,
-        remaining: -1,
-      };
-    }
-
-    // Check current usage for this billing period
-    const now = new Date();
-    const periodStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-
-    // FIX 2026-01-29: Use maybeSingle() - usage record may not exist yet
-    const { data: usage, error: usageError } = await supabaseAdmin
-      .from('usage_tracking')
-      .select('grok_videos')
-      .eq('user_id', userId)
-      .eq('period_start', periodStart)
-      .maybeSingle();
-
-    const used = usage?.grok_videos || 0;
-    const remaining = limit - used;
-
-    if (remaining <= 0) {
-      return {
-        allowed: false,
-        tier,
-        limit,
-        used,
-        remaining: 0,
-        reason: `Grok video limit reached (${used}/${limit} this month)`,
-      };
-    }
-
-    return {
-      allowed: true,
-      tier,
-      limit,
-      used,
-      remaining,
-    };
-  } catch (err) {
-    console.error('[GROK-VIDEO] Tier check error:', err);
-    return {
-      allowed: false,
-      tier: 'free',
-      limit: 0,
-      used: 0,
-      remaining: 0,
-      reason: 'Error checking tier access',
-    };
-  }
-}
-
-/**
- * Increment grok_videos usage count (call only for NON-CACHED generations)
- * Count: 1 for new_life_videos pair, 1 for court_order_video
- */
-async function incrementUsage(userId: string): Promise<boolean> {
-  try {
-    const now = new Date();
-    const periodStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const periodEnd = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
-
-    // Check if record exists
-    // FIX 2026-01-29: Use maybeSingle() - record may not exist yet
-    const { data: existing } = await supabaseAdmin
-      .from('usage_tracking')
-      .select('id, grok_videos')
-      .eq('user_id', userId)
-      .eq('period_start', periodStart)
-      .maybeSingle();
-
-    if (existing) {
-      // Update existing record
-      const { error } = await supabaseAdmin
-        .from('usage_tracking')
-        .update({ grok_videos: (existing.grok_videos || 0) + 1 })
-        .eq('id', existing.id);
-
-      if (error) {
-        console.error('[GROK-VIDEO] Usage update error:', error.message);
-        return false;
-      }
-    } else {
-      // Insert new record
-      const { error } = await supabaseAdmin
-        .from('usage_tracking')
-        .insert({
-          user_id: userId,
-          period_start: periodStart,
-          period_end: periodEnd,
-          grok_videos: 1,
-        });
-
-      if (error) {
-        console.error('[GROK-VIDEO] Usage insert error:', error.message);
-        return false;
-      }
-    }
-
-    console.log('[GROK-VIDEO] Usage incremented for user:', userId);
-    return true;
-  } catch (err) {
-    console.error('[GROK-VIDEO] Usage increment failed:', err);
-    return false;
-  }
-}
-
-// ============================================================================
 // DATABASE HELPERS
 // ============================================================================
 
@@ -945,9 +757,10 @@ export default async function handler(
     return;
   }
 
-  // Require authentication — uses video generation credits (Kling/Replicate)
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+  // Sign-in + the plan must include Grok videos (SOVEREIGN; one a month).
+  const entitled = await requireFeature(req, res, 'grokVideos');
+  if (!entitled) return;
+  const auth = entitled.auth;
 
   const body = req.body as GenerateRequest;
 
@@ -962,27 +775,25 @@ export default async function handler(
     return;
   }
 
+  if (body.action !== 'new_life_videos' && body.action !== 'court_order_video') {
+    res.status(400).json({
+      error: 'Unknown action',
+      validActions: ['new_life_videos', 'court_order_video'],
+    });
+    return;
+  }
+
+  // Reserve one video from this month's allowance before any vendor is called;
+  // it is given back below when every video came from the cache, or on failure.
+  if (!(await consumeOrDeny(res, entitled, 'grokVideos'))) return;
+  let reserved = true;
+  const giveBack = async (): Promise<void> => {
+    if (!reserved) return;
+    reserved = false;
+    await refundFeature(auth.userId, 'grokVideos', entitled.access.limits);
+  };
+
   try {
-    // ========================================================================
-    // TIER ACCESS CHECK (applies to all actions)
-    // ========================================================================
-    const tierAccess = await checkUserTierAccess(body.userId);
-
-    if (!tierAccess.allowed) {
-      console.log('[GROK-VIDEO] Access denied for user:', body.userId, tierAccess.reason);
-      res.status(403).json({
-        error: 'Access denied',
-        reason: tierAccess.reason,
-        tier: tierAccess.tier,
-        limit: tierAccess.limit,
-        used: tierAccess.used,
-        remaining: tierAccess.remaining,
-        upgradeRequired: true,
-      });
-      return;
-    }
-
-    console.log('[GROK-VIDEO] Access granted for user:', body.userId, 'tier:', tierAccess.tier);
 
     // ========================================================================
     // NEW LIFE VIDEOS (Winner + Loser pair)
@@ -1020,13 +831,14 @@ export default async function handler(
         !!forceRegenerate
       );
 
-      // Increment usage: count 1 for the winner+loser pair (only if NOT fully cached)
+      // Count 1 for the winner+loser pair — unless both came from the cache
       const fullyFromCache = winnerResult.cached && loserResult.cached;
-      if (!fullyFromCache) {
-        await incrementUsage(body.userId);
-        console.log('[GROK-VIDEO] Usage counted: 1 for new_life_videos pair');
-      } else {
+      if (fullyFromCache) {
+        await giveBack();
         console.log('[GROK-VIDEO] No usage counted - fully cached');
+      } else {
+        reserved = false;
+        console.log('[GROK-VIDEO] Usage counted: 1 for new_life_videos pair');
       }
 
       // Fire-and-forget: create in-app notification for the user
@@ -1113,12 +925,13 @@ export default async function handler(
         cityType || detectCityType(winnerCity)
       );
 
-      // Increment usage: count 1 for court order (only if NOT cached)
-      if (!result.cached) {
-        await incrementUsage(body.userId);
-        console.log('[GROK-VIDEO] Usage counted: 1 for court_order_video');
-      } else {
+      // Count 1 for the court order video — unless it came from the cache
+      if (result.cached) {
+        await giveBack();
         console.log('[GROK-VIDEO] No usage counted - cached');
+      } else {
+        reserved = false;
+        console.log('[GROK-VIDEO] Usage counted: 1 for court_order_video');
       }
 
       // Fire-and-forget: create in-app notification for the user
@@ -1157,13 +970,9 @@ export default async function handler(
       return;
     }
 
-    // Unknown action
-    res.status(400).json({
-      error: 'Unknown action',
-      validActions: ['new_life_videos', 'court_order_video'],
-    });
   } catch (error) {
     console.error('[GROK-VIDEO] Error:', error);
+    await giveBack();
 
     // Provide more specific error info for debugging
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -14,7 +14,35 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
+import { createClient } from '@supabase/supabase-js';
 import { getAdminEmails } from '../shared/auth.js';
+
+/** A signup alert is sent only for an account created in the last few minutes. */
+const SIGNUP_WINDOW_MS = 15 * 60 * 1000;
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
+/**
+ * True when a profile with this email was created moments ago. The route is
+ * called right after sign-up, before the user has a session, so this is what
+ * stops anyone from using it to send alerts about made-up accounts.
+ */
+async function isFreshSignup(email: string): Promise<boolean> {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  if (!url || !key) return false;
+  const db = createClient(url, key, { auth: { persistSession: false } });
+  const since = new Date(Date.now() - SIGNUP_WINDOW_MS).toISOString();
+  const { data, error } = await db
+    .from('profiles')
+    .select('id')
+    .ilike('email', email)
+    .gte('created_at', since)
+    .limit(1);
+  return !error && Array.isArray(data) && data.length > 0;
+}
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
@@ -30,12 +58,21 @@ export default async function handler(
     return;
   }
 
-  const { email, fullName } = req.body || {};
+  const { email: rawEmail, fullName: rawName } = req.body || {};
 
-  if (!email) {
+  if (typeof rawEmail !== 'string' || !rawEmail.includes('@') || rawEmail.length > 320) {
     res.status(400).json({ error: 'email is required' });
     return;
   }
+
+  if (!(await isFreshSignup(rawEmail.trim()))) {
+    // Not a real, just-created account — say nothing more.
+    res.status(200).json({ success: true });
+    return;
+  }
+
+  const email = escapeHtml(rawEmail.trim());
+  const fullName = typeof rawName === 'string' && rawName.trim() ? escapeHtml(rawName.trim().slice(0, 200)) : '';
 
   // Always respond fast — don't let email delivery block the response
   if (!RESEND_API_KEY) {

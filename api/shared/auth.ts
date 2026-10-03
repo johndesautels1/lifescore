@@ -13,6 +13,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { FOUNDER_ADMIN_EMAILS } from './plans.js';
 
 // ============================================================================
 // SUPABASE CLIENT (module-level, reused across requests)
@@ -80,13 +81,14 @@ export async function requireAuth(
 // ============================================================================
 
 /**
- * FIX S5: Single source of truth for admin email list.
- * Reads from DEV_BYPASS_EMAILS env var only — no hardcoded emails in source.
- * Set DEV_BYPASS_EMAILS in Vercel with comma-separated admin emails.
+ * Single source of truth for the admin email list: the founder accounts in
+ * ./plans.ts (the same list the screens use) plus any comma-separated emails
+ * in the DEV_BYPASS_EMAILS environment variable.
  */
 export function getAdminEmails(): string[] {
-  return (process.env.DEV_BYPASS_EMAILS || '')
+  const fromEnv = (process.env.DEV_BYPASS_EMAILS || '')
     .split(',')
     .map(e => e.trim().toLowerCase())
     .filter(Boolean);
+  return Array.from(new Set([...FOUNDER_ADMIN_EMAILS, ...fromEnv]));
 }

@@ -40,7 +40,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
   const inputRef = useRef<HTMLInputElement>(null);
 
   // FIX: Add tier access for Olivia usage gating
-  const { checkUsage, incrementUsage, isUnlimited, isAdmin } = useTierAccess();
+  const { checkUsage, isUnlimited, isAdmin } = useTierAccess();
 
   // FIX: Detect mobile to swap drag positioning from transform to right/bottom
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 480);
@@ -143,14 +143,12 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
         }));
         return;
       }
-      // Increment usage counter
-      await incrementUsage('oliviaMinutesPerMonth');
     }
 
     setInputText('');
     setUsageLimitReached(false);
     await sendMessage(messageText);
-  }, [inputText, sendMessage, checkUsage, incrementUsage, isUnlimited, isAdmin]);
+  }, [inputText, sendMessage, checkUsage, isUnlimited, isAdmin]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation(); // Prevent external handlers from capturing keys

@@ -94,6 +94,7 @@ import FreedomCategoryTabs from './FreedomCategoryTabs';
 import FreedomMetricsList from './FreedomMetricsList';
 import FreedomHeroFooter from './FreedomHeroFooter';
 import { getFirstNonEmptyCategory, getCategoryData, isValidFreedomData } from '../utils/freedomEducationUtils';
+import { grantHeaders } from '../lib/usageGrant';
 
 export interface JudgeReport {
   reportId: string;
@@ -149,7 +150,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
   onSavedReportLoaded
 }) => {
   const { supabaseUser, isAuthenticated, session } = useAuth();
-  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { checkUsage, isAdmin } = useTierAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -678,9 +679,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         setVideoGenerationProgress('');
         return;
       }
-
-      // Increment usage counter before starting generation
-      await incrementUsage('judgeVideos');
     }
 
     // Prevent concurrent video generations
@@ -845,6 +843,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
         headers: {
           'Content-Type': 'application/json',
           ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+          ...(comparisonResult?.city1?.city && comparisonResult?.city2?.city
+            ? grantHeaders(comparisonResult.city1.city, comparisonResult.city2.city)
+            : {}),
         },
         body: JSON.stringify({
           comparisonResult,

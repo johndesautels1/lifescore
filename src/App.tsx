@@ -33,7 +33,6 @@ import OliviaChatBubble from './components/OliviaChatBubble';
 import FeatureGate, { UsageMeter } from './components/FeatureGate';
 import HelpBubble from './components/HelpBubble';
 import MobileWarningModal from './components/MobileWarningModal';
-import { useTierAccess } from './hooks/useTierAccess';
 import {
   EnhancedModeToggle,
   EnhancedResults,
@@ -67,6 +66,7 @@ import {
 } from './utils/costCalculator';
 import { saveApiCostRecord } from './services/databaseService';
 import { warmUpSupabase } from './lib/supabase';
+import { startComparison } from './lib/usageGrant';
 import './styles/globals.css';
 import './App.css';
 
@@ -257,7 +257,6 @@ function enhancedReducer(state: EnhancedState, action: EnhancedAction): Enhanced
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session, refreshProfile } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
-  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
   const { completeJobAndNotify } = useJobTracker();
   const pendingComparisonJobRef = useRef<{ jobId: string; city1: string; city2: string } | null>(null);
   const [savedKey, setSavedKey] = useState(0);
@@ -611,49 +610,29 @@ const AppContent: React.FC = () => {
     // CRITICAL: enhancedResult must be cleared for BOTH modes to prevent Bern/Mesa showing for Baltimore/Bratislava
     dispatchEnhanced({ type: 'CLEAR_STALE_STATE' });
 
-    if (enhancedMode) {
-      // ADMIN BYPASS: Skip usage checks for admin users
-      if (!isAdmin) {
-        // Enhanced mode: Check usage limit before running
-        const usageResult = await checkUsage('enhancedComparisons');
-
-        if (!usageResult.allowed) {
-          // User has hit their limit - show pricing modal
-          toastInfo('Enhanced comparison limit reached â€” upgrade for more');
-          dispatchModal({ type: 'OPEN_PRICING', highlight: {
-            feature: 'enhancedComparisons',
-            tier: usageResult.requiredTier,
-          }});
-          return;
-        }
-
-        // Increment usage counter before running enhanced comparison
-        await incrementUsage('enhancedComparisons');
+    // The server counts the comparison once and hands back a grant that every AI
+    // call of this comparison carries (admins are allowed without a count).
+    const comparisonKind = enhancedMode ? 'enhancedComparisons' : 'standardComparisons';
+    const started = await startComparison(comparisonKind, city1, city2);
+    if (!started.ok) {
+      if (started.code === 'upgrade_required' || started.code === 'limit_reached') {
+        toastInfo(started.message);
+        dispatchModal({ type: 'OPEN_PRICING', highlight: {
+          feature: comparisonKind,
+          tier: started.requiredTier ?? (enhancedMode ? 'enterprise' : 'pro'),
+        }});
+      } else {
+        toastError(started.message);
       }
+      return;
+    }
+
+    if (enhancedMode) {
 
       // Run enhanced comparison
       toastInfo(`Starting enhanced comparison: ${city1.split(',')[0]} vs ${city2.split(',')[0]}`);
       dispatchEnhanced({ type: 'START_COMPARISON', cities: { city1, city2 } });
     } else {
-      // ADMIN BYPASS: Skip usage checks for admin users
-      if (!isAdmin) {
-        // Standard mode: Check usage limit before running
-        const usageResult = await checkUsage('standardComparisons');
-
-        if (!usageResult.allowed) {
-          // User has hit their limit - show pricing modal
-          toastInfo('Comparison limit reached â€” upgrade for more');
-          dispatchModal({ type: 'OPEN_PRICING', highlight: {
-            feature: 'standardComparisons',
-            tier: usageResult.requiredTier,
-          }});
-          return;
-        }
-
-        // Increment usage counter before running comparison
-        await incrementUsage('standardComparisons');
-      }
-
       // Run the comparison with user's scoring preferences
       try {
         await compare(city1, city2, { lawLivedRatio, conservativeMode, customWeights });
@@ -662,7 +641,7 @@ const AppContent: React.FC = () => {
         toastError(msg);
       }
     }
-  }, [enhancedMode, isAdmin, checkUsage, incrementUsage, compare, lawLivedRatio, conservativeMode, customWeights]);
+  }, [enhancedMode, compare, lawLivedRatio, conservativeMode, customWeights]);
 
   // PERF #1: handleReset was 10 separate setState calls â†’ now 1 dispatch + 1 setState + 1 reset
   const handleReset = useCallback(() => {

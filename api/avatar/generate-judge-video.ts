@@ -13,7 +13,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import crypto from 'crypto';
 
@@ -226,9 +226,11 @@ export default async function handler(
     return;
   }
 
-  // JWT auth — reject unauthenticated requests
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+  // Sign-in + the plan must include judge videos. A cached video is free; a new
+  // one counts one judge video (below, after the cache and in-progress checks).
+  const entitled = await requireFeature(req, res, 'judgeVideos');
+  if (!entitled) return;
+  let counted = false;
 
   const replicateToken = process.env.REPLICATE_API_TOKEN;
   if (!replicateToken) {
@@ -357,6 +359,9 @@ export default async function handler(
       return;
     }
 
+    if (!(await consumeOrDeny(res, entitled, 'judgeVideos'))) return;
+    counted = true;
+
     console.log('[JUDGE-VIDEO] Starting generation for:', comparisonId);
 
     // Step 1: Generate TTS audio from script
@@ -416,6 +421,7 @@ export default async function handler(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[JUDGE-VIDEO] Wav2Lip submission failed:', response.status, errorText);
+      await refundFeature(entitled.auth.userId, 'judgeVideos', entitled.access.limits);
       res.status(response.status).json({
         error: 'Failed to start video generation',
         message: errorText,
@@ -467,6 +473,7 @@ export default async function handler(
     });
   } catch (error) {
     console.error('[JUDGE-VIDEO] Error:', error);
+    if (counted) await refundFeature(entitled.auth.userId, 'judgeVideos', entitled.access.limits);
     res.status(500).json({
       error: 'Failed to generate video',
       message: error instanceof Error ? error.message : 'Unknown error',

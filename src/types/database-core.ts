@@ -9,7 +9,9 @@
 // TYPE ALIASES
 // ============================================================================
 
-export type UserTier = 'free' | 'pro' | 'enterprise';
+/** Plan ids — defined once in api/shared/plans.ts, shared by the app and the server. */
+import type { UserTier } from '../../api/shared/plans';
+export type { UserTier };
 export type ComparisonWinner = 'city1' | 'city2' | 'tie';
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type Theme = 'light' | 'dark' | 'auto';

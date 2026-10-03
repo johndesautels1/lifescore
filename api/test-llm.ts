@@ -7,6 +7,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
+import { requireAdmin } from './shared/entitlements.js';
 
 // Quick timeout for test calls (15 seconds)
 const TEST_TIMEOUT_MS = 15000;
@@ -202,13 +203,17 @@ async function testPerplexity(): Promise<{ success: boolean; message: string; la
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS - open for test endpoint
-  if (handleCors(req, res, 'open', { methods: 'GET, POST, OPTIONS' })) return;
+  // CORS - same app only; this route spends money on every call
+  if (handleCors(req, res, 'same-app', { methods: 'GET, POST, OPTIONS' })) return;
 
   // Rate limiting - light preset for test calls
   if (!applyRateLimit(req.headers, 'test-llm', 'light', res)) {
     return; // 429 already sent
   }
+
+  // Admins only — it calls every AI provider (was open to anyone before 2026-10-03)
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   // Check which LLM to test (default: all)
   const provider = req.query.provider as string | undefined;

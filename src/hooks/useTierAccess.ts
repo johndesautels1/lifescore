@@ -16,7 +16,24 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
-import type { UserTier, UsageTracking } from '../types/database';
+import {
+  ADMIN_LIMITS,
+  FOUNDER_ADMIN_EMAILS,
+  TIER_LIMITS,
+  TIER_NAMES,
+  USAGE_COLUMNS,
+  betaTesterLimits,
+  currentPeriodStart,
+  isCountedFeature,
+  requiredTierFor,
+  type FeatureKey,
+  type TierLimits,
+  type UserTier,
+} from '../../api/shared/plans';
+
+// Plans are defined once, in api/shared/plans.ts (the server enforces the same table).
+export { TIER_LIMITS, TIER_NAMES, TIER_PRICING } from '../../api/shared/plans';
+export type { FeatureKey, TierLimits } from '../../api/shared/plans';
 
 // ============================================================================
 // TIMEOUT HELPER WITH RETRY
@@ -40,92 +57,6 @@ async function withTimeout<T>(
 }
 
 // ============================================================================
-// TIER CONFIGURATION
-// ============================================================================
-
-/**
- * Feature limits per tier
- * -1 = unlimited
- */
-export interface TierLimits {
-  standardComparisons: number;      // Comparisons with 1 LLM
-  enhancedComparisons: number;      // Comparisons with 5 LLMs (Sovereign only)
-  oliviaMinutesPerMonth: number;    // Olivia AI voice minutes (0=none, 15=Navigator, 60=Sovereign)
-  judgeVideos: number;
-  gammaReports: number;
-  grokVideos: number;
-  cristianoVideos: number;          // Cristiano "Go To My New City" HeyGen videos (Sovereign only)
-  cloudSync: boolean;
-  apiAccess: boolean;
-}
-
-/**
- * Tier display names for UI
- */
-export const TIER_NAMES: Record<UserTier, string> = {
-  free: 'FREE',
-  pro: 'NAVIGATOR',
-  enterprise: 'SOVEREIGN',
-};
-
-/**
- * Tier limits configuration - ALL LIMITS ARE PER MONTH
- *
- * CORRECT TIER STRUCTURE (Feb 2026):
- * - FREE: $0, 1 LLM, 1 comparison, NO Olivia, NO Gamma
- * - NAVIGATOR: $29, 1 LLM, 1 comparison, 15min Olivia, 1 Gamma
- * - SOVEREIGN: $99, 5 LLMs, 1 standard OR 1 enhanced comparison, 60min Olivia, 1 Gamma
- */
-export const TIER_LIMITS: Record<UserTier, TierLimits> = {
-  free: {
-    standardComparisons: 1,         // 1 comparison/month with 1 LLM
-    enhancedComparisons: 0,         // No enhanced mode
-    oliviaMinutesPerMonth: 0,       // NO Olivia access
-    judgeVideos: 0,                 // NO Judge videos
-    gammaReports: 0,                // NO Gamma reports
-    grokVideos: 0,                  // NO Grok videos
-    cristianoVideos: 0,             // NO Cristiano videos
-    cloudSync: false,
-    apiAccess: false,
-  },
-  pro: {
-    standardComparisons: 1,         // 1 comparison/month with 1 LLM
-    enhancedComparisons: 0,         // No enhanced mode (Sovereign only)
-    oliviaMinutesPerMonth: 15,      // 15 minutes/month (3×5min sessions)
-    judgeVideos: 1,                 // 1 Judge video/month
-    gammaReports: 1,                // 1 Gamma report/month
-    grokVideos: 0,                  // NO Grok videos (Sovereign only)
-    cristianoVideos: 0,             // NO Cristiano videos (Sovereign only)
-    cloudSync: true,
-    apiAccess: false,
-  },
-  enterprise: {
-    standardComparisons: 1,         // 1 standard comparison OR use enhanced
-    enhancedComparisons: 1,         // 1 comparison/month with ALL 5 LLMs
-    oliviaMinutesPerMonth: 60,      // 60 minutes/month
-    judgeVideos: 1,                 // 1 Judge video/month
-    gammaReports: 1,                // 1 Gamma report/month (with all 5 LLMs)
-    grokVideos: 1,                  // 1 Grok video/month
-    cristianoVideos: 1,             // 1 Cristiano "Go To My New City" video/month
-    cloudSync: true,
-    apiAccess: true,
-  },
-};
-
-/**
- * Map feature keys to usage tracking columns
- */
-const FEATURE_TO_COLUMN: Record<string, keyof UsageTracking> = {
-  standardComparisons: 'standard_comparisons',
-  enhancedComparisons: 'enhanced_comparisons',
-  oliviaMinutesPerMonth: 'olivia_messages',
-  judgeVideos: 'judge_videos',
-  gammaReports: 'gamma_reports',
-  grokVideos: 'grok_videos',
-  cristianoVideos: 'cristiano_videos',
-};
-
-// ============================================================================
 // BETA TESTER CONFIGURATION
 // ============================================================================
 
@@ -147,28 +78,9 @@ export interface BetaAccessConfig {
   judgesFullAccess: boolean;
 }
 
-/**
- * Default beta tester limits (mapped to TierLimits shape).
- * Beta testers get: 1 simple + 1 enhanced search, unlimited Olivia,
- * full judges page, full visuals, no API access, no admin.
- */
-export const BETA_TESTER_LIMITS: TierLimits = {
-  standardComparisons: 1,
-  enhancedComparisons: 1,
-  oliviaMinutesPerMonth: -1,   // Unlimited
-  judgeVideos: -1,             // Full judges access
-  gammaReports: -1,            // Full visuals access
-  grokVideos: -1,              // Full judges access
-  cristianoVideos: -1,         // Full judges access
-  cloudSync: true,
-  apiAccess: false,
-};
-
 // ============================================================================
 // TYPES
 // ============================================================================
-
-export type FeatureKey = keyof TierLimits;
 
 export interface UsageCheckResult {
   allowed: boolean;
@@ -189,57 +101,16 @@ export interface TierAccessHook {
   betaAccess: BetaAccessConfig | null;  // Granular beta access config
   canAccess: (feature: FeatureKey) => boolean;
   checkUsage: (feature: FeatureKey) => Promise<UsageCheckResult>;
-  incrementUsage: (feature: FeatureKey) => Promise<boolean>;
   getRequiredTier: (feature: FeatureKey) => UserTier;
   isUnlimited: (feature: FeatureKey) => boolean;
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Get the minimum tier required for a feature
- */
-function getRequiredTierForFeature(feature: FeatureKey): UserTier {
-  // Check if free tier has access
-  const freeLimit = TIER_LIMITS.free[feature];
-  if (typeof freeLimit === 'boolean' ? freeLimit : freeLimit !== 0) {
-    return 'free';
-  }
-
-  // Check if pro tier has access
-  const proLimit = TIER_LIMITS.pro[feature];
-  if (typeof proLimit === 'boolean' ? proLimit : proLimit !== 0) {
-    return 'pro';
-  }
-
-  // Must be enterprise only
-  return 'enterprise';
-}
-
-/**
- * Get start of current month as ISO date string (YYYY-MM-DD)
- * Uses local timezone to avoid UTC conversion issues
- */
-function getCurrentPeriodStart(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  return `${year}-${month}-01`;
 }
 
 // ============================================================================
 // HOOK
 // ============================================================================
 
-// Hardcoded admin emails — guaranteed full access even if /api/admin-check fails
-const HARDCODED_ADMIN_EMAILS = [
-  'cluesnomads@gmail.com',
-  'brokerpinellas@gmail.com',
-  'jdes7@aol.com',
-  'johndesau7@gmail.com',
-];
+// Founder admin emails (api/shared/plans.ts) — guaranteed full access even if /api/admin-check fails.
+// The server grants the same accounts admin access, so screens and server agree.
 
 // Admin status cache key — server-side /api/admin-check result cached in localStorage
 const ADMIN_CACHE_KEY = 'lifescore_admin_status';
@@ -348,7 +219,7 @@ export function useTierAccess(): TierAccessHook {
   const { profile, user, isLoading: authLoading } = useAuth();
 
   // Admin status — hardcoded emails always pass, then falls back to /api/admin-check
-  const isHardcodedAdmin = !!user?.email && HARDCODED_ADMIN_EMAILS.includes(user.email.toLowerCase());
+  const isHardcodedAdmin = !!user?.email && FOUNDER_ADMIN_EMAILS.includes(user.email.toLowerCase());
   const [isDeveloper, setIsDeveloper] = useState<boolean>(() => {
     if (isHardcodedAdmin) return true;
     const cached = getCachedAdminStatus();
@@ -506,8 +377,11 @@ export function useTierAccess(): TierAccessHook {
 
   const tierName = TIER_NAMES[tier];
   // Beta testers get custom limits; admins get enterprise; everyone else gets tier limits
-  const limits = isDeveloper ? TIER_LIMITS.enterprise
-    : isBetaTester ? BETA_TESTER_LIMITS
+  const limits: TierLimits = isDeveloper ? ADMIN_LIMITS
+    : isBetaTester ? betaTesterLimits({
+        standardComparisonsLimit: betaAccess?.standardComparisonsLimit,
+        enhancedComparisonsLimit: betaAccess?.enhancedComparisonsLimit,
+      })
     : TIER_LIMITS[tier];
 
   /**
@@ -533,7 +407,7 @@ export function useTierAccess(): TierAccessHook {
    * Get required tier for a feature
    */
   const getRequiredTier = (feature: FeatureKey): UserTier => {
-    return getRequiredTierForFeature(feature);
+    return requiredTierFor(feature);
   };
 
   /**
@@ -595,8 +469,8 @@ export function useTierAccess(): TierAccessHook {
     }
 
     try {
-      const periodStart = getCurrentPeriodStart();
-      const column = FEATURE_TO_COLUMN[feature];
+      const periodStart = currentPeriodStart();
+      const column = isCountedFeature(feature) ? USAGE_COLUMNS[feature] : undefined;
 
       if (!column) {
         // Unknown feature, allow
@@ -642,8 +516,8 @@ export function useTierAccess(): TierAccessHook {
       console.warn('[useTierAccess] Usage check error, retrying once:', error);
       // Retry once before fail-closed denial
       try {
-        const periodStart = getCurrentPeriodStart();
-        const column = FEATURE_TO_COLUMN[feature];
+        const periodStart = currentPeriodStart();
+        const column = isCountedFeature(feature) ? USAGE_COLUMNS[feature] : undefined;
         if (column) {
           const { data: retryData } = await withTimeout(() =>
             supabase
@@ -681,91 +555,9 @@ export function useTierAccess(): TierAccessHook {
     }
   };
 
-  /**
-   * Increment usage counter for a feature
-   * Returns true if increment was successful, false if limit exceeded
-   */
-  const incrementUsage = async (feature: FeatureKey): Promise<boolean> => {
-    // First check if we have capacity
-    const usageCheck = await checkUsage(feature);
-    if (!usageCheck.allowed) {
-      return false;
-    }
-
-    // Use user.id (auth session) as fallback when profile hasn't loaded
-    const userId = profile?.id || user?.id;
-
-    // If unlimited or Supabase not configured, just return true
-    if (usageCheck.limit === -1 || !isSupabaseConfigured() || !userId) {
-      return true;
-    }
-
-    try {
-      const periodStart = getCurrentPeriodStart();
-      // Calculate last day of current month (local timezone)
-      const now = new Date();
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const periodEnd = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
-
-      const column = FEATURE_TO_COLUMN[feature];
-      if (!column) {
-        return true;
-      }
-
-      // Upsert usage record (with 45s timeout)
-      const { error } = await withTimeout(() =>
-        supabase.rpc('increment_usage', {
-          p_user_id: userId,
-          p_feature: column,
-          p_amount: 1,
-        })
-      );
-
-      if (error) {
-        // Fallback: try direct upsert
-        console.warn('[useTierAccess] RPC failed, trying direct upsert:', error);
-
-        const { data: existing } = await withTimeout(() =>
-          supabase
-            .from('usage_tracking')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('period_start', periodStart)
-            .maybeSingle()
-        );
-
-        if (existing) {
-          // Update existing record
-          const existingData = existing as Record<string, unknown>;
-          const currentValue = (existingData[column] as number) || 0;
-          await withTimeout(() =>
-            supabase
-              .from('usage_tracking')
-              .update({ [column]: currentValue + 1 })
-              .eq('id', existingData.id as string)
-          );
-        } else {
-          // Insert new record
-          await withTimeout(() =>
-            supabase.from('usage_tracking').insert({
-              user_id: userId,
-              period_start: periodStart,
-              period_end: periodEnd,
-              [column]: 1,
-            })
-          );
-        }
-      }
-
-      return true;
-    } catch (error) {
-      console.error('[useTierAccess] Increment usage error:', error);
-      // Fail open - don't block user due to tracking error
-      return true;
-    }
-  };
-
   return {
+    tier,
+    tierName,  return {
     tier,
     tierName,
     limits,
@@ -775,7 +567,6 @@ export function useTierAccess(): TierAccessHook {
     betaAccess,            // Granular beta access config (Emeilia categories, etc.)
     canAccess,
     checkUsage,
-    incrementUsage,
     getRequiredTier,
     isUnlimited,
   };
@@ -785,28 +576,4 @@ export function useTierAccess(): TierAccessHook {
 // UTILITY EXPORTS
 // ============================================================================
 
-/**
- * Get tier pricing info for display
- */
-export const TIER_PRICING = {
-  free: {
-    monthly: 0,
-    annual: 0,
-    name: 'FREE',
-    tagline: 'Start Your Journey',
-  },
-  pro: {
-    monthly: 29,
-    annual: 249,
-    name: 'NAVIGATOR',
-    tagline: 'Chart Your Course',
-  },
-  enterprise: {
-    monthly: 99,
-    annual: 899,
-    name: 'SOVEREIGN',
-    tagline: 'Command Your Destiny',
-  },
-};
-
-export default useTierAccess;
+export default useTierAccess;export default useTierAccess;

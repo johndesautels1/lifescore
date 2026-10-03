@@ -78,6 +78,10 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: str
     title: 'Go To My New City',
     description: 'Cristiano\'s cinematic Freedom Tour video (Sovereign only, 1/month).',
   },
+  movies: {
+    title: 'Moving Movies',
+    description: 'A screenplay and film of your move to your new city (Sovereign only).',
+  },
   cloudSync: {
     title: 'Cloud Sync',
     description: 'Save and sync your comparisons across all your devices.',

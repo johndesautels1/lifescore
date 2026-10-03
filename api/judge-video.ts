@@ -23,6 +23,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
+import { requireFeature, refundFeature } from './shared/entitlements.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -411,18 +412,21 @@ export default async function handler(
     return;
   }
 
-  // Require authentication — uses D-ID/ElevenLabs/OpenAI credits
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+  const body = (req.body || {}) as JudgeVideoRequest;
+  if (!body.action) {
+    res.status(400).json({ error: 'action is required (generate or status)' });
+    return;
+  }
+
+  // Generating a video counts one judge video from this month's allowance;
+  // checking its status only needs a sign-in.
+  const entitled = body.action === 'generate'
+    ? await requireFeature(req, res, 'judgeVideos', { consume: true })
+    : await requireAuth(req, res);
+  if (!entitled) return;
 
   try {
     const authHeader = getDIDAuthHeader();
-    const body = req.body as JudgeVideoRequest;
-
-    if (!body.action) {
-      res.status(400).json({ error: 'action is required (generate or status)' });
-      return;
-    }
 
     console.log('[JUDGE-VIDEO] Action:', body.action);
 
@@ -490,6 +494,10 @@ export default async function handler(
     }
   } catch (error) {
     console.error('[JUDGE-VIDEO] Error:', error);
+    // The video never started — give the counted use back.
+    if ('access' in entitled) {
+      await refundFeature(entitled.auth.userId, 'judgeVideos', entitled.access.limits);
+    }
     res.status(500).json({
       error: error instanceof Error ? error.message : 'Video generation failed',
     });

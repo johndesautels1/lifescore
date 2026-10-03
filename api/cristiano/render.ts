@@ -20,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
+import { requireFeature, consumeOrDeny, refundFeature, type Entitled } from '../shared/entitlements.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 
 export const config = {
@@ -411,6 +412,9 @@ export default async function handler(
     return;
   }
 
+  // Set once a new film has been counted, so a failed submission gives it back.
+  let counted: Entitled | null = null;
+
   try {
     const apiKey = getHeyGenKey();
 
@@ -418,6 +422,8 @@ export default async function handler(
     // GET: Status polling
     // ══════════════════════════════════════════════════════════════════════
     if (req.method === 'GET') {
+      const statusAuth = await requireAuth(req, res);
+      if (!statusAuth) return;
       const videoId = req.query.videoId as string;
       if (!videoId) {
         res.status(400).json({ error: 'videoId query parameter is required' });
@@ -472,16 +478,18 @@ export default async function handler(
     // POST: Render or status
     // ══════════════════════════════════════════════════════════════════════
 
-    // Auth required for rendering
-    const auth = await requireAuth(req, res);
-    if (!auth) return;
-
-    const body = req.body as RenderRequest;
+    const body = (req.body || {}) as RenderRequest;
 
     if (!body.action) {
       res.status(400).json({ error: 'action is required' });
       return;
     }
+
+    // Rendering needs a plan that includes Cristiano films (a new film is counted
+    // below, after the cache checks); checking status only needs a sign-in.
+    const entitled = body.action === 'render' ? await requireFeature(req, res, 'cristianoVideos') : null;
+    const auth = entitled ? entitled.auth : await requireAuth(req, res);
+    if (!auth) return;
 
     switch (body.action) {
       case 'render': {
@@ -543,6 +551,9 @@ export default async function handler(
           return;
         }
 
+        if (!entitled || !(await consumeOrDeny(res, entitled, 'cristianoVideos'))) return;
+        counted = entitled;
+
         // Build the Video Agent prompt
         const videoAgentPrompt = buildVideoAgentPrompt(body.storyboard);
 
@@ -591,6 +602,7 @@ export default async function handler(
         }
 
         console.log('[RENDER] Video Agent job submitted:', heygenVideoId);
+        counted = null; // the film is under way — the count stands
 
         // Calculate word count for cache
         const scenes = body.storyboard.scenes as Array<Record<string, unknown>> | undefined;
@@ -680,6 +692,7 @@ export default async function handler(
     }
   } catch (error) {
     console.error('[RENDER] Error:', error);
+    if (counted) await refundFeature(counted.auth.userId, 'cristianoVideos', counted.access.limits);
     res.status(500).json({
       error: error instanceof Error ? error.message : 'Cristiano render request failed',
     });

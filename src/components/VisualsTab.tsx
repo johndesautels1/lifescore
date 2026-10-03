@@ -135,7 +135,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   showEmbedded: propsShowEmbedded,
   setShowEmbedded: propsSetShowEmbedded,
 }) => {
-  const { checkUsage, incrementUsage, isAdmin } = useTierAccess();
+  const { checkUsage, isAdmin } = useTierAccess();
   const { createJob, completeJobAndNotify } = useJobTracker();
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const pendingJobRef = useRef<string | null>(null);
@@ -397,7 +397,6 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         setReportState({ status: 'error', error: 'Monthly Gamma report limit reached. Please upgrade to continue.' });
         return;
       }
-      await incrementUsage('gammaReports');
     }
 
     try {
@@ -459,7 +458,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
         error: error instanceof Error ? error.message : 'Failed to generate report',
       });
     }
-  }, [result, exportFormat, reportType, includeGunRights, gunData, gunStatus, fetchGunComparison, propsJudgeReport, checkUsage, incrementUsage, isAdmin, setReportState]);
+  }, [result, exportFormat, reportType, includeGunRights, gunData, gunStatus, fetchGunComparison, propsJudgeReport, checkUsage, isAdmin, setReportState]);
 
   // Audit 3.3: Added startTransition to deps
   const handleReset = useCallback(() => {

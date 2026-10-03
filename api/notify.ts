@@ -15,6 +15,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from './shared/cors.js';
+import { requireAuth } from './shared/auth.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 
 // Supabase admin client (service role for inserting notifications)
@@ -31,14 +32,13 @@ const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifesco
 // TYPES
 // ============================================================================
 
+/** The recipient is always the signed-in caller; there is no user or email field. */
 interface NotifyRequest {
   jobId?: string;
-  userId: string;
   title: string;
   message?: string;
   link?: string;
   channels?: ('in_app' | 'email' | 'sms')[];
-  email?: string;  // recipient email (looked up from profile if not provided)
 }
 
 // ============================================================================
@@ -138,19 +138,28 @@ export default async function handler(
     return;
   }
 
+  // Signed-in users may notify only themselves: the recipient is always the
+  // caller's own account and own email (this route was once an open mail relay).
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
   try {
     const {
       jobId,
-      userId,
       title,
       message,
       link,
       channels = ['in_app'],
-      email,
     } = req.body as NotifyRequest;
+    const userId = auth.userId;
+    const email = auth.email || undefined;
 
-    if (!userId || !title) {
-      res.status(400).json({ error: 'userId and title are required' });
+    if (!title || typeof title !== 'string' || title.length > 200) {
+      res.status(400).json({ error: 'title is required (200 characters at most)' });
+      return;
+    }
+    if (link !== undefined && (typeof link !== 'string' || !link.startsWith('/'))) {
+      res.status(400).json({ error: 'link must be a path within the app' });
       return;
     }
 
@@ -219,7 +228,8 @@ export default async function handler(
           status: 'notified',
           notified_at: new Date().toISOString(),
         })
-        .eq('id', jobId);
+        .eq('id', jobId)
+        .eq('user_id', userId);
       if (jobUpdateError) {
         console.error('[NOTIFY] Failed to update job status to notified:', jobUpdateError.message);
       }

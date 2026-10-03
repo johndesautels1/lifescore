@@ -13,6 +13,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../../shared/rateLimit.js';
+import { requireFeature } from '../../shared/entitlements.js';
 import { handleCors } from '../../shared/cors.js';
 import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
 
@@ -198,6 +199,10 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Sign-in + the plan must include Olivia (this route had no sign-in check before 2026-10-03).
+  const entitled = await requireFeature(req, res, 'oliviaMinutesPerMonth');
+  if (!entitled) return;
 
   try {
     const authHeader = getDIDAuthHeader();
