@@ -1,192 +1,187 @@
 /**
  * LIFE SCORE - Delete Account API
- * GDPR Article 17 "Right to Erasure" implementation
+ * GDPR Article 17 "Right to Erasure" (and the US state "right to delete").
  *
- * DELETE /api/user/delete
+ * DELETE /api/user/delete   body { confirmation: "DELETE MY ACCOUNT" }
+ *
+ * The order matters (rewritten 2026-10-03):
+ *   1. Stop the billing — cancel every live Stripe subscription. If Stripe
+ *      cannot be reached the account is NOT deleted: deleting it while Stripe
+ *      keeps charging would leave a customer billed with no account to cancel
+ *      from. Stripe keeps its own invoices (financial records, 7 years).
+ *   2. Remove the user's own files — `user-videos/{userId}/` (uploaded court
+ *      order videos) and `Reports/{userId}/` (saved report pages).
+ *   3. Delete the sign-in account. Every table holding the user's data is
+ *      linked to it ON DELETE CASCADE — or SET NULL for shared city caches and
+ *      consent proofs (migration 20261003_account_deletion_foreign_keys) — so
+ *      this one call removes the rest.
+ *
+ * Before 2026-10-03 the route deleted six tables by hand, never cancelled the
+ * Stripe subscription (the customer kept being billed), left judge reports,
+ * videos, saved reports, notifications and jobs in place, and answered
+ * "deleted" even when the sign-in account could not be removed.
  *
  * Clues Intelligence LTD
  * © 2026 All Rights Reserved
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
+import { getStripe } from '../shared/stripe.js';
 import { handleCors } from '../shared/cors.js';
-import { checkRateLimit, RATE_LIMIT_PRESETS } from '../shared/rateLimit.js';
+import { checkRateLimit } from '../shared/rateLimit.js';
 
-// FIX 2026-02-14: Timeout wrapper for GDPR deletes — prevents infinite hang
-const DB_TIMEOUT_MS = 15000; // 15s per table (total budget ~30s across all deletes)
-
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
-    ),
-  ]);
-}
-
-// Vercel config
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60,
 };
 
-// Rate limiter for delete endpoint (very restrictive)
-const rateLimiter = checkRateLimit;
+/** Per step; the whole route stays inside maxDuration. */
+const STEP_TIMEOUT_MS = 15_000;
+
+/** Storage folders that belong to one user, named `{userId}/…`. */
+const USER_FOLDERS: readonly string[] = ['user-videos', 'Reports'];
+
+/** Stripe states that can still charge. */
+const BILLABLE_STATUSES: readonly string[] = ['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'];
+
+/** A step that must finish, with a typed failure the handler maps to a reply. */
+class DeletionStepError extends Error {
+  constructor(readonly step: 'billing' | 'files' | 'account', detail: string) {
+    super(`[DELETE] ${step}: ${detail}`);
+    this.name = 'DeletionStepError';
+  }
+}
+
+async function withTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${STEP_TIMEOUT_MS}ms`)), STEP_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/** Step 1 — cancel every subscription that can still charge. Returns how many were cancelled. */
+async function cancelBilling(db: SupabaseClient, userId: string): Promise<number> {
+  const { data, error } = await withTimeout(
+    db.from('subscriptions').select('stripe_customer_id').eq('user_id', userId),
+    'Read subscriptions'
+  );
+  if (error) throw new DeletionStepError('billing', error.message);
+
+  const customers = [...new Set((data ?? []).map((row: { stripe_customer_id: string | null }) => row.stripe_customer_id).filter(
+    (id): id is string => typeof id === 'string' && id !== ''
+  ))];
+  if (customers.length === 0) return 0;
+
+  const stripe = getStripe();
+  if (!stripe) throw new DeletionStepError('billing', 'Stripe is not configured, so the subscription cannot be cancelled');
+
+  let cancelled = 0;
+  try {
+    for (const customer of customers) {
+      const subscriptions = await stripe.subscriptions.list({ customer, status: 'all', limit: 100 });
+      for (const subscription of subscriptions.data) {
+        if (!BILLABLE_STATUSES.includes(subscription.status)) continue;
+        await stripe.subscriptions.cancel(subscription.id);
+        cancelled++;
+      }
+    }
+  } catch (err) {
+    throw new DeletionStepError('billing', err instanceof Error ? err.message : String(err));
+  }
+  return cancelled;
+}
+
+/** Step 2 — remove every file in the user's own folders. Returns how many were removed. */
+async function removeUserFiles(db: SupabaseClient, userId: string): Promise<number> {
+  let removed = 0;
+  for (const bucket of USER_FOLDERS) {
+    // `list` is one page; keep going until the folder is empty.
+    for (let page = 0; page < 50; page++) {
+      const { data: files, error } = await withTimeout(
+        db.storage.from(bucket).list(userId, { limit: 100 }),
+        `List ${bucket}`
+      );
+      if (error) throw new DeletionStepError('files', `${bucket}: ${error.message}`);
+      const paths = (files ?? []).map((file) => `${userId}/${file.name}`);
+      if (paths.length === 0) break;
+      const { error: removeError } = await withTimeout(db.storage.from(bucket).remove(paths), `Remove ${bucket}`);
+      if (removeError) throw new DeletionStepError('files', `${bucket}: ${removeError.message}`);
+      removed += paths.length;
+    }
+  }
+  return removed;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   if (handleCors(req, res, 'restricted', { methods: 'DELETE, OPTIONS' })) return;
 
-  // Rate limit
+  // Rate limit (3 per minute per IP). Before 2026-10-03 this called
+  // checkRateLimit with two arguments instead of four, so it read an undefined
+  // limit and the route failed on every request.
   const clientIP = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 'unknown';
-  const rateResult = rateLimiter(clientIP, { windowMs: 60000, maxRequests: 3 }); // 3 per minute max
-  if (!rateResult.allowed) {
-    return res.status(429).json({
-      error: 'RATE_LIMITED',
-      message: 'Too many requests. Please wait before trying again.',
-      resetIn: rateResult.resetIn,
-    });
-  }
+  if (!checkRateLimit(clientIP, 'user/delete', { windowMs: 60000, maxRequests: 3 }, res)) return;
 
-  // Only allow DELETE
   if (req.method !== 'DELETE') {
     return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   }
 
+  const body: Record<string, unknown> =
+    typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {};
+  if (body.confirmation !== 'DELETE MY ACCOUNT') {
+    return res.status(400).json({
+      error: 'CONFIRMATION_MISMATCH',
+      message: 'Please type "DELETE MY ACCOUNT" to confirm.',
+    });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Authentication required.' });
+  }
+
+  const db = getServiceClient();
+  if (!db) {
+    console.error('[DELETE] Missing Supabase credentials');
+    return res.status(500).json({ error: 'CONFIG_ERROR', message: 'Server configuration error.' });
+  }
+
+  // The account is always the caller's own — never an id from the body.
+  const { data: { user }, error: authError } = await db.auth.getUser(authHeader.substring(7));
+  if (authError || !user) {
+    return res.status(401).json({ error: 'INVALID_TOKEN', message: 'Invalid or expired authentication token.' });
+  }
+  const userId = user.id;
+  console.log(`[DELETE] Starting account deletion for user: ${userId}`);
+
   try {
-    const { confirmation, userId } = req.body || {};
+    const subscriptionsCancelled = await cancelBilling(db, userId);
+    const filesRemoved = await removeUserFiles(db, userId);
 
-    // Verify confirmation text
-    if (confirmation !== 'DELETE MY ACCOUNT') {
-      return res.status(400).json({
-        error: 'CONFIRMATION_MISMATCH',
-        message: 'Please type "DELETE MY ACCOUNT" to confirm.',
-      });
-    }
+    const { error: deleteUserError } = await withTimeout(db.auth.admin.deleteUser(userId), 'Delete account');
+    if (deleteUserError) throw new DeletionStepError('account', deleteUserError.message);
 
-    // Get auth token from header
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'UNAUTHORIZED',
-        message: 'Authentication required.',
-      });
-    }
-
-    const token = authHeader.substring(7);
-
-    // Initialize Supabase client
-    const supabase = getServiceClient();
-
-    if (!supabase) {
-      console.error('[DELETE] Missing Supabase credentials');
-      return res.status(500).json({
-        error: 'CONFIG_ERROR',
-        message: 'Server configuration error.',
-      });
-    }
-
-    // Verify the user's token and get their ID
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return res.status(401).json({
-        error: 'INVALID_TOKEN',
-        message: 'Invalid or expired authentication token.',
-      });
-    }
-
-    const userIdToDelete = user.id;
-
-    // Log deletion start
-    console.log(`[DELETE] Starting account deletion for user: ${userIdToDelete}`);
-
-    const deletionSummary = {
-      messages: 0,
-      conversations: 0,
-      reports: 0,
-      comparisons: 0,
-      preferences: 0,
-    };
-
-    // 1. Delete Olivia messages (via conversation IDs)
-    const { data: conversations } = await withTimeout(
-      supabase.from('olivia_conversations').select('id').eq('user_id', userIdToDelete),
-      DB_TIMEOUT_MS, 'Fetch conversations'
-    );
-
-    if (conversations && conversations.length > 0) {
-      const conversationIds = conversations.map((c: { id: string }) => c.id);
-      const { count: msgCount } = await withTimeout(
-        supabase.from('olivia_messages').delete().in('conversation_id', conversationIds)
-          .select('*', { count: 'exact', head: true }),
-        DB_TIMEOUT_MS, 'Delete messages'
-      );
-      deletionSummary.messages = msgCount || 0;
-    }
-
-    // 2. Delete Olivia conversations
-    const { count: convCount } = await withTimeout(
-      supabase.from('olivia_conversations').delete().eq('user_id', userIdToDelete)
-        .select('*', { count: 'exact', head: true }),
-      DB_TIMEOUT_MS, 'Delete conversations'
-    );
-    deletionSummary.conversations = convCount || 0;
-
-    // 3. Delete Gamma reports
-    const { count: reportCount } = await withTimeout(
-      supabase.from('gamma_reports').delete().eq('user_id', userIdToDelete)
-        .select('*', { count: 'exact', head: true }),
-      DB_TIMEOUT_MS, 'Delete gamma reports'
-    );
-    deletionSummary.reports = reportCount || 0;
-
-    // 4. Delete comparisons
-    const { count: compCount } = await withTimeout(
-      supabase.from('comparisons').delete().eq('user_id', userIdToDelete)
-        .select('*', { count: 'exact', head: true }),
-      DB_TIMEOUT_MS, 'Delete comparisons'
-    );
-    deletionSummary.comparisons = compCount || 0;
-
-    // 5. Delete user preferences
-    const { count: prefCount } = await withTimeout(
-      supabase.from('user_preferences').delete().eq('user_id', userIdToDelete)
-        .select('*', { count: 'exact', head: true }),
-      DB_TIMEOUT_MS, 'Delete preferences'
-    );
-    deletionSummary.preferences = prefCount || 0;
-
-    // 6. Delete profile
-    await withTimeout(
-      supabase.from('profiles').delete().eq('id', userIdToDelete),
-      DB_TIMEOUT_MS, 'Delete profile'
-    );
-
-    // 7. Delete the auth user (using admin API)
-    const { error: deleteUserError } = await withTimeout(
-      supabase.auth.admin.deleteUser(userIdToDelete),
-      DB_TIMEOUT_MS, 'Delete auth user'
-    );
-
-    if (deleteUserError) {
-      console.error('[DELETE] Failed to delete auth user:', deleteUserError);
-      // Continue anyway - data is deleted, auth user deletion can be retried
-    }
-
-    console.log(`[DELETE] Account deletion complete for user: ${userIdToDelete}`, deletionSummary);
-
+    console.log(`[DELETE] Account deleted for user: ${userId}`, { subscriptionsCancelled, filesRemoved });
     return res.status(200).json({
       success: true,
       message: 'Your account and all associated data have been deleted.',
-      summary: deletionSummary,
+      summary: { subscriptionsCancelled, filesRemoved },
     });
-
   } catch (error) {
     console.error('[DELETE] Error:', error);
-    return res.status(500).json({
-      error: 'DELETION_FAILED',
-      message: 'An error occurred while deleting your account. Please contact support.',
-    });
+    const step = error instanceof DeletionStepError ? error.step : 'account';
+    const message =
+      step === 'billing'
+        ? 'We could not cancel your subscription, so your account has not been deleted. Please try again or contact support.'
+        : 'We could not finish deleting your account. Anything already removed stays removed; please try again or contact support.';
+    return res.status(step === 'billing' ? 502 : 500).json({ error: 'DELETION_FAILED', step, message });
   }
 }
