@@ -651,34 +651,39 @@ PricingModal → POST /api/stripe/create-checkout-session
 
 **Purpose:** Evaluate metrics for a city pair
 
-**Request:**
+**Request** (`EvaluationRequest` in `api/evaluate.ts`; sign-in plus a comparison grant for the city pair; vendor keys are read on the server only):
 ```typescript
 {
+  provider: 'claude-sonnet' | 'gpt-4o' | 'gemini-3-pro' | 'grok-4' | 'perplexity',
   city1: string,
   city2: string,
-  category: CategoryId,
-  metrics: Metric[],
-  provider: 'claude' | 'gpt4o' | 'gemini' | 'grok' | 'perplexity',
-  tavilyApiKey?: string,
-  anthropicKey?: string,
-  openaiKey?: string,
-  // ... other provider keys
+  categoryId?: string,
+  metrics: Array<{ id: string, name: string, description: string, categoryId: string, scoringDirection: string }>
 }
 ```
 
-**Response:**
+**Response** (`EvaluationResponse`):
 ```typescript
 {
+  provider: LLMProvider,
   success: boolean,
   scores: MetricScore[],
-  evidence: Evidence[],
-  provider: string,
-  tokensUsed: { input: number, output: number },
-  tavilyCredits: number
+  latencyMs: number,
+  error?: string,
+  warnings?: string[],
+  usage?: {
+    tokens: { inputTokens: number, outputTokens: number },
+    // Claude, GPT and Perplexity seats, when TAVILY_API_KEY is set: the credits
+    // Tavily reported, plus counts of calls it gave no credit count for.
+    tavily?: { researchCredits: number, searchCredits: number, totalCredits: number,
+               researchUnreported: number, searchUnreported: number }
+  }
 }
 ```
 
-**Timeout:** 240 seconds
+**Tavily** (`api/shared/tavily.ts`): a research report is ordered and collected within 45 seconds, alongside twelve searches. If it isn't ready by then, the evaluation goes ahead without it.
+
+**Time limit:** 300 seconds (`vercel.json`); each model call allows 240 seconds.
 
 #### POST /api/judge
 

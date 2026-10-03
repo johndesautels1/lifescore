@@ -72,6 +72,50 @@ export function calculateTavilyCost(
   return creditsUsed * pricing.perCredit;
 }
 
+/** One evaluator's Tavily credits, as the comparison reports them. */
+export interface TavilyCreditReport {
+  researchCredits: number;
+  searchCredits: number;
+  researchUnreported?: number;
+  searchUnreported?: number;
+}
+
+/**
+ * The comparison's Tavily cost rows from the credits Tavily reported to each
+ * evaluator. A call Tavily answered without a credit count is priced at the
+ * table's typical figure (tavily-research / tavily-search avgCredits) — the
+ * only estimate left. Research is one row; searches are one row per evaluator
+ * that ran any.
+ */
+export function tavilyCostsFromUsage(
+  reports: TavilyCreditReport[],
+  researchQuery: string,
+  timestamp: number
+): { research: TavilyCost | null; searches: TavilyCost[] } {
+  const researchCredits = reports.reduce(
+    (sum, r) => sum + r.researchCredits + (r.researchUnreported ?? 0) * API_PRICING['tavily-research'].avgCredits,
+    0
+  );
+  const research: TavilyCost | null = researchCredits > 0
+    ? {
+        type: 'research',
+        creditsUsed: researchCredits,
+        cost: calculateTavilyCost('research', researchCredits),
+        timestamp,
+        query: researchQuery,
+      }
+    : null;
+
+  const searches: TavilyCost[] = [];
+  for (const r of reports) {
+    const credits = r.searchCredits + (r.searchUnreported ?? 0) * API_PRICING['tavily-search'].avgCredits;
+    if (credits > 0) {
+      searches.push({ type: 'search', creditsUsed: credits, cost: calculateTavilyCost('search', credits), timestamp });
+    }
+  }
+  return { research, searches };
+}
+
 /**
  * Estimate tokens from text (rough approximation: ~4 chars per token)
  */

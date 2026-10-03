@@ -36,10 +36,17 @@ export interface TokenUsage {
   outputTokens: number;
 }
 
+/** Tavily credits for one evaluation, as api/evaluate.ts reports them (its TavilyUsage). */
 export interface TavilyUsage {
+  /** Credits Tavily reported for research reports. */
   researchCredits: number;
+  /** Credits Tavily reported for searches. */
   searchCredits: number;
   totalCredits: number;
+  /** Research reports ordered whose credits Tavily did not report. */
+  researchUnreported?: number;
+  /** Searches whose credits Tavily did not report. */
+  searchUnreported?: number;
 }
 
 export interface EvaluatorResult {
@@ -381,6 +388,8 @@ export async function runSingleEvaluatorBatched(
   let totalOutputTokens = 0;
   let totalTavilyResearch = 0;
   let totalTavilySearch = 0;
+  let totalResearchUnreported = 0;
+  let totalSearchUnreported = 0;
 
   results.forEach(({ categoryId, result }) => {
     categoryResults.set(categoryId, result);
@@ -399,6 +408,8 @@ export async function runSingleEvaluatorBatched(
     if (result.usage?.tavily) {
       totalTavilyResearch += result.usage.tavily.researchCredits;
       totalTavilySearch += result.usage.tavily.searchCredits;
+      totalResearchUnreported += result.usage.tavily.researchUnreported ?? 0;
+      totalSearchUnreported += result.usage.tavily.searchUnreported ?? 0;
     }
   });
 
@@ -412,7 +423,9 @@ export async function runSingleEvaluatorBatched(
     tavily: {
       researchCredits: totalTavilyResearch,
       searchCredits: totalTavilySearch,
-      totalCredits: totalTavilyResearch + totalTavilySearch
+      totalCredits: totalTavilyResearch + totalTavilySearch,
+      researchUnreported: totalResearchUnreported,
+      searchUnreported: totalSearchUnreported
     }
   };
 

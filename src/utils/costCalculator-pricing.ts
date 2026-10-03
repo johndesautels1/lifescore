@@ -91,9 +91,9 @@ export const API_PRICING = {
   // Tavily (credit-based pricing)
   'tavily-research': {
     perCredit: 0.01,  // $0.01 per credit (estimated from $50/5000 credits)
-    minCredits: 4,
+    minCredits: 4,    // mini report: 4–110 credits (docs.tavily.com/documentation/api-credits, read 3 Oct 2026)
     maxCredits: 110,
-    avgCredits: 30,   // typical usage
+    avgCredits: 30,   // our typical-figure guess; used only for a report Tavily gave no credit count for
     name: 'Tavily Research',
     icon: '📚'
   },
@@ -101,7 +101,7 @@ export const API_PRICING = {
     perCredit: 0.01,  // $0.01 per credit
     minCredits: 1,
     maxCredits: 10,
-    avgCredits: 3,    // typical usage per search
+    avgCredits: 2,    // an advanced search costs 2 credits (docs.tavily.com/documentation/api-credits, read 3 Oct 2026); used only when Tavily gave no count
     name: 'Tavily Search',
     icon: '🔎'
   },

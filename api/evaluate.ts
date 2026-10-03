@@ -19,7 +19,7 @@ import { AI_MODELS } from './shared/models.js';
 const STANDARD_COMPARISON_PROVIDER = 'claude-sonnet';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
 import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
-import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
+import { tavilyResearch, tavilySearch, type TavilyResearchOutcome, type TavilyResearchReport } from './shared/tavily.js';
 
 // Timeout constants (in milliseconds)
 const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM API calls (OpenAI, Claude, Gemini, etc.)
@@ -33,7 +33,7 @@ const CURRENT_YEAR = new Date().getFullYear().toString();
 // Added 2026-02-03 - Reduces duplicate Research API calls across LLM providers
 // ============================================================================
 interface CachedResearch {
-  data: TavilyResearchResponse;
+  data: TavilyResearchReport;
   timestamp: number;
 }
 const tavilyResearchCache = new Map<string, CachedResearch>();
@@ -270,11 +270,16 @@ interface TokenUsage {
   outputTokens: number;
 }
 
-// Tavily credit usage
+// Tavily credit usage: the credits Tavily reported for this evaluation's calls.
+// Mirrored by TavilyUsage in src/services/llmEvaluators.ts (the screen's copy).
 interface TavilyUsage {
   researchCredits: number;
   searchCredits: number;
   totalCredits: number;
+  /** Research reports ordered whose credits Tavily did not report (the cost screen estimates these). */
+  researchUnreported: number;
+  /** Searches whose credits Tavily did not report (the cost screen estimates these). */
+  searchUnreported: number;
 }
 
 interface EvaluationResponse {
@@ -543,73 +548,12 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   }
 }
 
-// Tavily API helpers - Optimized per Tavily recommendations (2026-01-18)
-interface TavilyResult { title: string; url: string; content: string }
-interface TavilyResponse { results: TavilyResult[]; answer?: string; creditsUsed?: number }
-interface TavilyResearchResponse { report: string; sources: { title: string; url: string }[] }
+// Tavily: research baseline + category searches, through the one Tavily
+// connection (api/shared/tavily.ts). The research report is ordered and
+// collected within TAVILY_TIMEOUT_MS, alongside the searches.
 
-// Tavily API headers - Updated 2026-01-21 to use Bearer auth per official docs
-// Docs: https://docs.tavily.com/documentation/api-reference/endpoint/search
-const getTavilyHeaders = (apiKey: string) => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${apiKey}`,
-  'X-Project-ID': 'lifescore-freedom-app'  // Project tracking for usage analytics
-});
-
-// Tavily Research API - Comprehensive baseline report for city comparison
-// FIX: Added retry logic (1 retry with 2s backoff) for transient failures
-async function tavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
-  const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) return null;
-
-  const MAX_RETRIES = 2;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      console.log(`[TAVILY RESEARCH] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
-      const response = await fetchWithTimeout(
-        'https://api.tavily.com/research',
-        {
-          method: 'POST',
-          headers: getTavilyHeaders(apiKey),
-          body: JSON.stringify({
-            // api_key removed - now using Bearer auth in header per Tavily docs
-            input: `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on ${CURRENT_YEAR} current laws.`,
-            model: 'mini',              // Cost-effective: 4-110 credits vs pro's 15-250
-            citation_format: 'numbered'
-          })
-        },
-        TAVILY_TIMEOUT_MS
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unable to read error');
-        console.error(`[TAVILY RESEARCH] Attempt ${attempt} error ${response.status}: ${errorText.slice(0, 500)}`);
-        // Don't retry on 4xx
-        if (response.status >= 400 && response.status < 500) return null;
-        if (attempt < MAX_RETRIES) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          continue;
-        }
-        return null;
-      }
-      const data = await response.json();
-      console.log(`[TAVILY RESEARCH] Success on attempt ${attempt} - report length: ${data.report?.length || 0}, sources: ${data.sources?.length || 0}`);
-      return { report: data.report || '', sources: data.sources || [] };
-    } catch (error) {
-      console.error(`[TAVILY RESEARCH] Attempt ${attempt} exception:`, error instanceof Error ? error.message : error);
-      if (attempt < MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        continue;
-      }
-      return null;
-    }
-  }
-  return null;
-}
-
-// Cached wrapper for tavilyResearch - checks in-memory cache first
-// Original tavilyResearch() function above remains UNCHANGED
-async function getCachedTavilyResearch(city1: string, city2: string): Promise<TavilyResearchResponse | null> {
+// Cached research - checks the in-memory cache first. A cache hit orders nothing.
+async function getCachedTavilyResearch(city1: string, city2: string): Promise<TavilyResearchOutcome> {
   // Normalize cache key (alphabetical order for consistent hits)
   const [a, b] = [city1.toLowerCase(), city2.toLowerCase()].sort();
   const cacheKey = `${a}:${b}`;
@@ -619,83 +563,141 @@ async function getCachedTavilyResearch(city1: string, city2: string): Promise<Ta
   if (cached && (Date.now() - cached.timestamp) < RESEARCH_CACHE_TTL_MS) {
     tavilyStats.researchCacheHits++;
     console.log(`[TAVILY RESEARCH CACHE HIT] ${city1} vs ${city2} (key: ${cacheKey})`);
-    return cached.data;
+    return { report: cached.data, ordered: false, credits: null };
   }
 
-  // Cache miss - call original function
+  // Cache miss - order and collect the report
   tavilyStats.researchCacheMisses++;
-  console.log(`[TAVILY RESEARCH CACHE MISS] ${city1} vs ${city2} - fetching...`);
+  console.log(`[TAVILY RESEARCH CACHE MISS] ${city1} vs ${city2} - ordering...`);
 
-  const result = await tavilyResearch(city1, city2);
+  const outcome = await tavilyResearch(
+    `Compare freedom laws and enforcement between ${city1} and ${city2} across: personal freedom (drugs, gambling, abortion, LGBTQ rights), property rights (zoning, HOA, land use), business regulations (licensing, taxes, employment), transportation laws, policing and legal system, and speech/lifestyle freedoms. Focus on ${CURRENT_YEAR} current laws.`,
+    { deadlineMs: TAVILY_TIMEOUT_MS, label: `${city1} vs ${city2}` },
+  );
 
-  // Store in cache if successful
-  if (result) {
+  // Store in cache if a report was collected
+  if (outcome.report) {
     pruneResearchCache();
     tavilyResearchCache.set(cacheKey, {
-      data: result,
+      data: outcome.report,
       timestamp: Date.now()
     });
     console.log(`[TAVILY RESEARCH CACHED] ${city1} vs ${city2} (expires in 30 min, cache size: ${tavilyResearchCache.size})`);
   }
 
-  return result;
+  return outcome;
 }
 
-// Tavily Search API - Category-level focused queries
-async function tavilySearch(query: string, maxResults: number = 5): Promise<TavilyResponse> {
-  tavilyStats.searchCalls++; // Track search calls for stats
-  const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) return { results: [] };
+/** The Tavily context block for an evaluator's prompt, and what it cost. */
+interface TavilyContext {
+  /** Text placed before the evaluation prompt ('' when Tavily returned nothing). */
+  context: string;
+  usage: TavilyUsage;
+}
 
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.tavily.com/search',
-      {
-        method: 'POST',
-        headers: getTavilyHeaders(apiKey),
-        body: JSON.stringify({
-          // api_key removed - now using Bearer auth in header per Tavily docs
-          query,
-          search_depth: 'advanced',
-          max_results: maxResults,
-          include_answer: 'advanced',     // Advanced LLM-generated answer for better synthesis
-          include_raw_content: false,     // Keep false, use chunks instead
-          chunks_per_source: 3,           // Pre-chunked relevant snippets
-          topic: 'general',
-          start_date: '2024-01-01',       // Fixed start for historical context
-          end_date: new Date().toISOString().split('T')[0],  // Dynamic: always current date
-          exclude_domains: [              // Block low-quality/opinion-based sources
-            'pinterest.com',
-            'facebook.com',
-            'twitter.com',
-            'instagram.com',
-            'tiktok.com',
-            'reddit.com',
-            'quora.com',
-            'yelp.com',
-            'tripadvisor.com'
-          ],
-          // country removed - was causing 400 errors for international cities
-          // Tavily will search globally without this parameter
-          include_usage: true             // Track credit consumption
-        })
-      },
-      TAVILY_TIMEOUT_MS
-    );
+/**
+ * Research baseline + the twelve category searches, in parallel. Returns null
+ * when Tavily is not configured. Never throws.
+ */
+async function gatherTavilyContext(city1: string, city2: string, closingLine: string): Promise<TavilyContext | null> {
+  if (!process.env.TAVILY_API_KEY) return null;
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unable to read error');
-      console.error(`[TAVILY SEARCH] Error ${response.status} for query "${query.slice(0, 50)}...": ${errorText.slice(0, 500)}`);
-      return { results: [] };
-    }
-    const data = await response.json();
-    const creditsUsed = data.usage?.total_tokens || 0;
-    console.log(`[TAVILY SEARCH] Success - results: ${data.results?.length || 0}, credits used: ${creditsUsed}`);
-    return { results: data.results || [], answer: data.answer, creditsUsed };
-  } catch (error) {
-    console.error(`[TAVILY SEARCH] Exception for query "${query.slice(0, 50)}...":`, error instanceof Error ? error.message : error);
-    return { results: [] };
+  const searchQueries = [
+    // personal_freedom (15 metrics)
+    `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+    `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
+    // housing_property (20 metrics)
+    `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+    `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
+    // business_work (25 metrics)
+    `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+    `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
+    // transportation (15 metrics)
+    `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+    `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
+    // policing_legal (15 metrics)
+    `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+    `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
+    // speech_lifestyle (10 metrics)
+    `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+    `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
+  ];
+
+  // Run Research + Search in parallel for speed
+  tavilyStats.searchCalls += searchQueries.length;
+  const [research, ...searchResults] = await Promise.all([
+    getCachedTavilyResearch(city1, city2),
+    ...searchQueries.map(q => tavilySearch(q, 5, TAVILY_TIMEOUT_MS)),
+  ]);
+
+  const allResults = searchResults.flatMap(r => r.results);
+  const answers = searchResults.map(r => r.answer).filter(Boolean);
+
+  // Build context: Research report first, then category searches
+  const contextParts: string[] = [];
+
+  if (research.report) {
+    contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
+${research.report.text}
+
+**Sources:** ${research.report.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
+`);
   }
+
+  if (allResults.length > 0) {
+    contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
+${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
+${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
+`);
+  }
+
+  const researchCredits = research.ordered ? (research.credits ?? 0) : 0;
+  const searchCredits = searchResults.reduce((sum, r) => sum + (r.credits ?? 0), 0);
+  const usage: TavilyUsage = {
+    researchCredits,
+    searchCredits,
+    totalCredits: researchCredits + searchCredits,
+    researchUnreported: research.ordered && research.credits === null ? 1 : 0,
+    searchUnreported: searchResults.filter(r => r.credits === null).length,
+  };
+  console.log(`[TAVILY] ${city1} vs ${city2}: report ${research.report ? 'used' : 'not available'}, ${allResults.length} search results, credits reported ${usage.totalCredits} (unreported: ${usage.researchUnreported} research, ${usage.searchUnreported} searches)`);
+
+  return {
+    context: contextParts.length > 0 ? contextParts.join('\n') + closingLine : '',
+    usage,
+  };
+}
+
+/** Adds an evaluation's Tavily cost (and the no-research warning) to its result. */
+function withTavily(result: EvaluationResponse, tavily: TavilyContext | null): EvaluationResponse {
+  if (!tavily) return result;
+  const warnings = tavily.context
+    ? result.warnings
+    : [...(result.warnings ?? []), 'Web research data was unavailable — scores may be less accurate'];
+  return {
+    ...result,
+    warnings,
+    usage: { tokens: result.usage?.tokens ?? { inputTokens: 0, outputTokens: 0 }, tavily: tavily.usage },
+  };
+}
+
+/** Both halves' warnings, each once (large categories run as two batches). */
+function mergeWarnings(a: string[] | undefined, b: string[] | undefined): string[] | undefined {
+  const all = [...new Set([...(a ?? []), ...(b ?? [])])];
+  return all.length > 0 ? all : undefined;
+}
+
+/** Adds up the Tavily cost of a category's two halves (large categories run as two batches). */
+function sumTavilyUsage(a: TavilyUsage | undefined, b: TavilyUsage | undefined): TavilyUsage | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return {
+    researchCredits: a.researchCredits + b.researchCredits,
+    searchCredits: a.searchCredits + b.searchCredits,
+    totalCredits: a.totalCredits + b.totalCredits,
+    researchUnreported: a.researchUnreported + b.researchUnreported,
+    searchUnreported: a.searchUnreported + b.searchUnreported,
+  };
 }
 
 // Claude evaluation — model from AI_MODELS.claudeEvaluator (with optional Tavily web research)
@@ -734,67 +736,15 @@ async function evaluateWithClaude(city1: string, city2: string, metrics: Evaluat
       success: combinedSuccess || combinedScores.length > 0,
       scores: combinedScores,
       latencyMs: Date.now() - startTime,
-      usage: { tokens: combinedUsage },
+      usage: { tokens: combinedUsage, tavily: sumTavilyUsage(result1.usage?.tavily, result2.usage?.tavily) },
+      warnings: mergeWarnings(result1.warnings, result2.warnings),
       error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
     };
   }
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
-  let tavilyContext = '';
-  if (process.env.TAVILY_API_KEY) {
-    // Step 1: Research API for comprehensive baseline (runs in parallel with searches)
-    const searchQueries = [
-      // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
-      // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
-      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
-      // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
-      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
-      // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
-      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
-      // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
-      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
-      // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
-      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
-    ];
-
-    // Run Research + Search in parallel for speed
-    const [researchResult, ...searchResults] = await Promise.all([
-      getCachedTavilyResearch(city1, city2).catch(() => null),
-      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
-    ]);
-
-    const allResults = searchResults.flatMap(r => r.results);
-    const answers = searchResults.map(r => r.answer).filter(Boolean);
-
-    // Build context: Research report first, then category searches
-    let contextParts: string[] = [];
-
-    if (researchResult?.report) {
-      contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
-${researchResult.report}
-
-**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
-`);
-    }
-
-    if (allResults.length > 0) {
-      contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
-${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
-${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
-`);
-    }
-
-    if (contextParts.length > 0) {
-      tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
-    }
-  }
+  const tavily = await gatherTavilyContext(city1, city2, '\nUse this research and search data to inform your evaluation.\n');
+  const tavilyContext = tavily?.context ?? '';
 
   // CLAUDE-SPECIFIC ADDENDUM
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
@@ -840,7 +790,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
         console.error(`[CLAUDE] Attempt ${attempt} failed: ${lastError}`);
         // A request Anthropic rejects outright (4xx other than overload) will not succeed on retry
         if (reply.kind === 'not-configured' || reply.kind === 'refused' || (reply.kind === 'http' && reply.status !== undefined && reply.status < 500 && reply.status !== 429)) {
-          return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
+          return withTavily({ provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError }, tavily);
         }
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
@@ -871,13 +821,13 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       };
 
       console.log(`[CLAUDE] Success on attempt ${attempt}: ${scores.length} scores returned`);
-      return {
+      return withTavily({
         provider: 'claude-sonnet',
         success: true,
         scores,
         latencyMs: Date.now() - startTime,
         usage: { tokens: usage }
-      };
+      }, tavily);
 
     } catch (error) {
       lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
@@ -893,7 +843,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
   // All retries exhausted
   console.error(`[CLAUDE] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
-  return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
+  return withTavily({ provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` }, tavily);
 }
 
 // GPT evaluation — model from AI_MODELS.gptEvaluator (with Tavily web research)
@@ -906,67 +856,8 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
   const startTime = Date.now();
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
-  let tavilyContext = '';
-  let gpt4oTavilyCredits = 0; // FIX B4: replaced var with let
-  if (process.env.TAVILY_API_KEY) {
-    const searchQueries = [
-      // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
-      // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
-      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
-      // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
-      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
-      // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
-      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
-      // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
-      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
-      // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
-      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
-    ];
-
-    // Run Research + Search in parallel for speed
-    const [researchResult, ...searchResults] = await Promise.all([
-      getCachedTavilyResearch(city1, city2).catch(() => null),
-      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], creditsUsed: 0 })))
-    ]);
-
-    // Track total Tavily credits used for the GPT seat
-    gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
-    console.log(`[GPT] Total Tavily credits used: ${gpt4oTavilyCredits}`);
-
-    const allResults = searchResults.flatMap(r => r.results);
-    const answers = searchResults.map(r => r.answer).filter(Boolean);
-
-    // Build context: Research report first, then category searches
-    let contextParts: string[] = [];
-
-    if (researchResult?.report) {
-      contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
-${researchResult.report}
-
-**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
-`);
-    }
-
-    if (allResults.length > 0) {
-      contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
-${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
-${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
-`);
-    }
-
-    if (contextParts.length > 0) {
-      tavilyContext = contextParts.join('\n') + '\nUse this research and search data to inform your evaluation.\n';
-    }
-  } else {
-    // gpt4oTavilyCredits already initialized to 0 above
-  }
+  const tavily = await gatherTavilyContext(city1, city2, '\nUse this research and search data to inform your evaluation.\n');
+  const tavilyContext = tavily?.context ?? '';
 
   // GPT SPECIFIC ADDENDUM
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
@@ -1019,7 +910,7 @@ Use the Tavily research data provided in the user message to evaluate laws and r
         console.error(`[GPT] Attempt ${attempt} failed: ${lastError}`);
         // A request the vendor rejects outright will not succeed on retry
         if (!isRetryable(reply)) {
-          return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
+          return withTavily({ provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError }, tavily);
         }
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
@@ -1050,13 +941,13 @@ Use the Tavily research data provided in the user message to evaluate laws and r
       };
 
       console.log(`[GPT] Success on attempt ${attempt}: ${scores.length} scores returned`);
-      return {
+      return withTavily({
         provider: 'gpt-4o',
         success: true,
         scores,
         latencyMs: Date.now() - startTime,
         usage: { tokens: usage }
-      };
+      }, tavily);
 
     } catch (error) {
       lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
@@ -1072,7 +963,7 @@ Use the Tavily research data provided in the user message to evaluate laws and r
 
   // All retries exhausted
   console.error(`[GPT] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
-  return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
+  return withTavily({ provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` }, tavily);
 }
 
 // Gemini evaluation — model from AI_MODELS.geminiEvaluator (with Google Search grounding)
@@ -1460,67 +1351,16 @@ async function evaluateWithPerplexity(city1: string, city2: string, metrics: Eva
       success: combinedSuccess || combinedScores.length > 0, // Partial success if we got any scores
       scores: combinedScores,
       latencyMs: combinedLatency,
-      usage: { tokens: combinedUsage },
+      usage: { tokens: combinedUsage, tavily: sumTavilyUsage(result1.usage?.tavily, result2.usage?.tavily) },
+      warnings: mergeWarnings(result1.warnings, result2.warnings),
       error: !combinedSuccess ? `Batch errors: ${result1.error || ''} ${result2.error || ''}`.trim() : undefined
     };
   }
 
   // Fetch Tavily context: Research baseline + Category searches (in parallel)
   // This pre-fetches data so Perplexity doesn't have to do ALL web searches itself
-  let tavilyContext = '';
-  if (process.env.TAVILY_API_KEY) {
-    const searchQueries = [
-      // personal_freedom (15 metrics)
-      `${city1} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
-      `${city2} personal freedom drugs alcohol cannabis gambling abortion LGBTQ laws ${CURRENT_YEAR}`,
-      // housing_property (20 metrics)
-      `${city1} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
-      `${city2} property rights zoning HOA land use housing regulations ${CURRENT_YEAR}`,
-      // business_work (25 metrics)
-      `${city1} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
-      `${city2} business regulations taxes licensing employment labor laws ${CURRENT_YEAR}`,
-      // transportation (15 metrics)
-      `${city1} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
-      `${city2} transportation vehicle regulations transit parking driving laws ${CURRENT_YEAR}`,
-      // policing_legal (15 metrics)
-      `${city1} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
-      `${city2} criminal justice police enforcement legal rights civil liberties ${CURRENT_YEAR}`,
-      // speech_lifestyle (10 metrics)
-      `${city1} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
-      `${city2} freedom speech expression privacy lifestyle regulations ${CURRENT_YEAR}`,
-    ];
-
-    // Run Research + Search in parallel for speed
-    const [researchResult, ...searchResults] = await Promise.all([
-      getCachedTavilyResearch(city1, city2).catch(() => null),
-      ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], answer: undefined })))
-    ]);
-
-    const allResults = searchResults.flatMap(r => r.results);
-    const answers = searchResults.map(r => r.answer).filter(Boolean);
-
-    // Build context: Research report first, then category searches
-    const contextParts: string[] = [];
-
-    if (researchResult?.report) {
-      contextParts.push(`## TAVILY RESEARCH REPORT (Comprehensive Baseline)
-${researchResult.report}
-
-**Sources:** ${researchResult.sources.map((s, i) => `[${i + 1}] ${s.title}`).join(', ')}
-`);
-    }
-
-    if (allResults.length > 0) {
-      contextParts.push(`## CATEGORY-SPECIFIC SEARCH RESULTS
-${answers.length > 0 ? `**Category Summaries:** ${answers.join(' | ')}\n\n` : ''}
-${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
-`);
-    }
-
-    if (contextParts.length > 0) {
-      tavilyContext = contextParts.join('\n') + '\nUse this Tavily research data to supplement your Sonar web search.\n';
-    }
-  }
+  const tavily = await gatherTavilyContext(city1, city2, '\nUse this Tavily research data to supplement your Sonar web search.\n');
+  const tavilyContext = tavily?.context ?? '';
 
   // PERPLEXITY-SPECIFIC ADDENDUM (optimized for citation-backed research)
   // UPDATED 2026-02-03: Added source efficiency, reuse, and confidence fallback rules per Perplexity optimization
@@ -1568,43 +1408,43 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
       // switched the chat/completions endpoint this route used off on 27 September 2026.
       const reply = await callPerplexity({
         preset: AI_MODELS.perplexityEvaluator.id,
-        instructions: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
-
-## SCORING RULES
-- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
-- Use numeric scores 0-100 (integers only)
-- Higher scores = MORE freedom/permissiveness for that metric
-
-## OUTPUT EFFICIENCY RULES
-- "sources": Include 2-3 URLs for reliability and verification
-- "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
-- Keep reasoning brief (1-2 sentences max)
-- IMPORTANT: Minimize your <think> reasoning to conserve output tokens for the JSON response
-
-## CONFIDENCE RULES
-- "high": Clear, current data from official sources
-- "medium": Data exists but may be outdated or sources partially conflict
-- "low": Limited data available; using best available inference
-
-## OUTPUT FORMAT
-Return ONLY valid JSON (no markdown, no explanation):
-{
-  "evaluations": [
-    {
-      "metricId": "metric_id",
-      "city1Legal": 75,
-      "city1Enforcement": 70,
-      "city2Legal": 60,
-      "city2Enforcement": 55,
-      "confidence": "high",
-      "reasoning": "Brief explanation",
-      "sources": ["url1", "url2"],
-      "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
-      "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
-    }
-  ]
-}
-
+        instructions: `You are an expert legal analyst evaluating freedom metrics. Use your web search to find current laws.
+
+## SCORING RULES
+- Follow the scoring scale in the user message (0-100 with 5 anchor bands)
+- Use numeric scores 0-100 (integers only)
+- Higher scores = MORE freedom/permissiveness for that metric
+
+## OUTPUT EFFICIENCY RULES
+- "sources": Include 2-3 URLs for reliability and verification
+- "city1Evidence" and "city2Evidence": Include AT MOST 1 evidence snippet each (the most relevant)
+- Keep reasoning brief (1-2 sentences max)
+- IMPORTANT: Minimize your <think> reasoning to conserve output tokens for the JSON response
+
+## CONFIDENCE RULES
+- "high": Clear, current data from official sources
+- "medium": Data exists but may be outdated or sources partially conflict
+- "low": Limited data available; using best available inference
+
+## OUTPUT FORMAT
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "evaluations": [
+    {
+      "metricId": "metric_id",
+      "city1Legal": 75,
+      "city1Enforcement": 70,
+      "city2Legal": 60,
+      "city2Enforcement": 55,
+      "confidence": "high",
+      "reasoning": "Brief explanation",
+      "sources": ["url1", "url2"],
+      "city1Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}],
+      "city2Evidence": [{"title": "Source", "url": "https://...", "snippet": "Key quote"}]
+    }
+  ]
+}
+
 You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
         input: prompt,
         maxOutputTokens: 16384,
@@ -1615,7 +1455,7 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
 
       if (!reply.ok) {
         if (!isRetryable(reply)) {
-          return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: reply.message };
+          return withTavily({ provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: reply.message }, tavily);
         }
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
@@ -1623,7 +1463,7 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
           await new Promise(resolve => setTimeout(resolve, backoffMs));
           continue;
         }
-        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `${reply.message} (after ${MAX_RETRIES} attempts)` };
+        return withTavily({ provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: `${reply.message} (after ${MAX_RETRIES} attempts)` }, tavily);
       }
 
       let rawText = reply.text;
@@ -1661,7 +1501,7 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
           await new Promise(resolve => setTimeout(resolve, backoffMs));
           continue;
         }
-        return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output after retries' };
+        return withTavily({ provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'No JSON object found in Perplexity output after retries' }, tavily);
       }
 
       const scores = parseResponse(jsonMatch[0], 'perplexity');
@@ -1688,13 +1528,13 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
         console.warn(`[PERPLEXITY] Estimated tokens from text: ${usage.inputTokens} in / ${usage.outputTokens} out`);
       }
 
-      return {
+      return withTavily({
         provider: 'perplexity',
         success: scores.length > 0,
         scores,
         latencyMs: Date.now() - startTime,
         usage: { tokens: usage }
-      };
+      }, tavily);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
       if (attempt < MAX_RETRIES) {
@@ -1703,12 +1543,12 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
       }
-      return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg };
+      return withTavily({ provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: errorMsg }, tavily);
     }
   }
 
   // Should never reach here, but TypeScript safety
-  return { provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Unexpected end of retry loop' };
+  return withTavily({ provider: 'perplexity', success: false, scores: [], latencyMs: Date.now() - startTime, error: 'Unexpected end of retry loop' }, tavily);
 }
 
 // Main handler
@@ -1793,9 +1633,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (result.success && result.scores.length < metrics.length) {
       warnings.push(`Only ${result.scores.length} of ${metrics.length} metrics were scored`);
     }
-    if (tavilyStats.researchCacheMisses > 0 && tavilyStats.researchCacheHits === 0 && !result.usage?.tavily) {
-      warnings.push('Web research data was unavailable — scores may be less accurate');
-    }
+    // The "web research unavailable" warning is added per evaluation by withTavily().
     if (warnings.length > 0) {
       result.warnings = warnings;
     }
