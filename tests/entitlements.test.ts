@@ -161,6 +161,17 @@ describe('paid vendors are reached only behind a plan check', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('every route that calls an AI model checks the plan (Emilia, the help desk, is the one exception)', () => {
+    const AI_CALL = /\bcall(Claude|OpenAI|Gemini|Grok|Perplexity)\(/;
+    const HELP_DESK = new Set(['api/emilia/message.ts']);
+    const offenders = routeFiles('api').filter((f) => {
+      if (HELP_DESK.has(f)) return false;
+      const src = readFileSync(f, 'utf8');
+      return AI_CALL.test(src) && !PLAN_CHECK.test(src);
+    });
+    expect(offenders).toEqual([]);
+  });
+
   it("Olivia's faces check her allowance and Cristiano's storyboard checks his films", () => {
     const expected: Record<string, string> = {
       'api/olivia/avatar/heygen.ts': 'oliviaMinutesPerMonth',

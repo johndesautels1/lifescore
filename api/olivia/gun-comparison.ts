@@ -11,7 +11,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature } from '../shared/entitlements.js';
 import { callClaude } from '../shared/anthropic.js';
 import { AI_MODELS } from '../shared/models.js';
 
@@ -87,8 +87,9 @@ export default async function handler(
     return;
   }
 
-  // Require authentication — this makes Anthropic API calls
-  const auth = await requireAuth(req, res);
+  // Paid plans only — this makes Anthropic API calls. Offered on Visual reports
+  // (gammaReports) and Enhanced results (Sovereign, which includes gammaReports).
+  const auth = (await requireFeature(req, res, 'gammaReports'))?.auth ?? null;
   if (!auth) return;
 
   try {
