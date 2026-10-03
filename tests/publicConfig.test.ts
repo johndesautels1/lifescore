@@ -42,6 +42,19 @@ describe('start-up order', () => {
     expect(client).not.toMatch(/import\.meta\.env\.VITE_SUPABASE_(URL|ANON_KEY)/);
   });
 
+  it('the client is created on first use, not when its file loads', () => {
+    // The build bundles lib/supabase.ts with lib/publicConfig.ts, which main.tsx
+    // loads first; a load-time client read the settings before the server's
+    // copy arrived (the live build of 3 Oct 2026 kept a blank key).
+    const client = readFileSync('src/lib/supabase.ts', 'utf8');
+    const factory = client.indexOf('function client()');
+    const create = client.indexOf('createClient(url');
+    expect(factory).toBeGreaterThan(0);
+    expect(create).toBeGreaterThan(factory);
+    expect(client).not.toMatch(/^export const supabase = createClient\(/m);
+    expect(client).toMatch(/export const supabase: SupabaseBrowserClient = new Proxy/);
+  });
+
   it('the server route hands out only the public pair', () => {
     const route = readFileSync('api/public-config.ts', 'utf8');
     expect(route).toContain('publicSupabaseSettings()');

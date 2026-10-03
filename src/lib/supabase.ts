@@ -6,38 +6,58 @@
 import { createClient } from '@supabase/supabase-js';
 import { publicSupabaseSettings } from './publicConfig';
 
-// Built-in settings, or the server's when the build left one out — main.tsx
-// loads those before any module that imports this one (lib/publicConfig.ts).
-const { url: supabaseUrl, anonKey: supabaseAnonKey } = publicSupabaseSettings();
+const PLACEHOLDER_URL = 'https://placeholder.supabase.co';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    '[Supabase] Missing environment variables. Auth features will be disabled.\n' +
-    'To enable: Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.'
-  );
+type SupabaseBrowserClient = ReturnType<typeof createClient>;
+
+let realClient: SupabaseBrowserClient | null = null;
+
+/**
+ * The one browser client, created on FIRST USE — never when this file loads.
+ * The build bundles this file together with lib/publicConfig.ts, which
+ * main.tsx loads before the app; a client created at load time would read the
+ * settings before the server's copy arrived (3 Oct 2026: the live build had a
+ * blank key and sign-in stayed broken). By first use, boot() has filled them.
+ */
+function client(): SupabaseBrowserClient {
+  if (!realClient) {
+    const { url, anonKey } = publicSupabaseSettings();
+    if (!url || !anonKey) {
+      console.warn(
+        '[Supabase] Missing environment variables. Auth features will be disabled.\n' +
+        'To enable: Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.'
+      );
+    }
+    // Create untyped client to avoid strict type inference issues
+    realClient = createClient(url || PLACEHOLDER_URL, anonKey || 'placeholder-key', {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'lifescore-auth',
+      },
+      global: {
+        headers: {
+          'x-application-name': 'lifescore',
+        },
+      },
+    });
+  }
+  return realClient;
 }
 
-// Create untyped client to avoid strict type inference issues
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: 'lifescore-auth',
-    },
-    global: {
-      headers: {
-        'x-application-name': 'lifescore',
-      },
-    },
-  }
-);
+/** The shared client; every property is read from the real client, created on first use. */
+export const supabase: SupabaseBrowserClient = new Proxy({} as SupabaseBrowserClient, {
+  get(_target, property) {
+    const real = client();
+    const value: unknown = Reflect.get(real, property, real);
+    return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(real) : value;
+  },
+});
 
 export function isSupabaseConfigured(): boolean {
-  return !!(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co');
+  const { url, anonKey } = publicSupabaseSettings();
+  return !!(url && anonKey && url !== PLACEHOLDER_URL);
 }
 
 /**
