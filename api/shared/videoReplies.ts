@@ -80,6 +80,43 @@ export function readKlingTask(body: unknown): KlingTaskReply {
   };
 }
 
+/** An id InVideo may send as text or as a number. */
+export function idText(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return text(value);
+}
+
+/**
+ * InVideo's reason when its MCP tools/call reply is a refusal, else undefined:
+ * a JSON-RPC `error` ({ code, message }), or a tool result marked
+ * `isError: true` (the MCP way to report a tool that ran and failed; its text
+ * says why). Cut to 300 characters.
+ */
+export function readMcpToolRefusal(body: unknown): string | undefined {
+  const reply = record(body);
+  if (reply.error !== undefined && reply.error !== null) {
+    return (text(record(reply.error).message) ?? text(reply.error) ?? 'no reason given').slice(0, 300);
+  }
+  const result = record(reply.result);
+  if (result.isError === true) {
+    const content = result.content;
+    const firstText = Array.isArray(content) ? text(record(content[0]).text) : undefined;
+    return (firstText ?? 'no reason given').slice(0, 300);
+  }
+  return undefined;
+}
+
+/**
+ * The payload of an MCP tools/call reply: the first content item's text, else
+ * the result itself, else ''.
+ */
+export function readMcpToolResult(body: unknown): unknown {
+  const result = record(body).result;
+  const content = record(result).content;
+  const firstText = Array.isArray(content) ? text(record(content[0]).text) : undefined;
+  return firstText ?? (result || '');
+}
+
 /** The xAI video route's reply (create and status). */
 export interface GrokVideoReply {
   id?: string;

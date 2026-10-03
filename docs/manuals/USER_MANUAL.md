@@ -431,7 +431,7 @@ Below the Freedom Video Clip, you'll find the **Freedom Journey** movie generato
 - **Stage 2:** InVideo renders a 4K cinematic movie with voiceover, stock footage, and music
 - The movie covers your story from struggling in the old city, discovering LIFE SCORE, getting the verdict, to moving to your new free life
 - Progress is tracked in real time through all stages (screenplay generation, submission, rendering)
-- If InVideo's rendering service is unavailable, the screenplay prompt is saved so you can paste it into InVideo manually
+- If InVideo's rendering service is unavailable or turns the job down, the screenplay prompt is saved so you can paste it into InVideo manually, and the page shows why
 - Movies are cached by city pair — if someone already generated the same comparison, you'll get the cached version instantly
 - **Note:** Movie rendering can take up to 15 minutes. The system polls every 10 seconds for up to 30 minutes.
 

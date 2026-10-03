@@ -8,7 +8,7 @@
  * States:
  *   idle            → "Create My Movie" button
  *   generating      → Screenplay + InVideo progress
- *   screenplay_ready → Prompt ready (fallback when InVideo MCP unavailable)
+ *   screenplay_ready → Prompt ready (fallback when InVideo MCP is unavailable or refuses; shows the reason)
  *   rendering       → Video processing progress
  *   completed       → Video player
  *   failed          → Error with retry
@@ -269,6 +269,11 @@ export default function MovieGenerator(props: MovieGeneratorProps) {
             Your 12-scene cinematic screenplay has been generated. Copy the prompt
             below and paste it into InVideo AI to create your 10-minute movie.
           </p>
+          {movieState.error && (
+            <p className="movie-error-message" role="status">
+              {movieState.error}
+            </p>
+          )}
 
           <div className="movie-prompt-actions">
             <button

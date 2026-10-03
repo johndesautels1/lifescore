@@ -1567,7 +1567,7 @@ Stage 2: InVideo MCP (generate-video-from-script) → 10-minute 4K movie
 | File | Purpose |
 |------|---------|
 | `api/movie/screenplay.ts` | Stage 1 — LLM generates 12-scene JSON screenplay with QA validation + up to 2 retries |
-| `api/movie/generate.ts` | Stage 2 — Submits screenplay to InVideo MCP; falls back to prompt-ready mode if MCP unavailable |
+| `api/movie/generate.ts` | Stage 2 — Submits screenplay to InVideo MCP; falls back to prompt-ready mode if MCP is unavailable or refuses the job (JSON-RPC error or `isError` result), and returns the reason as `movie.error` |
 | `src/services/movieService.ts` | Client orchestration — screenplay → submit → poll for completion (10s intervals, 30 min max) |
 | `src/components/MovieGenerator.tsx` | UI component — progress tracking through all stages with scene title display |
 | `src/components/MovieGenerator.css` | Styling for movie generator (544 lines) |

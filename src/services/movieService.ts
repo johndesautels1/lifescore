@@ -218,6 +218,8 @@ async function submitToInVideo(params: {
   videoUrl?: string;
   editUrl?: string;
   generationPrompt?: string;
+  /** Why InVideo did not make the film, when it did not. */
+  error?: string;
   cached: boolean;
 }> {
   const authHeaders = await getAuthHeaders();
@@ -247,6 +249,7 @@ async function submitToInVideo(params: {
     videoUrl: data.movie.videoUrl,
     editUrl: data.movie.editUrl,
     generationPrompt: data.movie.generationPrompt,
+    error: typeof data.movie.error === 'string' && data.movie.error ? data.movie.error : undefined,
     cached: data.cached,
   };
 }
@@ -377,6 +380,7 @@ export async function generateMovie(
         movieId: invideoResult.movieId,
         screenplay,
         generationPrompt: invideoResult.generationPrompt,
+        error: invideoResult.error,
         progress: 30,
         winnerCity: comparisonInput.winnerCity,
         loserCity: comparisonInput.loserCity,

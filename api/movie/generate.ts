@@ -22,6 +22,7 @@ import { requireFeature } from '../shared/entitlements.js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 import { asRecord, text as nonEmpty, type JsonRecord } from '../shared/jsonRead.js';
+import { idText, readMcpToolRefusal, readMcpToolResult } from '../shared/videoReplies.js';
 import type { Screenplay, ScreenplayScene } from './screenplay.js';
 
 export const config = {
@@ -45,25 +46,8 @@ interface InVideoSubmission {
   editUrl?: string;
   videoUrl?: string;
   status: string;
-  /** Set when InVideo could not be reached and the screenplay is kept for manual use. */
+  /** Set when InVideo could not be reached or refused the job; the screenplay is kept for manual use. */
   error?: string;
-}
-
-/** An id InVideo may send as text or as a number. */
-function idText(value: unknown): string | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return nonEmpty(value);
-}
-
-/**
- * The payload of a JSON-RPC tools/call reply: the first content item's text,
- * else the result itself, else ''.
- */
-function readToolResult(body: unknown): unknown {
-  const result = asRecord(body).result;
-  const content = asRecord(result).content;
-  const firstText = Array.isArray(content) ? nonEmpty(asRecord(content[0]).text) : undefined;
-  return firstText ?? (result || '');
 }
 
 /**
@@ -215,8 +199,17 @@ async function submitToInVideoMCP(
 
     const mcpResponse: unknown = await response.json();
 
+    // A refusal used to read as "submitted", so the film showed "rendering" for
+    // ever. It now keeps the screenplay for manual use, as when InVideo cannot
+    // be reached, with InVideo's reason.
+    const refusal = readMcpToolRefusal(mcpResponse);
+    if (refusal) {
+      console.warn('[MOVIE-GENERATE] InVideo refused the job:', refusal);
+      return { status: 'prompt_ready', error: `InVideo could not make the film: ${refusal}` };
+    }
+
     // Parse MCP response — the tool result contains the video info
-    const result = readToolResult(mcpResponse);
+    const result = readMcpToolResult(mcpResponse);
     let parsed: JsonRecord = {};
     try {
       parsed = asRecord(typeof result === 'string' ? JSON.parse(result) : result);
@@ -449,6 +442,8 @@ export default async function handler(
         editUrl: invideoResult.editUrl || null,
         videoId: invideoResult.videoId || null,
         generationPrompt,
+        // Why InVideo did not make the film (the screenplay screen shows it).
+        error: invideoResult.error || null,
       },
     });
   } catch (error) {

@@ -6,7 +6,51 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { readGrokVideo, readKlingTask, readReplicatePrediction } from '../api/shared/videoReplies';
+import {
+  idText,
+  readGrokVideo,
+  readKlingTask,
+  readMcpToolRefusal,
+  readMcpToolResult,
+  readReplicatePrediction,
+} from '../api/shared/videoReplies';
+
+describe('InVideo (MCP tools/call) replies', () => {
+  it('a JSON-RPC error is a refusal with InVideo\'s reason', () => {
+    expect(readMcpToolRefusal({ jsonrpc: '2.0', id: 'x', error: { code: -32000, message: 'Quota exceeded' } })).toBe('Quota exceeded');
+    expect(readMcpToolRefusal({ error: 'Bad key' })).toBe('Bad key');
+    expect(readMcpToolRefusal({ error: { code: 1 } })).toBe('no reason given');
+  });
+
+  it('a tool result marked isError is a refusal; its text is the reason', () => {
+    expect(readMcpToolRefusal({ result: { isError: true, content: [{ type: 'text', text: 'Script too long' }] } })).toBe('Script too long');
+    expect(readMcpToolRefusal({ result: { isError: true } })).toBe('no reason given');
+    expect(readMcpToolRefusal({ result: { content: [{ type: 'text', text: 'x'.repeat(400) }], isError: true } })?.length).toBe(300);
+  });
+
+  it('a normal result is not a refusal, and its payload is read', () => {
+    const ok = { result: { content: [{ type: 'text', text: '{"video_id":"v1"}' }] } };
+    expect(readMcpToolRefusal(ok)).toBeUndefined();
+    expect(readMcpToolResult(ok)).toBe('{"video_id":"v1"}');
+    expect(readMcpToolResult({ result: { video_id: 'v2' } })).toEqual({ video_id: 'v2' });
+    expect(readMcpToolResult({})).toBe('');
+  });
+
+  it('reads an id sent as text or number', () => {
+    expect(idText('abc')).toBe('abc');
+    expect(idText(42)).toBe('42');
+    expect(idText('')).toBeUndefined();
+  });
+
+  it('the movie route checks for a refusal before reading the result (anti-drift)', () => {
+    const route = readFileSync('api/movie/generate.ts', 'utf8');
+    expect(route.indexOf('readMcpToolRefusal(mcpResponse)')).toBeGreaterThan(-1);
+    expect(route.indexOf('readMcpToolRefusal(mcpResponse)')).toBeLessThan(route.indexOf('readMcpToolResult(mcpResponse)'));
+    // Stored on the movie row AND sent to the screen, which shows it.
+    expect(route.match(/error: invideoResult\.error \|\| null/g)?.length).toBe(2);
+    expect(readFileSync('src/components/MovieGenerator.tsx', 'utf8')).toMatch(/screenplay_ready[\s\S]*\{movieState\.error && \(/);
+  });
+});
 import { asRecord, finite, readIceServers, text } from '../api/shared/jsonRead';
 
 describe('shared JSON readers (api/shared/jsonRead.ts)', () => {
