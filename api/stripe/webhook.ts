@@ -1,235 +1,171 @@
 /**
  * LIFE SCORE - Stripe Webhook Handler
  *
- * Handles Stripe webhook events for subscription lifecycle.
- * Updates user tier and subscription records in Supabase.
+ * Keeps each customer's plan in step with Stripe. On every subscription event
+ * the handler re-reads the subscription from Stripe (so out-of-order or
+ * older-shaped payloads cannot store a stale state), stores it, and sets the
+ * owner's plan from ALL their subscriptions (api/shared/stripe.ts bestTier).
+ *
+ * A failed database write answers 500, so Stripe retries the event (it retries
+ * for up to three days). Before 2026-10-03 failures were logged and answered
+ * 200 — Stripe never retried, and a paying customer could stay on Free.
+ * Every step is idempotent, so a retry is always safe.
  *
  * Required env vars:
- * - STRIPE_SECRET_KEY
- * - STRIPE_WEBHOOK_SECRET
- * - SUPABASE_URL
- * - SUPABASE_SERVICE_KEY (for server-side operations)
+ * - STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+ * - SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)
  *
  * Webhook events handled:
  * - checkout.session.completed
- * - customer.subscription.created
- * - customer.subscription.updated
- * - customer.subscription.deleted
- * - invoice.payment_succeeded
- * - invoice.payment_failed
+ * - customer.subscription.created / updated / deleted / paused / resumed
+ * - invoice.payment_succeeded / invoice.payment_failed
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import type Stripe from 'stripe';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
+import {
+  bestTier,
+  getStripe,
+  invoiceSubscriptionId,
+  stripeId,
+  subscriptionPeriod,
+  unixToIso,
+} from '../shared/stripe.js';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
-});
+/** Per database call. Stripe waits up to 20 s for an answer before it counts a failure. */
+const DB_TIMEOUT_MS = 8_000;
 
-// Use service role key for server-side database operations
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
-);
-
-// FIX 2026-02-14: Timeout wrapper for webhook DB writes — Stripe retries on failure
-const DB_TIMEOUT_MS = 15000; // 15s per operation
-
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`[WEBHOOK] ${label} timed out after ${ms}ms`)), ms)
-    ),
-  ]);
+function dbDeadline(): AbortSignal {
+  return AbortSignal.timeout(DB_TIMEOUT_MS);
 }
 
-/**
- * Map Stripe price IDs to user tiers
- */
-function getTierFromPriceId(priceId: string): 'pro' | 'enterprise' | null {
-  const navigatorPrices = [
-    process.env.STRIPE_PRICE_NAVIGATOR_MONTHLY,
-    process.env.STRIPE_PRICE_NAVIGATOR_ANNUAL,
-  ];
-  const sovereignPrices = [
-    process.env.STRIPE_PRICE_SOVEREIGN_MONTHLY,
-    process.env.STRIPE_PRICE_SOVEREIGN_ANNUAL,
-  ];
-
-  if (navigatorPrices.includes(priceId)) return 'pro';
-  if (sovereignPrices.includes(priceId)) return 'enterprise';
-  return null;
+/** A write that must succeed before the event is acknowledged. */
+class WebhookWriteError extends Error {
+  constructor(step: string, detail: string) {
+    super(`[WEBHOOK] ${step} failed: ${detail}`);
+    this.name = 'WebhookWriteError';
+  }
 }
 
 // ============================================================================
-// WEBHOOK EVENT HANDLERS
+// SUBSCRIPTION SYNC
 // ============================================================================
 
+/** Which user a subscription belongs to: the checkout's user, its metadata, else our stored row. */
+async function ownerOf(
+  db: SupabaseClient,
+  subscription: Stripe.Subscription,
+  userHint: string | null
+): Promise<string | null> {
+  if (userHint) return userHint;
+  const fromMetadata = subscription.metadata?.userId;
+  if (fromMetadata) return fromMetadata;
+
+  const { data, error } = await db
+    .from('subscriptions')
+    .select('user_id')
+    .eq('stripe_subscription_id', subscription.id)
+    .abortSignal(dbDeadline())
+    .maybeSingle();
+  if (error) throw new WebhookWriteError('Find subscription owner', error.message);
+  return typeof data?.user_id === 'string' ? data.user_id : null;
+}
+
 /**
- * Handle checkout.session.completed
- * User just completed payment
+ * Store Stripe's current view of one subscription, then set its owner's plan
+ * from every subscription they hold.
  */
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
-  console.log('[WEBHOOK] Checkout completed:', session.id);
-
-  const userId = session.client_reference_id || session.metadata?.userId;
-  if (!userId) {
-    console.error('[WEBHOOK] No userId in session');
-    return;
-  }
-
-  // Subscription ID will be available
-  const subscriptionId = session.subscription as string;
-  if (!subscriptionId) {
-    console.error('[WEBHOOK] No subscription ID in session');
-    return;
-  }
-
-  // Fetch full subscription details
+async function syncSubscription(
+  stripe: Stripe,
+  db: SupabaseClient,
+  subscriptionId: string,
+  userHint: string | null = null
+): Promise<void> {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const priceId = subscription.items.data[0]?.price.id;
-  const tier = priceId ? getTierFromPriceId(priceId) : null;
-
-  if (!tier) {
-    console.error('[WEBHOOK] Could not determine tier from price:', priceId);
+  const userId = await ownerOf(db, subscription, userHint);
+  if (!userId) {
+    // Not started from this app (e.g. made by hand in the Stripe dashboard).
+    console.warn('[WEBHOOK] Subscription has no LifeScore user; nothing stored:', subscription.id);
     return;
   }
 
-  // Update user tier in profiles
-  const { error: profileError } = await withTimeout(
-    supabaseAdmin.from('profiles').update({ tier }).eq('id', userId),
-    DB_TIMEOUT_MS, 'Update profile tier'
-  );
-
-  if (profileError) {
-    console.error('[WEBHOOK] Failed to update profile tier:', profileError);
-  } else {
-    console.log('[WEBHOOK] Updated user tier:', userId, tier);
+  const customerId = stripeId(subscription.customer);
+  const priceId = subscription.items.data[0]?.price?.id ?? null;
+  const period = subscriptionPeriod(subscription);
+  if (!customerId || !priceId || !period) {
+    throw new WebhookWriteError(
+      'Read subscription',
+      `${subscription.id} is missing ${!customerId ? 'customer' : !priceId ? 'price' : 'billing period'}`
+    );
   }
 
-  // Create/update subscription record
-  const { error: subError } = await withTimeout(
-    supabaseAdmin.from('subscriptions').upsert(
+  const { error: upsertError } = await db
+    .from('subscriptions')
+    .upsert(
       {
         user_id: userId,
-        stripe_customer_id: session.customer as string,
-        stripe_subscription_id: subscriptionId,
+        stripe_customer_id: customerId,
+        stripe_subscription_id: subscription.id,
         stripe_price_id: priceId,
         status: subscription.status,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_start: unixToIso(period.start),
+        current_period_end: unixToIso(period.end),
         cancel_at_period_end: subscription.cancel_at_period_end,
+        canceled_at: unixToIso(subscription.canceled_at),
       },
       { onConflict: 'stripe_subscription_id' }
-    ),
-    DB_TIMEOUT_MS, 'Upsert subscription'
-  );
+    )
+    .abortSignal(dbDeadline());
+  if (upsertError) throw new WebhookWriteError('Store subscription', upsertError.message);
 
-  if (subError) {
-    console.error('[WEBHOOK] Failed to upsert subscription:', subError);
-  } else {
-    console.log('[WEBHOOK] Subscription record created/updated');
-  }
+  const { data: rows, error: rowsError } = await db
+    .from('subscriptions')
+    .select('status, stripe_price_id')
+    .eq('user_id', userId)
+    .abortSignal(dbDeadline());
+  if (rowsError) throw new WebhookWriteError('Read user subscriptions', rowsError.message);
+
+  const tier = bestTier(rows ?? []);
+  const { error: profileError } = await db
+    .from('profiles')
+    .update({ tier })
+    .eq('id', userId)
+    .abortSignal(dbDeadline());
+  if (profileError) throw new WebhookWriteError('Set plan', profileError.message);
+
+  console.log('[WEBHOOK] Subscription', subscription.id, subscription.status, '→ plan', tier, 'for', userId);
 }
 
-/**
- * Handle subscription updates (upgrades, downgrades, cancellations)
- */
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
-  console.log('[WEBHOOK] Subscription updated:', subscription.id, subscription.status);
+// ============================================================================
+// EVENT HANDLERS
+// ============================================================================
 
-  const userId = subscription.metadata?.userId;
-  const priceId = subscription.items.data[0]?.price.id;
-
-  // Update subscription record
-  const { error: subError } = await withTimeout(
-    supabaseAdmin.from('subscriptions').update({
-      status: subscription.status,
-      stripe_price_id: priceId,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end,
-      canceled_at: subscription.canceled_at
-        ? new Date(subscription.canceled_at * 1000).toISOString()
-        : null,
-    }).eq('stripe_subscription_id', subscription.id),
-    DB_TIMEOUT_MS, 'Update subscription'
-  );
-
-  if (subError) {
-    console.error('[WEBHOOK] Failed to update subscription:', subError);
+/** checkout.session.completed — the customer just paid. */
+async function onCheckoutCompleted(stripe: Stripe, db: SupabaseClient, session: Stripe.Checkout.Session): Promise<void> {
+  if (session.mode !== 'subscription') return;
+  const subscriptionId = stripeId(session.subscription);
+  if (!subscriptionId) {
+    console.error('[WEBHOOK] Checkout session has no subscription:', session.id);
+    return;
   }
-
-  // If subscription is active, update tier
-  if (subscription.status === 'active' && userId && priceId) {
-    const tier = getTierFromPriceId(priceId);
-    if (tier) {
-      await withTimeout(
-        supabaseAdmin.from('profiles').update({ tier }).eq('id', userId),
-        DB_TIMEOUT_MS, 'Update tier'
-      );
-      console.log('[WEBHOOK] Updated tier to:', tier);
-    }
-  }
+  const userId = session.client_reference_id || session.metadata?.userId || null;
+  await syncSubscription(stripe, db, subscriptionId, userId);
 }
 
-/**
- * Handle subscription deletion (canceled and period ended)
- */
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
-  console.log('[WEBHOOK] Subscription deleted:', subscription.id);
-
-  // Find user from subscription record
-  // FIX 2026-01-29: Use maybeSingle() - subscription may not exist
-  const { data: subRecord } = await withTimeout(
-    supabaseAdmin.from('subscriptions').select('user_id')
-      .eq('stripe_subscription_id', subscription.id).maybeSingle(),
-    DB_TIMEOUT_MS, 'Find subscription user'
-  );
-
-  if (subRecord?.user_id) {
-    // Downgrade user to free tier
-    await withTimeout(
-      supabaseAdmin.from('profiles').update({ tier: 'free' }).eq('id', subRecord.user_id),
-      DB_TIMEOUT_MS, 'Downgrade to free'
-    );
-
-    console.log('[WEBHOOK] Downgraded user to free:', subRecord.user_id);
-  }
-
-  // Update subscription status
-  await withTimeout(
-    supabaseAdmin.from('subscriptions').update({ status: 'canceled' })
-      .eq('stripe_subscription_id', subscription.id),
-    DB_TIMEOUT_MS, 'Cancel subscription record'
-  );
-}
-
-/**
- * Handle payment failures
- */
-async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
-  console.log('[WEBHOOK] Payment failed:', invoice.id);
-
-  const subscriptionId = invoice.subscription as string;
-  if (!subscriptionId) return;
-
-  // Update subscription status
-  await withTimeout(
-    supabaseAdmin.from('subscriptions').update({ status: 'past_due' })
-      .eq('stripe_subscription_id', subscriptionId),
-    DB_TIMEOUT_MS, 'Mark past_due'
-  );
-
+/** invoice.payment_succeeded / invoice.payment_failed — the subscription's state may have moved. */
+async function onInvoice(stripe: Stripe, db: SupabaseClient, invoice: Stripe.Invoice): Promise<void> {
+  const subscriptionId = invoiceSubscriptionId(invoice);
+  if (!subscriptionId) return; // a one-off invoice, not a plan
+  await syncSubscription(stripe, db, subscriptionId);
   // TODO: Send email notification to user about failed payment
 }
 
@@ -237,41 +173,31 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
 // MAIN HANDLER
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-): Promise<void> {
-  // Only POST allowed
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
-  // Verify configuration
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-    console.error('[WEBHOOK] Stripe not configured');
+  const stripe = getStripe();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const db = getServiceClient();
+  if (!stripe || !webhookSecret || !db) {
+    console.error('[WEBHOOK] Not configured:', { stripe: !!stripe, webhookSecret: !!webhookSecret, database: !!db });
     res.status(500).json({ error: 'Webhook not configured' });
     return;
   }
 
-  // Get raw body for signature verification
-  const rawBody = await getRawBody(req);
-  const signature = req.headers['stripe-signature'] as string;
-
-  if (!signature) {
+  const signature = req.headers['stripe-signature'];
+  if (typeof signature !== 'string' || !signature) {
     res.status(400).json({ error: 'Missing stripe-signature header' });
     return;
   }
 
   let event: Stripe.Event;
-
   try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    const rawBody = await readRawBody(req);
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (error) {
     console.error('[WEBHOOK] Signature verification failed:', error);
     res.status(400).json({
@@ -281,31 +207,25 @@ export default async function handler(
     return;
   }
 
-  console.log('[WEBHOOK] Received event:', event.type);
+  console.log('[WEBHOOK] Received event:', event.type, event.id);
 
   try {
-    // Handle different event types
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        await onCheckoutCompleted(stripe, db, event.data.object);
         break;
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
-        break;
-
       case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-        break;
-
-      case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object as Stripe.Invoice);
+      case 'customer.subscription.paused':
+      case 'customer.subscription.resumed':
+        await syncSubscription(stripe, db, event.data.object.id);
         break;
 
       case 'invoice.payment_succeeded':
-        // Payment successful - subscription should already be updated
-        console.log('[WEBHOOK] Payment succeeded:', (event.data.object as Stripe.Invoice).id);
+      case 'invoice.payment_failed':
+        await onInvoice(stripe, db, event.data.object);
         break;
 
       default:
@@ -314,7 +234,8 @@ export default async function handler(
 
     res.status(200).json({ received: true });
   } catch (error) {
-    console.error('[WEBHOOK] Error processing event:', error);
+    // 500 → Stripe retries the event later.
+    console.error('[WEBHOOK] Error processing event', event.id, error);
     res.status(500).json({
       error: 'Webhook processing failed',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -323,19 +244,15 @@ export default async function handler(
 }
 
 /**
- * Get raw body from request for signature verification
+ * The exact bytes Stripe signed. Chunks are joined as bytes — joining them as
+ * text could split a multi-byte character and break the signature.
  */
-async function getRawBody(req: VercelRequest): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk) => {
-      data += chunk;
-    });
-    req.on('end', () => {
-      resolve(data);
-    });
-    req.on('error', reject);
-  });
+async function readRawBody(req: VercelRequest): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : Buffer.from(chunk as Uint8Array));
+  }
+  return Buffer.concat(chunks);
 }
 
 // Disable body parsing - we need raw body for signature verification

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "type": "module",
   "scripts": {
@@ -22,7 +22,7 @@
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "simli-client": "3.0.1",
-    "stripe": "^20.2.0"
+    "stripe": "^23.0.0"
   },
   "devDependencies": {
     "@capacitor/android": "^8.1.0",

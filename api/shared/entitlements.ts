@@ -20,9 +20,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { requireAuth, getAdminEmails, type AuthResult } from './auth.js';
+import { getServiceClient, serviceRoleKey } from './supabaseAdmin.js';
 import {
   ADMIN_LIMITS,
   TIER_LIMITS,
@@ -43,18 +44,9 @@ import {
 // SERVICE CLIENT
 // ============================================================================
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-
-let adminClient: SupabaseClient | null = null;
-
 /** Service-role client, or null when the server is not configured (callers fail closed). */
 function getAdminClient(): SupabaseClient | null {
-  if (!supabaseUrl || !serviceKey) return null;
-  if (!adminClient) {
-    adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-  }
-  return adminClient;
+  return getServiceClient();
 }
 
 // ============================================================================
@@ -324,6 +316,7 @@ function cityPair(city1: string, city2: string): [string, string] {
 
 /** The signing key, derived from the service-role secret so no new secret is needed. */
 function grantKey(): Buffer | null {
+  const serviceKey = serviceRoleKey();
   if (!serviceKey) return null;
   return createHmac('sha256', serviceKey).update('lifescore-usage-grant-v1').digest();
 }

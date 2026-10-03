@@ -1,111 +1,56 @@
 /**
  * LIFE SCORE - Stripe Checkout Session API
  *
- * Creates a Stripe Checkout session for subscription purchases.
- * Redirects user to Stripe's hosted checkout page.
+ * Starts a plan purchase on Stripe's hosted pages.
+ *
+ * - A new subscriber goes to Stripe Checkout.
+ * - A customer who already pays for a plan and picks the other one goes to
+ *   Stripe's plan-change confirmation page for the subscription they hold.
+ *   Before 2026-10-03 they went to Checkout again and ended up with TWO
+ *   subscriptions, billed for both.
+ * - A returning customer is checked out as their existing Stripe customer, so
+ *   their invoices and cards stay in one place.
+ *
+ * Prices, plans, redirects and the Stripe connection: api/shared/stripe.ts.
  *
  * Required env vars:
  * - STRIPE_SECRET_KEY (must be sk_live_ or sk_test_, NOT rk_)
- * - STRIPE_PRICE_NAVIGATOR_MONTHLY
- * - STRIPE_PRICE_NAVIGATOR_ANNUAL
- * - STRIPE_PRICE_SOVEREIGN_MONTHLY
- * - STRIPE_PRICE_SOVEREIGN_ANNUAL
+ * - STRIPE_PRICE_NAVIGATOR_MONTHLY / _ANNUAL, STRIPE_PRICE_SOVEREIGN_MONTHLY / _ANNUAL
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import type Stripe from 'stripe';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
+import {
+  ENTITLING_STATUSES,
+  PRICE_CATALOGUE,
+  appBaseUrl,
+  getStripe,
+  isAllowedRedirectUrl,
+  isPriceKey,
+  isStripeError,
+  priceIdFor,
+} from '../shared/stripe.js';
 
-// ============================================================================
-// STRIPE CONFIGURATION
-// ============================================================================
+const DB_TIMEOUT_MS = 8_000;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
-});
-
-/**
- * Price ID mapping from tier+interval to Stripe price ID
- */
-const PRICE_IDS: Record<string, string | undefined> = {
-  navigator_monthly: process.env.STRIPE_PRICE_NAVIGATOR_MONTHLY,
-  navigator_annual: process.env.STRIPE_PRICE_NAVIGATOR_ANNUAL,
-  sovereign_monthly: process.env.STRIPE_PRICE_SOVEREIGN_MONTHLY,
-  sovereign_annual: process.env.STRIPE_PRICE_SOVEREIGN_ANNUAL,
-};
-
-/**
- * Map price IDs to tier names for database updates
- */
-const PRICE_TO_TIER: Record<string, 'pro' | 'enterprise'> = {};
-
-// Build reverse mapping at startup
-if (process.env.STRIPE_PRICE_NAVIGATOR_MONTHLY) {
-  PRICE_TO_TIER[process.env.STRIPE_PRICE_NAVIGATOR_MONTHLY] = 'pro';
-}
-if (process.env.STRIPE_PRICE_NAVIGATOR_ANNUAL) {
-  PRICE_TO_TIER[process.env.STRIPE_PRICE_NAVIGATOR_ANNUAL] = 'pro';
-}
-if (process.env.STRIPE_PRICE_SOVEREIGN_MONTHLY) {
-  PRICE_TO_TIER[process.env.STRIPE_PRICE_SOVEREIGN_MONTHLY] = 'enterprise';
-}
-if (process.env.STRIPE_PRICE_SOVEREIGN_ANNUAL) {
-  PRICE_TO_TIER[process.env.STRIPE_PRICE_SOVEREIGN_ANNUAL] = 'enterprise';
+interface SubscriptionRow {
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_price_id: string | null;
+  status: string | null;
 }
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface CheckoutRequest {
-  priceKey: 'navigator_monthly' | 'navigator_annual' | 'sovereign_monthly' | 'sovereign_annual';
-  userId: string;
-  userEmail: string;
-  successUrl?: string;
-  cancelUrl?: string;
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value ? value : undefined;
 }
 
-// FIX X1: Validate redirect URLs to prevent open redirect attacks
-function isAllowedRedirectUrl(url: string | undefined): boolean {
-  if (!url) return true; // undefined means use default — safe
-  try {
-    const parsed = new URL(url);
-    const allowedOrigins = [
-      'https://lifescore.vercel.app',
-      'https://www.clueslifescore.com',
-      'https://clueslifescore.com',
-      'capacitor://localhost',
-    ];
-    // Allow the current Vercel deploy URL
-    if (process.env.VERCEL_URL) {
-      allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
-    }
-    // Allow custom production domain from env
-    if (process.env.PRODUCTION_URL) {
-      allowedOrigins.push(process.env.PRODUCTION_URL);
-    }
-    // Allow localhost in development
-    if (parsed.hostname === 'localhost' && parsed.protocol === 'http:') {
-      return true;
-    }
-    return allowedOrigins.includes(parsed.origin);
-  } catch {
-    return false; // Malformed URL
-  }
-}
-
-// ============================================================================
-// HANDLER
-// ============================================================================
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // CORS - restricted to deployment origin
   if (handleCors(req, res, 'restricted')) return;
 
@@ -114,107 +59,134 @@ export default async function handler(
     return;
   }
 
-  // Check Stripe is configured
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const stripe = getStripe();
+  if (!stripe) {
     res.status(500).json({
       error: 'Stripe not configured',
       message: 'STRIPE_SECRET_KEY environment variable is not set',
     });
     return;
   }
-
-  // Verify JWT Bearer token
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Authentication required' });
+  const db = getServiceClient();
+  if (!db) {
+    res.status(500).json({ error: 'Database not configured' });
     return;
   }
 
-  const token = authHeader.substring(7);
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false },
-  });
+  // The signed-in user — the body's userId/userEmail are never trusted.
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+  const body: Record<string, unknown> =
+    typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {};
+  const priceKey = body.priceKey;
+  const successUrl = optionalString(body.successUrl);
+  const cancelUrl = optionalString(body.cancelUrl);
+
+  if (!priceKey) {
+    res.status(400).json({ error: 'Missing required fields', required: ['priceKey'] });
     return;
   }
+  if (!isPriceKey(priceKey)) {
+    res.status(400).json({ error: 'Invalid price key or price not configured', priceKey });
+    return;
+  }
+
+  // FIX X1: Validate redirect URLs against allowlist
+  if (!isAllowedRedirectUrl(successUrl) || !isAllowedRedirectUrl(cancelUrl)) {
+    res.status(400).json({ error: 'Invalid redirect URL' });
+    return;
+  }
+
+  const priceId = priceIdFor(priceKey);
+  if (!priceId) {
+    res.status(400).json({
+      error: 'Invalid price key or price not configured',
+      priceKey,
+      hint: `Set ${PRICE_CATALOGUE[priceKey].env} environment variable`,
+    });
+    return;
+  }
+
+  const baseUrl = appBaseUrl(req.headers.origin);
 
   try {
-    const body = req.body as CheckoutRequest;
+    const { data, error: rowsError } = await db
+      .from('subscriptions')
+      .select('stripe_customer_id, stripe_subscription_id, stripe_price_id, status')
+      .eq('user_id', auth.userId)
+      .order('created_at', { ascending: false })
+      .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS));
+    if (rowsError) {
+      console.error('[STRIPE] Could not read subscriptions:', rowsError.message);
+      res.status(500).json({ error: 'Failed to create checkout session', message: 'Could not read your plan' });
+      return;
+    }
+    const rows = (data ?? []) as SubscriptionRow[];
 
-    // Validate required fields
-    if (!body.priceKey) {
-      res.status(400).json({
-        error: 'Missing required fields',
-        required: ['priceKey'],
+    // Already paying: change the plan on the subscription they hold.
+    const current = rows.find((row) => row.status !== null && ENTITLING_STATUSES.includes(row.status));
+    if (current?.stripe_subscription_id && current.stripe_customer_id) {
+      if (current.stripe_price_id === priceId) {
+        res.status(409).json({ error: 'Already subscribed to this plan' });
+        return;
+      }
+      const subscription = await stripe.subscriptions.retrieve(current.stripe_subscription_id);
+      const item = subscription.items.data[0];
+      if (!item) {
+        res.status(409).json({ error: 'Subscription has no plan item; use Manage Subscription' });
+        return;
+      }
+      const portal = await stripe.billingPortal.sessions.create({
+        customer: current.stripe_customer_id,
+        return_url: cancelUrl || `${baseUrl}/?portal=returned`,
+        flow_data: {
+          type: 'subscription_update_confirm',
+          subscription_update_confirm: {
+            subscription: subscription.id,
+            items: [{ id: item.id, price: priceId, quantity: 1 }],
+          },
+          after_completion: {
+            type: 'redirect',
+            redirect: { return_url: successUrl || `${baseUrl}/?checkout=success` },
+          },
+        },
       });
+      console.log('[STRIPE] Plan change started:', { userId: auth.userId, priceKey, subscription: subscription.id });
+      res.status(200).json({ success: true, url: portal.url, planChange: true });
       return;
     }
 
-    // Override userId and userEmail with authenticated values to prevent IDOR
-    body.userId = user.id;
-    body.userEmail = user.email || body.userEmail;
+    console.log('[STRIPE] Creating checkout session:', { priceKey, priceId, userId: auth.userId });
 
-    // FIX X1: Validate redirect URLs against allowlist
-    if (!isAllowedRedirectUrl(body.successUrl) || !isAllowedRedirectUrl(body.cancelUrl)) {
-      res.status(400).json({ error: 'Invalid redirect URL' });
-      return;
-    }
-
-    // Get price ID
-    const priceId = PRICE_IDS[body.priceKey];
-    if (!priceId) {
-      res.status(400).json({
-        error: 'Invalid price key or price not configured',
-        priceKey: body.priceKey,
-        hint: `Set STRIPE_PRICE_${body.priceKey.toUpperCase().replace('_', '_')} environment variable`,
-      });
-      return;
-    }
-
-    console.log('[STRIPE] Creating checkout session:', {
-      priceKey: body.priceKey,
-      priceId,
-      userId: body.userId,
-    });
-
-    // Get base URL for redirects
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:5173';
-
-    // Create Stripe Checkout session
-    const session = await stripe.checkout.sessions.create({
+    const knownCustomer = rows.find((row) => row.stripe_customer_id)?.stripe_customer_id ?? null;
+    const params = (customer: string | null): Stripe.Checkout.SessionCreateParams => ({
       mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      customer_email: body.userEmail,
-      client_reference_id: body.userId, // For webhook to identify user
-      metadata: {
-        userId: body.userId,
-        priceKey: body.priceKey,
-      },
-      success_url: body.successUrl || `${baseUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: body.cancelUrl || `${baseUrl}/?checkout=canceled`,
-      subscription_data: {
-        metadata: {
-          userId: body.userId,
-        },
-      },
+      allowed_payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      ...(customer ? { customer } : { customer_email: auth.email || undefined }),
+      client_reference_id: auth.userId, // For webhook to identify user
+      metadata: { userId: auth.userId, priceKey },
+      success_url: successUrl || `${baseUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${baseUrl}/?checkout=canceled`,
+      subscription_data: { metadata: { userId: auth.userId } },
       // Allow promotion codes
       allow_promotion_codes: true,
       // Collect billing address for tax
       billing_address_collection: 'required',
     });
+
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create(params(knownCustomer));
+    } catch (error) {
+      // A customer deleted in the Stripe dashboard: start fresh with their email.
+      if (knownCustomer && isStripeError(error) && error.code === 'resource_missing') {
+        session = await stripe.checkout.sessions.create(params(null));
+      } else {
+        throw error;
+      }
+    }
 
     console.log('[STRIPE] Checkout session created:', session.id);
 
@@ -226,7 +198,7 @@ export default async function handler(
   } catch (error) {
     console.error('[STRIPE] Checkout error:', error);
 
-    if (error instanceof Stripe.errors.StripeError) {
+    if (isStripeError(error)) {
       res.status(400).json({
         error: 'Stripe error',
         message: error.message,
@@ -241,6 +213,3 @@ export default async function handler(
     });
   }
 }
-
-// Export price mapping for webhook
-export { PRICE_TO_TIER };

@@ -3,31 +3,23 @@
  *
  * Returns the current subscription status for a user.
  *
+ * The usage month is the UTC calendar month that consume_usage counts in
+ * (api/shared/plans.ts currentPeriodStart); before 2026-10-03 this route used
+ * the server's local month and could read the wrong row near month end.
+ *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../shared/cors.js';
+import { requireAuth } from '../shared/auth.js';
+import { getServiceClient } from '../shared/supabaseAdmin.js';
+import { currentPeriodStart } from '../shared/plans.js';
 
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
+const DB_TIMEOUT_MS = 8_000;
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
-);
-
-// ============================================================================
-// HANDLER
-// ============================================================================
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // CORS - restricted to deployment origin
   if (handleCors(req, res, 'restricted', { methods: 'GET, OPTIONS' })) return;
 
@@ -36,61 +28,50 @@ export default async function handler(
     return;
   }
 
-  // Verify JWT Bearer token
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Authentication required' });
-    return;
-  }
-
-  const token = authHeader.substring(7);
-
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
-  const authClient = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { persistSession: false },
-  });
-
-  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
-  if (authError || !user) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+  const db = getServiceClient();
+  if (!db) {
+    res.status(500).json({ error: 'Database not configured' });
     return;
   }
 
   // Use the authenticated user's ID — ignore any userId from query params
-  const userId = user.id;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const userId = auth.userId;
 
   try {
-    // Get subscription
-    // FIX 2026-01-29: Use maybeSingle() - user may not have subscription
-    const { data: subscription, error: subError } = await supabaseAdmin
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const periodStart = currentPeriodStart();
 
-    // Get user profile for tier
-    // FIX 2026-01-29: Use maybeSingle() - profile may not exist
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('tier')
-      .eq('id', userId)
-      .maybeSingle();
+    const [subscriptionResult, profileResult, usageResult] = await Promise.all([
+      db
+        .from('subscriptions')
+        .select('status, stripe_price_id, current_period_end, cancel_at_period_end')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS))
+        .maybeSingle(),
+      db
+        .from('profiles')
+        .select('tier')
+        .eq('id', userId)
+        .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS))
+        .maybeSingle(),
+      db
+        .from('usage_tracking')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('period_start', periodStart)
+        .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS))
+        .maybeSingle(),
+    ]);
 
-    // Get current usage
-    const periodStart = new Date();
-    periodStart.setDate(1);
-    periodStart.setHours(0, 0, 0, 0);
+    const failed = subscriptionResult.error || profileResult.error || usageResult.error;
+    if (failed) throw new Error(failed.message);
 
-    // FIX 2026-01-29: Use maybeSingle() - usage record may not exist
-    const { data: usage } = await supabaseAdmin
-      .from('usage_tracking')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('period_start', periodStart.toISOString().split('T')[0])
-      .maybeSingle();
+    const subscription = subscriptionResult.data;
+    const profile = profileResult.data;
+    const usage = usageResult.data;
 
     res.status(200).json({
       success: true,
@@ -119,7 +100,7 @@ export default async function handler(
             oliviaMessages: 0,
             judgeVideos: 0,
             gammaReports: 0,
-            periodStart: periodStart.toISOString().split('T')[0],
+            periodStart,
             periodEnd: null,
           },
     });

@@ -10,7 +10,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from './supabaseAdmin.js';
 
 // ============================================================================
 // TYPES
@@ -275,11 +275,9 @@ export async function lookupFieldEvidence(
   metricId: string,
   city?: string,
 ): Promise<FieldEvidenceResult> {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-  if (!supabaseUrl || !serviceKey) return { ok: false, status: 500, error: 'Database not configured' };
+  const supabase = getServiceClient();
+  if (!supabase) return { ok: false, status: 500, error: 'Database not configured' };
 
-  const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   const { data: comparison, error: dbError } = await supabase
     .from('comparisons')
     .select('comparison_result')
