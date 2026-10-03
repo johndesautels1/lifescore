@@ -6,7 +6,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess, TIER_NAMES } from '../hooks/useTierAccess';
-import { supabase } from '../lib/supabase';
+import { supabase, getAuthHeaders } from '../lib/supabase';
+import { toastSuccess } from '../utils/toast';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -17,8 +18,18 @@ interface SettingsModalProps {
 
 type SettingsTab = 'profile' | 'security' | 'subscription' | 'data';
 
+/** The server's own words for a failed request, else a plain fallback. */
+async function readServerMessage(response: Response, fallback: string): Promise<string> {
+  const body: unknown = await response.json().catch(() => null);
+  if (typeof body === 'object' && body !== null) {
+    const { message } = body as Record<string, unknown>;
+    if (typeof message === 'string' && message) return message;
+  }
+  return `${fallback} (${response.status})`;
+}
+
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgradeClick }) => {
-  const { user, profile, updateProfile, isConfigured } = useAuth();
+  const { user, profile, updateProfile, isConfigured, signOut } = useAuth();
   const { tier } = useTierAccess();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -40,6 +51,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
   const [storageUsage, setStorageUsage] = useState<{ used: number; percentage: number }>({ used: 0, percentage: 0 });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearSuccess, setClearSuccess] = useState(false);
+
+  // Account data on the server: a copy of it, or the account deleted.
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportMessage, setExportMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Calculate localStorage usage
   const calculateStorageUsage = useCallback(() => {
@@ -82,6 +101,72 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
     calculateStorageUsage();
     setTimeout(() => setClearSuccess(false), 3000);
   }, [calculateStorageUsage]);
+
+  // Download a copy of everything the account holds (/api/user/export).
+  const handleDownloadMyData = useCallback(async () => {
+    setExportBusy(true);
+    setExportMessage(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+    try {
+      const response = await fetch('/api/user/export', {
+        method: 'POST',
+        headers: await getAuthHeaders(),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        setExportMessage({ ok: false, text: await readServerMessage(response, 'Download failed') });
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lifescore-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      setExportMessage({ ok: true, text: 'Your data file has been downloaded.' });
+    } catch (error) {
+      console.error('[Settings] Download my data failed:', error);
+      setExportMessage({ ok: false, text: 'Download failed. Please try again.' });
+    } finally {
+      clearTimeout(timer);
+      setExportBusy(false);
+    }
+  }, []);
+
+  // Delete the account (/api/user/delete): cancels billing first, then deletes everything.
+  const handleDeleteAccount = useCallback(async () => {
+    if (deleteText !== 'DELETE MY ACCOUNT') return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+    try {
+      const response = await fetch('/api/user/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+        body: JSON.stringify({ confirmation: 'DELETE MY ACCOUNT' }),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        setDeleteError(await readServerMessage(response, 'We could not delete your account'));
+        return;
+      }
+      handleClearLocalData();
+      await signOut().catch(() => undefined); // the account no longer exists
+      onClose();
+      toastSuccess('Your account and all its data have been deleted.');
+    } catch (error) {
+      console.error('[Settings] Delete account failed:', error);
+      setDeleteError('We could not delete your account. Please try again or contact support.');
+    } finally {
+      clearTimeout(timer);
+      setDeleteBusy(false);
+    }
+  }, [deleteText, handleClearLocalData, signOut, onClose]);
 
   // Calculate storage on mount and tab switch
   useEffect(() => {
@@ -622,6 +707,86 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpgrad
                       <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
                     <span>Local data cleared successfully</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="settings-section">
+                <h3>Download My Data</h3>
+                <p className="section-description">
+                  Get a copy of everything your account holds &mdash; profile, comparisons, reports,
+                  Olivia conversations, subscription and usage &mdash; as one file.
+                </p>
+                <button
+                  type="button"
+                  className="settings-btn secondary"
+                  onClick={handleDownloadMyData}
+                  disabled={exportBusy || !user}
+                >
+                  <span>{exportBusy ? 'Preparing your file…' : 'Download My Data'}</span>
+                </button>
+                {exportMessage && (
+                  <div className={exportMessage.ok ? 'settings-success' : 'settings-error'} role="status">
+                    <span>{exportMessage.text}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="settings-section">
+                <h3>Delete My Account</h3>
+                <p className="section-description">
+                  Permanently deletes your account and everything it holds, and cancels any
+                  subscription. This cannot be undone.
+                </p>
+                {!showDeleteConfirm ? (
+                  <button
+                    type="button"
+                    className="settings-btn danger"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={!user}
+                  >
+                    <span>Delete My Account</span>
+                  </button>
+                ) : (
+                  <div className="clear-confirm">
+                    <div className="form-field">
+                      <label htmlFor="delete-account-confirm">Type DELETE MY ACCOUNT to confirm</label>
+                      <input
+                        type="text"
+                        id="delete-account-confirm"
+                        value={deleteText}
+                        onChange={(e) => setDeleteText(e.target.value)}
+                        autoComplete="off"
+                        disabled={deleteBusy}
+                      />
+                    </div>
+                    <div className="confirm-buttons">
+                      <button
+                        type="button"
+                        className="settings-btn secondary"
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setDeleteText('');
+                          setDeleteError('');
+                        }}
+                        disabled={deleteBusy}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-btn danger"
+                        onClick={handleDeleteAccount}
+                        disabled={deleteText !== 'DELETE MY ACCOUNT' || deleteBusy}
+                      >
+                        {deleteBusy ? 'Deleting…' : 'Delete Forever'}
+                      </button>
+                    </div>
+                    {deleteError && (
+                      <div className="settings-error" role="alert">
+                        <span>{deleteError}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

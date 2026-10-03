@@ -77,3 +77,12 @@ describe('account deletion', () => {
     expect(route).toMatch(/if \(deleteUserError\) throw new DeletionStepError\('account'/);
   });
 });
+
+describe('the doors to both routes', () => {
+  it('Settings → Data offers Download My Data and Delete My Account, calling the two routes', () => {
+    const settings = readFileSync('src/components/SettingsModal.tsx', 'utf8');
+    expect(settings).toContain("fetch('/api/user/export'");
+    expect(settings).toContain("fetch('/api/user/delete'");
+    expect(settings).toContain("deleteText !== 'DELETE MY ACCOUNT'");
+  });
+});
