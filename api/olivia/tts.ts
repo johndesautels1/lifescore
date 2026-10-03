@@ -14,6 +14,7 @@ import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { openaiSpeech } from '../shared/openai.js';
 
 // ============================================================================
 // CONSTANTS
@@ -78,42 +79,28 @@ function truncateText(text: string, maxChars: number = 5000): string {
  * Uses 'nova' voice - warm, conversational female
  */
 async function generateOpenAIAudio(text: string, speed: number = 1.0): Promise<{ audioUrl: string; durationMs: number }> {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) {
-    throw new Error('OPENAI_API_KEY not configured for TTS fallback');
-  }
-
   console.log('[OLIVIA/TTS] Using OpenAI fallback (nova voice)');
 
-  const response = await fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'tts-1',
-      voice: 'nova', // Warm, conversational female voice for Olivia
-      input: text,
-      response_format: 'mp3',
-      speed: speed || 1.0,
-    }),
+  const spoken = await openaiSpeech({
+    character: 'olivia',
+    text,
+    format: 'mp3',
+    quality: 'standard',
+    speed: speed || 1.0,
+    timeoutMs: 30_000,
+    label: 'OLIVIA/TTS tts',
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[OLIVIA/TTS] OpenAI TTS error:', response.status, errorText);
-    throw new Error(`OpenAI TTS failed: ${response.status}`);
+  if (!spoken.ok) {
+    console.error('[OLIVIA/TTS] OpenAI TTS error:', spoken.message);
+    throw new Error(`OpenAI TTS failed: ${spoken.message}`);
   }
 
-  const audioBuffer = await response.arrayBuffer();
-  const base64Audio = Buffer.from(audioBuffer).toString('base64');
-  const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+  const audioUrl = `data:audio/mpeg;base64,${spoken.audio.toString('base64')}`;
 
   // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
   const estimatedDurationMs = (text.length / 5 / 150) * 60 * 1000;
 
-  console.log('[OLIVIA/TTS] OpenAI audio generated, size:', audioBuffer.byteLength);
+  console.log('[OLIVIA/TTS] OpenAI audio generated, size:', spoken.audio.length);
 
   return { audioUrl, durationMs: Math.round(estimatedDurationMs) };
 }

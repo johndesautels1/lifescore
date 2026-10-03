@@ -15,7 +15,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { postWithRetry, toCount, type LlmResult } from './llm.js';
+import { postWithRetry, toCount, type LlmFailure, type LlmResult } from './llm.js';
 
 const RESPONSES_URL = 'https://api.openai.com/v1/responses';
 
@@ -94,4 +94,70 @@ export async function callOpenAI(request: OpenAIRequest): Promise<LlmResult> {
     citations: [],
     servedBy: typeof reply.model === 'string' ? reply.model : request.model,
   };
+}
+
+// ============================================================================
+// SPEECH — the voice back-up when ElevenLabs fails
+// ============================================================================
+//
+// Checked 2026-10-03 on OpenAI's text-to-speech guide: POST /v1/audio/speech
+// with model tts-1 (fast) or tts-1-hd (higher quality) — both current — and the
+// voices nova, shimmer and onyx (all supported by both). `pcm` is raw 24 kHz
+// 16-bit signed little-endian mono with no header. Before 2026-10-03 five
+// routes each carried their own copy of this call.
+
+const SPEECH_URL = 'https://api.openai.com/v1/audio/speech';
+
+/** Each character's back-up voice, fixed so a back-up never changes who is speaking. */
+export const BACKUP_VOICES = {
+  olivia: 'nova', // warm, conversational female
+  emilia: 'shimmer', // softer, expressive female
+  cristiano: 'onyx', // deep, authoritative male
+} as const;
+
+export type SpeechCharacter = keyof typeof BACKUP_VOICES;
+
+export interface SpeechRequest {
+  character: SpeechCharacter;
+  text: string;
+  /** mp3 for players; pcm = raw 24 kHz 16-bit mono samples. */
+  format: 'mp3' | 'pcm';
+  /** 'hd' → tts-1-hd (recorded videos); 'standard' → tts-1 (live speech). */
+  quality: 'standard' | 'hd';
+  speed?: number;
+  timeoutMs: number;
+  label: string;
+}
+
+export type SpeechResult = { ok: true; audio: Buffer; model: string } | LlmFailure;
+
+/** One speech call. Never throws; no retry (a live voice cannot wait for one). */
+export async function openaiSpeech(request: SpeechRequest): Promise<SpeechResult> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return { ok: false, kind: 'not-configured', message: 'OPENAI_API_KEY not configured for the voice back-up' };
+
+  const model = request.quality === 'hd' ? 'tts-1-hd' : 'tts-1';
+  const sent = await postWithRetry(
+    SPEECH_URL,
+    { authorization: `Bearer ${key}` },
+    {
+      model,
+      voice: BACKUP_VOICES[request.character],
+      input: request.text,
+      response_format: request.format,
+      ...(request.speed !== undefined ? { speed: request.speed } : {}),
+    },
+    { timeoutMs: request.timeoutMs, retries: 0, label: request.label },
+  );
+  if (!sent.ok) return sent;
+
+  try {
+    const audio = Buffer.from(await sent.response.arrayBuffer());
+    if (audio.length === 0) return { ok: false, kind: 'empty', message: `${request.label}: no audio in reply` };
+    return { ok: true, audio, model };
+  } catch (error) {
+    return { ok: false, kind: 'timeout', message: `${request.label}: audio not readable (${error instanceof Error ? error.message : String(error)})` };
+  } finally {
+    sent.release();
+  }
 }

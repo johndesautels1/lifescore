@@ -12,6 +12,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serviceDb } from '../shared/supabaseAdmin.js';
+import { openaiSpeech } from '../shared/openai.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
@@ -127,43 +128,21 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
   // OpenAI TTS fallback (or primary if no ElevenLabs key)
   if (openaiKey) {
-    const openaiController = new AbortController();
-    const openaiTimeoutId = setTimeout(() => openaiController.abort(), TTS_TIMEOUT_MS);
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'tts-1-hd',
-          voice: 'onyx', // Deep authoritative male voice
-          input: script,
-          response_format: 'mp3',
-        }),
-        signal: openaiController.signal,
-      });
-
-      clearTimeout(openaiTimeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[JUDGE-VIDEO] OpenAI TTS error:', response.status, errorText);
-        throw new Error(`OpenAI TTS failed: ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const estimatedDuration = (script.length / 5) / 150 * 60;
-
-      console.log('[JUDGE-VIDEO] OpenAI audio generated:', buffer.length, 'bytes');
-      return { buffer, duration: estimatedDuration };
-    } catch (openaiError) {
-      clearTimeout(openaiTimeoutId);
-      throw openaiError;
+    const spoken = await openaiSpeech({
+      character: 'cristiano',
+      text: script,
+      format: 'mp3',
+      quality: 'hd',
+      timeoutMs: TTS_TIMEOUT_MS,
+      label: 'JUDGE-VIDEO tts',
+    });
+    if (!spoken.ok) {
+      console.error('[JUDGE-VIDEO] OpenAI TTS error:', spoken.message);
+      throw new Error(`OpenAI TTS failed: ${spoken.message}`);
     }
+    const estimatedDuration = (script.length / 5) / 150 * 60;
+    console.log('[JUDGE-VIDEO] OpenAI audio generated:', spoken.audio.length, 'bytes');
+    return { buffer: spoken.audio, duration: estimatedDuration };
   }
 
   throw new Error('No TTS provider available');

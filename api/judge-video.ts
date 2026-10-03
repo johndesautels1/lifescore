@@ -25,6 +25,7 @@ import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 import { requireFeature, refundFeature } from './shared/entitlements.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
+import { openaiSpeech } from './shared/openai.js';
 
 // ============================================================================
 // CONSTANTS
@@ -48,36 +49,22 @@ const CRISTIANO_VOICE_ID = process.env.ELEVENLABS_CRISTIANO_VOICE_ID || 'ZpwpoMo
  * Returns base64 audio for D-ID consumption
  */
 async function generateOpenAIAudio(script: string): Promise<string> {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) {
-    throw new Error('OPENAI_API_KEY not configured for TTS fallback');
-  }
-
   console.log('[JUDGE-VIDEO-DID] Using OpenAI fallback (onyx voice)');
 
-  const response = await fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'tts-1',
-      voice: 'onyx', // Deep, authoritative male voice for Judge Cristiano
-      input: script,
-      response_format: 'mp3',
-    }),
+  const spoken = await openaiSpeech({
+    character: 'cristiano',
+    text: script,
+    format: 'mp3',
+    quality: 'standard',
+    timeoutMs: 45_000,
+    label: 'JUDGE-VIDEO-DID tts',
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[JUDGE-VIDEO-DID] OpenAI TTS error:', response.status, errorText);
-    throw new Error(`OpenAI TTS failed: ${response.status}`);
+  if (!spoken.ok) {
+    console.error('[JUDGE-VIDEO-DID] OpenAI TTS error:', spoken.message);
+    throw new Error(`OpenAI TTS failed: ${spoken.message}`);
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-
+  const base64Audio = spoken.audio.toString('base64');
   console.log('[JUDGE-VIDEO-DID] OpenAI audio generated, base64 length:', base64Audio.length);
   return base64Audio;
 }

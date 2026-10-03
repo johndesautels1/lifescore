@@ -11,6 +11,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
+import { openaiSpeech } from '../shared/openai.js';
 
 // ============================================================================
 // CONSTANTS
@@ -49,39 +50,24 @@ function getEmiliaVoiceId(): string {
  * Uses 'shimmer' voice - softer, expressive female (distinct from Olivia's 'nova')
  */
 async function generateOpenAIAudio(text: string): Promise<string> {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) {
-    throw new Error('OPENAI_API_KEY not configured for TTS fallback');
-  }
-
   console.log('[EMILIA/speak] Using OpenAI fallback (shimmer voice)');
 
-  const response = await fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'tts-1',
-      voice: 'shimmer', // Softer, expressive female voice for Emilia
-      input: text,
-      response_format: 'mp3',
-    }),
+  const spoken = await openaiSpeech({
+    character: 'emilia',
+    text,
+    format: 'mp3',
+    quality: 'standard',
+    timeoutMs: 30_000,
+    label: 'EMILIA/speak tts',
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[EMILIA/speak] OpenAI TTS error:', response.status, errorText);
-    throw new Error(`OpenAI TTS failed: ${response.status}`);
+  if (!spoken.ok) {
+    console.error('[EMILIA/speak] OpenAI TTS error:', spoken.message);
+    throw new Error(`OpenAI TTS failed: ${spoken.message}`);
   }
 
-  const audioBuffer = await response.arrayBuffer();
-  const base64 = Buffer.from(audioBuffer).toString('base64');
+  console.log(`[EMILIA/speak] OpenAI audio generated (${Math.round(spoken.audio.length / 1024)}KB)`);
 
-  console.log(`[EMILIA/speak] OpenAI audio generated (${Math.round(audioBuffer.byteLength / 1024)}KB)`);
-
-  return `data:audio/mpeg;base64,${base64}`;
+  return `data:audio/mpeg;base64,${spoken.audio.toString('base64')}`;
 }
 
 // ============================================================================

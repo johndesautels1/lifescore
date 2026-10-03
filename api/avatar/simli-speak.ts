@@ -14,6 +14,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
+import { openaiSpeech } from '../shared/openai.js';
 
 export const config = {
   maxDuration: 60,
@@ -138,44 +139,25 @@ export default async function handler(
       if (!openaiKey) {
         throw new Error('No TTS provider available - both ElevenLabs and OpenAI keys missing');
       }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-      try {
-        const response = await fetch('https://api.openai.com/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openaiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'tts-1',
-            voice: 'nova', // Professional female voice
-            input: body.text,
-            response_format: 'pcm',
-            speed: body.speed || 1.0,
-          }),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[SIMLI-SPEAK] OpenAI TTS error:', response.status, errorText);
-          throw new Error(`OpenAI TTS failed: ${response.status}`);
-        }
-
-        // OpenAI returns 24kHz PCM, need to resample to 16kHz
-        const originalBuffer = await response.arrayBuffer();
-        audioBuffer = resamplePCM(originalBuffer, 24000, 16000);
-        audioDuration = audioBuffer.byteLength / 32000;
-
-        console.log('[SIMLI-SPEAK] OpenAI audio generated and resampled:', audioBuffer.byteLength, 'bytes');
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
+      const spoken = await openaiSpeech({
+        character: 'olivia',
+        text: body.text,
+        format: 'pcm',
+        quality: 'standard',
+        speed: body.speed || 1.0,
+        timeoutMs: TIMEOUT_MS,
+        label: 'SIMLI-SPEAK tts',
+      });
+      if (!spoken.ok) {
+        console.error('[SIMLI-SPEAK] OpenAI TTS error:', spoken.message);
+        throw new Error(`OpenAI TTS failed: ${spoken.message}`);
       }
+
+      // OpenAI returns 24kHz PCM, need to resample to 16kHz
+      audioBuffer = resamplePCM(new Uint8Array(spoken.audio).buffer, 24000, 16000);
+      audioDuration = audioBuffer.byteLength / 32000;
+
+      console.log('[SIMLI-SPEAK] OpenAI audio generated and resampled:', audioBuffer.byteLength, 'bytes');
     }
 
     // Convert ArrayBuffer to base64 for JSON transport

@@ -11,6 +11,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { AI_MODELS, PANEL_SEATS, modelForSeat, type PanelSeat } from '../api/shared/models';
 import { extractJsonObject } from '../api/shared/anthropic';
+import { BACKUP_VOICES } from '../api/shared/openai';
 import { API_PRICING } from '../src/utils/costCalculator-pricing';
 import { calculateModelCost } from '../src/utils/costCalculator-functions';
 
@@ -59,9 +60,9 @@ describe('model ids live in one place', () => {
     }
   });
 
-  it('only the shared connections call the AI vendors for text', () => {
+  it('only the shared connections call the AI vendors (text, and the OpenAI voice back-up)', () => {
     const owners: Array<[RegExp, string]> = [
-      [/api\.openai\.com\/v1\/(responses|chat\/completions)/, 'api/shared/openai.ts'],
+      [/api\.openai\.com/, 'api/shared/openai.ts'],
       [/generativelanguage\.googleapis\.com/, 'api/shared/gemini.ts'],
       [/api\.x\.ai\/v1\/(responses|chat\/completions)/, 'api/shared/xai.ts'],
       [/api\.perplexity\.ai/, 'api/shared/perplexity.ts'],
@@ -72,6 +73,10 @@ describe('model ids live in one place', () => {
       for (const [pattern, owner] of owners) if (f !== owner && pattern.test(text)) offenders.push(`${f} → ${pattern}`);
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('each character keeps the same OpenAI back-up voice', () => {
+    expect(BACKUP_VOICES).toEqual({ olivia: 'nova', emilia: 'shimmer', cristiano: 'onyx' });
   });
 });
 
