@@ -22,6 +22,7 @@
  */
 
 import { fetchWithTimeout } from './fetchWithTimeout.js';
+import { asRecord as record, text } from './jsonRead.js';
 
 const TAVILY_API_URL = 'https://api.tavily.com';
 const PROJECT_ID = 'lifescore-freedom-app';
@@ -69,16 +70,6 @@ export interface TavilyResearchStatus {
   text: string;
   sources: TavilySource[];
   credits: number | null;
-}
-
-type JsonRecord = Record<string, unknown>;
-
-function record(value: unknown): JsonRecord {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as JsonRecord) : {};
-}
-
-function text(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
 function credits(usage: unknown): number | null {

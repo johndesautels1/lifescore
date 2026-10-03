@@ -81,8 +81,8 @@ export default async function handler(
   try {
     console.log('[SIMLI-SPEAK] Generating audio for:', body.text.substring(0, 50) + '...');
 
-    let audioBuffer: ArrayBuffer;
-    let audioDuration: number;
+    let audioBuffer: ArrayBuffer | null = null;
+    let audioDuration = 0;
     let usedOpenAIFallback = false;
 
     // Try ElevenLabs first if key exists
@@ -137,6 +137,11 @@ export default async function handler(
       audioDuration = audioBuffer.byteLength / 32000;
 
       console.log('[SIMLI-SPEAK] OpenAI audio generated and resampled:', audioBuffer.byteLength, 'bytes');
+    }
+
+    // ElevenLabs or the OpenAI back-up has produced audio by now, or thrown.
+    if (!audioBuffer) {
+      throw new Error('No TTS provider produced audio');
     }
 
     // Convert ArrayBuffer to base64 for JSON transport

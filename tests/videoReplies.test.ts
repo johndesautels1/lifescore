@@ -4,7 +4,49 @@
  * changed or broken reply into "field missing" rather than a crash.
  */
 import { describe, it, expect } from 'vitest';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { readGrokVideo, readKlingTask, readReplicatePrediction } from '../api/shared/videoReplies';
+import { asRecord, finite, readIceServers, text } from '../api/shared/jsonRead';
+
+describe('shared JSON readers (api/shared/jsonRead.ts)', () => {
+  it('reads only well-typed values', () => {
+    expect(asRecord({ a: 1 })).toEqual({ a: 1 });
+    expect(asRecord([1])).toEqual({});
+    expect(asRecord(null)).toEqual({});
+    expect(text('x')).toBe('x');
+    expect(text('')).toBeUndefined();
+    expect(text(3)).toBeUndefined();
+    expect(finite(2.5)).toBe(2.5);
+    expect(finite(Number.NaN)).toBeUndefined();
+    expect(finite('2')).toBeUndefined();
+  });
+
+  it('reads ICE server lists as Simli, HeyGen and D-ID send them', () => {
+    expect(readIceServers([
+      { urls: 'stun:stun.example:3478' },
+      { urls: ['turn:t.example:3478', 7], username: 'u', credential: 'c' },
+      { urls: [] },
+      { username: 'no-url' },
+      'junk',
+    ])).toEqual([
+      { urls: 'stun:stun.example:3478' },
+      { urls: ['turn:t.example:3478'], username: 'u', credential: 'c' },
+    ]);
+    expect(readIceServers({ urls: 'not a list' })).toEqual([]);
+  });
+
+  it('no other server file keeps its own copy of these readers (anti-drift)', () => {
+    const files = (dir: string): string[] => readdirSync(dir).flatMap((name) => {
+      const path = join(dir, name);
+      return statSync(path).isDirectory() ? files(path) : name.endsWith('.ts') ? [path.replace(/\\/g, '/')] : [];
+    });
+    const offenders = files('api').filter(
+      (f) => f !== 'api/shared/jsonRead.ts' && /function (isRecord|asRecord|record)\(|function readIceServers\(/.test(readFileSync(f, 'utf8')),
+    );
+    expect(offenders).toEqual([]);
+  });
+});
 
 describe('readReplicatePrediction', () => {
   it('keeps the fields the routes read from a finished prediction', () => {

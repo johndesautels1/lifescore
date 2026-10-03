@@ -21,6 +21,7 @@ import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { asRecord, text as nonEmpty, type JsonRecord } from '../shared/jsonRead.js';
 import type { Screenplay, ScreenplayScene } from './screenplay.js';
 
 export const config = {
@@ -37,6 +38,33 @@ const supabaseAdmin = serviceDb;
 // ============================================================================
 // INVIDEO MCP INTEGRATION
 // ============================================================================
+
+/** What a submission to InVideo came to. */
+interface InVideoSubmission {
+  videoId?: string;
+  editUrl?: string;
+  videoUrl?: string;
+  status: string;
+  /** Set when InVideo could not be reached and the screenplay is kept for manual use. */
+  error?: string;
+}
+
+/** An id InVideo may send as text or as a number. */
+function idText(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return nonEmpty(value);
+}
+
+/**
+ * The payload of a JSON-RPC tools/call reply: the first content item's text,
+ * else the result itself, else ''.
+ */
+function readToolResult(body: unknown): unknown {
+  const result = asRecord(body).result;
+  const content = asRecord(result).content;
+  const firstText = Array.isArray(content) ? nonEmpty(asRecord(content[0]).text) : undefined;
+  return firstText ?? (result || '');
+}
 
 /**
  * Build the full InVideo-ready prompt from the structured screenplay.
@@ -138,7 +166,7 @@ async function submitToInVideoMCP(
   screenplay: Screenplay,
   winnerCity: string,
   loserCity: string
-): Promise<{ videoId?: string; editUrl?: string; videoUrl?: string; status: string }> {
+): Promise<InVideoSubmission> {
   const fullPrompt = buildInVideoPromptFromScreenplay(screenplay, winnerCity, loserCity);
 
   // The InVideo MCP server uses SSE at https://mcp.invideo.io/sse
@@ -185,23 +213,23 @@ async function submitToInVideoMCP(
       throw new Error(`InVideo MCP returned ${response.status}: ${errorText}`);
     }
 
-    const mcpResponse = await response.json();
+    const mcpResponse: unknown = await response.json();
 
     // Parse MCP response — the tool result contains the video info
-    const result = mcpResponse.result?.content?.[0]?.text || mcpResponse.result || '';
-    let parsed: Record<string, string> = {};
+    const result = readToolResult(mcpResponse);
+    let parsed: JsonRecord = {};
     try {
-      parsed = typeof result === 'string' ? JSON.parse(result) : result;
+      parsed = asRecord(typeof result === 'string' ? JSON.parse(result) : result);
     } catch {
       // Result might be a plain text URL or status message
       parsed = { status: 'submitted', message: String(result) };
     }
 
     return {
-      videoId: parsed.video_id || parsed.videoId || parsed.id,
-      editUrl: parsed.edit_url || parsed.editUrl || parsed.url,
-      videoUrl: parsed.video_url || parsed.videoUrl,
-      status: parsed.status || 'submitted',
+      videoId: idText(parsed.video_id) ?? idText(parsed.videoId) ?? idText(parsed.id),
+      editUrl: nonEmpty(parsed.edit_url) ?? nonEmpty(parsed.editUrl) ?? nonEmpty(parsed.url),
+      videoUrl: nonEmpty(parsed.video_url) ?? nonEmpty(parsed.videoUrl),
+      status: nonEmpty(parsed.status) ?? 'submitted',
     };
   } catch (error) {
     console.error('[MOVIE-GENERATE] InVideo MCP connection failed:', error);

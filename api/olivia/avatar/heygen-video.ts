@@ -31,6 +31,7 @@ import { applyRateLimit } from '../../shared/rateLimit.js';
 import { handleCors } from '../../shared/cors.js';
 import { requireFeature } from '../../shared/entitlements.js';
 import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
+import { asRecord, finite, text } from '../../shared/jsonRead.js';
 import {
   MAX_SCRIPT_CHARS,
   isHeyGenError,
@@ -67,22 +68,43 @@ interface VideoGenerateRequest {
   title?: string;
 }
 
-interface HeyGenVideoGenerateResponse {
-  error: string | null;
-  data: {
-    video_id: string;
-  };
+/** A v1 video status ({ code, data: { … } }), as this route reads it. */
+interface HeyGenV1VideoStatus {
+  video_id: string;
+  /** pending | processing | completed | failed (kept as sent). */
+  status?: string;
+  video_url?: string;
+  thumbnail_url?: string;
+  duration?: number;
+  error?: string;
 }
 
-interface HeyGenVideoStatusResponse {
-  code: number;
-  data: {
-    video_id: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    video_url: string | null;
-    thumbnail_url: string | null;
-    duration: number | null;
-    error: string | null;
+/** HeyGen's `error`, which is text on some replies and { code, message } on others. */
+function heyGenErrorText(value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  return text(value) ?? text(asRecord(value).message) ?? JSON.stringify(value);
+}
+
+/** The video id in a v2 /video/generate reply ({ error, data: { video_id } }); throws on HeyGen's error. */
+function readGeneratedVideoId(body: unknown): string {
+  const reply = asRecord(body);
+  const error = heyGenErrorText(reply.error);
+  if (error) throw new Error(`HeyGen error: ${error}`);
+  const videoId = text(asRecord(reply.data).video_id);
+  if (!videoId) throw new Error('HeyGen error: no video id in the reply');
+  return videoId;
+}
+
+/** A v1 video_status.get reply; the id asked for stands in when the reply omits it. */
+function readV1VideoStatus(body: unknown, requestedId: string): HeyGenV1VideoStatus {
+  const data = asRecord(asRecord(body).data);
+  return {
+    video_id: text(data.video_id) ?? requestedId,
+    status: text(data.status),
+    video_url: text(data.video_url),
+    thumbnail_url: text(data.thumbnail_url),
+    duration: finite(data.duration),
+    error: heyGenErrorText(data.error),
   };
 }
 
@@ -253,13 +275,7 @@ async function generateVideo(
     throw new Error(`HeyGen video generation failed (${response.status}): ${errorText}`);
   }
 
-  const data: HeyGenVideoGenerateResponse = await response.json();
-
-  if (data.error) {
-    throw new Error(`HeyGen error: ${data.error}`);
-  }
-
-  return data.data.video_id;
+  return readGeneratedVideoId(await response.json());
 }
 
 /**
@@ -268,7 +284,7 @@ async function generateVideo(
 async function checkVideoStatus(
   apiKey: string,
   videoId: string
-): Promise<HeyGenVideoStatusResponse['data']> {
+): Promise<HeyGenV1VideoStatus> {
   const response = await fetchWithTimeout(
     `${HEYGEN_API_V1}/video_status.get?video_id=${encodeURIComponent(videoId)}`,
     {
@@ -285,8 +301,7 @@ async function checkVideoStatus(
     throw new Error(`HeyGen status check failed (${response.status}): ${errorText}`);
   }
 
-  const data: HeyGenVideoStatusResponse = await response.json();
-  return data.data;
+  return readV1VideoStatus(await response.json(), videoId);
 }
 
 /** v1 status in the screen's words. */

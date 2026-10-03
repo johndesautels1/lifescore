@@ -10,23 +10,7 @@
  * These are readers only: the requests themselves stay in their routes.
  */
 
-type JsonRecord = Record<string, unknown>;
-
-function isRecord(value: unknown): value is JsonRecord {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function text(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
-}
-
-function finite(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function record(value: unknown): JsonRecord {
-  return isRecord(value) ? value : {};
-}
+import { asRecord as record, finite, isRecord, text } from './jsonRead.js';
 
 /** A Replicate prediction, as returned by create and get (the fields the routes read). */
 export interface ReplicatePrediction {

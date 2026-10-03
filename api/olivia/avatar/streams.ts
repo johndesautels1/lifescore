@@ -16,6 +16,7 @@ import { applyRateLimit } from '../../shared/rateLimit.js';
 import { handleCors } from '../../shared/cors.js';
 import { requireFeature } from '../../shared/entitlements.js';
 import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
+import { asRecord, finite, readIceServers, text as jsonText, type IceServer } from '../../shared/jsonRead.js';
 
 // ============================================================================
 // CONSTANTS
@@ -35,20 +36,38 @@ const VOICE_ID = 'en-GB-SoniaNeural';
 // TYPES
 // ============================================================================
 
+/** A WebRTC ICE candidate as the browser sends it (RTCIceCandidateInit; the server has no DOM types). */
+interface IceCandidateInit {
+  candidate?: string;
+  sdpMid?: string | null;
+  sdpMLineIndex?: number | null;
+  usernameFragment?: string | null;
+}
+
 interface StreamRequest {
   action: 'create' | 'speak' | 'destroy' | 'ice-candidate';
   streamId?: string;
   sessionId?: string;
   text?: string;
-  candidate?: RTCIceCandidateInit;
+  candidate?: IceCandidateInit;
   sdpAnswer?: string;
 }
 
 interface StreamSession {
   id: string;
   session_id: string;
-  offer: RTCSessionDescriptionInit;
-  ice_servers: RTCIceServer[];
+  offer: { type: 'offer'; sdp: string };
+  ice_servers: IceServer[];
+}
+
+/** A new stream from D-ID's /talks/streams reply, or null when the id, session or offer is missing. */
+function readStreamSession(body: unknown): StreamSession | null {
+  const reply = asRecord(body);
+  const id = jsonText(reply.id);
+  const sessionId = jsonText(reply.session_id);
+  const sdp = jsonText(asRecord(reply.offer).sdp);
+  if (!id || !sessionId || !sdp) return null;
+  return { id, session_id: sessionId, offer: { type: 'offer', sdp }, ice_servers: readIceServers(reply.ice_servers) };
 }
 
 // ============================================================================
@@ -139,15 +158,13 @@ async function createStream(authHeader: string): Promise<StreamSession> {
     throw new Error(`Failed to create stream: ${response.status} - ${error}`);
   }
 
-  const data = await response.json();
-  console.log('[DID-STREAMS] Created stream:', data.id);
+  const stream = readStreamSession(await response.json());
+  if (!stream) {
+    throw new Error('Failed to create stream: D-ID sent no stream id, session or offer');
+  }
+  console.log('[DID-STREAMS] Created stream:', stream.id);
 
-  return {
-    id: data.id,
-    session_id: data.session_id,
-    offer: data.offer,
-    ice_servers: data.ice_servers,
-  };
+  return stream;
 }
 
 /**
@@ -194,7 +211,7 @@ async function sendIceCandidate(
   authHeader: string,
   streamId: string,
   sessionId: string,
-  candidate: RTCIceCandidateInit
+  candidate: IceCandidateInit
 ): Promise<void> {
   const response = await fetchWithTimeout(
     `${DID_API_BASE}/talks/streams/${streamId}/ice`,
@@ -263,10 +280,10 @@ async function speakText(
     throw new Error(`Failed to speak: ${error}`);
   }
 
-  const data = await response.json();
-  console.log('[DID-STREAMS] Speaking, duration:', data.duration);
+  const duration = finite(asRecord(await response.json()).duration);
+  console.log('[DID-STREAMS] Speaking, duration:', duration);
 
-  return { duration: data.duration || text.length * 50 }; // Estimate if not provided
+  return { duration: duration || text.length * 50 }; // Estimate if not provided
 }
 
 /**

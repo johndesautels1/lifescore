@@ -17,12 +17,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from './shared/cors.js';
 import { requireFeature } from './shared/entitlements.js';
+import { asRecord, readIceServers, text, type IceServer } from './shared/jsonRead.js';
 
 export const config = {
   maxDuration: 30,
 };
 
 const SIMLI_API_URL = 'https://api.simli.ai';
+
+/** The session_token from Simli's /compose/token reply, if present. */
+function readSessionToken(body: unknown): string | undefined {
+  return text(asRecord(body).session_token);
+}
 
 export default async function handler(
   req: VercelRequest,
@@ -72,8 +78,8 @@ export default async function handler(
       return;
     }
 
-    const tokenData = await tokenResponse.json();
-    const sessionToken = tokenData.session_token;
+    const tokenData: unknown = await tokenResponse.json();
+    const sessionToken = readSessionToken(tokenData);
 
     if (!sessionToken) {
       console.error('[SIMLI-CONFIG] No session_token in response:', tokenData);
@@ -82,7 +88,7 @@ export default async function handler(
     }
 
     // Generate ICE servers via Simli API (v3 flow)
-    let iceServers: Array<{ urls: string[] }> = [{ urls: ['stun:stun.l.google.com:19302'] }];
+    let iceServers: IceServer[] = [{ urls: ['stun:stun.l.google.com:19302'] }];
     try {
       const iceResponse = await fetch(`${SIMLI_API_URL}/compose/ice`, {
         method: 'GET',
@@ -93,8 +99,8 @@ export default async function handler(
       });
 
       if (iceResponse.ok) {
-        const iceData = await iceResponse.json();
-        if (iceData && iceData.length > 0) {
+        const iceData = readIceServers(await iceResponse.json());
+        if (iceData.length > 0) {
           iceServers = iceData;
         }
       } else {

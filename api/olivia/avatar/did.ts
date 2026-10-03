@@ -16,6 +16,7 @@ import { applyRateLimit } from '../../shared/rateLimit.js';
 import { requireFeature } from '../../shared/entitlements.js';
 import { handleCors } from '../../shared/cors.js';
 import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
+import { asRecord, text } from '../../shared/jsonRead.js';
 
 // ============================================================================
 // CONSTANTS
@@ -38,11 +39,19 @@ interface DIDAgentRequest {
   message?: string;
 }
 
+/** A D-ID agent chat reply: the fields this route reads. */
 interface DIDChatResponse {
-  id: string;
-  chat_id: string;
-  status: 'created' | 'started' | 'done' | 'error';
+  id?: string;
+  chat_id?: string;
+  /** created | started | done | error (kept as sent). */
+  status?: string;
   result_url?: string;
+}
+
+/** Reads a D-ID agent chat reply; never throws. */
+function readDIDChat(body: unknown): DIDChatResponse {
+  const reply = asRecord(body);
+  return { id: text(reply.id), chat_id: text(reply.chat_id), status: text(reply.status), result_url: text(reply.result_url) };
 }
 
 // ============================================================================
@@ -86,8 +95,11 @@ async function createChat(authHeader: string, agentId: string): Promise<{ chatId
     throw new Error(`Failed to create chat: ${error}`);
   }
 
-  const data = await response.json();
-  return { chatId: data.id };
+  const chatId = readDIDChat(await response.json()).id;
+  if (!chatId) {
+    throw new Error('Failed to create chat: D-ID sent no chat id');
+  }
+  return { chatId };
 }
 
 /**
@@ -125,7 +137,7 @@ async function sendMessage(
     throw new Error(`Failed to send message: ${error}`);
   }
 
-  return response.json();
+  return readDIDChat(await response.json());
 }
 
 /**
@@ -152,7 +164,7 @@ async function getChatStatus(
     throw new Error(`Failed to get chat status: ${error}`);
   }
 
-  return response.json();
+  return readDIDChat(await response.json());
 }
 
 /**
