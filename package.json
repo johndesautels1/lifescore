@@ -17,6 +17,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",
     "@vercel/og": "^0.8.6",
+    "livekit-client": "^2.17.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",

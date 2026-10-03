@@ -52,9 +52,11 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'TAVILY_API_KEY', description: 'Tavily — Web research for Claude', category: 'LLM Providers', side: 'server' },
 
   // --- Avatar & Video ---
-  { name: 'SIMLI_API_KEY', description: 'Simli AI — Primary avatar video', category: 'Avatar & Video', side: 'server' },
+  { name: 'LIVEAVATAR_API_KEY', description: 'HeyGen LiveAvatar — Olivia live face, primary (same value as the questionnaire engine)', category: 'Avatar & Video', side: 'server' },
+  { name: 'LIVEAVATAR_OLIVIA_AVATAR_ID', description: 'HeyGen LiveAvatar — Olivia avatar id, primary (same value as the questionnaire engine)', category: 'Avatar & Video', side: 'server' },
+  { name: 'SIMLI_API_KEY', description: 'Simli AI — Olivia back-up live face', category: 'Avatar & Video', side: 'server' },
   { name: 'SIMLI_FACE_ID', description: 'Simli face/avatar ID', category: 'Avatar & Video', side: 'server' },
-  { name: 'DID_API_KEY', description: 'D-ID — Fallback avatar provider', category: 'Avatar & Video', side: 'server' },
+  { name: 'DID_API_KEY', description: 'D-ID — Olivia second back-up face (behind Simli)', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_PRESENTER_URL', description: 'D-ID Olivia avatar image URL', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_JUDGE_PRESENTER_URL', description: 'D-ID Judge Cristiano avatar image URL', category: 'Avatar & Video', side: 'server' },
   { name: 'DID_AGENT_ID', description: 'D-ID agent ID', category: 'Avatar & Video', side: 'server' },

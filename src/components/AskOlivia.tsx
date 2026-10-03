@@ -24,7 +24,7 @@ import { DEFAULT_QUICK_ACTIONS } from '../types/olivia';
 import { useOliviaChat } from '../hooks/useOliviaChat';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
-import { useAvatarProvider } from '../hooks/useAvatarProvider';
+import { useOliviaFace } from '../hooks/useOliviaFace';
 import { useTierAccess } from '../hooks/useTierAccess';
 import { useContrastImages } from '../hooks/useContrastImages';
 import { UsageMeter } from './FeatureGate';
@@ -137,11 +137,10 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
     error: avatarError,
     activeProvider,
     hasFallenBack,
-  } = useAvatarProvider({
+  } = useOliviaFace({
+    // LiveAvatar first; her previous face (Simli, then D-ID) if it cannot start
     videoRef,
     audioRef,
-    autoFallback: true,
-    onProviderSwitch: () => {},
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1168,7 +1167,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
             <span className={`status-dot ${isAvatarReady ? 'online' : 'connecting'} ${hasFallenBack ? 'fallback' : ''}`}></span>
             <span className="status-text">
               {isAvatarReady
-                ? `OPENAI + ${activeProvider.toUpperCase()} CONNECTED${hasFallenBack ? ' (FALLBACK)' : ''}`
+                ? `CLAUDE + ${activeProvider.toUpperCase()} CONNECTED${hasFallenBack ? ' (FALLBACK)' : ''}`
                 : 'ESTABLISHING LINK'}
             </span>
           </div>
