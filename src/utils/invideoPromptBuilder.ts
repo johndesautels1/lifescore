@@ -301,7 +301,7 @@ Visual: The LIFE SCORE interface processing data. Your eyes widen.
 
 SCENE 4.2 — THE ENHANCED COMPARISON
 You're so excited you run the enhanced comparison — 5 different AI models
-(Claude, GPT-4o, Gemini, Grok, Perplexity) independently evaluate all
+(Claude, GPT, Gemini, Grok, Perplexity) independently evaluate all
 100 freedom metrics and reach consensus through mathematical agreement.
 Visual: Five AI models working in parallel, scores converging.
 

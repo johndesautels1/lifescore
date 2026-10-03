@@ -45,10 +45,10 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'ANTHROPIC_API_KEY', description: 'Anthropic — Claude Opus (Judge) + Sonnet', category: 'LLM Providers', side: 'server' },
   { name: 'OPENAI_API_KEY', description: 'OpenAI — GPT evaluator and voice fallback', category: 'LLM Providers', side: 'server' },
   { name: 'GEMINI_API_KEY', description: 'Google — Gemini 3.1 Pro evaluator', category: 'LLM Providers', side: 'server' },
-  { name: 'XAI_API_KEY', description: 'xAI — Grok 4 evaluator', category: 'LLM Providers', side: 'server' },
+  { name: 'XAI_API_KEY', description: 'xAI — Grok evaluator (model in api/shared/models.ts)', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_KEY', description: 'Alias for XAI_API_KEY', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_URL', description: 'Grok API base URL', category: 'LLM Providers', side: 'server' },
-  { name: 'PERPLEXITY_API_KEY', description: 'Perplexity — Sonar Reasoning Pro (web search)', category: 'LLM Providers', side: 'server' },
+  { name: 'PERPLEXITY_API_KEY', description: 'Perplexity — Agent API evaluator (web search)', category: 'LLM Providers', side: 'server' },
   { name: 'TAVILY_API_KEY', description: 'Tavily — Web research for Claude', category: 'LLM Providers', side: 'server' },
 
   // --- Avatar & Video ---

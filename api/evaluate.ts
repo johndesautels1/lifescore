@@ -936,9 +936,9 @@ async function evaluateWithGPT4o(city1: string, city2: string, metrics: Evaluati
       ...searchQueries.map(q => tavilySearch(q, 5).catch((): TavilyResponse => ({ results: [], creditsUsed: 0 })))
     ]);
 
-    // Track total Tavily credits used for GPT-4o
+    // Track total Tavily credits used for the GPT seat
     gpt4oTavilyCredits = searchResults.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
-    console.log(`[GPT-4o] Total Tavily credits used: ${gpt4oTavilyCredits}`);
+    console.log(`[GPT] Total Tavily credits used: ${gpt4oTavilyCredits}`);
 
     const allResults = searchResults.flatMap(r => r.results);
     const answers = searchResults.map(r => r.answer).filter(Boolean);
@@ -968,10 +968,10 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     // gpt4oTavilyCredits already initialized to 0 above
   }
 
-  // GPT-4o SPECIFIC ADDENDUM
+  // GPT SPECIFIC ADDENDUM
   // UPDATED 2026-01-21: Removed duplicate scale (now in buildBasePrompt)
   const gptAddendum = `
-## GPT-4o SPECIFIC INSTRUCTIONS
+## GPT SPECIFIC INSTRUCTIONS
 - Use the Tavily Research Report as your primary baseline for comparing ${city1} vs ${city2}
 - Cross-reference with category-specific search results for detailed metrics
 - Focus on factual accuracy - be precise with scores using the 5 anchor bands
@@ -991,9 +991,8 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`[GPT-4o] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
+      console.log(`[GPT] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
-      // GPT-4o uses standard chat completions API
       // One shared OpenAI call point (api/shared/openai.ts) — Responses API, model from AI_MODELS.
       const reply = await callOpenAI({
         model: AI_MODELS.gptEvaluator.id,
@@ -1035,8 +1034,8 @@ Use the Tavily research data provided in the user message to evaluate laws and r
       const scores = parseResponse(content, 'gpt-4o');
 
       if (scores.length === 0) {
-        lastError = 'Invalid JSON or no evaluations parsed from GPT-4o response';
-        console.error(`[GPT-4o] Attempt ${attempt}: ${lastError}. Content preview: ${content.substring(0, 200)}`);
+        lastError = 'Invalid JSON or no evaluations parsed from the GPT response';
+        console.error(`[GPT] Attempt ${attempt}: ${lastError}. Content preview: ${content.substring(0, 200)}`);
         if (attempt < MAX_RETRIES) {
           const backoffMs = Math.pow(2, attempt - 1) * 1000;
           await new Promise(resolve => setTimeout(resolve, backoffMs));
@@ -1050,7 +1049,7 @@ Use the Tavily research data provided in the user message to evaluate laws and r
         outputTokens: reply.usage.outputTokens
       };
 
-      console.log(`[GPT-4o] Success on attempt ${attempt}: ${scores.length} scores returned`);
+      console.log(`[GPT] Success on attempt ${attempt}: ${scores.length} scores returned`);
       return {
         provider: 'gpt-4o',
         success: true,
@@ -1061,18 +1060,18 @@ Use the Tavily research data provided in the user message to evaluate laws and r
 
     } catch (error) {
       lastError = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error - check API key');
-      console.error(`[GPT-4o] Attempt ${attempt} exception: ${lastError}`);
+      console.error(`[GPT] Attempt ${attempt} exception: ${lastError}`);
 
       if (attempt < MAX_RETRIES) {
         const backoffMs = Math.pow(2, attempt - 1) * 1000;
-        console.log(`[GPT-4o] Retrying in ${backoffMs}ms...`);
+        console.log(`[GPT] Retrying in ${backoffMs}ms...`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
       }
     }
   }
 
   // All retries exhausted
-  console.error(`[GPT-4o] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
+  console.error(`[GPT] All ${MAX_RETRIES} attempts failed. Last error: ${lastError}`);
   return { provider: 'gpt-4o', success: false, scores: [], latencyMs: Date.now() - startTime, error: `Failed after ${MAX_RETRIES} attempts: ${lastError}` };
 }
 

@@ -13,6 +13,7 @@ import type {
 } from '../types/enhancedComparison';
 import type { ComparisonResult, CategoryScore, MetricScore } from '../types/metrics';
 import { getAuthHeaders } from '../lib/supabase';
+import { AI_MODELS } from '../../api/shared/models';
 import type {
   VisualReportResponse,
   VisualReportState,
@@ -741,7 +742,7 @@ prompt="dramatic split cityscape view of ${city1Name} and ${city2Name}, cinemati
 
 <display size="lg" color="${result.winner === 'city1' ? '#FFD700' : '#1E90FF'}">${winner}</display>
 
-**Claude Opus 4.6 Recommendation:**
+**${AI_MODELS.judge.name} Recommendation:**
 
 <blockquote>
 ${judgeReport?.executiveSummary?.rationale || `Based on comprehensive analysis of 100 freedom metrics across 6 categories, ${winner} demonstrates superior overall freedom scores. The ${scoreDiff}-point margin reflects meaningful differences in how laws are written AND enforced in daily life.`}
@@ -1213,16 +1214,16 @@ function formatSection5LLMConsensus(
 
 | Model | Provider | Role | Strength |
 |-------|----------|------|----------|
-| 📝 Claude Sonnet 4.6 | Anthropic | Primary Evaluator | Legal framework analysis |
-| 🤖 GPT-4o | OpenAI | Cross-validation | Fact-checking |
-| 💎 Gemini 3.1 Pro | Google | Data validation | Google Search grounding |
-| 𝕏 Grok 4 | xAI | Sentiment analysis | X/Twitter integration |
-| 🔮 Sonar Pro | Perplexity | Deep research | Source credibility |
+| 📝 ${AI_MODELS.claudeEvaluator.name} | Anthropic | Primary Evaluator | Legal framework analysis |
+| 🤖 ${AI_MODELS.gptEvaluator.name} | OpenAI | Cross-validation | Fact-checking |
+| 💎 ${AI_MODELS.geminiEvaluator.name} | Google | Data validation | Google Search grounding |
+| 𝕏 ${AI_MODELS.grokEvaluator.name} | xAI | Sentiment analysis | X/Twitter integration |
+| 🔮 ${AI_MODELS.perplexityEvaluator.name} | Perplexity | Deep research | Source credibility |
 
 </table>
 
 **Final Judge:**
-<labels><label variant="solid" color="#7C3AED">🎭 Claude Opus 4.6 (Anthropic)</label></labels>
+<labels><label variant="solid" color="#7C3AED">🎭 ${AI_MODELS.judge.name} (Anthropic)</label></labels>
 
 Synthesizes all 5 evaluations into final scores and recommendation.
 
@@ -1296,7 +1297,7 @@ Two cities entered for comparison
 </item>
 <item label="2. Parallel AI Research">
 5 LLMs simultaneously research 100 metrics:
-• Claude Sonnet 4.6 • GPT-4o • Gemini 3.1 Pro • Grok 4 • Sonar Reasoning Pro
+• ${AI_MODELS.claudeEvaluator.name} • ${AI_MODELS.gptEvaluator.name} • ${AI_MODELS.geminiEvaluator.name} • ${AI_MODELS.grokEvaluator.name} • ${AI_MODELS.perplexityEvaluator.name}
 </item>
 <item label="3. Dual Scoring">
 Each LLM provides Legal + Enforcement scores per metric
@@ -1306,7 +1307,7 @@ Each LLM provides Legal + Enforcement scores per metric
 Statistical analysis to identify agreement, outliers, confidence
 </item>
 <item label="5. Final Judgment">
-Claude Opus 4.6 synthesizes all data into verdicts and recommendations
+${AI_MODELS.judge.name} synthesizes all data into verdicts and recommendations
 </item>
 <item label="6. Report Generation">
 Gamma AI transforms data into this visual presentation
@@ -1452,7 +1453,7 @@ We capture how laws are actually applied in daily life, not just what's written
 5 independent AI models research each metric, reducing single-source bias
 </item>
 <item label="🎭 Expert Judgment" color="#7C3AED">
-Claude Opus 4.6 synthesizes all data into actionable recommendations
+${AI_MODELS.judge.name} synthesizes all data into actionable recommendations
 </item>
 </smart-layout>
 
@@ -2564,13 +2565,13 @@ CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 ================================================================================
 
 5 LLMs Used for Evaluation:
-📝 Claude Sonnet 4.6 (Anthropic) - Primary evaluator with web search
-🤖 GPT-4o (OpenAI) - Cross-validation with Tavily search
-💎 Gemini 3.1 Pro (Google) - Native Google Search grounding
-𝕏 Grok 4 (xAI) - Real-time X/Twitter data integration
-🔮 Sonar Reasoning Pro (Perplexity) - Deep web research
+📝 ${AI_MODELS.claudeEvaluator.name} (Anthropic) - Primary evaluator with web search
+🤖 ${AI_MODELS.gptEvaluator.name} (OpenAI) - Cross-validation with Tavily search
+💎 ${AI_MODELS.geminiEvaluator.name} (Google) - Native Google Search grounding
+𝕏 ${AI_MODELS.grokEvaluator.name} (xAI) - Real-time X/Twitter data integration
+🔮 ${AI_MODELS.perplexityEvaluator.name} (Perplexity) - Deep web research
 
-Final Judge: 🎭 Claude Opus 4.6 (Anthropic) - Synthesizes all 5 evaluations
+Final Judge: 🎭 ${AI_MODELS.judge.name} (Anthropic) - Synthesizes all 5 evaluations
 
 ================================================================================
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):

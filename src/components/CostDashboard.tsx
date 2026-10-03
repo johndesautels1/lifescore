@@ -23,6 +23,17 @@ import {
 } from '../services/databaseService';
 import { useAuth } from '../contexts/AuthContext';
 import { AI_MODELS, modelForSeat } from '../../api/shared/models';
+
+/** The pricing reference, read from the model registry (api/shared/models.ts) — never typed by hand. */
+const LLM_PRICE_ROWS = [
+  { key: 'judge', icon: '🧠', model: AI_MODELS.judge, role: 'Judge' },
+  { key: 'claude', icon: '🎵', model: AI_MODELS.claudeEvaluator, role: 'Evaluator' },
+  { key: 'gpt', icon: '🤖', model: AI_MODELS.gptEvaluator, role: 'Evaluator' },
+  { key: 'gemini', icon: '💎', model: AI_MODELS.geminiEvaluator, role: 'Evaluator' },
+  { key: 'grok', icon: '🚀', model: AI_MODELS.grokEvaluator, role: 'Evaluator' },
+  { key: 'perplexity', icon: '🔍', model: AI_MODELS.perplexityEvaluator, role: 'Evaluator' },
+  { key: 'writer', icon: '💬', model: AI_MODELS.writer, role: 'Olivia, Emilia, writing' },
+] as const;
 import { isSupabaseConfigured } from '../lib/supabase';
 import type { ApiCostRecord } from '../types/database';
 import { toastConfirm } from '../utils/toast';
@@ -340,7 +351,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       'Date',
       'Tavily Cost',
       'Claude Sonnet Cost',
-      'GPT-4o Cost',
+      'GPT Cost',
       'Gemini Cost',
       'Grok Cost',
       'Perplexity Cost',
@@ -453,7 +464,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">🎵</span>
-                <span className="provider-name">Claude Sonnet 4.6</span>
+                <span className="provider-name">{AI_MODELS.claudeEvaluator.name}</span>
                 <span className="provider-cost">{formatCost(summary.claudeSonnetCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.claudeSonnetCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -461,7 +472,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">🤖</span>
-                <span className="provider-name">GPT-4o</span>
+                <span className="provider-name">{AI_MODELS.gptEvaluator.name}</span>
                 <span className="provider-cost">{formatCost(summary.gpt4oCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.gpt4oCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -469,7 +480,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">💎</span>
-                <span className="provider-name">Gemini 3.1 Pro</span>
+                <span className="provider-name">{AI_MODELS.geminiEvaluator.name}</span>
                 <span className="provider-cost">{formatCost(summary.geminiCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.geminiCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -477,7 +488,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">🚀</span>
-                <span className="provider-name">Grok 4</span>
+                <span className="provider-name">{AI_MODELS.grokEvaluator.name}</span>
                 <span className="provider-cost">{formatCost(summary.grokCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.grokCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -485,7 +496,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row">
                 <span className="provider-icon">🔍</span>
-                <span className="provider-name">Perplexity Sonar</span>
+                <span className="provider-name">{AI_MODELS.perplexityEvaluator.name}</span>
                 <span className="provider-cost">{formatCost(summary.perplexityCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.perplexityCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -493,7 +504,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </div>
               <div className="provider-row highlight">
                 <span className="provider-icon">🧠</span>
-                <span className="provider-name">Claude Opus 4.6 (Judge)</span>
+                <span className="provider-name">{AI_MODELS.judge.name} (Judge)</span>
                 <span className="provider-cost">{formatCost(summary.claudeOpusCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.claudeOpusCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -608,36 +619,13 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>🧠 Claude Opus 4.6</td>
-                    <td>$15.00</td>
-                    <td>$75.00</td>
-                  </tr>
-                  <tr>
-                    <td>🎵 Claude Sonnet 4.6</td>
-                    <td>$3.00</td>
-                    <td>$15.00</td>
-                  </tr>
-                  <tr>
-                    <td>🤖 GPT-4o</td>
-                    <td>$2.50</td>
-                    <td>$10.00</td>
-                  </tr>
-                  <tr>
-                    <td>💎 Gemini 3.1 Pro</td>
-                    <td>$1.25</td>
-                    <td>$5.00</td>
-                  </tr>
-                  <tr>
-                    <td>🚀 Grok 4</td>
-                    <td>$3.00</td>
-                    <td>$15.00</td>
-                  </tr>
-                  <tr>
-                    <td>🔍 Perplexity Sonar</td>
-                    <td>$1.00</td>
-                    <td>$5.00</td>
-                  </tr>
+                  {LLM_PRICE_ROWS.map((priceRow) => (
+                    <tr key={priceRow.key}>
+                      <td>{priceRow.icon} {priceRow.model.name} ({priceRow.role})</td>
+                      <td>${priceRow.model.inputPerM.toFixed(2)}</td>
+                      <td>${priceRow.model.outputPerM.toFixed(2)}</td>
+                    </tr>
+                  ))}
                   <tr>
                     <td>🔎 Tavily</td>
                     <td colSpan={2}>~$0.01/credit (varies by plan)</td>
@@ -645,11 +633,6 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   <tr>
                     <td>📊 Gamma</td>
                     <td colSpan={2}>~$0.50/generation (varies by plan)</td>
-                  </tr>
-                  <tr>
-                    <td>💬 GPT-4 Turbo (Olivia)</td>
-                    <td>$10.00</td>
-                    <td>$30.00</td>
                   </tr>
                   <tr>
                     <td>🔊 ElevenLabs TTS</td>
@@ -728,7 +711,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                           </span>
                         </div>
                         <div className="detail-item">
-                          <span className="detail-label">GPT-4o</span>
+                          <span className="detail-label">GPT</span>
                           <span className="detail-value">
                             {formatCost(cost.gpt4o.reduce((s, c) => s + c.totalCost, 0))}
                           </span>

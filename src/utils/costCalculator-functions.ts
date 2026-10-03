@@ -489,7 +489,7 @@ export function formatCostBreakdownLog(breakdown: ComparisonCostBreakdown): stri
     ``,
     `--- LLM EVALUATORS ---`,
     `Claude Sonnet: ${formatCost(breakdown.claudeSonnet.reduce((s, c) => s + c.totalCost, 0))} (${breakdown.claudeSonnet.length} calls)`,
-    `GPT-4o: ${formatCost(breakdown.gpt4o.reduce((s, c) => s + c.totalCost, 0))} (${breakdown.gpt4o.length} calls)`,
+    `GPT: ${formatCost(breakdown.gpt4o.reduce((s, c) => s + c.totalCost, 0))} (${breakdown.gpt4o.length} calls)`,
     `Gemini: ${formatCost(breakdown.gemini.reduce((s, c) => s + c.totalCost, 0))} (${breakdown.gemini.length} calls)`,
     `Grok: ${formatCost(breakdown.grok.reduce((s, c) => s + c.totalCost, 0))} (${breakdown.grok.length} calls)`,
     `Perplexity: ${formatCost(breakdown.perplexity.reduce((s, c) => s + c.totalCost, 0))} (${breakdown.perplexity.length} calls)`,

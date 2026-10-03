@@ -85,7 +85,7 @@ If you've forgotten your password:
 
 2. **Choose Comparison Mode**
    - **Standard Mode**: Uses Claude Sonnet for fast, accurate analysis
-   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 4.6, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) with consensus scoring
+   - **Enhanced Mode**: Uses 5 AI providers (Claude Sonnet 5.5, GPT-6.1, Gemini 3.1 Pro, Grok 4.7, Perplexity Agent API) with consensus scoring
 
 3. **Run the Comparison**
    - Click "Compare Cities"
@@ -444,12 +444,13 @@ When a California resident contacts support about privacy:
 Password reset ONLY modifies auth.users.encrypted_password and auth.users.recovery_token. Zero impact on profiles, comparisons, subscriptions, or any other application table.
 
 ### AI Providers
-- **Claude Sonnet 4.6**: Primary evaluator
-- **GPT-4o**: Enhanced mode evaluator
+- **Claude Sonnet 5.5**: Primary evaluator
+- **GPT-6.1**: Enhanced mode evaluator
 - **Gemini 3.1 Pro**: Enhanced mode evaluator
-- **Grok 4**: Enhanced mode evaluator
-- **Perplexity Sonar**: Enhanced mode evaluator
-- **Claude Opus 4.6**: Judge (consensus)
+- **Grok 4.7**: Enhanced mode evaluator
+- **Perplexity Agent API**: Enhanced mode evaluator
+- **Claude Opus 5.5**: Judge (consensus)
+- Model ids and prices: api/shared/models.ts (the one model list)
 - **Tavily**: Web research (45s timeout)
 
 ### External Services
@@ -746,7 +747,7 @@ User triggers task → NotifyMeModal → job created in \`jobs\` table → task 
 
 | Test File | Module Under Test | Tests | What It Validates |
 |-----------|-------------------|-------|-------------------|
-| costCalculator.test.ts | src/utils/costCalculator-functions.ts | 31 | LLM cost math (Opus, GPT-4o, Gemini, Sonnet), Tavily credits, TTS (ElevenLabs/OpenAI/HD), Avatar (Replicate/D-ID/Simli/HeyGen), Kling per-image, Gamma per-generation, formatCost, createCostBreakdown, finalizeCostBreakdown totals |
+| costCalculator.test.ts | src/utils/costCalculator-functions.ts | 31 | LLM cost math (judge, GPT, Gemini, Sonnet seats), Tavily credits, TTS (ElevenLabs/OpenAI/HD), Avatar (Replicate/D-ID/Simli/HeyGen), Kling per-image, Gamma per-generation, formatCost, createCostBreakdown, finalizeCostBreakdown totals |
 | scoring.test.ts | src/api/scoring.ts | 26 | normalizeScore for boolean/range/scale/categorical metrics, lower_is_better inversion, clamping, string parsing, createComparison winner/tie/category logic |
 | scoringThresholds.test.ts | src/constants/scoringThresholds.ts | 9 | Confidence levels (unanimous/strong/moderate/split), boundary values, isDisagreementArea threshold |
 | rateLimit.test.ts | api/shared/rateLimit.ts | 18 | Preset values (heavy/standard/light/health), rateLimiter.check tracking, blocking after max, independent IP/endpoint tracking, getClientIP header extraction |
@@ -1169,7 +1170,7 @@ Capped at 100
 
 ## 9. THE JUDGE Analysis (Updated 2026-02-13)
 
-Claude Opus 4.6 provides:
+The judge (Claude Opus 5.5) provides:
 - **Trend Analysis**: values normalized to 'improving' (not 'rising') for DB constraint
 - **Score Passing**: Judge receives actual scores in both standard and enhanced mode (fixed)
 - **Tie Handling**: No more "winner is TIE" in video scripts (fixed)

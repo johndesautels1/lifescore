@@ -75,6 +75,21 @@ describe('model ids live in one place', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('no screen, prompt or manual names a retired model (names come from the registry)', () => {
+    // The price history keeps old names on purpose; two notes explain the
+    // 27 Sep 2026 Perplexity switch away from Sonar Pro.
+    const allowed = new Set(['src/utils/costCalculator-pricing.ts', 'api/shared/models.ts', 'api/shared/perplexity.ts']);
+    const retired = /(Claude )?Opus 4\.\d|Sonnet 4\.\d|GPT-4o|GPT-4 Turbo|Grok 4(?!\.7)\b|Sonar (Reasoning )?Pro/;
+    const offenders = ALL.filter((f) => !allowed.has(f) && retired.test(readFileSync(f, 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
+  it('the cost dashboard reads its per-token prices from the registry', () => {
+    const dashboard = readFileSync('src/components/CostDashboard.tsx', 'utf8');
+    expect(dashboard).toContain('LLM_PRICE_ROWS.map(');
+    expect(dashboard).not.toMatch(/<td>\$\d+\.\d\d<\/td>/);
+  });
+
   it('each character keeps the same OpenAI back-up voice', () => {
     expect(BACKUP_VOICES).toEqual({ olivia: 'nova', emilia: 'shimmer', cristiano: 'onyx' });
   });

@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE™ Judge Tab - The Final Verdict
  *
- * Claude Opus 4.6 serves as THE JUDGE - providing holistic freedom analysis,
+ * The judge model (AI_MODELS.judge in api/shared/models.ts) serves as THE JUDGE - providing holistic freedom analysis,
  * future trend forecasting, and executive recommendations.
  *
  * Features:
@@ -28,6 +28,7 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
 import { ALL_METROS } from '../data/metros';
+import { AI_MODELS } from '../../api/shared/models';
 import { getFlagUrl } from '../utils/countryFlags';
 import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -1298,7 +1299,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   <div class="footer">
     <p>LIFE SCORE™ - The Judge's Verdict<br>
-    Powered by Claude Opus 4.6<br>
+    Powered by ${AI_MODELS.judge.name}<br>
     © 2025-2026 Clues Intelligence LTD</p>
   </div>
 </body>
@@ -1717,7 +1718,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                       <div className="generating-ring delay-2"></div>
                       <div className="generating-text">ANALYZING EVIDENCE</div>
                       <div className="generating-subtext">
-                        Claude Opus 4.6 is reviewing all metrics and sources...
+                        {AI_MODELS.judge.name} is reviewing all metrics and sources...
                       </div>
                       <div className="progress-bar-container">
                         <div
@@ -2316,7 +2317,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               <div className="pending-gavel">⚖️</div>
               <h3 className="pending-title">Verdict Pending</h3>
               <p className="pending-description">
-                Click "Generate Judge's Verdict" above to receive Claude Opus 4.6's comprehensive analysis,
+                Click "Generate Judge's Verdict" above to receive {AI_MODELS.judge.name}'s comprehensive analysis,
                 including future trend forecasting and executive recommendation.
               </p>
               <div className="pending-features">
@@ -2513,7 +2514,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
           </div>
         </div>
         <div className="footer-right">
-          <span className="footer-model">Powered by Claude Opus 4.6</span>
+          <span className="footer-model">Powered by {AI_MODELS.judge.name}</span>
         </div>
       </footer>
 

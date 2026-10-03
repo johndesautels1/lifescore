@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { AI_MODELS } from '../../api/shared/models';
 import './DataSourcesModal.css';
 
 interface DataSourcesModalProps {
@@ -108,7 +109,7 @@ export const DataSourcesModal: React.FC<DataSourcesModalProps> = ({ isOpen, onCl
         <div className="modal-footer">
           <p>
             <strong>How it works:</strong> 5 AI models independently evaluate each metric using web search,
-            then Claude Opus 4.6 synthesizes their findings into a consensus score.
+            then {AI_MODELS.judge.name} synthesizes their findings into a consensus score.
           </p>
         </div>
       </div>

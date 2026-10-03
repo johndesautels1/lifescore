@@ -1,6 +1,6 @@
 ﻿/**
  * LIFE SCORE™ Judge Report API
- * Vercel Serverless Function - Claude Opus 4.6 comprehensive analysis
+ * Vercel Serverless Function - the judge model (AI_MODELS.judge) comprehensive analysis
  *
  * This endpoint generates THE JUDGE's comprehensive verdict including:
  * - Holistic freedom analysis across all metrics
@@ -254,7 +254,7 @@ function buildJudgePrompt(
     ? `\n## EVIDENCE FROM EVALUATOR LLMs\n${allEvidence.slice(0, 30).join('\n')}\n`
     : '';
 
-  return `You are Claude Opus 4.6, THE JUDGE for LIFE SCORE™ - the final arbiter of freedom comparisons.
+  return `You are ${AI_MODELS.judge.name}, THE JUDGE for LIFE SCORE™ - the final arbiter of freedom comparisons.
 
 ## YOUR ROLE
 You are not just analyzing scores - you are THE JUDGE who must:

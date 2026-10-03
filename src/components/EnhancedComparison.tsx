@@ -21,6 +21,7 @@ import EvidencePanel from './EvidencePanel';
 import ScoreMethodology from './ScoreMethodology';
 import './EnhancedComparison.css';
 import { grantHeaders } from '../lib/usageGrant';
+import { AI_MODELS } from '../../api/shared/models';
 
 // Helper: compute median of a sorted number array
 function computeMedian(sorted: number[]): number {
@@ -461,8 +462,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         <div className={`judge-status ${judgeResult ? 'complete' : isJudging ? 'running' : 'ready'}`}>
           <span className="judge-icon">🎭</span>
           <span className="judge-text">
-            {isJudging && !judgeResult && 'Claude Opus 4.6 is building initial consensus...'}
-            {isJudging && judgeResult && `Claude Opus 4.6 is updating consensus with ${completedCount} LLMs...`}
+            {isJudging && !judgeResult && `${AI_MODELS.judge.name} is building initial consensus...`}
+            {isJudging && judgeResult && `${AI_MODELS.judge.name} is updating consensus with ${completedCount} LLMs...`}
             {judgeResult && !isJudging && (lastJudgedCount > 1
               ? `Consensus from ${lastJudgedCount} LLMs • Agreement: ${judgeResult.overallAgreement}%`
               : `Evaluated by 1 LLM • Confidence: ${judgeResult.overallAgreement}%`)}
@@ -524,7 +525,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, anthropic: e.target.value })}
               placeholder="sk-ant-..."
             />
-            <span className="key-models">Claude Opus 4.6 (Judge), Sonnet 4.6</span>
+            <span className="key-models">{AI_MODELS.judge.name} (Judge), {AI_MODELS.claudeEvaluator.name}</span>
           </div>
 
           <div className="api-key-group">
@@ -538,7 +539,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, openai: e.target.value })}
               placeholder="sk-..."
             />
-            <span className="key-models">GPT-4o</span>
+            <span className="key-models">{AI_MODELS.gptEvaluator.name}</span>
           </div>
 
           <div className="api-key-group">
@@ -552,7 +553,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, gemini: e.target.value })}
               placeholder="AI..."
             />
-            <span className="key-models">Gemini 3.1 Pro</span>
+            <span className="key-models">{AI_MODELS.geminiEvaluator.name}</span>
           </div>
 
           <div className="api-key-group">
@@ -566,7 +567,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, xai: e.target.value })}
               placeholder="xai-..."
             />
-            <span className="key-models">Grok 4</span>
+            <span className="key-models">{AI_MODELS.grokEvaluator.name}</span>
           </div>
 
           <div className="api-key-group">
@@ -580,7 +581,7 @@ export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSav
               onChange={e => setKeys({ ...keys, perplexity: e.target.value })}
               placeholder="pplx-..."
             />
-            <span className="key-models">Sonar Reasoning Pro</span>
+            <span className="key-models">{AI_MODELS.perplexityEvaluator.name}</span>
           </div>
 
           <div className="api-key-group optional">
@@ -879,7 +880,7 @@ const LLMDisagreementSection: React.FC<LLMDisagreementSectionProps> = ({ result,
               )}
             </div>
             <span className="summary-detail">
-              Based on {result.llmsUsed.length} AI models with Claude Opus 4.6 as final judge
+              Based on {result.llmsUsed.length} AI models with {AI_MODELS.judge.name} as final judge
             </span>
           </div>
 

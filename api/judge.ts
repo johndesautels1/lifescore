@@ -1,6 +1,6 @@
 ﻿/**
  * LIFE SCORE™ Opus Judge API
- * Vercel Serverless Function - Claude Opus 4.6 consensus builder
+ * Vercel Serverless Function - the judge model (AI_MODELS.judge) consensus builder
  *
  * FIX: Now properly computes consensus scores from evaluator results
  * FIX: Now actually calls Opus API for enhanced judging (not just statistical)
@@ -380,7 +380,7 @@ function buildOpusPrompt(
     ? `\n## SCORING CRITERIA FOR DISAGREEMENT METRICS\nThese metrics use category-based scoring. Use this context to resolve disagreements:\n${categoryContext.join('\n')}\n`
     : '';
 
-  return `You are Claude Opus 4.6, the final judge for LIFE SCORE™ city comparisons.
+  return `You are ${AI_MODELS.judge.name}, the final judge for LIFE SCORE™ city comparisons.
 
 ## CITIES
 - City 1: ${city1}

@@ -170,7 +170,7 @@ Scene 3: "The Discovery" (1:40-2:30, 50s) — ACT 2: DISCOVERY
   Mood: Curiosity, hope. Color: Warming.
 
 Scene 4: "The Comparison" (2:30-3:30, 60s) — ACT 2: DISCOVERY
-  User runs LIFE SCORE comparison. 5 AI models (Claude, GPT-4o, Gemini, Grok, Perplexity)
+  User runs LIFE SCORE comparison. 5 AI models (Claude, GPT, Gemini, Grok, Perplexity)
   independently evaluate 100 freedom metrics and reach consensus.
   Mood: Excitement, anticipation. Color: Warming.
 
