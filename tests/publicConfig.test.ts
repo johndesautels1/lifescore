@@ -55,6 +55,13 @@ describe('start-up order', () => {
     expect(client).toMatch(/export const supabase: SupabaseBrowserClient = new Proxy/);
   });
 
+  it('a page from an older release reloads once instead of failing to load a screen', () => {
+    const main = readFileSync('src/main.tsx', 'utf8');
+    expect(main).toContain("window.addEventListener('vite:preloadError'");
+    expect(main).toMatch(/Date\.now\(\) - last < 30_000/);
+    expect(main).toContain('window.location.reload()');
+  });
+
   it('the server route hands out only the public pair', () => {
     const route = readFileSync('api/public-config.ts', 'utf8');
     expect(route).toContain('publicSupabaseSettings()');

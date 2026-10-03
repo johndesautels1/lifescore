@@ -11,6 +11,27 @@ import { toastError } from './utils/toast'
 // E10: Initialize global error tracking (internal buffer + reporting)
 initErrorTracking();
 
+/**
+ * A page opened before a new release asks for screen files that release
+ * replaced, and the screen fails with "Failed to fetch dynamically imported
+ * module" (3 Oct 2026, after a day of releases). Vite reports this as
+ * 'vite:preloadError'; reload once so the page loads the current release.
+ * A reload within the last 30 seconds is not repeated, so a real outage shows
+ * its error instead of looping; without session storage there is no reload.
+ */
+const RELEASE_RELOAD_KEY = 'lifescore-release-reload-at';
+window.addEventListener('vite:preloadError', (event) => {
+  try {
+    const last = Number(sessionStorage.getItem(RELEASE_RELOAD_KEY)) || 0;
+    if (Date.now() - last < 30_000) return;
+    sessionStorage.setItem(RELEASE_RELOAD_KEY, String(Date.now()));
+  } catch {
+    return; // storage blocked: let the error show rather than risk a reload loop
+  }
+  event.preventDefault();
+  window.location.reload();
+});
+
 // Global unhandled promise rejection handler — show toast to user
 window.onunhandledrejection = (event: PromiseRejectionEvent) => {
   console.error('[Unhandled Rejection]', event.reason);
