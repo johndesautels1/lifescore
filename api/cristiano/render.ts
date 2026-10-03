@@ -21,7 +21,7 @@ import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
 import { requireFeature, consumeOrDeny, refundFeature, type Entitled } from '../shared/entitlements.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { agentSession, agentVideo, startAgentFilm } from '../shared/heygen/videoAgent.js';
 
 export const config = {
   maxDuration: 300,  // Vercel Pro: 5 min — HeyGen API submission + Supabase cache + validation
@@ -31,14 +31,17 @@ export const config = {
 // CONSTANTS
 // ============================================================================
 
-const HEYGEN_VIDEO_AGENT_URL = 'https://api.heygen.com/v1/video_agent/generate';
-const HEYGEN_STATUS_URL = 'https://api.heygen.com/v1/video_status.get';
-const HEYGEN_TIMEOUT_MS = 120000;  // 120s for HeyGen API calls (submission + status)
+// HeyGen's v3 video agent, through the questionnaire engine's wiring, verbatim
+// (api/shared/heygen/videoAgent.ts). The v1 /video_agent/generate and
+// /video_status.get endpoints this route used are gone from it.
+//
+// Cristiano's face and voice: the SAME two settings the engine's judge page and
+// film agent read (film.ts presenterId / agentVoiceId) — no built-in defaults.
+const CRISTIANO_LOOK_ID = (process.env.HEYGEN_AVATAR_LOOK_ID ?? '').trim();
+const CRISTIANO_VOICE_ID = (process.env.HEYGEN_CRISTIANO_VOICE_ID ?? '').trim();
 
-// Cristiano avatar, voice & look (from env — rotate API key if changed)
-const CRISTIANO_AVATAR_ID = process.env.HEYGEN_CRISTIANO_AVATAR_ID || '7a0ee88ad6814ed9af896f9164407c41';
-const CRISTIANO_VOICE_ID = process.env.HEYGEN_CRISTIANO_VOICE_ID || 'DzUwifXFzrD4THQLxNun';
-const AVATAR_LOOK_ID = process.env.HEYGEN_AVATAR_LOOK_ID || '';
+/** A HeyGen session or video id: letters, digits, '_' and '-'. */
+const HEYGEN_ID = /^[A-Za-z0-9_-]{1,128}$/;
 
 // Supabase admin client
 const supabaseAdmin = createClient(
@@ -68,14 +71,6 @@ interface RenderRequest {
 // HELPERS
 // ============================================================================
 
-function getHeyGenKey(): string {
-  const key = process.env.HEYGEN_API_KEY;
-  if (!key) {
-    throw new Error('HEYGEN_API_KEY not configured');
-  }
-  return key;
-}
-
 /**
  * Pre-render validation: ensure all hard requirements are met before
  * spending HeyGen credits.
@@ -83,8 +78,8 @@ function getHeyGenKey(): string {
 function preRenderValidation(storyboard: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!CRISTIANO_AVATAR_ID) {
-    errors.push('HEYGEN_CRISTIANO_AVATAR_ID not configured in environment');
+  if (!CRISTIANO_LOOK_ID) {
+    errors.push('HEYGEN_AVATAR_LOOK_ID not configured in environment');
   }
   if (!CRISTIANO_VOICE_ID) {
     errors.push('HEYGEN_CRISTIANO_VOICE_ID not configured in environment');
@@ -215,12 +210,11 @@ function buildVideoAgentPrompt(storyboard: Record<string, unknown>): string {
 
   // Belt-and-suspenders: embed avatar/voice/look IDs directly in the prompt
   // so HeyGen picks them up regardless of whether it reads them from config.
-  const avatarLine = CRISTIANO_AVATAR_ID ? `\nAVATAR: Use avatar_id "${CRISTIANO_AVATAR_ID}".` : '';
+  const avatarLine = CRISTIANO_LOOK_ID ? `\nAVATAR: Use avatar_id "${CRISTIANO_LOOK_ID}".` : '';
   const voiceLine = CRISTIANO_VOICE_ID ? ` Use voice_id "${CRISTIANO_VOICE_ID}".` : '';
-  const lookLine = AVATAR_LOOK_ID ? ` Use look_id "${AVATAR_LOOK_ID}".` : '';
 
   const prompt = `Create a 105–120 second cinematic city tour video for CLUES Life Score "Go To My New City."
-${avatarLine}${voiceLine}${lookLine}
+${avatarLine}${voiceLine}
 
 Follow the Storyboard JSON exactly: scene order, timing, captions.
 
@@ -319,7 +313,8 @@ async function saveToCache(params: {
   cityName: string;
   country?: string;
   region?: string;
-  heygenVideoId: string;
+  heygenSessionId: string;
+  heygenVideoId: string | null;
   storyboard: Record<string, unknown>;
   winnerPackage?: Record<string, unknown>;
   sceneCount: number;
@@ -334,6 +329,7 @@ async function saveToCache(params: {
         city_name: params.cityName.trim().toLowerCase(),
         country: params.country || null,
         region: params.region || null,
+        heygen_session_id: params.heygenSessionId,
         heygen_video_id: params.heygenVideoId,
         storyboard: params.storyboard,
         winner_package: params.winnerPackage || null,
@@ -382,13 +378,70 @@ async function updateCache(
     if (updates.error) updateData.error = updates.error;
     if (updates.status === 'completed') updateData.completed_at = new Date().toISOString();
 
+    if (!HEYGEN_ID.test(heygenVideoId)) return;
+    // New films are found by their agent session; films made before 2026-10-03 by their video id.
     await supabaseAdmin
       .from('cristiano_city_videos')
       .update(updateData)
-      .eq('heygen_video_id', heygenVideoId);
+      .or(`heygen_session_id.eq.${heygenVideoId},heygen_video_id.eq.${heygenVideoId}`);
   } catch (err) {
     console.warn('[RENDER] Cache update failed:', err);
   }
+}
+
+/**
+ * Where a film stands, by the handle the screen holds (the agent session for new
+ * films; the video id for films made before 2026-10-03). The engine's two-step
+ * read (film.ts): the session names a video only once the agent has planned it;
+ * then the video is asked for its file. An unknown or transient answer is
+ * "rendering", never "failed" — a film still being made is never thrown away.
+ */
+async function filmStatus(handle: string): Promise<Record<string, unknown>> {
+  if (!HEYGEN_ID.test(handle)) return { videoId: handle, status: 'failed', error: 'Unknown film.' };
+
+  const { data: row } = await supabaseAdmin
+    .from('cristiano_city_videos')
+    .select('heygen_session_id, heygen_video_id')
+    .or(`heygen_session_id.eq.${handle},heygen_video_id.eq.${handle}`)
+    .limit(1)
+    .maybeSingle();
+
+  let videoId: string | null = row?.heygen_video_id ?? null;
+  const sessionId: string | null = row?.heygen_session_id ?? null;
+
+  if (videoId === null && sessionId !== null) {
+    const session = await agentSession(sessionId);
+    if (!session.ok) return { videoId: handle, status: 'rendering', note: session.failure.message };
+    if (session.value.error !== null) {
+      await updateCache(handle, { status: 'failed', error: session.value.error });
+      return { videoId: handle, status: 'failed', error: session.value.error };
+    }
+    if (session.value.videoId === null) return { videoId: handle, status: 'rendering', note: 'Planning your film.' };
+    videoId = session.value.videoId;
+    await supabaseAdmin.from('cristiano_city_videos').update({ heygen_video_id: videoId }).eq('heygen_session_id', sessionId);
+  }
+
+  const state = await agentVideo(videoId ?? handle);
+  if (!state.ok) return { videoId: handle, status: 'rendering', note: state.failure.message };
+  if (state.value.status === 'failed') {
+    const error = state.value.error ?? 'The film service could not finish it.';
+    await updateCache(handle, { status: 'failed', error });
+    return { videoId: handle, status: 'failed', error };
+  }
+  if (state.value.status !== 'completed' || state.value.url === null) {
+    return { videoId: handle, status: 'processing', note: state.value.error ?? 'Filming.' };
+  }
+  await updateCache(handle, {
+    status: 'completed',
+    videoUrl: state.value.url,
+    durationSeconds: state.value.seconds ?? undefined,
+  });
+  return {
+    videoId: handle,
+    status: 'completed',
+    videoUrl: state.value.url,
+    durationSeconds: state.value.seconds ?? undefined,
+  };
 }
 
 // ============================================================================
@@ -416,7 +469,6 @@ export default async function handler(
   let counted: Entitled | null = null;
 
   try {
-    const apiKey = getHeyGenKey();
 
     // ══════════════════════════════════════════════════════════════════════
     // GET: Status polling
@@ -430,47 +482,7 @@ export default async function handler(
         return;
       }
 
-      const statusResponse = await fetchWithTimeout(
-        `${HEYGEN_STATUS_URL}?video_id=${encodeURIComponent(videoId)}`,
-        {
-          method: 'GET',
-          headers: { 'X-Api-Key': apiKey },
-        },
-        HEYGEN_TIMEOUT_MS
-      );
-
-      if (!statusResponse.ok) {
-        const errorText = await statusResponse.text();
-        throw new Error(`HeyGen status check failed (${statusResponse.status}): ${errorText}`);
-      }
-
-      const statusData = await statusResponse.json();
-      const status = statusData.data;
-
-      console.log('[RENDER] Status for', videoId, ':', status.status);
-
-      // Update cache on completion or failure
-      if (status.status === 'completed' || status.status === 'failed') {
-        await updateCache(videoId, {
-          status: status.status,
-          videoUrl: status.video_url || undefined,
-          thumbnailUrl: status.thumbnail_url || undefined,
-          durationSeconds: status.duration || undefined,
-          error: status.error || undefined,
-        });
-      }
-
-      res.status(200).json({
-        videoId: status.video_id,
-        status: status.status === 'completed' ? 'completed'
-          : status.status === 'failed' ? 'failed'
-          : status.status === 'processing' ? 'processing'
-          : 'rendering',
-        videoUrl: status.video_url || undefined,
-        thumbnailUrl: status.thumbnail_url || undefined,
-        durationSeconds: status.duration || undefined,
-        error: status.error || undefined,
-      });
+      res.status(200).json(await filmStatus(videoId));
       return;
     }
 
@@ -543,7 +555,7 @@ export default async function handler(
             video: {
               id: inProgress.id,
               cityName: inProgress.city_name,
-              heygenVideoId: inProgress.heygen_video_id,
+              heygenVideoId: inProgress.heygen_session_id ?? inProgress.heygen_video_id,
               status: inProgress.status,
               createdAt: inProgress.created_at,
             },
@@ -560,48 +572,19 @@ export default async function handler(
         console.log('[RENDER] Submitting to HeyGen Video Agent for:', body.winnerCity);
         console.log('[RENDER] Prompt length:', videoAgentPrompt.length, 'chars');
 
-        // Submit to HeyGen Video Agent
-        // Video Agent V2 config only accepts: avatar_id, duration_sec, orientation.
-        // voice_id and look_id are NOT accepted (400: "Extra inputs are not permitted").
-        // Voice is set via the avatar's default in HeyGen dashboard.
-        // look_id is embedded in the prompt text as a hint instead.
-        const configObj: Record<string, unknown> = {
-          avatar_id: CRISTIANO_AVATAR_ID,
-          duration_sec: 120,
-          orientation: 'landscape',
-        };
-
-        console.log('[RENDER] Config:', JSON.stringify(configObj));
-
-        const renderResponse = await fetchWithTimeout(
-          HEYGEN_VIDEO_AGENT_URL,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Api-Key': apiKey,
-            },
-            body: JSON.stringify({
-              prompt: videoAgentPrompt,
-              config: configObj,
-            }),
-          },
-          HEYGEN_TIMEOUT_MS
-        );
-
-        if (!renderResponse.ok) {
-          const errorText = await renderResponse.text();
-          throw new Error(`HeyGen Video Agent failed (${renderResponse.status}): ${errorText}`);
+        // Submit to HeyGen's v3 video agent — the engine's call, with Cristiano's
+        // own face and voice as fields (film.ts startAgentFilm).
+        const started = await startAgentFilm({
+          prompt: videoAgentPrompt,
+          ...(CRISTIANO_LOOK_ID ? { avatarId: CRISTIANO_LOOK_ID } : {}),
+          ...(CRISTIANO_VOICE_ID ? { voiceId: CRISTIANO_VOICE_ID } : {}),
+        });
+        if (!started.ok) {
+          throw new Error(started.failure.message);
         }
-
-        const renderData = await renderResponse.json();
-        const heygenVideoId = renderData.data?.video_id || renderData.video_id;
-
-        if (!heygenVideoId) {
-          throw new Error('No video_id returned from HeyGen Video Agent');
-        }
-
-        console.log('[RENDER] Video Agent job submitted:', heygenVideoId);
+        const heygenSessionId = started.value.sessionId;
+        const heygenVideoId = started.value.videoId;
+        console.log('[RENDER] Video Agent session started:', heygenSessionId, 'video:', heygenVideoId ?? '(not yet named)');
         counted = null; // the film is under way — the count stands
 
         // Calculate word count for cache
@@ -614,6 +597,7 @@ export default async function handler(
           cityName: body.winnerCity,
           country: body.winnerCountry,
           region: body.winnerRegion,
+          heygenSessionId,
           heygenVideoId,
           storyboard: body.storyboard,
           winnerPackage: body.winnerPackage,
@@ -627,9 +611,10 @@ export default async function handler(
           success: true,
           cached: false,
           video: {
-            id: cacheId || heygenVideoId,
+            id: cacheId || heygenSessionId,
             cityName: body.winnerCity,
-            heygenVideoId,
+            // The handle the screen polls: the agent session (the video id comes later).
+            heygenVideoId: heygenSessionId,
             status: 'rendering',
             sceneCount: scenes?.length || 7,
             wordCount,
@@ -645,45 +630,7 @@ export default async function handler(
           return;
         }
 
-        const statusResponse = await fetchWithTimeout(
-          `${HEYGEN_STATUS_URL}?video_id=${encodeURIComponent(body.heygenVideoId)}`,
-          {
-            method: 'GET',
-            headers: { 'X-Api-Key': apiKey },
-          },
-          HEYGEN_TIMEOUT_MS
-        );
-
-        if (!statusResponse.ok) {
-          const errorText = await statusResponse.text();
-          throw new Error(`HeyGen status check failed (${statusResponse.status}): ${errorText}`);
-        }
-
-        const statusData = await statusResponse.json();
-        const status = statusData.data;
-
-        // Update cache
-        if (status.status === 'completed' || status.status === 'failed') {
-          await updateCache(body.heygenVideoId, {
-            status: status.status,
-            videoUrl: status.video_url || undefined,
-            thumbnailUrl: status.thumbnail_url || undefined,
-            durationSeconds: status.duration || undefined,
-            error: status.error || undefined,
-          });
-        }
-
-        res.status(200).json({
-          videoId: status.video_id,
-          status: status.status === 'completed' ? 'completed'
-            : status.status === 'failed' ? 'failed'
-            : status.status === 'processing' ? 'processing'
-            : 'rendering',
-          videoUrl: status.video_url || undefined,
-          thumbnailUrl: status.thumbnail_url || undefined,
-          durationSeconds: status.duration || undefined,
-          error: status.error || undefined,
-        });
+        res.status(200).json(await filmStatus(body.heygenVideoId));
         return;
       }
 
