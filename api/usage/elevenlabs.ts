@@ -9,7 +9,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireAdmin } from '../shared/entitlements.js';
 
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 
@@ -41,8 +41,8 @@ export default async function handler(
     return;
   }
 
-  // Require authentication — usage data should not be public
-  const auth = await requireAuth(req, res);
+  // Admin only (2026-10-03) — the vendor account's usage is not for customers
+  const auth = await requireAdmin(req, res);
   if (!auth) return;
 
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;

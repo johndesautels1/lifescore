@@ -15,7 +15,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature } from '../shared/entitlements.js';
 
 export const config = {
   maxDuration: 30,
@@ -34,7 +34,7 @@ export default async function handler(
   }
 
   // Require authentication
-  const auth = await requireAuth(req, res);
+  const auth = (await requireFeature(req, res, 'oliviaMinutesPerMonth'))?.auth ?? null;
   if (!auth) return;
 
   const apiKey = process.env.SIMLI_API_KEY;

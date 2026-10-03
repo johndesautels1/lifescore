@@ -16,7 +16,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature } from '../shared/entitlements.js';
 import { callClaude } from '../shared/anthropic.js';
 import { AI_MODELS } from '../shared/models.js';
 
@@ -438,7 +438,7 @@ export default async function handler(
   }
 
   // Auth required
-  const auth = await requireAuth(req, res);
+  const auth = (await requireFeature(req, res, 'cristianoVideos'))?.auth ?? null;
   if (!auth) return;
 
   try {

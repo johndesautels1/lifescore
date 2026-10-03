@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../../shared/rateLimit.js';
 import { handleCors } from '../../shared/cors.js';
-import { requireAuth } from '../../shared/auth.js';
+import { requireFeature } from '../../shared/entitlements.js';
 import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
 
 // ============================================================================
@@ -230,7 +230,7 @@ export default async function handler(
   }
 
   // Require authentication — uses HeyGen streaming credits
-  const auth = await requireAuth(req, res);
+  const auth = (await requireFeature(req, res, 'oliviaMinutesPerMonth'))?.auth ?? null;
   if (!auth) return;
 
   try {

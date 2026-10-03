@@ -13,7 +13,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { requireFeature } from '../shared/entitlements.js';
 import { openaiSpeech } from '../shared/openai.js';
 
 export const config = {
@@ -53,7 +53,7 @@ export default async function handler(
   }
 
   // Require authentication — calls ElevenLabs/OpenAI TTS APIs
-  const auth = await requireAuth(req, res);
+  const auth = (await requireFeature(req, res, 'oliviaMinutesPerMonth'))?.auth ?? null;
   if (!auth) return;
 
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;

@@ -129,3 +129,58 @@ describe('comparison grants', () => {
     expect(ent.GRANT_REPORT_WINDOW_SECONDS).toBe(30 * 24 * 60 * 60);
   });
 });
+
+describe('paid vendors are reached only behind a plan check', () => {
+  /** Hosts that cost money per call (faces, voices, films, decks, video models). */
+  const PAID_VENDOR = /api\.heygen\.com|simli\.(ai|com)|api\.d-id\.com|liveavatar|api\.elevenlabs\.io|api\.replicate\.com|gamma\.app|api\.x\.ai|kling/;
+  const PLAN_CHECK = /requireFeature|requireAdmin|consumeFeature|consumeOrDeny|requireJudgeReportAccess|requireComparisonGrant/;
+  /** Named exceptions, each with its reason. A new paid route is NOT one of these. */
+  const EXEMPT: Record<string, string> = {
+    'api/avatar/video-status.ts': 'polls a video already paid for',
+    'api/video/grok-status.ts': 'polls a video already paid for',
+    'api/emilia/speak.ts': "Emilia's voice — the help desk every user has",
+  };
+
+  function routeFiles(dir: string): string[] {
+    const out: string[] = [];
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) {
+        if (name !== 'shared') out.push(...routeFiles(path));
+      } else if (name.endsWith('.ts')) out.push(path.replace(/\\/g, '/'));
+    }
+    return out;
+  }
+
+  it('every route that calls a paid vendor checks the plan (or is a named exception)', () => {
+    const offenders = routeFiles('api').filter((f) => {
+      if (EXEMPT[f]) return false;
+      const src = readFileSync(f, 'utf8');
+      return PAID_VENDOR.test(src) && !PLAN_CHECK.test(src);
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  it("Olivia's faces check her allowance and Cristiano's storyboard checks his films", () => {
+    const expected: Record<string, string> = {
+      'api/olivia/avatar/heygen.ts': 'oliviaMinutesPerMonth',
+      'api/olivia/avatar/heygen-video.ts': 'oliviaMinutesPerMonth',
+      'api/olivia/avatar/streams.ts': 'oliviaMinutesPerMonth',
+      'api/olivia/avatar/did.ts': 'oliviaMinutesPerMonth',
+      'api/olivia/avatar/live.ts': 'oliviaMinutesPerMonth',
+      'api/avatar/simli-speak.ts': 'oliviaMinutesPerMonth',
+      'api/avatar/simli-session.ts': 'oliviaMinutesPerMonth',
+      'api/simli-config.ts': 'oliviaMinutesPerMonth',
+      'api/cristiano/storyboard.ts': 'cristianoVideos',
+    };
+    for (const [file, feature] of Object.entries(expected)) {
+      expect(readFileSync(file, 'utf8'), file).toContain(`requireFeature(req, res, '${feature}'`);
+    }
+  });
+
+  it('vendor quota routes are admin-only', () => {
+    for (const file of ['api/usage/check-quotas.ts', 'api/usage/elevenlabs.ts']) {
+      expect(readFileSync(file, 'utf8'), file).toContain('await requireAdmin(req, res)');
+    }
+  });
+});

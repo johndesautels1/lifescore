@@ -10,7 +10,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth, getAdminEmails } from '../shared/auth.js';
+import { getAdminEmails } from '../shared/auth.js';
+import { requireAdmin } from '../shared/entitlements.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 
 // ============================================================================
@@ -210,8 +211,8 @@ export default async function handler(
 ): Promise<void> {
   if (handleCors(req, res, 'same-app')) return;
 
-  // FIX RL2: Require authentication to prevent public access to quota data
-  const auth = await requireAuth(req, res);
+  // Admin only (2026-10-03): any signed-in user could read vendor quotas and POST usage deltas that fire admin alert emails
+  const auth = await requireAdmin(req, res);
   if (!auth) return;
 
   try {
