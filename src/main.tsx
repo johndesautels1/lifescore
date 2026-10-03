@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
+import './styles/fonts.css'
 import './index.css'
 import './styles/dark-mode.css'
 import { loadPublicSupabaseSettings } from './lib/publicConfig.ts'

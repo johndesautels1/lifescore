@@ -86,3 +86,14 @@ describe('the doors to both routes', () => {
     expect(settings).toContain("deleteText !== 'DELETE MY ACCOUNT'");
   });
 });
+
+describe('no visitor address goes to Google for fonts', () => {
+  it('the page and its stylesheets load fonts from our own site only', () => {
+    const files = ['index.html', 'src/main.tsx', 'src/index.css', 'src/components/AboutClues-layout.css'];
+    for (const f of files) expect(readFileSync(f, 'utf8'), f).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);
+    const fonts = readFileSync('src/styles/fonts.css', 'utf8');
+    expect(fonts).not.toMatch(/url\(https?:/);
+    expect(fonts.match(/url\(\/fonts\//g)?.length ?? 0).toBeGreaterThan(0);
+    expect(readFileSync('src/main.tsx', 'utf8')).toContain("import './styles/fonts.css'");
+  });
+});
