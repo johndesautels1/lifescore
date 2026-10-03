@@ -170,6 +170,8 @@ export function useEmilia(): UseEmiliaReturn {
           body: JSON.stringify({
             threadId,
             message: trimmed,
+            // The conversation so far — Emilia runs on Claude, which keeps no server-side threads
+            history: messages.map((m) => ({ role: m.role, content: m.content })),
           }),
         });
 
@@ -199,7 +201,7 @@ export function useEmilia(): UseEmiliaReturn {
         setIsLoading(false);
       }
     },
-    [threadId]
+    [threadId, messages]
   );
 
   // Retry last failed message

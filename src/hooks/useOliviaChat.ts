@@ -32,6 +32,7 @@ import {
 import { isSupabaseConfigured } from '../lib/supabase';
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateLLMCost } from '../utils/costCalculator';
+import { AI_MODELS } from '../../api/shared/models';
 
 // ============================================================================
 // SAVED COMPARISONS SUMMARY BUILDER
@@ -229,6 +230,7 @@ export function useOliviaChat(
       // This ensures Olivia knows about the selected report
       const response = await sendMessage(userMessage, {
         threadId: threadId || undefined,
+        history: messages.map(m => ({ role: m.role, content: m.content })),
         context: context || undefined,
         textSummary: textSummary || undefined,
       });
@@ -249,10 +251,10 @@ export function useOliviaChat(
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // FIX #73: Record Olivia chat cost (GPT-4 Turbo tokens)
+      // FIX #73: Record Olivia chat cost (her model is AI_MODELS.writer)
       if (response.usage) {
         const { inputTokens, outputTokens } = response.usage;
-        const costs = calculateLLMCost('gpt-4-turbo', inputTokens, outputTokens);
+        const costs = calculateLLMCost(AI_MODELS.writer.id, inputTokens, outputTokens);
         appendServiceCost('olivia', {
           threadId: response.threadId,
           inputTokens,
@@ -340,7 +342,7 @@ export function useOliviaChat(
       setIsTyping(false);
       abortControllerRef.current = null;
     }
-  }, [threadId, context, textSummary, isContextLoading, isTyping, generateMessageId, user, dbConversationId, comparisonResult]);
+  }, [threadId, messages, context, textSummary, isContextLoading, isTyping, generateMessageId, user, dbConversationId, comparisonResult]);
 
   /**
    * Clear chat history and start fresh

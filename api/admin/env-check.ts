@@ -43,7 +43,7 @@ const ENV_VARS: EnvVarDef[] = [
 
   // --- LLM Provider Keys ---
   { name: 'ANTHROPIC_API_KEY', description: 'Anthropic — Claude Opus (Judge) + Sonnet', category: 'LLM Providers', side: 'server' },
-  { name: 'OPENAI_API_KEY', description: 'OpenAI — GPT-4o evaluator, Olivia assistant, TTS', category: 'LLM Providers', side: 'server' },
+  { name: 'OPENAI_API_KEY', description: 'OpenAI — GPT evaluator and voice fallback', category: 'LLM Providers', side: 'server' },
   { name: 'GEMINI_API_KEY', description: 'Google — Gemini 3.1 Pro evaluator', category: 'LLM Providers', side: 'server' },
   { name: 'XAI_API_KEY', description: 'xAI — Grok 4 evaluator', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_KEY', description: 'Alias for XAI_API_KEY', category: 'LLM Providers', side: 'server' },
@@ -95,10 +95,6 @@ const ENV_VARS: EnvVarDef[] = [
   // --- Email (Resend) ---
   { name: 'RESEND_API_KEY', description: 'Resend email API key', category: 'Email (Resend)', side: 'server' },
   { name: 'RESEND_FROM_EMAIL', description: 'Default from email address', category: 'Email (Resend)', side: 'server' },
-
-  // --- AI Assistants ---
-  { name: 'OPENAI_ASSISTANT_ID', description: 'OpenAI assistant ID for Olivia', category: 'AI Assistants', side: 'server' },
-  { name: 'EMILIA_ASSISTANT_ID', description: 'OpenAI assistant ID for Emilia', category: 'AI Assistants', side: 'server' },
 
   // --- Caching (Vercel KV) ---
   { name: 'KV_REST_API_URL', description: 'Vercel KV REST API URL', category: 'Caching (KV)', side: 'server' },

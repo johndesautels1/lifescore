@@ -1,93 +1,67 @@
 /**
  * LIFE SCORE - Olivia Chat API
- * Main chat endpoint using OpenAI Assistants API
+ *
+ * POST /api/olivia/chat
+ *   { message, history?, threadId?, context?, textSummary? }
+ *   → { threadId, messageId, response, model, usage }
+ *
+ * Olivia ran on OpenAI's Assistants service until OpenAI switched it off on
+ * 26 August 2026. She now runs on Claude through the shared call point
+ * (api/shared/anthropic.ts), model AI_MODELS.writer:
+ *   - her instructions and knowledge base are read from docs/ (api/shared/knowledge.ts)
+ *     and cached by Claude, so the long knowledge base is billed in full only when it changes;
+ *   - the comparison the user is viewing is added as a second cached block;
+ *   - the conversation so far comes from the browser (history) — Claude keeps no threads;
+ *   - get_field_evidence looks up the sources behind a metric of the user's OWN saved
+ *     comparison (api/shared/fieldEvidence.ts) directly, with no internal HTTP hop.
+ * Each message counts one Olivia message from the plan's monthly allowance.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { randomUUID } from 'node:crypto';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { requireFeature, refundFeature } from '../shared/entitlements.js';
+import {
+  callClaude,
+  cleanConversation,
+  type ClaudeMessage,
+  type ClaudeTextBlock,
+  type ClaudeTool,
+  type ClaudeToolResultBlock,
+} from '../shared/anthropic.js';
+import { AI_MODELS } from '../shared/models.js';
+import { loadKnowledge } from '../shared/knowledge.js';
+import { lookupFieldEvidence } from '../shared/fieldEvidence.js';
 
 // ============================================================================
-// CONSTANTS
+// LIMITS
 // ============================================================================
 
-const OPENAI_API_BASE = 'https://api.openai.com/v1';
-const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for assistant responses
-const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || 'asst_3wbVjyY629u7fDylaK0s5gsM';
+/** Whole request, tool rounds included (the route may run for 120 s). */
+const CHAT_TIMEOUT_MS = 110_000;
+const MAX_HISTORY_TURNS = 20;
+const MAX_TURN_CHARS = 4_000;
+const MAX_MESSAGE_CHARS = 4_000;
+const MAX_CONTEXT_CHARS = 200_000;
+const MAX_TOOL_ROUNDS = 3;
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface ChatRequest {
-  threadId?: string;
-  message: string;
-  context?: any; // LifeScoreContext
-  textSummary?: string; // Pre-built text summary from context API
-  generateAudio?: boolean;
-}
-
-interface OpenAIMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: Array<{
-    type: 'text';
-    text: { value: string };
-  }>;
-}
-
-interface ToolCall {
-  id: string;
-  type: 'function';
-  function: {
-    name: string;
-    arguments: string;
-  };
-}
-
-interface OpenAIRun {
-  id: string;
-  status: 'queued' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'expired' | 'requires_action';
-  thread_id: string;
-  required_action?: {
-    type: 'submit_tool_outputs';
-    submit_tool_outputs: {
-      tool_calls: ToolCall[];
-    };
-  };
-  // Token usage (available after completion)
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
+  threadId?: unknown;
+  message?: unknown;
+  history?: unknown;
+  context?: any; // LifeScoreContext, built by /api/olivia/context
+  textSummary?: unknown; // Pre-built text summary from the context API
 }
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-/**
- * Get OpenAI API key
- */
-function getOpenAIKey(): string {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) {
-    throw new Error('OPENAI_API_KEY not configured');
-  }
-  return key;
-}
-
-/**
- * Strip OpenAI citation annotations from response text
- * These look like: 【4:9†OLIVIA_KNOWLEDGE_BASE.md】
- */
-function stripCitations(text: string): string {
-  // Match patterns like 【number:number†filename】
-  return text.replace(/【\d+:\d+†[^\】]+】/g, '').trim();
-}
 
 /**
  * Build context message for Olivia with ALL 100 metrics
@@ -188,399 +162,33 @@ function buildContextMessage(context: any, textSummary?: string): string {
 }
 
 // ============================================================================
-// FUNCTION CALLING - FIELD EVIDENCE
+// TOOL - FIELD EVIDENCE
 // ============================================================================
 
-/**
- * Call the field-evidence API to get sources for a metric
- */
-async function callFieldEvidenceAPI(
-  comparisonId: string,
-  metricId: string,
-  city?: string,
-  authToken?: string
-): Promise<string> {
-  try {
-    // Use internal API call (same server)
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_BASE_URL || 'https://clueslifescore.com';
-
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-    const response = await fetchWithTimeout(
-      `${baseUrl}/api/olivia/field-evidence`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ comparisonId, metricId, city }),
-      },
-      10000
-    );
-
-    if (!response.ok) {
-      return JSON.stringify({ error: 'Could not fetch evidence', metricId });
-    }
-
-    const data = await response.json();
-    return JSON.stringify(data);
-  } catch (error) {
-    console.error('[OLIVIA/CHAT] Field evidence API error:', error);
-    return JSON.stringify({ error: 'Evidence lookup failed', metricId });
-  }
-}
-
-/**
- * Handle tool calls from the assistant
- */
-async function handleToolCalls(
-  toolCalls: ToolCall[],
-  comparisonId?: string,
-  authToken?: string
-): Promise<Array<{ tool_call_id: string; output: string }>> {
-  const outputs: Array<{ tool_call_id: string; output: string }> = [];
-
-  for (const toolCall of toolCalls) {
-    if (toolCall.function.name === 'getFieldEvidence') {
-      const args = JSON.parse(toolCall.function.arguments);
-      const result = await callFieldEvidenceAPI(
-        args.comparisonId || comparisonId || '',
-        args.metricId,
-        args.city,
-        authToken
-      );
-      outputs.push({ tool_call_id: toolCall.id, output: result });
-      console.log('[OLIVIA/CHAT] Tool call result for', args.metricId, ':', result.substring(0, 100));
-    } else {
-      // Unknown function - return error
-      outputs.push({
-        tool_call_id: toolCall.id,
-        output: JSON.stringify({ error: `Unknown function: ${toolCall.function.name}` }),
-      });
-    }
-  }
-
-  return outputs;
-}
-
-/**
- * Submit tool outputs back to the run
- */
-async function submitToolOutputs(
-  apiKey: string,
-  threadId: string,
-  runId: string,
-  toolOutputs: Array<{ tool_call_id: string; output: string }>
-): Promise<OpenAIRun> {
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads/${threadId}/runs/${runId}/submit_tool_outputs`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2',
-      },
-      body: JSON.stringify({ tool_outputs: toolOutputs }),
+const FIELD_EVIDENCE_TOOL: ClaudeTool = {
+  name: 'get_field_evidence',
+  description:
+    'Look up the web sources (titles, links and quoted snippets) behind one metric of the comparison the user is ' +
+    'viewing. Use it when the user asks where a score came from or wants proof. metricId is the metric id from ' +
+    'the comparison data (for example "pf_01_cannabis_legal"); city narrows the sources to one of the two cities.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      metricId: { type: 'string', description: 'The metric id from the comparison data.' },
+      city: { type: 'string', description: 'Optional: one of the two compared cities.' },
     },
-    OPENAI_TIMEOUT_MS
-  );
+    required: ['metricId'],
+    additionalProperties: false,
+  },
+  strict: true,
+};
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to submit tool outputs: ${error}`);
-  }
-
-  return response.json();
-}
-
-// ============================================================================
-// OPENAI ASSISTANTS API FUNCTIONS
-// ============================================================================
-
-/**
- * Create a new thread
- */
-async function createThread(apiKey: string): Promise<string> {
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2',
-      },
-      body: JSON.stringify({}),
-    },
-    OPENAI_TIMEOUT_MS
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to create thread: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.id;
-}
-
-/**
- * Add a message to thread
- */
-async function addMessage(
-  apiKey: string,
-  threadId: string,
-  content: string,
-  role: 'user' | 'assistant' = 'user'
-): Promise<string> {
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads/${threadId}/messages`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2',
-      },
-      body: JSON.stringify({ role, content }),
-    },
-    OPENAI_TIMEOUT_MS
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to add message: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.id;
-}
-
-/**
- * Run the assistant on a thread
- */
-async function createRun(
-  apiKey: string,
-  threadId: string,
-  assistantId: string,
-  additionalInstructions?: string
-): Promise<OpenAIRun> {
-  const body: any = { assistant_id: assistantId };
-  if (additionalInstructions) {
-    body.additional_instructions = additionalInstructions;
-  }
-
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads/${threadId}/runs`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2',
-      },
-      body: JSON.stringify(body),
-    },
-    OPENAI_TIMEOUT_MS
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to create run: ${error}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Poll run status until complete, handling tool calls automatically
- */
-async function waitForRun(
-  apiKey: string,
-  threadId: string,
-  runId: string,
-  comparisonId?: string,
-  maxAttempts: number = 60,
-  authToken?: string
-): Promise<OpenAIRun> {
-  for (let i = 0; i < maxAttempts; i++) {
-    const response = await fetchWithTimeout(
-      `${OPENAI_API_BASE}/threads/${threadId}/runs/${runId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'OpenAI-Beta': 'assistants=v2',
-        },
-      },
-      OPENAI_TIMEOUT_MS
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Failed to get run status: ${error}`);
-    }
-
-    const run: OpenAIRun = await response.json();
-
-    if (run.status === 'completed') {
-      return run;
-    }
-
-    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
-      throw new Error(`Run ${run.status}`);
-    }
-
-    // Handle tool calls (function calling)
-    if (run.status === 'requires_action' && run.required_action?.type === 'submit_tool_outputs') {
-      const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
-      console.log('[OLIVIA/CHAT] Handling', toolCalls.length, 'tool calls');
-
-      // Execute the tool calls
-      const toolOutputs = await handleToolCalls(toolCalls, comparisonId, authToken);
-
-      // Submit the results back to OpenAI
-      await submitToolOutputs(apiKey, threadId, runId, toolOutputs);
-      console.log('[OLIVIA/CHAT] Submitted tool outputs, continuing run');
-
-      // Continue polling (don't count this as an attempt)
-      continue;
-    }
-
-    // Wait 500ms before next poll (reduced from 1000ms for faster response)
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-
-  throw new Error('Run timed out');
-}
-
-/**
- * List runs on a thread to check for active ones
- */
-async function listRuns(
-  apiKey: string,
-  threadId: string,
-  limit: number = 10
-): Promise<OpenAIRun[]> {
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads/${threadId}/runs?limit=${limit}`,
-    {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'OpenAI-Beta': 'assistants=v2',
-      },
-    },
-    OPENAI_TIMEOUT_MS
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to list runs: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.data;
-}
-
-/**
- * Cancel an active run
- */
-async function cancelRun(
-  apiKey: string,
-  threadId: string,
-  runId: string
-): Promise<OpenAIRun> {
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads/${threadId}/runs/${runId}/cancel`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2',
-      },
-    },
-    OPENAI_TIMEOUT_MS
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to cancel run: ${error}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Check for and cancel any active runs on a thread
- * Returns true if runs were cancelled, false if no active runs
- */
-async function cancelActiveRuns(apiKey: string, threadId: string): Promise<boolean> {
-  const runs = await listRuns(apiKey, threadId, 5);
-  const activeStatuses = ['queued', 'in_progress', 'requires_action'];
-  const activeRuns = runs.filter(run => activeStatuses.includes(run.status));
-
-  if (activeRuns.length === 0) {
-    return false;
-  }
-
-  console.log('[OLIVIA/CHAT] Found', activeRuns.length, 'active run(s), cancelling...');
-
-  for (const run of activeRuns) {
-    try {
-      await cancelRun(apiKey, threadId, run.id);
-      console.log('[OLIVIA/CHAT] Cancelled run:', run.id);
-    } catch (err) {
-      // Run may have already completed/cancelled, ignore
-      console.log('[OLIVIA/CHAT] Could not cancel run:', run.id, err);
-    }
-  }
-
-  // Wait for cancellation to take effect - poll until no active runs
-  for (let i = 0; i < 10; i++) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const checkRuns = await listRuns(apiKey, threadId, 5);
-    const stillActive = checkRuns.filter(run => activeStatuses.includes(run.status));
-    if (stillActive.length === 0) {
-      console.log('[OLIVIA/CHAT] All runs cancelled successfully');
-      return true;
-    }
-    console.log('[OLIVIA/CHAT] Still waiting for', stillActive.length, 'run(s) to cancel...');
-  }
-
-  console.log('[OLIVIA/CHAT] Warning: Some runs may still be active after cancellation attempts');
-  return true;
-}
-
-/**
- * Get messages from thread
- */
-async function getMessages(
-  apiKey: string,
-  threadId: string,
-  limit: number = 1
-): Promise<OpenAIMessage[]> {
-  const response = await fetchWithTimeout(
-    `${OPENAI_API_BASE}/threads/${threadId}/messages?limit=${limit}&order=desc`,
-    {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'OpenAI-Beta': 'assistants=v2',
-      },
-    },
-    OPENAI_TIMEOUT_MS
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to get messages: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.data;
+async function runFieldEvidenceTool(input: unknown, userId: string, comparisonId: string | undefined): Promise<string> {
+  const args = (typeof input === 'object' && input !== null ? input : {}) as { metricId?: unknown; city?: unknown };
+  if (typeof args.metricId !== 'string' || !args.metricId) return JSON.stringify({ error: 'metricId is required' });
+  if (!comparisonId) return JSON.stringify({ error: 'No saved comparison is open, so there are no sources to look up.' });
+  const result = await lookupFieldEvidence(userId, comparisonId, args.metricId, typeof args.city === 'string' ? args.city : undefined);
+  return JSON.stringify(result.ok ? result.response : { error: result.error, metricId: args.metricId });
 }
 
 // ============================================================================
@@ -604,124 +212,98 @@ export default async function handler(
     return;
   }
 
-  // JWT auth — reject unauthenticated requests
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+  const body = (req.body || {}) as ChatRequest;
+  const message = typeof body.message === 'string' ? body.message.trim() : '';
+  if (!message || message.length > MAX_MESSAGE_CHARS) {
+    res.status(400).json({ error: `message is required (${MAX_MESSAGE_CHARS} characters at most)` });
+    return;
+  }
+
+  // Sign-in + an Olivia plan; counts one message from this month's allowance.
+  const entitled = await requireFeature(req, res, 'oliviaMinutesPerMonth', { consume: true });
+  if (!entitled) return;
+
+  const knowledge = loadKnowledge('olivia');
+  if (!knowledge.ok) {
+    await refundFeature(entitled.auth.userId, 'oliviaMinutesPerMonth', entitled.access.limits);
+    res.status(503).json({ error: 'Olivia is unavailable right now. Please try again shortly.', type: 'knowledge_unavailable' });
+    return;
+  }
 
   try {
-    const apiKey = getOpenAIKey();
-    const { threadId: existingThreadId, message, context, textSummary } = req.body as ChatRequest;
+    const threadId = typeof body.threadId === 'string' && body.threadId ? body.threadId.slice(0, 100) : randomUUID();
+    const context = body.context;
+    const textSummary = typeof body.textSummary === 'string' ? body.textSummary : undefined;
 
-    if (!message || typeof message !== 'string') {
-      res.status(400).json({ error: 'message is required' });
-      return;
-    }
-
-    console.log('[OLIVIA/CHAT] Processing message:', message.substring(0, 50) + '...');
-
-    // Create or use existing thread
-    let threadId = existingThreadId;
-    if (!threadId) {
-      threadId = await createThread(apiKey);
-      console.log('[OLIVIA/CHAT] Created new thread:', threadId);
-    } else {
-      // Existing thread - check for and cancel any active runs before adding message
-      try {
-        const hadActiveRuns = await cancelActiveRuns(apiKey, threadId);
-        if (hadActiveRuns) {
-          console.log('[OLIVIA/CHAT] Cancelled active runs on existing thread');
-        }
-      } catch (err) {
-        console.warn('[OLIVIA/CHAT] Could not check/cancel active runs:', err);
-        // Continue anyway - the addMessage will fail if runs are still active
-      }
-    }
-
-    // Build context instructions for this conversation (with ALL 100 metrics)
-    // IMPORTANT: Always inject context when available, not just for new threads
-    // This allows users to select a report AFTER starting a chat and Olivia will see it
-    let additionalInstructions: string | undefined;
+    const panel = `\n\nMODELS IN USE TODAY\nThe judge is ${AI_MODELS.judge.name}. Claude's evaluator seat is ${AI_MODELS.claudeEvaluator.name}. You are ${AI_MODELS.writer.name}.`;
+    const system: ClaudeTextBlock[] = [
+      { type: 'text', text: knowledge.text + panel, cache_control: { type: 'ephemeral', ttl: '1h' } },
+    ];
+    // The comparison the user is viewing, when there is one (always sent, so a report
+    // chosen after the chat started is seen too).
     if (context) {
-      additionalInstructions = buildContextMessage(context, textSummary);
-      console.log('[OLIVIA/CHAT] Added context with', context?.topMetrics?.length || 0, 'metrics, length:', additionalInstructions.length);
+      const contextText = buildContextMessage(context, textSummary).slice(0, MAX_CONTEXT_CHARS);
+      if (contextText.trim()) system.push({ type: 'text', text: contextText, cache_control: { type: 'ephemeral' } });
     }
 
-    // Add user message to thread with retry on active run error
-    let messageAdded = false;
-    for (let attempt = 0; attempt < 3 && !messageAdded; attempt++) {
-      try {
-        await addMessage(apiKey, threadId, message, 'user');
-        messageAdded = true;
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        if (errorMsg.includes('while a run') && errorMsg.includes('is active')) {
-          console.log('[OLIVIA/CHAT] Active run detected, cancelling and retrying (attempt', attempt + 1, ')');
-          await cancelActiveRuns(apiKey, threadId);
-        } else {
-          throw err; // Re-throw non-active-run errors
-        }
+    const messages: ClaudeMessage[] = [...cleanConversation(body.history, MAX_HISTORY_TURNS, MAX_TURN_CHARS), { role: 'user', content: message }];
+    const comparisonId: string | undefined =
+      typeof context?.comparison?.comparisonId === 'string' ? context.comparison.comparisonId : undefined;
+    const deadline = Date.now() + CHAT_TIMEOUT_MS;
+    const usage = { inputTokens: 0, outputTokens: 0 };
+    let responseText = '';
+
+    for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
+      const reply = await callClaude({
+        model: AI_MODELS.writer.id,
+        maxTokens: 8000,
+        effort: 'low', // conversation, spoken aloud — quick and natural
+        system,
+        messages,
+        tools: round < MAX_TOOL_ROUNDS ? [FIELD_EVIDENCE_TOOL] : undefined,
+        timeoutMs: Math.max(5_000, deadline - Date.now()),
+        label: 'olivia-chat',
+      });
+      if (!reply.ok) throw new Error(reply.message);
+
+      usage.inputTokens += reply.usage.inputTokens + reply.usage.cacheReadTokens + reply.usage.cacheWriteTokens;
+      usage.outputTokens += reply.usage.outputTokens;
+
+      if (reply.stopReason !== 'tool_use' || reply.toolUses.length === 0) {
+        responseText = reply.text;
+        break;
       }
-    }
-    if (!messageAdded) {
-      throw new Error('Failed to add message after multiple attempts - thread may have stuck runs');
-    }
 
-    // Run the assistant
-    const run = await createRun(apiKey, threadId, ASSISTANT_ID, additionalInstructions);
-    console.log('[OLIVIA/CHAT] Created run:', run.id);
-
-    // Extract comparisonId for function calling
-    const comparisonId = context?.comparison?.comparisonId;
-
-    // Forward auth token for internal API calls (field-evidence)
-    const authToken = req.headers.authorization?.replace('Bearer ', '');
-
-    // Wait for completion (handles tool calls automatically)
-    const completedRun = await waitForRun(apiKey, threadId, run.id, comparisonId, 60, authToken);
-    console.log('[OLIVIA/CHAT] Run completed');
-
-    // Log token usage for cost tracking
-    if (completedRun.usage) {
-      console.log(`[OLIVIA/CHAT] Token usage: ${completedRun.usage.prompt_tokens} in / ${completedRun.usage.completion_tokens} out`);
+      // Answer every tool call in ONE user message, then let Olivia continue.
+      messages.push({ role: 'assistant', content: reply.content });
+      const results: ClaudeToolResultBlock[] = await Promise.all(
+        reply.toolUses.map(async (call) => ({
+          type: 'tool_result' as const,
+          tool_use_id: call.id,
+          content: call.name === FIELD_EVIDENCE_TOOL.name
+            ? await runFieldEvidenceTool(call.input, entitled.auth.userId, comparisonId)
+            : JSON.stringify({ error: `Unknown tool: ${call.name}` }),
+        })),
+      );
+      messages.push({ role: 'user', content: results });
+      responseText = reply.text;
     }
 
-    // Get the assistant's response
-    const messages = await getMessages(apiKey, threadId, 1);
-    const assistantMessage = messages.find(m => m.role === 'assistant');
-
-    if (!assistantMessage) {
-      throw new Error('No assistant response received');
-    }
-
-    const rawResponse = assistantMessage.content
-      .filter(c => c.type === 'text')
-      .map(c => c.text.value)
-      .join('\n');
-
-    // Strip citation annotations like 【4:9†OLIVIA_KNOWLEDGE_BASE.md】
-    const responseText = stripCitations(rawResponse);
-
-    console.log('[OLIVIA/CHAT] Response length:', responseText.length);
+    if (!responseText) throw new Error('Olivia returned no answer');
 
     res.status(200).json({
       threadId,
-      messageId: assistantMessage.id,
+      messageId: randomUUID(),
       response: responseText,
-      // Include token usage for cost tracking
-      usage: completedRun.usage ? {
-        inputTokens: completedRun.usage.prompt_tokens,
-        outputTokens: completedRun.usage.completion_tokens,
-      } : undefined,
+      model: AI_MODELS.writer.id,
+      usage,
     });
   } catch (error) {
     console.error('[OLIVIA/CHAT] Error:', error);
-
-    const message = error instanceof Error ? error.message : 'Chat request failed';
-    const isNotFound = message.includes('not found') || message.includes('404');
-
-    res.status(isNotFound ? 404 : 500).json({
-      error: message,
-      type: isNotFound ? 'assistant_not_found' : 'chat_api_error',
+    await refundFeature(entitled.auth.userId, 'oliviaMinutesPerMonth', entitled.access.limits);
+    res.status(502).json({
+      error: 'Olivia could not answer just now. Please try again.',
+      type: 'chat_api_error',
     });
   }
 }

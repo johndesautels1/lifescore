@@ -1,136 +1,48 @@
-# Olivia Knowledge Base Sync Guide
+# Olivia and Emilia Knowledge — How It Reaches Them
 
 **Document ID:** LS-SYNC-001
-**Last Updated:** January 30, 2026
+**Last Updated:** October 3, 2026
 
 ---
 
 ## Overview
 
-Olivia uses OpenAI's Assistants API with a knowledge base file (`OLIVIA_KNOWLEDGE_BASE.md`). When app features change, this file must be updated AND synced to OpenAI.
+Olivia and Emilia run on Claude (model `AI_MODELS.writer` in `api/shared/models.ts`).
+They read their instructions and knowledge **straight from the deployed `docs/` files**
+on every conversation (`api/shared/knowledge.ts`). There is no upload and no sync step.
 
-## The Problem
+Until August 2026 both ran on OpenAI's Assistants service, which needed every edit to be
+uploaded with a "sync" button. OpenAI switched that service off on 26 August 2026; the
+sync routes and scripts were removed on 3 October 2026.
 
-Changes to manuals or app features don't automatically reach Olivia because:
-1. The knowledge base is a **static file** in the repo
-2. It must be **manually uploaded** to OpenAI's Assistant platform
-3. Without sync, Olivia gives outdated or incorrect answers
+## The files
 
-## Solution: Knowledge Sync Workflow
+| Assistant | File | Role |
+|-----------|------|------|
+| Olivia | `docs/OLIVIA_GPT_INSTRUCTIONS.md` | Who she is and how she speaks |
+| Olivia | `docs/OLIVIA_KNOWLEDGE_BASE.md` | Everything she knows about LIFE SCORE |
+| Emilia | `docs/EMILIA_INSTRUCTIONS.md` | Who she is and how she answers |
+| Emilia | `docs/manuals/USER_MANUAL.md` | How to use every feature |
+| Emilia | `docs/manuals/CUSTOMER_SERVICE_MANUAL.md` | Support, plans, billing, contact |
+| Emilia | `docs/manuals/TECHNICAL_SUPPORT_MANUAL.md` | How the app works |
+| Emilia | `docs/manuals/LEGAL_COMPLIANCE_MANUAL.md` | Privacy and data rights |
+| Emilia | `docs/manuals/APP_SCHEMA_MANUAL.md` | What the app stores |
 
-### Step 1: Update the Knowledge Base
+The list itself lives in `api/shared/knowledge.ts`; change it there.
 
-Edit `D:\LifeScore\docs\OLIVIA_KNOWLEDGE_BASE.md` with new information.
+## Updating what they know
 
-**What to update:**
-- New features (Section 36)
-- Changed tier pricing/limits (Section 36.1)
-- New assistants like Emilia (Section 36.3)
-- Support contact changes (Section 36.5)
-- Any user-facing changes Olivia should know about
+1. Edit the file.
+2. Commit and push to `main`.
+3. Vercel deploys; the next conversation uses the new text.
+4. Admin panel → Help → APIs → **Check knowledge files** confirms every file reached the
+   live server, with its size.
 
-### Step 2: Sync to OpenAI
+The model names Olivia quotes ("the judge is …") are added from `AI_MODELS` at request
+time, so the documents never need a model version written into them.
 
-Run the sync script:
+## Cost
 
-```bash
-cd D:\LifeScore
-npx ts-node scripts/sync-olivia-knowledge.ts
-```
-
-**Requirements:**
-- `OPENAI_API_KEY` environment variable must be set
-- Internet connection to OpenAI API
-
-### Step 3: Verify
-
-Test by asking Olivia about the new feature in the app.
-
----
-
-## When to Sync
-
-**ALWAYS sync after:**
-- Adding new app features
-- Changing subscription tiers or pricing
-- Adding new assistants (like Emilia)
-- Changing domain names or support contacts
-- Any Phase completion (Phase 1, 2, 3, etc.)
-
-**Sync checklist for manual updates:**
-1. [ ] Updated OLIVIA_KNOWLEDGE_BASE.md
-2. [ ] Ran sync script
-3. [ ] Tested Olivia responses in app
-
----
-
-## Assistant Details
-
-| Property | Value |
-|----------|-------|
-| Assistant ID | `asst_3wbVjyY629u7fDylaK0s5gsM` |
-| Model | GPT-4 Turbo |
-| Knowledge File | OLIVIA_KNOWLEDGE_BASE.md |
-| Platform | https://platform.openai.com/assistants |
-
----
-
-## Manual Sync (if script fails)
-
-1. Go to https://platform.openai.com/assistants
-2. Select assistant `asst_3wbVjyY629u7fDylaK0s5gsM`
-3. Under "Files", delete the old knowledge base
-4. Upload new `OLIVIA_KNOWLEDGE_BASE.md`
-5. Save changes
-
----
-
-## Future Improvement: Automated Sync
-
-Add to CI/CD pipeline (Vercel):
-
-```json
-// vercel.json (example)
-{
-  "buildCommand": "npm run build && npm run sync-olivia"
-}
-```
-
-```json
-// package.json
-{
-  "scripts": {
-    "sync-olivia": "ts-node scripts/sync-olivia-knowledge.ts"
-  }
-}
-```
-
-**Warning:** Automated sync on every deploy may cause API costs. Consider triggering only when the knowledge base file changes.
-
----
-
-## Related Files
-
-| File | Purpose |
-|------|---------|
-| `docs/OLIVIA_KNOWLEDGE_BASE.md` | The knowledge base (310KB) |
-| `scripts/sync-olivia-knowledge.ts` | Sync script |
-| `docs/OLIVIA_GPT_INSTRUCTIONS.md` | Olivia's personality/instructions |
-| `api/olivia/chat.ts` | Chat API using the assistant |
-
----
-
-## Troubleshooting
-
-**"Olivia doesn't know about X feature"**
-→ Check if OLIVIA_KNOWLEDGE_BASE.md includes it, then run sync
-
-**"Sync script fails with auth error"**
-→ Verify OPENAI_API_KEY is set: `echo $OPENAI_API_KEY`
-
-**"File too large to upload"**
-→ OpenAI limit is 512MB. Current file is ~310KB (well under limit)
-
----
-
-*This document ensures Olivia always has current knowledge.*
+The instructions and knowledge are sent as one block marked for Claude's prompt cache
+(one hour). The first conversation after a change pays the full input price for it;
+later messages read it from the cache at a small fraction of that.

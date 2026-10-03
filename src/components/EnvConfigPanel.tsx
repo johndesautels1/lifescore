@@ -71,10 +71,9 @@ const EnvConfigPanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [revealedVars, setRevealedVars] = useState<Set<string>>(new Set());
 
-  // Knowledge base sync state
-  const [syncingOlivia, setSyncingOlivia] = useState(false);
-  const [syncingEmilia, setSyncingEmilia] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ target: string; success: boolean; message: string } | null>(null);
+  // Knowledge check state
+  const [checkingKnowledge, setCheckingKnowledge] = useState(false);
+  const [knowledgeResult, setKnowledgeResult] = useState<{ success: boolean; lines: string[] } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,29 +133,40 @@ const EnvConfigPanel: React.FC = () => {
     });
   };
 
-  const handleSync = useCallback(async (target: 'olivia' | 'emilia') => {
-    const setLoading = target === 'olivia' ? setSyncingOlivia : setSyncingEmilia;
-    setLoading(true);
-    setSyncResult(null);
-
+  /**
+   * Olivia and Emilia read their instructions and manuals straight from the
+   * deployment (no sync step since they moved to Claude). This proves every file
+   * arrived on the live server, with its size.
+   */
+  const handleCheckKnowledge = useCallback(async () => {
+    setCheckingKnowledge(true);
+    setKnowledgeResult(null);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`/api/admin/sync-${target}-knowledge`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const label = target === 'olivia' ? 'Olivia' : 'Emilia';
-        setSyncResult({ target, success: true, message: `${label} knowledge base synced successfully` });
-      } else {
-        setSyncResult({ target, success: false, message: data.error || 'Sync failed' });
+      const res = await fetch('/api/admin/knowledge-status', { headers });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok || typeof data !== 'object' || data === null) {
+        setKnowledgeResult({ success: false, lines: [`Check failed (${res.status})`] });
+        return;
       }
+      const lines: string[] = [];
+      let success = true;
+      for (const assistant of ['olivia', 'emilia'] as const) {
+        const entry = (data as Record<string, { ok?: boolean; files?: Array<{ name: string; chars: number }>; missing?: string[] }>)[assistant];
+        const label = assistant === 'olivia' ? 'Olivia' : 'Emilia';
+        if (entry?.ok && entry.files) {
+          const total = entry.files.reduce((sum, f) => sum + f.chars, 0);
+          lines.push(`${label}: ${entry.files.length} files, ${new Intl.NumberFormat('en-US').format(total)} characters`);
+        } else {
+          success = false;
+          lines.push(`${label}: missing ${(entry?.missing ?? ['(unknown)']).join(', ')}`);
+        }
+      }
+      setKnowledgeResult({ success, lines });
     } catch {
-      setSyncResult({ target, success: false, message: 'Network error — could not reach server' });
+      setKnowledgeResult({ success: false, lines: ['Network error — could not reach server'] });
     } finally {
-      setLoading(false);
+      setCheckingKnowledge(false);
     }
   }, []);
 
@@ -204,41 +214,34 @@ const EnvConfigPanel: React.FC = () => {
         </p>
       </div>
 
-      {/* Knowledge Base Sync */}
+      {/* Knowledge check */}
       <div className="env-category env-sync-section">
         <div className="env-category-header">
-          <h4 className="env-category-title">AI Knowledge Base Sync</h4>
+          <h4 className="env-category-title">Olivia &amp; Emilia knowledge</h4>
         </div>
         <p className="env-sync-description">
-          Push updated manuals to OpenAI Assistants. Run after editing any documentation.
+          Olivia and Emilia read their instructions and manuals straight from the live site.
+          Edit the documents and push — there is nothing to sync. Check that every file arrived:
         </p>
         <div className="env-sync-buttons">
           <button
+            type="button"
             className="env-sync-btn"
-            onClick={() => handleSync('emilia')}
-            disabled={syncingEmilia}
+            onClick={handleCheckKnowledge}
+            disabled={checkingKnowledge}
           >
-            {syncingEmilia ? (
-              <><span className="env-sync-spinner" /> Syncing Emilia...</>
+            {checkingKnowledge ? (
+              <><span className="env-sync-spinner" /> Checking...</>
             ) : (
-              <>Sync Emilia (6 manuals)</>
-            )}
-          </button>
-          <button
-            className="env-sync-btn"
-            onClick={() => handleSync('olivia')}
-            disabled={syncingOlivia}
-          >
-            {syncingOlivia ? (
-              <><span className="env-sync-spinner" /> Syncing Olivia...</>
-            ) : (
-              <>Sync Olivia (knowledge base)</>
+              <>Check knowledge files</>
             )}
           </button>
         </div>
-        {syncResult && (
-          <div className={`env-sync-result ${syncResult.success ? 'success' : 'error'}`}>
-            {syncResult.success ? '✓' : '!'} {syncResult.message}
+        {knowledgeResult && (
+          <div className={`env-sync-result ${knowledgeResult.success ? 'success' : 'error'}`} role="status">
+            {knowledgeResult.lines.map((line) => (
+              <div key={line}>{knowledgeResult.success ? '✓' : '!'} {line}</div>
+            ))}
           </div>
         )}
       </div>

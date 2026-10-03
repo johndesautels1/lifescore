@@ -1,75 +1,35 @@
 /**
  * LIFE SCORE - Emilia Message API
- * Send message to Emilia and get response
+ * Send a message to Emilia, the help assistant, and get her answer.
  *
  * POST /api/emilia/message
+ *   { threadId, message, history? } → { success, response: { id, content, createdAt } }
+ *
+ * Emilia ran on OpenAI Assistants until OpenAI switched that service off on
+ * 26 August 2026. She now runs on Claude through the shared call point
+ * (api/shared/anthropic.ts), model AI_MODELS.writer. Her instructions
+ * (docs/EMILIA_INSTRUCTIONS.md) and the five manuals she answers from are read
+ * from the deployment (api/shared/knowledge.ts) and cached by Claude. The
+ * conversation so far comes from the browser.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { randomUUID } from 'node:crypto';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
+import { applyRateLimit } from '../shared/rateLimit.js';
+import { callClaude, cleanConversation } from '../shared/anthropic.js';
+import { AI_MODELS } from '../shared/models.js';
+import { loadKnowledge } from '../shared/knowledge.js';
 
 // ============================================================================
-// CONSTANTS
+// LIMITS
 // ============================================================================
 
-const OPENAI_API_BASE = 'https://api.openai.com/v1';
-const OPENAI_TIMEOUT_MS = 60000;
-const MAX_POLL_ATTEMPTS = 30;
-const POLL_INTERVAL_MS = 2000;
-
-// Emilia Assistant ID (configured in Vercel env vars)
-const EMILIA_ASSISTANT_ID = process.env.EMILIA_ASSISTANT_ID || '';
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface MessageRequest {
-  threadId: string;
-  message: string;
-}
-
-interface OpenAIRun {
-  id: string;
-  status: 'queued' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'expired';
-  thread_id: string;
-}
-
-interface OpenAIMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: Array<{
-    type: 'text';
-    text: { value: string };
-  }>;
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function getOpenAIKey(): string {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) {
-    throw new Error('OPENAI_API_KEY not configured');
-  }
-  return key;
-}
-
-/**
- * Strip OpenAI citation annotations from response text
- */
-function stripCitations(text: string): string {
-  return text.replace(/【\d+:\d+†[^\】]+】/g, '').trim();
-}
-
-/**
- * Sleep helper
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const EMILIA_TIMEOUT_MS = 55_000; // inside the route's 60-second limit
+const MAX_HISTORY_TURNS = 20;
+const MAX_TURN_CHARS = 4_000;
+const MAX_MESSAGE_CHARS = 4_000;
 
 // ============================================================================
 // HANDLER
@@ -81,6 +41,7 @@ export default async function handler(
 ): Promise<void> {
   // CORS
   if (handleCors(req, res, 'same-app', { methods: 'POST, OPTIONS' })) return;
+  if (!applyRateLimit(req.headers, 'emilia-message', 'standard', res)) return;
 
   // Method check
   if (req.method !== 'POST') {
@@ -88,161 +49,45 @@ export default async function handler(
     return;
   }
 
-  // JWT auth — reject unauthenticated requests
+  // Signed-in users only
   const auth = await requireAuth(req, res);
   if (!auth) return;
 
-  const { threadId, message } = req.body as MessageRequest;
-
-  if (!threadId || !message) {
-    res.status(400).json({ error: 'threadId and message are required' });
+  const { threadId, message, history } = (req.body || {}) as { threadId?: unknown; message?: unknown; history?: unknown };
+  const text = typeof message === 'string' ? message.trim() : '';
+  if (typeof threadId !== 'string' || !threadId || !text || text.length > MAX_MESSAGE_CHARS) {
+    res.status(400).json({ error: `threadId and message are required (${MAX_MESSAGE_CHARS} characters at most)` });
     return;
   }
 
-  try {
-    const openaiKey = getOpenAIKey();
-
-    if (!EMILIA_ASSISTANT_ID) {
-      console.error('[EMILIA/message] EMILIA_ASSISTANT_ID not configured');
-      res.status(500).json({
-        error: 'Emilia assistant not configured',
-      });
-      return;
-    }
-
-    // 1. Add user message to thread
-    const addMessageResponse = await fetch(
-      `${OPENAI_API_BASE}/threads/${threadId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'Content-Type': 'application/json',
-          'OpenAI-Beta': 'assistants=v2',
-        },
-        body: JSON.stringify({
-          role: 'user',
-          content: message,
-        }),
-      }
-    );
-
-    if (!addMessageResponse.ok) {
-      const error = await addMessageResponse.text();
-      console.error('[EMILIA/message] Failed to add message:', error);
-      throw new Error(`Failed to add message: ${addMessageResponse.status}`);
-    }
-
-    // 2. Create and run the assistant
-    const createRunResponse = await fetch(
-      `${OPENAI_API_BASE}/threads/${threadId}/runs`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'Content-Type': 'application/json',
-          'OpenAI-Beta': 'assistants=v2',
-        },
-        body: JSON.stringify({
-          assistant_id: EMILIA_ASSISTANT_ID,
-        }),
-      }
-    );
-
-    if (!createRunResponse.ok) {
-      const error = await createRunResponse.text();
-      console.error('[EMILIA/message] Failed to create run:', error);
-      throw new Error(`Failed to create run: ${createRunResponse.status}`);
-    }
-
-    const run: OpenAIRun = await createRunResponse.json();
-
-    // 3. Poll for completion
-    let attempts = 0;
-    let currentRun: OpenAIRun = run;
-
-    while (attempts < MAX_POLL_ATTEMPTS) {
-      if (currentRun.status === 'completed') {
-        break;
-      }
-
-      if (
-        currentRun.status === 'failed' ||
-        currentRun.status === 'cancelled' ||
-        currentRun.status === 'expired'
-      ) {
-        throw new Error(`Run ${currentRun.status}`);
-      }
-
-      await sleep(POLL_INTERVAL_MS);
-      attempts++;
-
-      const checkRunResponse = await fetch(
-        `${OPENAI_API_BASE}/threads/${threadId}/runs/${run.id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${openaiKey}`,
-            'OpenAI-Beta': 'assistants=v2',
-          },
-        }
-      );
-
-      if (!checkRunResponse.ok) {
-        throw new Error(`Failed to check run status: ${checkRunResponse.status}`);
-      }
-
-      currentRun = await checkRunResponse.json();
-    }
-
-    if (currentRun.status !== 'completed') {
-      throw new Error('Run timed out');
-    }
-
-    // 4. Get the latest message
-    const messagesResponse = await fetch(
-      `${OPENAI_API_BASE}/threads/${threadId}/messages?limit=1&order=desc`,
-      {
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'OpenAI-Beta': 'assistants=v2',
-        },
-      }
-    );
-
-    if (!messagesResponse.ok) {
-      throw new Error(`Failed to get messages: ${messagesResponse.status}`);
-    }
-
-    const messagesData = await messagesResponse.json();
-    const latestMessage: OpenAIMessage = messagesData.data[0];
-
-    if (!latestMessage || latestMessage.role !== 'assistant') {
-      throw new Error('No assistant response found');
-    }
-
-    // Extract text content
-    const textContent = latestMessage.content.find((c) => c.type === 'text');
-    const responseText = textContent?.text?.value || 'Sorry, I couldn\'t generate a response.';
-
-    // Strip citations
-    const cleanResponse = stripCitations(responseText);
-
-    console.log(`[EMILIA/message] Response generated (${cleanResponse.length} chars)`);
-
-    res.status(200).json({
-      success: true,
-      response: {
-        id: latestMessage.id,
-        content: cleanResponse,
-        createdAt: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    console.error('[EMILIA/message] Error:', error);
-
-    res.status(500).json({
-      error: 'Failed to get response',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+  const knowledge = loadKnowledge('emilia');
+  if (!knowledge.ok) {
+    res.status(503).json({ error: 'Emilia is unavailable right now. Please try again shortly.' });
+    return;
   }
+
+  const reply = await callClaude({
+    model: AI_MODELS.writer.id,
+    maxTokens: 8000,
+    effort: 'low', // help-desk answers: quick and direct
+    system: [{ type: 'text', text: knowledge.text, cache_control: { type: 'ephemeral', ttl: '1h' } }],
+    messages: [...cleanConversation(history, MAX_HISTORY_TURNS, MAX_TURN_CHARS), { role: 'user', content: text }],
+    timeoutMs: EMILIA_TIMEOUT_MS,
+    label: 'emilia',
+  });
+
+  if (!reply.ok) {
+    console.error('[EMILIA/message] Claude call failed:', reply.kind, reply.message);
+    res.status(502).json({ error: 'Emilia could not answer just now. Please try again.' });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    response: {
+      id: randomUUID(),
+      content: reply.text,
+      createdAt: new Date().toISOString(),
+    },
+  });
 }

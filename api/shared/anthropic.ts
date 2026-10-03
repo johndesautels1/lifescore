@@ -247,3 +247,26 @@ export function extractJsonObject(text: string): unknown {
     return null;
   }
 }
+
+/**
+ * A conversation sent by the browser, made safe to forward: only user/assistant
+ * text turns, the newest `maxTurns`, each cut to `maxChars`, alternating, starting
+ * with the user and ending with the assistant (the new message is the next turn).
+ * Used by Olivia and Emilia, which keep their conversations in the browser.
+ */
+export function cleanConversation(raw: unknown, maxTurns: number, maxChars: number): ClaudeMessage[] {
+  if (!Array.isArray(raw)) return [];
+  const turns: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  for (const item of raw.slice(-maxTurns * 2)) {
+    if (typeof item !== 'object' || item === null) continue;
+    const { role, content } = item as { role?: unknown; content?: unknown };
+    if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string' || !content.trim()) continue;
+    const text = content.slice(0, maxChars);
+    const last = turns[turns.length - 1];
+    if (last && last.role === role) last.content = `${last.content}\n\n${text}`;
+    else turns.push({ role, content: text });
+  }
+  while (turns.length > 0 && turns[0].role !== 'user') turns.shift();
+  while (turns.length > 0 && turns[turns.length - 1].role !== 'assistant') turns.pop();
+  return turns.slice(-maxTurns);
+}

@@ -6,6 +6,7 @@
 import { getAuthHeaders } from '../lib/supabase';
 import type {
   OliviaChatRequest,
+  OliviaHistoryTurn,
   OliviaChatResponse,
   LifeScoreContext,
   ContextBuildResponse,
@@ -63,6 +64,7 @@ export async function sendMessage(
   message: string,
   options: {
     threadId?: string;
+    history?: OliviaHistoryTurn[]; // The conversation so far — Claude keeps no server-side threads
     context?: LifeScoreContext;
     textSummary?: string; // Pre-built text summary with all 100 metrics
     generateAudio?: boolean;
@@ -71,6 +73,7 @@ export async function sendMessage(
   const request: OliviaChatRequest & { textSummary?: string } = {
     message,
     threadId: options.threadId,
+    history: options.history,
     context: options.context,
     textSummary: options.textSummary,
     generateAudio: options.generateAudio,
@@ -84,7 +87,7 @@ export async function sendMessage(
       headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify(request),
     },
-    90000 // 90 second timeout - server may retry on active runs
+    120000 // the server allows Olivia up to 110 seconds, tool lookups included
   );
 
   if (!response.ok) {

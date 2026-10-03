@@ -862,8 +862,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 |--------|----------|------|---------|
 | GET | `/api/admin-check` | Yes + Admin | Check if user has admin/developer bypass status |
 | GET | `/api/admin/env-check` | Yes + Admin | Show all environment variable configuration status (secrets masked — S4 fix 2026-02-26) |
-| POST | `/api/admin/sync-olivia-knowledge` | Yes + Admin | Upload knowledge base to OpenAI Assistant |
-| POST | `/api/admin/sync-emilia-knowledge` | Yes + Admin | Upload Emilia knowledge base to OpenAI Assistant (CORS fix C2 2026-02-26) |
+| GET | `/api/admin/knowledge-status` | Yes + Admin | Prove Olivia's and Emilia's instruction and manual files reached the live server (replaced the OpenAI sync endpoints 2026-10-03; Olivia and Emilia now read docs/ directly on Claude) |
 | GET, PUT | `/api/prompts` | Yes (JWT) + Admin (PUT) | Admin-editable prompt management (GET was unprotected — AC4 fix 2026-02-26) |
 
 ### 3.8 User Data (2)
@@ -1369,7 +1368,7 @@ lifescore/
 │   │
 │   ├── admin/                        # Admin endpoints
 │   │   ├── env-check.ts              # Env var status
-│   │   └── sync-olivia-knowledge.ts  # Knowledge base upload
+│   │   └── knowledge-status.ts       # Olivia/Emilia knowledge files check
 │   │
 │   ├── usage/                        # Usage monitoring
 │   │   ├── check-quotas.ts           # Provider quota checking

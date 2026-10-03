@@ -13,6 +13,7 @@
 export type {
   OliviaChatMessage,
   OliviaChatRequest,
+  OliviaHistoryTurn,
   OliviaChatResponse,
   ContextCity,
   ContextCategory,

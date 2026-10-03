@@ -28,10 +28,17 @@ export interface OliviaChatMessage {
  * Chat request to API
  */
 export interface OliviaChatRequest {
-  threadId?: string;           // OpenAI thread ID for continuity
+  threadId?: string;           // Conversation label (Claude keeps no server-side threads)
   message: string;             // User's message
+  history?: OliviaHistoryTurn[]; // The conversation so far, oldest first
   context?: LifeScoreContext;  // LIFE SCORE data context
   generateAudio?: boolean;     // Request TTS audio with response
+}
+
+/** One earlier turn of the conversation, as the server needs it. */
+export interface OliviaHistoryTurn {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 /**
