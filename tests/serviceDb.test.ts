@@ -56,6 +56,26 @@ describe('server files share one database connection', () => {
   });
 });
 
+describe('the browser reads only public settings', () => {
+  /** Vite copies every import.meta.env.VITE_* the browser code reads into the public JavaScript. */
+  const PUBLIC_SETTINGS = new Set([
+    'VITE_APP_URL',
+    'VITE_AVATAR_PROVIDER',
+    'VITE_DEMO_ENABLED',
+    'VITE_ERROR_REPORTING_URL',
+    'VITE_SUPABASE_ANON_KEY',
+    'VITE_SUPABASE_URL',
+  ]);
+
+  it('no screen reads a VITE_ setting outside the public list (an API key there would be published)', () => {
+    const read = new Set<string>();
+    for (const f of sourceFiles('src')) {
+      for (const m of readFileSync(f, 'utf8').matchAll(/import\.meta\.env\.(VITE_[A-Z0-9_]+)/g)) read.add(m[1]);
+    }
+    expect([...read].filter((name) => !PUBLIC_SETTINGS.has(name))).toEqual([]);
+  });
+});
+
 describe('the service connection fails closed', () => {
   function clearDatabaseSettings(): void {
     for (const name of [
