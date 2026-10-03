@@ -152,7 +152,7 @@ export default async function handler(
       },
       body: JSON.stringify({
         from: RESEND_FROM,
-        to: ADMIN_EMAILS,
+        to: getAdminEmails(),
         subject,
         html,
       }),

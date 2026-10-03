@@ -405,7 +405,7 @@ export default async function handler(
   const entitled = await requireFeature(req, res, 'movies');
   if (!entitled) return;
   const auth = entitled.auth;
-  console.log('[MOVIE-SCREENPLAY] Access granted, tier:', tierAccess.tier);
+  console.log('[MOVIE-SCREENPLAY] Access granted, tier:', entitled.access.tier);
 
   try {
     const { comparisonInput } = req.body as { comparisonInput: MovieComparisonInput };

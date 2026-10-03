@@ -235,7 +235,7 @@ export default async function handler(
   const entitled = await requireFeature(req, res, 'movies');
   if (!entitled) return;
   const auth = entitled.auth;
-  console.log('[MOVIE-GENERATE] Access granted, tier:', tierAccess.tier);
+  console.log('[MOVIE-GENERATE] Access granted, tier:', entitled.access.tier);
 
   // ── GET: Check movie status ────────────────────────────────────────
   if (req.method === 'GET') {
