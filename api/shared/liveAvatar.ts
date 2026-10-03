@@ -2,7 +2,7 @@
  * LIFE SCORE — Olivia's live face: the HeyGen LiveAvatar LITE session.
  *
  * PORTED VERBATIM 2026-10-03 from the questionnaire engine
- * (D:clues-questionnaire-engineservereportliveAvatar.ts) on John's order:
+ * (D:\clues-questionnaire-engine\server\report\liveAvatar.ts) on John's order:
  * "olivia liveavatar wired in bite identical to the heygen configuration
  * clues-questionnaire-engine uses". Only this header and the `process`
  * declaration differ; change both copies together.
