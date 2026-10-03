@@ -14,6 +14,7 @@ import { serviceDb } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { readGrokVideo, readKlingTask, readReplicatePrediction } from '../shared/videoReplies.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -92,7 +93,7 @@ async function checkKlingStatus(taskId: string): Promise<{
       return { status: 'processing', videoUrl: null, error: null };
     }
 
-    const result = await response.json();
+    const result = readKlingTask(await response.json());
 
     if (result.code !== 0) {
       console.warn('[KLING-STATUS] API returned error:', result.code, result.message);
@@ -100,10 +101,10 @@ async function checkKlingStatus(taskId: string): Promise<{
     }
 
     const taskStatus = result.data?.task_status;
-    const videos = result.data?.task_result?.videos;
+    const firstVideoUrl = result.data?.task_result?.videos?.[0]?.url;
 
-    if (taskStatus === 'succeed' && videos?.length > 0) {
-      return { status: 'completed', videoUrl: videos[0].url, error: null };
+    if (taskStatus === 'succeed' && firstVideoUrl) {
+      return { status: 'completed', videoUrl: firstVideoUrl, error: null };
     } else if (taskStatus === 'failed') {
       return { status: 'failed', videoUrl: null, error: result.data?.task_status_msg || 'Generation failed' };
     }
@@ -139,7 +140,7 @@ async function checkGrokStatus(predictionId: string): Promise<{
       return { status: 'processing', videoUrl: null, error: null };
     }
 
-    const result = await response.json();
+    const result = readGrokVideo(await response.json());
 
     if (result.status === 'completed' && result.video_url) {
       return { status: 'completed', videoUrl: result.video_url, error: null };
@@ -181,7 +182,7 @@ async function checkReplicateStatus(predictionId: string): Promise<{
       return { status: 'processing', videoUrl: null, error: null };
     }
 
-    const prediction = await response.json();
+    const prediction = readReplicatePrediction(await response.json());
 
     if (prediction.status === 'succeeded' && prediction.output) {
       const videoUrl = Array.isArray(prediction.output)

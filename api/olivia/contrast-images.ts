@@ -15,6 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
+import { readReplicatePrediction } from '../shared/videoReplies.js';
 
 // Replicate API configuration
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -243,14 +244,18 @@ async function generateFluxImage(prompt: string): Promise<string> {
     throw new Error(`Replicate API error: ${createResponse.status} - ${errorText}`);
   }
 
-  const prediction = await createResponse.json();
+  const prediction = readReplicatePrediction(await createResponse.json());
+  const pollUrl = prediction.urls?.get;
+  if (!pollUrl) {
+    throw new Error('Replicate API error: no status link in the reply');
+  }
 
   // Poll for completion (Flux Schnell is fast, usually 5-10 seconds)
   let attempts = 0;
   const maxAttempts = 30; // 30 seconds max
 
   while (attempts < maxAttempts) {
-    const statusResponse = await fetch(prediction.urls.get, {
+    const statusResponse = await fetch(pollUrl, {
       headers: {
         'Authorization': `Bearer ${replicateToken}`,
       },
@@ -260,11 +265,14 @@ async function generateFluxImage(prompt: string): Promise<string> {
       throw new Error(`Failed to check prediction status: ${statusResponse.status}`);
     }
 
-    const status = await statusResponse.json();
+    const status = readReplicatePrediction(await statusResponse.json());
 
     if (status.status === 'succeeded') {
       // Flux returns array of URLs
       const imageUrl = Array.isArray(status.output) ? status.output[0] : status.output;
+      if (!imageUrl) {
+        throw new Error('Image generation finished without an image');
+      }
       return imageUrl;
     }
 

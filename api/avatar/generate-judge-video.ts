@@ -18,6 +18,7 @@ import { handleCors } from '../shared/cors.js';
 import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { describeHeyGenFailure, submitVideo, videoConfigured } from '../shared/heygen/heygenVideo.js';
+import { readReplicatePrediction } from '../shared/videoReplies.js';
 import crypto from 'crypto';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -40,6 +41,26 @@ export const config = {
 
 // Supabase client
 const supabaseAdmin = serviceDb;
+
+/** The avatar_videos columns this route reads back. */
+interface AvatarVideoRow {
+  id: string;
+  comparison_id: string;
+  status: string;
+  video_url: string | null;
+  video_storage_path: string | null;
+  script: string | null;
+  duration_seconds: number | null;
+  created_at: string;
+  completed_at: string | null;
+  replicate_prediction_id: string | null;
+}
+
+/** A row lookup's answer, or the stand-in used when the lookup times out. */
+interface RowLookup {
+  data: AvatarVideoRow | null;
+  error: { message: string } | null;
+}
 
 interface GenerateRequest {
   comparisonId?: string;
@@ -205,7 +226,7 @@ export default async function handler(
 
   try {
     // Helper for DB operations with timeout
-    const withTimeout = async <T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+    const withTimeout = async <T>(promise: PromiseLike<T>, ms: number, fallback: T): Promise<T> => {
       return Promise.race([
         promise,
         new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
@@ -216,13 +237,13 @@ export default async function handler(
 
     // Check cache first (with timeout - don't let DB issues block video generation)
     // Using maybeSingle() instead of single() to avoid error when no rows exist
-    const cacheResult = await withTimeout(
+    const cacheResult = await withTimeout<RowLookup>(
       supabaseAdmin
         .from('avatar_videos')
         .select('*')
         .eq('comparison_id', comparisonId)
         .eq('status', 'completed')
-        .maybeSingle(),
+        .maybeSingle<AvatarVideoRow>(),
       DB_TIMEOUT_MS,
       { data: null, error: { message: 'Cache lookup timeout' } }
     );
@@ -278,13 +299,13 @@ export default async function handler(
 
     // Check if already processing (with timeout)
     // Using maybeSingle() - returns null if no processing job exists
-    const processingResult = await withTimeout(
+    const processingResult = await withTimeout<RowLookup>(
       supabaseAdmin
         .from('avatar_videos')
         .select('*')
         .eq('comparison_id', comparisonId)
         .in('status', ['pending', 'processing'])
-        .maybeSingle(),
+        .maybeSingle<AvatarVideoRow>(),
       DB_TIMEOUT_MS,
       { data: null, error: { message: 'Processing check timeout' } }
     );
@@ -433,7 +454,14 @@ export default async function handler(
       return;
     }
 
-    const prediction = await response.json();
+    const prediction = readReplicatePrediction(await response.json());
+    if (!prediction.id) {
+      // Without an id the video can never be polled, so the user is not charged.
+      console.error('[JUDGE-VIDEO] Wav2Lip accepted the job but sent no prediction id');
+      await refundFeature(entitled.auth.userId, 'judgeVideos', entitled.access.limits);
+      res.status(502).json({ error: 'Failed to start video generation', message: 'The video service sent no job id.' });
+      return;
+    }
     console.log('[JUDGE-VIDEO] Prediction started:', prediction.id, 'status:', prediction.status);
 
     // Store in database (if table exists)

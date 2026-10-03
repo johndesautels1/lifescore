@@ -17,7 +17,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const DEFAULT_STORAGE_BUCKET = 'judge-videos';
 const DOWNLOAD_TIMEOUT_MS = 120000; // 120s to download large video files from provider CDN
@@ -35,7 +35,7 @@ const UPLOAD_TIMEOUT_MS = 120000;   // 120s to upload large video files to Supab
 export async function persistVideoToStorage(
   providerUrl: string,
   comparisonId: string,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   bucket: string = DEFAULT_STORAGE_BUCKET
 ): Promise<{ publicUrl: string; storagePath: string } | null> {
   const storagePath = `${comparisonId}.mp4`;
