@@ -12,6 +12,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { getAdminEmails } from '../shared/auth.js';
 import { requireAdmin } from '../shared/entitlements.js';
+import { elevenLabsSubscription } from '../shared/elevenlabs.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 
 // ============================================================================
@@ -232,14 +233,11 @@ export default async function handler(
       try {
         const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
         if (elevenLabsKey) {
-          const elResponse = await fetch('https://api.elevenlabs.io/v1/user/subscription', {
-            headers: { 'xi-api-key': elevenLabsKey },
-          });
-          if (elResponse.ok) {
-            const elData = await elResponse.json();
+          const usage = await elevenLabsSubscription();
+          if (usage.ok) {
             elevenLabsActual = {
-              character_count: elData.character_count,
-              character_limit: elData.character_limit,
+              character_count: usage.subscription.character_count,
+              character_limit: usage.subscription.character_limit,
             };
           }
         }

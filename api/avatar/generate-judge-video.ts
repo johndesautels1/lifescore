@@ -13,6 +13,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serviceDb } from '../shared/supabaseAdmin.js';
 import { openaiSpeech } from '../shared/openai.js';
+import { elevenLabsSpeech } from '../shared/elevenlabs.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
@@ -75,55 +76,25 @@ async function generateTTSAudio(script: string): Promise<{ buffer: Buffer; durat
 
   // Try ElevenLabs first, fallback to OpenAI if it fails (quota exceeded, etc)
   if (elevenLabsKey) {
-    const elevenLabsController = new AbortController();
-    const elevenLabsTimeoutId = setTimeout(() => elevenLabsController.abort(), TTS_TIMEOUT_MS);
-
-    try {
-      const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${CRISTIANO_VOICE_ID}`,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'xi-api-key': elevenLabsKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: script,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: 0.6,
-              similarity_boost: 0.75,
-              style: 0.1,
-              use_speaker_boost: true,
-            },
-          }),
-          signal: elevenLabsController.signal,
-        }
-      );
-
-      clearTimeout(elevenLabsTimeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[JUDGE-VIDEO] ElevenLabs error:', response.status, errorText);
-        // Fall through to OpenAI fallback
-        throw new Error(`ElevenLabs failed: ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+    const spoken = await elevenLabsSpeech({
+      voiceId: CRISTIANO_VOICE_ID,
+      text: script,
+      voiceSettings: { stability: 0.6, similarity_boost: 0.75, style: 0.1, use_speaker_boost: true },
+      accept: 'audio/mpeg',
+      timeoutMs: TTS_TIMEOUT_MS,
+      label: 'JUDGE-VIDEO voice',
+    });
+    if (spoken.ok) {
+      const buffer = Buffer.from(spoken.audio);
       const estimatedDuration = (script.length / 5) / 150 * 60;
       console.log('[JUDGE-VIDEO] ElevenLabs audio generated:', buffer.length, 'bytes');
       return { buffer, duration: estimatedDuration };
-    } catch (elevenLabsError) {
-      clearTimeout(elevenLabsTimeoutId);
-      console.warn('[JUDGE-VIDEO] ElevenLabs failed, trying OpenAI fallback:', elevenLabsError);
-      if (!openaiKey) {
-        throw elevenLabsError; // No fallback available
-      }
-      // Fall through to OpenAI
     }
+    console.warn('[JUDGE-VIDEO] ElevenLabs failed, trying OpenAI fallback:', spoken.message);
+    if (!openaiKey) {
+      throw new Error(`ElevenLabs failed: ${spoken.message}`); // No fallback available
+    }
+    // Fall through to OpenAI
   }
 
   // OpenAI TTS fallback (or primary if no ElevenLabs key)

@@ -12,12 +12,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
 import { openaiSpeech } from '../shared/openai.js';
+import { elevenLabsSpeech, failureStatus } from '../shared/elevenlabs.js';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_TIMEOUT_MS = 30000;
 
 // Default to a friendly female voice if not configured
@@ -125,33 +125,25 @@ export default async function handler(
       return;
     }
 
-    const response = await fetch(
-      `${ELEVENLABS_API_BASE}/text-to-speech/${finalVoiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': elevenLabsKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.7, // Slightly more stable than Olivia
-            similarity_boost: 0.8,
-            style: 0.2, // Subtle expressiveness
-            use_speaker_boost: true,
-          },
-        }),
-      }
-    );
+    const spoken = await elevenLabsSpeech({
+      voiceId: finalVoiceId,
+      text,
+      voiceSettings: {
+        stability: 0.7, // Slightly more stable than Olivia
+        similarity_boost: 0.8,
+        style: 0.2, // Subtle expressiveness
+        use_speaker_boost: true,
+      },
+      timeoutMs: ELEVENLABS_TIMEOUT_MS,
+      label: 'EMILIA/speak voice',
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[EMILIA/speak] ElevenLabs error:', response.status, errorText);
+    if (!spoken.ok) {
+      console.error('[EMILIA/speak] ElevenLabs error:', spoken.message);
 
       // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
-      if (response.status === 401 || response.status === 429) {
+      const status = failureStatus(spoken);
+      if (status === 401 || status === 429) {
         console.log('[EMILIA/speak] ElevenLabs failed, trying OpenAI fallback...');
         const audioUrl = await generateOpenAIAudio(text);
         res.status(200).json({
@@ -167,11 +159,11 @@ export default async function handler(
         return;
       }
 
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      throw new Error(`ElevenLabs API error: ${spoken.message}`);
     }
 
     // Get audio as buffer
-    const arrayBuffer = await response.arrayBuffer();
+    const arrayBuffer = spoken.audio;
     const base64 = Buffer.from(arrayBuffer).toString('base64');
 
     console.log(`[EMILIA/speak] Generated audio (${Math.round(arrayBuffer.byteLength / 1024)}KB)`);

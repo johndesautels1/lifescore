@@ -90,6 +90,12 @@ describe('model ids live in one place', () => {
     expect(dashboard).not.toMatch(/<td>\$\d+\.\d\d<\/td>/);
   });
 
+  it('only the shared ElevenLabs file (and the engine-port live voice) calls ElevenLabs', () => {
+    const owners = new Set(['api/shared/elevenlabs.ts', 'api/shared/oliviaVoiceRequest.ts']);
+    const offenders = ALL.filter((f) => !owners.has(f) && /api\.elevenlabs\.io|xi-api-key/.test(readFileSync(f, 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
   it('each character keeps the same OpenAI back-up voice', () => {
     expect(BACKUP_VOICES).toEqual({ olivia: 'nova', emilia: 'shimmer', cristiano: 'onyx' });
   });

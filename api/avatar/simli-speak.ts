@@ -15,6 +15,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
 import { openaiSpeech } from '../shared/openai.js';
+import { elevenLabsSpeech } from '../shared/elevenlabs.js';
 
 export const config = {
   maxDuration: 60,
@@ -87,48 +88,26 @@ export default async function handler(
     // Try ElevenLabs first if key exists
     if (elevenLabsKey) {
       const emotionSettings = EMOTION_SETTINGS[body.emotion || 'neutral'];
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-      try {
-        const response = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${OLIVIA_VOICE_ID}?output_format=pcm_16000`,
-          {
-            method: 'POST',
-            headers: {
-              'xi-api-key': elevenLabsKey,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              text: body.text,
-              model_id: 'eleven_multilingual_v2',
-              voice_settings: {
-                stability: emotionSettings.stability,
-                similarity_boost: emotionSettings.similarity_boost,
-                style: emotionSettings.style,
-                use_speaker_boost: true,
-                speed: body.speed || 1.0,
-              },
-            }),
-            signal: controller.signal,
-          }
-        );
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[SIMLI-SPEAK] ElevenLabs error:', response.status, errorText);
-          throw new Error(`ElevenLabs TTS failed: ${response.status}`);
-        }
-
-        audioBuffer = await response.arrayBuffer();
+      const spoken = await elevenLabsSpeech({
+        voiceId: OLIVIA_VOICE_ID,
+        text: body.text,
+        voiceSettings: {
+          stability: emotionSettings.stability,
+          similarity_boost: emotionSettings.similarity_boost,
+          style: emotionSettings.style,
+          use_speaker_boost: true,
+          speed: body.speed || 1.0,
+        },
+        outputFormat: 'pcm_16000',
+        timeoutMs: TIMEOUT_MS,
+        label: 'SIMLI-SPEAK voice',
+      });
+      if (spoken.ok) {
+        audioBuffer = spoken.audio;
         audioDuration = audioBuffer.byteLength / 32000;
-
         console.log('[SIMLI-SPEAK] ElevenLabs audio generated:', audioBuffer.byteLength, 'bytes,', audioDuration.toFixed(2), 's');
-      } catch (err) {
-        clearTimeout(timeoutId);
-        console.warn('[SIMLI-SPEAK] ElevenLabs failed, trying OpenAI fallback:', err instanceof Error ? err.message : err);
+      } else {
+        console.warn('[SIMLI-SPEAK] ElevenLabs failed, trying OpenAI fallback:', spoken.message);
         usedOpenAIFallback = true;
       }
     }

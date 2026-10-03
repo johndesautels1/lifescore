@@ -161,9 +161,9 @@ describe('paid vendors are reached only behind a plan check', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('every route that calls an AI model checks the plan (Emilia, the help desk, is the one exception)', () => {
-    const AI_CALL = /\bcall(Claude|OpenAI|Gemini|Grok|Perplexity)\(/;
-    const HELP_DESK = new Set(['api/emilia/message.ts']);
+  it('every route that calls an AI model or voice checks the plan (Emilia, the help desk, is the one exception)', () => {
+    const AI_CALL = /\b(call(Claude|OpenAI|Gemini|Grok|Perplexity)|elevenLabsSpeech|openaiSpeech)\(/;
+    const HELP_DESK = new Set(['api/emilia/message.ts', 'api/emilia/speak.ts']);
     const offenders = routeFiles('api').filter((f) => {
       if (HELP_DESK.has(f)) return false;
       const src = readFileSync(f, 'utf8');

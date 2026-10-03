@@ -13,14 +13,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
 import { openaiSpeech } from '../shared/openai.js';
+import { elevenLabsConfigured, elevenLabsSpeech, failureStatus } from '../shared/elevenlabs.js';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_TIMEOUT_MS = 60000; // 60 seconds
 
 // Default voice ID - Olivia's voice (uses ELEVENLABS_OLIVIA_VOICE_ID env var)
@@ -47,15 +46,11 @@ interface TTSRequest {
 // HELPERS
 // ============================================================================
 
-/**
- * Get ElevenLabs API key
- */
-function getElevenLabsKey(): string {
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) {
+/** Throws when ElevenLabs is not configured, so the handler's catch uses the OpenAI back-up. */
+function requireElevenLabs(): void {
+  if (!elevenLabsConfigured()) {
     throw new Error('ELEVENLABS_API_KEY not configured');
   }
-  return key;
 }
 
 /**
@@ -131,7 +126,7 @@ export default async function handler(
   if (!entitled) return;
 
   try {
-    const apiKey = getElevenLabsKey();
+    requireElevenLabs();
     const {
       text,
       voiceId = DEFAULT_VOICE_ID,
@@ -157,34 +152,27 @@ export default async function handler(
     console.log('[OLIVIA/TTS] Generating speech for', processedText.length, 'characters');
 
     // Call ElevenLabs API
-    const response = await fetchWithTimeout(
-      `${ELEVENLABS_API_BASE}/text-to-speech/${voiceId}?output_format=${outputFormat}`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          text: processedText,
-          model_id: modelId,
-          voice_settings: {
-            stability,
-            similarity_boost: similarityBoost,
-            speed: req.body.speed || 1.0,
-          },
-        }),
+    const spoken = await elevenLabsSpeech({
+      voiceId,
+      text: processedText,
+      modelId,
+      voiceSettings: {
+        stability,
+        similarity_boost: similarityBoost,
+        speed: req.body.speed || 1.0,
       },
-      ELEVENLABS_TIMEOUT_MS
-    );
+      outputFormat,
+      accept: 'audio/mpeg',
+      timeoutMs: ELEVENLABS_TIMEOUT_MS,
+      label: 'OLIVIA/TTS voice',
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[OLIVIA/TTS] ElevenLabs error:', response.status, errorText);
+    if (!spoken.ok) {
+      console.error('[OLIVIA/TTS] ElevenLabs error:', spoken.message);
 
       // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
-      if (response.status === 401 || response.status === 429) {
+      const status = failureStatus(spoken);
+      if (status === 401 || status === 429) {
         console.log('[OLIVIA/TTS] ElevenLabs failed, trying OpenAI fallback...');
         const fallbackResult = await generateOpenAIAudio(processedText, req.body.speed || 1.0);
         res.status(200).json({
@@ -200,11 +188,11 @@ export default async function handler(
         return;
       }
 
-      throw new Error(`TTS generation failed: ${response.status}`);
+      throw new Error(`TTS generation failed: ${spoken.message}`);
     }
 
     // Get audio data
-    const audioBuffer = await response.arrayBuffer();
+    const audioBuffer = spoken.audio;
     const base64Audio = Buffer.from(audioBuffer).toString('base64');
     const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
 

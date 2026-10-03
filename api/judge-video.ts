@@ -26,6 +26,7 @@ import { requireAuth } from './shared/auth.js';
 import { requireFeature, refundFeature } from './shared/entitlements.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 import { openaiSpeech } from './shared/openai.js';
+import { elevenLabsSpeech, failureStatus } from './shared/elevenlabs.js';
 
 // ============================================================================
 // CONSTANTS
@@ -86,42 +87,28 @@ async function generateElevenLabsAudio(script: string): Promise<string> {
   console.log('[JUDGE-VIDEO-DID] Generating ElevenLabs audio, script length:', script.length);
 
   try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${CRISTIANO_VOICE_ID}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': elevenLabsKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: script,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.6,
-            similarity_boost: 0.75,
-            style: 0.1,
-            use_speaker_boost: true,
-          },
-        }),
-      }
-    );
+    const spoken = await elevenLabsSpeech({
+      voiceId: CRISTIANO_VOICE_ID,
+      text: script,
+      voiceSettings: { stability: 0.6, similarity_boost: 0.75, style: 0.1, use_speaker_boost: true },
+      timeoutMs: 45_000,
+      label: 'JUDGE-VIDEO-DID voice',
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[JUDGE-VIDEO-DID] ElevenLabs error:', response.status, errorText);
+    if (!spoken.ok) {
+      console.error('[JUDGE-VIDEO-DID] ElevenLabs error:', spoken.message);
 
       // Fallback to OpenAI for 401 (invalid key) or 429 (rate limit/quota)
-      if (response.status === 401 || response.status === 429) {
+      const status = failureStatus(spoken);
+      if (status === 401 || status === 429) {
         console.log('[JUDGE-VIDEO-DID] ElevenLabs failed, trying OpenAI fallback...');
         return generateOpenAIAudio(script);
       }
 
-      throw new Error(`ElevenLabs TTS failed: ${response.status}`);
+      throw new Error(`ElevenLabs TTS failed: ${spoken.message}`);
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+    const base64Audio = Buffer.from(spoken.audio).toString('base64');
 
     console.log('[JUDGE-VIDEO-DID] ElevenLabs audio generated, base64 length:', base64Audio.length);
     return base64Audio;

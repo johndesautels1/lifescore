@@ -10,8 +10,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAdmin } from '../shared/entitlements.js';
+import { elevenLabsSubscription } from '../shared/elevenlabs.js';
 
-const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 
 interface ElevenLabsSubscriptionInfo {
   tier: string;
@@ -56,19 +56,13 @@ export default async function handler(
   }
 
   try {
-    const response = await fetch(`${ELEVENLABS_API_BASE}/user/subscription`, {
-      method: 'GET',
-      headers: {
-        'xi-api-key': elevenLabsKey,
-      },
-    });
+    const usage = await elevenLabsSubscription();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[USAGE/elevenlabs] API error:', response.status, errorText);
+    if (!usage.ok) {
+      console.error('[USAGE/elevenlabs] API error:', usage.message);
 
       // Special handling for 401 - key is invalid
-      if (response.status === 401) {
+      if (usage.status === 401) {
         res.status(200).json({
           available: false,
           error: 'Invalid API key',
@@ -78,10 +72,10 @@ export default async function handler(
         return;
       }
 
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      throw new Error(usage.message);
     }
 
-    const data = await response.json() as ElevenLabsSubscriptionInfo;
+    const data = usage.subscription as unknown as ElevenLabsSubscriptionInfo;
 
     // Calculate usage percentage and warning level
     const percentage = data.character_count / data.character_limit;
