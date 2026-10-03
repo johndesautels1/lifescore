@@ -1,5 +1,5 @@
 ﻿/**
- * LIFE SCOREâ„¢ Gamma Service
+ * LIFE SCORE™ Gamma Service
  * Client-side service for generating visual reports via Gamma API
  * Supports both Simple (ComparisonResult) and Enhanced (EnhancedComparisonResult) modes
  *
@@ -49,17 +49,17 @@ import { getMetricDisplayName } from '../shared/metricDisplayNames';
 
 // Category display configuration
 const CATEGORY_CONFIG: Record<string, { name: string; icon: string; metricCount: number; weight: string }> = {
-  'personal_freedom': { name: 'Personal Autonomy', icon: 'ðŸ—½', metricCount: 15, weight: '20%' },
-  'personal-freedom': { name: 'Personal Autonomy', icon: 'ðŸ—½', metricCount: 15, weight: '20%' },
-  'housing_property': { name: 'Housing & Property', icon: 'ðŸ ', metricCount: 20, weight: '20%' },
-  'housing-property': { name: 'Housing & Property', icon: 'ðŸ ', metricCount: 20, weight: '20%' },
-  'business_work': { name: 'Business & Work', icon: 'ðŸ’¼', metricCount: 25, weight: '20%' },
-  'business-work': { name: 'Business & Work', icon: 'ðŸ’¼', metricCount: 25, weight: '20%' },
-  'transportation': { name: 'Transportation', icon: 'ðŸš‡', metricCount: 15, weight: '15%' },
-  'policing_legal': { name: 'Policing & Courts', icon: 'âš–ï¸', metricCount: 15, weight: '15%' },
-  'policing-courts': { name: 'Policing & Courts', icon: 'âš–ï¸', metricCount: 15, weight: '15%' },
-  'speech_lifestyle': { name: 'Speech & Lifestyle', icon: 'ðŸŽ­', metricCount: 10, weight: '10%' },
-  'speech-lifestyle': { name: 'Speech & Lifestyle', icon: 'ðŸŽ­', metricCount: 10, weight: '10%' }
+  'personal_freedom': { name: 'Personal Autonomy', icon: '🗽', metricCount: 15, weight: '20%' },
+  'personal-freedom': { name: 'Personal Autonomy', icon: '🗽', metricCount: 15, weight: '20%' },
+  'housing_property': { name: 'Housing & Property', icon: '🏠', metricCount: 20, weight: '20%' },
+  'housing-property': { name: 'Housing & Property', icon: '🏠', metricCount: 20, weight: '20%' },
+  'business_work': { name: 'Business & Work', icon: '💼', metricCount: 25, weight: '20%' },
+  'business-work': { name: 'Business & Work', icon: '💼', metricCount: 25, weight: '20%' },
+  'transportation': { name: 'Transportation', icon: '🚇', metricCount: 15, weight: '15%' },
+  'policing_legal': { name: 'Policing & Courts', icon: '⚖️', metricCount: 15, weight: '15%' },
+  'policing-courts': { name: 'Policing & Courts', icon: '⚖️', metricCount: 15, weight: '15%' },
+  'speech_lifestyle': { name: 'Speech & Lifestyle', icon: '🎭', metricCount: 10, weight: '10%' },
+  'speech-lifestyle': { name: 'Speech & Lifestyle', icon: '🎭', metricCount: 10, weight: '10%' }
 };
 
 // ============================================================================
@@ -78,7 +78,7 @@ function formatEnhancedCategoryWithAllMetrics(
   city1Consensus: CategoryConsensus,
   city2Consensus: CategoryConsensus
 ): string {
-  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: 'ðŸ“Š', metricCount: 0, weight: '0%' };
+  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: '📊', metricCount: 0, weight: '0%' };
   const city1Score = Math.round(city1Consensus.averageConsensusScore ?? 0);
   const city2Score = Math.round(city2Consensus.averageConsensusScore ?? 0);
   const catWinner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'TIE';
@@ -114,7 +114,7 @@ function formatSimpleCategoryWithAllMetrics(
   city1Category: CategoryScore,
   city2Category: CategoryScore
 ): string {
-  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: 'ðŸ“Š', metricCount: 0, weight: '0%' };
+  const config = CATEGORY_CONFIG[categoryId] || { name: categoryId, icon: '📊', metricCount: 0, weight: '0%' };
   const city1Score = Math.round(city1Category.averageScore ?? 0);
   const city2Score = Math.round(city2Category.averageScore ?? 0);
   const catWinner = city1Score > city2Score ? city1Name : city2Score > city1Score ? city2Name : 'TIE';
@@ -253,7 +253,7 @@ ${result.disagreementSummary ? `**LLM Disagreement Notes:** ${result.disagreemen
 CRITICAL INSTRUCTIONS FOR GAMMA AI - READ CAREFULLY
 ================================================================================
 
-This is a LIFE SCOREâ„¢ Freedom Comparison Report. This report EXCLUSIVELY
+This is a LIFE SCORE™ Freedom Comparison Report. This report EXCLUSIVELY
 compares LEGAL FREEDOM (written law) AND LIVED FREEDOM (enforcement reality) metrics between two cities.
 
 **TROPHY PLACEMENT RULE:**
@@ -276,15 +276,15 @@ NEVER place the 🏆 next to the loser (${loser}). This is critical.
 This is a legal & lived freedom analysis tool, NOT a general city comparison tool.
 
 ================================================================================
-LIFE SCOREâ„¢ LEGAL & LIVED FREEDOM COMPARISON REPORT
+LIFE SCORE™ LEGAL & LIVED FREEDOM COMPARISON REPORT
 ================================================================================
 
 # ${city1Name}, ${city1Country} vs ${city2Name}, ${city2Country}
-## LIFE SCOREâ„¢ Legal Independence & Freedom Evaluation
+## LIFE SCORE™ Legal Independence & Freedom Evaluation
 
 ---
 
-## ðŸ† OVERALL WINNER: ${winner}
+## 🏆 OVERALL WINNER: ${winner}
 
 | City | Total LIFE SCORE | Categories Won |
 |------|------------------|----------------|
@@ -296,7 +296,7 @@ ${result.winner !== 'tie' ? `**${winner} offers ${scoreDiff} more freedom points
 
 ---
 
-## WHAT IS LIFE SCOREâ„¢?
+## WHAT IS LIFE SCORE™?
 
 LIFE SCORE (Legal Independence & Freedom Evaluation) measures **100 specific freedom
 metrics** across 6 categories, capturing TWO types of freedom:
@@ -308,12 +308,12 @@ Unlike subjective "livability" indexes, LIFE SCORE evaluates concrete laws,
 regulations, AND their real-world enforcement.
 
 **The 6 Categories (100 Total Metrics):**
-1. ðŸ—½ Personal Autonomy (15 metrics, 20% weight) - Vice laws, bodily autonomy
-2. ðŸ  Housing & Property (20 metrics, 20% weight) - Property rights, HOA rules
-3. ðŸ’¼ Business & Work (25 metrics, 20% weight) - Licensing, employment laws
-4. ðŸš‡ Transportation (15 metrics, 15% weight) - Mobility freedom
-5. âš–ï¸ Policing & Courts (15 metrics, 15% weight) - Legal system fairness
-6. ðŸŽ­ Speech & Lifestyle (10 metrics, 10% weight) - Expression, privacy
+1. 🗽 Personal Autonomy (15 metrics, 20% weight) - Vice laws, bodily autonomy
+2. 🏠 Housing & Property (20 metrics, 20% weight) - Property rights, HOA rules
+3. 💼 Business & Work (25 metrics, 20% weight) - Licensing, employment laws
+4. 🚇 Transportation (15 metrics, 15% weight) - Mobility freedom
+5. ⚖️ Policing & Courts (15 metrics, 15% weight) - Legal system fairness
+6. 🎭 Speech & Lifestyle (10 metrics, 10% weight) - Expression, privacy
 
 ---
 
@@ -329,12 +329,12 @@ ${methodologySection}
 
 ## ABOUT CLUES INTELLIGENCE LTD
 
-LIFE SCOREâ„¢ is part of the CLUES (Comprehensive Location & Utility Evaluation
+LIFE SCORE™ is part of the CLUES (Comprehensive Location & Utility Evaluation
 System) platform by Clues Intelligence LTD. We help individuals make data-driven
 decisions about international relocation based on verified legal data.
 
 **Website:** [clueslifescore.com](https://clueslifescore.com)
-**Copyright:** Â© 2025-2026 Clues Intelligence LTD. All Rights Reserved.
+**Copyright:** © 2025-2026 Clues Intelligence LTD. All Rights Reserved.
 
 ================================================================================
 END OF DATA - USE ONLY THE INFORMATION ABOVE

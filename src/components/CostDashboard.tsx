@@ -1,5 +1,5 @@
 ﻿/**
- * LIFE SCOREâ„¢ Admin Cost Dashboard
+ * LIFE SCORE™ Admin Cost Dashboard
  * Displays API cost breakdown for monitoring and profitability analysis
  * Data persists to Supabase database for authenticated users
  */
@@ -147,7 +147,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
           const mergedDb = dbBreakdowns.map(db => {
             const local = localByCompId.get(db.comparisonId);
             if (!local) return db;
-            // For each service cost field, take the higher value â€” localStorage
+            // For each service cost field, take the higher value — localStorage
             // has post-comparison costs that the DB snapshot missed
             const patched = { ...db };
             if ((local.gammaTotal || 0) > (db.gammaTotal || 0)) {
@@ -203,7 +203,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
             }
           }
         } else {
-          // No DB data â€” use local
+          // No DB data — use local
           setCosts(localCosts);
           setSummary(calculateCostSummary());
           if (localCosts.length > 0) {
@@ -250,16 +250,16 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
           const { error } = await deleteAllApiCosts(user.id);
           if (error) {
             console.error('[CostDashboard] Failed to delete from database:', error);
-            setSaveMessage('âœ— Cleared local data, but database deletion failed');
+            setSaveMessage('✗ Cleared local data, but database deletion failed');
           } else {
-            setSaveMessage('âœ“ All data deleted from database and browser');
+            setSaveMessage('✓ All data deleted from database and browser');
           }
         } catch (err) {
           console.error('[CostDashboard] Database deletion error:', err);
-          setSaveMessage('âœ— Cleared local data, but database deletion failed');
+          setSaveMessage('✗ Cleared local data, but database deletion failed');
         }
       } else {
-        setSaveMessage('âœ“ All data deleted from browser storage');
+        setSaveMessage('✓ All data deleted from browser storage');
       }
 
       setSummary(calculateCostSummary());
@@ -272,7 +272,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
 
   const handleSaveData = async () => {
     if (costs.length === 0) {
-      setSaveMessage('âœ— No data to save');
+      setSaveMessage('✗ No data to save');
       setTimeout(() => setSaveMessage(null), 3000);
       return;
     }
@@ -306,25 +306,25 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
         }
 
         if (errorCount === 0) {
-          setSaveMessage(`âœ“ ${successCount} records saved to database`);
+          setSaveMessage(`✓ ${successCount} records saved to database`);
           setDataSource('database');
         } else if (successCount > 0) {
-          setSaveMessage(`âš ï¸ ${successCount} saved, ${errorCount} failed`);
+          setSaveMessage(`⚠️ ${successCount} saved, ${errorCount} failed`);
         } else {
-          setSaveMessage('âœ— Failed to save to database (saved locally)');
+          setSaveMessage('✗ Failed to save to database (saved locally)');
         }
 
         // Reload from database to get updated records
         await loadCosts();
       } else {
-        setSaveMessage('âœ“ Data saved to browser storage');
+        setSaveMessage('✓ Data saved to browser storage');
         setDataSource('local');
       }
 
       setLastSaved(new Date());
     } catch (error) {
       console.error('[CostDashboard] Save error:', error);
-      setSaveMessage('âœ— Failed to save data');
+      setSaveMessage('✗ Failed to save data');
     }
 
     setIsSaving(false);
@@ -398,11 +398,11 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </span>
             ) : lastSaved ? (
               <span className="last-saved">
-                ðŸ’¾ {dataSource === 'database' ? 'Saved to database' : 'Saved locally'} â€¢ {lastSaved.toLocaleString()}
+                💾 {dataSource === 'database' ? 'Saved to database' : 'Saved locally'} • {lastSaved.toLocaleString()}
               </span>
             ) : user && dbConfigured ? (
               <span className="last-saved" style={{ color: '#f59e0b' }}>
-                âš ï¸ Not saved to database - click "Save Data" to persist
+                ⚠️ Not saved to database - click "Save Data" to persist
               </span>
             ) : (
               <span className="last-saved" style={{ color: '#6b7280' }}>
@@ -410,7 +410,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
               </span>
             )}
           </div>
-          <button className="close-btn" onClick={onClose}>Ã—</button>
+          <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
         {/* Summary Cards */}
@@ -419,22 +419,22 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
             <h3>Cost Summary</h3>
             <div className="summary-cards">
               <div className="summary-card total">
-                <span className="card-icon">ðŸ’°</span>
+                <span className="card-icon">💰</span>
                 <span className="card-label">Grand Total</span>
                 <span className="card-value">{formatCost(summary.grandTotal)}</span>
               </div>
               <div className="summary-card">
-                <span className="card-icon">ðŸ“Š</span>
+                <span className="card-icon">📊</span>
                 <span className="card-label">Total Comparisons</span>
                 <span className="card-value">{summary.totalComparisons}</span>
               </div>
               <div className="summary-card">
-                <span className="card-icon">âš¡</span>
+                <span className="card-icon">⚡</span>
                 <span className="card-label">Enhanced</span>
                 <span className="card-value">{summary.enhancedComparisons}</span>
               </div>
               <div className="summary-card">
-                <span className="card-icon">ðŸ“ˆ</span>
+                <span className="card-icon">📈</span>
                 <span className="card-label">Avg Enhanced Cost</span>
                 <span className="card-value">{formatCost(summary.avgCostPerEnhanced)}</span>
               </div>
@@ -444,7 +444,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
             <h3>Cost by Provider</h3>
             <div className="provider-breakdown">
               <div className="provider-row">
-                <span className="provider-icon">ðŸ”Ž</span>
+                <span className="provider-icon">🔎</span>
                 <span className="provider-name">Tavily (Research + Search)</span>
                 <span className="provider-cost">{formatCost(summary.tavilyCost)}</span>
                 <span className="provider-pct">
@@ -452,7 +452,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸŽµ</span>
+                <span className="provider-icon">🎵</span>
                 <span className="provider-name">Claude Sonnet 4.6</span>
                 <span className="provider-cost">{formatCost(summary.claudeSonnetCost)}</span>
                 <span className="provider-pct">
@@ -460,7 +460,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ¤–</span>
+                <span className="provider-icon">🤖</span>
                 <span className="provider-name">GPT-4o</span>
                 <span className="provider-cost">{formatCost(summary.gpt4oCost)}</span>
                 <span className="provider-pct">
@@ -468,7 +468,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ’Ž</span>
+                <span className="provider-icon">💎</span>
                 <span className="provider-name">Gemini 3.1 Pro</span>
                 <span className="provider-cost">{formatCost(summary.geminiCost)}</span>
                 <span className="provider-pct">
@@ -476,7 +476,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸš€</span>
+                <span className="provider-icon">🚀</span>
                 <span className="provider-name">Grok 4</span>
                 <span className="provider-cost">{formatCost(summary.grokCost)}</span>
                 <span className="provider-pct">
@@ -484,7 +484,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ”</span>
+                <span className="provider-icon">🔍</span>
                 <span className="provider-name">Perplexity Sonar</span>
                 <span className="provider-cost">{formatCost(summary.perplexityCost)}</span>
                 <span className="provider-pct">
@@ -492,7 +492,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row highlight">
-                <span className="provider-icon">ðŸ§ </span>
+                <span className="provider-icon">🧠</span>
                 <span className="provider-name">Claude Opus 4.6 (Judge)</span>
                 <span className="provider-cost">{formatCost(summary.claudeOpusCost)}</span>
                 <span className="provider-pct">
@@ -500,7 +500,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ“Š</span>
+                <span className="provider-icon">📊</span>
                 <span className="provider-name">Gamma (Reports)</span>
                 <span className="provider-cost">{formatCost(summary.gammaCost)}</span>
                 <span className="provider-pct">
@@ -508,7 +508,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ’¬</span>
+                <span className="provider-icon">💬</span>
                 <span className="provider-name">Olivia (Chat Assistant)</span>
                 <span className="provider-cost">{formatCost(summary.oliviaCost)}</span>
                 <span className="provider-pct">
@@ -516,7 +516,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ”Š</span>
+                <span className="provider-icon">🔊</span>
                 <span className="provider-name">TTS (ElevenLabs + OpenAI)</span>
                 <span className="provider-cost">{formatCost(summary.ttsCost)}</span>
                 <span className="provider-pct">
@@ -524,7 +524,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸŽ¥</span>
+                <span className="provider-icon">🎥</span>
                 <span className="provider-name">Avatar (HeyGen + D-ID + Simli + Replicate)</span>
                 <span className="provider-cost">{formatCost(summary.avatarCost)}</span>
                 <span className="provider-pct">
@@ -532,7 +532,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">ðŸ–¼ï¸</span>
+                <span className="provider-icon">🖼️</span>
                 <span className="provider-name">Kling AI (Image Generation)</span>
                 <span className="provider-cost">{formatCost(summary.klingCost)}</span>
                 <span className="provider-pct">
@@ -575,22 +575,22 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                   {showPricing ? 'Hide Pricing' : 'Show Pricing'}
                 </button>
                 <button className="action-btn" onClick={handleExportCSV} disabled={costs.length === 0}>
-                  ðŸ“¥ Export
+                  📥 Export
                 </button>
               </div>
               {/* Bottom row: Save to Database and Delete All */}
               <div className="section-actions-bottom">
                 <button className="action-btn save" onClick={handleSaveData} disabled={costs.length === 0 || isSaving || isLoading}>
-                  {isSaving ? 'â³ Saving...' : user && dbConfigured ? 'ðŸ’¾ Save to Database' : 'ðŸ’¾ Save Data'}
+                  {isSaving ? '⏳ Saving...' : user && dbConfigured ? '💾 Save to Database' : '💾 Save Data'}
                 </button>
                 <button className="action-btn danger" onClick={handleClearData} disabled={costs.length === 0 || isSaving || isLoading}>
-                  ðŸ—‘ï¸ Delete All
+                  🗑️ Delete All
                 </button>
               </div>
             </div>
           </div>
           {saveMessage && (
-            <div className={`save-status ${saveMessage.includes('âœ“') ? 'success' : 'error'}`}>
+            <div className={`save-status ${saveMessage.includes('✓') ? 'success' : 'error'}`}>
               {saveMessage}
             </div>
           )}
@@ -609,74 +609,74 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </thead>
                 <tbody>
                   <tr>
-                    <td>ðŸ§  Claude Opus 4.6</td>
+                    <td>🧠 Claude Opus 4.6</td>
                     <td>$15.00</td>
                     <td>$75.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸŽµ Claude Sonnet 4.6</td>
+                    <td>🎵 Claude Sonnet 4.6</td>
                     <td>$3.00</td>
                     <td>$15.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸ¤– GPT-4o</td>
+                    <td>🤖 GPT-4o</td>
                     <td>$2.50</td>
                     <td>$10.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸ’Ž Gemini 3.1 Pro</td>
+                    <td>💎 Gemini 3.1 Pro</td>
                     <td>$1.25</td>
                     <td>$5.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸš€ Grok 4</td>
+                    <td>🚀 Grok 4</td>
                     <td>$3.00</td>
                     <td>$15.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸ” Perplexity Sonar</td>
+                    <td>🔍 Perplexity Sonar</td>
                     <td>$1.00</td>
                     <td>$5.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸ”Ž Tavily</td>
+                    <td>🔎 Tavily</td>
                     <td colSpan={2}>~$0.01/credit (varies by plan)</td>
                   </tr>
                   <tr>
-                    <td>ðŸ“Š Gamma</td>
+                    <td>📊 Gamma</td>
                     <td colSpan={2}>~$0.50/generation (varies by plan)</td>
                   </tr>
                   <tr>
-                    <td>ðŸ’¬ GPT-4 Turbo (Olivia)</td>
+                    <td>💬 GPT-4 Turbo (Olivia)</td>
                     <td>$10.00</td>
                     <td>$30.00</td>
                   </tr>
                   <tr>
-                    <td>ðŸ”Š ElevenLabs TTS</td>
+                    <td>🔊 ElevenLabs TTS</td>
                     <td colSpan={2}>$0.18/1K chars</td>
                   </tr>
                   <tr>
-                    <td>ðŸ—£ï¸ OpenAI TTS</td>
+                    <td>🗣️ OpenAI TTS</td>
                     <td colSpan={2}>$0.015/1K chars ($0.030 HD)</td>
                   </tr>
                   <tr>
-                    <td>ðŸŽ¥ HeyGen Avatar</td>
+                    <td>🎥 HeyGen Avatar</td>
                     <td colSpan={2}>$0.032/sec</td>
                   </tr>
                   <tr>
-                    <td>ðŸ‘¤ D-ID Avatar</td>
+                    <td>👤 D-ID Avatar</td>
                     <td colSpan={2}>$0.025/sec</td>
                   </tr>
                   <tr>
-                    <td>ðŸŽ­ Simli Avatar</td>
+                    <td>🎭 Simli Avatar</td>
                     <td colSpan={2}>$0.02/sec</td>
                   </tr>
                   <tr>
-                    <td>ðŸŽ¬ Replicate Wav2Lip</td>
+                    <td>🎬 Replicate Wav2Lip</td>
                     <td colSpan={2}>$0.0014/sec</td>
                   </tr>
                   <tr>
-                    <td>ðŸ–¼ï¸ Kling AI</td>
+                    <td>🖼️ Kling AI</td>
                     <td colSpan={2}>$0.05/image</td>
                   </tr>
                 </tbody>
@@ -686,7 +686,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
 
           {costs.length === 0 ? (
             <div className="no-data">
-              <span className="no-data-icon">ðŸ“­</span>
+              <span className="no-data-icon">📭</span>
               <p>No cost data recorded yet.</p>
               <p className="hint">Run some comparisons to start tracking costs.</p>
             </div>
