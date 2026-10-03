@@ -19,8 +19,22 @@ import { FOUNDER_ADMIN_EMAILS } from './plans.js';
 // SUPABASE CLIENT (module-level, reused across requests)
 // ============================================================================
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Trimmed: a pasted setting can carry a line break (the built page's address did, 2026-10-03).
+const supabaseUrl = (
+  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || ''
+).trim();
+const supabaseAnonKey = (
+  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
+).trim();
+
+/**
+ * The browser's public Supabase settings, served by /api/public-config when a
+ * build leaves them out (src/lib/publicConfig.ts). The anon key is public by
+ * design — it ships in every visitor's page; row-level security protects data.
+ */
+export function publicSupabaseSettings(): { url: string; anonKey: string } {
+  return { url: supabaseUrl, anonKey: supabaseAnonKey };
+}
 
 // ============================================================================
 // AUTH RESULT TYPE

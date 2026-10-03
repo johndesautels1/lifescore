@@ -4,9 +4,11 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { publicSupabaseSettings } from './publicConfig';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Built-in settings, or the server's when the build left one out — main.tsx
+// loads those before any module that imports this one (lib/publicConfig.ts).
+const { url: supabaseUrl, anonKey: supabaseAnonKey } = publicSupabaseSettings();
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
