@@ -59,7 +59,7 @@ import {
   finalizeCostBreakdown,
   storeCostBreakdown,
   calculateModelCost,
-  calculateTavilyCost,
+  tavilyCostsFromUsage,
   formatCostBreakdownLog,
   toApiCostRecordInsert,
   type APICallCost
@@ -942,33 +942,17 @@ const AppContent: React.FC = () => {
                                 };
                               }
 
-                              // FIX #73: Estimate Tavily research/search costs
-                              // Each enhanced comparison uses ~1 research call (~30 credits)
-                              // and ~15 search calls across providers (~3 credits each = ~45 credits)
-                              const activeProviders = llmResults.size;
-                              if (activeProviders > 0) {
-                                const researchCredits = 30;
-                                const researchCost = calculateTavilyCost('research', researchCredits);
-                                costBreakdown.tavilyResearch = {
-                                  type: 'research',
-                                  creditsUsed: researchCredits,
-                                  cost: researchCost,
-                                  timestamp: Date.now(),
-                                  query: `${pendingCities.city1} vs ${pendingCities.city2} research`,
-                                };
-
-                                // Each provider does ~3 search queries
-                                const searchCreditsPerProvider = 9; // ~3 searches * 3 credits each
-                                for (let i = 0; i < activeProviders; i++) {
-                                  const searchCost = calculateTavilyCost('search', searchCreditsPerProvider);
-                                  costBreakdown.tavilySearches.push({
-                                    type: 'search',
-                                    creditsUsed: searchCreditsPerProvider,
-                                    cost: searchCost,
-                                    timestamp: Date.now(),
-                                  });
-                                }
-                              }
+                              // Tavily: the credits Tavily reported to each evaluator
+                              // (api/evaluate.ts → usage.tavily); a call it gave no count
+                              // for is priced at the table's typical figure.
+                              const tavilyReports = Array.from(llmResults.values()).flatMap(r => (r.usage?.tavily ? [r.usage.tavily] : []));
+                              const tavilyCosts = tavilyCostsFromUsage(
+                                tavilyReports,
+                                `${pendingCities.city1} vs ${pendingCities.city2} research`,
+                                Date.now()
+                              );
+                              costBreakdown.tavilyResearch = tavilyCosts.research;
+                              costBreakdown.tavilySearches.push(...tavilyCosts.searches);
 
                               const finalBreakdown = finalizeCostBreakdown(costBreakdown);
                               storeCostBreakdown(finalBreakdown);

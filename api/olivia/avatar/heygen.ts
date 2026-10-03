@@ -8,6 +8,7 @@ import { applyRateLimit } from '../../shared/rateLimit.js';
 import { handleCors } from '../../shared/cors.js';
 import { requireFeature } from '../../shared/entitlements.js';
 import { fetchWithTimeout } from '../../shared/fetchWithTimeout.js';
+import { asRecord, readIceServers, text as jsonText, type IceServer } from '../../shared/jsonRead.js';
 
 // ============================================================================
 // CONSTANTS
@@ -31,25 +32,31 @@ interface HeyGenSessionRequest {
   voiceId?: string;
 }
 
-interface HeyGenAccessTokenResponse {
-  data: {
-    token: string;
+/** A new streaming session, as this route reads it from HeyGen's streaming.new reply. */
+interface HeyGenSession {
+  session_id: string;
+  sdp: {
+    sdp: string;
+    type: 'offer';
   };
+  ice_servers: IceServer[];
 }
 
-interface HeyGenSessionResponse {
-  data: {
-    session_id: string;
-    sdp: {
-      sdp: string;
-      type: 'offer';
-    };
-    ice_servers: Array<{
-      urls: string[];
-      username?: string;
-      credential?: string;
-    }>;
-  };
+/** The token in HeyGen's streaming.create_token reply ({ data: { token } }), if present. */
+function readAccessToken(body: unknown): string | undefined {
+  return jsonText(asRecord(asRecord(body).data).token);
+}
+
+/**
+ * The session in HeyGen's streaming.new reply ({ data: { session_id, sdp, ice_servers } }),
+ * or null when the id or the offer is missing. ICE entries without a URL are dropped.
+ */
+function readSession(body: unknown): HeyGenSession | null {
+  const data = asRecord(asRecord(body).data);
+  const sessionId = jsonText(data.session_id);
+  const offer = jsonText(asRecord(data.sdp).sdp);
+  if (!sessionId || !offer) return null;
+  return { session_id: sessionId, sdp: { sdp: offer, type: 'offer' }, ice_servers: readIceServers(data.ice_servers) };
 }
 
 // ============================================================================
@@ -88,8 +95,11 @@ async function getAccessToken(apiKey: string): Promise<string> {
     throw new Error(`Failed to get access token: ${error}`);
   }
 
-  const data: HeyGenAccessTokenResponse = await response.json();
-  return data.data.token;
+  const token = readAccessToken(await response.json());
+  if (!token) {
+    throw new Error('Failed to get access token: HeyGen sent no token');
+  }
+  return token;
 }
 
 /**
@@ -99,7 +109,7 @@ async function createSession(
   token: string,
   avatarId: string,
   voiceId?: string
-): Promise<HeyGenSessionResponse['data']> {
+): Promise<HeyGenSession> {
   const response = await fetchWithTimeout(
     `${HEYGEN_API_BASE}/streaming.new`,
     {
@@ -123,8 +133,11 @@ async function createSession(
     throw new Error(`Failed to create session: ${error}`);
   }
 
-  const data: HeyGenSessionResponse = await response.json();
-  return data.data;
+  const session = readSession(await response.json());
+  if (!session) {
+    throw new Error('Failed to create session: HeyGen sent no session id or offer');
+  }
+  return session;
 }
 
 /**

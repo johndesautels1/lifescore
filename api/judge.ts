@@ -38,8 +38,9 @@ function getConfidenceLevel(stdDev: number): ConfidenceLevel {
   return 'split';
 }
 
-function isDisagreementArea(stdDev: number): boolean {
-  return stdDev > CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG;
+/** A metric with no scores (stdDev null) is never a disagreement. */
+function isDisagreementArea(stdDev: number | null): boolean {
+  return stdDev !== null && stdDev > CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG;
 }
 
 // Timeout constant for Opus API (240s - within Vercel Pro 300s limit)
@@ -442,7 +443,8 @@ function mergeOpusJudgments(
   if (!opusResponse.judgments) return;
 
   // FIX #3: Helper to validate and clamp scores to 0-100 range
-  const clampScore = (score: number | undefined, fallback: number): number => {
+  // (a metric with no data keeps its null when Opus gives no usable score)
+  const clampScore = (score: number | undefined, fallback: number | null): number | null => {
     if (typeof score !== 'number' || isNaN(score)) return fallback;
     return Math.max(0, Math.min(100, Math.round(score)));
   };
@@ -571,7 +573,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Calculate overall agreement from standard deviations
   // FIX: Only include metrics with 2+ LLM scores - single-LLM metrics have stdDev=0 which falsely inflates agreement
   const validConsensuses = [...city1Consensuses, ...city2Consensuses].filter(c => c.llmScores.length >= 2);
-  const validStdDevs = validConsensuses.map(c => c.standardDeviation);
+  const validStdDevs = validConsensuses
+    .map(c => c.standardDeviation)
+    .filter((sd): sd is number => sd !== null);
 
   // If no metrics have 2+ LLMs, use default (indicates insufficient data, not perfect agreement)
   const avgStdDev = validStdDevs.length > 0 ? calculateMean(validStdDevs) : CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV;

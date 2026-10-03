@@ -25,6 +25,7 @@ export {
   calculateModelCost,
   calculateLLMCost,
   calculateTavilyCost,
+  tavilyCostsFromUsage,
   estimateTokens,
   calculateGammaCost,
   calculateTTSCost,

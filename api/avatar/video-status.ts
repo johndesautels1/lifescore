@@ -14,6 +14,7 @@ import { serviceDb } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { readReplicatePrediction } from '../shared/videoReplies.js';
 import { describeHeyGenFailure, videoState } from '../shared/heygen/heygenVideo.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -113,7 +114,7 @@ export default async function handler(
         return;
       }
 
-      const prediction = await response.json();
+      const prediction = readReplicatePrediction(await response.json());
       console.log('[VIDEO-STATUS] Replicate status:', prediction.status);
 
       // Map Replicate status to our status
@@ -251,7 +252,7 @@ export default async function handler(
           );
 
           if (response.ok) {
-            const prediction = await response.json();
+            const prediction = readReplicatePrediction(await response.json());
 
             if (prediction.status === 'succeeded' && prediction.output) {
               // Extract temporary Replicate URL (expires ~1h)

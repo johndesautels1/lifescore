@@ -25,6 +25,7 @@ import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 import { requireFeature, refundFeature } from './shared/entitlements.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
+import { asRecord, text } from './shared/jsonRead.js';
 import { openaiSpeech } from './shared/openai.js';
 import { elevenLabsSpeech, failureStatus } from './shared/elevenlabs.js';
 
@@ -166,11 +167,25 @@ interface StatusRequest {
 
 type JudgeVideoRequest = GenerateVideoRequest | StatusRequest;
 
+/** A D-ID talk reply (create and status), as this route reads it. */
 interface DIDTalkResponse {
-  id: string;
-  status: 'created' | 'started' | 'done' | 'error';
+  id?: string;
+  /** created | started | done | error (kept as sent). */
+  status?: string;
   result_url?: string;
-  error?: { description: string };
+  /** error.description, or error itself when D-ID sends it as text. */
+  error?: string;
+}
+
+/** Reads a D-ID talk reply; never throws. */
+function readDIDTalk(body: unknown): DIDTalkResponse {
+  const reply = asRecord(body);
+  return {
+    id: text(reply.id),
+    status: text(reply.status),
+    result_url: text(reply.result_url),
+    error: text(asRecord(reply.error).description) ?? text(reply.error),
+  };
 }
 
 // ============================================================================
@@ -300,7 +315,7 @@ async function createTalk(
     throw new Error(`D-ID video generation failed: ${error}`);
   }
 
-  const data: DIDTalkResponse = await response.json();
+  const data = readDIDTalk(await response.json());
 
   if (!data.id) {
     throw new Error('D-ID did not return a talk ID');
@@ -337,7 +352,7 @@ async function getTalkStatus(
     throw new Error(`Failed to check talk status: ${error}`);
   }
 
-  const data: DIDTalkResponse = await response.json();
+  const data = readDIDTalk(await response.json());
 
   // Map D-ID status to our status
   let videoStatus: 'pending' | 'generating' | 'ready' | 'error';
@@ -361,7 +376,7 @@ async function getTalkStatus(
   return {
     status: videoStatus,
     videoUrl: data.result_url,
-    error: data.error?.description,
+    error: data.error,
   };
 }
 

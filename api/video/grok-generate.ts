@@ -13,6 +13,7 @@ import { serviceDb } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
+import { readGrokVideo, readKlingTask, readReplicatePrediction } from '../shared/videoReplies.js';
 import { notifyJobComplete } from '../shared/notifyJob.js';
 import crypto from 'crypto';
 
@@ -327,7 +328,11 @@ async function generateWithGrok(prompt: string): Promise<{ predictionId: string;
       return null; // Fall back to Replicate
     }
 
-    const result = await response.json();
+    const result = readGrokVideo(await response.json());
+    if (!result.id) {
+      console.warn('[GROK-VIDEO] Grok accepted the job but sent no id');
+      return null; // Fall back to Replicate
+    }
     console.log('[GROK-VIDEO] Grok generation started:', result.id);
 
     return {
@@ -438,7 +443,7 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
       return { predictionId: '', status: 'failed', error: errorMsg };
     }
 
-    const result = await response.json();
+    const result = readKlingTask(await response.json());
 
     if (result.code !== 0) {
       const errorMsg = `Kling API error ${result.code}: ${result.message || 'unknown'}`;
@@ -446,11 +451,16 @@ async function generateWithKling(prompt: string, durationSeconds: number = 10): 
       return { predictionId: '', status: 'failed', error: errorMsg };
     }
 
-    console.log('[KLING-VIDEO] Kling generation started:', result.data.task_id);
+    const taskId = result.data?.task_id;
+    if (!taskId) {
+      console.warn('[KLING-VIDEO] Kling accepted the job but sent no task id');
+      return { predictionId: '', status: 'failed', error: 'Kling accepted the job but sent no task id' };
+    }
+    console.log('[KLING-VIDEO] Kling generation started:', taskId);
 
     return {
-      predictionId: result.data.task_id,
-      status: result.data.task_status || 'submitted',
+      predictionId: taskId,
+      status: result.data?.task_status || 'submitted',
     };
   } catch (error) {
     const errorMsg = `Kling exception: ${error instanceof Error ? error.message : String(error)}`;
@@ -495,7 +505,10 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
     throw new Error(`Replicate video generation failed: ${response.status} - ${errorText}`);
   }
 
-  const prediction = await response.json();
+  const prediction = readReplicatePrediction(await response.json());
+  if (!prediction.id) {
+    throw new Error('Replicate video generation failed: no prediction id in the reply');
+  }
   console.log('[GROK-VIDEO] Replicate Minimax prediction started:', prediction.id);
 
   return {
@@ -799,6 +812,7 @@ export default async function handler(
       const { winnerCity, loserCity, winnerCityType, loserCityType, forceRegenerate } = body as NewLifeVideosRequest;
 
       if (!winnerCity || !loserCity) {
+        await giveBack();
         res.status(400).json({
           error: 'Missing required fields',
           required: ['winnerCity', 'loserCity'],
@@ -905,6 +919,7 @@ export default async function handler(
       const { winnerCity, cityType } = body as CourtOrderVideoRequest;
 
       if (!winnerCity) {
+        await giveBack();
         res.status(400).json({
           error: 'Missing required fields',
           required: ['winnerCity'],
