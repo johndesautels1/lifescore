@@ -21,7 +21,8 @@ import { createClient } from '@supabase/supabase-js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { callClaude } from '../shared/anthropic.js';
+import { AI_MODELS } from '../shared/models.js';
 
 export const config = {
   maxDuration: 300,  // Vercel Pro: 5 min — LLM screenplay can retry
@@ -339,10 +340,6 @@ async function generateScreenplay(
   input: MovieComparisonInput,
   qaFeedback?: string[]
 ): Promise<Screenplay> {
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
-  }
 
   const systemPrompt = buildSystemPrompt();
 
@@ -357,32 +354,21 @@ Return ONLY valid JSON matching the schema. No markdown, no backticks, no explan
     userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues. Pay attention to scene count (12) and total duration (600s).`;
   }
 
-  const response = await fetchWithTimeout(
-    'https://api.anthropic.com/v1/messages',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 16384,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      }),
-    },
-    LLM_TIMEOUT_MS
-  );
+  const reply = await callClaude({
+    model: AI_MODELS.writer.id,
+    maxTokens: 32000, // thinking + the full JSON
+    effort: 'medium',
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+    timeoutMs: LLM_TIMEOUT_MS,
+    label: 'screenplay',
+  });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM call failed (${response.status}): ${errorText}`);
+  if (!reply.ok) {
+    throw new Error(`LLM call failed (${reply.kind}): ${reply.message}`);
   }
 
-  const data = await response.json();
-  const rawText = data.content?.[0]?.text || '';
+  const rawText = reply.text;
 
   // Extract JSON (handle potential markdown wrapping)
   let jsonText = rawText.trim();

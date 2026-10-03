@@ -15,8 +15,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { requireJudgeReportAccess } from './shared/entitlements.js';
+import { callClaude } from './shared/anthropic.js';
+import { AI_MODELS } from './shared/models.js';
 import { handleCors } from './shared/cors.js';
-import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 import { CATEGORIES } from './shared/metrics.js';
 import { notifyJobComplete } from './shared/notifyJob.js';
 
@@ -454,48 +455,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[JUDGE-REPORT] Generating report for ${city1} vs ${city2}, userId: ${userId}`);
 
-    // Check for Anthropic API key
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) {
-      return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
-    }
-
     // Build the comprehensive prompt
     const prompt = buildJudgePrompt(city1, city2, comparisonResult);
     console.log(`[JUDGE-REPORT] Prompt length: ${prompt.length} chars`);
 
-    // Call Claude Opus 4.6
-    const response = await fetchWithTimeout(
-      'https://api.anthropic.com/v1/messages',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-8',
-          max_tokens: 8192,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      },
-      OPUS_TIMEOUT_MS
-    );
+    // The judge model writes the report (model: AI_MODELS.judge)
+    const reply = await callClaude({
+      model: AI_MODELS.judge.id,
+      maxTokens: 24000, // thinking + the full written report; 8192 left no room
+      effort: 'high',
+      messages: [{ role: 'user', content: prompt }],
+      timeoutMs: OPUS_TIMEOUT_MS,
+      label: 'judge-report',
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[JUDGE-REPORT] Opus API error: ${response.status} - ${errorText.slice(0, 500)}`);
-      return res.status(500).json({ error: `Opus API error: ${response.status}` });
+    if (!reply.ok) {
+      console.error(`[JUDGE-REPORT] Opus call failed (${reply.kind}): ${reply.message}`);
+      return res.status(reply.kind === 'not-configured' ? 500 : 502).json({ error: 'The judge could not write the report. Please try again.' });
     }
 
-    const data = await response.json();
-    const content = data.content?.[0]?.text;
-
-    if (!content) {
-      console.error('[JUDGE-REPORT] Empty response from Opus');
-      return res.status(500).json({ error: 'Empty response from Opus' });
-    }
+    const content = reply.text;
 
     console.log(`[JUDGE-REPORT] Opus response received, content length: ${content.length} chars`);
 

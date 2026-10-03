@@ -17,7 +17,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { callClaude } from '../shared/anthropic.js';
+import { AI_MODELS } from '../shared/models.js';
 
 export const config = {
   maxDuration: 300,  // Vercel Pro: 5 min — LLM storyboard can retry (2×90s) + validation
@@ -367,10 +368,6 @@ async function generateStoryboard(
   winnerPackage: WinnerPackage,
   qaFeedback?: string[]
 ): Promise<Storyboard> {
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
-  }
 
   const systemPrompt = buildSystemPrompt();
 
@@ -386,32 +383,21 @@ Return ONLY valid JSON matching the schema. No markdown, no backticks, no explan
     userPrompt += `\n\nIMPORTANT — Your previous attempt failed QA validation with these errors:\n${qaFeedback.map(e => `- ${e}`).join('\n')}\nFix these issues in your new output. Pay special attention to the 200-250 word count target for voiceover. NEVER exceed 300 words total.`;
   }
 
-  const response = await fetchWithTimeout(
-    'https://api.anthropic.com/v1/messages',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 8192,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      }),
-    },
-    LLM_TIMEOUT_MS
-  );
+  const reply = await callClaude({
+    model: AI_MODELS.writer.id,
+    maxTokens: 16000, // thinking + the full JSON
+    effort: 'low', // keeps the storyboard inside its 90-second window
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+    timeoutMs: LLM_TIMEOUT_MS,
+    label: 'storyboard',
+  });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM call failed (${response.status}): ${errorText}`);
+  if (!reply.ok) {
+    throw new Error(`LLM call failed (${reply.kind}): ${reply.message}`);
   }
 
-  const data = await response.json();
-  const rawText = data.content?.[0]?.text || '';
+  const rawText = reply.text;
 
   // Extract JSON from response (handle potential markdown wrapping)
   let jsonText = rawText.trim();

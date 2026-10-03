@@ -9,46 +9,30 @@
 // API PRICING CONFIGURATION (per 1M tokens unless noted)
 // ============================================================================
 
+import { AI_MODELS } from '../../api/shared/models';
+
 export const API_PRICING = {
-  // Anthropic Claude
-  // Note 2026-05-25: Opus bumped to 4.7 to align with LTM + OB. The
-  // 4.6 entry is retained as a deprecated record so historical
-  // Supabase cost rows (judge_reports.opus_judge_total recorded with
-  // model='claude-opus-4-6') still resolve to a price in the
-  // CostDashboard fallback path. Pricing tier is identical — Anthropic
-  // hasn't differentiated Opus 4.6 vs 4.7 input/output rates.
-  // 2026-07 refresh: current judge model. Older versioned keys are retained
-  // below so historical Supabase cost rows still resolve to a price.
-  'claude-opus-4-8': {
-    input: 15.00,    // $15 per 1M input tokens
-    output: 75.00,   // $75 per 1M output tokens
-    name: 'Claude Opus 4.8',
+  // Anthropic Claude — the CURRENT models come from api/shared/models.ts (the one place a
+  // model id and its published price are written). Older ids stay below so historical
+  // Supabase cost rows still resolve, at Anthropic's real published rates (they were
+  // listed here at $15/$75, a price these models never had).
+  [AI_MODELS.judge.id]: {
+    input: AI_MODELS.judge.inputPerM,
+    output: AI_MODELS.judge.outputPerM,
+    name: AI_MODELS.judge.name,
     icon: '🧠'
   },
-  'claude-opus-4-7': {
-    input: 15.00,    // $15 per 1M input tokens
-    output: 75.00,   // $75 per 1M output tokens
-    name: 'Claude Opus 4.7 (deprecated)',
-    icon: '🧠'
-  },
-  'claude-opus-4-6': {
-    input: 15.00,    // $15 per 1M input tokens — deprecated, retained for historical records
-    output: 75.00,   // $75 per 1M output tokens — deprecated
-    name: 'Claude Opus 4.6 (deprecated)',
-    icon: '🧠'
-  },
-  'claude-sonnet-5': {
-    input: 3.00,     // $3 per 1M input tokens
-    output: 15.00,   // $15 per 1M output tokens
-    name: 'Claude Sonnet 5',
+  [AI_MODELS.claudeEvaluator.id]: {
+    input: AI_MODELS.claudeEvaluator.inputPerM,
+    output: AI_MODELS.claudeEvaluator.outputPerM,
+    name: AI_MODELS.claudeEvaluator.name,
     icon: '🎵'
   },
-  'claude-sonnet-4-6': {
-    input: 3.00,     // $3 per 1M input tokens
-    output: 15.00,   // $15 per 1M output tokens
-    name: 'Claude Sonnet 4.6 (deprecated)',
-    icon: '🎵'
-  },
+  'claude-opus-4-8': { input: 5.00, output: 25.00, name: 'Claude Opus 4.8 (retired here)', icon: '🧠' },
+  'claude-opus-4-7': { input: 5.00, output: 25.00, name: 'Claude Opus 4.7 (retired here)', icon: '🧠' },
+  'claude-opus-4-6': { input: 5.00, output: 25.00, name: 'Claude Opus 4.6 (retired here)', icon: '🧠' },
+  'claude-sonnet-5': { input: 2.00, output: 10.00, name: 'Claude Sonnet 5 (retired here)', icon: '🎵' },
+  'claude-sonnet-4-6': { input: 3.00, output: 15.00, name: 'Claude Sonnet 4.6 (retired here)', icon: '🎵' },
 
   // OpenAI
   'gpt-5.5': {

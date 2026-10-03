@@ -127,60 +127,16 @@ If a git command fails, say so honestly — do not fabricate a number.
 
 ---
 
-## Claude API Model IDs & Configuration (Updated 2026-05-25)
+## AI models and the Claude connection (updated 2026-10-03)
 
-### Model IDs — No Date Suffix
-*(2026-07 cascade refresh — bumped every provider to current models.)*
-- **Opus:** `claude-opus-4-8`  *(judge + judge-report; bumped from 4-7 on 2026-07)*
-- **Sonnet:** `claude-sonnet-5`  *(evaluator + Olivia/movie/Cristiano storyboards)*
-- **Haiku:** `claude-haiku-4-5-20251001`
-
-Non-Anthropic evaluators (the enhanced-comparison cascade), refreshed 2026-07:
-- **OpenAI:** `gpt-5.5`  *(was `gpt-4o`)*
-- **Google:** `gemini-3.1-pro`  *(GA; was `gemini-3.1-pro-preview`)*
-- **xAI:** `grok-4.5`  *(was `grok-4`)*
-- **Perplexity:** `sonar-pro`  *(was `sonar-reasoning-pro` — the reasoning variant)*
-
-NOTE: the internal provider IDs (`claude-sonnet`, `gpt-4o`, `gemini-3-pro`,
-`grok-4`, `perplexity`) are IDENTIFIERS used as keys across the type unions,
-rate limiter, and cost tracker — they are deliberately NOT renamed. Only the
-wire `model:` strings sent to each API were bumped.
-
-Old date-suffixed IDs (e.g. `claude-sonnet-4-5-20250929`) are deprecated.
-Deprecated model keys (`claude-opus-4-7`, `claude-opus-4-6`, `claude-sonnet-4-6`,
-`gpt-4o`, `grok-4`, `gemini-3-pro`, `perplexity-sonar`) are retained in
-`src/utils/costCalculator-pricing.ts` only so historical Supabase cost rows
-still resolve to a price.
-
-### Extended Thinking — Adaptive (New)
-The old `thinking: {type: "enabled", budget_tokens: N}` syntax is deprecated.
-Use adaptive thinking with the `effort` parameter instead:
-
-```javascript
-// Opus 4.7 — complex reasoning
-{
-  model: "claude-opus-4-7",
-  max_tokens: 16000,
-  thinking: { type: "adaptive" },
-  effort: "high",  // "high" | "medium" | "low" | "max" (Opus only)
-  messages: [{ role: "user", content: "..." }]
-}
-
-// Sonnet 4.6 — web search calls
-{
-  model: "claude-sonnet-4-6",
-  max_tokens: 1000,
-  thinking: { type: "adaptive" },
-  effort: "medium",
-  tools: [{ type: "web_search_20250305", name: "web_search" }],
-  messages: [{ role: "user", content: "..." }]
-}
-```
-
-No beta header required — adaptive thinking is GA.
-
-### IMPORTANT: Opus Prefilled Assistant Restriction
-**Opus (4.6 and 4.7) does NOT support prefilled assistant messages.**
-Requests with prefilled assistant messages return a 400 error. If any
-Opus calls use prefilled assistant content, they must be refactored to
-use system prompts or user messages instead.
+- **Model ids live in ONE file: `api/shared/models.ts`** (`AI_MODELS`, by job: judge,
+  claudeEvaluator, writer). Never type a model id anywhere else — a test fails if you do.
+- **Every Claude call goes through `callClaude()` in `api/shared/anthropic.ts`.** No route
+  calls `api.anthropic.com` itself. It sets effort, reads every text block of the reply
+  (current models put a thinking block first, so `content[0].text` is empty), retries
+  overloads, and turns on Anthropic's refusal fallback (`fallbacks: "default"`).
+- Current models (Claude Opus 5.5, Claude Sonnet 5.5) always think: no `temperature`, no
+  `thinking: {type: "disabled"}`, no `budget_tokens`, no prefilled assistant message —
+  each returns a 400. Depth is set with `effort` (Opus 5.5 defaults to medium, so set it).
+- Prices for the current models come from `AI_MODELS`; older ids stay in
+  `src/utils/costCalculator-pricing.ts` only so old cost rows still resolve.

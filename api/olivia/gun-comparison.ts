@@ -12,7 +12,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { callClaude } from '../shared/anthropic.js';
+import { AI_MODELS } from '../shared/models.js';
 
 // ============================================================================
 // TYPES
@@ -37,8 +38,7 @@ interface GunComparisonResponse {
 // CONSTANTS
 // ============================================================================
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_TIMEOUT_MS = 30000;
+const ANTHROPIC_TIMEOUT_MS = 55000; // inside the route's 60-second limit
 
 const GUN_LAW_CATEGORIES = [
   'Open Carry',
@@ -99,38 +99,25 @@ export default async function handler(
       return;
     }
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) {
-      res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
-      return;
-    }
-
     const userMessage = `Compare gun laws between "${cityA}" and "${cityB}" for these categories:\n${GUN_LAW_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n')}`;
 
-    const response = await fetchWithTimeout(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    }, ANTHROPIC_TIMEOUT_MS);
+    const reply = await callClaude({
+      model: AI_MODELS.writer.id,
+      maxTokens: 8000, // thinking + the comparison JSON
+      effort: 'low',
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
+      timeoutMs: ANTHROPIC_TIMEOUT_MS,
+      label: 'gun-comparison',
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[GUN-COMPARISON] Anthropic error:', response.status, errorText);
+    if (!reply.ok) {
+      console.error('[GUN-COMPARISON] Claude call failed:', reply.kind, reply.message);
       res.status(502).json({ error: 'Failed to fetch gun law comparison' });
       return;
     }
 
-    const data = await response.json();
-    const textContent = data.content?.[0]?.text || '';
+    const textContent = reply.text;
 
     // Parse JSON from response (handle markdown code blocks)
     let parsed: { categories: GunLawCategory[]; summary: string };

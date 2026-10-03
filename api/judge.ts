@@ -11,8 +11,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { requireComparisonGrant } from './shared/entitlements.js';
+import { callClaude } from './shared/anthropic.js';
+import { AI_MODELS } from './shared/models.js';
 import { handleCors } from './shared/cors.js';
-import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
 import { METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
 
@@ -526,35 +527,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const prompt = buildOpusPrompt(city1, city2, city1Consensuses, city2Consensuses, disagreementMetrics);
       console.log(`[JUDGE] Calling Opus API with prompt length: ${prompt.length} chars`);
 
-      const response = await fetchWithTimeout(
-        'https://api.anthropic.com/v1/messages',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': anthropicKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-opus-4-8',
-            max_tokens: 4096,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        },
-        OPUS_TIMEOUT_MS
-      );
+      const reply = await callClaude({
+        model: AI_MODELS.judge.id,
+        maxTokens: 16000, // the judge thinks before it writes; 4096 left no room
+        effort: 'high',
+        messages: [{ role: 'user', content: prompt }],
+        timeoutMs: OPUS_TIMEOUT_MS,
+        label: 'judge',
+      });
 
-      if (response.ok) {
-        const data = await response.json();
-
-        // Capture token usage from Opus response
+      if (reply.ok) {
+        // Capture token usage from the judge's reply
         opusTokenUsage = {
-          inputTokens: data?.usage?.input_tokens || 0,
-          outputTokens: data?.usage?.output_tokens || 0
+          inputTokens: reply.usage.inputTokens,
+          outputTokens: reply.usage.outputTokens
         };
         console.log(`[JUDGE] Opus token usage: ${opusTokenUsage.inputTokens} in / ${opusTokenUsage.outputTokens} out`);
 
-        const content = data.content?.[0]?.text;
+        const content = reply.text;
         console.log(`[JUDGE] Opus response received, content length: ${content?.length || 0} chars`);
         if (content) {
           const opusJudgments = parseOpusResponse(content);
@@ -569,8 +559,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
       } else {
-        const errorText = await response.text();
-        console.error(`[JUDGE] Opus API error: ${response.status} - ${errorText.slice(0, 500)}`);
+        console.error(`[JUDGE] Opus call failed (${reply.kind}): ${reply.message}`);
       }
     } catch (error) {
       console.error('[JUDGE] Opus judge API call failed, using statistical consensus:', error);

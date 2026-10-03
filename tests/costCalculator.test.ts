@@ -15,19 +15,25 @@ import {
   createCostBreakdown,
   finalizeCostBreakdown,
 } from '../src/utils/costCalculator-functions';
+import { AI_MODELS } from '../api/shared/models';
 
 // ============================================================================
 // calculateLLMCost
 // ============================================================================
 
 describe('calculateLLMCost', () => {
-  it('calculates Claude Opus cost correctly', () => {
-    // 1000 input tokens, 500 output tokens
-    // Opus: $15/1M input, $75/1M output
+  it('prices the current judge model from the model registry', () => {
+    // 1000 input tokens, 500 output tokens at the judge's published rate
+    const result = calculateLLMCost(AI_MODELS.judge.id, 1000, 500);
+    expect(result.inputCost).toBeCloseTo(1000 * AI_MODELS.judge.inputPerM / 1_000_000, 8);
+    expect(result.outputCost).toBeCloseTo(500 * AI_MODELS.judge.outputPerM / 1_000_000, 8);
+  });
+
+  it('keeps historical Opus rows at the real Anthropic rate ($5 / $25), not the $15 / $75 once listed', () => {
     const result = calculateLLMCost('claude-opus-4-7', 1000, 500);
-    expect(result.inputCost).toBeCloseTo(0.015, 5);
-    expect(result.outputCost).toBeCloseTo(0.0375, 5);
-    expect(result.totalCost).toBeCloseTo(0.0525, 5);
+    expect(result.inputCost).toBeCloseTo(0.005, 5);
+    expect(result.outputCost).toBeCloseTo(0.0125, 5);
+    expect(result.totalCost).toBeCloseTo(0.0175, 5);
   });
 
   it('calculates GPT-4o cost correctly', () => {
@@ -56,9 +62,9 @@ describe('calculateLLMCost', () => {
   it('handles large token counts', () => {
     // 1 million tokens each
     const result = calculateLLMCost('claude-opus-4-7', 1_000_000, 1_000_000);
-    expect(result.inputCost).toBeCloseTo(15.0, 2);
-    expect(result.outputCost).toBeCloseTo(75.0, 2);
-    expect(result.totalCost).toBeCloseTo(90.0, 2);
+    expect(result.inputCost).toBeCloseTo(5.0, 2);
+    expect(result.outputCost).toBeCloseTo(25.0, 2);
+    expect(result.totalCost).toBeCloseTo(30.0, 2);
   });
 });
 

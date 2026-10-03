@@ -8,46 +8,29 @@ import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 import { requireAdmin } from './shared/entitlements.js';
+import { callClaude } from './shared/anthropic.js';
+import { AI_MODELS } from './shared/models.js';
 
 // Quick timeout for test calls (15 seconds)
 const TEST_TIMEOUT_MS = 15000;
 
 // Test Claude Sonnet
 async function testClaude(): Promise<{ success: boolean; message: string; latencyMs: number }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { success: false, message: 'ANTHROPIC_API_KEY not set', latencyMs: 0 };
-
+  // Same call point and model as the real evaluator, so the test proves the real path.
   const startTime = Date.now();
-  try {
-    const response = await fetchWithTimeout(
-      'https://api.anthropic.com/v1/messages',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-5',
-          max_tokens: 10,
-          messages: [{ role: 'user', content: 'Say "ok"' }]
-        })
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    const latencyMs = Date.now() - startTime;
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, message: `API error ${response.status}: ${errorText.slice(0, 200)}`, latencyMs };
-    }
-
-    const data = await response.json();
-    return { success: true, message: `Response: ${data.content?.[0]?.text || 'ok'}`, latencyMs };
-  } catch (error) {
-    return { success: false, message: String(error), latencyMs: Date.now() - startTime };
-  }
+  const reply = await callClaude({
+    model: AI_MODELS.claudeEvaluator.id,
+    maxTokens: 2000, // the model may think briefly before answering
+    effort: 'low',
+    messages: [{ role: 'user', content: 'Say "ok"' }],
+    timeoutMs: TEST_TIMEOUT_MS,
+    retries: 0,
+    label: 'test-llm',
+  });
+  const latencyMs = Date.now() - startTime;
+  return reply.ok
+    ? { success: true, message: `Response from ${reply.servedBy}: ${reply.text}`, latencyMs }
+    : { success: false, message: reply.message.slice(0, 300), latencyMs };
 }
 
 // Test GPT-4o

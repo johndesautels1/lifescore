@@ -67,6 +67,7 @@ import {
 import { saveApiCostRecord } from './services/databaseService';
 import { warmUpSupabase } from './lib/supabase';
 import { startComparison } from './lib/usageGrant';
+import { AI_MODELS } from '../api/shared/models';
 import './styles/globals.css';
 import './App.css';
 
@@ -899,7 +900,7 @@ const AppContent: React.FC = () => {
                               llmResults.forEach((evalResult, provider) => {
                                 if (evalResult.usage?.tokens) {
                                   const { inputTokens, outputTokens } = evalResult.usage.tokens;
-                                  const pricingKey = provider === 'claude-sonnet' ? 'claude-sonnet-5' :
+                                  const pricingKey = provider === 'claude-sonnet' ? AI_MODELS.claudeEvaluator.id :
                                                      provider === 'gpt-4o' ? 'gpt-5.5' :
                                                      provider === 'gemini-3-pro' ? 'gemini-3.1-pro' :
                                                      provider === 'grok-4' ? 'grok-4.5' :
@@ -930,10 +931,10 @@ const AppContent: React.FC = () => {
 
                               if (effectiveJudgeResult?.usage?.opusTokens) {
                                 const { inputTokens, outputTokens } = effectiveJudgeResult.usage.opusTokens;
-                                const judgeCosts = calculateLLMCost('claude-opus-4-8', inputTokens, outputTokens);
+                                const judgeCosts = calculateLLMCost(AI_MODELS.judge.id, inputTokens, outputTokens);
                                 costBreakdown.opusJudge = {
                                   provider: 'claude-opus',
-                                  model: 'claude-opus-4-8',
+                                  model: AI_MODELS.judge.id,
                                   inputTokens,
                                   outputTokens,
                                   inputCost: judgeCosts.inputCost,

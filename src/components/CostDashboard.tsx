@@ -22,6 +22,7 @@ import {
   deleteAllApiCosts,
 } from '../services/databaseService';
 import { useAuth } from '../contexts/AuthContext';
+import { AI_MODELS } from '../../api/shared/models';
 import { isSupabaseConfigured } from '../lib/supabase';
 import type { ApiCostRecord } from '../types/database';
 import { toastConfirm } from '../utils/toast';
@@ -52,7 +53,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       total > 0 ? [{ provider, model, inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: total, timestamp: new Date(record.created_at).getTime(), context }] : [];
 
     const opusJudge: APICallCost | null = record.opus_judge_total > 0
-      ? { provider: 'claude-opus', model: 'claude-opus-4-7', inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.opus_judge_total, timestamp: new Date(record.created_at).getTime(), context: 'judge' }
+      ? { provider: 'claude-opus', model: AI_MODELS.judge.id, inputTokens: 0, outputTokens: 0, inputCost: 0, outputCost: 0, totalCost: record.opus_judge_total, timestamp: new Date(record.created_at).getTime(), context: 'judge' }
       : null;
 
     return {
@@ -61,7 +62,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
       city2: record.city2_name,
       mode: record.mode,
       timestamp: new Date(record.created_at).getTime(),
-      claudeSonnet: makeCallCost('claude-sonnet', 'claude-sonnet-4-6', record.claude_sonnet_total, 'evaluation'),
+      claudeSonnet: makeCallCost('claude-sonnet', AI_MODELS.claudeEvaluator.id, record.claude_sonnet_total, 'evaluation'),
       gpt4o: makeCallCost('gpt-4o', 'gpt-4o', record.gpt4o_total, 'evaluation'),
       gemini: makeCallCost('gemini-3-pro', 'gemini-3-pro', record.gemini_total, 'evaluation'),
       grok: makeCallCost('grok-4', 'grok-4', record.grok_total, 'evaluation'),

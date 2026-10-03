@@ -7,6 +7,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyRateLimit } from './shared/rateLimit.js';
 import { handleCors } from './shared/cors.js';
 import { requireComparisonGrant } from './shared/entitlements.js';
+import { callClaude } from './shared/anthropic.js';
+import { AI_MODELS } from './shared/models.js';
 
 /** The one model a standard (single-model) comparison runs on — see src/hooks/useComparison.ts. */
 const STANDARD_COMPARISON_PROVIDER = 'claude-sonnet';
@@ -691,7 +693,7 @@ async function tavilySearch(query: string, maxResults: number = 5): Promise<Tavi
   }
 }
 
-// Claude Sonnet 4.6 evaluation (with optional Tavily web search)
+// Claude evaluation — model from AI_MODELS.claudeEvaluator (with optional Tavily web research)
 async function evaluateWithClaude(city1: string, city2: string, metrics: EvaluationRequest['metrics']): Promise<EvaluationResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -817,30 +819,22 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
     try {
       console.log(`[CLAUDE] Attempt ${attempt}/${MAX_RETRIES} for ${city1} vs ${city2}`);
 
-      const response = await fetchWithTimeout(
-        'https://api.anthropic.com/v1/messages',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-5',
-            max_tokens: 16384,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        },
-        LLM_TIMEOUT_MS
-      );
+      // One shared Claude call point (api/shared/anthropic.ts) — it retries overloads itself.
+      const reply = await callClaude({
+        model: AI_MODELS.claudeEvaluator.id,
+        maxTokens: 24000, // room for thinking + 100 scored metrics
+        effort: 'medium',
+        messages: [{ role: 'user', content: prompt }],
+        timeoutMs: LLM_TIMEOUT_MS,
+        retries: 1,
+        label: 'evaluate',
+      });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        lastError = `API error: ${response.status} - ${errorText}`;
+      if (!reply.ok) {
+        lastError = reply.message;
         console.error(`[CLAUDE] Attempt ${attempt} failed: ${lastError}`);
-        // Don't retry on 4xx errors (client errors), only on 5xx (server errors)
-        if (response.status >= 400 && response.status < 500) {
+        // A request Anthropic rejects outright (4xx other than overload) will not succeed on retry
+        if (reply.kind === 'not-configured' || reply.kind === 'refused' || (reply.kind === 'http' && reply.status !== undefined && reply.status < 500 && reply.status !== 429)) {
           return { provider: 'claude-sonnet', success: false, scores: [], latencyMs: Date.now() - startTime, error: lastError };
         }
         if (attempt < MAX_RETRIES) {
@@ -851,18 +845,7 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
         continue;
       }
 
-      const data = await response.json();
-      // FIX #8: Defensive parsing - handle missing/malformed response
-      const content = data?.content?.[0]?.text;
-      if (!content) {
-        lastError = 'Empty or malformed response from Claude';
-        console.error(`[CLAUDE] Attempt ${attempt}: ${lastError}`);
-        if (attempt < MAX_RETRIES) {
-          const backoffMs = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-        }
-        continue;
-      }
+      const content = reply.text;
 
       const scores = parseResponse(content, 'claude-sonnet');
 
@@ -876,10 +859,10 @@ ${allResults.map(r => `- **${r.title}** (${r.url}): ${r.content}`).join('\n')}
         continue;
       }
 
-      // Extract token usage from Claude response
+      // Token usage for cost tracking
       const usage: TokenUsage = {
-        inputTokens: data?.usage?.input_tokens || 0,
-        outputTokens: data?.usage?.output_tokens || 0
+        inputTokens: reply.usage.inputTokens,
+        outputTokens: reply.usage.outputTokens
       };
 
       console.log(`[CLAUDE] Success on attempt ${attempt}: ${scores.length} scores returned`);
