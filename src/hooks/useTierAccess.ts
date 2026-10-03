@@ -557,8 +557,6 @@ export function useTierAccess(): TierAccessHook {
 
   return {
     tier,
-    tierName,  return {
-    tier,
     tierName,
     limits,
     isLoading: authLoading,
@@ -576,4 +574,4 @@ export function useTierAccess(): TierAccessHook {
 // UTILITY EXPORTS
 // ============================================================================
 
-export default useTierAccess;export default useTierAccess;
+export default useTierAccess;
