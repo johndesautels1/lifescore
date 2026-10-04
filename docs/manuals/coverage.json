@@ -289,9 +289,9 @@
         "scripts/manuals-autoupdate.ts",
         "tests/manuals.test.ts"
       ],
-      "hash": "fe19946960643130691ca3deeeca1dbc684c5f46ae16ef573bae6c31b50bdf8f",
+      "hash": "2797b3954d8a3135f4d3fe2b4b110728341945ad70a88a59a00379300c880e36",
       "reviewed": "2026-10-04",
-      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+      "basis": "4d4e7917f3b8e06e90eeb7feb0672fadb39bb02f"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#15-admin-tools": {
       "files": [

@@ -247,7 +247,7 @@ function appCode(root: string): { file: string; text: string }[] {
     .map((file) => ({ file, text: read(root, file) ?? '' }));
 }
 
-/** Storage buckets the code names (`…BUCKET = 'x'`, `storage.from('x')`), and where. */
+/** Storage buckets the code names (a `…_BUCKET` constant or a `storage.from(…)` call), and where. */
 function factBuckets(root: string): string {
   const used = new Map<string, Set<string>>();
   for (const { file, text } of appCode(root)) {
