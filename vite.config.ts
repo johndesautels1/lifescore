@@ -11,10 +11,13 @@ export default defineConfig({
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo-512.png'],
       manifest: false, // Use our custom manifest.json in public folder
       workbox: {
-        // Pre-cache only the app shell: index.html, core CSS, and critical vendor chunks.
+        // Pre-cache only the app shell: index.html, core CSS, and critical vendor chunks,
+        // plus Rolldown's runtime (rolldown-runtime-*.js, which index.html preloads since Vite 8).
+        // scripts/check-precache-shell.mjs fails CI if the built page loads a file at start
+        // that these patterns miss.
         // Lazy-loaded tab chunks (Results, JudgeTab, AskOlivia, etc.) are cached on first
         // use via runtimeCaching below — NOT pre-cached on install.
-        globPatterns: ['**/*.html', '**/index-*.js', '**/index-*.css', '**/react-vendor-*.js', '**/supabase-*.js', '**/app-data-*.js', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
+        globPatterns: ['**/*.html', '**/index-*.js', '**/index-*.css', '**/rolldown-runtime-*.js', '**/react-vendor-*.js', '**/supabase-*.js', '**/app-data-*.js', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
         runtimeCaching: [
           {
             // Lazy-loaded JS/CSS chunks: cache on first use (StaleWhileRevalidate)

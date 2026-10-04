@@ -8,6 +8,8 @@
 # - server typecheck: api/ is compiled separately by Vercel and `tsc -b` does not cover it.
 #   Its first check (3 Oct 2026) found 145 errors, three of them live crashes; it now gates every push.
 # - test: the vitest suite, including the anti-drift guards.
+# - build: the production build, then every file the built page loads at start must be in the
+#   offline precache (on 4 Oct 2026 Vite 8 added rolldown-runtime-*.js and nothing noticed).
 name: CI
 
 on:
@@ -46,3 +48,9 @@ jobs:
 
       - name: Tests
         run: npx vitest run
+
+      - name: Production build
+        run: npx vite build
+
+      - name: Every start-up file is precached for offline use
+        run: node scripts/check-precache-shell.mjs

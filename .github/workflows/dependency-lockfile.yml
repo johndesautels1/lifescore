@@ -7,8 +7,8 @@
 #
 # Proof, in order: npm ci from the new lockfile; both type checks (the app and
 # the server functions) with TypeScript 7; the test suite; the production build;
-# the chunks the PWA precache names (vite.config.ts globPatterns) exist; the
-# security audit and the linter are printed for the record.
+# every file the built page loads at start is precached (scripts/check-precache-shell.mjs);
+# the security audit and the linter are printed for the record.
 name: Dependency lockfile
 
 on:
@@ -56,12 +56,8 @@ jobs:
       - name: Production build
         run: npx vite build
 
-      - name: The chunks the PWA precache names exist
-        run: |
-          ls dist/assets
-          for name in index react-vendor supabase app-data; do
-            ls dist/assets | grep -q "^${name}-" || { echo "missing chunk: ${name}-*"; exit 1; }
-          done
+      - name: Every start-up file is precached for offline use
+        run: node scripts/check-precache-shell.mjs
 
       - name: Security audit (for the record)
         run: npm audit --audit-level=low || true
@@ -78,5 +74,5 @@ jobs:
             echo "The lockfile is already current."
             exit 0
           fi
-          git commit -m "chore(deps): lockfile for ${GITHUB_REF_NAME}" -m "Resolved by .github/workflows/dependency-lockfile.yml. npm ci, both TypeScript 7 type checks, vitest, vite build and the PWA chunk check passed on it."
+          git commit -m "chore(deps): lockfile for ${GITHUB_REF_NAME}" -m "Resolved by .github/workflows/dependency-lockfile.yml. npm ci, both TypeScript 7 type checks, vitest, vite build and the offline start-up check passed on it."
           git push origin "HEAD:${GITHUB_REF_NAME}"
