@@ -69,11 +69,12 @@
 
 ## 3. Timed jobs
 
-The only timed job (`vercel.json` → `crons`) is:
+The timed jobs (`vercel.json` → `crons`) are:
 
 | Job | Schedule | What it does |
 |---|---|---|
 | `/api/warmup` | Every 5 minutes | Keeps the database connection warm; deletes nothing |
+| `/api/cron/vendor-check` | Mondays 08:00 UTC | Checks the AI vendors still serve the app's models and that Google sign-in starts; emails the admins on a failure. Reads and deletes no personal data |
 
 **No automatic deletion job runs today.** See Open items.
 
