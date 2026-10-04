@@ -1,6 +1,79 @@
 {
   "version": 1,
   "sections": {
+    "CUSTOMER_SERVICE_MANUAL.md#1-the-company-and-how-customers-reach-us": {
+      "files": [
+        "src/legal/legalFacts.ts",
+        "src/shared/companyContact.ts"
+      ],
+      "hash": "cf999b7cae3d7abbab472218362d9f94583a5fddaf7641b78fbf868fbb15637e",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
+    "CUSTOMER_SERVICE_MANUAL.md#2-what-each-plan-includes": {
+      "files": [
+        "api/shared/plans.ts",
+        "src/components/PricingModal.tsx"
+      ],
+      "hash": "559edff45340091dd0ca8225a1df353e1306b33f511fa82d8933b538dcb5bbf0",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
+    "CUSTOMER_SERVICE_MANUAL.md#3-what-customers-ask-and-the-answer": {
+      "files": [
+        "src/components/CitySelector.tsx",
+        "src/components/NotifyMeModal.tsx",
+        "src/components/Results.tsx",
+        "api/shared/entitlements.ts",
+        "src/components/SavedComparisons.tsx"
+      ],
+      "hash": "68df7807346686c7a0b1343154a93b5f37f432f84e72af1354a8d4f7b02f1dce",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
+    "CUSTOMER_SERVICE_MANUAL.md#4-messages-customers-see-and-what-to-do": {
+      "files": [
+        "api/shared/entitlements.ts",
+        "src/components/LoginScreen.tsx",
+        "src/hooks/useComparison.ts",
+        "api/olivia/chat.ts",
+        "src/hooks/useJudgeVideo.ts",
+        "src/hooks/useGrokVideo.ts",
+        "src/main.tsx"
+      ],
+      "hash": "088108a0ca3603791ba6e56a9a53b33e07b9d07a3699822ea65fc5d0aac37d53",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
+    "CUSTOMER_SERVICE_MANUAL.md#5-account-and-privacy-requests": {
+      "files": [
+        "src/components/SettingsModal.tsx",
+        "api/user/export.ts",
+        "api/user/delete.ts",
+        "src/legal/legalContent.ts"
+      ],
+      "hash": "dbed2f05c9808e3984aeba71a4c8af1f2243972551e2df98acc325ef0aa0bf51",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
+    "CUSTOMER_SERVICE_MANUAL.md#6-billing-and-refunds": {
+      "files": [
+        "src/legal/legalContent.ts",
+        "src/components/SettingsModal.tsx",
+        "api/shared/plans.ts"
+      ],
+      "hash": "af08cdf8edb945a8fe4ac3b7b84b95a66426dce2663c1492433723f0126216d5",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
+    "CUSTOMER_SERVICE_MANUAL.md#7-escalation": {
+      "files": [
+        "src/legal/legalFacts.ts"
+      ],
+      "hash": "d4e8cdab460d0385820b7793cb9efa4ad0fa5cbe60299e1b5ef4a64c460fed48",
+      "reviewed": "2026-10-04",
+      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+    },
     "USER_MANUAL.md#1-what-life-score-is": {
       "files": [
         "src/components/Header.tsx",
