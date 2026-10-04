@@ -174,17 +174,17 @@
       "files": [
         "src/services/gammaService.ts"
       ],
-      "hash": "ba4e99b1f9cdc0eaf86df2ba4793f2f0b75290f9af432078d5d307427eea9656",
+      "hash": "4083793d349ee8d78505dba98d792bd2f951d275eb179c8bfce46c4a72f42e78",
       "reviewed": "2026-10-04",
-      "basis": "4f5c4a46cc7afe1e0b7997c65952cac95b9b534d"
+      "basis": "e96a499da069bb85223a4a4da1dd89fc6db03fd7"
     },
     "GAMMA_PROMPTS_MANUAL.md#4-the-enhanced-report-prompt": {
       "files": [
         "src/services/gammaService.ts"
       ],
-      "hash": "ba4e99b1f9cdc0eaf86df2ba4793f2f0b75290f9af432078d5d307427eea9656",
+      "hash": "4083793d349ee8d78505dba98d792bd2f951d275eb179c8bfce46c4a72f42e78",
       "reviewed": "2026-10-04",
-      "basis": "4f5c4a46cc7afe1e0b7997c65952cac95b9b534d"
+      "basis": "e96a499da069bb85223a4a4da1dd89fc6db03fd7"
     },
     "JUDGE_EQUATIONS_MANUAL.md#1-what-a-score-means": {
       "files": [

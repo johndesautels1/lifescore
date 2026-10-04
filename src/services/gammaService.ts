@@ -609,6 +609,26 @@ function evaluatorsUsed(result: EnhancedComparisonResult) {
   return EVALUATOR_PROMPT_INFO.filter(e => used.has(e.seat)).map(e => ({ ...e, name: modelForSeat(e.seat).name }));
 }
 
+/**
+ * How many distinct links the models cited for this comparison: every model's
+ * evidence and source links, both cities. John, 4 Oct 2026 ("The real count"):
+ * the report used to print a fixed "500+".
+ */
+export function uniqueSourceCount(result: EnhancedComparisonResult): number {
+  const urls = new Set<string>();
+  for (const city of [result.city1, result.city2]) {
+    for (const category of city.categories) {
+      for (const metric of category.metrics) {
+        for (const score of metric.llmScores ?? []) {
+          for (const item of score.evidence ?? []) if (item.url?.trim()) urls.add(item.url.trim());
+          for (const url of score.sources ?? []) if (url?.trim()) urls.add(url.trim());
+        }
+      }
+    }
+  }
+  return urls.size;
+}
+
 /** "3 AI models" / "1 AI model". */
 function modelCount(n: number): string {
   return `${n} AI model${n === 1 ? '' : 's'}`;
@@ -1206,6 +1226,7 @@ function formatSection5LLMConsensus(
   const n = evaluators.length;
   // Law and lived scores for 100 metrics and 2 cities, from each evaluator
   const dataPoints = 2 * 100 * 2 * n;
+  const sourceCount = uniqueSourceCount(result).toLocaleString('en-US');
 
   // Calculate overall agreement
   let totalMetrics = 0;
@@ -1275,7 +1296,7 @@ Synthesizes the ${n} evaluation${n === 1 ? '' : 's'} into final scores and recom
 | Metric | Value | Detail |
 |--------|-------|--------|
 | **Data Points Analyzed** | **${dataPoints.toLocaleString('en-US')}** | Law and lived scores × 100 metrics × 2 cities × ${modelCount(n)} |
-| **Unique Sources Cited** | **500+** | References gathered across all AI models |
+| **Unique Sources Cited** | **${sourceCount}** | Distinct links cited across all AI models |
 | **Strong Agreement Rate** | **${agreementPct}%** | Metrics where the ${modelCount(n)} reached consensus |
 
 ${confidence === 'high' ? `All ${modelCount(n)} showed strong alignment on the vast majority of metrics, indicating reliable conclusions.` :
@@ -1349,7 +1370,7 @@ Gamma AI transforms data into this visual presentation
 **Processing Stats:**
 - ⏱️ Total Time: ${Math.round(result.processingStats.totalTimeMs / 60000)} minutes
 - 📊 Metrics Evaluated: ${result.processingStats.metricsEvaluated}
-- 🔗 Sources: 500+ citations
+- 🔗 Sources: ${sourceCount} distinct links cited
 
 <aside variant="note">
 Multi-AI consensus eliminates single-model bias and provides more reliable freedom assessments.
