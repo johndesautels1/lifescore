@@ -15,7 +15,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { postWithRetry, toCount, type LlmFailure, type LlmResult } from './llm.js';
+import { getModelCheck, postWithRetry, toCount, type LlmFailure, type LlmResult, type ModelCheck } from './llm.js';
 
 const RESPONSES_URL = 'https://api.openai.com/v1/responses';
 
@@ -160,4 +160,11 @@ export async function openaiSpeech(request: SpeechRequest): Promise<SpeechResult
   } finally {
     sent.release();
   }
+}
+
+/** Whether OpenAI still serves a model id (GET /v1/models/{id}). */
+export async function openaiModelCheck(id: string): Promise<ModelCheck> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return { ok: false, reason: 'not-configured', message: 'OPENAI_API_KEY is not set' };
+  return getModelCheck(`https://api.openai.com/v1/models/${encodeURIComponent(id)}`, { Authorization: `Bearer ${key}` });
 }

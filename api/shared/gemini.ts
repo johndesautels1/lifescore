@@ -15,7 +15,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { postWithRetry, toCount, type LlmCitation, type LlmResult } from './llm.js';
+import { getModelCheck, postWithRetry, toCount, type LlmCitation, type LlmResult, type ModelCheck } from './llm.js';
 
 export interface GeminiRequest {
   model: string;
@@ -113,4 +113,11 @@ export async function callGemini(request: GeminiRequest): Promise<LlmResult> {
     citations,
     servedBy: typeof reply.modelVersion === 'string' ? reply.modelVersion : request.model,
   };
+}
+
+/** Whether Google still serves a Gemini model id (GET /v1beta/models/{id}). */
+export async function geminiModelCheck(id: string): Promise<ModelCheck> {
+  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+  if (!key) return { ok: false, reason: 'not-configured', message: 'GEMINI_API_KEY is not set' };
+  return getModelCheck(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(id)}`, { 'x-goog-api-key': key });
 }

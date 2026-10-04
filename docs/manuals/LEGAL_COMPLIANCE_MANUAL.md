@@ -143,6 +143,8 @@ An administrator is a signed-in user whose email is on the admin list (`getAdmin
 
 ## 12. Compliance calendar
 
+Each quarter (1 January, April, July, October) the **law watch** opens a GitHub issue, *Compliance review*, with researched changes in the law that reach the app (each with its source) and this checklist (Technical Support Manual, section 11).
+
 | When | Task |
 |---|---|
 | January | Review every supplier agreement (`DPA_TRACKER.md` review dates); review the Privacy Policy for new data practices |

@@ -1,4 +1,8 @@
-# Runs on every push to main and every pull request, on GitHub's machines (never locally).
+# Runs on every push to main, every pull request and every Monday 06:00 UTC, on GitHub's
+# machines (never locally). The weekly run repeats the whole check on main with no new
+# code, so anything that goes stale with time alone (a dated rule, a library that resolves
+# differently) fails within a week rather than at the next push (John, 4 Oct 2026:
+# scheduled checks). The manuals step runs on pushes only.
 # - install: `npm ci` fails if package.json and package-lock.json disagree — the drift that froze
 #   production from 9 Jul to 3 Oct 2026 (simli-client asked for ^3 while the lockfile said 2.0.0).
 # - typecheck: the same `tsc -b` the Vercel build runs, so a type error is caught before deploy.
@@ -20,6 +24,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:

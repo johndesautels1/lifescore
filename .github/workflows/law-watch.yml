@@ -1,0 +1,63 @@
+# The quarterly law watch: on the 1st of January, April, July and October (and on
+# demand), scripts/law-watch.ts asks Claude — with web search, a source for every item
+# — which changes in privacy, consumer, AI and online-safety law reach LIFE SCORE, and
+# this opens the report as a GitHub issue with the fixed compliance checklist
+# (Legal Compliance Manual, section 12). It informs the founders' review; it changes
+# no page. John, 4 Oct 2026: scheduled checks for "LAWS".
+#
+# Needs the ANTHROPIC_API_KEY repository secret (the one the manuals step uses).
+name: Law watch
+
+on:
+  schedule:
+    - cron: "0 7 1 1,4,7,10 *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: law-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Research the quarter's legal changes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npx tsx scripts/law-watch.ts > "$RUNNER_TEMP/law-watch.md"
+
+      - name: Open the review as an issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          quarter="$(date -u +%Y) Q$(( ($(date -u +%-m) - 1) / 3 + 1 ))"
+          {
+            echo "Researched by Claude with web search on $(date -u +%Y-%m-%d) (scripts/law-watch.ts). Check every item against its source before acting; this is not legal advice."
+            echo
+            cat "$RUNNER_TEMP/law-watch.md"
+            echo
+            echo "## The quarter's checklist (Legal Compliance Manual, section 12)"
+            echo
+            echo "- [ ] Review the items above with the founders (and a lawyer where one is needed)"
+            echo "- [ ] Supplier agreements: any new supplier, or a review date due (docs/legal/DPA_TRACKER.md)"
+            echo "- [ ] Privacy Policy: any new kind of data, supplier or country? If so, change src/legal and bump LEGAL_EFFECTIVE"
+            echo "- [ ] Consent banner and the Do Not Sell opt-out still record (Settings, footer)"
+            echo "- [ ] Admin access: who is on the admin list and in authorized_manual_access"
+            echo "- [ ] April only: pay the ICO data protection fee"
+          } > "$RUNNER_TEMP/issue.md"
+          gh issue create --title "Compliance review — $quarter" --body-file "$RUNNER_TEMP/issue.md"

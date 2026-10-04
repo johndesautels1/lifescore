@@ -15,7 +15,7 @@
  * © 2025-2026 All Rights Reserved
  */
 
-import { postWithRetry, toCount, type LlmResult } from './llm.js';
+import { getModelCheck, postWithRetry, toCount, type LlmResult, type ModelCheck } from './llm.js';
 
 const RESPONSES_URL = 'https://api.x.ai/v1/responses';
 
@@ -103,4 +103,11 @@ export async function callGrok(request: GrokRequest): Promise<LlmResult> {
     citations: [],
     servedBy: typeof reply.model === 'string' ? reply.model : request.model,
   };
+}
+
+/** Whether xAI still serves a Grok model id (GET /v1/models/{id}). */
+export async function grokModelCheck(id: string): Promise<ModelCheck> {
+  const key = process.env.XAI_API_KEY;
+  if (!key) return { ok: false, reason: 'not-configured', message: 'XAI_API_KEY is not set' };
+  return getModelCheck(`https://api.x.ai/v1/models/${encodeURIComponent(id)}`, { Authorization: `Bearer ${key}` });
 }

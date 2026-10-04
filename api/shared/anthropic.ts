@@ -27,6 +27,7 @@
  */
 
 import type { ClaudeModelId } from './models.js';
+import { getModelCheck, type ModelCheck } from './llm.js';
 
 const MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
@@ -70,6 +71,19 @@ export interface ClaudeTool {
   strict?: boolean;
 }
 
+/**
+ * A tool Anthropic runs on its own servers, e.g. web search:
+ * `{ type: 'web_search_20260209', name: 'web_search', max_uses: 8 }`. Its results come
+ * back in the reply's content; the caller runs nothing.
+ */
+export interface ClaudeServerTool {
+  type: string;
+  name: string;
+  max_uses?: number;
+  allowed_domains?: string[];
+  blocked_domains?: string[];
+}
+
 export interface ClaudeRequest {
   model: ClaudeModelId;
   maxTokens: number;
@@ -77,7 +91,7 @@ export interface ClaudeRequest {
   /** A plain string, or blocks (use blocks to mark large stable text with cache_control). */
   system?: string | ClaudeTextBlock[];
   messages: ClaudeMessage[];
-  tools?: ClaudeTool[];
+  tools?: Array<ClaudeTool | ClaudeServerTool>;
   /** Whole-request time limit, retries included. */
   timeoutMs: number;
   /** Extra attempts on overload / 5xx / network failure (default 2). */
@@ -221,7 +235,9 @@ export async function callClaude(request: ClaudeRequest): Promise<ClaudeResult> 
     if (stopReason === 'max_tokens') {
       return { ok: false, kind: 'truncated', message: `${request.label}: reply cut off at max_tokens (${request.maxTokens})` };
     }
-    if (!text && toolUses.length === 0) {
+    // 'pause_turn': a server tool (web search) paused a long turn; the caller sends the
+    // content back to let it continue, so an empty text is not a failure there.
+    if (!text && toolUses.length === 0 && stopReason !== 'pause_turn') {
       return { ok: false, kind: 'empty', message: `${request.label}: Claude returned no text (stop_reason ${stopReason})` };
     }
 
@@ -269,4 +285,14 @@ export function cleanConversation(raw: unknown, maxTurns: number, maxChars: numb
   while (turns.length > 0 && turns[0].role !== 'user') turns.shift();
   while (turns.length > 0 && turns[turns.length - 1].role !== 'assistant') turns.pop();
   return turns.slice(-maxTurns);
+}
+
+/** Whether Anthropic still serves a model id (GET /v1/models/{id}). */
+export async function claudeModelCheck(id: string): Promise<ModelCheck> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'not-configured', message: 'ANTHROPIC_API_KEY is not set' };
+  return getModelCheck(`https://api.anthropic.com/v1/models/${encodeURIComponent(id)}`, {
+    'x-api-key': apiKey,
+    'anthropic-version': API_VERSION,
+  });
 }

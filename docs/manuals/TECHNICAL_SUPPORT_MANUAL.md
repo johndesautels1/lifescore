@@ -159,7 +159,7 @@ Every setting the code reads, from `.env.example` (`tests/envExample.test.ts` ke
 ---
 
 ## 11. Functions, scheduled jobs and deployment
-<!-- covers: .github/workflows/ci.yml, .github/workflows/dependency-lockfile.yml, .github/workflows/dependency-security.yml -->
+<!-- covers: .github/workflows/ci.yml, .github/workflows/dependency-lockfile.yml, .github/workflows/dependency-security.yml, .github/workflows/dependency-updates.yml, .github/workflows/law-watch.yml, api/cron/vendor-check.ts, api/shared/vendorCheck.ts -->
 
 Function time limits and the extra files each carries (`vercel.json`):
 
@@ -171,7 +171,11 @@ Scheduled and automatic jobs:
 <!-- facts:jobs -->
 <!-- /facts:jobs -->
 
-**Deployment** — every push to `main` deploys to production on Vercel; other branches get preview deployments. **CI** (`ci.yml`) on every push and pull request: `npm ci` (fails if the lockfile has drifted), the TypeScript 7 type check of the app and of `api/`, the manuals step (section 14, pushes to main only), the tests, the production build, and the offline start-up check (`scripts/check-precache-shell.mjs`: every file the page loads at start is precached, the start page itself is not, and navigations go to the network first). **Dependencies** — library upgrades are resolved on GitHub by the Dependency lockfile job on a branch; the weekly security job offers fixes as a pull request.
+**Deployment** — every push to `main` deploys to production on Vercel; other branches get preview deployments. **CI** (`ci.yml`) on every push and pull request, and every Monday on `main` so anything that goes stale with time alone fails within a week: `npm ci` (fails if the lockfile has drifted), the TypeScript 7 type check of the app and of `api/`, the manuals step (section 14, pushes to main only), the tests, the production build, and the offline start-up check (`scripts/check-precache-shell.mjs`: every file the page loads at start is precached, the start page itself is not, and navigations go to the network first). **Dependencies** — library upgrades are resolved on GitHub by the Dependency lockfile job on a branch; each Monday the security job offers fixes, and the updates job offers every release within package.json's ranges (listing new major versions it did not take), each as a pull request proven by the same checks as CI.
+
+**Checks on a timer** (John, 4 Oct 2026):
+- **Vendor check** — Vercel cron, Mondays 08:00 UTC (`api/cron/vendor-check.ts`): asks each AI vendor whether every model id in `api/shared/models.ts` is still served (Perplexity's Agent API has no model list, so it is not checked) and whether Google sign-in still starts; any failure is emailed to the admins. It needs the `CRON_SECRET` setting and refuses every caller without it.
+- **Law watch** — GitHub, the 1st of January, April, July and October (`law-watch.yml`, `scripts/law-watch.ts`): Claude with web search reports changes in privacy, consumer, AI and online-safety law that reach the app, with a source for each, and the job opens it as a "Compliance review" issue with the quarter's checklist (Legal Compliance Manual, section 12).
 
 ---
 

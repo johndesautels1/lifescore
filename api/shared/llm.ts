@@ -103,3 +103,30 @@ export async function postWithRetry(
   }
   return last;
 }
+
+// ============================================================================
+// MODEL CHECKS (the weekly vendor check, api/cron/vendor-check.ts)
+// ============================================================================
+
+/** Whether a vendor still serves a model id. */
+export type ModelCheck =
+  | { ok: true }
+  | { ok: false; reason: 'missing' | 'not-configured' | 'error'; message: string; status?: number };
+
+/** GET a vendor's model-metadata URL: 200 = served, 404 = gone, anything else = could not tell. */
+export async function getModelCheck(url: string, headers: Record<string, string>, timeoutMs = 15_000): Promise<ModelCheck> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { method: 'GET', headers, signal: controller.signal });
+    if (response.ok) return { ok: true };
+    const detail = (await response.text().catch(() => '')).slice(0, 200);
+    if (response.status === 404) return { ok: false, reason: 'missing', status: 404, message: detail || 'not found' };
+    return { ok: false, reason: 'error', status: response.status, message: detail || `HTTP ${response.status}` };
+  } catch (err) {
+    const timedOut = err instanceof Error && err.name === 'AbortError';
+    return { ok: false, reason: 'error', message: timedOut ? `no answer in ${timeoutMs} ms` : err instanceof Error ? err.message : String(err) };
+  } finally {
+    clearTimeout(timer);
+  }
+}

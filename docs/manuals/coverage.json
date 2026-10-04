@@ -335,27 +335,31 @@
         "vite.config.ts",
         "src/main.tsx"
       ],
-      "hash": "b58624340893807cc43472acca4f7594ccbc6994b2823cefc646628dd32a13ea",
+      "hash": "f0e45a95c15616caf857656e3acda80e40b8564748e7a49268e151fef49752f9",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#10-settings": {
       "files": [
         ".env.example"
       ],
-      "hash": "2ab647434122b877c18edc6a32944c8f5327463b507498ca580958b2c650ee44",
+      "hash": "ca23a60ddd3b1e477afa16bec15f74c5919e1aaa943a74b007ff30145877eaa8",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#11-functions-scheduled-jobs-and-deployment": {
       "files": [
         ".github/workflows/ci.yml",
         ".github/workflows/dependency-lockfile.yml",
-        ".github/workflows/dependency-security.yml"
+        ".github/workflows/dependency-security.yml",
+        ".github/workflows/dependency-updates.yml",
+        ".github/workflows/law-watch.yml",
+        "api/cron/vendor-check.ts",
+        "api/shared/vendorCheck.ts"
       ],
-      "hash": "242379db28f11ec3e56f1ff26cc6859a533761b3d45b256c28d8dc383ba6da66",
+      "hash": "de3c99b2420d69ae08d888f773d5189f6e771071a36006c3b63aa4976d93cf48",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#12-tests": {
       "files": [
@@ -406,9 +410,9 @@
         "api/shared/replicateWebhook.ts",
         "vercel.json"
       ],
-      "hash": "78f718b11d76784e31bdbd2801127c887e574eecdfc910bdefea6856e5d37a93",
+      "hash": "d1602872d0abd85305db3ced2f4227ac14c93cf73d3a17d56dd6e2a2f4d5dc53",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#2-where-things-are": {
       "files": [
@@ -449,9 +453,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "adbf898338bc99811e5a5caa6e919b4f7a5122c0e6d8cb181de5fdd482200445",
+      "hash": "284271a0e7c5553ad619d31b703fab14494e025ef0b216131045db3d06d90f0f",
       "reviewed": "2026-10-04",
-      "basis": "b27179a0d405d57c3519322c89c04dc0b330f523"
+      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
