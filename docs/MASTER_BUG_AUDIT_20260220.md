@@ -42,7 +42,7 @@ Account deletion now clears `reports/` (it named the empty `Reports`). The opt-o
 
 ---
 
-## SCORING FAULTS FOUND 4 OCTOBER 2026 — OPEN, AWAITING RULINGS
+## SCORING FAULTS FOUND 4 OCTOBER 2026 — ALL RULED AND FIXED THE SAME DAY
 
 Read from the code while rewriting the Judge Equations Manual (its section 9 explains each). Every one changes scores users see, so none is changed without John's ruling.
 
@@ -56,7 +56,7 @@ Read from the code while rewriting the Judge Equations Manual (its section 9 exp
 | SC6 | `api/evaluate.ts` | FIXED 4 Oct — with `USE_CATEGORY_SCORING` off, the numbers prompt's replies ("city1Legal": 75) were read only as letter grades, so every score was dropped; now read as numbers. No change in production, where the setting is on (`tests/evaluateParse.test.ts`) |
 | SC7 | `src/api/scoring.ts` | FIXED 4 Oct — a second copy of the Standard-mode arithmetic was used only by `tests/scoring.test.ts`; the hook now uses it and keeps none of its own, so the tests run the real code (`tests/standardScoring.test.ts`) |
 
-## GAMMA REPORT FAULTS FOUND 4 OCTOBER 2026 — OPEN, AWAITING RULINGS
+## GAMMA REPORT FAULTS FOUND 4 OCTOBER 2026 — ALL RULED AND FIXED THE SAME DAY
 
 Read from the code while rewriting the Gamma Prompts Manual (its section 6). Each changes what a report says or what an admin screen does.
 
@@ -190,7 +190,7 @@ The individual items behind these counts were never written into this file, and 
 
 - Launch blocker #14 (server plan checks): FIXED 3 Oct 2026.
 - GDPR (G1/G2), retention and portability (B21/B22): FIXED — the privacy policy promises keeping data for the life of the account and deleting it at once on request, which is what the code does.
-- Open and real: S14 (the Content-Security-Policy, report-only since 4 Oct), the code-style clean-up (11 withTimeout copies; dead Phase 2 code; the 39 `as any` are gone), and the mobile/accessibility polish folded into the look-and-feel work.
+- Open and real: the code-style clean-up (11 withTimeout copies; dead Phase 2 code; the 39 `as any` are gone), and the mobile/accessibility polish folded into the look-and-feel work.
 
 ---
 
@@ -293,7 +293,7 @@ The individual items behind these counts were never written into this file, and 
 | S11 | api/stripe/webhook.ts | 2 | LOW | Webhook secret not rotated | NOT A BUG — rotation is done in Stripe's dashboard, not in code |
 | S12 | api/user/delete.ts | 2 | LOW | No delete confirmation | FIXED — the user types DELETE MY ACCOUNT; the server checks it |
 | S13 | src/hooks/useVoiceRecognition.ts | 1 | LOW | Mic permission not graceful | FIXED — a plain message on not-allowed |
-| S14 | vercel.json | 1 | LOW | No Content-Security-Policy | OPEN — a report-only policy went live 4 Oct 2026: browsers block nothing and report what it would block to `/api/csp-report` (logged as `[CSP]` lines). It is switched on once those reports show every vendor site is listed |
+| S14 | vercel.json | 1 | LOW | No Content-Security-Policy | FIXED 4 Oct 2026 — sent report-only first; its reports showed only Vercel's own toolbar, which the policy now allows, and it was switched on the same day (John: "switch"). Browsers report anything it blocks to `/api/csp-report` (logged as `[CSP]` lines); `tests/cspReport.test.ts` |
 | S15 | api/evaluate.ts | 1 | LOW | Stack trace in error response | NOT A BUG — no stack in any response |
 | S16 | api/judge.ts | 1 | LOW | Same | NOT A BUG |
 | S17 | api/video/grok-generate.ts | 1 | LOW | Same | NOT A BUG |

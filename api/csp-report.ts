@@ -1,10 +1,10 @@
 /**
  * LIFE SCORE - where browsers send Content-Security-Policy reports.
  *
- * POST /api/csp-report. The header in vercel.json is report-only, so nothing is
- * blocked yet; each report is logged as one "[CSP]" line (blocked site, page
- * path, directive - see api/shared/cspReport.ts) to show which outside sites
- * the policy still lacks before it is switched on. Browsers send these with
+ * POST /api/csp-report. The Content-Security-Policy in vercel.json is enforced
+ * (since 4 Oct 2026); each block a browser reports is logged as one "[CSP]" line
+ * (blocked site, page path, directive - see api/shared/cspReport.ts), so a
+ * vendor site the policy lacks shows up in Vercel's logs. Browsers send these with
  * their own content types (application/csp-report, application/reports+json),
  * which Vercel does not parse, so the body is read as bytes.
  */

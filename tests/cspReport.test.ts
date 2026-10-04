@@ -1,9 +1,10 @@
 /**
- * LIFE SCORE - the report-only Content-Security-Policy and its report reader (anti-drift).
+ * LIFE SCORE - the Content-Security-Policy and its report reader (anti-drift).
  *
- * Item S14 in docs/MASTER_BUG_AUDIT_20260220.md: vercel.json sends the policy
- * report-only (4 Oct 2026), browsers report what it would block to
- * /api/csp-report, and the route logs the blocked site and the page path only.
+ * Item S14 in docs/MASTER_BUG_AUDIT_20260220.md: vercel.json sent the policy
+ * report-only on 4 Oct 2026, then enforced it the same day (John: "switch").
+ * Browsers report what it blocks to /api/csp-report, and the route logs the
+ * blocked site and the page path only.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -57,13 +58,24 @@ describe('the header', () => {
     headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }>;
   };
   const all = vercel.headers.find((rule) => rule.source === '/(.*)');
-  const policy = all?.headers.find((h) => h.key === 'Content-Security-Policy-Report-Only')?.value ?? '';
+  const policy = all?.headers.find((h) => h.key === 'Content-Security-Policy')?.value ?? '';
 
-  it('is sent report-only on every page, reporting to /api/csp-report', () => {
+  it('is enforced on every page, reporting to /api/csp-report', () => {
+    expect(all?.headers.some((h) => h.key === 'Content-Security-Policy-Report-Only')).toBe(false);
     expect(policy).toContain('report-uri /api/csp-report');
     expect(policy).toContain("object-src 'none'");
     expect(policy).toContain("frame-ancestors 'self'");
     expect(policy).toContain("script-src 'self'");
+    // scripts only from our own site (and Vercel's toolbar), never inline
+    expect(/script-src[^;]*'unsafe-inline'/.test(policy)).toBe(false);
+    expect(/script-src[^;]*'unsafe-eval'/.test(policy)).toBe(false);
+  });
+
+  it('allows what the app reaches: Supabase, the live faces, Gamma, vendor video downloads', () => {
+    for (const source of ['https://*.supabase.co', 'https://api.simli.ai', 'https://*.livekit.cloud', 'https://*.liveavatar.com', 'wss:', 'https://replicate.delivery', 'https://fal.media', 'https://*.heygen.ai', 'https://api.github.com']) {
+      expect({ source, listed: policy.includes(source) }).toEqual({ source, listed: true });
+    }
+    expect(policy).toContain('frame-src \'self\' https://gamma.app');
   });
 
   it('the report route reads the raw body and logs through the reader', () => {
