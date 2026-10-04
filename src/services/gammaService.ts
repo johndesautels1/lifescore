@@ -866,7 +866,7 @@ ${loser ? `${loser} would need significant reforms in ${city1CatWins > city2CatW
 }
 
 // ============================================================================
-// SECTION 2: LAW VS REALITY (Pages 9-12)
+// SECTION 5: LAW VS REALITY (Pages 19-22)
 // ============================================================================
 function formatSection2LawVsReality(
   result: EnhancedComparisonResult
@@ -910,11 +910,11 @@ function formatSection2LawVsReality(
   const surpriseRestrictions = sortedGaps.filter(m => m.type === 'surprise_restriction').slice(0, 3);
 
   return `
-## SECTION 2: LAW VS REALITY (Dual Scoring)
+## SECTION 5: LAW VS REALITY (Dual Scoring)
 
 ---
 
-### PAGE 9: UNDERSTANDING DUAL SCORES
+### PAGE 19: UNDERSTANDING DUAL SCORES
 
 <smart-layout variant="solidBoxes">
 <item label="📜 Legal Score (Law on Paper)" color="#6B46C1">
@@ -936,7 +936,7 @@ How laws are actually enforced in daily life. Reflects real-world experience and
 
 ---
 
-### PAGE 10: DUAL SCORE SUMMARY BY CATEGORY
+### PAGE 20: DUAL SCORE SUMMARY BY CATEGORY
 
 <smart-layout variant="barStats">
 ${result.city1.categories.map((cat, idx) => {
@@ -960,7 +960,7 @@ ${city2Name}: 📜 ${city2Legal} | 🏙️ ${city2Lived}
 
 ---
 
-### PAGE 11: BIGGEST LAW VS REALITY GAPS
+### PAGE 21: BIGGEST LAW VS REALITY GAPS
 
 **Top Discrepancies Between Written Law and Enforcement:**
 
@@ -978,7 +978,7 @@ ${sortedGaps.map((m, i) => {
 
 ---
 
-### PAGE 12: REAL-WORLD EXAMPLES
+### PAGE 22: REAL-WORLD EXAMPLES
 
 | 📜 Paper Tiger Laws | 🔒 Surprise Restrictions |
 |---------------------|-------------------------|
@@ -993,7 +993,7 @@ Understanding the gap between law and reality is crucial for anyone considering 
 }
 
 // ============================================================================
-// SECTION 3: CATEGORY DEEP DIVES (Pages 13-42) - 5 pages each x 6 categories
+// SECTION 6: CATEGORY DEEP DIVES (Pages 23-52) - 5 pages each x 6 categories
 // ============================================================================
 function formatSection3CategoryDeepDives(
   result: EnhancedComparisonResult,
@@ -1012,7 +1012,7 @@ function formatSection3CategoryDeepDives(
   ];
 
   let output = `
-## SECTION 3: CATEGORY DEEP DIVES
+## SECTION 6: CATEGORY DEEP DIVES
 
 `;
 
@@ -1056,7 +1056,7 @@ function formatSection3CategoryDeepDives(
     const highAgreement = agreementLevels.filter(l => l === 'unanimous' || l === 'strong').length;
     const agreementPct = Math.round((highAgreement / agreementLevels.length) * 100);
 
-    const pageBase = 13 + (catIndex * 5);
+    const pageBase = 23 + (catIndex * 5);
 
     output += `
 ---
@@ -1327,7 +1327,7 @@ Multi-AI consensus eliminates single-model bias and provides more reliable freed
 }
 
 // ============================================================================
-// SECTION 6: GUN RIGHTS (Pages 53-56) - OPTIONAL, UNSCORED
+// SECTION 11: GUN RIGHTS (Pages 68-71) - OPTIONAL, UNSCORED
 // ============================================================================
 function formatSection6GunRights(
   _result: EnhancedComparisonResult,
@@ -1335,7 +1335,7 @@ function formatSection6GunRights(
 ): string {
   if (!gunData) {
     return `
-## SECTION 6: GUN RIGHTS COMPARISON
+## SECTION 11: GUN RIGHTS COMPARISON
 
 ---
 
@@ -1356,7 +1356,7 @@ Gun rights are intentionally excluded from the 100-metric scoring system due to 
   }
 
   return `
-## SECTION 6: GUN RIGHTS COMPARISON
+## SECTION 11: GUN RIGHTS COMPARISON
 
 ---
 
@@ -1425,13 +1425,13 @@ This information is provided for comparison purposes only. Laws change frequentl
 }
 
 // ============================================================================
-// SECTION 7: METHODOLOGY (Pages 72-75)
+// SECTION 12: METHODOLOGY (Pages 72-75)
 // ============================================================================
 function formatSection7Methodology(
   result: EnhancedComparisonResult
 ): string {
   return `
-## SECTION 7: METHODOLOGY
+## SECTION 12: METHODOLOGY
 
 ---
 
@@ -1543,7 +1543,7 @@ Evidence: Government sources, legal databases, enforcement reports
 }
 
 // ============================================================================
-// SECTION 8 FIXED: EVIDENCE FROM BOTH CITIES
+// SECTION 13: EVIDENCE & CLOSING (Pages 76-82) - citations from both cities
 // ============================================================================
 function formatSection8EvidenceClosingBothCities(
   result: EnhancedComparisonResult
@@ -1596,7 +1596,7 @@ function formatSection8EvidenceClosingBothCities(
   });
 
   return `
-## SECTION: EVIDENCE & CLOSING
+## SECTION 13: EVIDENCE & CLOSING
 
 ---
 
@@ -1781,7 +1781,7 @@ prompt="elegant minimalist design, world map silhouette, compass, premium qualit
 }
 
 // ============================================================================
-// NEW SECTION: YOUR LIFE IN EACH CITY (Narrative Storytelling)
+// SECTION 2: YOUR LIFE IN EACH CITY (Pages 9-12) - narrative storytelling
 // ============================================================================
 function formatSectionLifeInEachCity(
   result: EnhancedComparisonResult,
@@ -1811,11 +1811,11 @@ function formatSectionLifeInEachCity(
   const policingDesc2 = getScore('city2', 'policing_legal') > 65 ? 'fair legal system with police accountability' : 'aggressive enforcement and legal complexities';
 
   return `
-## SECTION 4: YOUR LIFE IN EACH CITY (Pages 43-46)
+## SECTION 2: YOUR LIFE IN EACH CITY (Pages 9-12)
 
 ---
 
-### PAGE 43: A WEEK IN ${city1Name.toUpperCase()}
+### PAGE 9: A WEEK IN ${city1Name.toUpperCase()}
 
 image-layout="behind"
 prompt="beautiful morning cityscape of ${city1Name} ${city1Country}, lifestyle photography, warm golden hour light, people enjoying city life"
@@ -1849,7 +1849,7 @@ Live under ${policingDesc1}. ${getScore('city1', 'policing_legal') > 70 ? 'Inter
 
 ---
 
-### PAGE 44: A WEEK IN ${city2Name.toUpperCase()}
+### PAGE 10: A WEEK IN ${city2Name.toUpperCase()}
 
 image-layout="behind"
 prompt="beautiful morning cityscape of ${city2Name} ${city2Country}, lifestyle photography, warm golden hour light, people enjoying city life"
@@ -1883,7 +1883,7 @@ Live under ${policingDesc2}. ${getScore('city2', 'policing_legal') > 70 ? 'Inter
 
 ---
 
-### PAGE 45: SIDE-BY-SIDE LIFESTYLE COMPARISON
+### PAGE 11: SIDE-BY-SIDE LIFESTYLE COMPARISON
 
 <columns>
 <column>
@@ -1913,7 +1913,7 @@ Same person, same day, two completely different freedom experiences. Your daily 
 
 ---
 
-### PAGE 46: FREEDOM MOMENTS THAT MATTER
+### PAGE 12: FREEDOM MOMENTS THAT MATTER
 
 image-layout="right"
 prompt="person enjoying freedom, outdoor cafe, working on laptop, ${result.winner === 'city1' ? city1Name : city2Name} atmosphere"
@@ -1945,7 +1945,7 @@ ${city1Name}: ${getScore('city1', 'personal_freedom') > 65 ? 'Relaxed' : 'Strict
 }
 
 // ============================================================================
-// NEW SECTION: WHO SHOULD CHOOSE WHICH? (Persona Recommendations)
+// SECTION 3: WHO SHOULD CHOOSE WHICH? (Pages 13-15) - persona recommendations
 // ============================================================================
 function formatSectionPersonaRecommendations(
   result: EnhancedComparisonResult
@@ -1968,11 +1968,11 @@ function formatSectionPersonaRecommendations(
   const retireesBest = (getScore('city1', 'housing_property') + getScore('city1', 'policing_legal') + getScore('city1', 'transportation')) > (getScore('city2', 'housing_property') + getScore('city2', 'policing_legal') + getScore('city2', 'transportation')) ? city1Name : city2Name;
 
   return `
-## SECTION 5: WHO SHOULD CHOOSE WHICH CITY? (Pages 47-49)
+## SECTION 3: WHO SHOULD CHOOSE WHICH CITY? (Pages 13-15)
 
 ---
 
-### PAGE 47: PERSONA RECOMMENDATIONS
+### PAGE 13: PERSONA RECOMMENDATIONS
 
 image-layout="right"
 prompt="diverse group of professionals, entrepreneurs, families, digital nomads, lifestyle choice concept, modern photography"
@@ -2006,7 +2006,7 @@ prompt="diverse group of professionals, entrepreneurs, families, digital nomads,
 
 ---
 
-### PAGE 48: MORE PERSONAS
+### PAGE 14: MORE PERSONAS
 
 <table colwidths="[20,20,60]">
 
@@ -2021,7 +2021,7 @@ prompt="diverse group of professionals, entrepreneurs, families, digital nomads,
 
 ---
 
-### PAGE 49: DECISION MATRIX
+### PAGE 15: DECISION MATRIX
 
 # 🎚️ What If You Weighted Differently?
 
@@ -2048,7 +2048,7 @@ Your "winner" may differ from our default ranking depending on what matters most
 }
 
 // ============================================================================
-// NEW SECTION: SURPRISING FINDINGS (Counterintuitive Insights)
+// SECTION 4: SURPRISING FINDINGS (Pages 16-18) - counterintuitive insights
 // ============================================================================
 function formatSectionSurprisingFindings(
   result: EnhancedComparisonResult,
@@ -2097,11 +2097,11 @@ function formatSectionSurprisingFindings(
   });
 
   return `
-## SECTION 6: SURPRISING FINDINGS (Pages 50-52)
+## SECTION 4: SURPRISING FINDINGS (Pages 16-18)
 
 ---
 
-### PAGE 50: WHAT MIGHT SURPRISE YOU
+### PAGE 16: WHAT MIGHT SURPRISE YOU
 
 image-layout="right"
 prompt="surprised person looking at data, revelation moment, light bulb concept, modern professional photography"
@@ -2123,7 +2123,7 @@ ${winner}'s advantage comes primarily from enforcement reality, not written laws
 
 ---
 
-### PAGE 51: MYTH VS REALITY
+### PAGE 17: MYTH VS REALITY
 
 # 🎭 Reputation vs Data
 
@@ -2135,7 +2135,7 @@ ${winner}'s advantage comes primarily from enforcement reality, not written laws
 
 ---
 
-### PAGE 52: LAW VS ENFORCEMENT SURPRISES
+### PAGE 18: LAW VS ENFORCEMENT SURPRISES
 
 # 📜 Paper Tigers & Hidden Restrictions
 
@@ -2161,7 +2161,7 @@ The gap between law and reality is where freedom actually lives. A permissive la
 }
 
 // ============================================================================
-// NEW SECTION: THE HIDDEN COSTS (Restriction Cost Analysis)
+// SECTION 7: THE HIDDEN COSTS (Pages 53-55) - restriction cost analysis
 // ============================================================================
 function formatSectionHiddenCosts(
   result: EnhancedComparisonResult
@@ -2258,7 +2258,7 @@ These are estimates based on LIFE SCORE data. Actual costs vary by individual ci
 }
 
 // ============================================================================
-// NEW SECTION: FUTURE OUTLOOK (5-Year Forecast)
+// SECTION 8: FUTURE OUTLOOK (Pages 56-59) - 5-year forecast
 // ============================================================================
 function formatSectionFutureOutlook(
   result: EnhancedComparisonResult,
@@ -2381,7 +2381,7 @@ Economic crisis, pandemic, major court rulings, or regime change could rapidly s
 }
 
 // ============================================================================
-// NEW SECTION: YOUR NEXT STEPS (Relocation Checklists)
+// SECTION 9: YOUR NEXT STEPS (Pages 60-62) - relocation checklists
 // ============================================================================
 function formatSectionNextSteps(
   result: EnhancedComparisonResult

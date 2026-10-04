@@ -78,9 +78,9 @@ Written by `formatEnhancedReportForGamma()` from the Enhanced comparison, the Ju
 
 ## 6. Known problems (4 October 2026)
 
-Read from the code while writing this manual; each changes what a report says, so each waits for a ruling.
+Read from the code while writing this manual; each changes what a report says, so each waits for a ruling (or says how it was ruled).
 
-1. **Sections are sent out of order and misnumbered** — the table in section 4 shows it: Gamma is told "generate in this order" while the headings run Section 1, 4, 5, 6, 2, 3, 7, 8, 9, 10, 6, 7 and the page labels jump from 8 to 43 and back to 9.
+1. ~~Sections sent out of order and misnumbered~~ — **fixed 4 October 2026** (John: "keep order, renumber"): sections 1–13 and pages 1–82 now run in the order sent (`tests/gammaPrompt.test.ts`).
 2. **The prompt always names all five evaluators**, even when fewer took part in the comparison.
 3. **The Standard button says 35 pages; the prompt asks for 30.**
 4. **The Prompts screen edits nothing** (section 5).

@@ -62,7 +62,7 @@ Read from the code while rewriting the Gamma Prompts Manual (its section 6). Eac
 
 | # | Where | Fault |
 |---|---|---|
-| GR1 | `src/services/gammaService.ts` | The Enhanced prompt sends its sections out of order and misnumbered: headings run Section 1, 4, 5, 6, 2, 3, 7, 8, 9, 10, 6, 7; page labels jump 1–8, 43–52, 9–42, 53–82 |
+| GR1 | `src/services/gammaService.ts` | FIXED 4 Oct (John: "keep order, renumber") — the Enhanced prompt sent its sections out of order and misnumbered (Section 1, 4, 5, 6, 2, 3, …; pages 1–8, 43–52, 9–42, 53–82); now Sections 1–13, pages 1–82 in the order sent (`tests/gammaPrompt.test.ts`) |
 | GR2 | `src/services/gammaService.ts` | The Enhanced prompt names all five evaluators even when fewer took part |
 | GR3 | `src/components/VisualsTab.tsx` | The Standard button says 35 pages; the prompt asks Gamma for 30 |
 | GR4 | `src/components/PromptsManager.tsx`, `api/prompts.ts` | The admin Prompts screen saves to `app_prompts`, which nothing in the app reads — an edit changes no prompt |
