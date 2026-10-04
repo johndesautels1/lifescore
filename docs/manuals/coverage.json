@@ -8,9 +8,9 @@
         "src/components/ResetPasswordScreen.tsx",
         "src/lib/supabase.ts"
       ],
-      "hash": "4c3285e59ffcf530f375bcd70e021cdafa1927beddc0b1a4b981c7fe38b3f367",
+      "hash": "73405ab014ab5b9f75904b104fbeee8bb6bdbee8a1b09959fc46471f3e5947e4",
       "reviewed": "2026-10-04",
-      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+      "basis": "d131e43802c62f7f2b9ac9fa2700a9d4b001d28d"
     },
     "APP_SCHEMA_MANUAL.md#2-tables": {
       "files": [

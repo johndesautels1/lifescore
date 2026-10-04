@@ -21,8 +21,6 @@ Accounts are **Supabase Auth**. Supabase keeps the sign-in records (`auth.users`
 - Google;
 - GitHub.
 
-`AuthContext` also has an email sign-in link (`signInWithMagicLink`), but no screen offers it.
-
 **A new account** — when Supabase creates the sign-in record, the trigger `on_auth_user_created` runs `handle_new_user()`, which creates the user's `profiles` row (email, name and picture from the sign-up) and a `user_preferences` row with the defaults. Nothing else is created until the user uses the app.
 
 **Forgotten password:**

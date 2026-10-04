@@ -57,7 +57,6 @@ interface AuthContextValue extends AuthState {
   signInWithEmail: (email: string, password: string) => Promise<{ error: AuthError | Error | null }>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signInWithGitHub: () => Promise<{ error: AuthError | null }>;
-  signInWithMagicLink: (email: string) => Promise<{ error: AuthError | null }>;
 
   // Sign up
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>;
@@ -452,20 +451,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, [state.isConfigured]);
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
-    if (!state.isConfigured) {
-      return { error: { message: 'Supabase not configured' } as AuthError };
-    }
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
-  }, [state.isConfigured]);
-
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     if (!state.isConfigured) {
       return { error: { message: 'Supabase not configured' } as AuthError };
@@ -646,7 +631,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmail,
     signInWithGoogle,
     signInWithGitHub,
-    signInWithMagicLink,
     signUp,
     resetPassword,
     updatePassword,
