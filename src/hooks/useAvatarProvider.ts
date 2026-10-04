@@ -13,8 +13,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useSimli } from './useSimli';
-import type { SimliSpeakRequest } from '../types/avatar';
+import { useSimli, type SimliSpeakRequest } from './useSimli';
 import { useDIDStream } from './useDIDStream';
 
 // ============================================================================

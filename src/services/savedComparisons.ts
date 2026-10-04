@@ -121,8 +121,7 @@ export interface SavedJudgeReport {
     futureOutlook?: string;
     confidenceLevel?: string;
   };
-  /** Stored as null when the report had none. */
-  freedomEducation?: FreedomEducationData | null;
+  freedomEducation?: FreedomEducationData;
 }
 
 /** A Judge report read back from the database: the saved shape plus its owner. */
@@ -1317,7 +1316,7 @@ export async function syncJudgeReportsFromSupabase(): Promise<SavedJudgeReport[]
           futureOutlook: fullReport?.executiveSummary?.futureOutlook || '',
           confidenceLevel: fullReport?.executiveSummary?.confidenceLevel || 'medium',
         },
-        freedomEducation: fullReport?.freedomEducation || null,
+        freedomEducation: fullReport?.freedomEducation || undefined,
       };
 
       localReports.push(newReport);
@@ -1502,7 +1501,7 @@ export async function fetchJudgeReportByComparisonId(comparisonId: string): Prom
         futureOutlook: '',
         confidenceLevel: 'medium',
       },
-      freedomEducation: fullReport?.freedomEducation || null,
+      freedomEducation: fullReport?.freedomEducation || undefined,
     };
   } catch (error) {
     console.error('[savedComparisons] Error fetching judge report by comparisonId:', error);
@@ -1576,7 +1575,7 @@ export async function fetchJudgeReportByCities(city1: string, city2: string): Pr
         futureOutlook: '',
         confidenceLevel: 'medium',
       },
-      freedomEducation: fullReport?.freedomEducation || null,
+      freedomEducation: fullReport?.freedomEducation || undefined,
     };
   } catch (error) {
     console.error('[savedComparisons] Error fetching judge report by cities:', error);
@@ -1657,7 +1656,7 @@ export async function fetchFullJudgeReport(reportId: string): Promise<LoadedJudg
         futureOutlook: '',
         confidenceLevel: 'medium',
       },
-      freedomEducation: fullReport?.freedomEducation || null,
+      freedomEducation: fullReport?.freedomEducation || undefined,
     };
   } catch (error) {
     console.error('[savedComparisons] Error fetching full Judge report:', error);

@@ -318,7 +318,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             futureOutlook: fullReport.executiveSummary.futureOutlook || '',
             confidenceLevel: fullReport.executiveSummary.confidenceLevel as 'high' | 'medium' | 'low',
           },
-          freedomEducation: fullReport.freedomEducation ?? undefined,
+          freedomEducation: fullReport.freedomEducation,
         };
         setJudgeReport(loadedReport);
       } else {
@@ -364,7 +364,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             futureOutlook: source.executiveSummary.futureOutlook || '',
             confidenceLevel: (source.executiveSummary.confidenceLevel || source.summaryOfFindings.overallConfidence) as 'high' | 'medium' | 'low',
           },
-          freedomEducation: source.freedomEducation ?? undefined,
+          freedomEducation: source.freedomEducation,
         };
         setJudgeReport(loadedReport);
 
@@ -1006,7 +1006,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 futureOutlook: supabaseReport.executiveSummary?.futureOutlook || '',
                 confidenceLevel: (supabaseReport.executiveSummary?.confidenceLevel || 'medium') as 'high' | 'medium' | 'low',
               },
-              freedomEducation: supabaseReport.freedomEducation ?? undefined,
+              freedomEducation: supabaseReport.freedomEducation,
             };
 
             setJudgeReport(loadedReport);
