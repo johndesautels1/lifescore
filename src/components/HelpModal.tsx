@@ -20,6 +20,7 @@ import PromptsManager from './PromptsManager';
 import EnvConfigPanel from './EnvConfigPanel';
 import EmiliaChat from './EmiliaChat';
 import { useAuth } from '../contexts/AuthContext';
+import { useTierAccess } from '../hooks/useTierAccess';
 import './HelpModal.css';
 
 export type ManualTabType = 'csm' | 'tech' | 'user' | 'legal' | 'license' | 'schema' | 'equations' | 'prompts' | 'apis';
@@ -42,9 +43,6 @@ const ALL_TABS: { id: ManualTabType; label: string; icon: string; adminOnly: boo
   { id: 'apis', label: 'APIs', icon: '🔑', adminOnly: true },
 ];
 
-// Admin emails that can access restricted manuals
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com', 'johndesau7@gmail.com'];
-
 const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<ManualTabType>('user');
   const [showChat, setShowChat] = useState(false);
@@ -53,7 +51,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   // Get user info for access control
   const { user } = useAuth();
   const userEmail = user?.email || null;
-  const isAdmin = userEmail ? ADMIN_EMAILS.includes(userEmail.toLowerCase()) : false;
+  // The server's admin answer (useTierAccess), not a copied email list: the server
+  // still refuses restricted manuals to anyone else (api/emilia/manuals.ts). Bug audit S5.
+  const { isAdmin } = useTierAccess();
 
   // Filter tabs based on admin status
   const visibleTabs = ALL_TABS.filter(tab => !tab.adminOnly || isAdmin);

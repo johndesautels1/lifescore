@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "node node_modules/@typescript/native/bin/tsc -b && vite build",
     "lint": "eslint .",
+    "typecheck": "node node_modules/@typescript/native/bin/tsc -b && node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"

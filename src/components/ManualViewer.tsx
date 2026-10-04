@@ -65,9 +65,20 @@ function sanitizeHtml(html: string): string {
   return clean;
 }
 
+/**
+ * Every character HTML reads as markup, written as plain text (bug audit S8). The
+ * manual's own words can then never become tags or attributes: the converter below
+ * writes the only tags on the page, and sanitizeHtml stays as a second layer. Code
+ * examples in the manuals (JSX with <div>…) now show as written instead of being
+ * stripped.
+ */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // Basic markdown to HTML converter
 function markdownToHtml(markdown: string): string {
-  let html = markdown;
+  let html = escapeHtml(markdown);
 
   // Headers
   html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');

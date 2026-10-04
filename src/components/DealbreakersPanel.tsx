@@ -3,7 +3,7 @@
  * Let users mark must-have metrics that will trigger warnings
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, ALL_METRICS } from '../shared/metrics';
 import { saveUserPreferenceToDb } from '../services/savedComparisons';
 import './DealbreakersPanel.css';
@@ -55,10 +55,17 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedDealbreakers, setSelectedDealbreakers] = useState<string[]>(initialDealbreakers);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  // Bug audit ML6 (as in WeightPresets): the save effect ran on the first render,
+  // before the saved list had loaded, and wrote the starting list to the database,
+  // then the real one: two racing writes on every visit. Saving now waits for the
+  // load, and skips a write when nothing changed from what was loaded or saved.
+  const [hydrated, setHydrated] = useState(false);
+  const lastSavedRef = useRef<string | undefined>(undefined);
 
   // Load from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+    lastSavedRef.current = stored ?? undefined;
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -68,18 +75,24 @@ export const DealbreakersPanel: React.FC<DealbreakersProps> = ({
         // Invalid JSON, ignore
       }
     }
+    // The loaded list reaches state on the next render; saving may start then.
+    setHydrated(true);
   }, []);
 
   // Save to localStorage + database when changed
   useEffect(() => {
+    if (!hydrated) return;
+    onDealbreakersChange(selectedDealbreakers);
+    const json = JSON.stringify(selectedDealbreakers);
+    if (json === lastSavedRef.current) return;
+    lastSavedRef.current = json;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedDealbreakers));
+      localStorage.setItem(STORAGE_KEY, json);
     } catch (err) {
       console.error('[DealbreakersPanel] Failed to save dealbreakers:', err);
     }
     saveUserPreferenceToDb('dealbreakers', selectedDealbreakers);
-    onDealbreakersChange(selectedDealbreakers);
-  }, [selectedDealbreakers, onDealbreakersChange]);
+  }, [hydrated, selectedDealbreakers, onDealbreakersChange]);
 
   const toggleDealbreaker = (metricId: string) => {
     setSelectedDealbreakers(prev => {

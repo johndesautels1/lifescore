@@ -9,6 +9,29 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getAuthHeaders } from '../lib/supabase';
 
+/** How long closing a stream on the server may take. */
+const DESTROY_TIMEOUT_MS = 10_000;
+
+/**
+ * Close a D-ID stream on D-ID's side (through /api/olivia/avatar/streams), so a
+ * paid stream does not stay open until D-ID times it out. keepalive lets the
+ * request finish when the page itself is closing. Never throws.
+ */
+async function destroyRemoteStream(streamId: string, sessionId: string): Promise<void> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch('/api/olivia/avatar/streams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ action: 'destroy', streamId, sessionId }),
+      keepalive: true,
+      signal: AbortSignal.timeout(DESTROY_TIMEOUT_MS),
+    });
+  } catch (err) {
+    console.warn('[useDIDStream] Cleanup warning:', err);
+  }
+}
+
 // ============================================================================
 // RATE LIMITING CONSTANTS
 // ============================================================================
@@ -65,6 +88,9 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
   });
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  // The open stream, read by disconnect and the unmount cleanup. A ref, because
+  // those can run from an old render's closure (bug audit ML1).
+  const openStreamRef = useRef<{ streamId: string; sessionId: string } | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Rate limiting refs - persist across renders without triggering re-renders
@@ -79,6 +105,12 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
   const onSpeakingEndRef = useRef(onSpeakingEnd);
   const onErrorRef = useRef(onError);
 
+  // Keep the open-stream ref in step with state.
+  useEffect(() => {
+    openStreamRef.current =
+      state.streamId && state.sessionId ? { streamId: state.streamId, sessionId: state.sessionId } : null;
+  }, [state.streamId, state.sessionId]);
+
   // Keep callback refs updated
   useEffect(() => {
     onSpeakingStartRef.current = onSpeakingStart;
@@ -92,6 +124,9 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
+      const open = openStreamRef.current;
+      openStreamRef.current = null;
+      if (open) void destroyRemoteStream(open.streamId, open.sessionId);
       if (speakingTimeoutRef.current) {
         clearTimeout(speakingTimeoutRef.current);
       }
@@ -356,23 +391,10 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       speakingTimeoutRef.current = null;
     }
 
-    // Notify backend
-    if (state.streamId && state.sessionId) {
-      try {
-        const authHeaders = await getAuthHeaders();
-        await fetch('/api/olivia/avatar/streams', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify({
-            action: 'destroy',
-            streamId: state.streamId,
-            sessionId: state.sessionId,
-          }),
-        });
-      } catch (err) {
-        console.warn('[useDIDStream] Cleanup warning:', err);
-      }
-    }
+    // Notify backend (the live stream, from the ref — see openStreamRef)
+    const open = openStreamRef.current;
+    openStreamRef.current = null;
+    if (open) await destroyRemoteStream(open.streamId, open.sessionId);
 
     setState({
       status: 'idle',
@@ -382,7 +404,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
     });
 
     console.log('[useDIDStream] Disconnected');
-  }, [state.streamId, state.sessionId, videoRef]);
+  }, [videoRef]);
 
   /**
    * Reset retry counters - call this when user explicitly requests reconnection

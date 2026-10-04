@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useTierAccess } from '../hooks/useTierAccess';
 import { supabase, getAuthHeaders } from '../lib/supabase';
 import { toastSuccess, toastError } from '../utils/toast';
 import './PromptsManager.css';
@@ -40,15 +40,14 @@ const PROMPT_CATEGORIES: { id: string; label: string; icon: string }[] = [
   { id: 'invideo', label: 'InVideo', icon: '🎬' },
 ];
 
-const ADMIN_EMAILS = ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'jdes7@aol.com', 'johndesau7@gmail.com'];
-
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
 const PromptsManager: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+  // The server's admin answer (useTierAccess), not a copied email list: the server
+  // still refuses prompt edits to anyone else (api/prompts.ts). Bug audit S5.
+  const { isAdmin } = useTierAccess();
 
   // State
   const [activeCategory, setActiveCategory] = useState('evaluate');

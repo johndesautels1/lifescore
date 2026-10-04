@@ -19,8 +19,20 @@ import { isComparisonFeature, requireFeature, refundFeature, signComparisonGrant
 
 const MAX_CITY_LENGTH = 200;
 
+/**
+ * A city name as the grant will carry it into every model prompt: text, not empty,
+ * bounded, and with no line breaks or other control characters, which are how a
+ * typed "city" could break out of the prompt around it (bug audit S7). The grant
+ * then binds this exact pair, so /api/evaluate and /api/judge receive only names
+ * that passed here.
+ */
 function isCity(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0 && value.length <= MAX_CITY_LENGTH;
+  return (
+    typeof value === 'string' &&
+    value.trim().length > 0 &&
+    value.length <= MAX_CITY_LENGTH &&
+    !/[\u0000-\u001f\u007f]/.test(value)
+  );
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {

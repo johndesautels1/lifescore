@@ -3,7 +3,7 @@
  * Let users customize category importance and Law vs Lived Reality weighting
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CATEGORIES } from '../shared/metrics';
 import type { CategoryId, LawLivedRatio } from '../types/metrics';
 import { saveUserPreferenceToDb } from '../services/savedComparisons';
@@ -202,11 +202,20 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
   // Base weights before redistribution (used when toggling exclusions)
   const [baseWeights, setBaseWeights] = useState<CategoryWeights>(PRESETS[0].weights);
 
+  // Bug audit ML6: the three save effects below ran on the first render, before the
+  // saved choices had loaded, and wrote the DEFAULTS to the database, then the real
+  // values a moment later: two racing writes per preference on every visit (John's
+  // console showed each "saved to database" twice). They now wait until the load has
+  // run, and skip a write when nothing changed from what was loaded or last saved.
+  const [hydrated, setHydrated] = useState(false);
+  const lastSavedRef = useRef<{ weights?: string; lawLived?: string; excluded?: string }>({});
+
   // Load from localStorage on mount
   useEffect(() => {
     // Load excluded categories first (needed for weight redistribution)
     let loadedExcluded = new Set<CategoryId>();
     const storedExcluded = localStorage.getItem(STORAGE_KEY_EXCLUDED);
+    lastSavedRef.current.excluded = storedExcluded ?? undefined;
     if (storedExcluded) {
       try {
         const parsed = JSON.parse(storedExcluded);
@@ -220,6 +229,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
 
     // Load category weights
     const stored = localStorage.getItem(STORAGE_KEY);
+    lastSavedRef.current.weights = stored ?? undefined;
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -242,6 +252,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
 
     // Load Law/Lived preferences
     const storedLawLived = localStorage.getItem(STORAGE_KEY_LAWLIVED);
+    lastSavedRef.current.lawLived = storedLawLived ?? undefined;
     if (storedLawLived) {
       try {
         const parsed = JSON.parse(storedLawLived);
@@ -256,49 +267,64 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
     } else {
       onLawLivedChange?.(PRESETS[0].lawLivedRatio);
     }
+
+    // The loaded values reach state on the next render; saving may start then.
+    setHydrated(true);
   }, []);
 
   // Save to localStorage + database when changed
   useEffect(() => {
+    if (!hydrated) return;
     const data = {
       weights: customWeights,
       baseWeights: baseWeights,
       presetId: selectedPreset,
       isCustom
     };
+    const json = JSON.stringify(data);
+    if (json === lastSavedRef.current.weights) return;
+    lastSavedRef.current.weights = json;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, json);
     } catch (err) {
       console.error('[WeightPresets] Failed to save weights:', err);
     }
     saveUserPreferenceToDb('weight_presets', data);
-  }, [customWeights, baseWeights, selectedPreset, isCustom]);
+  }, [hydrated, customWeights, baseWeights, selectedPreset, isCustom]);
 
   // Save Law/Lived preferences to localStorage + database
   useEffect(() => {
+    if (!hydrated) return;
     const data = {
       ratio: lawLivedRatio,
       isCustom: isLawLivedCustom,
       conservativeMode
     };
+    const json = JSON.stringify(data);
+    if (json === lastSavedRef.current.lawLived) return;
+    lastSavedRef.current.lawLived = json;
     try {
-      localStorage.setItem(STORAGE_KEY_LAWLIVED, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY_LAWLIVED, json);
     } catch (err) {
       console.error('[WeightPresets] Failed to save Law/Lived preferences:', err);
     }
     saveUserPreferenceToDb('law_lived_preferences', data);
-  }, [lawLivedRatio, isLawLivedCustom, conservativeMode]);
+  }, [hydrated, lawLivedRatio, isLawLivedCustom, conservativeMode]);
 
   // Save excluded categories to localStorage + database
   useEffect(() => {
+    if (!hydrated) return;
     const data = Array.from(excludedCategories);
+    const json = JSON.stringify(data);
+    if (json === lastSavedRef.current.excluded) return;
+    lastSavedRef.current.excluded = json;
     try {
-      localStorage.setItem(STORAGE_KEY_EXCLUDED, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY_EXCLUDED, json);
     } catch (err) {
       console.error('[WeightPresets] Failed to save excluded categories:', err);
     }
     saveUserPreferenceToDb('excluded_categories', data);
-  }, [excludedCategories]);
+  }, [hydrated, excludedCategories]);
 
   const handlePresetSelect = (preset: WeightPreset) => {
     setSelectedPreset(preset.id);

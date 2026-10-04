@@ -1,18 +1,41 @@
 # LIFE SCORE — Grand Master Bug List (Single Source of Truth)
 
 **Audit Date:** 2026-02-20
-**Last Status Update:** 2026-02-26
-**Branch:** claude/coding-session-Jh27y
+**Last Status Update:** 2026-10-04 — every item re-checked against the code and the live database, not against this document
 **Scope:** Full codebase — 25 categories across 5 parallel agents
 **Total bugs found:** 110 (deduplicated from technical audit)
 
 **DO NOT create new bug lists. Update THIS file only.**
 
+**Held to the code by `tests/bugAudit.test.ts`.** Every row in Categories A–E carries one status word — FIXED, NOT A BUG, N/A, ACCEPTED or OPEN — followed by its evidence. The test fails if a row's status disagrees with the test's own list, and for each verdict it can check in the code (a file, a call, a guard), it checks it. Change a status here and in the test together.
+
 ---
 
-## PART 1: BUGS FIXED IN OUR SESSIONS (47 total)
+## THE 4 OCTOBER 2026 VERIFICATION
 
-All committed and pushed to `claude/coding-session-Jh27y`.
+John, 4 Oct 2026: *"you must verify each one with the actual code not trusting the docs and you must update the docs so they dont drift again."*
+
+**Wrong in this document until today** (marked fixed or clean; the code disagreed):
+
+| ID | The document said | The code said | Now |
+|----|-------------------|---------------|-----|
+| A34 | Console.log in auth flow — FIXED | The browser console printed the signed-in user's id and email; the pricing screens logged the whole profile; saved comparisons logged the user id | Fixed (commit 0e8c900); `tests/browserLogs.test.ts` |
+| S5 | Admin emails centralized — FIXED | HelpModal and PromptsManager still carried their own copied admin list | Both use the server's admin answer (`useTierAccess`) |
+| T12 | Unused import — FIXED | `api/evaluate.ts` still imported `METRICS_MAP` unused | Removed (0e8c900) |
+| T13 | No unused imports | `api/video/grok-generate.ts` computed a cache key it never used | Removed (0e8c900) |
+| B12, B34 | .env.example complete | Nine settings the code reads were missing (FAL_KEY, LIVEAVATAR_*, INVIDEO_*, PRODUCTION_URL, SUPABASE_ACCESS_TOKEN, two fallback names); four it lists were no longer read | Matched both ways; `tests/envExample.test.ts` |
+| #7 (errors) | No offline detection — OPEN | `src/main.tsx` already tells the user when the connection drops and returns | FIXED |
+| as any (11) | 11 places | 39 `as any` in src/ and api/ | OPEN (counted below) |
+
+**Real faults fixed today:** A16 and six more server calls with no time limit · A17 · A21 · A26 · T4 · ML1 (a paid D-ID stream left open on exit) · ML6 (saved preferences overwritten by defaults on every visit — also in DealbreakersPanel) · ML13/ML14 · S7 · S8. New drift tests: `serverTimeouts`, `browserLogs`, `envExample`, `preferenceSaves`, `bugAudit`.
+
+**Checked in the live database** (Supabase, 4 Oct 2026): every public table has row-level security; consent records and usage rows are readable only by their owner; `comparisons.user_id` is indexed and linked to `profiles`; `user_preferences` has no duplicate index; scores are stored as `numeric`. The table `api_usage_log` no longer exists (usage lives in `usage_tracking`, owner-only, linked to `profiles`).
+
+---
+
+## PART 1: BUGS FIXED IN THE FEBRUARY SESSIONS (47 total)
+
+The February history, kept as it was recorded. The current state of each item is in the category tables below.
 
 | # | Bug ID | Commit | What Was Fixed |
 |---|--------|--------|----------------|
@@ -35,7 +58,7 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 | 17 | S4 | 24727ba | Admin env-check masks secrets more tightly |
 | 18 | EN1+EN2 | 3c50445 | Missing env vars added to .env.example |
 | 19 | M3 | 908faef | Hardcoded bypass emails removed (was security hole) |
-| 20 | S5 | 135f648+5f248de | Admin emails centralized (was copy-pasted in 10 files) |
+| 20 | S5 | 135f648+5f248de | Admin emails centralized (was copy-pasted in 10 files) — two screens still had copies until 4 Oct 2026 |
 | 21 | C2 | 992db07 | CORS mode was missing on sync-emilia endpoint |
 | 22 | Refactor | 9bfe497 | sync-olivia cleaned up to use shared helpers |
 | 23 | EN3 | 4816ccf | Resend email from-address standardized |
@@ -61,112 +84,79 @@ All committed and pushed to `claude/coding-session-Jh27y`.
 | 43 | CL5 | 50e1d9d | 5 debug console.log removed from SavedComparisons |
 | 44-47 | CL6 | b2e96e3 | 11 debug console.log removed from 5 smaller components |
 
----
-
-## PART 2: BUGS NOT FIXED — PLAIN LANGUAGE EXPLANATIONS
-
-### Security / Code Audit Skips
-
-| Bug ID | What It Is (Plain Language) | How Important? | Can You Launch Without Fixing? |
-|--------|---------------------------|----------------|-------------------------------|
-| B1 (timeouts) | ~~7 API endpoints missing timeout settings in vercel.json.~~ | **NOT A BUG** — Vercel Pro default is 60s, all endpoints work. Verified 2026-02-26. DO NOT FIX. | N/A |
-| R5 (duplication) | The withTimeout function is copy-pasted 12 times across the codebase. It works, it's just messy. Fixing it means changing imports in 12+ files at once. | LOW — It's ugly code but it works fine | YES — This is pure tech debt, doesn't affect users at all |
-| I1 (duplication) | Same as R5 basically — code duplication across 30+ files (CORS helpers, fetch helpers). Works, just duplicated. | LOW — Technical debt only | YES — Zero user impact |
-| A5 (anon key) | The Supabase anonymous key has a fallback hardcoded in src/lib/supabase.ts. If the env var is missing, it falls back to the hardcoded key. | LOW — The anon key is meant to be public (Supabase design). Real security is in RLS policies. | YES — Supabase anon keys are designed to be public. Cosmetic. |
-| C1 (CORS) | Some endpoints still use * (allow any website) for CORS instead of restricting to your domain. The important ones (auth-protected) were already tightened. | LOW — The auth layer protects the data regardless of CORS | YES — Auth is the real protection, and that's done |
-| G1+G2 (GDPR DB) | GDPR database tables for consent tracking and data deletion requests. Supabase migration files that need careful planning. | MEDIUM for UK/EU users — You're a UK company, so GDPR matters, but the app already has consent logging and user delete/export endpoints | YES for initial launch — schedule within 30 days if you have EU users |
-| P1 (favicon) | Missing favicon/app icons in proper PNG format. The app works but may show a blank icon on some devices. | LOW — Cosmetic only | YES |
-| P3 (zoom) | user-scalable=no in the HTML head prevents pinch-to-zoom. Intentional for Capacitor (mobile app). | NOT A BUG — Correct for mobile apps | YES — Working as designed |
-| P4 (PWA devOptions) | PWA devOptions are set. Only matters in development. | NOT A BUG — Dev config | YES |
-| SD3 (Gemini model) | Gemini model name mismatch — ALREADY FIXED in a prior session (commit 8a1d440). | ALREADY DONE | N/A |
-| DC6 (async) | Flagged as "unnecessary async" — but the async IS needed. False positive. | NOT A BUG | N/A |
-| as any (11) | 11 places in the code that bypass TypeScript type checking with `as any`. These exist because Supabase returns data in formats TypeScript can't predict. Changing them risks runtime crashes. | LOW — The code works correctly, TypeScript just can't verify it | YES — Safety workarounds, not bugs |
-
-### Error Handling (3 remaining)
-
-| Bug | What It Is | Important? | Launch Without It? |
-|-----|-----------|------------|-------------------|
-| #4 | ~~Errors only show in the browser console — no toast/popup.~~ | **ALREADY FIXED** in prior session. react-hot-toast installed, `<Toaster>` in main.tsx, custom wrapper in utils/toast.tsx, used across 19 files. | N/A |
-| #7 | No offline detection — if the user loses internet, nothing tells them | MEDIUM — App just silently fails | YES — Most users understand when they're offline |
-| #10 | ~~No error tracking service.~~ | **ALREADY FIXED** in prior session. `src/lib/errorTracking.ts` captures global errors + unhandled rejections, buffers them, and can send to external endpoint via `VITE_ERROR_REPORTING_URL`. Not Sentry, but functional. | N/A |
-
-### Database/Supabase (6 remaining)
-
-| Bug | What It Is | Important? | Launch Without It? |
-|-----|-----------|------------|-------------------|
-| #6 | Migration file missing IF NOT EXISTS — was actually already correct (false alarm) | NOT A BUG | N/A |
-| #8 | Hung Supabase connections don't get cancelled, just raced with a timeout | LOW — Wastes a connection but doesn't break anything | YES |
-| #10 | avatar_videos table is publicly readable (no auth needed to SELECT) | BY DESIGN — These are public video content | YES |
-| #13 | Connection pooling concerns | LOW — Supabase handles this | YES |
-| #14 | Subscription enforcement gaps — frontend gates work, backend APIs don't check tier | MEDIUM — Technical users could bypass frontend paywall via direct API calls | **DEFER TO DEDICATED SESSION** — frontend gates prevent normal user abuse. Backend tier checks risk breaking payment flow if done wrong. Verified 2026-02-26. |
-| #15 | Minor migration ordering issues | LOW | YES |
-
-### Mobile UI/UX (39 remaining)
-
-| Priority | Count | What They Are | Launch Without? |
-|----------|-------|--------------|-----------------|
-| HIGH (5) | ~~5~~ | ~~Category bars lose color identity, score headers not centered, cockpit header too tall, 7-column grid unreadable, metric names truncated~~ | **ALL 5 ALREADY FIXED** in prior sessions. Verified 2026-02-26: border colors at 768px, single-column grid, reduced padding, 4-column collapse at 480px, ellipsis truncation. |
-| MEDIUM (22) | 22 | !important cleanup, forced white text in light mode, touch targets too small, missing breakpoints, table overflow | YES — Cosmetic issues |
-| LOW (12) | 12 | Minor spacing, alignment tweaks | YES — Nice to have |
-
-### Accessibility/WCAG (21 remaining)
-
-| Priority | Count | What They Are | Launch Without? |
-|----------|-------|--------------|-----------------|
-| HIGH (4) | 4 | Missing aria-live for dynamic content, TabNavigation missing keyboard support, winner bars use color only (colorblind users can't tell), form errors not linked to inputs | YES but note: If you need WCAG compliance for enterprise sales or government contracts, these matter |
-| MEDIUM (12) | 12 | Various ARIA improvements | YES |
-| LOW (5) | 5 | Minor accessibility enhancements | YES |
-
-### Performance (11 remaining)
-
-| Bug | What It Is | Important? | Launch Without It? |
-|-----|-----------|------------|-------------------|
-| #1 CRITICAL | App.tsx has 32 useState variables — should be consolidated with useReducer | MEDIUM — App re-renders more than it needs to, feels sluggish | YES — Works, just slower than ideal |
-| #2 CRITICAL | ~~Logo PNG is 1.5MB — should be WebP.~~ | **FIXED** 2026-02-26 (commit eacb56b). Switched to 37KB WebP. | N/A |
-| #4 CRITICAL | SavedComparisons blocks on Supabase sync at mount — should show local data first | MEDIUM — Saved comparisons tab feels slow to open | YES |
-| #7-#9 | Missing useCallback/useMemo optimizations | LOW — Slight performance gains | YES |
-| #14 | 100 metrics in DOM without virtualization | MEDIUM — Scroll performance on low-end phones | YES |
-
-### Scoring (1 remaining)
-
-| Bug | What It Is | Important? | Launch Without It? |
-|-----|-----------|------------|-------------------|
-| #3 | 150 lines of dead Phase 2 scoring code behind a flag | LOW — Dead code, never runs | YES |
-
-### From FINAL-CODEBASE-FIXES-TABLE (52 items — mostly features/UX/legal)
-
-| Section | Count | Summary | Launch Without? |
-|---------|-------|---------|-----------------|
-| A: Critical UI/UX | 7 | Cristiano animation, text sizing, scroll behavior, mobile buttons, welcome screen | YES — Polish items |
-| B: Legal/Compliance | 11 | Email updates, GDPR, DPAs with vendors, ICO registration, DPO appointment | Schedule these — Legal obligations for a UK company |
-| C: Architecture | 4 | Tavily restructure, city caching, prompt tweaks | YES for launch — Performance/cost optimizations |
-| D: UX Flow | 2 | Post-search flow redesign, score calculation UI | YES — Feature requests |
-| E: New Features | 5 | Save buttons, upload buttons, Gamma prompt update | YES — Feature requests |
-| F: Code Quality | 2 | Debug session, refactor pass | YES — Maintenance |
-| G: Existing Items | 21 | Mix of bugs (letter C not typing), incomplete features, documentation | Mixed — The letter C bug (G1) should be investigated |
+(The IDs in Part 1 are the February session's own numbering; A12, A13… here are not the Category B rows of the same name.)
 
 ---
 
-## PART 3: BOTTOM LINE — WHAT MATTERS FOR MARKETPLACE + PLAY STORE LAUNCH
+## PART 2: THE FEBRUARY "NOT FIXED" GROUPS — STATE ON 4 OCT 2026
 
-### Must fix before launch (3 items)
+### Security / code-audit skips
 
-1. ~~**B1 — vercel.json timeouts**~~ — **NOT A BUG.** Vercel Pro 60s default works. Verified 2026-02-26. DO NOT FIX.
-2. ~~**Logo 1.5MB → WebP**~~ — **FIXED** 2026-02-26 (commit eacb56b). 37KB WebP.
-3. ~~**Error handling #4**~~ — **ALREADY FIXED** in prior session. react-hot-toast installed, Toaster mounted, used in 19 files.
-4. **Subscription enforcement #14** — Frontend paywall works (FeatureGate, useTierAccess, checkUsage all solid). Backend APIs do NOT check tier — a technical user could bypass frontend and call evaluate/judge/gamma/video APIs directly on free tier. Frontend gates prevent normal abuse. **DEFER TO DEDICATED SESSION** — touching payment logic risks locking out paying users. Verified 2026-02-26.
+| Bug ID | What it is | State (4 Oct 2026) |
+|--------|-----------|--------------------|
+| B1 (timeouts) | vercel.json function time limits | NOT A BUG — the functions that need longer than the default carry `maxDuration` in vercel.json; every outbound server call now has its own limit (`tests/serverTimeouts.test.ts`). |
+| R5 (duplication) | withTimeout copy-pasted | OPEN — 11 copies (was 12). Joins the code-style clean-up on the burndown. |
+| I1 (duplication) | CORS / fetch helpers duplicated | IMPROVED — CORS is one helper (`api/shared/cors.ts`); server fetches share `api/shared/fetchWithTimeout.ts`. Remaining copies join the code-style clean-up. |
+| A5 (anon key) | Hard-coded Supabase key fallback in src/lib/supabase.ts | FIXED — no Supabase key is written anywhere in src/ or api/; settings load from the build or the server (`src/lib/publicConfig.ts`). |
+| C1 (CORS) | Some endpoints allow any website | FIXED — one route is open to every site, `api/health.ts`, a public health check. |
+| G1+G2 (GDPR DB) | Consent and deletion | FIXED — consent records in `consent_logs` (written by the server, owner-only reads); Download My Data and Delete My Account in Settings (`api/user/export.ts`, `api/user/delete.ts`, `tests/privacyRoutes.test.ts`). |
+| P1 (favicon) | PNG icons | FIXED — favicon-16/32, apple-touch-icon and PWA icons ship in public/. |
+| P3 (zoom) | user-scalable=no | NOT A BUG — deliberate for the mobile app. |
+| P4 (PWA devOptions) | Dev config | NOT A BUG. |
+| SD3 (Gemini model) | Model name | FIXED — model names live in `api/shared/models.ts`. |
+| DC6 (async) | "Unnecessary async" | NOT A BUG. |
+| as any | Type escapes | OPEN — 39 `as any` in src/ and api/ (the February count of 11 was wrong). Code-style clean-up. |
 
-### Should fix within 30 days of launch (5 items)
+### Error handling
 
-1. **G1+G2** — GDPR database tables (UK legal requirement)
-2. **Legal section B** — DPAs, ICO registration
-3. ~~**Error tracking #10**~~ — **ALREADY FIXED** in prior session. `src/lib/errorTracking.ts` captures errors globally. Set `VITE_ERROR_REPORTING_URL` to enable remote reporting.
-4. ~~**Mobile HIGH items**~~ — **ALL 5 ALREADY FIXED** in prior sessions. Verified 2026-02-26: responsive breakpoints at 768px and 480px properly handle all 5 layout issues.
-5. ~~**Letter C bug (G1)**~~ — **ALREADY FIXED** in prior session. AskOlivia keyboard handler only intercepts Enter, doesn't block any letters. `startTransition` used for smooth typing.
+| Bug | What it is | State |
+|-----|-----------|-------|
+| #4 | Errors only in the console | FIXED — react-hot-toast, `<Toaster>` in main.tsx, `src/utils/toast`. |
+| #7 | No offline detection | FIXED — `src/main.tsx` toasts on `offline` and `online`. |
+| #10 | No error tracking | FIXED — `src/lib/errorTracking.ts`; ErrorBoundary calls `trackError`. |
 
-### Everything else can wait
+### Database / Supabase
 
-The remaining ~90 items are tech debt, cosmetic polish, accessibility improvements, and feature requests. None of them will prevent a launch or cause user complaints on day one.
+| Bug | What it is | State |
+|-----|-----------|-------|
+| #6 | Migration IF NOT EXISTS | NOT A BUG. |
+| #8 | Hung connections raced with a timeout | ACCEPTED — queries run through `withRetry` with a timeout. |
+| #10 | avatar_videos publicly readable | BY DESIGN — public video content; RLS on. |
+| #13 | Connection pooling | N/A — Supabase pools. |
+| #14 | Backend does not check the plan | FIXED 3 Oct 2026 — every paid server route checks the plan (`api/shared/entitlements.ts`; comparisons need a signed grant from `/api/usage/consume`). |
+| #15 | Migration ordering | ACCEPTED — applied migrations are not renamed. |
+
+### Mobile UI/UX (39), Accessibility/WCAG (21), FINAL-CODEBASE-FIXES-TABLE (52)
+
+The individual items behind these counts were never written into this file, and their source table is no longer in the repository, so they cannot be checked one by one. What could be checked:
+
+- **WCAG HIGH (4):** live regions for changing content — FIXED (`aria-live` on the loading progress, Olivia's chat log and the winner); tab bar keyboard — FIXED (arrow keys, Home, End in `TabNavigation.tsx`); winner bars by colour only — FIXED (each bar names its city and the winner is written out); form errors linked to inputs — FIXED (`aria-invalid` + `aria-describedby` in LoginScreen).
+- **Mobile HIGH (5):** FIXED in February (768 px and 480 px breakpoints).
+- The rest of the mobile and accessibility polish moves to the burndown's look-and-feel work (the 3D look, dark glass hovers centred on phones).
+
+### Performance
+
+| Bug | What it is | State |
+|-----|-----------|-------|
+| #1 | App.tsx had 32 useState | IMPROVED — 19 now, with reducers for modals and the enhanced flow. |
+| #2 | 1.5 MB logo | FIXED — 37 KB WebP. |
+| #4 | Saved comparisons waited for the database | FIXED — shows the browser's copy first, then syncs (`SavedComparisons.tsx`). |
+| #7–#9 | Missing memoisation | ACCEPTED — memo only where measured. |
+| #14 | 100 metrics without virtualisation | ACCEPTED — not measured as slow. |
+
+### Scoring
+
+| Bug | What it is | State |
+|-----|-----------|-------|
+| #3 | Phase 2 scoring code behind a flag | OPEN — still in `api/evaluate.ts` behind `USE_CATEGORY_SCORING`, with two unused prompt builders (`buildEvaluationPromptWithScoring`, `buildPrompt`). Removing it needs the flag's Vercel value confirmed first. |
+
+---
+
+## PART 3: BOTTOM LINE (4 OCT 2026)
+
+- Launch blocker #14 (server plan checks): FIXED 3 Oct 2026.
+- GDPR (G1/G2), retention and portability (B21/B22): FIXED — the privacy policy promises keeping data for the life of the account and deleting it at once on request, which is what the code does.
+- Open and real: S14 (a Content-Security-Policy header), the code-style clean-up (39 `as any`, 11 withTimeout copies, dead Phase 2 code), and the mobile/accessibility polish folded into the look-and-feel work.
 
 ---
 
@@ -186,155 +176,155 @@ The remaining ~90 items are tech debt, cosmetic polish, accessibility improvemen
 
 | ID | File | Sev | Risk | Description | Status |
 |----|------|-----|------|-------------|--------|
-| T1 | src/components/NewLifeVideos.tsx | 5 | MED | Rules of Hooks violation — useRef/useState called after conditional early return | **FIXED** |
-| T2 | src/components/WeightPresets.tsx | 3 | LOW | Type assertion `as any` on weight redistribution | OPEN |
-| T3 | src/components/CitySelector.tsx | 2 | LOW | Metro type doesn't include optional fields used in filtering | OPEN |
-| T4 | src/components/CourtOrderVideo.tsx | 2 | LOW | result possibly undefined but destructured without guard | OPEN |
-| T5 | src/hooks/useComparison.ts | 2 | LOW | Non-null assertion on API response | OPEN |
-| T6 | src/hooks/useGrokVideo.ts | 2 | LOW | String literal union not enforced for status | OPEN |
-| T7 | src/hooks/useJudgeVideo.ts | 2 | LOW | Same string literal issue | OPEN |
-| T8 | src/hooks/useCristianoVideo.ts | 2 | LOW | Same string literal issue | OPEN |
-| T9 | src/components/ManualViewer.tsx | 2 | LOW | Optional chain missing on nested access | OPEN |
-| T10 | src/hooks/useEmilia.ts | 2 | LOW | Cast to `any` silences type error on audio context | OPEN |
-| T11 | api/shared/supabaseClient.ts | 2 | LOW | Module-level `!` assertion on env vars | N/A (file removed) |
-| T12 | api/evaluate.ts | 1 | LOW | Unused import | **FIXED** (commit 597d4d9, 2026-02-27) |
-| T13 | api/video/grok-generate.ts | 1 | LOW | Unused import | NOT A BUG — verified 2026-02-27, no unused imports found |
-| T14 | api/gamma/generate-gamma.ts | 1 | LOW | Unused import | N/A (path changed) |
-| T15 | src/components/TabNavigation.tsx | 1 | LOW | Prop interface overly broad | NOT A BUG — verified 2026-02-27, interface is clean and well-typed |
-| T16 | src/components/HelpBubble.tsx | 1 | LOW | Unused CSS class | NOT A BUG — verified 2026-02-27, all CSS classes used |
-| T17 | api/stripe/webhook.ts | 2 | LOW | event.type switch no default case | NOT A BUG — verified 2026-02-27, default case already exists |
-| T18 | api/user/preferences.ts | 2 | LOW | Missing validation on preference key names | OPEN |
-| T19 | src/hooks/useTierAccess.ts | 2 | LOW | Retry count hardcoded, no backoff | OPEN |
-| T20 | src/components/LoadingState.tsx | 1 | LOW | Inline style objects recreated every render | NOT A BUG — verified 2026-02-27, dynamic width style is intentional |
-| T21 | api/shared/rateLimiter.ts | 2 | LOW | In-memory rate limiter resets on cold start | OPEN |
-| T22 | api/emilia/manuals.ts | 1 | LOW | Error message leaks internal path | **FIXED** 2026-02-27 — removed message field from 500 response |
-| T23 | src/components/ErrorBoundary.tsx | 1 | LOW | componentDidCatch logs to console only | NOT A BUG — verified 2026-02-27, already calls trackError() |
-| T24 | api/evaluate.ts | 2 | LOW | LLM response not validated against schema | OPEN |
-| T25 | src/hooks/useURLParams.ts | 1 | LOW | URL params not sanitized before use | OPEN |
+| T1 | src/components/NewLifeVideos.tsx | 5 | MED | Rules of Hooks violation | FIXED — ESLint's rules-of-hooks (4 Oct run) flags nothing here |
+| T2 | src/components/WeightPresets.tsx | 3 | LOW | `as any` on weight redistribution | FIXED — no `as any` in the file |
+| T3 | src/components/CitySelector.tsx | 2 | LOW | Metro type missing fields used in filtering | NOT A BUG — Metro is {city, country, region?}; the selector reads only these |
+| T4 | src/components/CourtOrderVideo.tsx | 2 | LOW | result destructured without guard | FIXED — 4 Oct: a reply without the saved row shows an error instead of crashing |
+| T5 | src/hooks/useComparison.ts | 2 | LOW | Non-null assertion on API response | FIXED — none left |
+| T6 | src/hooks/useGrokVideo.ts | 2 | LOW | Status not a literal union | FIXED — `useState<GrokVideoStatus>` |
+| T7 | src/hooks/useJudgeVideo.ts | 2 | LOW | Same | FIXED — `useState<JudgeVideoStatus>` |
+| T8 | src/hooks/useCristianoVideo.ts | 2 | LOW | Same | FIXED — CristianoVideoState.status is a literal union |
+| T9 | src/components/ManualViewer.tsx | 2 | LOW | Optional chain missing | FIXED — no unguarded nested access |
+| T10 | src/hooks/useEmilia.ts | 2 | LOW | `any` cast on audio context | FIXED — no `any`; plays an audio element |
+| T11 | api/shared/supabaseClient.ts | 2 | LOW | Module-level `!` on env vars | N/A — file removed |
+| T12 | api/evaluate.ts | 1 | LOW | Unused import | FIXED — 4 Oct: METRICS_MAP removed (the February fix had missed it) |
+| T13 | api/video/grok-generate.ts | 1 | LOW | Unused import | FIXED — 4 Oct: unused cache key and its crypto import removed |
+| T14 | api/gamma/generate-gamma.ts | 1 | LOW | Unused import | N/A — path is now api/gamma.ts |
+| T15 | src/components/TabNavigation.tsx | 1 | LOW | Prop interface overly broad | NOT A BUG — typed props, icon names typed (`Icon3DName`) |
+| T16 | src/components/HelpBubble.tsx | 1 | LOW | Unused CSS class | NOT A BUG |
+| T17 | api/stripe/webhook.ts | 2 | LOW | switch without default | FIXED — `default:` present |
+| T18 | api/user/preferences.ts | 2 | LOW | Preference key validation | N/A — file does not exist |
+| T19 | src/hooks/useTierAccess.ts | 2 | LOW | Retry without backoff | FIXED — `withRetry` (exponential backoff) |
+| T20 | src/components/LoadingState.tsx | 1 | LOW | Inline style objects | NOT A BUG — the dynamic width is intentional |
+| T21 | api/shared/rateLimit.ts | 2 | LOW | In-memory limiter resets on cold start | ACCEPTED — burst protection only; paid use is counted in the database |
+| T22 | api/emilia/manuals.ts | 1 | LOW | Error leaks internal path | FIXED — 500 answers `{ error: 'Failed to load manual' }` only |
+| T23 | src/components/ErrorBoundary.tsx | 1 | LOW | Logs to console only | FIXED — calls `trackError` |
+| T24 | api/evaluate.ts | 2 | LOW | LLM response not validated | FIXED — every score checked, clamped 0–100, invalid ones dropped |
+| T25 | src/hooks/useURLParams.ts | 1 | LOW | URL params not sanitised | NOT A BUG — the values are only matched against the city list |
 
 ### CATEGORY B: API, AUTH & RACE CONDITIONS (35 bugs)
 
 | ID | File | Sev | Risk | Description | Status |
 |----|------|-----|------|-------------|--------|
-| A1 | api/video/grok-generate.ts | 5 | MED | No auth + arbitrary userId | **FIXED** |
-| A2 | api/evaluate.ts | 4 | MED | No auth on LLM evaluation | **FIXED** |
-| A3 | api/judge.ts | 4 | MED | No auth on judge | **FIXED** |
-| A4 | api/gamma/generate-gamma.ts | 4 | MED | No auth on Gamma | **FIXED** |
-| A5 | api/test-llm.ts | 4 | MED | No auth on test endpoint | MITIGATED (intentional) |
-| A6 | 6 API files | 4 | MED | SUPABASE_ANON_KEY fallback | MITIGATED |
-| A7 | api/stripe/webhook.ts | 4 | HIGH | Webhook signature not verified in dev | **FIXED** |
-| A8 | api/stripe/create-checkout-session.ts | 4 | MED | Open redirect via success_url | **FIXED** |
-| A9 | api/stripe/create-portal-session.ts | 4 | MED | Same open redirect | **FIXED** |
-| A10 | api/user/delete.ts | 4 | HIGH | GDPR delete misses tables | OPEN |
-| A11 | src/contexts/AuthContext.tsx | 3 | LOW | Race: two tabs fetch simultaneously | OPEN |
-| A12 | src/hooks/useComparison.ts | 3 | LOW | Abort controller race | OPEN |
-| A13 | api/evaluate.ts | 3 | LOW | No request timeout | OPEN |
-| A14 | api/judge.ts | 3 | LOW | Same missing timeout | OPEN |
-| A15 | api/gamma/generate-gamma.ts | 3 | LOW | Same missing timeout | OPEN |
-| A16 | api/video/grok-generate.ts | 3 | LOW | Same missing timeout | OPEN |
-| A17 | src/hooks/useContrastImages.ts | 3 | LOW | No timeout/abort | OPEN |
-| A18 | api/shared/rateLimiter.ts | 3 | MED | Rate limiter resets per instance | OPEN |
-| A19 | src/hooks/useOliviaChat.ts | 3 | MED | useEffect self-triggers | OPEN |
-| A20 | src/hooks/useComparison.ts | 2 | LOW | Error state not cleared | OPEN |
-| A21 | api/evaluate.ts | 2 | LOW | JSON parse failure returns 500 | OPEN |
-| A22 | api/stripe/webhook.ts | 2 | LOW | Tier update failure swallowed | OPEN |
-| A23 | api/user/preferences.ts | 2 | LOW | Upsert conflict may lose writes | OPEN |
-| A24 | src/hooks/useEmilia.ts | 2 | LOW | Audio context not resumed | OPEN |
-| A25 | src/hooks/useGrokVideo.ts | 2 | LOW | Polling not cleared on error | OPEN |
-| A26 | src/hooks/useJudgeVideo.ts | 2 | LOW | Same polling pattern | OPEN |
-| A27 | src/hooks/useCristianoVideo.ts | 2 | LOW | Same polling pattern | OPEN |
-| A28 | api/emilia/chat.ts | 2 | LOW | System prompt injection | MITIGATED |
-| A29 | api/shared/supabaseClient.ts | 2 | LOW | Shared client instance | N/A |
-| A30 | src/hooks/useApiUsageMonitor.ts | 2 | LOW | 60s usage check interval | OPEN |
-| A31 | api/evaluate.ts | 1 | LOW | Hardcoded model name | OPEN |
-| A32 | api/judge.ts | 1 | LOW | Same hardcoded model | OPEN |
-| A33 | api/video/grok-generate.ts | 1 | LOW | Same hardcoded model | OPEN |
-| A34 | src/contexts/AuthContext.tsx | 1 | LOW | Console.log in auth flow | **FIXED** |
-| A35 | api/shared/rateLimiter.ts | 1 | LOW | Rate limit headers not set | OPEN |
+| A1 | api/video/grok-generate.ts | 5 | MED | No auth + arbitrary userId | FIXED — plan check on the signed-in user |
+| A2 | api/evaluate.ts | 4 | MED | No auth on LLM evaluation | FIXED — `requireComparisonGrant` |
+| A3 | api/judge.ts | 4 | MED | No auth on judge | FIXED — `requireComparisonGrant` |
+| A4 | api/gamma.ts | 4 | MED | No auth on Gamma | FIXED — plan check (path was api/gamma/generate-gamma.ts) |
+| A5 | api/test-llm.ts | 4 | MED | No auth on test endpoint | FIXED — `requireAdmin` |
+| A6 | 6 API files | 4 | MED | SUPABASE_ANON_KEY fallback | FIXED — no key written in code |
+| A7 | api/stripe/webhook.ts | 4 | HIGH | Signature not verified in dev | FIXED — `constructEvent` always; no secret means 500 |
+| A8 | api/stripe/create-checkout-session.ts | 4 | MED | Open redirect | FIXED — `isAllowedRedirectUrl` |
+| A9 | api/stripe/create-portal-session.ts | 4 | MED | Open redirect | FIXED — `isAllowedRedirectUrl` |
+| A10 | api/user/delete.ts | 4 | HIGH | GDPR delete misses tables | FIXED — 3 Oct: every user table (`tests/privacyRoutes.test.ts`) |
+| A11 | src/contexts/AuthContext.tsx | 3 | LOW | Two tabs fetch at once | NOT A BUG — each tab reads its own copy; the reads change nothing |
+| A12 | src/hooks/useComparison.ts | 3 | LOW | Abort controller race | FIXED — the previous comparison is aborted first |
+| A13 | api/evaluate.ts | 3 | LOW | No request timeout | FIXED — model calls are timed |
+| A14 | api/judge.ts | 3 | LOW | No request timeout | FIXED — through the shared Claude client, timed |
+| A15 | api/gamma.ts | 3 | LOW | No request timeout | FIXED — timed |
+| A16 | api/video/grok-generate.ts | 3 | LOW | No request timeout | FIXED — 4 Oct: the Minimax request (30 s), and six other untimed server calls (`tests/serverTimeouts.test.ts`) |
+| A17 | src/hooks/useContrastImages.ts | 3 | LOW | No timeout/abort | FIXED — 4 Oct: the browser gives up after 2 minutes with a plain message |
+| A18 | api/shared/rateLimit.ts | 3 | MED | Rate limiter per instance | ACCEPTED — as T21 |
+| A19 | src/hooks/useOliviaChat.ts | 3 | MED | useEffect self-triggers | NOT A BUG — guarded by the last-comparison ref and a stale-result check |
+| A20 | src/hooks/useComparison.ts | 2 | LOW | Error state not cleared | FIXED — a new comparison replaces the whole state |
+| A21 | api/evaluate.ts | 2 | LOW | Bad JSON returns 500 | FIXED — 4 Oct: answers 400 |
+| A22 | api/stripe/webhook.ts | 2 | LOW | Tier update failure swallowed | FIXED — a failed write answers 500 so Stripe retries |
+| A23 | api/user/preferences.ts | 2 | LOW | Upsert conflict | N/A — file does not exist |
+| A24 | src/hooks/useEmilia.ts | 2 | LOW | Audio context not resumed | N/A — plays an audio element, no AudioContext |
+| A25 | src/hooks/useGrokVideo.ts | 2 | LOW | Polling not cleared on error | FIXED — capped at MAX_POLL_ATTEMPTS, errors included |
+| A26 | src/hooks/useJudgeVideo.ts | 2 | LOW | Polling not cleared on error | FIXED — 4 Oct: stops after 15 minutes or 10 failed checks in a row |
+| A27 | src/hooks/useCristianoVideo.ts | 2 | LOW | Polling not cleared | FIXED — the service polls at most MAX_POLL_ATTEMPTS |
+| A28 | api/emilia/message.ts | 2 | LOW | System prompt injection | FIXED — the user's text goes only in the user turn |
+| A29 | api/shared/supabaseClient.ts | 2 | LOW | Shared client instance | N/A — file removed |
+| A30 | src/hooks/useApiUsageMonitor.ts | 2 | LOW | 60 s usage check | FIXED — every 5 minutes |
+| A31 | api/evaluate.ts | 1 | LOW | Hard-coded model name | FIXED — `api/shared/models.ts` |
+| A32 | api/judge.ts | 1 | LOW | Hard-coded model name | FIXED — `api/shared/models.ts` |
+| A33 | api/video/grok-generate.ts | 1 | LOW | Hard-coded model name | FIXED — each video model named once in its vendor file |
+| A34 | src/contexts/AuthContext.tsx | 1 | LOW | Console.log in auth flow | FIXED — 4 Oct: the console no longer shows ids, emails or profiles (`tests/browserLogs.test.ts`) |
+| A35 | api/shared/rateLimit.ts | 1 | LOW | Rate limit headers not set | FIXED — X-RateLimit-* set |
 
 ### CATEGORY C: SECURITY (17 bugs)
 
 | ID | File | Sev | Risk | Description | Status |
 |----|------|-----|------|-------------|--------|
-| S1 | api/avatar/simli-session.ts | 5 | HIGH | API key returned to client | **FIXED** |
-| S2 | api/simli-config.ts | 5 | HIGH | Same API key exposure | **FIXED** |
-| S3 | src/components/LoginScreen.tsx | 5 | HIGH | Password in localStorage | **FIXED** |
-| S4 | vercel.json | 4 | MED | CORS * on API routes | **FIXED** |
-| S5 | 4 files | 3 | MED | Hardcoded admin emails | **FIXED** |
-| S6 | api/emilia/chat.ts | 3 | LOW | System prompt injection | MITIGATED |
-| S7 | api/evaluate.ts | 3 | LOW | City names unsanitized in prompt | OPEN |
-| S8 | src/components/ManualViewer.tsx | 3 | LOW | dangerouslySetInnerHTML | MITIGATED (sanitized) |
-| S9 | api/shared/supabaseClient.ts | 3 | MED | Service role key overused | OPEN |
-| S10 | src/App.tsx | 2 | LOW | Anon key in client bundle | OPEN (acceptable) |
-| S11 | api/stripe/webhook.ts | 2 | LOW | Webhook secret not rotated | OPEN |
-| S12 | api/user/delete.ts | 2 | LOW | No delete confirmation | OPEN |
-| S13 | src/hooks/useVoiceRecognition.ts | 1 | LOW | Mic permission not graceful | OPEN |
-| S14 | public/manifest.json | 1 | LOW | CSP not configured for PWA | OPEN |
-| S15 | api/evaluate.ts | 1 | LOW | Stack trace in error response | NOT A BUG — verified 2026-02-27, no stack traces in responses |
-| S16 | api/judge.ts | 1 | LOW | Same stack trace leak | NOT A BUG — verified 2026-02-27, safe error messages only |
-| S17 | api/video/grok-generate.ts | 1 | LOW | Same stack trace leak | NOT A BUG — verified 2026-02-27, safe error messages only |
+| S1 | api/avatar/simli-session.ts | 5 | HIGH | API key returned to client | FIXED — the key stays on the server (`api/simli-config.ts` returns a session token) |
+| S2 | api/simli-config.ts | 5 | HIGH | Same | FIXED — as S1 |
+| S3 | src/components/LoginScreen.tsx | 5 | HIGH | Password in localStorage | FIXED — never stored |
+| S4 | vercel.json | 4 | MED | CORS * on API routes | FIXED — per-route CORS in `api/shared/cors.ts` |
+| S5 | 4 files | 3 | MED | Hard-coded admin emails | FIXED — 4 Oct: the last two copies removed; one list in `api/shared/plans.ts` |
+| S6 | api/emilia/message.ts | 3 | LOW | System prompt injection | FIXED — as A28 |
+| S7 | api/usage/consume.ts | 3 | LOW | City names unsanitised in prompt | FIXED — 4 Oct: names with line breaks or control characters are refused before the grant that binds them |
+| S8 | src/components/ManualViewer.tsx | 3 | LOW | dangerouslySetInnerHTML | FIXED — 4 Oct: the manual text is escaped before conversion, so only the converter's own tags appear |
+| S9 | api/shared/supabaseAdmin.ts | 3 | MED | Service role key overused | ACCEPTED — server-only, never in src/; routes authenticate first |
+| S10 | src/App.tsx | 2 | LOW | Anon key in client bundle | NOT A BUG — public by Supabase design; RLS protects data |
+| S11 | api/stripe/webhook.ts | 2 | LOW | Webhook secret not rotated | NOT A BUG — rotation is done in Stripe's dashboard, not in code |
+| S12 | api/user/delete.ts | 2 | LOW | No delete confirmation | FIXED — the user types DELETE MY ACCOUNT; the server checks it |
+| S13 | src/hooks/useVoiceRecognition.ts | 1 | LOW | Mic permission not graceful | FIXED — a plain message on not-allowed |
+| S14 | vercel.json | 1 | LOW | No Content-Security-Policy | OPEN — needs one careful policy across every vendor (Simli, LiveKit, HeyGen, D-ID, Stripe, Supabase, Gamma, video hosts) |
+| S15 | api/evaluate.ts | 1 | LOW | Stack trace in error response | NOT A BUG — no stack in any response |
+| S16 | api/judge.ts | 1 | LOW | Same | NOT A BUG |
+| S17 | api/video/grok-generate.ts | 1 | LOW | Same | NOT A BUG |
 
 ### CATEGORY D: CONFIG, BUILD, DATABASE & COMPLIANCE (35 bugs)
 
 | ID | File | Sev | Risk | Description | Status |
 |----|------|-----|------|-------------|--------|
-| B1 | vercel.json | 4 | HIGH | API routes missing includeFiles | **FIXED** |
-| B2 | supabase/migrations | 4 | HIGH | consent_logs RLS blocks inserts | OPEN |
-| B3 | supabase/migrations | 4 | HIGH | No RLS for api_usage_log | OPEN |
-| B4 | package.json | 3 | MED | @anthropic-ai/sdk in client deps | OPEN |
-| B5 | package.json | 3 | MED | openai in client bundle | OPEN |
-| B6 | tsconfig.json | 3 | MED | strict: false | OPEN |
-| B7 | supabase/migrations | 2 | LOW | Missing index comparisons.user_id | OPEN |
-| B8 | supabase/migrations | 2 | LOW | Missing index api_usage_log.created_at | OPEN |
-| B9 | supabase/migrations | 2 | LOW | Duplicate index user_preferences | OPEN |
-| B10 | vite.config.ts | 2 | LOW | No chunk splitting | **FIXED** |
-| B11 | package.json | 2 | LOW | No lint/typecheck scripts | OPEN |
-| B12 | .env.example | 2 | LOW | Missing API key entries | **FIXED** |
-| B13 | vercel.json | 2 | LOW | No cache headers on static assets | NOT A BUG — verified 2026-02-27, cache headers already exist for /assets/ |
-| B14 | vercel.json | 2 | LOW | No security headers | **FIXED** 2026-02-27 — added X-Content-Type-Options, X-Frame-Options, Referrer-Policy |
-| B15 | public/sw.js | 2 | LOW | Service worker caches API indefinitely | OPEN |
-| B16 | public/sw.js | 2 | LOW | No cache versioning | OPEN |
-| B17 | public/manifest.json | 2 | LOW | start_url mismatch | NOT A BUG — verified 2026-02-27, start_url "/" is correct for PWAs |
-| B18 | supabase/migrations | 2 | LOW | real vs numeric for scores | OPEN |
-| B19 | supabase/migrations | 2 | LOW | No FK comparisons.user_id | OPEN |
-| B20 | supabase/migrations | 2 | LOW | No FK api_usage_log.user_id | OPEN |
-| B21 | docs/legal | 3 | MED | Data retention not implemented | OPEN |
-| B22 | docs/legal | 3 | MED | Data portability not implemented | OPEN |
-| B23 | api/user/delete.ts | 3 | MED | No confirmation email on delete | OPEN |
-| B24 | public/robots.txt | 1 | LOW | Allows crawling /api/ | **FIXED** (commit 597d4d9, 2026-02-27) |
-| B25 | public/index.html | 1 | LOW | Missing OG meta tags | **FIXED** |
-| B26 | package.json | 1 | LOW | No engines field | **FIXED** 2026-02-27 — added engines.node >=18.0.0 |
-| B27 | vercel.json | 1 | LOW | No region config | OPEN |
-| B28 | .gitignore | 1 | LOW | Missing .env.local | NOT A BUG — verified 2026-02-27, .env.local already in .gitignore (lines 28+41) |
-| B29 | supabase/migrations | 1 | LOW | Inconsistent naming | OPEN |
-| B30 | tsconfig.json | 1 | LOW | No path aliases | OPEN |
-| B31 | vite.config.ts | 1 | LOW | No env validation plugin | OPEN |
-| B32 | package.json | 1 | LOW | No prepare script | OPEN |
-| B33 | supabase/migrations | 1 | LOW | No comments on RLS policies | OPEN |
-| B34 | .env.example | 1 | LOW | No descriptions for env vars | NOT A BUG — verified 2026-02-27, all vars have section headers + inline comments |
-| B35 | vercel.json | 2 | LOW | SPA fallback masks API 404s | OPEN |
+| B1 | vercel.json | 4 | HIGH | API routes missing includeFiles | FIXED — `includeFiles: api/shared/**` where needed |
+| B2 | supabase | 4 | HIGH | consent_logs RLS blocks inserts | FIXED — the server writes consent (`api/consent/log.ts`); signed-in users may insert their own (checked live 4 Oct) |
+| B3 | supabase | 4 | HIGH | No RLS for api_usage_log | N/A — table gone; `usage_tracking` has RLS, owner-only (checked live) |
+| B4 | package.json | 3 | MED | @anthropic-ai/sdk in client deps | FIXED — not a dependency |
+| B5 | package.json | 3 | MED | openai in client bundle | FIXED — not a dependency |
+| B6 | tsconfig | 3 | MED | strict: false | FIXED — strict in both app and server configs |
+| B7 | supabase | 2 | LOW | Missing index comparisons.user_id | FIXED — `idx_comparisons_user_id` (checked live) |
+| B8 | supabase | 2 | LOW | Missing index api_usage_log.created_at | N/A — table gone |
+| B9 | supabase | 2 | LOW | Duplicate index user_preferences | FIXED — primary key + unique(user_id) only (checked live) |
+| B10 | vite.config.ts | 2 | LOW | No chunk splitting | FIXED — Rolldown `codeSplitting.groups` |
+| B11 | package.json | 2 | LOW | No lint/typecheck scripts | FIXED — `lint`, `test`, `typecheck` |
+| B12 | .env.example | 2 | LOW | Missing API key entries | FIXED — 4 Oct: matches the code both ways (`tests/envExample.test.ts`) |
+| B13 | vercel.json | 2 | LOW | No cache headers on static assets | NOT A BUG — /assets/ headers set |
+| B14 | vercel.json | 2 | LOW | No security headers | FIXED — X-Content-Type-Options, X-Frame-Options, Referrer-Policy |
+| B15 | public/sw.js | 2 | LOW | Service worker caches API | FIXED — hand-written sw.js gone; Workbox caches no API call and fetches the start page from the network first |
+| B16 | public/sw.js | 2 | LOW | No cache versioning | FIXED — Workbox revisions and `cleanupOutdatedCaches` |
+| B17 | public/manifest.json | 2 | LOW | start_url mismatch | NOT A BUG |
+| B18 | supabase | 2 | LOW | real vs numeric for scores | FIXED — scores are numeric (checked live) |
+| B19 | supabase | 2 | LOW | No FK comparisons.user_id | FIXED — references profiles.id (checked live) |
+| B20 | supabase | 2 | LOW | No FK api_usage_log.user_id | N/A — table gone; usage_tracking.user_id references profiles.id |
+| B21 | docs/legal | 3 | MED | Data retention not implemented | FIXED — the policy states account-lifetime retention and immediate deletion, which the code does |
+| B22 | docs/legal | 3 | MED | Data portability not implemented | FIXED — Download My Data (`api/user/export.ts`) |
+| B23 | api/user/delete.ts | 3 | MED | No confirmation email on delete | NOT A BUG — none promised; deletion is confirmed on screen and takes effect at once |
+| B24 | public/robots.txt | 1 | LOW | Allows crawling /api/ | FIXED — Disallow: /api/ |
+| B25 | index.html | 1 | LOW | Missing OG meta tags | FIXED — og: and twitter: tags in index.html |
+| B26 | package.json | 1 | LOW | No engines field | FIXED — engines.node 24.x |
+| B27 | vercel.json | 1 | LOW | No region config | NOT A BUG — the project runs in fra1 (Vercel project setting) |
+| B28 | .gitignore | 1 | LOW | Missing .env.local | NOT A BUG — listed |
+| B29 | supabase | 1 | LOW | Inconsistent naming | ACCEPTED — applied migrations are not renamed |
+| B30 | tsconfig.json | 1 | LOW | No path aliases | NOT A BUG — a style choice |
+| B31 | vite.config.ts | 1 | LOW | No env validation plugin | NOT A BUG — public settings are validated as they load (`src/lib/publicConfig.ts`) |
+| B32 | package.json | 1 | LOW | No prepare script | NOT A BUG — nothing to prepare |
+| B33 | supabase | 1 | LOW | No comments on RLS policies | ACCEPTED — the policy names say what each does |
+| B34 | .env.example | 1 | LOW | No descriptions for env vars | FIXED — every entry described (4 Oct) |
+| B35 | vercel.json | 2 | LOW | SPA fallback masks API 404s | FIXED — the fallback excludes api/ |
 
-### CATEGORY E: REACT STATE & MEMORY LEAKS (14 bugs, 4 cross-referenced above)
+### CATEGORY E: REACT STATE & MEMORY LEAKS (14 bugs)
 
 | ID | File | Sev | Risk | Description | Status |
 |----|------|-----|------|-------------|--------|
-| ML1 | src/hooks/useAvatarProvider.ts | 4 | MED | Stale disconnect refs — WebRTC leak | OPEN |
-| ML2 | src/components/OliviaAvatar.tsx | 3 | MED | connect/disconnect stale closure | OPEN |
-| ML3 | src/components/NewLifeVideos.tsx | 3 | LOW | reset missing from useEffect deps | OPEN |
-| ML4 | src/components/CourtOrderVideo.tsx | 3 | LOW | reset missing from useEffect deps | OPEN |
-| ML5 | src/components/WeightPresets.tsx | 3 | MED | Mount useEffect calls stale callback | OPEN |
-| ML6 | src/components/WeightPresets.tsx | 3 | MED | Save effect overwrites with defaults | OPEN |
-| ML7 | src/components/OliviaChatBubble.tsx | 2 | LOW | setTimeout without cleanup | **FIXED** 2026-02-27 — added clearTimeout in useEffect cleanup |
-| ML8 | src/components/EmiliaChat.tsx | 2 | LOW | setTimeout without cleanup | **FIXED** 2026-02-27 — added clearTimeout in useEffect cleanup |
-| ML9 | src/components/CitySelector.tsx | 2 | LOW | getFilteredMetros recomputed every render | OPEN |
-| ML10 | src/components/ManualViewer.tsx | 2 | LOW | userEmail in deps but unused | **FIXED** 2026-02-27 — removed unused userEmail from useEffect deps |
-| ML11 | src/components/LoginScreen.tsx | 2 | LOW | 3s setTimeout without cleanup | **FIXED** 2026-02-27 — added ref + clearTimeout on unmount |
-| ML12 | src/components/ResetPasswordScreen.tsx | 2 | LOW | 2s setTimeout without cleanup | **FIXED** 2026-02-27 — added ref + clearTimeout on unmount |
-| ML13 | src/hooks/useTTS.ts | 2 | LOW | speed missing from useCallback deps | OPEN |
-| ML14 | src/hooks/useTTS.ts | 2 | LOW | speed missing from play useCallback deps | OPEN |
+| ML1 | src/hooks/useAvatarProvider.ts | 4 | MED | Stale disconnect — WebRTC leak | FIXED — 4 Oct: leaving now closes the paid D-ID stream on D-ID's side (`openStreamRef` in useDIDStream) |
+| ML2 | src/components/OliviaAvatar.tsx | 3 | MED | connect/disconnect stale closure | NOT A BUG — useSimli's disconnect reads refs and never changes |
+| ML3 | src/components/NewLifeVideos.tsx | 3 | LOW | reset missing from deps | NOT A BUG — reset never changes (stable callback) |
+| ML4 | src/components/CourtOrderVideo.tsx | 3 | LOW | reset missing from deps | NOT A BUG — reset is stable and the effect sees the current upload; adding the upload would reset on every upload |
+| ML5 | src/components/WeightPresets.tsx | 3 | MED | Mount effect calls stale callback | NOT A BUG — runs once, with the props of that render |
+| ML6 | src/components/WeightPresets.tsx | 3 | MED | Save effect overwrites with defaults | FIXED — 4 Oct: saving waits for the load (also DealbreakersPanel); `tests/preferenceSaves.test.ts` |
+| ML7 | src/components/OliviaChatBubble.tsx | 2 | LOW | setTimeout without cleanup | FIXED — clearTimeout in cleanup |
+| ML8 | src/components/EmiliaChat.tsx | 2 | LOW | setTimeout without cleanup | FIXED — clearTimeout in cleanup |
+| ML9 | src/components/CitySelector.tsx | 2 | LOW | Filtered list recomputed every render | ACCEPTED — 201 cities; not measured as slow |
+| ML10 | src/components/ManualViewer.tsx | 2 | LOW | userEmail in deps but unused | FIXED |
+| ML11 | src/components/LoginScreen.tsx | 2 | LOW | setTimeout without cleanup | FIXED — ref + clearTimeout |
+| ML12 | src/components/ResetPasswordScreen.tsx | 2 | LOW | setTimeout without cleanup | FIXED — ref + clearTimeout |
+| ML13 | src/hooks/useTTS.ts | 2 | LOW | speed missing from deps | FIXED — 4 Oct |
+| ML14 | src/hooks/useTTS.ts | 2 | LOW | speed missing from play deps | FIXED — 4 Oct |
 
 ---
 
 **END OF GRAND MASTER BUG LIST**
 
-*This is the SINGLE SOURCE OF TRUTH. Do not create new bug lists. Update this file only.*
+*This is the SINGLE SOURCE OF TRUTH. Do not create new bug lists. Update this file only — and `tests/bugAudit.test.ts` with it.*
