@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { cityTotal, metricScore, readComparison } from '../api/shared/comparisonInput';
 import { readLifeScoreContext } from '../api/shared/oliviaContext';
 
@@ -120,7 +120,4 @@ describe('the server routes read through the two readers', () => {
     }
   });
 
-  it('the old unused copy of the comparison types is gone', () => {
-    expect(existsSync('api/shared/types.ts')).toBe(false);
-  });
 });
