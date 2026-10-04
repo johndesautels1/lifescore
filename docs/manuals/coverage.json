@@ -400,9 +400,9 @@
         "src/components/PromptsManager.tsx",
         "api/usage/check-quotas.ts"
       ],
-      "hash": "6cf15fb069430107264113d0ea4264ff56b783ddaba1cb315bd222b4850c72a2",
+      "hash": "926691dc5465a2009ba54eebedde84acb7035164c0c2aad2c1fc62f6bddf0a9f",
       "reviewed": "2026-10-04",
-      "basis": "72a89916717b891f38381584d6a2da547fdafcfe"
+      "basis": "05f24a646a9ed7d4d84064647fef2c24cb237a27"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#16-security": {
       "files": [
