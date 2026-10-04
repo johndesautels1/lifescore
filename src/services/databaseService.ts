@@ -28,6 +28,7 @@ import type {
   ReportWithHtml,
   ReportShare,
   ReportSummary,
+  Profile,
 } from '../types/database';
 
 // Import report storage service functions
@@ -656,7 +657,7 @@ export async function syncLocalToDatabase(
  * Export all user data (for GDPR compliance)
  */
 export async function exportUserData(userId: string): Promise<{
-  profile: any;
+  profile: Profile | null;
   comparisons: Comparison[];
   conversations: OliviaConversation[];
   messages: OliviaMessage[];
@@ -674,13 +675,13 @@ export async function exportUserData(userId: string): Promise<{
   ]);
 
   // Get messages for all conversations
-  const conversationIds = (conversations.data || []).map((c: any) => c.id);
+  const conversationIds = ((conversations.data as OliviaConversation[] | null) || []).map((c) => c.id);
   const messages = conversationIds.length > 0
     ? await withTimeout(() => supabase.from('olivia_messages').select('*').in('conversation_id', conversationIds).limit(EXPORT_LIMIT * 10))
     : { data: [] };
 
   return {
-    profile: profile.data,
+    profile: (profile.data as Profile | null) ?? null,
     comparisons: (comparisons.data as Comparison[]) || [],
     conversations: (conversations.data as OliviaConversation[]) || [],
     messages: (messages.data as OliviaMessage[]) || [],

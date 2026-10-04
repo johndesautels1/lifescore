@@ -14,6 +14,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSimli } from './useSimli';
+import type { SimliSpeakRequest } from '../types/avatar';
 import { useDIDStream } from './useDIDStream';
 
 // ============================================================================
@@ -58,7 +59,7 @@ export interface UseAvatarProviderReturn {
 
   // Actions
   connect: () => Promise<void>;
-  speak: (text: string, options?: { emotion?: string; speed?: number }) => Promise<void>;
+  speak: (text: string, options?: { emotion?: SimliSpeakRequest['emotion']; speed?: number }) => Promise<void>;
   disconnect: () => void;
   interrupt: () => void;
   pause: () => void;
@@ -245,14 +246,14 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
 
   const speak = useCallback(async (
     text: string,
-    options?: { emotion?: string; speed?: number }
+    options?: { emotion?: SimliSpeakRequest['emotion']; speed?: number }
   ) => {
     onSpeakingStartRef.current?.();
 
     if (activeProvider === 'simli') {
       try {
         await simli.speak(text, {
-          emotion: options?.emotion as any,
+          emotion: options?.emotion,
           speed: options?.speed,
         });
         simliErrorCount.current = 0; // Reset on success

@@ -8,6 +8,7 @@
 
 import type { ComparisonResult } from '../types/metrics';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
+import type { FreedomEducationData } from '../types/freedomEducation';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 
@@ -120,7 +121,19 @@ export interface SavedJudgeReport {
     futureOutlook?: string;
     confidenceLevel?: string;
   };
-  freedomEducation?: any;
+  /** Stored as null when the report had none. */
+  freedomEducation?: FreedomEducationData | null;
+}
+
+/** A Judge report read back from the database: the saved shape plus its owner. */
+export type LoadedJudgeReport = SavedJudgeReport & { userId?: string };
+
+/** What a full database sync reports back. */
+interface FullSyncResult {
+  success: boolean;
+  message: string;
+  pulled: number;
+  pushed: number;
 }
 
 // ============================================================================
@@ -1427,7 +1440,7 @@ export function clearAllJudgeReports(): void {
  * Used as a fallback when localStorage has no matching report for a loaded comparison.
  * Queries the full_report JSONB column since comparison_id isn't always written.
  */
-export async function fetchJudgeReportByComparisonId(comparisonId: string): Promise<any | null> {
+export async function fetchJudgeReportByComparisonId(comparisonId: string): Promise<LoadedJudgeReport | null> {
   try {
     if (!isSupabaseConfigured()) return null;
 
@@ -1501,7 +1514,7 @@ export async function fetchJudgeReportByComparisonId(comparisonId: string): Prom
  * FIX 2026-02-14: Fetch Judge report from Supabase by city names.
  * Last-resort fallback when comparisonId doesn't match (different session).
  */
-export async function fetchJudgeReportByCities(city1: string, city2: string): Promise<any | null> {
+export async function fetchJudgeReportByCities(city1: string, city2: string): Promise<LoadedJudgeReport | null> {
   try {
     if (!isSupabaseConfigured()) return null;
 
@@ -1575,7 +1588,7 @@ export async function fetchJudgeReportByCities(city1: string, city2: string): Pr
  * FIX 2026-02-08: Fetch full Judge report from Supabase by report_id
  * Returns the complete report with all category analysis and details
  */
-export async function fetchFullJudgeReport(reportId: string): Promise<any | null> {
+export async function fetchFullJudgeReport(reportId: string): Promise<LoadedJudgeReport | null> {
   try {
     if (!isSupabaseConfigured()) {
       console.log('[savedComparisons] Supabase not configured');
@@ -2127,7 +2140,7 @@ export function importFromJSON(json: string): { success: boolean; message: strin
  * pass the check before either sets the lock. Using a Promise ensures that if a
  * sync is in progress, subsequent callers await (or skip) the same operation.
  */
-let activeSyncPromise: Promise<any> | null = null;
+let activeSyncPromise: Promise<FullSyncResult> | null = null;
 // Keep boolean for backward compat with sub-function lock checks
 let databaseSyncLock = false;
 
@@ -2318,7 +2331,7 @@ export async function syncToDatabase(): Promise<{ success: boolean; message: str
  * Called when user logs in
  * Note: Does not use mutex lock directly as it calls pullFromDatabase and syncToDatabase which have their own locks
  */
-export async function fullDatabaseSync(): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> {
+export async function fullDatabaseSync(): Promise<FullSyncResult> {
   // FIX 7.5+: Promise-based lock — if a sync is already running, return its result
   // instead of starting a second concurrent sync (which could corrupt data)
   if (activeSyncPromise) {
@@ -2330,7 +2343,7 @@ export async function fullDatabaseSync(): Promise<{ success: boolean; message: s
     return { success: false, message: 'Database not configured.', pulled: 0, pushed: 0 };
   }
 
-  const doSync = async (): Promise<{ success: boolean; message: string; pulled: number; pushed: number }> => {
+  const doSync = async (): Promise<FullSyncResult> => {
   // FIX 7.5: Acquire lock for full sync duration
   databaseSyncLock = true;
 
