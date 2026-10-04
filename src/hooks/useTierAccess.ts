@@ -15,7 +15,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getAuthHeaders, withQueryTimeout, type SupabaseQuery } from '../lib/supabase';
 import {
   ADMIN_LIMITS,
   FOUNDER_ADMIN_EMAILS,
@@ -35,26 +35,8 @@ import {
 export { TIER_LIMITS, TIER_NAMES, TIER_PRICING } from '../../api/shared/plans';
 export type { FeatureKey, TierLimits } from '../../api/shared/plans';
 
-// ============================================================================
-// TIMEOUT HELPER WITH RETRY
-// ============================================================================
-
-/**
- * Wrap a Supabase query with retry logic and timeout.
- * Uses exponential backoff on timeout/network errors.
- */
-async function withTimeout<T>(
-  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
-  ms: number = SUPABASE_TIMEOUT_MS,
-  operationName: string = 'Tier access query'
-): Promise<T> {
-  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
-  return withRetry(factory, {
-    timeoutMs: ms,
-    operationName,
-    maxRetries: 2, // 3 total attempts — aligned with supabase.ts RETRY_CONFIG
-  });
-}
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
+const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Tier access query');
 
 // ============================================================================
 // BETA TESTER CONFIGURATION

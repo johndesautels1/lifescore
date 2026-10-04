@@ -129,7 +129,7 @@ The February history, kept as it was recorded. The current state of each item is
 | Bug ID | What it is | State (4 Oct 2026) |
 |--------|-----------|--------------------|
 | B1 (timeouts) | vercel.json function time limits | NOT A BUG — the functions that need longer than the default carry `maxDuration` in vercel.json; every outbound server call now has its own limit (`tests/serverTimeouts.test.ts`). |
-| R5 (duplication) | withTimeout copy-pasted | OPEN — 11 copies (was 12). Joins the code-style clean-up on the burndown. |
+| R5 (duplication) | withTimeout copy-pasted | FIXED 4 Oct 2026 — the 11 copies are gone: `api/shared/timeout.ts` (server, and the browser's evaluator) and `withQueryTimeout` in `src/lib/supabase.ts` (the browser's Supabase queries, with retries). `tests/timeout.test.ts` keeps copies out. |
 | I1 (duplication) | CORS / fetch helpers duplicated | IMPROVED — CORS is one helper (`api/shared/cors.ts`); server fetches share `api/shared/fetchWithTimeout.ts`. Remaining copies join the code-style clean-up. |
 | A5 (anon key) | Hard-coded Supabase key fallback in src/lib/supabase.ts | FIXED — no Supabase key is written anywhere in src/ or api/; settings load from the build or the server (`src/lib/publicConfig.ts`). |
 | C1 (CORS) | Some endpoints allow any website | FIXED — one route is open to every site, `api/health.ts`, a public health check. |
@@ -190,7 +190,7 @@ The individual items behind these counts were never written into this file, and 
 
 - Launch blocker #14 (server plan checks): FIXED 3 Oct 2026.
 - GDPR (G1/G2), retention and portability (B21/B22): FIXED — the privacy policy promises keeping data for the life of the account and deleting it at once on request, which is what the code does.
-- Open and real: the code-style clean-up (11 withTimeout copies; dead Phase 2 code; the 39 `as any` are gone), and the mobile/accessibility polish folded into the look-and-feel work.
+- Open and real: the code-style clean-up (dead Phase 2 code; the 39 `as any` and the 11 withTimeout copies are gone), and the mobile/accessibility polish folded into the look-and-feel work.
 
 ---
 

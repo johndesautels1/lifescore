@@ -14,6 +14,7 @@ import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { getAuthHeaders } from '../lib/supabase';
 import { grantHeaders } from '../lib/usageGrant';
 import { blendLawLived, isScore } from '../shared/lawLived';
+import { withTimeoutOr } from '../../api/shared/timeout';
 
 // ============================================================================
 // TIMEOUT CONSTANTS
@@ -315,14 +316,6 @@ export async function runSingleEvaluatorBatched(
 
   onCategoryProgress?.(progressState);
 
-  // Helper to wrap a promise with timeout
-  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, timeoutValue: T): Promise<T> => {
-    return Promise.race([
-      promise,
-      new Promise<T>((resolve) => setTimeout(() => resolve(timeoutValue), timeoutMs))
-    ]);
-  };
-
   // Helper to evaluate a single category
   const evaluateCategory = async (category: typeof CATEGORIES[0]) => {
     const categoryId = category.id as CategoryId;
@@ -342,7 +335,7 @@ export async function runSingleEvaluatorBatched(
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
       const categoryTimeout = getClientTimeout(metrics.length);
-      result = await withTimeout(
+      result = await withTimeoutOr(
         evaluateCategoryBatch(provider, city1, city2, categoryId, metrics, scoring),
         categoryTimeout,
         { success: false, scores: [], latencyMs: categoryTimeout, error: `Timeout for ${categoryId}` }

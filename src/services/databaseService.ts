@@ -9,7 +9,7 @@
  * - User preferences
  */
 
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, withQueryTimeout, type SupabaseQuery } from '../lib/supabase';
 import type {
   Comparison,
   ComparisonInsert,
@@ -27,29 +27,8 @@ import type {
   Profile,
 } from '../types/database';
 
-// ============================================================================
-// HELPER: Timeout wrapper with retry for Supabase queries
-// ============================================================================
-
-/**
- * Wrap a Supabase query with retry logic and timeout.
- * Uses exponential backoff on timeout/network errors.
- */
-async function withTimeout<T>(
-  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
-  ms: number = SUPABASE_TIMEOUT_MS,
-  operationName: string = 'Database query'
-): Promise<T> {
-  // Accept both factory functions and raw promises for backwards compatibility.
-  // Factory functions enable true retry (re-execute query on each attempt).
-  // Raw promises still work but retries will await the same resolved/rejected result.
-  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
-  return withRetry(factory, {
-    timeoutMs: ms,
-    operationName,
-    maxRetries: 2, // 3 total attempts — aligned with supabase.ts RETRY_CONFIG
-  });
-}
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
+const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Database query');
 
 // ============================================================================
 // HELPER: Check if database is available

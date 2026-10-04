@@ -178,6 +178,24 @@ export async function withRetry<T>(
   throw lastError || new Error(`${operationName} failed`);
 }
 
+/** A Supabase query, or a function that starts it (retries re-run a function; a started query is awaited again). */
+export type SupabaseQuery<T> = (() => PromiseLike<T>) | PromiseLike<T>;
+
+/**
+ * A Supabase query with a time limit and retries: SUPABASE_TIMEOUT_MS per attempt,
+ * three attempts with backoff (withRetry). `operationName` names it in the logs.
+ * The one copy (bug audit R5): JudgeTab, useTierAccess, databaseService and
+ * savedComparisons each had their own.
+ */
+export function withQueryTimeout<T>(
+  query: SupabaseQuery<T>,
+  operationName = 'Supabase query',
+  ms: number = SUPABASE_TIMEOUT_MS
+): Promise<T> {
+  const factory = typeof query === 'function' ? query : () => query;
+  return withRetry(factory, { timeoutMs: ms, operationName, maxRetries: 2 });
+}
+
 /**
  * Execute a Supabase query with retry and return fallback on final failure.
  * Use when you want graceful degradation instead of throwing.

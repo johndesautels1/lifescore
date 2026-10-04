@@ -32,6 +32,7 @@ import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { getStripe } from '../shared/stripe.js';
 import { handleCors } from '../shared/cors.js';
 import { checkRateLimit } from '../shared/rateLimit.js';
+import { timeLimit } from '../shared/timeout.js';
 
 export const config = {
   maxDuration: 60,
@@ -54,19 +55,8 @@ class DeletionStepError extends Error {
   }
 }
 
-async function withTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      Promise.resolve(promise),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label} timed out after ${STEP_TIMEOUT_MS}ms`)), STEP_TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
+/** This file's work gives up after STEP_TIMEOUT_MS (api/shared/timeout.ts). */
+const withTimeout = timeLimit(STEP_TIMEOUT_MS);
 
 /** Step 1 — cancel every subscription that can still charge. Returns how many were cancelled. */
 async function cancelBilling(db: SupabaseClient, userId: string): Promise<number> {

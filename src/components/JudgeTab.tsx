@@ -32,32 +32,11 @@ import { CATEGORIES } from '../shared/metrics';
 import { ALL_METROS } from '../data/metros';
 import { AI_MODELS } from '../../api/shared/models';
 import { getFlagUrl } from '../utils/countryFlags';
-import { supabase, isSupabaseConfigured, withRetry, SUPABASE_TIMEOUT_MS, getAuthHeaders } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getAuthHeaders, withQueryTimeout, type SupabaseQuery } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-/**
- * Wrap a Supabase query with retry logic and timeout.
- * Uses exponential backoff on timeout/network errors.
- *
- * FIX RT1: Accept a factory function OR a PromiseLike.
- * When a PromiseLike is passed, retries still work because Supabase
- * query builders are lazy — .then() triggers a fresh HTTP request
- * each time. But for safety, callers can pass a factory instead.
- */
-async function withTimeout<T>(
-  promiseOrFactory: PromiseLike<T> | (() => PromiseLike<T>),
-  ms: number = SUPABASE_TIMEOUT_MS,
-  operationName: string = 'Judge tab query'
-): Promise<T> {
-  const factory = typeof promiseOrFactory === 'function'
-    ? promiseOrFactory
-    : () => promiseOrFactory;
-  return withRetry(factory, {
-    timeoutMs: ms,
-    operationName,
-    maxRetries: 2, // 3 total attempts — ~40s worst case with 12s timeout + backoff
-  });
-}
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
+const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Judge tab query');
 import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';

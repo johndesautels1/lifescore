@@ -16,6 +16,7 @@ import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { readRawBody } from '../shared/rawBody.js';
 import { replicateWebhookHeaders, replicateWebhookSecret, verifyReplicateWebhook } from '../shared/replicateWebhook.js';
 import { readReplicatePrediction } from '../shared/videoReplies.js';
+import { timeLimit } from '../shared/timeout.js';
 
 const TIMEOUT_MS = 45000; // 45s — required for DB + video download from Replicate CDN + upload to Supabase Storage
 
@@ -29,20 +30,8 @@ export const config = {
 
 const supabaseAdmin = serviceDb;
 
-/**
- * Wrap a Supabase query with timeout
- */
-async function withTimeout<T>(
-  promise: PromiseLike<T>,
-  timeoutMs: number = TIMEOUT_MS
-): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs)
-    ),
-  ]);
-}
+/** This file's work gives up after TIMEOUT_MS (api/shared/timeout.ts). */
+const withTimeout = timeLimit(TIMEOUT_MS);
 
 // Wav2Lip costs ~$0.0014/sec on L40S GPU, typically ~6 seconds = ~$0.005/run
 const WAV2LIP_COST_PER_RUN = 0.005;

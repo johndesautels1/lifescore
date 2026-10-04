@@ -8,9 +8,9 @@
         "src/components/ResetPasswordScreen.tsx",
         "src/lib/supabase.ts"
       ],
-      "hash": "73405ab014ab5b9f75904b104fbeee8bb6bdbee8a1b09959fc46471f3e5947e4",
+      "hash": "a8d5b9c1f959d97e28c378a113222afae39420c475f65cf0b9828e980191e68e",
       "reviewed": "2026-10-04",
-      "basis": "d131e43802c62f7f2b9ac9fa2700a9d4b001d28d"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "APP_SCHEMA_MANUAL.md#2-tables": {
       "files": [
@@ -38,9 +38,9 @@
         "api/olivia/contrast-images.ts",
         "api/user/delete.ts"
       ],
-      "hash": "ae61302c08818354451b8fe8a237b9ae9fe278836fa841ca5014087884c11a58",
+      "hash": "3b2f0be2bf1ecce6b3013a5042a78cca391fcc967dc287e79adc0dc65383bff6",
       "reviewed": "2026-10-04",
-      "basis": "853e305a90ed83bbc505430b4666efaaf11586b6"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "APP_SCHEMA_MANUAL.md#5-database-functions": {
       "files": [
@@ -58,9 +58,9 @@
         "src/components/SettingsModal.tsx",
         "src/components/CookieConsent.tsx"
       ],
-      "hash": "a6ba2296588ba33e6f83dc73174ec2b5d03258ebd4b1233d3aabdd2feba643be",
+      "hash": "19b237dbaa304e4e7687b618afca7fbe7f92191cbb0b702a37c67e2cba0d47a5",
       "reviewed": "2026-10-04",
-      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "APP_SCHEMA_MANUAL.md#7-deleting-an-account-and-exporting-data": {
       "files": [
@@ -68,9 +68,9 @@
         "api/user/export.ts",
         "supabase/migrations/20261003_account_deletion_foreign_keys.sql"
       ],
-      "hash": "55e3d7e47255bd69abc6cf8c28848a6a12bb8a5ce924bde611c2f8d35837518c",
+      "hash": "a6e1fc9c737b7d809efa22f26ad5530b129564123d3881c650e80995ec0b1c8c",
       "reviewed": "2026-10-04",
-      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "APP_SCHEMA_MANUAL.md#8-changing-the-database": {
       "files": [
@@ -132,9 +132,9 @@
         "api/user/delete.ts",
         "src/legal/legalContent.ts"
       ],
-      "hash": "d9839ee170a6793db8e5318ee290063848f461aa3d9ff776d5398e3a15a16c4f",
+      "hash": "38e59c693f03f504c9a3796dd31f4ca5592f60a6b98e07c1e3e784931d602d35",
       "reviewed": "2026-10-04",
-      "basis": "dd0de1f3953f02bcf988a858dfb3a082b0dfea94"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "CUSTOMER_SERVICE_MANUAL.md#6-billing-and-refunds": {
       "files": [
@@ -228,9 +228,9 @@
         "src/services/opusJudge.ts",
         "api/shared/scoringThresholds.ts"
       ],
-      "hash": "22496a29e0d595565ccc96c92721e5b95b7403bce207b25d279a0e245699cf48",
+      "hash": "069a14c0f257b9ea3526f8d84ef94b6f3297f11c841635607be110f994b8e334",
       "reviewed": "2026-10-04",
-      "basis": "736c87553ab17525b25d4904457cb6601ec7a6e7"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "JUDGE_EQUATIONS_MANUAL.md#6-the-judge-s-verdict": {
       "files": [
@@ -291,9 +291,9 @@
         "api/user/delete.ts",
         "src/components/LegalModal.tsx"
       ],
-      "hash": "c4db04bf53337e5d77c6315540333ad7ebc2a2271b9c8711be8a341583f3c114",
+      "hash": "32f88eb4ff76aca95496df1c77eeffe7411b3c487d334e4396b4665feeaab057",
       "reviewed": "2026-10-04",
-      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "LEGAL_COMPLIANCE_MANUAL.md#5-consent-and-cookies": {
       "files": [
@@ -309,9 +309,9 @@
         "src/legal/legalContent.ts",
         "api/user/delete.ts"
       ],
-      "hash": "fa55fd848f7454305e66d79317bc0a9ce75b07eb5cb4cf95c9746dda86e4c27c",
+      "hash": "0498cae875f37e8a9d3a8edd32e495cfaffff15908df862555d769b5a78b5ef3",
       "reviewed": "2026-10-04",
-      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "LEGAL_COMPLIANCE_MANUAL.md#7-age": {
       "files": [
@@ -440,9 +440,9 @@
         "api/usage/consume.ts",
         "src/hooks/useTierAccess.ts"
       ],
-      "hash": "0d6da73a43e6c344aa06cb80abb70c3fcdef40278a2b9a4880f351d2ff766dd8",
+      "hash": "ca816175c352e104dd07b531d73db65ae31ce10b53b2538dd0478aeef27a5e9f",
       "reviewed": "2026-10-04",
-      "basis": "21b211a0e70061909bdc901fffb0ec8da00cd562"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#5-ai-models-and-how-comparisons-run": {
       "files": [
@@ -489,9 +489,9 @@
         "api/movie/generate.ts",
         "api/shared/persistVideo.ts"
       ],
-      "hash": "24ce86e60a04a21817f8956de93fb130b49f79f85e745d3a5aa9c56b623ee473",
+      "hash": "53bd47cb0582c3cd8463fee1d00b2262e7c00d117bffd32ed54576dbb9f9b6e6",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#9-database": {
       "files": [
@@ -517,9 +517,9 @@
         "api/user/export.ts",
         "api/user/delete.ts"
       ],
-      "hash": "c184193a14f6b784d1098639073dab7efdd0cd05b5957e3dda8529e3f41e7053",
+      "hash": "4fa0740a2f16155bf8e0f6a82176e8f598cc83f95c4a086b2bd830423317efd8",
       "reviewed": "2026-10-04",
-      "basis": "dd0de1f3953f02bcf988a858dfb3a082b0dfea94"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "USER_MANUAL.md#11-plans": {
       "files": [
@@ -651,18 +651,18 @@
         "src/components/GoToMyNewCity.tsx",
         "src/components/MovieGenerator.tsx"
       ],
-      "hash": "0cceab9a7134f119e38bc68c9edfc735e22bb44326af79282f3dcf401f005b11",
+      "hash": "3da97bc39b10398fa77ef5b96fbb6ce8c5c0f4e88c981dddf8aaa220956e25b6",
       "reviewed": "2026-10-04",
-      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "USER_MANUAL.md#6-the-judge-s-report": {
       "files": [
         "src/components/JudgeTab.tsx",
         "api/shared/entitlements.ts"
       ],
-      "hash": "9b3b712305c7dedbc827215a3a2e4b38abe0224fe29cebc56323e0fe96b28729",
+      "hash": "5b9318504b528a665c5918dcfba689def0c6f792bae1da75d448ff84f88dea0f",
       "reviewed": "2026-10-04",
-      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
+      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
     },
     "USER_MANUAL.md#7-visuals": {
       "files": [

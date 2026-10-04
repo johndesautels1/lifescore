@@ -16,6 +16,7 @@ import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { readReplicatePrediction } from '../shared/videoReplies.js';
 import { describeHeyGenFailure, videoState } from '../shared/heygen/heygenVideo.js';
+import { timeLimit } from '../shared/timeout.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 const TIMEOUT_MS = 45000; // 45s — required for DB + Replicate status check + video download/re-upload to Storage
@@ -50,20 +51,8 @@ async function fetchWithTimeout(
   }
 }
 
-/**
- * Wrap a Supabase query with timeout
- */
-async function withTimeout<T>(
-  promise: PromiseLike<T>,
-  timeoutMs: number = TIMEOUT_MS
-): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs)
-    ),
-  ]);
-}
+/** This file's work gives up after TIMEOUT_MS (api/shared/timeout.ts). */
+const withTimeout = timeLimit(TIMEOUT_MS);
 
 export default async function handler(
   req: VercelRequest,

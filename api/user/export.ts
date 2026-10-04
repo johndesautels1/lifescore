@@ -19,6 +19,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { checkRateLimit } from '../shared/rateLimit.js';
+import { timeLimit } from '../shared/timeout.js';
 
 export const config = {
   maxDuration: 60, // May take time to gather all data
@@ -61,17 +62,8 @@ interface ConversationExport {
   messages: Array<{ role: string; content: string; createdAt: string }>;
 }
 
-function withTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`${label} timed out after ${QUERY_TIMEOUT_MS}ms`)), QUERY_TIMEOUT_MS);
-    }),
-  ]).finally(() => {
-    if (timer) clearTimeout(timer);
-  });
-}
+/** This file's work gives up after QUERY_TIMEOUT_MS (api/shared/timeout.ts). */
+const withTimeout = timeLimit(QUERY_TIMEOUT_MS);
 
 function withoutHidden(row: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};

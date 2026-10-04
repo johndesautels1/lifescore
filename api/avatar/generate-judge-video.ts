@@ -21,6 +21,7 @@ import { describeHeyGenFailure, submitVideo, videoConfigured } from '../shared/h
 import { readReplicatePrediction } from '../shared/videoReplies.js';
 import crypto from 'crypto';
 import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { withTimeoutOr } from '../shared/timeout.js';
 
 /** Time limit for Replicate accepting a judge-video prediction. */
 const REPLICATE_CREATE_TIMEOUT_MS = 30_000;
@@ -229,19 +230,11 @@ export default async function handler(
   const comparisonId = body.comparisonId || generateComparisonId(body.city1, body.city2, body.winner);
 
   try {
-    // Helper for DB operations with timeout
-    const withTimeout = async <T>(promise: PromiseLike<T>, ms: number, fallback: T): Promise<T> => {
-      return Promise.race([
-        promise,
-        new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
-      ]);
-    };
-
     const DB_TIMEOUT_MS = 15000; // 15s — pure DB queries (cache lookup, processing check), no file transfers
 
     // Check cache first (with timeout - don't let DB issues block video generation)
     // Using maybeSingle() instead of single() to avoid error when no rows exist
-    const cacheResult = await withTimeout<RowLookup>(
+    const cacheResult = await withTimeoutOr<RowLookup>(
       supabaseAdmin
         .from('avatar_videos')
         .select('*')
@@ -303,7 +296,7 @@ export default async function handler(
 
     // Check if already processing (with timeout)
     // Using maybeSingle() - returns null if no processing job exists
-    const processingResult = await withTimeout<RowLookup>(
+    const processingResult = await withTimeoutOr<RowLookup>(
       supabaseAdmin
         .from('avatar_videos')
         .select('*')

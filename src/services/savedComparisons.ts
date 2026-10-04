@@ -11,24 +11,10 @@ import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { FreedomEducationData } from '../types/freedomEducation';
 import { clearGitHubConfig, getGitHubConfig, saveGitHubConfig, storedGistId, type GitHubConfig } from './githubToken';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
-import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getCurrentUser, withQueryTimeout, type SupabaseQuery } from '../lib/supabase';
 
-/**
- * Wrap a Supabase query with retry logic and timeout.
- * Uses exponential backoff on timeout/network errors.
- */
-async function withTimeout<T>(
-  queryFn: (() => PromiseLike<T>) | PromiseLike<T>,
-  ms: number = SUPABASE_TIMEOUT_MS,
-  operationName: string = 'Saved comparisons query'
-): Promise<T> {
-  const factory = typeof queryFn === 'function' ? queryFn : () => queryFn;
-  return withRetry(factory, {
-    timeoutMs: ms,
-    operationName,
-    maxRetries: 2, // 3 total attempts — aligned with supabase.ts RETRY_CONFIG
-  });
-}
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
+const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Saved comparisons query');
 import {
   saveComparison as dbSaveComparison,
   getUserComparisons as dbGetUserComparisons,
