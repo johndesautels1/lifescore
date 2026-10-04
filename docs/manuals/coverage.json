@@ -154,6 +154,86 @@
       "reviewed": "2026-10-04",
       "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
     },
+    "LEGAL_COMPLIANCE_MANUAL.md#1-who-we-are": {
+      "files": [
+        "src/legal/legalFacts.ts"
+      ],
+      "hash": "d4e8cdab460d0385820b7793cb9efa4ad0fa5cbe60299e1b5ef4a64c460fed48",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#10-who-can-read-the-internal-manuals": {
+      "files": [
+        "api/emilia/manuals.ts",
+        "api/shared/auth.ts"
+      ],
+      "hash": "0685e6517092a49c64b346a93e5335bcf28ec73b7fd4c71b63ba44a4e0740ee4",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#2-the-legal-pages-and-where-users-find-them": {
+      "files": [
+        "src/legal/legalContent.ts",
+        "src/components/Footer.tsx",
+        "src/components/LegalModal.tsx"
+      ],
+      "hash": "5021fde9f7abec9c7c1c80ffe460fff901c4408b9aec54f2753a354f29b4a0f6",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#3-suppliers-sub-processors": {
+      "files": [
+        "src/legal/subProcessors.ts"
+      ],
+      "hash": "452bb7d45732fac39e29f92c51dd1bf19ff2a1daf5d67b2bd29442c1b4a6d87a",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#4-people-s-rights-and-where-they-use-them": {
+      "files": [
+        "src/components/SettingsModal.tsx",
+        "api/user/export.ts",
+        "api/user/delete.ts",
+        "src/components/LegalModal.tsx"
+      ],
+      "hash": "c4db04bf53337e5d77c6315540333ad7ebc2a2271b9c8711be8a341583f3c114",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#5-consent-and-cookies": {
+      "files": [
+        "src/components/CookieConsent.tsx",
+        "api/consent/log.ts"
+      ],
+      "hash": "9c1c00f0190689f5fe8a727c9baf2ac733ff52cba4e7fec27852fdeb8fb9380e",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#6-how-long-data-is-kept": {
+      "files": [
+        "src/legal/legalContent.ts",
+        "api/user/delete.ts"
+      ],
+      "hash": "fa55fd848f7454305e66d79317bc0a9ce75b07eb5cb4cf95c9746dda86e4c27c",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#7-age": {
+      "files": [
+        "src/legal/legalFacts.ts"
+      ],
+      "hash": "d4e8cdab460d0385820b7793cb9efa4ad0fa5cbe60299e1b5ef4a64c460fed48",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
+    "LEGAL_COMPLIANCE_MANUAL.md#9-trademarks-and-intellectual-property": {
+      "files": [
+        "src/components/Footer.tsx"
+      ],
+      "hash": "041485c224cda0b65020ea5bb196a12a2d46ab8c015099957b0bb5161294ba30",
+      "reviewed": "2026-10-04",
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
+    },
     "TECHNICAL_SUPPORT_MANUAL.md#1-architecture": {
       "files": [
         "vercel.json",
@@ -209,9 +289,9 @@
         "scripts/manuals-autoupdate.ts",
         "tests/manuals.test.ts"
       ],
-      "hash": "1fe025e49c7d24b9deff55f96bed184dbc371c4f9a17161e3d0cd5b5690dbb67",
+      "hash": "fe19946960643130691ca3deeeca1dbc684c5f46ae16ef573bae6c31b50bdf8f",
       "reviewed": "2026-10-04",
-      "basis": "98e9ff69ddf7c188d3f10f80e132ed71f6ac901f"
+      "basis": "dae49282759a448aae0ec60c2d6225354b96e56b"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#15-admin-tools": {
       "files": [

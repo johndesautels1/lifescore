@@ -309,6 +309,53 @@ function factBrowserStorage(root: string): string {
   return table(['Key', 'Code that uses it'], rows);
 }
 
+/** A quoted string's value as written in source ('…' or "…", with \' or \" inside). */
+function unquote(literal: string): string {
+  return literal.slice(1, -1).replace(/\\(['"\\])/g, '$1');
+}
+
+const STRING = String.raw`('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")`;
+
+/** Who we are, as every legal page states it (src/legal/legalFacts.ts). */
+function factLegal(root: string): string {
+  const text = read(root, 'src/legal/legalFacts.ts') ?? '';
+  const body = text.match(/LEGAL_FACTS\s*=\s*\{([\s\S]*?)\}\s*as const/)?.[1] ?? '';
+  const rows = [...body.matchAll(new RegExp(String.raw`^\s*([a-zA-Z]+):\s*${STRING}`, 'gm'))].map((m) => [code(m[1]), unquote(m[2])]);
+  const effective = text.match(new RegExp(String.raw`LEGAL_EFFECTIVE\s*=\s*${STRING}`))?.[1];
+  if (effective) rows.push([code('LEGAL_EFFECTIVE'), unquote(effective)]);
+  return `${table(['Fact', 'Value'], rows)}\n\nFrom ${code('src/legal/legalFacts.ts')}; every legal page fills its {holes} from these.`;
+}
+
+/** The legal pages and their sections (src/legal/legalContent.ts). */
+function factLegalPages(root: string): string {
+  const text = read(root, 'src/legal/legalContent.ts') ?? '';
+  const rows: string[][] = [];
+  const pages = [...text.matchAll(new RegExp(String.raw`^  '?([a-z-]+)'?:\s*\{\s*\n\s*title:\s*${STRING}`, 'gm'))];
+  pages.forEach((page, i) => {
+    const end = i + 1 < pages.length ? pages[i + 1].index : text.length;
+    const headings = [...text.slice(page.index, end).matchAll(new RegExp(String.raw`heading:\s*${STRING}`, 'g'))].map((h) => unquote(h[1]));
+    rows.push([code(page[1]), unquote(page[2]), headings.join(' · ')]);
+  });
+  return `${table(['Page', 'Title', 'Sections'], rows)}\n\nFrom ${code('src/legal/legalContent.ts')}. ${code('docs/legal/')} holds the same words (${code('node scripts/build-legal-docs.mjs')}).`;
+}
+
+/** The supplier register (src/legal/subProcessors.ts). */
+function factSubProcessors(root: string): string {
+  const text = read(root, 'src/legal/subProcessors.ts') ?? '';
+  const field = (block: string, name: string) => {
+    const m = block.match(new RegExp(String.raw`${name}:\s*${STRING}`));
+    return m ? unquote(m[1]) : '';
+  };
+  const rows = [...text.matchAll(/\{\s*\n\s*name:[\s\S]*?\n\s*\}/g)].map((m) => [
+    field(m[0], 'name'),
+    field(m[0], 'role'),
+    field(m[0], 'data'),
+    field(m[0], 'jurisdiction'),
+  ]).filter(([name]) => name !== ''); // the interface's own `{ name: string … }` is not a supplier
+  const updated = text.match(new RegExp(String.raw`LAST_UPDATED\s*=\s*${STRING}`))?.[1];
+  return `${table(['Supplier', 'What for', 'What it receives', 'Where'], rows)}\n\nFrom ${code('src/legal/subProcessors.ts')}${updated ? `, last updated ${unquote(updated)}` : ''}.`;
+}
+
 /**
  * Row-level security policies the migrations leave on public tables:
  * table -> policy name -> command (ALL when the policy names none).
@@ -427,6 +474,9 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   dbfunctions: factDbFunctions,
   policies: factPolicies,
   browserstorage: factBrowserStorage,
+  legal: factLegal,
+  legalpages: factLegalPages,
+  subprocessors: factSubProcessors,
   jobs: factJobs,
   functions: factFunctions,
   components: (root) => factModules(root, 'src/components', /\.tsx$/),

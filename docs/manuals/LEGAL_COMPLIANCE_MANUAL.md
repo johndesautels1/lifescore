@@ -1,585 +1,164 @@
-# LIFE SCORE - Legal Compliance Manual
+# LIFE SCORE Legal Compliance Manual
 
-**Document Version:** 1.5
-**Last Updated:** February 28, 2026
-**Classification:** INTERNAL - Admin Access Only
+**Last Reviewed:** 4 October 2026
+**Document ID:** LS-LCM-001
+**For:** administrators (restricted in the admin panel; internal — do not share outside the company)
 
----
+How LIFE SCORE meets its legal duties: who the company is, the legal pages and where users find them, the suppliers, people's rights and where they exercise them, consent, retention, breaches, trademarks, and the company's own records. The company facts, the legal pages and the supplier register are written into this manual from the code each time it is opened. Each written section names the code it explains and is brought up to date automatically when that code changes (Technical Support Manual, section 14).
 
-## Company Information
-
-### Registered Entity
-
-**Company Name:** Clues Intelligence LTD
-**Company Number:** 16966151
-**Registered Address:**
-167-169 Great Portland Street
-5th Floor
-London W1W 5PF
-United Kingdom
-
-**Company Type:** UK Limited Company
-**D-U-N-S Number:** 234489716
-**Admin Contact:** cluesnomads@gmail.com
+The company's internal policies live in `docs/legal/`; several are held to the code by tests (section 11).
 
 ---
 
-## Section 1: Regulatory Registration Status
+## 1. Who we are
+<!-- covers: src/legal/legalFacts.ts -->
 
-### 1.1 ICO Registration (UK)
+<!-- facts:legal -->
+<!-- /facts:legal -->
 
-| Item | Status | Details |
-|------|--------|---------|
-| **Registration Required** | YES | UK-based company processing personal data |
-| **Registration URL** | https://ico.org.uk/for-organisations/register/ |
-| **Annual Fee** | ~£40-60 | Depends on organization size |
-| **Application Number** | **C1885368** | Submitted 2026-02-28 |
-| **Security Number** | **CSN7726118** | Quote this + reference number when contacting ICO |
-| **ICO Helpline** | 0303 123 1113 | Quote security number when calling |
-| **Registration Status** | REGISTERED | Confirmed 2026-02-28 |
+Every legal page and every customer-facing contact uses these facts; `src/shared/companyContact.ts` builds the footer's contact details from them.
 
-**Action Required:**
-1. ~~Go to ico.org.uk~~ DONE
-2. ~~Complete Data Protection Fee registration~~ DONE — Application C1885368
-3. ~~Receive security number~~ DONE — CSN7726118
-4. Pay annual fee (upon invoice)
-5. Display registration number in Privacy Policy (once issued)
+**Company records** (not held in the code; the master is `docs/legal/COMPLIANCE_README.md`):
 
-### 1.2 EU Representative
-
-| Item | Status | Details |
-|------|--------|---------|
-| **Required** | NO | UK company post-Brexit - EU Rep not required |
-| **Notes** | N/A | If serving EU customers directly, revisit this |
-
-### 1.3 DUNS Number
-
-| Item | Status | Details |
-|------|--------|---------|
-| **D-U-N-S Number** | **234489716** | Registered with Dun & Bradstreet |
-| **Status** | OBTAINED | Active |
-| **Use Cases** | Enterprise B2B, business credit, vendor verification | Not required for consumer SaaS but good to have |
+| Record | Value |
+|---|---|
+| Company type | UK private limited company, registered in England and Wales |
+| ICO (UK data protection fee) | Application C1885368, security number CSN7726118 — registered 28 Feb 2026 (checklist D1). Quote both when contacting the ICO (0303 123 1113). The fee is paid on the ICO's invoice each year |
+| D-U-N-S number | 234489716 (Dun & Bradstreet; checklist D3) |
+| Data Protection Officer | Not required (no large-scale monitoring or sensitive data); the Privacy Officer above handles privacy |
+| Admin contact (internal) | cluesnomads@gmail.com — never on a customer-facing page |
 
 ---
 
-## Section 2: GDPR Compliance
+## 2. The legal pages and where users find them
+<!-- covers: src/legal/legalContent.ts, src/components/Footer.tsx, src/components/LegalModal.tsx -->
 
-### 2.1 Data We Collect
+<!-- facts:legalpages -->
+<!-- /facts:legalpages -->
 
-| Data Type | Purpose | Legal Basis | Retention |
-|-----------|---------|-------------|-----------|
-| Email address | Account creation, authentication | Contract performance | Until account deletion |
-| Name | Personalization | Contract performance | Until account deletion |
-| Password (hashed) | Authentication | Contract performance | Until account deletion |
-| City comparisons | Service delivery | Contract performance | Until account deletion |
-| Olivia conversations | AI advisor chat history | Contract performance | Until account deletion |
-| Emilia help chat | Help assistant sessions | Contract performance | Session-based (browser only) |
-| Freedom Video Clips | Judge verdict videos (Supabase Storage) | Contract performance | Until account deletion |
-| App prompts | System prompt references (admin-editable) | Legitimate interest | Permanent |
-| Payment info | Billing (via Stripe) | Contract performance | Per Stripe retention |
-| IP address | Security, rate limiting | Legitimate interest | 90 days |
-| Usage analytics | Service improvement | Legitimate interest | Anonymized after 30 days |
-
-### 2.2 Data Subject Rights
-
-We must honor these GDPR rights:
-
-| Right | Implementation | Endpoint |
-|-------|----------------|----------|
-| **Right to Access** | User can export all data | `/api/user/export` |
-| **Right to Deletion** | User can delete account (timeout safety net) | `/api/user/delete` |
-| **Right to Rectification** | User can update profile | Settings page |
-| **Right to Portability** | JSON export available | `/api/user/export` |
-| **Right to Object** | Can opt out of analytics | Cookie settings |
-
-**GDPR Delete Endpoint — Timeout Safety Net (2026-02-14):**
-The `/api/user/delete` GDPR Right to Erasure endpoint now includes a timeout safety net to prevent hanging requests. This ensures the deletion process completes within Vercel serverless function limits (default 10s for Hobby, 60s for Pro). If any individual deletion step (profiles, comparisons, conversations, videos, reports, storage) exceeds the timeout, the request still returns a partial-success response rather than hanging indefinitely.
-
-### 2.3 Data Processing Agreements (DPAs)
-
-| Vendor | Service | DPA Status | Notes |
-|--------|---------|------------|-------|
-| Supabase | Database, Auth | SIGNED | Included in Terms |
-| Stripe | Payments | SIGNED | Stripe DPA auto-accepted |
-| OpenAI | GPT-4o Evaluation | SIGNED | Via API Terms |
-| Anthropic | Claude Evaluation | SIGNED | Via API Terms |
-| Google | Gemini Evaluation | PENDING | Email required |
-| xAI (Grok) | Grok Evaluation | PENDING | Email required |
-| Perplexity | LLM Evaluation | PENDING | Email required |
-| D-ID | Video Avatar | PENDING | Email required |
-| HeyGen | Gamma Report Video Presenter | PENDING | Email required |
-| Tavily | Web Search | PENDING | Email required |
-| ElevenLabs | Text-to-Speech | SIGNED | Via Terms |
-| Gamma | Report Generation | PENDING | Email required |
-| InVideo | Moving Movie Generation (10-min cinematic via MCP) | PENDING | Email required |
-| fal.ai (Kling 3) | Video Generation | PENDING | Email required |
-| Replicate | Video Generation (Minimax fallback) | PENDING | Email required |
-| Simli | Avatar Video (WebRTC) | PENDING | Email required |
-| Resend | Email Notifications | SIGNED | Via Terms |
-| Vercel | Hosting | SIGNED | Via Terms |
-
-**DPA Request Email Template:**
-```
-Subject: Data Processing Agreement Request - Clues Intelligence LTD
-
-Dear [Vendor] Legal/Privacy Team,
-
-We are Clues Intelligence LTD, a UK-registered company using [Service Name]
-for our LIFE SCORE application.
-
-We process personal data of EU/UK residents and require a Data Processing
-Agreement (DPA) compliant with UK GDPR and EU GDPR.
-
-Please provide:
-1. Your standard DPA, or
-2. Confirmation that DPA terms are included in your Terms of Service
-
-Our Details:
-- Company: Clues Intelligence LTD
-- Address: 167-169 Great Portland Street, 5th Floor, London W1W 5PF
-- Contact: cluesnomads@gmail.com
-- Use Case: [Brief description of how we use the service]
-
-Thank you for your assistance.
-
-Best regards,
-Clues Intelligence LTD
-```
+- **One source** — the pages' words live in `src/legal/legalContent.ts`, filled from the company facts (section 1). The pop-up draws them, and `docs/legal/*.md` holds the same words, regenerated by `node scripts/build-legal-docs.mjs`; `tests/legalContent.test.ts` fails when the two differ.
+- **The doors** — the site footer links every page (Privacy, Terms, Cookies, Acceptable Use, Refunds, Do Not Sell or Share My Personal Information, US State Privacy Rights) and has **Cookie Settings**. Each opens the legal pop-up (`LegalModal`).
+- **The effective date** on every page is `LEGAL_EFFECTIVE` (section 1). Change it when the words change materially; the Terms promise an email at least 30 days before a material change to them applies.
+- **Trademark notice** — the footer states that CLUES™, SMART™ and LIFE SCORE™ are trademarks of the company, with its company number (section 9).
 
 ---
 
-## Section 3: US State Compliance
+## 3. Suppliers (sub-processors)
+<!-- covers: src/legal/subProcessors.ts -->
 
-### 3.1 Applicability Thresholds
+<!-- facts:subprocessors -->
+<!-- /facts:subprocessors -->
 
-These laws only apply when you exceed thresholds:
-
-| State | Law | Revenue Threshold | Consumer Threshold | Status |
-|-------|-----|-------------------|-------------------|--------|
-| California | CCPA/CPRA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
-| Virginia | VCDPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
-| Colorado | CPA | N/A | 100K+ consumers | **IMPLEMENTED** |
-| Connecticut | CTDPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
-| Utah | UCPA | $25M+ | 100K+ consumers | **IMPLEMENTED** |
-
-**Current Status:** All 5 state privacy laws proactively implemented (2026-02-28). No registration fees — these are compliance-only laws.
-**Review Trigger:** Monitor for new state privacy laws annually
-
-### 3.2 CCPA/CPRA Implementation (Completed 2026-02-28)
-
-| Requirement | Implementation | Status |
-|-------------|---------------|--------|
-| "Do Not Sell or Share" link | Footer link → LegalModal 'do-not-sell' page | DONE |
-| Opt-out mechanism | One-click button with localStorage + consent_logs audit trail | DONE |
-| Categories of PI disclosure | Table in Do Not Sell page listing all PI categories | DONE |
-| Right to Know | Account Settings > Download My Data (/api/user/export) | DONE |
-| Right to Delete | Account Settings > Delete Account (/api/user/delete) | DONE |
-| Right to Correct | Account Settings > Edit Profile | DONE |
-| Non-discrimination clause | Stated in Do Not Sell page | DONE |
-| Authorized agent provision | Documented in Do Not Sell page | DONE |
-| 45-day response commitment | Documented in Privacy Policy + Do Not Sell page | DONE |
-| Privacy Policy CCPA disclosures | Updated with full CCPA/CPRA rights table + PI categories | DONE |
-
-**Technical Components:**
-- `src/components/LegalModal.tsx` — DoNotSellContent component with opt-out UI
-- `src/components/Footer.tsx` — "Do Not Sell or Share My Personal Information" link
-- `api/consent/log.ts` — Accepts `ccpa_dns` consent type
-- `supabase/migrations/20260228_ccpa_dns_optout.sql` — Column + index + reporting view
-- **Logged-in users:** Persisted to `user_preferences.ccpa_dns_optout` (Supabase) — survives device/browser changes
-- **Anonymous users:** localStorage key `clues_ccpa_dns_optout` as fallback
-- All actions logged to `consent_logs` audit trail (consent type: `ccpa_dns`)
-- Database view: `ccpa_dns_optouts` — for compliance reporting
-- Export helper: `getCcpaDnsOptOut()` for non-React contexts; React components use `useAuth().preferences?.ccpa_dns_optout`
-
-### 3.3 Virginia, Colorado, Connecticut & Utah Implementation (Completed 2026-02-28)
-
-All four state privacy laws were implemented simultaneously. These laws do **not** require registration or fees — they are compliance-only laws that require proper disclosures and consumer rights mechanisms.
-
-| Requirement | Implementation | Status |
-|-------------|---------------|--------|
-| Privacy Policy disclosures | Full state-specific sections in Privacy Policy (Sections 8.3–8.6) | DONE |
-| Consumer rights (access, delete, correct) | Already implemented via GDPR/CCPA features | DONE |
-| Opt-out mechanism | Shared "Do Not Sell" button (same as CCPA) | DONE |
-| Appeal process | Email-based appeal for VA, CO, CT (documented in each section) | DONE |
-| Universal opt-out (Colorado) | GPC signal recognition documented | DONE |
-| "US State Privacy Rights" page | New `state-privacy` page in LegalModal | DONE |
-| Footer link | "US State Privacy Rights" link added to footer | DONE |
-
-**Technical Components:**
-- `src/components/LegalModal.tsx` — New `StatePrivacyContent` component + `state-privacy` page type
-- `src/components/Footer.tsx` — "US State Privacy Rights" link added alongside existing legal links
-- `docs/legal/PRIVACY_POLICY.md` — Sections 8.3 (Virginia), 8.4 (Colorado), 8.5 (Connecticut), 8.6 (Utah), 8.7 (Other States)
-- Existing CCPA opt-out mechanism (`Do Not Sell` button, consent logging) covers all state opt-out requirements
-
-**Key Differences Between States:**
-
-| Feature | VA (VCDPA) | CO (CPA) | CT (CTDPA) | UT (UCPA) |
-|---------|------------|----------|------------|-----------|
-| Right to Correct | Yes | Yes | Yes | No |
-| Appeal Process | Required (60 days) | Required (AG referral) | Required (60 days, AG referral) | Not required |
-| Universal Opt-Out | Not required | **Required (GPC)** | Not required | Not required |
-| Cure Period | 30 days (until 2025) | None | 60 days (until 2025) | 30 days |
-| Non-Discrimination | Yes | Yes | Yes | Not explicit |
+- **The register** is `src/legal/subProcessors.ts`; the Privacy Policy draws it. `tests/legalContent.test.ts` fails the build when the code calls a supplier the register does not name.
+- **Adding a supplier** — add it to the register (what it is for, what it receives, where), bump `LAST_UPDATED`, request its data processing agreement, and add a row to `docs/legal/DPA_TRACKER.md` (`tests/complianceDocs.test.ts` requires one per supplier). A new supplier, a new kind of data or a new country is a material change to the Privacy Policy.
+- **Agreements** — `docs/legal/DPA_TRACKER.md` records each supplier's agreement and its status; signed copies are in `docs/legal/dpas/`. Request templates are in `docs/legal/COMPLIANCE_README.md`.
 
 ---
 
-## Section 4: Data Protection Officer (DPO)
+## 4. People's rights, and where they use them
+<!-- covers: src/components/SettingsModal.tsx, api/user/export.ts, api/user/delete.ts, src/components/LegalModal.tsx -->
 
-### 4.1 DPO Requirement
+| Right | Where | What happens |
+|---|---|---|
+| Access, portability | Settings → Data → **Download My Data** | `api/user/export.ts` returns every table holding the user's rows as one JSON file |
+| Correction | Settings → Profile (name); email address by writing to the contact | — |
+| Deletion | Settings → Data → **Delete My Account** (type DELETE MY ACCOUNT) | `api/user/delete.ts` cancels any Stripe subscription first (nothing is deleted if Stripe cannot be reached), removes the user's files, then the account; every table holding the user's data goes with it |
+| Opt out of sale or sharing | Footer → **Do Not Sell or Share My Personal Information** → opt-out button | Nothing is sold or shared; the choice is still recorded in the browser (`clues_ccpa_dns_optout`), in the account (`user_preferences.ccpa_dns_optout`) when signed in, and in `consent_logs` (type `ccpa_dns`) |
+| Restriction, objection, withdrawing consent | Write to the contact | Handled by hand |
 
-| Criteria | Our Status | DPO Required? |
-|----------|------------|---------------|
-| Public authority | NO | No |
-| Large-scale systematic monitoring | NO | No |
-| Large-scale sensitive data processing | NO | No |
-
-**Conclusion:** Formal DPO appointment NOT required for LIFE SCORE
-
-### 4.2 Privacy Contact
-
-Even without formal DPO, designate a privacy contact:
-
-**Privacy Contact:** cluesnomads@gmail.com
-**Responsibilities:**
-- Handle data subject requests
-- Respond to privacy inquiries
-- Coordinate with legal if needed
+- **Response times** promised on the pages: one month (Privacy Policy, everyone); 45 days (the US state pages). Verify that a request by email comes from the account's address before acting.
+- **US states** — California, Virginia, Colorado, Connecticut and Utah rights are on the US State Privacy Rights page, with appeals answered in writing within 60 days. Global Privacy Control is treated as a request not to sell or share, which is already how the service works for everyone.
+- **The Do Not Sell audit list** — the `ccpa_dns_optouts` view lists every opt-out and opt-in from `consent_logs` (admin use; Application Schema Manual, section 3).
 
 ---
 
-## Section 5: Cookie Compliance
+## 5. Consent and cookies
+<!-- covers: src/components/CookieConsent.tsx, api/consent/log.ts -->
 
-### 5.1 Cookies We Use
-
-| Cookie | Type | Purpose | Consent Required? |
-|--------|------|---------|-------------------|
-| Session | Strictly Necessary | Authentication | No |
-| Preferences | Functional | Theme, settings | No |
-| Analytics | Performance | Usage tracking | Yes |
-
-### 5.2 Cookie Banner
-
-**Implementation Status:** Active
-**Location:** `src/components/CookieConsent.tsx`
-
-Required elements:
-- Clear description of cookie types
-- Accept/Reject buttons
-- Link to Cookie Policy
-- Granular consent options
+- **The banner** (`CookieConsent.tsx`) appears until the visitor chooses. Essential storage (sign-in) is always on; functional is on by default; analytics and marketing are off by default. The visitor can accept all, reject everything non-essential, or choose in **Cookie Settings** (also in the footer).
+- **The choice** is kept in the browser (`clues_cookie_consent`, with an anonymous id `clues_anonymous_id`) and logged through `/api/consent/log` to `consent_logs` (types `cookies`, `marketing`, `analytics`, `terms`, `privacy`, `ccpa_dns`). Consent records are kept as proof; when an account is deleted they stay without the link to it.
+- **What the service does not do** — no advertising, no third-party analytics and no cross-site tracking (the Cookie Policy). The analytics and marketing switches record a preference; nothing reads them today.
 
 ---
 
-## Section 6: Data Breach Response
+## 6. How long data is kept
+<!-- covers: src/legal/legalContent.ts, api/user/delete.ts -->
 
-### 6.1 Response Timeline
+The Privacy Policy's "How long we keep it" section is the promise; `docs/legal/DATA_RETENTION_POLICY.md` gives a line per table and is held to the code by `tests/complianceDocs.test.ts` (every table holding a user has a line; no purge is claimed unless a timed job does it).
 
-| Action | Deadline | Responsible |
-|--------|----------|-------------|
-| Detect breach | Immediate | Monitoring systems |
-| Assess severity | Within 24 hours | Admin |
-| Notify ICO (if required) | Within 72 hours | Admin |
-| Notify affected users (if high risk) | Without undue delay | Admin |
-
-### 6.2 Breach Notification Template
-
-```
-Subject: Important Security Notice - LIFE SCORE
-
-Dear [User],
-
-We are writing to inform you of a data security incident that may
-have affected your LIFE SCORE account.
-
-What Happened:
-[Description of incident]
-
-What Information Was Involved:
-[List affected data types]
-
-What We Are Doing:
-[Steps taken to address]
-
-What You Can Do:
-- Change your password
-- Monitor for suspicious activity
-- Contact us with questions
-
-Contact:
-cluesnomads@gmail.com
-
-We sincerely apologize for any inconvenience.
-
-Clues Intelligence LTD
-167-169 Great Portland Street, 5th Floor
-London W1W 5PF
-```
+- Account data (comparisons, reports, videos, Olivia conversations, preferences): while the account exists; removed at once when the account is deleted.
+- Payment records: kept by Stripe as tax and accounting law requires.
+- Consent records: kept as proof, without the account link after deletion.
+- Server logs: the hosting provider's standard period.
+- Shared caches of city comparisons and films hold no personal information.
 
 ---
 
-## Section 7: Annual Compliance Calendar
+## 7. Age
+<!-- covers: src/legal/legalFacts.ts -->
 
-### 7.1 Recurring Tasks
-
-| Month | Task | Details |
-|-------|------|---------|
-| January | DPA Review | Review all vendor DPAs, renew as needed |
-| January | Privacy Policy Review | Update for any new data practices |
-| April | ICO Fee Renewal | Pay annual registration fee |
-| July | Security Audit | Review access controls, API keys |
-| October | Cookie Audit | Verify consent mechanisms working |
-| December | Data Retention Cleanup | Purge data beyond retention period |
-
-### 7.2 Event-Triggered Reviews
-
-| Trigger | Action Required |
-|---------|-----------------|
-| New vendor added | Request and sign DPA |
-| New data type collected | Update Privacy Policy |
-| User threshold crossed | Review state compliance |
-| Security incident | Execute breach response plan |
-| Law change | Consult legal, update policies |
+The service is for people aged 18 or over (`minimumAge`, section 1); the Terms and the Privacy Policy say so. Sign-up does not ask for a date of birth.
 
 ---
 
-## Section 7B: Trademark Strategy
+## 8. Security and breaches
 
-### 7B.1 Current Status
-
-All marks are currently used with the ™ symbol (unregistered common law rights). No marks have been formally registered with any trademark office. The site footer states (since 4 October 2026): *"CLUES™ (Comprehensive Location Utility & Evaluation System), SMART™ (Strategic Market Assessment & Rating Technology) and LIFE SCORE™ (Legal Independence & Freedom Evaluation) are trademarks of Clues Intelligence LTD, a company registered in England and Wales (Company No. 16966151). All other trademarks are the property of their respective owners."*
-
-**Full strategy document:** `docs/legal/TRADEMARK_STRATEGY.md`
-
-### 7B.2 Marks Requiring Registration
-
-**Tier 1 — Core Brand (Register Immediately):**
-
-| Mark | Type | Status |
-|------|------|--------|
-| **CLUES** | Word mark — umbrella brand | NOT FILED |
-| **LIFE SCORE** | Word mark — flagship product | NOT FILED |
-| **SMART** | Word mark — proprietary technology | NOT FILED |
-
-**Tier 2 — Acronym Expansions (When Budget Allows):**
-
-| Mark | Full Form | Status |
-|------|-----------|--------|
-| **CLUES** | Comprehensive Location Utility & Evaluation System | NOT FILED |
-| **SMART** | Strategic Market Assessment & Rating Technology | NOT FILED |
-| **LIFE SCORE** | Legal Independence & Freedom Evaluation | NOT FILED |
-
-**Tier 3 — Product Module Names (19 modules — file at each product launch):**
-FAITH SCORE, VOTE SCORE, PLAY SCORE, GREEN SCORE, WORK SCORE, LEARN SCORE, HEALTH SCORE, SAFE SCORE, COST SCORE, CONNECT SCORE, CULTURE SCORE, FOOD SCORE, TRANSIT SCORE, WEATHER SCORE, SOCIAL SCORE, STARTUP SCORE, RETIRE SCORE, FAMILY SCORE, EXPAT SCORE
-
-**Tier 4 — AI Persona Names (Consider Later):**
-Olivia, Cristiano, Emilia — common names are harder to register; protected via IP Assignment Deed in the interim.
-
-### 7B.3 Filing Priority
-
-| Phase | Marks | Jurisdiction | Est. Cost |
-|-------|-------|-------------|-----------|
-| **Phase 1 (Now)** | CLUES, LIFE SCORE, SMART | UK IPO | £660 (3 marks × 2 classes) |
-| **Phase 2 (Revenue)** | CLUES, LIFE SCORE, SMART | USPTO | $1,500 (3 marks × 2 classes) |
-| **Phase 3 (Budget)** | Acronym expansions | UK + US | £660 + $1,500 |
-| **Phase 4 (Per Launch)** | Each [X] SCORE module | UK + US | ~£620 per module |
-
-**Nice Classes:** Class 9 (software) + Class 42 (SaaS) minimum.
-
-### 7B.4 ™ vs ® Usage
-
-| Symbol | Meaning | Current Use |
-|--------|---------|-------------|
-| ™ | Unregistered trademark (common law) | **In use now** — footer, branding |
-| ® | Registered trademark | **DO NOT USE** until registration granted |
-
-### 7B.5 Key Prerequisite
-
-The **IP Assignment Deed** (`docs/legal/IP_ASSIGNMENT_DEED.md`) must be signed **before** filing any trademark applications. The company (Clues Intelligence LTD) — not the individual — should be the trademark applicant. This deed assigns all IP from John E. Desautels II to the company.
-
-**Status:** READY TO SIGN (requires wet-ink signature + witness)
-
-### 7B.6 Existing IP Protection
-
-| Protection | Status |
-|-----------|--------|
-| IP Assignment Deed | Ready to sign |
-| Terms of Service IP clause | Active |
-| Footer trademark notice (™) | Active |
-| Copyright in source code | Automatic (UK law) |
-| Common law / passing off rights | Active through commercial use |
+- **The plan** is `docs/legal/DATA_BREACH_RESPONSE_PLAN.md`: detect and report, contain, assess, notify, recover, review, with its notification wording.
+- **The deadline that matters**: tell the ICO within **72 hours** of becoming aware of a breach that risks people's rights; tell the people affected without undue delay when the risk is high. Record every breach, notified or not.
+- **Account takeover**: disable the account, reset its credentials, tell the user through another contact, review the access records, and report to the ICO if data was exposed.
+- How the service is secured (sign-in on every personal route, row-level security, server-only keys): Technical Support Manual, section 16, and Application Schema Manual, section 3.
 
 ---
 
-## Section 8: Legal Documents Checklist
+## 9. Trademarks and intellectual property
+<!-- covers: src/components/Footer.tsx -->
 
-### 8.1 Required Documents
-
-| Document | Location | Status |
-|----------|----------|--------|
-| Privacy Policy | `/legal/privacy` | ACTIVE |
-| Terms of Service | `/legal/terms` | ACTIVE |
-| Cookie Policy | `/legal/cookies` | ACTIVE |
-| Refund Policy | `/legal/refunds` | ACTIVE |
-| IP Assignment Deed | `docs/legal/IP_ASSIGNMENT_DEED.md` | READY TO SIGN |
-| Trademark Strategy | `docs/legal/TRADEMARK_STRATEGY.md` | ACTIVE |
-
-### 8.2 Document Update Log
-
-| Date | Document | Change | Author |
-|------|----------|--------|--------|
-| 2026-02-28 | Trademark Strategy | Created comprehensive trademark strategy — 4 tiers of marks (core brand, acronym expansions, module names, AI personas), filing jurisdictions (UK/US/EU), cost estimates, Nice classification, phased registration plan | Claude Opus 4.6 |
-| 2026-02-28 | Legal Compliance | US State Privacy Rights: VA (VCDPA), CO (CPA), CT (CTDPA), UT (UCPA) — full disclosures in Privacy Policy, new StatePrivacyContent component in LegalModal, footer link, appeal processes documented | Claude Opus 4.6 |
-| 2026-02-28 | Legal Compliance | ICO Registration application number C1885368 logged — status updated from NOT STARTED to APPLICATION SUBMITTED | Claude Opus 4.6 |
-| 2026-02-28 | IP Assignment Deed | Created IP Assignment Deed — founder-to-company assignment of all IP (software, product names, AI personas, methodologies). Requires wet-ink signature + witness. | Claude Opus 4.6 |
-| 2026-02-26 | All 6 Manuals | **Major security audit:** 47 fixes — 20+ endpoints authenticated (total 38+), IDOR vulnerability fixed, CORS hardened, XSS patched, 87 debug console.log removed, admin emails centralized, API key leak fixed, tie victory text fixed, dynamic year, dead code cleanup. GDPR Article 32 compliance strengthened. | Claude Opus 4.6 |
-| 2026-02-14 | Legal, App Schema, Judge Equations, User, CS, Tech | Comprehensive update for 40 commits — collapsible panels, cost dashboard fix, video URL expiration, GoToMyNewCity, 200MB storage limit, GDPR timeout safety, HeyGen reliability, Supabase resilience | Claude Opus 4.6 |
-| 2026-02-13 | All Manuals | Comprehensive update for ~200 commits of changes | Claude Opus 4.6 |
-| 2026-02-10 | Security | JWT auth added to 8+ API endpoints; auth bypass fixed on /api/emilia/manuals | Claude Opus 4.6 |
-| 2026-02-02 | All | Added registered address | Claude |
-| 2026-01-30 | Privacy Policy | Initial version | Claude |
-| 2026-01-30 | Terms of Service | Initial version | Claude |
-| 2026-01-30 | Cookie Policy | Initial version | Claude |
-| 2026-01-30 | Refund Policy | Initial version | Claude |
-
-### 8.3 Security Improvements (2026-02-10, Major Expansion 2026-02-26)
-
-**2026-02-10 (initial hardening):**
-- **JWT auth required** on 8+ previously unprotected API endpoints (emilia/manuals, emilia/thread, avatar/simli-speak, judge-video, etc.)
-- **Auth bypass fixed** on `/api/emilia/manuals` — was previously bypassable via unverified email query parameter
-- **Database hardening** — RLS policies strengthened on report_shares, judge_reports, gamma_reports
-- **Admin check caching** — 5-min TTL with 1-hour grace period prevents lockout during Supabase timeouts
-- **grok_videos UNIQUE constraint** now includes status column to prevent data integrity issues
-
-**2026-02-26 (comprehensive security audit — 47 fixes):**
-
-This is the most significant security update in the application's history. All changes committed on branch `claude/coding-session-Jh27y`.
-
-**Authentication (20+ endpoints secured):**
-- JWT authentication added to ALL remaining unprotected API endpoints (evaluate, judge, gamma, grok-generate, grok-status, invideo-override, video-status, olivia/context, olivia/gun-comparison, olivia/avatar/streams, olivia/avatar/heygen, olivia/avatar/heygen-video, emilia/thread, check-quotas, elevenlabs, prompts GET)
-- Total authenticated endpoints: **38+** (previously ~15)
-- **IDOR vulnerability fixed** on `/api/video/grok-generate` — userId from request body is now overridden with the authenticated user's ID, preventing one user from generating videos under another user's account
-
-**XSS & Injection Prevention:**
-- `innerHTML`-based HTML entity decoding replaced with safe `DOMParser` (D1)
-- `voiceId` parameter validated with regex before URL path interpolation in ElevenLabs TTS (X3)
-- Stripe `success_url` and `cancel_url` validated against app origin to prevent open redirect phishing (X1+X2)
-
-**CORS Hardening:**
-- 3 auth-protected endpoints tightened from `Access-Control-Allow-Origin: *` to same-app restricted origin (C3)
-- Missing CORS configuration added to sync-emilia-knowledge admin endpoint (C2)
-
-**Secret Protection:**
-- API key was being sent to the browser in simli-session response — removed (S1)
-- Admin env-check endpoint now masks secrets more aggressively (S4)
-- Admin emails centralized in shared `getAdminEmails()` function — removed 10 hardcoded email lists (S5)
-- Hardcoded admin bypass emails removed from grok-generate (M3)
-
-**Information Leakage Prevention:**
-- 87 debug `console.log` statements removed from 10 production component files (CL1-CL6)
-- These were exposing comparison IDs, API response data, video URLs, and internal state to the browser console
-
-**Code Quality & Safety:**
-- React hooks moved above conditional returns (H1 — prevents crash)
-- `var` replaced with `let` for proper scoping (B4)
-- Dead code removed (DC1 unused Map, DC3 unused state variable)
-- `withTimeout` retry logic fixed — was reusing stale promises (RT1)
-- Hardcoded "2025" year strings replaced with dynamic year (SD1+SD2)
-- Social meta tag image URLs corrected to absolute URLs (P2)
-- Environment variable documentation updated with missing entries (EN1+EN2+EN3)
-
-**Compliance Impact:**
-- This audit significantly strengthens our GDPR Article 32 ("security of processing") compliance posture
-- All personal data endpoints are now authenticated, reducing unauthorized access risk to near-zero
-- The IDOR fix ensures complete data isolation between users
-
-### 8.4 New Storage Bucket
-
-A `user-videos` Supabase Storage bucket was added (2026-02-11) for Freedom Video Clip uploads:
-- 100 MB max file size
-- Public read access for sharing
-- RLS: users can only upload to their own path (`user-videos/{userId}/`)
-- This constitutes a new data processing activity that should be reflected in the Privacy Policy
-
-### 8.5 Reports Storage Bucket — 200MB File Size Limit (2026-02-14)
-
-The `reports` Supabase Storage bucket now has a **200MB file size limit** enforced:
-- Previously the `reports` bucket had no explicit file size limit
-- The 200MB limit covers enhanced HTML reports which can be large due to embedded charts and data
-- The `user-videos` bucket remains at 100MB (documented in 8.4 above)
-- The `contrast-images` bucket remains at 5MB
-
-**Summary of all storage bucket limits:**
-
-| Bucket | Max File Size | Purpose |
-|--------|--------------|---------|
-| `reports` | **200MB** | HTML reports per user folder |
-| `user-videos` | 100MB | Freedom Video Clip uploads |
-| `contrast-images` | 5MB | AI contrast image copies |
+- **In use**: CLUES™, SMART™ and LIFE SCORE™, with the ™ symbol (unregistered rights). Never use ® until a registration is granted.
+- **Not yet filed** (checklist G2–G7): CLUES, LIFE SCORE and SMART at the UK IPO first, then the USPTO — Nice classes 9 (software) and 42 (software as a service). The plan, costs and later marks (the acronym expansions, each "[X] SCORE" module, the personas Olivia, Cristiano and Emilia) are in `docs/legal/TRADEMARK_STRATEGY.md`.
+- **IP Assignment Deed** (`docs/legal/IP_ASSIGNMENT_DEED.md`) assigns the founder's rights in the software, names, personas and methods to the company. Drafted 28 Feb 2026; it takes effect when signed in wet ink before an independent witness, and must be signed before any trademark is filed so that the company is the applicant.
+- **Other protection**: the Terms' intellectual-property clause, the footer notice, copyright in the code, and rights from trading under the names. The License Manual sets out what users may and may not do.
 
 ---
 
-## Section 9: Authorized Access
+## 10. Who can read the internal manuals
+<!-- covers: api/emilia/manuals.ts, api/shared/auth.ts -->
 
-### 9.1 Manual Access Levels
+| Manual | Who |
+|---|---|
+| User Manual, License Manual | Everyone |
+| Customer Service, Technical Support, Legal Compliance, Application Schema, Judge Equations, Gamma Prompts | Administrators only |
 
-| Manual | Public Access | Admin Only |
-|--------|--------------|------------|
-| User Manual | YES | YES |
-| Customer Service Manual | NO | YES |
-| Technical Support Manual | NO | YES |
-| Legal Compliance Manual | NO | YES |
-
-### 9.2 Authorized Administrators
-
-| Email | Role | Added |
-|-------|------|-------|
-| cluesnomads@gmail.com | Owner/Admin | 2026-02-02 |
-| brokerpinellas@gmail.com | Developer/Admin | 2026-02-02 |
-
-To add new authorized users:
-1. Insert into `authorized_manual_access` table in Supabase
-2. Email must match user's Supabase Auth email
+An administrator is a signed-in user whose email is on the admin list (`getAdminEmails()` in `api/shared/auth.ts`: the founders' addresses plus the `DEV_BYPASS_EMAILS` setting) or has an active row in `authorized_manual_access`. To give someone access, add their sign-in email to that table (Supabase dashboard); to remove it, set `is_active` to false.
 
 ---
 
-## Section 10: Quick Reference
+## 11. Documents held to the code
 
-### 10.1 Key Contacts
-
-| Role | Contact |
-|------|---------|
-| Admin | cluesnomads@gmail.com |
-| Support | cluesnomads@gmail.com |
-| Legal | cluesnomads@gmail.com |
-
-### 10.2 Important Links
-
-- ICO Registration: https://ico.org.uk/for-organisations/register/
-- UK IPO (Trademarks): https://www.gov.uk/apply-for-a-trade-mark
-- USPTO (US Trademarks): https://www.uspto.gov/trademarks
-- EUIPO (EU Trademarks): https://euipo.europa.eu
-- Supabase Dashboard: https://supabase.com/dashboard
-- Vercel Dashboard: https://vercel.com/dashboard
-- Stripe Dashboard: https://dashboard.stripe.com
-
-### 10.3 Emergency Procedures
-
-**Data Breach:**
-1. Contain the breach immediately
-2. Assess scope within 24 hours
-3. Notify ICO within 72 hours if required
-4. Notify users if high risk
-5. Document everything
-
-**Account Takeover:**
-1. Disable affected account
-2. Reset credentials
-3. Notify user via alternate contact
-4. Review access logs
-5. Report to ICO if data exposed
+| Test | Holds |
+|---|---|
+| `tests/legalContent.test.ts` | Seven pages, each with a title, the effective date and sections; every {hole} filled; the company contact (never a personal mailbox); minimum age 18; `docs/legal` matches the pop-up; every supplier the code calls is in the register; every door a page names exists |
+| `tests/complianceDocs.test.ts` | The export spec lists every table the export reads; the retention policy has a line per table and claims no purge without a timed job; the deletion spec names every subscription state cancelled and the migration that keeps deletion unblocked; every supplier has a DPA tracker row; the supplier policy keeps no second register; the checklist names the same privacy contact |
 
 ---
 
-**END OF LEGAL COMPLIANCE MANUAL**
+## 12. Compliance calendar
 
-*This document is for internal use only. Do not share externally.*
+| When | Task |
+|---|---|
+| January | Review every supplier agreement (`DPA_TRACKER.md` review dates); review the Privacy Policy for new data practices |
+| April | Pay the ICO fee |
+| July | Security review — who has admin access, which keys exist, rotate what needs it |
+| October | Check the consent banner and the opt-out still record |
+| On a new supplier | Register, agreement, tracker row (section 3) |
+| On a new kind of data | Update the Privacy Policy and bump `LEGAL_EFFECTIVE` |
+| On a security incident | The breach plan (section 8) |
+| On a law change or a new US state law | Review the pages; take advice where needed |
+
+---
+
+## 13. Open items (company records, 4 October 2026)
+
+- **Supplier agreements still requested**, not signed: xAI, Perplexity, D-ID and Gamma, among others — the current list is `DPA_TRACKER.md`.
+- **IP Assignment Deed** awaits signature (section 9); trademarks wait on it.
+- **EU representative** — the checklist records it as not required; the priority list (`docs/legal/PRIORITY_ACTION_LIST.md`) says to appoint one before marketing in the EU. Under the EU GDPR (Article 27) a company outside the EU that offers its service to people in the EU must name a representative there, unless its processing is occasional and low-risk. This is for the founders to decide with advice.
+- **Enterprise customers** will need a SaaS agreement reviewed by a lawyer (priority list, item 6).
