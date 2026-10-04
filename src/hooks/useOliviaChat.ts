@@ -119,7 +119,7 @@ export function useOliviaChat(
   const [textSummary, setTextSummary] = useState<string | null>(null);
   const [isContextLoading, setIsContextLoading] = useState(false);
 
-  // Database persistence state (Supabase conversation ID, separate from OpenAI threadId)
+  // Database persistence state (Supabase conversation ID, separate from the chat's threadId)
   const [dbConversationId, setDbConversationId] = useState<string | null>(null);
 
   // Refs

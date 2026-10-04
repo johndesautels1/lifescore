@@ -5,7 +5,7 @@
  * - Claude (/api/olivia/chat, with whole-app search) = ALL intelligence (the brain)
  * - Simli AI = Avatar video only (replaced D-ID - 90% cost savings)
  *
- * Flow: User → OpenAI → Response → Simli speaks response
+ * Flow: User → Claude (AI_MODELS.writer, via /api/olivia/chat) → Response → Simli speaks response
  *
  * Design Philosophy:
  * - James Bond: Sleek sophistication, MI6 briefing room elegance
@@ -27,6 +27,7 @@ import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useTTS } from '../hooks/useTTS';
 import { useOliviaFace } from '../hooks/useOliviaFace';
 import { useTierAccess } from '../hooks/useTierAccess';
+import { AI_MODELS } from '../../api/shared/models';
 import { useContrastImages } from '../hooks/useContrastImages';
 import { UsageMeter } from './FeatureGate';
 import { ContrastDisplays } from './ContrastDisplays';
@@ -270,14 +271,14 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   }, [messages, showTextChat]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // AUTO-SPEAK: When OpenAI responds, make avatar speak it (if video enabled)
-  // This is the KEY connection: OpenAI brain → Avatar mouth (Simli or D-ID)
+  // AUTO-SPEAK: When Olivia's model responds, make avatar speak it (if video enabled)
+  // This is the KEY connection: Olivia's brain (Claude) → Avatar mouth (Simli or D-ID)
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (autoSpeak && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
 
-      // Only speak NEW assistant messages (from OpenAI)
+      // Only speak NEW assistant messages (from Olivia's model)
       if (lastMessage.role === 'assistant' && lastMessage.id !== lastSpokenMsgRef.current) {
         lastSpokenMsgRef.current = lastMessage.id;
 
@@ -341,7 +342,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
 
     setInputText('');
     setUsageLimitReached(false);
-    // Send to OpenAI (the brain) - response will auto-trigger speak
+    // Send to Olivia's model (the brain) - response will auto-trigger speak
     await sendMessage(messageText);
   }, [inputText, sendMessage, checkUsage, isUnlimited, isAdmin]);
 
@@ -615,7 +616,8 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
           <div className="status-cluster">
             <div className="status-indicator online">
               <span className="indicator-dot"></span>
-              <span className="indicator-label">OPENAI BRAIN</span>
+              {/* The model Olivia runs on, from the model list (John, 4 Oct 2026) */}
+              <span className="indicator-label">{AI_MODELS.writer.name.toUpperCase()} BRAIN</span>
             </div>
             <div className="status-indicator">
               <span className="indicator-icon">◈</span>
@@ -1034,7 +1036,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          TEXT CHAT PANEL - Expandable Transcript (OpenAI responses)
+          TEXT CHAT PANEL - Expandable Transcript (Olivia's responses)
       ═══════════════════════════════════════════════════════════════════ */}
       {showTextChat && (
         <section className="chat-transcript-panel">

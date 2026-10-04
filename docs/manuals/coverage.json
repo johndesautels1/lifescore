@@ -682,9 +682,9 @@
         "api/olivia/chat.ts",
         "api/shared/plans.ts"
       ],
-      "hash": "9d2c2b26202e9b93aec1e7d7904e3cb468d847b05ccca9b1da0e50241eda85ed",
+      "hash": "e1417441f27a3e1b8d7b735c9bf6d8a618bc368407a28110eb7e88841c9b37f2",
       "reviewed": "2026-10-04",
-      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
+      "basis": "193e696e5acbdd86f6cde255570832fd29fbb01b"
     },
     "USER_MANUAL.md#9-saved": {
       "files": [
