@@ -126,7 +126,12 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
       {/* 2. The brand: beneath the toolbar, centred */}
       <div className="site-header-brand-area">
         <div className="site-header-brand" ref={brandTiltRef}>
-          <Icon3D name="compass" size={64} className="site-header-brand-icon" />
+          {/* The compass on a lit plate: gunmetal reads dark on night blue, so it
+              stands in a halo of light (John: "more bright and prominant"). */}
+          <span className="site-header-brand-mark" aria-hidden="true">
+            <span className="site-header-brand-halo" />
+            <Icon3D name="compass" size={88} className="site-header-brand-icon" />
+          </span>
           <div className="site-header-brand-words">
             <h1 className="company-name">CLUES INTELLIGENCE LTD</h1>
             <p className="clues-branding">

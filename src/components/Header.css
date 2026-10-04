@@ -254,13 +254,49 @@
   transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
 }
 
-.site-header-brand-icon {
-  width: 64px;
-  height: 64px;
+/* The compass stands on a lit plate: a platinum-white core, a gold ring of light
+   and a sapphire glow, so the gunmetal reads bright against night blue. */
+.site-header-brand-mark {
+  position: relative;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+}
+
+.site-header-brand-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 244, 214, 0.32) 22%, rgba(244, 197, 90, 0.22) 42%, rgba(59, 108, 255, 0.18) 62%, transparent 72%);
+  box-shadow: 0 0 40px 6px rgba(244, 197, 90, 0.25), 0 0 80px 18px rgba(59, 108, 255, 0.22);
+  animation: site-header-halo 5.5s ease-in-out infinite;
+}
+
+@keyframes site-header-halo {
+  0%, 100% { opacity: 0.85; scale: 1; }
+  50% { opacity: 1; scale: 1.06; }
+}
+
+.site-header-brand-icon {
+  position: relative;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
-  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.55));
-  transform: translateY(calc(var(--h) * -4px)) rotate(calc(var(--h) * -10deg)) scale(calc(1 + var(--h) * 0.08));
+  filter:
+    brightness(1.35)
+    contrast(1.08)
+    drop-shadow(0 0 14px rgba(255, 236, 190, 0.55))
+    drop-shadow(0 12px 12px rgba(0, 0, 0, 0.55));
+  transform: translateY(calc(var(--h) * -5px)) rotate(calc(var(--h) * -10deg)) scale(calc(1 + var(--h) * 0.1));
+  animation: site-header-compass-float 4.8s ease-in-out infinite;
+}
+
+@keyframes site-header-compass-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -4px; }
 }
 
 .site-header-brand-words {
@@ -456,13 +492,23 @@
     padding: 1.25rem 0.75rem 1.5rem;
   }
 
+  .site-header-brand-mark {
+    width: 92px;
+    height: 92px;
+  }
+
   .site-header-brand-icon {
-    width: 52px;
-    height: 52px;
+    width: 70px;
+    height: 70px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .site-header-brand-halo,
+  .site-header-brand-icon {
+    animation: none;
+  }
+
   .site-header .upgrade-btn,
   .site-header .admin-btn img,
   .site-header .header-contact-icon {
