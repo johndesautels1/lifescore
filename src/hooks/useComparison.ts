@@ -184,9 +184,16 @@ function calculateCityScore(
   customWeights?: Record<string, number> | null
 ): CityScore {
   const categories: CategoryScore[] = [];
+  // Totals are weighted averages over the categories that have a score; a
+  // category with none is left out and the others share its weight
+  // (John, 4 Oct 2026 — as Enhanced mode does). With every category scored the
+  // weights add up to 100 and the totals are what they always were.
   let totalScore = 0;
+  let scoredWeight = 0;
   let totalLegalScore = 0;
+  let legalWeight = 0;
   let totalLivedScore = 0;
+  let livedWeight = 0;
   let totalVerified = 0;
   let totalMetrics = 0;
   let totalEvaluated = 0;
@@ -195,7 +202,6 @@ function calculateCityScore(
     // FIXED: Pass customWeights to calculateCategoryScore
     const categoryScore = calculateCategoryScore(category.id, metricScores, customWeights);
     categories.push(categoryScore);
-    totalScore += categoryScore.weightedScore;
     totalVerified += categoryScore.verifiedMetrics;
     totalMetrics += categoryScore.totalMetrics;
     totalEvaluated += categoryScore.evaluatedMetrics;
@@ -204,13 +210,22 @@ function calculateCityScore(
     // FIXED: Use customWeights for category weight if provided
     const categoryDef = CATEGORIES.find(c => c.id === category.id);
     const catWeight = customWeights?.[category.id] ?? categoryDef?.weight ?? 0;
-    if (categoryScore.averageLegalScore !== null && categoryScore.averageLegalScore !== undefined) {
-      totalLegalScore += (categoryScore.averageLegalScore * catWeight) / 100;
+    if (categoryScore.averageScore !== null) {
+      totalScore += categoryScore.weightedScore; // averageScore × weight / 100
+      scoredWeight += catWeight;
     }
-    if (categoryScore.averageLivedScore !== null && categoryScore.averageLivedScore !== undefined) {
-      totalLivedScore += (categoryScore.averageLivedScore * catWeight) / 100;
+    if (isScore(categoryScore.averageLegalScore)) {
+      totalLegalScore += categoryScore.averageLegalScore * catWeight;
+      legalWeight += catWeight;
+    }
+    if (isScore(categoryScore.averageLivedScore)) {
+      totalLivedScore += categoryScore.averageLivedScore * catWeight;
+      livedWeight += catWeight;
     }
   }
+  totalScore = scoredWeight > 0 ? (totalScore * 100) / scoredWeight : 0;
+  totalLegalScore = legalWeight > 0 ? totalLegalScore / legalWeight : 0;
+  totalLivedScore = livedWeight > 0 ? totalLivedScore / livedWeight : 0;
 
   // Determine overall confidence based on evaluation rate (not just verification)
   const evaluationRate = totalMetrics > 0 ? totalEvaluated / totalMetrics : 0;
@@ -497,9 +512,10 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
       for (const category of CATEGORIES) {
         const cat1 = city1Score.categories.find(c => c.categoryId === category.id);
         const cat2 = city2Score.categories.find(c => c.categoryId === category.id);
-        const score1 = cat1?.averageScore ?? 0;
-        const score2 = cat2?.averageScore ?? 0;
+        const score1 = cat1?.averageScore ?? null;
+        const score2 = cat2?.averageScore ?? null;
 
+        // A category either city has no score for earns no win and no spread
         if (score1 !== null && score2 !== null) {
           const diff = score1 - score2;
           const absDiff = Math.abs(diff);
@@ -572,10 +588,12 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
         const cat1 = city1Score.categories.find(c => c.categoryId === category.id);
         const cat2 = city2Score.categories.find(c => c.categoryId === category.id);
 
-        const score1 = cat1?.averageScore ?? 0;
-        const score2 = cat2?.averageScore ?? 0;
+        const score1 = cat1?.averageScore ?? null;
+        const score2 = cat2?.averageScore ?? null;
 
-        if (Math.abs(score1 - score2) < 2) {
+        if (score1 === null || score2 === null) {
+          categoryWinners[category.id] = 'tie'; // no score for one city: no winner
+        } else if (Math.abs(score1 - score2) < 2) {
           categoryWinners[category.id] = 'tie';
         } else if (score1 > score2) {
           categoryWinners[category.id] = 'city1';

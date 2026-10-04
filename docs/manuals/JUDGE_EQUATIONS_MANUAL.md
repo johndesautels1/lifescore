@@ -72,13 +72,15 @@ category = Σ(metric × wₘ) / Σ(wₘ)            over metrics with a score; n
 
 The same averaging gives a category law score and lived score, shown beside it — each over the metrics that have that half.
 
-**City base score** — each category's share by its weight *w꜀* (default or the user's, adding up to 100):
+**City base score** — the weighted average of the categories that have a score, by their weights *w꜀* (default or the user's). A category with no score is left out and the others share its weight; with all six scored the weights add up to 100, so this is each category's share:
 
 ```
-base = Σ( category × w꜀ / 100 )             a category with no score adds 0
+base = Σ(category × w꜀) / Σ(w꜀)            over categories with a score
 ```
 
-**Differentiation** (so close cities do not blur together). Over the six categories:
+The city's law and lived totals are averaged the same way, each over the categories that have that average.
+
+**Differentiation** (so close cities do not blur together). Over the categories both cities have a score for:
 
 ```
 wins(city)   = number of categories it leads by more than 5 points
@@ -88,7 +90,7 @@ bonus(city)  = 2 × wins(city)
 final(city)  = round( min(100, base + bonus) )
 ```
 
-**Winner.** The cities tie when their final scores differ by less than 1; otherwise the higher wins. A category is a tie when the two differ by less than 2.
+**Winner.** The cities tie when their final scores differ by less than 1; otherwise the higher wins. A category is a tie when the two differ by less than 2, or when either city has no score for it.
 
 **Confidence** shown for each city — how much of the 100 metrics returned a score: 80 % or more is high, 50 % or more is medium, below that low.
 
@@ -198,6 +200,6 @@ Found while writing this manual, read from the code. Each changes what users see
 2. ~~The Judge sees 30 of 100 metrics~~ — **fixed 4 October 2026** (John: "show all 100"; `tests/judgeConsensus.test.ts`).
 3. ~~Enhanced mode ignores Law vs Lived and Worst-Case Mode~~ — **fixed 4 October 2026** (John: "use their settings"): the model buttons pass the user's settings to every evaluation.
 4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
-5. **Standard mode counts a missing category as 0** — in the city base score (the other weights are not shared out, as Enhanced mode does), and, when only one city lacks it, in the category wins and the largest gap.
+5. ~~Standard mode counts a missing category as 0~~ — **fixed 4 October 2026** (John: "same as Enhanced"): a missing category is left out, its weight shared, and it earns no bonus (`tests/standardScoring.test.ts`).
 6. **The numbers fallback cannot be read** (section 3).
 7. **A second copy of the Standard-mode arithmetic** (`src/api/scoring.ts`) is used only by `tests/scoring.test.ts`, so that test does not check the code the app runs.

@@ -52,7 +52,7 @@ Read from the code while rewriting the Judge Equations Manual (its section 9 exp
 | SC2 | `api/judge.ts` | FIXED 4 Oct (John: "show all 100") — the Judge was shown only the first 30 of 100 metrics; now every metric any model answered (`tests/judgeConsensus.test.ts`) |
 | SC3 | `src/services/llmEvaluators.ts` | FIXED 4 Oct (John: "use their settings") — Enhanced mode ignored Law vs Lived and Worst-Case Mode (always (L + E) / 2); the model buttons now pass the user's settings (`tests/lawLived.test.ts`) |
 | SC4 | `src/hooks/useComparison.ts`, `src/services/llmEvaluators.ts` | FIXED 4 Oct (John: "leave it out") — a side with no score counted as 0 (halving the metric; Enhanced scored a fully missing metric 0); now left out everywhere (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`) |
-| SC5 | `src/hooks/useComparison.ts` | Standard mode counts a category with no score as 0 in the city total and, when one city lacks it, in the category wins and largest gap |
+| SC5 | `src/hooks/useComparison.ts` | FIXED 4 Oct (John: "same as Enhanced") — Standard mode counted a category with no score as 0 in the city total and, when one city lacked it, in the category wins and largest gap; now left out with its weight shared (`tests/standardScoring.test.ts`) |
 | SC6 | `api/evaluate.ts` | With `USE_CATEGORY_SCORING` off, replies use names the reader does not take, so every score would be dropped (the setting is on in production) |
 | SC7 | `src/api/scoring.ts` | A second copy of the Standard-mode arithmetic, used only by `tests/scoring.test.ts` — the test does not check the code the app runs |
 

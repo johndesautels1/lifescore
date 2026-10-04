@@ -121,9 +121,9 @@
         "src/hooks/useGrokVideo.ts",
         "src/main.tsx"
       ],
-      "hash": "ae71a06d2f19dc35d443e1fdd89df798fbcc0cac3a916331a65070119b98b1e2",
+      "hash": "e8c51793404a51e2d6863dd76d9434baf12900be2e10470525749f76642e3dd9",
       "reviewed": "2026-10-04",
-      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
+      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
     },
     "CUSTOMER_SERVICE_MANUAL.md#5-account-and-privacy-requests": {
       "files": [
@@ -183,9 +183,9 @@
       "files": [
         "src/hooks/useComparison.ts"
       ],
-      "hash": "025550db3b8d994638df9d2c428cc3201ffebcb15ab5d3a07b21d2dc0d15189d",
+      "hash": "a0a357f54cc62b8e94ab5a253239c98e91927cf1ab807e4095c71d97ac73265d",
       "reviewed": "2026-10-04",
-      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
+      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
     },
     "JUDGE_EQUATIONS_MANUAL.md#5-enhanced-mode-several-models-and-the-judge": {
       "files": [
@@ -415,9 +415,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "e8f67f5dfeee92ed6fd05628c68e1a10d036c76b5827cd18b3380eb09ce326c3",
+      "hash": "f82bfbd03cf6701b372d7bac68d1775f3268fcb89c9dbe3f339bc573627c5d49",
       "reviewed": "2026-10-04",
-      "basis": "5c71ef119b489298b75cad682b4c3b411bb5de10"
+      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
@@ -558,9 +558,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/models.ts"
       ],
-      "hash": "a01099d749224b7e5f1d457e239a1e191651a802ef73800f7c48d889675df0d6",
+      "hash": "9e77f7dd0b0b1e759b8d8f0d124e840d9faa7a900db62e7db52e7c814ddffa28",
       "reviewed": "2026-10-04",
-      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
+      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
     },
     "USER_MANUAL.md#4-2-customize-priorities": {
       "files": [
