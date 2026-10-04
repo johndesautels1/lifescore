@@ -18,7 +18,8 @@ export type Theme = 'light' | 'dark' | 'auto';
 export type DefaultView = 'grid' | 'list' | 'table';
 export type GrokVideoType = 'winner_mood' | 'loser_mood' | 'perfect_life';
 export type GrokVideoStatus = 'pending' | 'processing' | 'completed' | 'failed';
-export type GrokVideoProvider = 'grok' | 'replicate';
+/** Who made a city clip: Kling 3 through fal ('kling3', since 4 Oct 2026) or the Replicate Minimax back-up; 'grok' and 'kling' are older rows. */
+export type GrokVideoProvider = 'kling3' | 'replicate' | 'kling' | 'grok';
 export type SubscriptionStatus =
   | 'active'
   | 'canceled'

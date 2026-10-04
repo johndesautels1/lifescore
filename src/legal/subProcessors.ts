@@ -11,7 +11,7 @@
  * changed jurisdiction is a material change to the Privacy Policy.
  */
 
-export const LAST_UPDATED = '2026-10-03';
+export const LAST_UPDATED = '2026-10-04';
 
 export interface SubProcessor {
   name: string;
@@ -112,10 +112,10 @@ export const SUB_PROCESSORS: readonly SubProcessor[] = [
     jurisdiction: 'Replicate, Inc. (United States)',
   },
   {
-    name: 'Kling AI',
-    role: 'City video clips',
-    data: 'Descriptions of cities (no personal data)',
-    jurisdiction: 'Kuaishou Technology (China); international service from Singapore',
+    name: 'fal.ai (Kling 3)',
+    role: 'City video clips, made with the Kling 3 model',
+    data: 'A description of a city scene written on our server — never your name, email or account id. If a clip has not yet been copied to our storage, your browser fetches it from fal.media, which sees your IP address the way any web server does',
+    jurisdiction: 'fal.ai (United States)',
   },
   {
     name: 'InVideo',

@@ -34,12 +34,12 @@ For each processor:
 | **ElevenLabs** | Voices | To locate on the vendor's legal page | [ ] Not recorded | - | - |
 | **Simli** | Back-up live face for Olivia | Contact support | [ ] Not recorded | - | - |
 | **Replicate** | Back-up judge videos, city clips and pictures | To locate on the vendor's legal page | [ ] Not recorded | - | - |
-| **Kling AI** | City video clips (no personal data) | Contact support | [ ] Not recorded | - | - |
+| **fal.ai** (Kling 3) | City video clips (no personal data) | Referenced from fal's terms of service (fal.ai/legal/terms-of-service) | [ ] Not recorded | - | - |
 | **InVideo** | Moving Movies films (no personal data) | Contact support | [ ] Not recorded | - | - |
 | **Resend** | Email | To locate on the vendor's legal page | [ ] Not recorded | - | - |
 | **Flagpedia** (flagcdn.com) | Flag images fetched by the browser (sees IP address) | flagpedia.net | [ ] Not recorded — likely no DPA available; consider serving flags from our own site | - | - |
 
-> Rows added 2026-10-03 for every supplier the code calls (the register is `src/legal/subProcessors.ts`; `tests/complianceDocs.test.ts` fails if one is missing here). "Not recorded" means no agreement is on file in this folder, not that none exists — update the row when it is signed.
+> Rows added 2026-10-03 for every supplier the code calls (the register is `src/legal/subProcessors.ts`; `tests/complianceDocs.test.ts` fails if one is missing here). "Not recorded" means no agreement is on file in this folder, not that none exists — update the row when it is signed. On 2026-10-04 fal.ai replaced Kling AI: city clips are now made with Kling 3 through fal, and nothing is sent to Kling's own service.
 
 ---
 

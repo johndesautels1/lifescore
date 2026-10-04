@@ -331,6 +331,8 @@ await updateVideoWithAudio(videoJobId, ttsResult.url);
 **Impact:** Unnecessary computation
 **Location:** `api/video/grok-status.ts:34-62`
 
+> **Note (2026-10-04):** obsolete. Kling's own service and its JWT were replaced by Kling 3 through fal (`api/shared/falKling.ts`, `Authorization: Key`); there is no JWT left to cache.
+
 **Current Behavior:**
 - Generates new Kling JWT on every status poll
 - JWT valid for 30 minutes, regenerated every 5 seconds

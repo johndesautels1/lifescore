@@ -23,7 +23,8 @@ export type GrokVideoStatus =
 
 export type CityType = 'beach' | 'mountain' | 'urban' | 'desert' | 'european' | 'tropical' | 'general';
 
-export type VideoProvider = 'grok' | 'replicate';
+/** Who made a city clip: Kling 3 through fal ('kling3', since 4 Oct 2026) or the Replicate Minimax back-up; 'grok' and 'kling' are older rows. */
+export type VideoProvider = 'kling3' | 'replicate' | 'kling' | 'grok';
 
 // ============================================================================
 // GROK VIDEO TYPES

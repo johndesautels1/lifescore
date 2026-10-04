@@ -6175,13 +6175,13 @@ Users may receive email alerts at warning thresholds.
 
 ## 36.7 Video Generation
 
-**Primary Video Provider:** Kling AI
+**Primary Video Provider:** Kling 3 through fal (with sound)
 - Creates "Freedom" mood videos (for winning city)
 - Creates "Imprisonment" mood videos (for losing city)
 - Generation takes 90-180 seconds
 - Videos are cached for instant replay on subsequent views
 
-**Fallback:** Replicate Minimax (if Kling unavailable)
+**Last back-up:** Replicate Minimax (if Kling 3 cannot start)
 
 ---
 

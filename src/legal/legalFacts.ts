@@ -9,7 +9,7 @@
  */
 
 /** The date the current wording took effect. Bump it when the words change materially. */
-export const LEGAL_EFFECTIVE = '3 October 2026';
+export const LEGAL_EFFECTIVE = '4 October 2026';
 
 export const LEGAL_FACTS = {
   company: 'Clues Intelligence LTD',

@@ -1,7 +1,7 @@
 /**
  * LIFE SCORE - Grok Video Status API
  *
- * Checks the status of Grok video generation.
+ * Checks the status of a city clip: Kling 3 through fal, or the Replicate Minimax back-up.
  * Can query by: videoId or predictionId (direct provider query)
  * Also supports cache checking via POST.
  *
@@ -14,12 +14,11 @@ import { serviceDb } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireAuth } from '../shared/auth.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
-import { readGrokVideo, readKlingTask, readReplicatePrediction } from '../shared/videoReplies.js';
-import crypto from 'crypto';
+import { readReplicatePrediction } from '../shared/videoReplies.js';
+import { checkKlingClip } from '../shared/falKling.js';
+import { isExpiringClipUrl } from '../shared/clipHosts.js';
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
-const GROK_API_URL = process.env.GROK_API_URL || 'https://api.x.ai/v1';
-const KLING_API_URL = 'https://api-singapore.klingai.com';
 
 // Storage bucket for persisting court order / grok videos
 const COURT_ORDER_BUCKET = 'court-order-videos';
@@ -31,129 +30,9 @@ export const config = {
 const supabaseAdmin = serviceDb;
 
 // ============================================================================
-// KLING JWT AUTHENTICATION
+// PROVIDER STATUS CHECKS (Kling 3 through fal: checkKlingClip, api/shared/falKling.ts)
 // ============================================================================
 
-function generateKlingJWT(): string | null {
-  const accessKey = process.env.KLING_VIDEO_API_KEY;
-  const secretKey = process.env.KLING_VIDEO_SECRET;
-
-  if (!accessKey || !secretKey) {
-    return null;
-  }
-
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const now = Math.floor(Date.now() / 1000);
-  const payload = { iss: accessKey, exp: now + 1800, nbf: now - 5 };
-
-  const base64UrlEncode = (obj: object): string => {
-    return Buffer.from(JSON.stringify(obj))
-      .toString('base64')
-      .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  };
-
-  const headerEncoded = base64UrlEncode(header);
-  const payloadEncoded = base64UrlEncode(payload);
-  const signatureInput = `${headerEncoded}.${payloadEncoded}`;
-  const signature = crypto
-    .createHmac('sha256', secretKey)
-    .update(signatureInput)
-    .digest('base64')
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-
-  return `${headerEncoded}.${payloadEncoded}.${signature}`;
-}
-
-// ============================================================================
-// PROVIDER STATUS CHECKS
-// ============================================================================
-
-async function checkKlingStatus(taskId: string): Promise<{
-  status: string;
-  videoUrl: string | null;
-  error: string | null;
-}> {
-  const token = generateKlingJWT();
-
-  if (!token) {
-    return { status: 'failed', videoUrl: null, error: 'Kling API not configured' };
-  }
-
-  try {
-    const response = await fetch(`${KLING_API_URL}/v1/videos/text2video/${taskId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn('[KLING-STATUS] API error:', response.status, errorText);
-      return { status: 'processing', videoUrl: null, error: null };
-    }
-
-    const result = readKlingTask(await response.json());
-
-    if (result.code !== 0) {
-      console.warn('[KLING-STATUS] API returned error:', result.code, result.message);
-      return { status: 'processing', videoUrl: null, error: null };
-    }
-
-    const taskStatus = result.data?.task_status;
-    const firstVideoUrl = result.data?.task_result?.videos?.[0]?.url;
-
-    if (taskStatus === 'succeed' && firstVideoUrl) {
-      return { status: 'completed', videoUrl: firstVideoUrl, error: null };
-    } else if (taskStatus === 'failed') {
-      return { status: 'failed', videoUrl: null, error: result.data?.task_status_msg || 'Generation failed' };
-    }
-
-    return { status: 'processing', videoUrl: null, error: null };
-  } catch (err) {
-    console.warn('[KLING-STATUS] Status check failed:', err);
-    return { status: 'processing', videoUrl: null, error: null };
-  }
-}
-
-async function checkGrokStatus(predictionId: string): Promise<{
-  status: string;
-  videoUrl: string | null;
-  error: string | null;
-}> {
-  const grokApiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
-
-  if (!grokApiKey) {
-    return { status: 'failed', videoUrl: null, error: 'Grok API not configured' };
-  }
-
-  try {
-    const response = await fetch(`${GROK_API_URL}/videos/${predictionId}`, {
-      headers: {
-        'Authorization': `Bearer ${grokApiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn('[GROK-STATUS] Grok API error:', response.status, errorText);
-      return { status: 'processing', videoUrl: null, error: null };
-    }
-
-    const result = readGrokVideo(await response.json());
-
-    if (result.status === 'completed' && result.video_url) {
-      return { status: 'completed', videoUrl: result.video_url, error: null };
-    } else if (result.status === 'failed') {
-      return { status: 'failed', videoUrl: null, error: result.error || 'Generation failed' };
-    }
-
-    return { status: 'processing', videoUrl: null, error: null };
-  } catch (err) {
-    console.warn('[GROK-STATUS] Grok status check failed:', err);
-    return { status: 'processing', videoUrl: null, error: null };
-  }
-}
 
 async function checkReplicateStatus(predictionId: string): Promise<{
   status: string;
@@ -262,10 +141,7 @@ export default async function handler(
           // FIX: For cached entries with temporary provider URLs, try to migrate to permanent storage.
           // If migration fails (URL expired), invalidate the cache entry.
           for (const entry of [winnerResult.data, loserResult.data]) {
-            const isTemporaryUrl = entry.video_url && !entry.video_storage_path && (
-              entry.video_url.includes('replicate.delivery') ||
-              entry.video_url.includes('klingai.com')
-            );
+            const isTemporaryUrl = !entry.video_storage_path && isExpiringClipUrl(entry.video_url);
 
             if (isTemporaryUrl) {
               const cacheKey = `${entry.city_name}-${entry.video_type}-${entry.id.substring(0, 8)}`;
@@ -364,13 +240,9 @@ export default async function handler(
   try {
     // Direct prediction query if predictionId provided
     if (predictionId && !videoId) {
-      // Try Kling first (primary), then Replicate fallback
-      let providerStatus = await checkKlingStatus(predictionId);
-
-      // If Kling doesn't have it, try Replicate
-      if (providerStatus.status === 'processing' || providerStatus.error?.includes('not configured')) {
-        providerStatus = await checkReplicateStatus(predictionId);
-      }
+      // Kling 3 first; a request fal does not know may be a Replicate back-up clip
+      const kling = await checkKlingClip(predictionId);
+      const providerStatus = kling.gone ? await checkReplicateStatus(predictionId) : kling;
 
       res.status(200).json({
         success: true,
@@ -409,8 +281,8 @@ export default async function handler(
 
     // If still processing, check provider status
     if (video.status === 'processing' && video.prediction_id) {
-      // Auto-fail predictions stuck for too long (Kling: 8 min, Replicate: 10 min)
-      const MAX_PROCESSING_MS = video.provider === 'kling' ? 8 * 60 * 1000 : 10 * 60 * 1000;
+      // Auto-fail clips stuck for too long (10 minutes, Kling 3 or Replicate)
+      const MAX_PROCESSING_MS = 10 * 60 * 1000;
       const ageMs = video.created_at ? Date.now() - new Date(video.created_at).getTime() : 0;
 
       if (ageMs > MAX_PROCESSING_MS) {
@@ -432,12 +304,13 @@ export default async function handler(
 
       // Only poll provider if not already auto-failed
       if (video.status === 'processing') {
-        if (video.provider === 'kling') {
-          providerStatus = await checkKlingStatus(video.prediction_id);
-        } else if (video.provider === 'grok') {
-          providerStatus = await checkGrokStatus(video.prediction_id);
-        } else {
+        if (video.provider === 'kling3') {
+          providerStatus = await checkKlingClip(video.prediction_id);
+        } else if (video.provider === 'replicate') {
           providerStatus = await checkReplicateStatus(video.prediction_id);
+        } else {
+          // Clips started on Kling's own service or the old Grok route (both retired 4 Oct 2026)
+          providerStatus = { status: 'failed', videoUrl: null, error: `This clip was started on a video service LifeScore no longer uses (${video.provider}). Please make it again.` };
         }
       } else {
         providerStatus = { status: video.status, videoUrl: null, error: video.error_message };
@@ -497,8 +370,7 @@ export default async function handler(
     // FIX: For completed videos with temporary provider URLs (no storage path),
     // attempt to migrate to permanent storage. If the URL has already expired, mark as failed.
     if (video.status === 'completed' && video.video_url && !video.video_storage_path) {
-      const isTemporaryUrl = video.video_url.includes('replicate.delivery') ||
-                             video.video_url.includes('klingai.com');
+      const isTemporaryUrl = isExpiringClipUrl(video.video_url);
 
       if (isTemporaryUrl) {
         console.log('[GROK-STATUS] Completed video has temporary URL, attempting migration:', video.id);

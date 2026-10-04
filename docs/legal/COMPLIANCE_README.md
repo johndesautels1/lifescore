@@ -120,7 +120,7 @@
 | E13 | ElevenLabs | Voices | [ ] | [ ] | Not recorded |
 | E14 | Simli | Back-up live face | [ ] | [ ] | Not recorded |
 | E15 | Replicate | Back-up videos, clips, pictures | [ ] | [ ] | Not recorded |
-| E16 | Kling AI | City clips (no personal data) | [ ] | [ ] | Not recorded |
+| E16 | fal.ai (Kling 3) | City clips (no personal data); replaced Kling AI on 2026-10-04 | [ ] | [ ] | Not recorded |
 | E17 | InVideo | Films (no personal data) | [ ] | [ ] | Not recorded |
 | E18 | Resend | Email | [ ] | [ ] | Not recorded |
 | E19 | Flagpedia (flagcdn.com) | Flag images (sees IP) | [ ] | [ ] | Not recorded |

@@ -15,6 +15,7 @@ import {
   TAVILY_PLAN_MONTHLY_CREDITS,
   TAVILY_PLAN_PER_CREDIT,
   TAVILY_OVERAGE_PER_CREDIT,
+  KLING3_USD_PER_SECOND_WITH_SOUND,
   type APICallCost,
   type ComparisonCostBreakdown,
   type CostSummary
@@ -546,8 +547,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                 </span>
               </div>
               <div className="provider-row">
-                <span className="provider-icon">🖼️</span>
-                <span className="provider-name">Kling AI (Image Generation)</span>
+                <span className="provider-icon">🎬</span>
+                <span className="provider-name">Kling 3 city clips (fal)</span>
                 <span className="provider-cost">{formatCost(summary.klingCost)}</span>
                 <span className="provider-pct">
                   {summary.grandTotal > 0 ? ((summary.klingCost / summary.grandTotal) * 100).toFixed(1) : 0}%
@@ -664,8 +665,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ isOpen, onClose })
                     <td colSpan={2}>$0.0014/sec</td>
                   </tr>
                   <tr>
-                    <td>🖼️ Kling AI</td>
-                    <td colSpan={2}>$0.05/image</td>
+                    <td>🎬 Kling 3 city clips (fal)</td>
+                    <td colSpan={2}>{`$${KLING3_USD_PER_SECOND_WITH_SOUND}/sec with sound; Minimax back-up clips: price not published`}</td>
                   </tr>
                 </tbody>
               </table>

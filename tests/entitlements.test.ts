@@ -132,7 +132,7 @@ describe('comparison grants', () => {
 
 describe('paid vendors are reached only behind a plan check', () => {
   /** Hosts that cost money per call (faces, voices, films, decks, video models). */
-  const PAID_VENDOR = /api\.heygen\.com|simli\.(ai|com)|api\.d-id\.com|liveavatar|api\.elevenlabs\.io|api\.replicate\.com|gamma\.app|api\.x\.ai|kling/;
+  const PAID_VENDOR = /api\.heygen\.com|simli\.(ai|com)|api\.d-id\.com|liveavatar|api\.elevenlabs\.io|api\.replicate\.com|gamma\.app|api\.x\.ai|kling|fal\.run|submitKlingClip/;
   const PLAN_CHECK = /requireFeature|requireAdmin|consumeFeature|consumeOrDeny|requireJudgeReportAccess|requireComparisonGrant/;
   /** Named exceptions, each with its reason. A new paid route is NOT one of these. */
   const EXEMPT: Record<string, string> = {

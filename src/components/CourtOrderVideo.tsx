@@ -22,6 +22,7 @@ import VideoPhoneWarning from './VideoPhoneWarning';
 import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import type { NotifyChannel } from '../types/database';
+import { isExpiringClipUrl } from '../../api/shared/clipHosts';
 import './CourtOrderVideo.css';
 
 // ============================================================================
@@ -150,7 +151,7 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
         if (!cancelled && data?.video_url) {
           // Prefer permanent storage path URL over expired provider URL
           const url = data.video_url;
-          const isExpiredProviderUrl = url.includes('replicate.delivery') || url.includes('klingai.com');
+          const isExpiredProviderUrl = isExpiringClipUrl(url);
           if (!isExpiredProviderUrl || !data.video_storage_path) {
             setCachedVideoUrl(url);
           }

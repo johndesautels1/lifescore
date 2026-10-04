@@ -27,6 +27,27 @@ import {
 // FIX #73: Import cost tracking utilities
 import { appendServiceCost, calculateKlingCost } from '../utils/costCalculator';
 
+/**
+ * Records what each newly made clip cost (FIX #73). A clip already finished
+ * when the reply came back was reused from the cache and cost nothing. Kling 3
+ * clips are priced per second; a Replicate Minimax back-up clip is recorded
+ * unpriced, because Replicate publishes no price for that model.
+ */
+function recordClipCosts(clips: Array<GrokVideo | null>, context: string): void {
+  for (const clip of clips) {
+    if (!clip || clip.status === 'completed') continue;
+    const priced = clip.provider === 'kling3';
+    appendServiceCost('kling', {
+      seconds: clip.durationSeconds,
+      provider: clip.provider,
+      priced,
+      cost: priced ? calculateKlingCost(clip.durationSeconds) : 0,
+      timestamp: Date.now(),
+      context,
+    });
+  }
+}
+
 const POLL_INTERVAL = 3000; // 3 seconds
 const MAX_POLL_ATTEMPTS = 120; // 6 minutes max (120 * 3s)
 
@@ -226,16 +247,9 @@ export function useGrokVideo(): UseGrokVideoReturn {
         videoPairRef.current = result.videos;
         setVideoPair(result.videos);
 
-        // FIX #73: Record Kling video cost (2 images for pair, skip if cached)
+        // FIX #73: Record what each newly made clip cost (skipped when all came from the cache)
         if (!result.cached) {
-          const imageCount = 2; // Winner + loser videos
-          const cost = calculateKlingCost(imageCount);
-          appendServiceCost('kling', {
-            imageCount,
-            cost,
-            timestamp: Date.now(),
-            context: 'new-life-videos',
-          });
+          recordClipCosts([result.videos.winner, result.videos.loser], 'new-life-videos');
         }
 
         // Check if cached/complete
@@ -281,16 +295,9 @@ export function useGrokVideo(): UseGrokVideoReturn {
         videoRef.current = result.video;
         setVideo(result.video);
 
-        // FIX #73: Record Kling video cost (1 image for court order, skip if cached)
+        // FIX #73: Record what the newly made clip cost (skipped when it came from the cache)
         if (!result.cached) {
-          const imageCount = 1;
-          const cost = calculateKlingCost(imageCount);
-          appendServiceCost('kling', {
-            imageCount,
-            cost,
-            timestamp: Date.now(),
-            context: 'court-order-video',
-          });
+          recordClipCosts([result.video], 'court-order-video');
         }
 
         // Check if cached/complete

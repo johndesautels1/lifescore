@@ -140,7 +140,7 @@ If you've forgotten your password:
   2. **InVideo Rendering** — The screenplay is submitted to InVideo's AI video engine for professional rendering
   3. **Status Polling** — The system checks every 10 seconds (up to 30 minutes) until your movie is ready
 - **5-Act, 12-Scene Story Structure**: The movie follows a dramatic arc across 5 acts — Struggle (life in the losing city), Discovery (finding CLUES & LIFE SCORE), Revelation (comparison results & verdict), Journey (packing up & traveling), and New Life (arrival, freedom & epilogue)
-- **Court Order Video**: A separate 10-second cinematic "perfect life" scene generated via Kling AI, available from the Judge Tab's Court Order section
+- **Court Order Video**: A separate 10-second cinematic "perfect life" scene generated with Kling 3 (through fal), available from the Judge Tab's Court Order section
 - **Admin VIP Override**: Admins can upload custom InVideo videos for specific cities or comparisons
 - **Tier Access**: Both Moving Movies AND Court Order videos require SOVEREIGN tier. Non-SOVEREIGN users receive a 403 "Access denied" response. Admin emails in DEV_BYPASS_EMAILS bypass the tier check.
 
@@ -277,7 +277,7 @@ We do not sell your personal information. You can opt out of any sharing by clic
 - Admin emails bypass the tier check (DEV_BYPASS_EMAILS env var)
 
 ### "Court Order video not playing" (Added 2026-02-28)
-- Court Order uses Kling AI (primary) with Replicate fallback
+- Court Order uses Kling 3 through fal (primary) with Replicate Minimax as the last back-up
 - Kling/Replicate CDN URLs expire after ~24 hours
 - After 3 failed playback attempts, the system auto-clears broken URLs
 - Click "SEE COURT ORDER" to regenerate a fresh video
@@ -457,7 +457,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 - **Stripe**: Payments
 - **ElevenLabs**: Text-to-speech (with OpenAI TTS fallback)
 - **Gamma**: Report generation
-- **Kling AI**: Primary video generation (JWT HS256 auth)
+- **Kling 3 (fal)**: Primary city clips (FAL_KEY, 'Authorization: Key')
 - **Replicate**: Fallback video generation (Minimax)
 - **Simli**: Avatar video (PRIMARY - WebRTC)
 - **HeyGen**: Gamma report video presenter (Olivia streaming + MP4) AND Cristiano "Go To My New City" cinematic video (Video Agent V2)
@@ -541,7 +541,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 
 ### Court Order Video (Kling AI Short)
 - **Trigger**: "SEE COURT ORDER" button in JudgeTab → CourtOrderVideo.tsx
-- **Provider**: Kling AI (primary) → Replicate Minimax (fallback)
+- **Provider**: Kling 3 through fal (primary) → Replicate Minimax (last back-up)
 - **Duration**: 10-second cinematic "perfect life" scene
 - **Polling**: Every 3s for up to 120 attempts (6 minutes)
 - **Permanent Storage**: court-order-videos Supabase bucket (50MB, MP4/WebM)
@@ -564,14 +564,14 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 | src/components/CourtOrderVideo.tsx | Court Order UI: generate, upload, play, save, download, share (887 lines) |
 | src/services/grokVideoService.ts | Kling/Replicate video API wrapper + detectCityType() |
 | src/hooks/useGrokVideo.ts | React hook: generation state, polling, progress interpolation |
-| api/video/grok-generate.ts | Kling AI + Replicate fallback endpoint (240s) |
+| api/video/grok-generate.ts | Kling 3 (fal) + Replicate Minimax back-up endpoint (240s) |
 | api/video/grok-status.ts | Video status polling endpoint (30s) |
 | api/video/invideo-override.ts | Admin VIP video override CRUD |
 
 ### Movie Pipeline Env Vars
 - **INVIDEO_MCP_URL**: InVideo MCP server endpoint
 - **INVIDEO_API_KEY**: InVideo API authentication
-- **KLING_VIDEO_API_KEY / KLING_VIDEO_SECRET**: Kling AI JWT auth (HS256)
+- **FAL_KEY**: Kling 3 city clips through fal
 - **REPLICATE_API_TOKEN**: Fallback video provider
 
 ### Movie Pipeline Timeouts
@@ -623,7 +623,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 ### Generation Flow
 - Two actions: new_life_videos (pair) and court_order_video (single)
 - Sequential generation: loser first, then winner (NOT parallel)
-- Kling AI primary → Replicate Minimax fallback
+- Kling 3 through fal primary → Replicate Minimax last back-up
 - Timeout: 240 seconds
 
 ### Playback
@@ -841,7 +841,7 @@ A formal **Deed of Assignment of Intellectual Property** assigns all IP from sol
 ## DPA Status
 
 Signed: Supabase, Stripe, OpenAI, Anthropic, ElevenLabs, Resend, Vercel
-Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, Kling AI, Replicate, Simli
+Pending: Google, xAI, Perplexity, D-ID, HeyGen, Tavily, Gamma, fal.ai (Kling 3), Replicate, Simli
 
 ## Annual Calendar
 
@@ -1069,7 +1069,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buc
 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
 
 ### Required (Features)
-ELEVENLABS_API_KEY, SIMLI_API_KEY, KLING_VIDEO_API_KEY, KLING_VIDEO_SECRET, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
+ELEVENLABS_API_KEY, SIMLI_API_KEY, FAL_KEY, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
 
 ### Optional
 GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, INVIDEO_MCP_URL, INVIDEO_API_KEY, KV_REST_API_URL, KV_REST_API_TOKEN

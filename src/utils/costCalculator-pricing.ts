@@ -22,6 +22,15 @@ export const TAVILY_PLAN_PER_CREDIT = 0.0075;
 /** Price of a credit after the plan's monthly credits are used. */
 export const TAVILY_OVERAGE_PER_CREDIT = 0.008;
 
+/**
+ * Kling 3 Standard city clips through fal, sound on (John, 4 Oct 2026): fal's
+ * model page for fal-ai/kling-video/v3/standard/text-to-video, read 4 Oct 2026,
+ * charges $0.126 per second with audio ($0.084 without). Clips made by the
+ * Replicate Minimax back-up are not priced: Replicate publishes no price for
+ * minimax/video-01 on its model or pricing pages (checked 4 Oct 2026).
+ */
+export const KLING3_USD_PER_SECOND_WITH_SOUND = 0.126;
+
 export const API_PRICING = {
   // TODAY'S MODELS ARE NOT LISTED HERE: their ids and published prices live in
   // api/shared/models.ts and are priced with calculateModelCost(). The ids below are
@@ -138,7 +147,7 @@ export const API_PRICING = {
   'heygen': { perSecond: 0.032, name: 'HeyGen Avatar', icon: '🎥' },
 
   // IMAGE GENERATION SERVICES
-  'kling': { perImage: 0.05, name: 'Kling AI', icon: '🖼️' }
+  'kling': { perSecond: KLING3_USD_PER_SECOND_WITH_SOUND, name: 'Kling 3 city clips (fal, with sound)', icon: '🎬' }
 } as const;
 
 // ============================================================================
@@ -206,7 +215,14 @@ export interface AvatarCost {
 
 // Kling Image Generation Cost
 export interface KlingCost {
-  imageCount: number;
+  /** Seconds of clip made (Kling 3 is priced per second). */
+  seconds?: number;
+  /** Who made the clip: 'kling3' or the 'replicate' back-up. */
+  provider?: string;
+  /** False for a back-up clip whose price is not published (cost 0). */
+  priced?: boolean;
+  /** Older rows counted clips as 'images' at $0.05 each. */
+  imageCount?: number;
   cost: number;
   timestamp: number;
   context?: string;

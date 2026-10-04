@@ -11,6 +11,7 @@ export {
   TAVILY_PLAN_MONTHLY_CREDITS,
   TAVILY_PLAN_PER_CREDIT,
   TAVILY_OVERAGE_PER_CREDIT,
+  KLING3_USD_PER_SECOND_WITH_SOUND,
 } from './costCalculator-pricing';
 export type {
   TokenUsage,

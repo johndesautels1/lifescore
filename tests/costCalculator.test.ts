@@ -18,6 +18,7 @@ import {
 } from '../src/utils/costCalculator-functions';
 import {
   API_PRICING,
+  KLING3_USD_PER_SECOND_WITH_SOUND,
   TAVILY_OVERAGE_PER_CREDIT,
   TAVILY_PLAN_MONTHLY_CREDITS,
   TAVILY_PLAN_PER_CREDIT,
@@ -195,12 +196,13 @@ describe('calculateAvatarCost', () => {
 // ============================================================================
 
 describe('calculateKlingCost', () => {
-  it('calculates per-image cost', () => {
-    // $0.05 per image
-    expect(calculateKlingCost(5)).toBeCloseTo(0.25, 4);
+  it('prices a Kling 3 clip per second, sound on ($0.126/s, fal, 4 Oct 2026)', () => {
+    expect(KLING3_USD_PER_SECOND_WITH_SOUND).toBe(0.126);
+    expect(calculateKlingCost(8)).toBeCloseTo(1.008, 6);
+    expect(calculateKlingCost(10)).toBeCloseTo(1.26, 6);
   });
 
-  it('returns zero for zero images', () => {
+  it('returns zero for zero seconds', () => {
     expect(calculateKlingCost(0)).toBe(0);
   });
 });

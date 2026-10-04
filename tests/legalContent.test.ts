@@ -79,7 +79,7 @@ describe('the supplier register names every supplier the code calls', () => {
     [/simli\.ai/, 'Simli'],
     [/api\.d-id\.com/, 'D-ID'],
     [/api\.replicate\.com/, 'Replicate'],
-    [/klingai\.com/, 'Kling'],
+    [/klingai\.com|queue\.fal\.run|fal\.media/, 'fal'],
     [/invideo\.io/, 'InVideo'],
     [/api\.resend\.com/, 'Resend'],
     [/from 'stripe'/, 'Stripe'],

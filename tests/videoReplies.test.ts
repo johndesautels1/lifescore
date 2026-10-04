@@ -8,8 +8,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   idText,
-  readGrokVideo,
-  readKlingTask,
   readMcpToolRefusal,
   readMcpToolResult,
   readReplicatePrediction,
@@ -133,44 +131,3 @@ describe('readReplicatePrediction', () => {
   });
 });
 
-describe('readKlingTask', () => {
-  it('reads a successful query with its first video', () => {
-    const r = readKlingTask({
-      code: 0,
-      message: 'SUCCEED',
-      data: { task_id: 't-1', task_status: 'succeed', task_result: { videos: [{ id: 'v', url: 'https://k/v.mp4' }] } },
-    });
-    expect(r.code).toBe(0);
-    expect(r.data?.task_id).toBe('t-1');
-    expect(r.data?.task_result?.videos?.[0]?.url).toBe('https://k/v.mp4');
-  });
-
-  it('keeps Kling\'s own error code and message when there is no data', () => {
-    expect(readKlingTask({ code: 1201, message: 'not supported' })).toEqual({ code: 1201, message: 'not supported' });
-  });
-
-  it('a reply with no code is not read as success', () => {
-    expect(readKlingTask({ data: { task_id: 't' } }).code).toBeUndefined();
-    expect(readKlingTask('oops').code).toBeUndefined();
-  });
-});
-
-describe('readGrokVideo', () => {
-  it('reads the fields the status check uses', () => {
-    expect(readGrokVideo({ id: 'g1', status: 'completed', video_url: 'https://x/v.mp4', extra: 1 })).toEqual({
-      id: 'g1',
-      status: 'completed',
-      video_url: 'https://x/v.mp4',
-      error: undefined,
-    });
-  });
-
-  it('ignores wrongly typed fields', () => {
-    expect(readGrokVideo({ id: 3, video_url: ['x'], error: { message: 'm' } })).toEqual({
-      id: undefined,
-      status: undefined,
-      video_url: undefined,
-      error: undefined,
-    });
-  });
-});

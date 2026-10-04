@@ -1,7 +1,8 @@
 /**
  * LIFE SCORE - Grok Video Generation API
  *
- * Generates videos using Grok Imagine API with Replicate fallback.
+ * Generates city clips with Kling 3 through fal (api/shared/falKling.ts), with
+ * Replicate Minimax as the last back-up. (The route keeps its old name and table.)
  * Supports "New Life Videos" (winner/loser pair) and "Court Order" (perfect life).
  *
  * Clues Intelligence LTD
@@ -13,7 +14,9 @@ import { serviceDb } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature, consumeOrDeny, refundFeature } from '../shared/entitlements.js';
 import { persistVideoToStorage } from '../shared/persistVideo.js';
-import { readGrokVideo, readKlingTask, readReplicatePrediction } from '../shared/videoReplies.js';
+import { readReplicatePrediction } from '../shared/videoReplies.js';
+import { submitKlingClip } from '../shared/falKling.js';
+import { isExpiringClipUrl } from '../shared/clipHosts.js';
 import { notifyJobComplete } from '../shared/notifyJob.js';
 import crypto from 'crypto';
 
@@ -28,15 +31,9 @@ export const config = {
   maxDuration: 240, // 4 minutes for sequential video generation (loser + winner)
 };
 
-// Grok API configuration
-const GROK_API_URL = process.env.GROK_API_URL || 'https://api.x.ai/v1';
-const GROK_VIDEO_ENDPOINT = '/videos/generations'; // TBD - confirm exact endpoint
+// Kling 3 through fal is the primary (api/shared/falKling.ts); Replicate Minimax is the last back-up.
 
-// Kling AI - Primary video generation (high quality, 5-10 sec videos with sound)
-const KLING_API_URL = 'https://api-singapore.klingai.com';
-const KLING_MODEL = 'kling-v2-6'; // Latest model with sound support
-
-// Replicate fallback - text-to-video model (if Kling fails)
+// Replicate back-up - text-to-video model (if Kling 3 fails)
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 // Use Minimax Video-01 for high-quality text-to-video generation
 const REPLICATE_VIDEO_MODEL = 'minimax/video-01';
@@ -295,178 +292,22 @@ function generateCacheKey(cityName: string, videoType: VideoType): string {
 }
 
 // ============================================================================
-// VIDEO GENERATION - GROK PRIMARY
-// ============================================================================
-
-async function generateWithGrok(prompt: string): Promise<{ predictionId: string; status: string } | null> {
-  const grokApiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
-
-  if (!grokApiKey) {
-    console.log('[GROK-VIDEO] No Grok API key, skipping Grok provider');
-    return null;
-  }
-
-  try {
-    console.log('[GROK-VIDEO] Attempting Grok video generation...');
-
-    const response = await fetch(`${GROK_API_URL}${GROK_VIDEO_ENDPOINT}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${grokApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt,
-        duration: 10, // 10 seconds
-        style: 'cinematic',
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn('[GROK-VIDEO] Grok API error:', response.status, errorText);
-      return null; // Fall back to Replicate
-    }
-
-    const result = readGrokVideo(await response.json());
-    if (!result.id) {
-      console.warn('[GROK-VIDEO] Grok accepted the job but sent no id');
-      return null; // Fall back to Replicate
-    }
-    console.log('[GROK-VIDEO] Grok generation started:', result.id);
-
-    return {
-      predictionId: result.id,
-      status: result.status || 'processing',
-    };
-  } catch (error) {
-    console.warn('[GROK-VIDEO] Grok generation failed:', error);
-    return null; // Fall back to Replicate
-  }
-}
-
-// ============================================================================
-// VIDEO GENERATION - KLING AI (Primary - High Quality)
+// VIDEO GENERATION - KLING 3 THROUGH FAL (primary; api/shared/falKling.ts)
 // ============================================================================
 
 /**
- * Generate JWT token for Kling API authentication
- * Uses HS256 algorithm per Kling API docs
+ * Starts the clip on Kling 3. On failure the reason comes back, so the
+ * Replicate back-up can be tried and the reason shown to admins.
  */
-function generateKlingJWT(): string | null {
-  const accessKey = process.env.KLING_VIDEO_API_KEY;
-  const secretKey = process.env.KLING_VIDEO_SECRET;
-
-  if (!accessKey || !secretKey) {
-    console.log('[KLING-VIDEO] No Kling API credentials configured');
-    return null;
+async function generateWithKling3(prompt: string, durationSeconds: number): Promise<{ predictionId: string; status: string; error?: string }> {
+  console.log('[KLING3] Submitting a', durationSeconds, 's clip | prompt length:', prompt.length);
+  const submitted = await submitKlingClip(prompt, durationSeconds);
+  if (!submitted.ok) {
+    console.warn('[KLING3] Could not start the clip:', submitted.error);
+    return { predictionId: '', status: 'failed', error: submitted.error };
   }
-
-  // JWT Header
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT'
-  };
-
-  // JWT Payload
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: accessKey,
-    exp: now + 1800, // 30 minutes validity
-    nbf: now - 5     // Valid from 5 seconds ago
-  };
-
-  // Base64URL encode
-  const base64UrlEncode = (obj: object): string => {
-    return Buffer.from(JSON.stringify(obj))
-      .toString('base64')
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-  };
-
-  const headerEncoded = base64UrlEncode(header);
-  const payloadEncoded = base64UrlEncode(payload);
-
-  // Create signature using HMAC-SHA256
-  const signatureInput = `${headerEncoded}.${payloadEncoded}`;
-  const signature = crypto
-    .createHmac('sha256', secretKey)
-    .update(signatureInput)
-    .digest('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-
-  return `${headerEncoded}.${payloadEncoded}.${signature}`;
-}
-
-/**
- * Generate video using Kling AI API
- * Returns task_id for polling, or null if failed
- */
-async function generateWithKling(prompt: string, durationSeconds: number = 10): Promise<{ predictionId: string; status: string; error?: string } | null> {
-  const token = generateKlingJWT();
-
-  if (!token) {
-    console.warn('[KLING-VIDEO] JWT generation failed — KLING_VIDEO_API_KEY or KLING_VIDEO_SECRET missing');
-    return { predictionId: '', status: 'failed', error: 'Kling JWT failed: missing KLING_VIDEO_API_KEY or KLING_VIDEO_SECRET' };
-  }
-
-  try {
-    console.log('[KLING-VIDEO] Attempting Kling video generation...');
-    console.log('[KLING-VIDEO] Model:', KLING_MODEL, '| Duration:', durationSeconds, '| Prompt length:', prompt.length);
-
-    const requestBody = {
-      model_name: KLING_MODEL,
-      prompt: prompt.slice(0, 2500), // Max 2500 chars
-      duration: String(durationSeconds <= 5 ? 5 : 10), // "5" or "10"
-      aspect_ratio: '16:9',
-      mode: 'std', // Standard mode (cost-effective)
-      // Note: sound requires 'pro' mode on kling-v2-6; std mode does not support sound
-      // See: Kling API error 1201 - "model/mode(kling-v2-6/std) is not supported with sound on"
-    };
-
-    const response = await fetch(`${KLING_API_URL}/v1/videos/text2video`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      const errorMsg = `Kling HTTP ${response.status}: ${errorText.slice(0, 500)}`;
-      console.warn('[KLING-VIDEO] Kling API error:', response.status, errorText);
-      return { predictionId: '', status: 'failed', error: errorMsg };
-    }
-
-    const result = readKlingTask(await response.json());
-
-    if (result.code !== 0) {
-      const errorMsg = `Kling API error ${result.code}: ${result.message || 'unknown'}`;
-      console.warn('[KLING-VIDEO] Kling API returned error:', result.code, result.message);
-      return { predictionId: '', status: 'failed', error: errorMsg };
-    }
-
-    const taskId = result.data?.task_id;
-    if (!taskId) {
-      console.warn('[KLING-VIDEO] Kling accepted the job but sent no task id');
-      return { predictionId: '', status: 'failed', error: 'Kling accepted the job but sent no task id' };
-    }
-    console.log('[KLING-VIDEO] Kling generation started:', taskId);
-
-    return {
-      predictionId: taskId,
-      status: result.data?.task_status || 'submitted',
-    };
-  } catch (error) {
-    const errorMsg = `Kling exception: ${error instanceof Error ? error.message : String(error)}`;
-    console.warn('[KLING-VIDEO] Kling generation failed:', error);
-    return { predictionId: '', status: 'failed', error: errorMsg };
-  }
+  console.log('[KLING3] Clip started:', submitted.requestId);
+  return { predictionId: submitted.requestId, status: 'processing' };
 }
 
 // ============================================================================
@@ -543,8 +384,7 @@ async function checkCache(cityName: string, videoType: VideoType): Promise<GrokV
     // FIX: If cache hit has a temporary provider URL (no storage path), migrate to permanent storage.
     // This prevents the URL-expiration problem that caused videos to be lost.
     if (data?.video_url && !data.video_storage_path) {
-      const isTemporaryUrl = data.video_url.includes('replicate.delivery') ||
-                             data.video_url.includes('klingai.com');
+      const isTemporaryUrl = isExpiringClipUrl(data.video_url);
 
       if (isTemporaryUrl) {
         console.log('[GROK-VIDEO] Cache hit has temporary provider URL, attempting migration:', data.id);
@@ -694,17 +534,14 @@ async function generateSingleVideo(
   const prompt = generatePrompt(cityName, videoType, cityType);
   const durationSec = videoType === 'perfect_life' ? 10 : 8;
 
-  // Try Kling first (high quality with sound), then Replicate fallback
-  // Note: Grok video API doesn't exist publicly, so we skip it
+  // Kling 3 first (with its own sound), then the Replicate Minimax back-up
   let klingError: string | undefined;
-  let result = await generateWithKling(prompt, durationSec);
-  let provider = 'kling';
+  let result: { predictionId: string; status: string; error?: string } = await generateWithKling3(prompt, durationSec);
+  let provider = 'kling3';
 
-  // Check if Kling returned an error (now returns error info instead of null)
-  if (!result || result.error) {
-    klingError = result?.error || 'Kling returned null';
-    console.log('[VIDEO] Kling failed:', klingError, '— trying Replicate...');
-    result = null;
+  if (result.error) {
+    klingError = result.error;
+    console.log('[VIDEO] Kling 3 failed:', klingError, '— trying the Replicate back-up...');
 
     try {
       result = await generateWithReplicate(prompt);
@@ -989,6 +826,7 @@ export default async function handler(
     // Provide more specific error info for debugging
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const isCredentialsError = errorMessage.includes('missing credentials') ||
+                               errorMessage.includes('FAL_KEY') ||
                                errorMessage.includes('REPLICATE_API_TOKEN') ||
                                errorMessage.includes('No video provider');
 
@@ -996,7 +834,7 @@ export default async function handler(
       error: 'Failed to generate video',
       message: errorMessage,
       hint: isCredentialsError
-        ? 'Video provider credentials not configured. Please add KLING_VIDEO_API_KEY + KLING_VIDEO_SECRET or REPLICATE_API_TOKEN to Vercel environment variables.'
+        ? 'Video provider credentials not configured. Please add FAL_KEY (Kling 3) or REPLICATE_API_TOKEN to Vercel environment variables.'
         : 'Please try again or contact support.',
     });
   }

@@ -162,14 +162,10 @@ export function calculateAvatarCost(
 }
 
 /**
- * Calculate Kling Image Generation cost
+ * Cost of a Kling 3 city clip: seconds × the per-second price (sound on).
  */
-export function calculateKlingCost(imageCount: number): number {
-  const pricing = API_PRICING['kling'];
-  if ('perImage' in pricing) {
-    return imageCount * pricing.perImage;
-  }
-  return 0;
+export function calculateKlingCost(seconds: number): number {
+  return seconds * API_PRICING['kling'].perSecond;
 }
 
 // ============================================================================

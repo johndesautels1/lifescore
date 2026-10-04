@@ -446,7 +446,7 @@ Report analytics and audit trail.
 ### 2.5 Video Tables
 
 #### `grok_videos`
-Video generation records for New Life Videos and Court Orders. Primary provider: Kling AI; fallback: Replicate Minimax.
+Video generation records for New Life Videos and Court Orders. Primary provider: Kling 3 through fal; last back-up: Replicate Minimax.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -459,7 +459,7 @@ Video generation records for New Life Videos and Court Orders. Primary provider:
 | video_url | TEXT | | CDN video URL |
 | thumbnail_url | TEXT | | Thumbnail URL |
 | duration_seconds | NUMERIC | DEFAULT 8 | Video length |
-| provider | TEXT | DEFAULT 'grok' | 'grok', 'replicate' (also used for 'kling') |
+| provider | TEXT | DEFAULT 'grok' | 'kling3' (Kling 3 through fal, since 2026-10-04) or 'replicate'; 'kling' and 'grok' remain allowed for older rows (CHECK, migration `20261004_grok_videos_kling3_provider`) |
 | prediction_id | TEXT | | Provider task/prediction ID |
 | status | TEXT | DEFAULT 'pending' | 'pending', 'processing', 'completed', 'failed' |
 | error_message | TEXT | | Error details |
@@ -824,7 +824,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | POST | `/api/movie/screenplay` | Yes (JWT) | Stage 1: Claude Sonnet 4.6 generates 12-scene JSON screenplay with QA validation (maxDuration: 300s) |
 | POST | `/api/movie/generate` | Yes (JWT) | Stage 2: Submit screenplay to InVideo MCP for 10-min 4K movie rendering (maxDuration: 300s) |
 | GET | `/api/movie/generate?movieId=X` | Yes (JWT) | Check movie generation status / get video URL |
-| POST | `/api/video/grok-generate` | Yes (JWT) | Generate videos via Kling AI (primary) with Replicate fallback. **IDOR fix 2026-02-26:** userId overridden with auth user ID |
+| POST | `/api/video/grok-generate` | Yes (JWT) | Generate videos via Kling 3 through fal (primary) with Replicate Minimax as the last back-up. **IDOR fix 2026-02-26:** userId overridden with auth user ID |
 | GET, POST | `/api/video/grok-status` | Yes (JWT) | Check video generation status; POST supports cache checking |
 | GET, POST, DELETE | `/api/video/invideo-override` | Yes (JWT) + Admin (POST/DELETE) | Admin-managed InVideo overrides for Court Order videos |
 | POST | `/api/avatar/generate-judge-video` | Yes (JWT) | Generate Cristiano judge videos via Replicate Wav2Lip |
@@ -1166,7 +1166,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Service | Purpose | Models/Features |
 |---------|---------|-----------------|
-| **Kling AI** | Primary video generation (New Life Videos, Court Orders) | kling-v2-6, 5-10s clips, JWT auth (HS256) |
+| **Kling 3 (fal)** | Primary video generation (New Life Videos, Court Orders) | fal-ai/kling-video/v3/standard/text-to-video, 3–15 s clips with sound, `Authorization: Key <FAL_KEY>` |
 | **Replicate** | Video fallback + Judge avatar generation | Minimax Video-01, Wav2Lip |
 | **Simli AI** | Real-time Olivia avatar | WebRTC streaming, PCM audio |
 | **D-ID** | Fallback avatar streaming | WebRTC Streams API |
@@ -1269,8 +1269,7 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 
 | Variable | Purpose |
 |----------|---------|
-| `KLING_VIDEO_API_KEY` | Kling AI video generation |
-| `KLING_VIDEO_SECRET` | Kling AI secret for JWT signing |
+| `FAL_KEY` | Kling 3 city clips through fal |
 | `REPLICATE_API_TOKEN` | Replicate (video fallback + Wav2Lip) |
 | `SIMLI_API_KEY` | Simli AI avatar |
 | `SIMLI_FACE_ID` | Simli face/avatar ID |
@@ -1352,7 +1351,7 @@ lifescore/
 │   │   └── simli-speak.ts            # Simli TTS audio
 │   │
 │   ├── video/                        # Grok/Kling video endpoints
-│   │   ├── grok-generate.ts          # Kling AI + Replicate fallback
+│   │   ├── grok-generate.ts          # Kling 3 (fal) + Replicate Minimax back-up
 │   │   ├── grok-status.ts            # Status + cache check
 │   │   └── invideo-override.ts       # Admin InVideo overrides
 │   │

@@ -76,9 +76,8 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'ELEVENLABS_EMILIA_VOICE_ID', description: 'Emilia help widget voice ID', category: 'Text-to-Speech', side: 'server' },
 
   // --- Video Generation ---
-  { name: 'REPLICATE_API_TOKEN', description: 'Replicate — Stable Video Diffusion fallback', category: 'Video Generation', side: 'server' },
-  { name: 'KLING_VIDEO_API_KEY', description: 'Kling AI — High-quality video generation', category: 'Video Generation', side: 'server' },
-  { name: 'KLING_VIDEO_SECRET', description: 'Kling AI secret key', category: 'Video Generation', side: 'server' },
+  { name: 'FAL_KEY', description: 'fal — Kling 3 city clips (primary)', category: 'Video Generation', side: 'server' },
+  { name: 'REPLICATE_API_TOKEN', description: 'Replicate — Minimax city clips (last back-up), judge-video and image back-ups', category: 'Video Generation', side: 'server' },
 
   // --- Report Generation (Gamma) ---
   { name: 'GAMMA_API_KEY', description: 'Gamma — Visual report generation', category: 'Reports (Gamma)', side: 'server' },

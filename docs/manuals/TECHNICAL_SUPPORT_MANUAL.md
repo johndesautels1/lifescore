@@ -618,7 +618,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | Service | Purpose |
 |---------|---------|
 | Replicate | Video generation (Minimax) |
-| Kling AI | Primary video generation |
+| fal (Kling 3) | Primary city clips |
 | ElevenLabs | Text-to-speech |
 | Gamma | PDF/PPTX report generation |
 | Simli | Avatar video (PRIMARY) |
@@ -743,7 +743,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| /api/video/grok-generate | POST | Start video generation (two actions: `new_life_videos` pair, `court_order_video` single). Kling AI primary, Replicate fallback. SOVEREIGN only. |
+| /api/video/grok-generate | POST | Start video generation (two actions: `new_life_videos` pair, `court_order_video` single). Kling 3 through fal primary, Replicate fallback. SOVEREIGN only. |
 | /api/video/grok-status | GET | Check video status. HEAD-validates replicate.delivery URLs, auto-marks expired as failed. |
 | /api/video/invideo-override | POST | Admin cinematic prompt override per comparison |
 | /api/avatar/generate-judge-video | POST | Generate judge video (JWT auth required) |
@@ -1348,15 +1348,15 @@ Script Generation (LLM) → TTS Audio (ElevenLabs) →
 → Poll for completion → Return URL
 ```
 
-### 9.2 Grok/Kling Video Flow (Updated 2026-02-13)
+### 9.2 City Clip Flow (Updated 2026-10-04)
 
 ```
 Client Request → /api/video/grok-generate →
 → Two actions supported:
    1. "new_life_videos" — generates winner (FREEDOM) + loser (IMPRISONMENT) pair
    2. "court_order_video" — generates single "perfect life" video
-→ Try Kling AI (primary, model kling-v2-6, 10s duration, 'std' mode) →
-→ Fallback to Replicate Minimax (minimax/video-01) on Kling failure →
+→ Try Kling 3 through fal (primary: fal-ai/kling-video/v3/standard/text-to-video, 8 s mood / 10 s perfect-life clips, Kling's own sound on) →
+→ Fall back to Replicate Minimax (minimax/video-01) if Kling 3 cannot start →
 → Store job ID in grok_videos table →
 → Client polls /api/video/grok-status at 3s intervals →
 → Return video URL when complete (max 6 min / 120 poll attempts)
@@ -1371,22 +1371,13 @@ Automatic city type classification for prompt optimization: beach, mountain, urb
 **Stale Processing Detection:**
 Auto-fails processing records older than 3 minutes to prevent stuck video jobs.
 
-### 9.3 Kling AI JWT Generation
+### 9.3 Kling 3 through fal (since 2026-10-04)
 
-```typescript
-// api/video/grok-status.ts
-function generateKlingJWT(accessKey: string, secretKey: string): string {
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const payload = {
-    iss: accessKey,
-    exp: Math.floor(Date.now() / 1000) + 1800, // 30 min
-    nbf: Math.floor(Date.now() / 1000) - 5
-  };
-  // Sign with HMAC-SHA256 using secretKey
-}
-```
-
-**Kling Error Code 1201:** Model/mode not supported with sound. App uses 'std' mode (no sound, cost-effective).
+`api/shared/falKling.ts` holds the questionnaire engine's wire shapes, re-checked on fal's model page on 2026-10-04:
+- Submit `POST https://queue.fal.run/fal-ai/kling-video/v3/standard/text-to-video` with `Authorization: Key <FAL_KEY>` and `{ prompt, duration "3"–"15", aspect_ratio "16:9", negative_prompt }` → `{ request_id }`.
+- Status `GET https://queue.fal.run/fal-ai/kling-video/requests/{id}/status`; result `GET https://queue.fal.run/fal-ai/kling-video/requests/{id}` → `{ video: { url } }`. Status and result live under the app `fal-ai/kling-video`, never the full endpoint.
+- Rows are saved with `provider = 'kling3'`. The status route asks fal about them and Replicate about `'replicate'` rows. Older `'kling'` and `'grok'` rows get a "please make it again" message.
+- Price: $0.126 per second with sound (cost table `KLING3_USD_PER_SECOND_WITH_SOUND`).
 
 ### 9.4 Video Status Values
 
@@ -1912,8 +1903,7 @@ User clicks Judge tab (JudgeTab.tsx)
 - `ELEVENLABS_API_KEY` - TTS for Olivia/Emilia/Judge
 - `ELEVENLABS_VOICE_ID` - Default voice ID
 - `SIMLI_API_KEY` - Primary avatar video generation (server-side only; client fetches via /api/simli-config)
-- `KLING_VIDEO_API_KEY` - Primary video generation (Kling AI)
-- `KLING_VIDEO_SECRET` - Kling JWT signing (HMAC-SHA256)
+- `FAL_KEY` - Kling 3 city clips through fal (primary)
 - `REPLICATE_API_TOKEN` - Video generation (Wav2Lip/Minimax fallback)
 - `GAMMA_API_KEY` - PDF/PPTX report generation
 - `RESEND_API_KEY` - Email alerts and notifications
@@ -2005,7 +1995,7 @@ npm run preview
 ### 13.3 Video Generation Stuck
 
 1. Check `grok_videos` table for job status
-2. Verify Kling/Replicate API keys
+2. Verify the fal (Kling 3) and Replicate keys
 3. Check for JWT expiration
 4. Review error_message field
 
@@ -2365,7 +2355,7 @@ Comprehensive quota tracking for all 16 API providers with admin-configurable li
 | `d_id` | D-ID Avatar | 👤 | credits | 20 | ~$0.025/sec |
 | `heygen` | HeyGen Avatar | 🎥 | seconds | 600 | $0.032/sec |
 | `replicate` | Replicate Wav2Lip | 🎬 | dollars | $10.00 | $0.0014/sec |
-| `kling` | Kling AI Video | 🖼️ | credits | 100 | ~$0.05/image |
+| `kling` | Kling AI Video | 🖼️ | credits | 100 | $0.126/sec with sound (Kling 3 through fal) |
 | `gamma` | Gamma Reports | 📊 | credits | 50 | ~$0.50/generation |
 
 ### 17.2 Warning Thresholds
