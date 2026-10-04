@@ -19,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { UserTier } from '../types/database';
 import { toastError } from '../utils/toast';
+import { maxAnnualSavingPercent } from '../utils/annualSaving';
 import './PricingPage.css';
 
 // ============================================================================
@@ -217,7 +218,7 @@ const PricingPage: React.FC = () => {
             onClick={() => setBillingInterval('annual')}
           >
             Annual
-            <span className="save-badge">Save up to 28%</span>
+            <span className="save-badge">Save up to {maxAnnualSavingPercent(PRICING_TIERS)}%</span>
           </button>
         </div>
 

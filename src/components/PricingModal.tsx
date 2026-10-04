@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTierAccess } from '../hooks/useTierAccess';
 import type { UserTier } from '../types/database';
 import { toastError } from '../utils/toast';
+import { maxAnnualSavingPercent } from '../utils/annualSaving';
 import './PricingModal.css';
 
 // ============================================================================
@@ -234,7 +235,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
             onClick={() => setBillingInterval('annual')}
           >
             Annual
-            <span className="save-tag">Save 28%</span>
+            <span className="save-tag">Save up to {maxAnnualSavingPercent(PRICING_TIERS)}%</span>
           </button>
         </div>
 
