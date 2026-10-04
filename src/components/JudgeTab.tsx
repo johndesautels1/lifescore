@@ -25,6 +25,7 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback, startTransition } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
+import GlassHover from './hover/GlassHover';
 import type { ComparisonResult } from '../types/metrics';
 import { CATEGORIES } from '../shared/metrics';
 import { ALL_METROS } from '../data/metros';
@@ -183,7 +184,11 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
 
   // Confidence interval hover cards — which card is open
   const [hoverCard, setHoverCard] = useState<'city1' | 'city2' | 'confidence' | null>(null);
-  const hoverCardRef = useRef<HTMLDivElement>(null);
+  // Each card opens from its own score or badge (GlassHover: dark glass, centred on mobile, inside the window on desktop)
+  const city1ScoreRef = useRef<HTMLSpanElement>(null);
+  const city2ScoreRef = useRef<HTMLSpanElement>(null);
+  const confidenceRef = useRef<HTMLSpanElement>(null);
+  const closeHoverCard = useCallback(() => setHoverCard(null), []);
   const { createJob } = useJobTracker();
 
   // Video generation progress simulation (Replicate doesn't return %)
@@ -489,17 +494,6 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Close hover card on outside click
-  useEffect(() => {
-    if (!hoverCard) return;
-    const handler = (e: MouseEvent) => {
-      if (hoverCardRef.current && !hoverCardRef.current.contains(e.target as Node)) {
-        setHoverCard(null);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [hoverCard]);
 
   // Cockpit-style time formatting
   const formatTime = (date: Date) => {
@@ -1971,6 +1965,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
             <div className="card-score hover-card-anchor">
               <span
+                ref={city1ScoreRef}
                 className="score-value score-clickable"
                 onClick={() => setHoverCard(hoverCard === 'city1' ? null : 'city1')}
                 title="Tap for confidence details"
@@ -1984,7 +1979,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               {hoverCard === 'city1' && (() => {
                 const stats = getConfidenceStats('city1');
                 return (
-                  <div className="confidence-hover-card" ref={hoverCardRef}>
+                  <GlassHover anchorRef={city1ScoreRef} open onClose={closeHoverCard} prefer="below" label="Score confidence" className="confidence-hover-card">
                     <div className="hover-card-header">
                       <span className="hover-card-title">Score Confidence</span>
                       <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
@@ -2027,7 +2022,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                         <p className="hover-card-empty">Detailed consensus data not available for this comparison.</p>
                       </div>
                     )}
-                  </div>
+                  </GlassHover>
                 );
               })()}
             </div>
@@ -2047,6 +2042,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             <div className="confidence-badge hover-card-anchor">
               <span className="confidence-label">CONFIDENCE</span>
               <span
+                ref={confidenceRef}
                 className={`confidence-value confidence-clickable ${judgeReport?.summaryOfFindings.overallConfidence ?? 'pending'}`}
                 onClick={() => setHoverCard(hoverCard === 'confidence' ? null : 'confidence')}
                 title="Tap for confidence breakdown"
@@ -2059,7 +2055,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 const conf = judgeReport?.summaryOfFindings.overallConfidence ?? 'pending';
                 const enhanced = comparisonResult as EnhancedComparisonResult | null;
                 return (
-                  <div className="confidence-hover-card confidence-center-card" ref={hoverCardRef}>
+                  <GlassHover anchorRef={confidenceRef} open onClose={closeHoverCard} prefer="below" label="Confidence breakdown" className="confidence-hover-card confidence-center-card">
                     <div className="hover-card-header">
                       <span className="hover-card-title">Confidence Level</span>
                       <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
@@ -2093,7 +2089,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                         </div>
                       )}
                     </div>
-                  </div>
+                  </GlassHover>
                 );
               })()}
             </div>
@@ -2113,6 +2109,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
             </div>
             <div className="card-score hover-card-anchor">
               <span
+                ref={city2ScoreRef}
                 className="score-value score-clickable"
                 onClick={() => setHoverCard(hoverCard === 'city2' ? null : 'city2')}
                 title="Tap for confidence details"
@@ -2126,7 +2123,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
               {hoverCard === 'city2' && (() => {
                 const stats = getConfidenceStats('city2');
                 return (
-                  <div className="confidence-hover-card" ref={hoverCardRef}>
+                  <GlassHover anchorRef={city2ScoreRef} open onClose={closeHoverCard} prefer="below" label="Score confidence" className="confidence-hover-card">
                     <div className="hover-card-header">
                       <span className="hover-card-title">Score Confidence</span>
                       <button className="hover-card-close" onClick={() => setHoverCard(null)}>×</button>
@@ -2169,7 +2166,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                         <p className="hover-card-empty">Detailed consensus data not available for this comparison.</p>
                       </div>
                     )}
-                  </div>
+                  </GlassHover>
                 );
               })()}
             </div>

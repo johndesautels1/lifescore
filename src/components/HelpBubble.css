@@ -168,40 +168,6 @@
 }
 
 /* Tooltip on hover */
-.help-bubble-tooltip {
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: #1e293b;
-  color: #f1f5f9;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  pointer-events: none;
-}
-
-.help-bubble-tooltip::before {
-  content: '';
-  position: absolute;
-  left: -6px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-width: 6px;
-  border-style: solid;
-  border-color: transparent #1e293b transparent transparent;
-}
-
-.help-bubble:hover .help-bubble-tooltip {
-  opacity: 1;
-  visibility: visible;
-}
 
 /* Notification state */
 .help-bubble.has-notification {
@@ -234,10 +200,6 @@
   }
 
   .help-bubble-label {
-    display: none;
-  }
-
-  .help-bubble-tooltip {
     display: none;
   }
 
@@ -289,9 +251,5 @@
 @media (prefers-contrast: high) {
   .help-bubble {
     border: 2px solid white;
-  }
-
-  .help-bubble-tooltip {
-    border: 1px solid #64748b;
   }
 }

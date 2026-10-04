@@ -58,6 +58,8 @@ Use the arrow keys, Home and End to move between tabs from the keyboard.
 
 **Always on screen** — the Olivia chat bubble (section 8) and the help button, *"Need help? Ask Emilia"* (section 12).
 
+**Hints and information cards** — rest the pointer on a button to see what it does. Information cards (a metric's **?** in Enhanced results, a score or the confidence on the Judge's Report) open beside what you pointed at on a computer, and in the middle of the screen on a phone; tap outside or press Escape to close them.
+
 **The footer** — company and contact details, the legal pages (Privacy, Terms, Cookies, Acceptable Use, Refunds, Do Not Sell or Share My Personal Information, US State Privacy Rights), **Cookie Settings**, **Plans and prices** and **About Clues Intelligence**.
 
 ---

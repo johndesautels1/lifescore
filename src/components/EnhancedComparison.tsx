@@ -13,6 +13,7 @@ import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProg
 import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
+import GlassHover from './hover/GlassHover';
 import { DealbreakersWarning, checkDealbreakers } from './DealbreakersWarning';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { DataSourcesModal } from './DataSourcesModal';
@@ -178,6 +179,72 @@ export interface LLMButtonState {
   result?: EvaluatorResult;
   categoryProgress?: CategoryBatchProgress[];
 }
+
+/**
+ * A metric's "?" and its "Why this matters" card. The card is a GlassHover:
+ * dark glass, centred on mobile, beside the "?" and inside the window on
+ * desktop (John, 4 Oct 2026). A mouse resting on the "?" opens it; a click pins
+ * it open until a click elsewhere, Escape or a scroll.
+ */
+const MetricWhyHover: React.FC<{ text: string; pinned: boolean; onToggle: () => void; onClose: () => void }> = ({
+  text,
+  pinned,
+  onToggle,
+  onClose,
+}) => {
+  const anchorRef = useRef<HTMLSpanElement | null>(null);
+  const [hovered, setHovered] = useState(false);
+  const leaveTimer = useRef<number | undefined>(undefined);
+
+  const stay = () => window.clearTimeout(leaveTimer.current);
+  const leave = () => {
+    window.clearTimeout(leaveTimer.current);
+    leaveTimer.current = window.setTimeout(() => setHovered(false), 150);
+  };
+  useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
+
+  const close = useCallback(() => {
+    setHovered(false);
+    onClose();
+  }, [onClose]);
+
+  return (
+    <span className="metric-tooltip">
+      <span
+        ref={anchorRef}
+        className="tooltip-trigger"
+        aria-label="Why this metric matters"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        onPointerEnter={(e) => {
+          if (e.pointerType !== 'mouse') return;
+          stay();
+          setHovered(true);
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType === 'mouse') leave();
+        }}
+      >
+        ?
+      </span>
+      <GlassHover
+        anchorRef={anchorRef}
+        open={pinned || hovered}
+        onClose={close}
+        label="Why this matters"
+        className="metric-why-hover"
+        width="min(340px, calc(100vw - 32px))"
+        onPointerEnter={stay}
+        onPointerLeave={leave}
+      >
+        <strong className="metric-why-title">Why this matters</strong>
+        <p>{text}</p>
+      </GlassHover>
+    </span>
+  );
+};
 
 export const LLMSelector: React.FC<LLMSelectorProps> = ({
   city1,
@@ -2145,16 +2212,12 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
                             <div className="metric-name-container">
                               <span className="metric-name">{metric.shortName}</span>
                               {tooltip && (
-                                <div className={`metric-tooltip ${activeTooltip === metric.id ? 'tooltip-active' : ''}`} onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveTooltip(activeTooltip === metric.id ? null : metric.id);
-                                }}>
-                                  <span className="tooltip-trigger" title={tooltip.whyMatters}>?</span>
-                                  <div className="tooltip-content">
-                                    <strong>Why This Matters:</strong>
-                                    <p>{tooltip.whyMatters}</p>
-                                  </div>
-                                </div>
+                                <MetricWhyHover
+                                  text={tooltip.whyMatters}
+                                  pinned={activeTooltip === metric.id}
+                                  onToggle={() => setActiveTooltip(activeTooltip === metric.id ? null : metric.id)}
+                                  onClose={() => setActiveTooltip(null)}
+                                />
                               )}
                             </div>
                           </div>

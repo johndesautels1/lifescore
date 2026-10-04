@@ -552,6 +552,7 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
         onClick={toggleOpen}
         onPointerDown={handlePointerDown}
         aria-label="Chat with Olivia"
+        title="Chat with Olivia"
         style={{ touchAction: 'none' }}
       >
         <div className="fab-inner">
@@ -562,7 +563,6 @@ const OliviaChatBubble: React.FC<OliviaChatBubbleProps> = ({ comparisonResult })
           </div>
         </div>
         {hasNewMessage && <span className="fab-badge">1</span>}
-        <span className="fab-tooltip">Chat with Olivia</span>
       </button>
     </div>
   );

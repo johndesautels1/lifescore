@@ -245,46 +245,17 @@
 }
 
 /* ── The popover card itself ── */
-.confidence-hover-card {
-  position: absolute;
-  top: calc(100% + 0.75rem);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  width: 280px;
-  background: rgba(13, 25, 50, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(201, 162, 39, 0.3);
-  border-radius: 10px;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(201, 162, 39, 0.08);
-  animation: hoverCardIn 0.2s ease-out;
+/* The card is a GlassHover (src/components/hover): dark glass, centred on
+   mobile, inside the window on desktop. Here: its width and no inner padding
+   (the header and body pad themselves). */
+.glass-hover.confidence-hover-card {
+  width: min(280px, calc(100vw - 32px));
+  padding: 0;
 }
 
 /* Center card on versus column */
-.confidence-center-card {
-  width: 300px;
-}
-
-@keyframes hoverCardIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-/* Arrow pointing up */
-.confidence-hover-card::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: rgba(13, 25, 50, 0.92);
-  border-left: 1px solid rgba(201, 162, 39, 0.3);
-  border-top: 1px solid rgba(201, 162, 39, 0.3);
+.glass-hover.confidence-center-card {
+  width: min(300px, calc(100vw - 32px));
 }
 
 .hover-card-header {
@@ -419,17 +390,6 @@
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.5;
   margin: 0.25rem 0 0;
-}
-
-/* ── Responsive: on mobile the cards flip below ── */
-@media (max-width: 600px) {
-  .confidence-hover-card {
-    width: 250px;
-  }
-
-  .confidence-center-card {
-    width: 260px;
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

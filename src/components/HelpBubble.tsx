@@ -56,7 +56,6 @@ const HelpBubble: React.FC = () => {
           </div>
           <span className="help-bubble-label">Help</span>
           {hasUnreadTip && <span className="help-bubble-badge">1</span>}
-          <span className="help-bubble-tooltip">Ask Emilia for Help</span>
         </button>
       </div>
 

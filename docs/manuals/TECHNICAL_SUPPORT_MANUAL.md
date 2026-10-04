@@ -35,6 +35,7 @@ Libraries and versions (from `package.json`):
 | `src/shared/`, `src/data/` | Metrics, categories, the city list, company contact |
 | `src/legal/` | The legal pages' single source (`legalContent.ts`, `legalFacts.ts`, `subProcessors.ts`) |
 | `src/assets/icons3d/` | The 3D icons (CC0), listed once in `src/components/icons3d/icons3d.ts` |
+| `src/components/hover/` | The dark glass hovers: `GlassHover` (every hover card — centred on phones, beside its anchor and inside the window on desktop, drawn on `<body>`), `GlassTooltipLayer` (every `title` hint, mounted once in `App`), `placeHover` (the desktop placement). A new hover uses these, never its own CSS card (`tests/glassHover.test.ts`) |
 | `api/` | Server routes; `api/shared/` shared server code |
 | `supabase/migrations/` | Database migrations, applied in file order |
 | `scripts/` | Maintenance scripts (legal documents, auth URLs, manuals) |

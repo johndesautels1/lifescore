@@ -415,9 +415,9 @@
         "src/App.tsx",
         "src/components/TabNavigation.tsx"
       ],
-      "hash": "e7f6e2670b86d044187eb7304884ff53f72beb16e3992a1d0fa53692d40b8111",
+      "hash": "ea702e73111aef53d9f9ea189a349e18e0aa9b0a5192ed8b67451aef7ff762d8",
       "reviewed": "2026-10-04",
-      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#3-api-routes": {
       "files": [
@@ -533,9 +533,9 @@
         "src/components/EmiliaChat.tsx",
         "api/emilia/message.ts"
       ],
-      "hash": "00909dece28250efdef8c234e220e1f36c5816e6d32397e9a2ed2ae85104dded",
+      "hash": "009f1ae443da210b12b842e4c7072b3772c68f0c7d3eb9ea91373aab7ae3dd3f",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#13-privacy-cookies-and-legal": {
       "files": [
@@ -582,9 +582,9 @@
         "src/components/HelpBubble.tsx",
         "src/components/OliviaChatBubble.tsx"
       ],
-      "hash": "e380b78545496d235bf19bc5f8658483ba3caa26acbbf7ebd0979497fad56dc0",
+      "hash": "121eef8af74449dbb3d1d544a83010d730e762139f2eebcfa1d5e172576d5a7e",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#4-1-standard-and-enhanced-comparisons": {
       "files": [
@@ -592,9 +592,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/models.ts"
       ],
-      "hash": "0d58533c86e833caa17f1b42d1c3846f7122089c64b277699293a7b3ae8baf1d",
+      "hash": "73036885437f55df3f7003453a997a0f17bb900fd41d3d3a2320b55bdee51007",
       "reviewed": "2026-10-04",
-      "basis": "b27179a0d405d57c3519322c89c04dc0b330f523"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#4-2-customize-priorities": {
       "files": [
@@ -626,9 +626,9 @@
       "files": [
         "src/components/EnhancedComparison.tsx"
       ],
-      "hash": "dfd9c5a69aec4240313cb3c00d443722d9b93c71b340512624bc613beeb5a088",
+      "hash": "3fc71e7de9e3557beff7dd770161b414d74d401fb99bd3405281e9dae1481980",
       "reviewed": "2026-10-04",
-      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#5-reading-your-results": {
       "files": [
@@ -647,18 +647,18 @@
         "src/components/GoToMyNewCity.tsx",
         "src/components/MovieGenerator.tsx"
       ],
-      "hash": "835a1c31db65d8b438763cc17fe3191d8743dea8a555420664c011420084c72f",
+      "hash": "d7a801ef600c2ff77b3740ffcce73eafa8eed21929415463f79d516a6ff4e835",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#6-the-judge-s-report": {
       "files": [
         "src/components/JudgeTab.tsx",
         "api/shared/entitlements.ts"
       ],
-      "hash": "8e66aadf525c24be58a08bea361d7dbdc482c846d45ed61a00aa4ba5d2c716d1",
+      "hash": "0b0a55719fb6eb0e329995f3309d86ee61f4bfbf8a5ac023624d3c6e0dc742d3",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#7-visuals": {
       "files": [
@@ -678,9 +678,9 @@
         "api/olivia/chat.ts",
         "api/shared/plans.ts"
       ],
-      "hash": "a8a82e4792cdb7db4ffcc4dec87b86b812b71f730e9a5e31de28e60e893547fe",
+      "hash": "057ffa7e9d3e76fabded1374eeb3e4c3c55a48c484ca19cf82a87f5b05fab6b4",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
     },
     "USER_MANUAL.md#9-saved": {
       "files": [

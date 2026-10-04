@@ -1,0 +1,100 @@
+/*
+ * LIFE SCORE - dark glass hovers (GlassHover, GlassTooltipLayer).
+ * John, 4 Oct 2026: dark glass in every theme; centre of the screen on mobile,
+ * inside the window on desktop. Positions are set by the components; this file
+ * only draws the glass.
+ */
+
+:root {
+  --glass-hover-bg: rgba(9, 14, 30, 0.8);
+  --glass-hover-bg-solid: rgba(9, 14, 30, 0.96); /* where the browser cannot blur */
+  --glass-hover-border: rgba(255, 255, 255, 0.14);
+  --glass-hover-edge: rgba(212, 175, 55, 0.35); /* gold, as the app's accents */
+  --glass-hover-text: #eef2fa;
+  --glass-hover-muted: #b8c2d6;
+  --glass-hover-shadow: 0 18px 48px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-hover-radius: 14px;
+  --glass-hover-z: 100000;
+}
+
+.glass-hover {
+  position: fixed;
+  z-index: var(--glass-hover-z);
+  box-sizing: border-box;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  padding: 14px 16px;
+  background: var(--glass-hover-bg-solid);
+  color: var(--glass-hover-text);
+  border: 1px solid var(--glass-hover-border);
+  border-top-color: var(--glass-hover-edge);
+  border-radius: var(--glass-hover-radius);
+  box-shadow: var(--glass-hover-shadow);
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: left;
+  animation: glass-hover-in 160ms ease-out;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-hover {
+    background: var(--glass-hover-bg);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+  }
+}
+
+/* Desktop: placed by placeHover (top/left set inline) */
+.glass-hover--placed {
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 16px));
+}
+
+/* Mobile: dead centre of the screen */
+.glass-hover--centred {
+  top: 50%;
+  left: 50%;
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(70vh, calc(100vh - 48px));
+  transform: translate(-50%, -50%);
+  animation-name: glass-hover-in-centred;
+}
+
+.glass-hover-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--glass-hover-z) - 1);
+  background: rgba(2, 6, 23, 0.55);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* A plain-text hint (the app's title tooltips) */
+.glass-hover--tip {
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: min(320px, calc(100vw - 16px));
+  pointer-events: none;
+  white-space: pre-line;
+}
+
+@keyframes glass-hover-in {
+  from { opacity: 0; translate: 0 4px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@keyframes glass-hover-in-centred {
+  from { opacity: 0; scale: 0.97; }
+  to { opacity: 1; scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-hover,
+  .glass-hover--centred {
+    animation: none;
+  }
+}

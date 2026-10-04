@@ -10,6 +10,7 @@ import React, { useState, useCallback, useEffect, useReducer, useRef, Suspense }
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import ResetPasswordScreen from './components/ResetPasswordScreen';
+import GlassTooltipLayer from './components/hover/GlassTooltipLayer';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomeHero from './components/HomeHero';
@@ -1519,6 +1520,8 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      {/* Every title hint as a dark glass tooltip, on every screen (sign-in included) */}
+      <GlassTooltipLayer />
       <AppContent />
     </AuthProvider>
   );

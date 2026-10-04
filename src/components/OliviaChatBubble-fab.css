@@ -139,35 +139,3 @@
   50% { transform: scale(1.2); }
 }
 
-.fab-tooltip {
-  position: absolute;
-  right: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--bubble-midnight);
-  color: var(--bubble-platinum);
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.fab-tooltip::after {
-  content: '';
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 6px solid transparent;
-  border-left-color: var(--bubble-midnight);
-}
-
-.olivia-fab:hover .fab-tooltip {
-  opacity: 1;
-}
-
