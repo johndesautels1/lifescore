@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useTierAccess, TIER_NAMES, type FeatureKey } from '../hooks/useTierAccess';
+import { useTierAccess, TIER_NAMES, TIER_LIMITS, type FeatureKey } from '../hooks/useTierAccess';
 import type { UserTier } from '../types/database';
 import './FeatureGate.css';
 
@@ -60,7 +60,8 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, { title: string; description: str
   },
   oliviaMinutesPerMonth: {
     title: 'Olivia AI',
-    description: 'Voice chat with Olivia AI (Navigator: 15min/month, Sovereign: 60min/month).',
+    // Each message to Olivia counts as one (John, 4 Oct 2026: "Say messages")
+    description: `Chat with Olivia AI (Navigator: ${TIER_LIMITS.pro.oliviaMinutesPerMonth} messages/month, Sovereign: ${TIER_LIMITS.enterprise.oliviaMinutesPerMonth} messages/month).`,
   },
   judgeVideos: {
     title: 'Judge Video',

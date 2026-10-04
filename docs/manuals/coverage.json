@@ -95,9 +95,9 @@
         "api/shared/plans.ts",
         "src/components/PricingModal.tsx"
       ],
-      "hash": "4fbcc1eca23976de0d10cc6d591abf2e3ef8b4ca6d06fc4d1cf1354a883bd6bc",
+      "hash": "ed46b19e0b3c4f07f42a12917e8ee430f9f5c020f9c85507c9784427b6d2c086",
       "reviewed": "2026-10-04",
-      "basis": "3a0be7e4d273f3552a9d958beef7466cc01e64bf"
+      "basis": "21b211a0e70061909bdc901fffb0ec8da00cd562"
     },
     "CUSTOMER_SERVICE_MANUAL.md#3-what-customers-ask-and-the-answer": {
       "files": [
@@ -440,9 +440,9 @@
         "api/usage/consume.ts",
         "src/hooks/useTierAccess.ts"
       ],
-      "hash": "18aa4188118a1927b2c305820f3b9f353fa383c7774c9749935dc8df987c3c03",
+      "hash": "0d6da73a43e6c344aa06cb80abb70c3fcdef40278a2b9a4880f351d2ff766dd8",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "21b211a0e70061909bdc901fffb0ec8da00cd562"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#5-ai-models-and-how-comparisons-run": {
       "files": [
@@ -526,9 +526,9 @@
         "src/components/PricingModal.tsx",
         "api/shared/plans.ts"
       ],
-      "hash": "4fbcc1eca23976de0d10cc6d591abf2e3ef8b4ca6d06fc4d1cf1354a883bd6bc",
+      "hash": "ed46b19e0b3c4f07f42a12917e8ee430f9f5c020f9c85507c9784427b6d2c086",
       "reviewed": "2026-10-04",
-      "basis": "3a0be7e4d273f3552a9d958beef7466cc01e64bf"
+      "basis": "21b211a0e70061909bdc901fffb0ec8da00cd562"
     },
     "USER_MANUAL.md#12-help-and-emilia": {
       "files": [

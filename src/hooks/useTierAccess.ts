@@ -6,8 +6,8 @@
  *
  * Tiers:
  * - FREE (free): Limited features, 1 comparison/month
- * - NAVIGATOR (pro): $29/month, 1 LLM, 15min Olivia, 1 comparison
- * - SOVEREIGN (enterprise): $99/month, 5 LLMs, 60min Olivia, enhanced mode
+ * - NAVIGATOR (pro): $29/month, 1 LLM, 15 Olivia messages, 1 comparison
+ * - SOVEREIGN (enterprise): $99/month, 5 LLMs, 60 Olivia messages, enhanced mode
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved

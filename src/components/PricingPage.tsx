@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTierAccess, TIER_PRICING } from '../hooks/useTierAccess';
+import { useTierAccess, TIER_PRICING, TIER_LIMITS } from '../hooks/useTierAccess';
 import type { UserTier } from '../types/database';
 import { toastError } from '../utils/toast';
 import { maxAnnualSavingPercent } from '../utils/annualSaving';
@@ -71,7 +71,7 @@ const PRICING_TIERS: PricingTier[] = [
     popular: true,
     features: [
       '1 comparison/month (1 LLM)',
-      '15 min Olivia AI/month',
+      `${TIER_LIMITS.pro.oliviaMinutesPerMonth} Olivia AI messages/month`,
       '1 Judge video/month',
       '1 Gamma report/month',
       '1 comparison image set/month',
@@ -87,7 +87,7 @@ const PRICING_TIERS: PricingTier[] = [
     annualPrice: TIER_PRICING.enterprise.annual,
     features: [
       '1 comparison/month (5 LLMs)',
-      '60 min Olivia AI/month',
+      `${TIER_LIMITS.enterprise.oliviaMinutesPerMonth} Olivia AI messages/month`,
       '1 Judge video/month',
       '1 Gamma report/month (5 LLMs)',
       'Enhanced Mode',
@@ -352,8 +352,8 @@ const PricingPage: React.FC = () => {
             <div className="comparison-row">
               <div className="comparison-feature">Olivia AI</div>
               <div className="comparison-value">—</div>
-              <div className="comparison-value">15 min/month</div>
-              <div className="comparison-value highlight">60 min/month</div>
+              <div className="comparison-value">{TIER_LIMITS.pro.oliviaMinutesPerMonth} messages/month</div>
+              <div className="comparison-value highlight">{TIER_LIMITS.enterprise.oliviaMinutesPerMonth} messages/month</div>
             </div>
 
             <div className="comparison-row">
