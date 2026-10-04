@@ -634,7 +634,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 
 | Feature | Service | Env Vars | Files |
 |---------|---------|----------|-------|
-| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | OpenAI Assistants API | `OPENAI_API_KEY`, `OPENAI_ASSISTANT_ID` | `api/olivia/chat.ts` |
+| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | Claude (`AI_MODELS.writer`) through `api/shared/anthropic.ts`, with whole-app search (`api/shared/appKnowledge.ts`) | `ANTHROPIC_API_KEY` | `api/olivia/chat.ts` |
 | **Olivia Voice** (Chat TTS) | ElevenLabs → OpenAI fallback | `ELEVENLABS_API_KEY`, `ELEVENLABS_OLIVIA_VOICE_ID` | `api/olivia/tts.ts` |
 | **Olivia Video Presenter** (Gamma reports) | HeyGen | `HEYGEN_API_KEY`, `HEYGEN_OLIVIA_AVATAR_ID`, `HEYGEN_OLIVIA_VOICE_ID` | `api/olivia/avatar/heygen-video.ts` |
 
@@ -759,7 +759,7 @@ PricingModal → POST /api/stripe/create-checkout-session
 | /api/emilia/speak | POST | TTS with shimmer voice |
 | /api/emilia/manuals | GET | Fetch manual content (JWT auth required — no longer accepts unverified email param) |
 
-**Knowledge Sync:** Run `npx ts-node scripts/sync-emilia-knowledge.ts` after updating manuals.
+**Knowledge (no sync step):** Emilia reads her instructions and the manuals from the deployment (`api/shared/knowledge.ts`), and searches the whole deployed app line by line (`api/shared/appKnowledge.ts`). Olivia has the same search. Both are current the moment a push deploys. Admins may see code and file paths; everyone else gets plain words. The admin panel's knowledge check (`/api/admin/knowledge-status`) shows how many files the search indexed.
 
 ### 4.7 Prompts Endpoints (Added 2026-02-10)
 
@@ -1070,7 +1070,7 @@ const LLM_TIMEOUT_MS = 240000; // 240 seconds for LLM evaluations
 const TAVILY_TIMEOUT_MS = 45000; // 45 seconds (reduced from 240s for faster failure recovery)
 
 // api/olivia/chat.ts
-const OPENAI_TIMEOUT_MS = 60000; // 60 seconds for OpenAI Assistants API
+const CHAT_TIMEOUT_MS = 110_000; // Whole request, tool rounds included (the route may run for 120 s)
 ```
 
 #### Client-Side (Service Functions)
@@ -1908,7 +1908,8 @@ User clicks Judge tab (JudgeTab.tsx)
 - `REPLICATE_API_TOKEN` - Video generation (Wav2Lip/Minimax fallback)
 - `GAMMA_API_KEY` - PDF/PPTX report generation
 - `RESEND_API_KEY` - Email alerts and notifications
-- `EMILIA_ASSISTANT_ID` - OpenAI Assistant ID for Emilia help widget
+- `LIVEAVATAR_API_KEY`, `LIVEAVATAR_OLIVIA_AVATAR_ID` - Olivia's live face
+- (Olivia and Emilia need no assistant ids: they run on Claude through `ANTHROPIC_API_KEY` since 3 Oct 2026)
 
 **Optional:**
 - `GEMINI_API_KEY` - Google Gemini evaluator

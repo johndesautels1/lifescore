@@ -21,7 +21,8 @@
       "includeFiles": "api/shared/**"
     },
     "api/olivia/chat.ts": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "includeFiles": "{src/**,api/**,docs/**,supabase/**,scripts/**,tests/**,vercel.json,package.json,vite.config.ts,index.html,.env.example}"
     },
     "api/olivia/tts.ts": {
       "maxDuration": 120
@@ -73,6 +74,14 @@
     "api/movie/screenplay.ts": {
       "maxDuration": 300,
       "includeFiles": "api/shared/**"
+    },
+    "api/emilia/message.ts": {
+      "maxDuration": 60,
+      "includeFiles": "{src/**,api/**,docs/**,supabase/**,scripts/**,tests/**,vercel.json,package.json,vite.config.ts,index.html,.env.example}"
+    },
+    "api/admin/knowledge-status.ts": {
+      "maxDuration": 30,
+      "includeFiles": "{src/**,api/**,docs/**,supabase/**,scripts/**,tests/**,vercel.json,package.json,vite.config.ts,index.html,.env.example}"
     }
   },
   "buildCommand": "npm run build",

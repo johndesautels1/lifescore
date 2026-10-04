@@ -114,7 +114,7 @@ If you've forgotten your password:
 - Chat with Olivia for insights about your comparison
 - Available on all pages (bottom-right bubble)
 - Voice responses available (ElevenLabs cloned voice with OpenAI TTS fallback)
-- **Ask Olivia Help** (chat bubble): OpenAI Assistants API brain, ElevenLabs cloned voice → OpenAI "nova" fallback
+- **Ask Olivia Help** (chat bubble): Claude brain with whole-app search, ElevenLabs cloned voice → OpenAI "nova" fallback
 - **Ask Olivia page** (video + chat): Same voice wiring as Help chat
 
 #### Visual Reports (Updated 2026-02-17)
@@ -469,7 +469,7 @@ Password reset ONLY modifies auth.users.encrypted_password and auth.users.recove
 
 | Feature | Service | Env Vars | Files |
 |---------|---------|----------|-------|
-| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | OpenAI Assistants API | OPENAI_API_KEY, OPENAI_ASSISTANT_ID | api/olivia/chat.ts |
+| **Ask Olivia Chat** (Help bubble + Ask Olivia page) | Claude (AI_MODELS.writer) + whole-app search | ANTHROPIC_API_KEY | api/olivia/chat.ts |
 | **Olivia Voice** (Chat TTS) | ElevenLabs → OpenAI fallback | ELEVENLABS_API_KEY, ELEVENLABS_OLIVIA_VOICE_ID | api/olivia/tts.ts |
 | **Olivia Live Presenter** (Gamma streaming overlay) | HeyGen Streaming API v1 | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen.ts |
 | **Olivia Video Presenter** (Gamma pre-rendered MP4) | HeyGen Video API v2 | HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID | api/olivia/avatar/heygen-video.ts |
@@ -952,7 +952,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buc
 ### Olivia
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/olivia/chat | POST | Main chat (OpenAI Assistants API) |
+| /api/olivia/chat | POST | Main chat (Claude, with whole-app search) |
 | /api/olivia/context | POST | Transform comparison data into Olivia context |
 | /api/olivia/tts | POST | ElevenLabs TTS with OpenAI fallback |
 | /api/olivia/field-evidence | POST | Source evidence for specific metrics |
@@ -1063,13 +1063,13 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buc
 
 ---
 
-## 7. Environment Variables (63 total)
+## 7. Environment Variables (65 in .env.example)
 
 ### Required (Production)
 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
 
 ### Required (Features)
-ELEVENLABS_API_KEY, SIMLI_API_KEY, FAL_KEY, REPLICATE_API_TOKEN, GAMMA_API_KEY, EMILIA_ASSISTANT_ID
+ELEVENLABS_API_KEY, SIMLI_API_KEY, FAL_KEY, REPLICATE_API_TOKEN, GAMMA_API_KEY, LIVEAVATAR_API_KEY, LIVEAVATAR_OLIVIA_AVATAR_ID
 
 ### Optional
 GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, HEYGEN_OLIVIA_AVATAR_ID, HEYGEN_OLIVIA_VOICE_ID, HEYGEN_CRISTIANO_AVATAR_ID, HEYGEN_CRISTIANO_VOICE_ID, HEYGEN_AVATAR_LOOK_ID, INVIDEO_MCP_URL, INVIDEO_API_KEY, KV_REST_API_URL, KV_REST_API_TOKEN
@@ -1079,8 +1079,9 @@ GEMINI_API_KEY, GROK_API_KEY, PERPLEXITY_API_KEY, DID_API_KEY, HEYGEN_API_KEY, H
 - **HEYGEN_OLIVIA_AVATAR_ID / HEYGEN_OLIVIA_VOICE_ID** → Olivia Live Presenter (streaming) + Video Presenter (pre-rendered MP4)
 - **DID_API_KEY / DID_PRESENTER_URL** → Olivia cockpit avatar on Ask Olivia page (D-ID Streams, Microsoft Sonia voice)
 - **HEYGEN_CRISTIANO_AVATAR_ID** → \`7a0ee88ad6814ed9af896f9164407c41\` — Cristiano "Go To My New City" cinematic video (Video Agent V2), paired with HEYGEN_CRISTIANO_VOICE_ID + HEYGEN_AVATAR_LOOK_ID
-- **OPENAI_ASSISTANT_ID** → Olivia chat brain (OpenAI Assistants API)
-- These are 5 independent systems. Changing one does NOT affect the others.
+- **LIVEAVATAR_API_KEY / LIVEAVATAR_OLIVIA_AVATAR_ID** → Olivia's live face (primary)
+- **ANTHROPIC_API_KEY** → Olivia's and Emilia's brain (Claude); no assistant ids since 3 Oct 2026
+- These are independent systems. Changing one does NOT affect the others.
 
 ---
 

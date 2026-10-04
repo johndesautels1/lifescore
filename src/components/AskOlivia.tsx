@@ -2,7 +2,7 @@
  * LIFE SCORE™ Ask Olivia - Premium Edition
  *
  * ARCHITECTURE: Option B (Updated for Simli AI)
- * - OpenAI Assistant = ALL intelligence (the brain)
+ * - Claude (/api/olivia/chat, with whole-app search) = ALL intelligence (the brain)
  * - Simli AI = Avatar video only (replaced D-ID - 90% cost savings)
  *
  * Flow: User → OpenAI → Response → Simli speaks response

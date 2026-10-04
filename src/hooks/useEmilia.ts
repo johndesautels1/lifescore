@@ -2,7 +2,7 @@
  * LIFE SCORE™ useEmilia Hook
  *
  * Manages Emilia chat state, including:
- * - Thread management with OpenAI Assistants API
+ * - Conversation kept in the browser; answers from Claude via /api/emilia/message
  * - Message history
  * - Voice playback (TTS)
  * - Conversation export features

@@ -1,17 +1,20 @@
 /**
  * LIFE SCORE - Knowledge status (admin)
  * GET /api/admin/knowledge-status
- *   → { olivia: { ok, files | missing }, emilia: { ok, files | missing } }
+ *   → { olivia: { ok, files | missing }, emilia: { ok, files | missing },
+ *       app: { files, publicFiles, passages, characters } }
  *
  * Olivia and Emilia read their instructions and manuals straight from docs/ in
  * the deployment (api/shared/knowledge.ts) — there is no "sync" step any more.
- * This check proves every file reached the live server, with its size.
+ * This check proves every file reached the live server, with its size, and how
+ * much of the app the whole-app search (api/shared/appKnowledge.ts) indexed.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { requireAdmin } from '../shared/entitlements.js';
 import { loadKnowledge } from '../shared/knowledge.js';
+import { appKnowledgeStats, getAppKnowledge } from '../shared/appKnowledge.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (handleCors(req, res, 'same-app', { methods: 'GET, OPTIONS' })) return;
@@ -30,5 +33,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   };
 
   res.setHeader('Cache-Control', 'no-store');
-  res.status(200).json({ olivia: describe('olivia'), emilia: describe('emilia') });
+  res.status(200).json({ olivia: describe('olivia'), emilia: describe('emilia'), app: appKnowledgeStats(getAppKnowledge()) });
 }

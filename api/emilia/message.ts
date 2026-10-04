@@ -9,18 +9,22 @@
  * 26 August 2026. She now runs on Claude through the shared call point
  * (api/shared/anthropic.ts), model AI_MODELS.writer. Her instructions
  * (docs/EMILIA_INSTRUCTIONS.md) and the five manuals she answers from are read
- * from the deployment (api/shared/knowledge.ts) and cached by Claude. The
- * conversation so far comes from the browser.
+ * from the deployment (api/shared/knowledge.ts) and cached by Claude. She can
+ * also search the whole deployed app, line by line (api/shared/appKnowledge.ts;
+ * admins may see code, everyone else gets plain words). The conversation so far
+ * comes from the browser.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ClaudeMessage, ClaudeTextBlock, ClaudeToolResultBlock } from '../shared/anthropic.js';
 import { randomUUID } from 'node:crypto';
 import { handleCors } from '../shared/cors.js';
-import { requireAuth } from '../shared/auth.js';
+import { getAdminEmails, requireAuth } from '../shared/auth.js';
 import { applyRateLimit } from '../shared/rateLimit.js';
 import { callClaude, cleanConversation } from '../shared/anthropic.js';
 import { AI_MODELS } from '../shared/models.js';
 import { loadKnowledge } from '../shared/knowledge.js';
+import { appKnowledgeGuide, appKnowledgeTools, isAppKnowledgeTool, runAppKnowledgeTool } from '../shared/appKnowledge.js';
 
 // ============================================================================
 // LIMITS
@@ -30,6 +34,8 @@ const EMILIA_TIMEOUT_MS = 55_000; // inside the route's 60-second limit
 const MAX_HISTORY_TURNS = 20;
 const MAX_TURN_CHARS = 4_000;
 const MAX_MESSAGE_CHARS = 4_000;
+/** Rounds of tool use per answer: room to search the app, read the lines, then answer. */
+const MAX_TOOL_ROUNDS = 5;
 
 // ============================================================================
 // HANDLER
@@ -66,18 +72,50 @@ export default async function handler(
     return;
   }
 
-  const reply = await callClaude({
-    model: AI_MODELS.writer.id,
-    maxTokens: 8000,
-    effort: 'low', // help-desk answers: quick and direct
-    system: [{ type: 'text', text: knowledge.text, cache_control: { type: 'ephemeral', ttl: '1h' } }],
-    messages: [...cleanConversation(history, MAX_HISTORY_TURNS, MAX_TURN_CHARS), { role: 'user', content: text }],
-    timeoutMs: EMILIA_TIMEOUT_MS,
-    label: 'emilia',
-  });
+  // Whole-app knowledge (api/shared/appKnowledge.ts): admins may see code; everyone else plain words.
+  const isAdmin = getAdminEmails().includes(auth.email.toLowerCase());
+  const system: ClaudeTextBlock[] = [
+    { type: 'text', text: knowledge.text, cache_control: { type: 'ephemeral', ttl: '1h' } },
+    { type: 'text', text: appKnowledgeGuide(isAdmin) },
+  ];
+  const messages: ClaudeMessage[] = [...cleanConversation(history, MAX_HISTORY_TURNS, MAX_TURN_CHARS), { role: 'user', content: text }];
+  const deadline = Date.now() + EMILIA_TIMEOUT_MS;
+  let answer = '';
 
-  if (!reply.ok) {
-    console.error('[EMILIA/message] Claude call failed:', reply.kind, reply.message);
+  for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
+    const reply = await callClaude({
+      model: AI_MODELS.writer.id,
+      maxTokens: 8000,
+      effort: 'low', // help-desk answers: quick and direct
+      system,
+      messages,
+      tools: round < MAX_TOOL_ROUNDS ? appKnowledgeTools(isAdmin) : undefined,
+      timeoutMs: Math.max(5_000, deadline - Date.now()),
+      label: 'emilia',
+    });
+
+    if (!reply.ok) {
+      console.error('[EMILIA/message] Claude call failed:', reply.kind, reply.message);
+      res.status(502).json({ error: 'Emilia could not answer just now. Please try again.' });
+      return;
+    }
+
+    answer = reply.text;
+    if (reply.stopReason !== 'tool_use' || reply.toolUses.length === 0) break;
+
+    // Answer every tool call in ONE user message, then let Emilia continue.
+    messages.push({ role: 'assistant', content: reply.content });
+    const results: ClaudeToolResultBlock[] = reply.toolUses.map((call) => ({
+      type: 'tool_result' as const,
+      tool_use_id: call.id,
+      content: isAppKnowledgeTool(call.name)
+        ? runAppKnowledgeTool(call.name, call.input, isAdmin)
+        : JSON.stringify({ error: `Unknown tool: ${call.name}` }),
+    }));
+    messages.push({ role: 'user', content: results });
+  }
+
+  if (!answer) {
     res.status(502).json({ error: 'Emilia could not answer just now. Please try again.' });
     return;
   }
@@ -86,7 +124,7 @@ export default async function handler(
     success: true,
     response: {
       id: randomUUID(),
-      content: reply.text,
+      content: answer,
       createdAt: new Date().toISOString(),
     },
   });

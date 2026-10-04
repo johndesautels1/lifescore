@@ -3,7 +3,7 @@
  *
  * Floating chat interface that appears on all pages except Ask Olivia.
  * Text-only, elegant, expandable/collapsible.
- * Uses the same OpenAI Assistant brain as the main Olivia interface.
+ * Uses the same Claude brain (/api/olivia/chat) as the main Olivia interface.
  *
  * Design: Subtle luxury - like a concierge service at The Savoy.
  */

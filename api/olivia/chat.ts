@@ -32,6 +32,8 @@ import {
 } from '../shared/anthropic.js';
 import { AI_MODELS } from '../shared/models.js';
 import { loadKnowledge } from '../shared/knowledge.js';
+import { getAdminEmails } from '../shared/auth.js';
+import { appKnowledgeGuide, appKnowledgeTools, isAppKnowledgeTool, runAppKnowledgeTool } from '../shared/appKnowledge.js';
 import { lookupFieldEvidence } from '../shared/fieldEvidence.js';
 
 // ============================================================================
@@ -44,7 +46,8 @@ const MAX_HISTORY_TURNS = 20;
 const MAX_TURN_CHARS = 4_000;
 const MAX_MESSAGE_CHARS = 4_000;
 const MAX_CONTEXT_CHARS = 200_000;
-const MAX_TOOL_ROUNDS = 3;
+/** Rounds of tool use per answer: room to search the app, read the lines, then answer. */
+const MAX_TOOL_ROUNDS = 5;
 
 // ============================================================================
 // TYPES
@@ -236,8 +239,11 @@ export default async function handler(
     const textSummary = typeof body.textSummary === 'string' ? body.textSummary : undefined;
 
     const panel = `\n\nMODELS IN USE TODAY\nThe judge is ${AI_MODELS.judge.name}. Claude's evaluator seat is ${AI_MODELS.claudeEvaluator.name}. You are ${AI_MODELS.writer.name}.`;
+    // Whole-app knowledge (api/shared/appKnowledge.ts): admins may see code; everyone else plain words.
+    const isAdmin = getAdminEmails().includes(entitled.auth.email.toLowerCase());
     const system: ClaudeTextBlock[] = [
       { type: 'text', text: knowledge.text + panel, cache_control: { type: 'ephemeral', ttl: '1h' } },
+      { type: 'text', text: appKnowledgeGuide(isAdmin) },
     ];
     // The comparison the user is viewing, when there is one (always sent, so a report
     // chosen after the chat started is seen too).
@@ -260,7 +266,7 @@ export default async function handler(
         effort: 'low', // conversation, spoken aloud — quick and natural
         system,
         messages,
-        tools: round < MAX_TOOL_ROUNDS ? [FIELD_EVIDENCE_TOOL] : undefined,
+        tools: round < MAX_TOOL_ROUNDS ? [FIELD_EVIDENCE_TOOL, ...appKnowledgeTools(isAdmin)] : undefined,
         timeoutMs: Math.max(5_000, deadline - Date.now()),
         label: 'olivia-chat',
       });
@@ -282,7 +288,9 @@ export default async function handler(
           tool_use_id: call.id,
           content: call.name === FIELD_EVIDENCE_TOOL.name
             ? await runFieldEvidenceTool(call.input, entitled.auth.userId, comparisonId)
-            : JSON.stringify({ error: `Unknown tool: ${call.name}` }),
+            : isAppKnowledgeTool(call.name)
+              ? runAppKnowledgeTool(call.name, call.input, isAdmin)
+              : JSON.stringify({ error: `Unknown tool: ${call.name}` }),
         })),
       );
       messages.push({ role: 'user', content: results });

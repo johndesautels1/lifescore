@@ -846,7 +846,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/olivia/chat` | Yes (JWT) | Main chat via OpenAI Assistants API |
+| POST | `/api/olivia/chat` | Yes (JWT) | Main chat: Claude, with whole-app search (`api/shared/appKnowledge.ts`) |
 | POST | `/api/olivia/context` | Yes (JWT) | Transform comparison data into Olivia context |
 | POST | `/api/olivia/field-evidence` | Yes (JWT) | Source evidence for specific metrics |
 | POST | `/api/olivia/gun-comparison` | Yes (JWT) | Standalone unscored gun rights comparison |
@@ -959,7 +959,7 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | `AskOlivia.tsx` | Premium Olivia AI assistant with avatar and voice |
 | `OliviaChatBubble.tsx` | Floating chat interface (expandable/collapsible) |
 | `OliviaAvatar.tsx` | Real-time photorealistic Simli AI avatar |
-| `EmiliaChat.tsx` | AI help chat using OpenAI Assistants API |
+| `EmiliaChat.tsx` | AI help chat (Claude via `/api/emilia/message`, with whole-app search) |
 | `HelpBubble.tsx` | Floating Emilia teal help button (bottom-left) |
 | `HelpModal.tsx` | 8-tab documentation modal with chat integration |
 | `ManualViewer.tsx` | Markdown documentation renderer |
@@ -1258,10 +1258,8 @@ Emails in `DEV_BYPASS_EMAILS` env var + hardcoded `cluesnomads@gmail.com` and `b
 
 | Variable | Purpose |
 |----------|---------|
-| `OPENAI_API_KEY` | GPT-4o evaluator, Olivia, Emilia |
-| `OPENAI_ASSISTANT_ID` | Olivia assistant ID |
-| `EMILIA_ASSISTANT_ID` | Emilia help assistant ID |
-| `ANTHROPIC_API_KEY` | Claude Opus/Sonnet |
+| `OPENAI_API_KEY` | GPT evaluator |
+| `ANTHROPIC_API_KEY` | Claude: evaluator, judge, Olivia, Emilia |
 | `GEMINI_API_KEY` | Google Gemini |
 | `XAI_API_KEY` | xAI Grok (alias: GROK_API_KEY) |
 | `PERPLEXITY_API_KEY` | Perplexity web search |
@@ -1358,7 +1356,7 @@ lifescore/
 │   │   └── invideo-override.ts       # Admin InVideo overrides
 │   │
 │   ├── olivia/                       # Olivia AI assistant
-│   │   ├── chat.ts                   # Main chat (OpenAI Assistants)
+│   │   ├── chat.ts                   # Main chat (Claude + whole-app search)
 │   │   ├── context.ts                # Context builder
 │   │   ├── field-evidence.ts         # Evidence lookup
 │   │   ├── gun-comparison.ts         # Unscored gun comparison

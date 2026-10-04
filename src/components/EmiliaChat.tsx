@@ -2,7 +2,7 @@
  * LIFE SCORE™ Emilia Chat Component
  *
  * AI-powered chat interface for help and documentation questions.
- * Uses OpenAI Assistants API via Emilia backend.
+ * Answers come from Claude via the Emilia backend (/api/emilia/message).
  *
  * Features:
  * - Real-time chat with streaming responses
