@@ -64,6 +64,15 @@ describe('the footer', () => {
     }
   });
 
+  // Ruling, John 4 Oct 2026: cluesintelligence.com is the flagship, a different
+  // app. The footer links it to send traffic there; the header never shows it.
+  it('the flagship website is in the footer and never in the header', () => {
+    const header = readFileSync('src/components/Header.tsx', 'utf8');
+    expect(header).not.toContain('COMPANY_CONTACT.website');
+    expect(header).not.toContain('cluesintelligence.com');
+    expect(footer).toContain('COMPANY_CONTACT.website');
+  });
+
   it('keeps every legal door', () => {
     for (const label of [
       'Privacy',

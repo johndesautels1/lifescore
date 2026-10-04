@@ -7,7 +7,7 @@
  *   1. a slim toolbar of its own — theme on the left, the account controls on
  *      the right, wrapping on narrow screens;
  *   2. the brand beneath it — the 3D compass, CLUES INTELLIGENCE LTD, the CLUES
- *      line, the contact line, and the LIFE SCORE title.
+ *      line, the phone number, and the LIFE SCORE title.
  * Nothing is absolutely positioned, so a longer plan name, a badge count or a
  * longer user name moves the toolbar's own row, never the brand.
  *
@@ -140,15 +140,13 @@ export const Header: React.FC<HeaderProps> = ({ onUpgradeClick, onCostDashboardC
           </div>
         </div>
 
-        {/* Contact Info (src/shared/companyContact.ts, as in the footer) */}
+        {/* Contact Info: the phone only (src/shared/companyContact.ts). Ruling, John
+            4 Oct 2026: the flagship's website belongs to a different app; the
+            footer links it to send traffic there, the header never shows it. */}
         <div className="header-contact">
           <a href={COMPANY_CONTACT.phoneHref}>
             <Icon3D name="phone" size={22} className="header-contact-icon" />
             {COMPANY_CONTACT.phoneDisplay}
-          </a>
-          <a href={COMPANY_CONTACT.website.href} target="_blank" rel="noopener noreferrer" aria-label={`${COMPANY_CONTACT.website.label} (opens in new window)`}>
-            <Icon3D name="link" size={22} className="header-contact-icon" />
-            {COMPANY_CONTACT.website.label}
           </a>
         </div>
 
