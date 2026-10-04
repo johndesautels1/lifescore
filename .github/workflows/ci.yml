@@ -7,6 +7,10 @@
 #   (typescript-eslint), as Microsoft advises until TypeScript 7.1 ships one.
 # - server typecheck: api/ is compiled separately by Vercel and `tsc -b` does not cover it.
 #   Its first check (3 Oct 2026) found 145 errors, three of them live crashes; it now gates every push.
+# - manuals: on a push to main, written manual sections whose code changed are rewritten by
+#   Claude (scripts/manuals-autoupdate.ts) and committed back BEFORE the tests check them
+#   (tests/manuals.test.ts). Needs the ANTHROPIC_API_KEY repository secret; without it nothing
+#   is rewritten and the test names any section a person must update.
 # - test: the vitest suite, including the anti-drift guards.
 # - build: the production build, then every file the built page loads at start must be in the
 #   offline precache (on 4 Oct 2026 Vite 8 added rolldown-runtime-*.js and nothing noticed).
@@ -19,7 +23,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # the manuals step commits its updates back to main
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -31,6 +35,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the manuals step reads what changed since each section's review
 
       - uses: actions/setup-node@v7
         with:
@@ -45,6 +51,20 @@ jobs:
 
       - name: Type check the server functions (api/)
         run: node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json
+
+      - name: Bring the manuals up to date with this push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npx tsx scripts/manuals-autoupdate.ts
+          if ! git diff --quiet -- docs/manuals; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/manuals
+            git commit -m "docs(manuals): sections brought up to date with ${GITHUB_SHA::7}" -m "Rewritten by scripts/manuals-autoupdate.ts in CI against the code they cover; tests/manuals.test.ts checked them in the same run."
+            git pull --rebase origin main && git push origin HEAD:main || echo "Could not push the manual update (main moved on); the next push redoes it."
+          fi
 
       - name: Tests
         run: npx vitest run

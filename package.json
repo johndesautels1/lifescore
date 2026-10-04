@@ -11,6 +11,7 @@
     "build": "node node_modules/@typescript/native/bin/tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "node node_modules/@typescript/native/bin/tsc -b && node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json",
+    "manuals:stamp": "node scripts/manuals-stamp.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -41,6 +42,7 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
     "sharp": "^0.35.5",
+    "tsx": "^4.21.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.71.0",
     "vite": "^8.3.2",

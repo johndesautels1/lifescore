@@ -33,7 +33,7 @@ import type { ClaudeTool } from './anthropic.js';
 // ============================================================================
 
 /** Folders indexed whole (text files only), from the repository root. */
-export const KNOWLEDGE_FOLDERS = ['src', 'api', 'docs', 'supabase', 'scripts', 'tests'] as const;
+export const KNOWLEDGE_FOLDERS = ['src', 'api', 'docs', 'supabase', 'scripts', 'tests', '.github'] as const;
 
 /** Single files at the root. */
 export const KNOWLEDGE_ROOT_FILES = ['vercel.json', 'package.json', 'vite.config.ts', 'index.html', '.env.example'] as const;
@@ -43,6 +43,7 @@ const TEXT_FILE = /\.(ts|tsx|mts|cts|js|mjs|cjs|css|sql|md|txt|json|html|yml|yam
 
 /** Never indexed, even inside an indexed folder. */
 const SKIP = /(^|\/)(node_modules|dist|dev-dist|\.git)(\/|$)|package-lock\.json$/;
+// (`.github` is indexed: the `\.git` rule above matches only the folder named exactly .git.)
 
 /**
  * Who may see a file. Non-admins: what every visitor can already see or is
@@ -53,6 +54,7 @@ const PUBLIC_FILES: readonly RegExp[] = [
   /^src\//,
   /^docs\/manuals\/USER_MANUAL\.md$/,
   /^docs\/manuals\/CUSTOMER_SERVICE_MANUAL\.md$/,
+  /^docs\/manuals\/LICENSE_MANUAL\.md$/,
   /^docs\/legal\//,
   /^api\/shared\/plans\.ts$/,
   /^index\.html$/,

@@ -17,6 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fillManualFacts } from './manualFacts.js';
 
 interface KnowledgeFile {
   /** Path from the repository root, for logs and the admin check. */
@@ -46,7 +47,8 @@ function readKnowledgeFile(file: KnowledgeFile): string | null {
   if (cached !== undefined) return cached;
   for (const path of [fileURLToPath(file.url), join(process.cwd(), file.name)]) {
     try {
-      const text = readFileSync(path, 'utf8');
+      // Facts the code defines (routes, settings, plans…) are written in from this deployment.
+      const text = fillManualFacts(readFileSync(path, 'utf8'));
       cache.set(file.name, text);
       return text;
     } catch {

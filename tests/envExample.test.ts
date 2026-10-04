@@ -25,7 +25,7 @@ function codeFiles(dir: string): string[] {
 const PLATFORM = new Set([
   'VERCEL', 'VERCEL_URL', 'VERCEL_ENV', 'VERCEL_REGION', 'VERCEL_PROJECT_PRODUCTION_URL',
   'VERCEL_GIT_COMMIT_SHA', 'VERCEL_GIT_COMMIT_MESSAGE', 'NODE_ENV', 'CI',
-  'DEV', 'PROD', 'MODE', 'BASE_URL', 'SSR',
+  'DEV', 'PROD', 'MODE', 'BASE_URL', 'SSR', 'GITHUB_STEP_SUMMARY',
 ]);
 
 const sources = [...codeFiles('api'), ...codeFiles('src'), ...codeFiles('scripts'), 'vite.config.ts'].map((f) =>
