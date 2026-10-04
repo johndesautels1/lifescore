@@ -8,9 +8,9 @@
         "src/components/ResetPasswordScreen.tsx",
         "src/lib/supabase.ts"
       ],
-      "hash": "a8d5b9c1f959d97e28c378a113222afae39420c475f65cf0b9828e980191e68e",
+      "hash": "d189229e73954365b0d939d4b77e3ae6e4b637531157324bc99af630f43a4fcf",
       "reviewed": "2026-10-04",
-      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
+      "basis": "51e3c23910a52c9b18a3eb3a1070876a0962f4fb"
     },
     "APP_SCHEMA_MANUAL.md#2-tables": {
       "files": [
@@ -58,9 +58,9 @@
         "src/components/SettingsModal.tsx",
         "src/components/CookieConsent.tsx"
       ],
-      "hash": "19b237dbaa304e4e7687b618afca7fbe7f92191cbb0b702a37c67e2cba0d47a5",
+      "hash": "c9eaaf15fe4d13313e79974bf0594e8d4855ca20f3eb0806d89d080fc0e90d3b",
       "reviewed": "2026-10-04",
-      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
+      "basis": "51e3c23910a52c9b18a3eb3a1070876a0962f4fb"
     },
     "APP_SCHEMA_MANUAL.md#7-deleting-an-account-and-exporting-data": {
       "files": [
@@ -440,9 +440,9 @@
         "api/usage/consume.ts",
         "src/hooks/useTierAccess.ts"
       ],
-      "hash": "ca816175c352e104dd07b531d73db65ae31ce10b53b2538dd0478aeef27a5e9f",
+      "hash": "ab1db46721a95a578715d8a076736042fb171093fc08212f7484900c8a0303e5",
       "reviewed": "2026-10-04",
-      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
+      "basis": "51e3c23910a52c9b18a3eb3a1070876a0962f4fb"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#5-ai-models-and-how-comparisons-run": {
       "files": [
@@ -651,18 +651,18 @@
         "src/components/GoToMyNewCity.tsx",
         "src/components/MovieGenerator.tsx"
       ],
-      "hash": "3da97bc39b10398fa77ef5b96fbb6ce8c5c0f4e88c981dddf8aaa220956e25b6",
+      "hash": "d5cc2b9d96cfa8a360d87447c57385a77c55e8a6e12017bf8d296ba519257966",
       "reviewed": "2026-10-04",
-      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
+      "basis": "51e3c23910a52c9b18a3eb3a1070876a0962f4fb"
     },
     "USER_MANUAL.md#6-the-judge-s-report": {
       "files": [
         "src/components/JudgeTab.tsx",
         "api/shared/entitlements.ts"
       ],
-      "hash": "5b9318504b528a665c5918dcfba689def0c6f792bae1da75d448ff84f88dea0f",
+      "hash": "30b550fe118c4746f2f7eb768778a592c62c7a010c02294616511439466c9344",
       "reviewed": "2026-10-04",
-      "basis": "5abf99726bf5ad3c5de7cca05279fcd81278f523"
+      "basis": "51e3c23910a52c9b18a3eb3a1070876a0962f4fb"
     },
     "USER_MANUAL.md#7-visuals": {
       "files": [
