@@ -9,7 +9,7 @@ import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedCompari
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
 import { getStoredAPIKeys, saveAPIKeys } from '../services/enhancedComparison';
-import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress } from '../services/llmEvaluators';
+import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress, type ScoringPreferences } from '../services/llmEvaluators';
 import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
 import { getMetricTooltip } from '../data/metricTooltips';
@@ -156,6 +156,8 @@ export const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini
 interface LLMSelectorProps {
   city1: string;
   city2: string;
+  /** The user's Law vs Lived split and Conservative mode, as Standard mode uses them. */
+  scoring: ScoringPreferences;
   // Lifted state from App.tsx
   llmStates: Map<LLMProvider, LLMButtonState>;
   setLLMStates: React.Dispatch<React.SetStateAction<Map<LLMProvider, LLMButtonState>>>;
@@ -180,6 +182,7 @@ export interface LLMButtonState {
 export const LLMSelector: React.FC<LLMSelectorProps> = ({
   city1,
   city2,
+  scoring,
   llmStates,
   setLLMStates,
   judgeResult,
@@ -310,7 +313,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
             }
             return next;
           });
-        }
+        },
+        scoring
       );
 
       setCurrentLLMProgress(null);

@@ -55,11 +55,11 @@ For each metric and each city, the evaluator chooses one **level** for the law a
 
 Standard mode asks one model (the `/api/evaluate` call with `claude-sonnet`), one category at a time, and does the arithmetic in the browser.
 
-**Metric score.** For each city, with law score *L*, enforcement score *E* and the user's **Law vs Lived** split (*law* % / *lived* %, default 50/50):
+**Metric score.** For each city, with law score *L*, enforcement score *E* and the user's **Law vs Lived** split (*law* % / *lived* %, default 50/50) and **Worst-Case Mode** (Conservative mode in the code):
 
 ```
 metric = round( (L × law + E × lived) / 100 )
-metric = round( min(L, E) )                      when Conservative mode is on
+metric = round( min(L, E) )                      when Worst-Case Mode is on
 ```
 
 When the evaluator rated only one half, the metric takes that half (in either setting); when it rated neither, the metric is missing (`src/shared/lawLived.ts`).
@@ -101,13 +101,14 @@ If a category's call fails, the comparison goes on without it and says how many 
 
 Enhanced mode asks several models the same questions (Technical Support Manual, section 5), combines their answers on the server (`/api/judge`) and builds the result in the browser.
 
-**Each model's metric score** — law and enforcement counted equally:
+**Each model's metric score** — the same rule as Standard mode, with the user's **Law vs Lived** split and **Worst-Case Mode**:
 
 ```
-model metric = round( (L + E) / 2 )
+model metric = round( (L × law + E × lived) / 100 )
+model metric = round( min(L, E) )                Worst-Case Mode on
 ```
 
-With one half missing the model's score is the other half; with neither, the model gives no answer for that metric (the same rule as Standard mode, at an even split).
+With one half missing the model's score is the other half; with neither, the model gives no answer for that metric.
 
 **Consensus for a metric** (per city; one answer per model):
 
@@ -167,7 +168,7 @@ One metric, Cannabis Legality (weight 7 in Personal Autonomy): the evaluator cho
 
 ```
 City A: (40 × 50 + 100 × 50) / 100 = 70        City B: (20 × 50 + 20 × 50) / 100 = 20
-Conservative mode:  City A = min(40, 100) = 40   City B = 20
+Worst-Case Mode:    City A = min(40, 100) = 40   City B = 20
 ```
 
 If City A's Personal Autonomy average comes to 68 and City B's to 52, the category adds 68 × 20 / 100 = 13.6 and 10.4 to their base scores. With base scores 71.0 and 62.4, City A leading three categories by more than 5 points and City B one, and a largest gap of 22: City A = 71.0 + 6 + 11 = 88; City B = 62.4 + 2 = 64. City A wins by 24.
@@ -195,7 +196,7 @@ Found while writing this manual, read from the code. Each changes what users see
 
 1. **The disagreement mark differs** — the server marks σ above 15 (`api/judge.ts` keeps its own copy of the limits); the shared limits (`src/constants/scoringThresholds.ts`) say 20.
 2. **The Judge sees 30 of 100 metrics** — disagreements on the other 70 never reach it.
-3. **Enhanced mode ignores Law vs Lived and Conservative mode** — every model score is the plain average of law and enforcement.
+3. ~~Enhanced mode ignores Law vs Lived and Worst-Case Mode~~ — **fixed 4 October 2026** (John: "use their settings"): the model buttons pass the user's settings to every evaluation.
 4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
 5. **Standard mode counts a missing category as 0** — in the city base score (the other weights are not shared out, as Enhanced mode does), and, when only one city lacks it, in the category wins and the largest gap.
 6. **The numbers fallback cannot be read** (section 3).

@@ -9,7 +9,7 @@
  */
 
 import type { LLMProvider, LLMAPIKeys, LLMMetricScore } from '../types/enhancedComparison';
-import type { MetricDefinition, CategoryId } from '../types/metrics';
+import type { MetricDefinition, CategoryId, LawLivedRatio } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { getAuthHeaders } from '../lib/supabase';
 import { grantHeaders } from '../lib/usageGrant';
@@ -64,6 +64,19 @@ export interface EvaluatorResult {
 }
 
 // API response score format (from /api/evaluate)
+/**
+ * How the user combines a metric's two halves — the same settings as Standard
+ * mode (John, 4 Oct 2026: Enhanced follows the Law vs Lived slider and
+ * Conservative mode too).
+ */
+export interface ScoringPreferences {
+  lawLivedRatio: LawLivedRatio;
+  conservativeMode: boolean;
+}
+
+/** The defaults: law and enforcement count equally. */
+export const DEFAULT_SCORING: ScoringPreferences = { lawLivedRatio: { law: 50, lived: 50 }, conservativeMode: false };
+
 /** One metric from /api/evaluate; a half the evaluator could not rate is null. */
 interface APIMetricScore {
   metricId: string;
@@ -110,7 +123,8 @@ async function evaluateCategoryBatch(
   city1: string,
   city2: string,
   categoryId: CategoryId,
-  metrics: MetricDefinition[]
+  metrics: MetricDefinition[],
+  scoring: ScoringPreferences
 ): Promise<{ success: boolean; scores: LLMMetricScore[]; latencyMs: number; error?: string; usage?: { tokens: TokenUsage; tavily?: TavilyUsage } }> {
   const startTime = Date.now();
 
@@ -184,9 +198,9 @@ async function evaluateCategoryBatch(
     const now = new Date().toISOString();
 
     const city1Scores: LLMMetricScore[] = apiScores.flatMap((s: APIMetricScore): LLMMetricScore[] => {
-      // Law and enforcement count equally; a half the model could not rate is left
-      // out, and a metric with neither is not this model's answer (src/shared/lawLived.ts).
-      const normalizedScore = blendLawLived(s.city1LegalScore, s.city1EnforcementScore);
+      // Law and enforcement combine by the user's settings; a half the model could not
+      // rate is left out, and a metric with neither is not this model's answer (src/shared/lawLived.ts).
+      const normalizedScore = blendLawLived(s.city1LegalScore, s.city1EnforcementScore, scoring.lawLivedRatio, scoring.conservativeMode);
       if (normalizedScore === null) return [];
       return [{
         metricId: s.metricId,
@@ -210,9 +224,9 @@ async function evaluateCategoryBatch(
     });
 
     const city2Scores: LLMMetricScore[] = apiScores.flatMap((s: APIMetricScore): LLMMetricScore[] => {
-      // Law and enforcement count equally; a half the model could not rate is left
-      // out, and a metric with neither is not this model's answer (src/shared/lawLived.ts).
-      const normalizedScore = blendLawLived(s.city2LegalScore, s.city2EnforcementScore);
+      // Law and enforcement combine by the user's settings; a half the model could not
+      // rate is left out, and a metric with neither is not this model's answer (src/shared/lawLived.ts).
+      const normalizedScore = blendLawLived(s.city2LegalScore, s.city2EnforcementScore, scoring.lawLivedRatio, scoring.conservativeMode);
       if (normalizedScore === null) return [];
       return [{
         metricId: s.metricId,
@@ -282,7 +296,8 @@ export async function runSingleEvaluatorBatched(
   city1: string,
   city2: string,
   _apiKeys: LLMAPIKeys & { tavily?: string }, // Keys are in Vercel env vars, not used client-side
-  onCategoryProgress?: (progress: CategoryBatchProgress[]) => void
+  onCategoryProgress?: (progress: CategoryBatchProgress[]) => void,
+  scoring: ScoringPreferences = DEFAULT_SCORING
 ): Promise<BatchedEvaluatorResult> {
   const startTime = Date.now();
 
@@ -329,7 +344,7 @@ export async function runSingleEvaluatorBatched(
       // Wrap in timeout to prevent hanging (240s per category - must exceed server 180s)
       const categoryTimeout = getClientTimeout(metrics.length);
       result = await withTimeout(
-        evaluateCategoryBatch(provider, city1, city2, categoryId, metrics),
+        evaluateCategoryBatch(provider, city1, city2, categoryId, metrics, scoring),
         categoryTimeout,
         { success: false, scores: [], latencyMs: categoryTimeout, error: `Timeout for ${categoryId}` }
       );

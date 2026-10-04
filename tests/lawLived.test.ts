@@ -46,11 +46,21 @@ describe('every scoring path uses the rule', () => {
     expect(source.includes('totalLivedScore / totalLivedWeight')).toBe(true);
   });
 
-  it('Enhanced mode drops a model answer with neither half instead of scoring it 0', () => {
+  it("Enhanced mode blends by the user's settings and drops a model answer with neither half", () => {
     const source = readFileSync('src/services/llmEvaluators.ts', 'utf8');
-    expect(source.includes('blendLawLived(s.city1LegalScore, s.city1EnforcementScore)')).toBe(true);
-    expect(source.includes('blendLawLived(s.city2LegalScore, s.city2EnforcementScore)')).toBe(true);
+    for (const n of [1, 2]) {
+      expect(
+        source.includes(`blendLawLived(s.city${n}LegalScore, s.city${n}EnforcementScore, scoring.lawLivedRatio, scoring.conservativeMode)`)
+      ).toBe(true);
+    }
     expect(/LegalScore \+ s\.city\dEnforcementScore\) \/ 2/.test(source)).toBe(false);
+  });
+
+  it('the Enhanced model buttons receive the Law vs Lived and Worst-Case settings (SC3)', () => {
+    const app = readFileSync('src/App.tsx', 'utf8');
+    const selector = readFileSync('src/components/EnhancedComparison.tsx', 'utf8');
+    expect(app.includes('scoring={{ lawLivedRatio, conservativeMode }}')).toBe(true);
+    expect(/runSingleEvaluatorBatched\([\s\S]*?\n\s*scoring\s*\);/.test(selector)).toBe(true);
   });
 
   it("the server's law and enforcement consensus skips models without that half", () => {

@@ -194,9 +194,9 @@
         "src/services/opusJudge.ts",
         "src/constants/scoringThresholds.ts"
       ],
-      "hash": "86a93e5892beac3a9fba13336f9a9e9ca19816bba6b93e818eb49d96f6652698",
+      "hash": "97c58302824101ddb36ca51f342b32ea48bae043076a7f5f9ea6cd691dbead66",
       "reviewed": "2026-10-04",
-      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
+      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
     },
     "JUDGE_EQUATIONS_MANUAL.md#6-the-judge-s-verdict": {
       "files": [
@@ -381,9 +381,9 @@
         "src/App.tsx",
         "src/components/TabNavigation.tsx"
       ],
-      "hash": "b4013e9d83aacd341de22d49d5eef49243904f9d72162d8a2bc63ce76a446405",
+      "hash": "e7f6e2670b86d044187eb7304884ff53f72beb16e3992a1d0fa53692d40b8111",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#3-api-routes": {
       "files": [
@@ -558,9 +558,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/models.ts"
       ],
-      "hash": "58634478b1393dba64f3822713615c3e9ac321646eb4b8e1b44bd112d081fb0c",
+      "hash": "a01099d749224b7e5f1d457e239a1e191651a802ef73800f7c48d889675df0d6",
       "reviewed": "2026-10-04",
-      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
+      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
     },
     "USER_MANUAL.md#4-2-customize-priorities": {
       "files": [
@@ -592,9 +592,9 @@
       "files": [
         "src/components/EnhancedComparison.tsx"
       ],
-      "hash": "d76128ec5c75dafcd081e5ba003e4faef705346612fdc88e0f3e03f49f48f459",
+      "hash": "dfd9c5a69aec4240313cb3c00d443722d9b93c71b340512624bc613beeb5a088",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
     },
     "USER_MANUAL.md#5-reading-your-results": {
       "files": [

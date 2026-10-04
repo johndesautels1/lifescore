@@ -807,6 +807,7 @@ const AppContent: React.FC = () => {
                   <LLMSelector
                     city1={pendingCities.city1}
                     city2={pendingCities.city2}
+                    scoring={{ lawLivedRatio, conservativeMode }}
                     llmStates={llmStates}
                     setLLMStates={setLLMStates}
                     judgeResult={judgeResultLifted}
