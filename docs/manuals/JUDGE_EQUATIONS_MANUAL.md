@@ -133,6 +133,8 @@ Law and enforcement consensus are weighted the same way, each over the models th
 
 **The Judge.** Metrics where σ is above **15** for either city are marked "high disagreement". The Judge model is shown the models' scores for every metric any model answered and may replace the consensus for a metric with its own scores and explanation; its scores are kept between 0 and 100. It never changes the agreement level, which always follows σ. It may also name the disagreement areas; the five first are shown.
 
+**If the Judge does not answer**, partial results are built from the models alone (`partialJudgeOutput`): each metric takes the first model's score that covers it, with that model's own law and enforcement halves; its blended score stands in only for a half it did not give.
+
 **Overall agreement** — over metrics answered by at least two models:
 
 ```

@@ -10,7 +10,7 @@
  * - See "Dead Code" folder for archived functions if restoration needed
  */
 
-import type { MetricConsensus, CategoryConsensus, EnhancedComparisonResult, CityConsensusScore, LLMProvider } from '../types/enhancedComparison';
+import type { MetricConsensus, CategoryConsensus, EnhancedComparisonResult, CityConsensusScore, LLMProvider, LLMMetricScore } from '../types/enhancedComparison';
 import type { CategoryId } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES } from '../shared/metrics';
 import { getMetricDisplayName } from '../shared/metricDisplayNames';
@@ -366,5 +366,46 @@ export function buildEnhancedResultFromJudge(
       llmTimings,
       metricsEvaluated: ALL_METRICS.length
     }
+  };
+}
+
+/**
+ * The judge's output built from the evaluators alone, for partial results when
+ * the judge did not answer: each metric takes the first model's score that
+ * covers it. Its law and enforcement halves are that model's own; the blended
+ * score stands in only for a half the model did not give (John, 4 Oct 2026:
+ * the enforcement half used to be the blended score, and a law score of 0
+ * counted as missing).
+ */
+export function partialJudgeOutput(evaluatorResults: EvaluatorResult[]): JudgeOutput {
+  const city1Consensuses: MetricConsensus[] = [];
+  const city2Consensuses: MetricConsensus[] = [];
+
+  evaluatorResults.forEach(evalResult => {
+    if (!evalResult.success && (!evalResult.scores || evalResult.scores.length === 0)) return;
+
+    evalResult.scores?.forEach((score: LLMMetricScore) => {
+      const consensus: MetricConsensus = {
+        metricId: score.metricId,
+        llmScores: [score],
+        consensusScore: score.normalizedScore,
+        legalScore: score.legalScore ?? score.normalizedScore,
+        enforcementScore: score.enforcementScore ?? score.normalizedScore,
+        confidenceLevel: 'moderate' as const,
+        standardDeviation: 0,
+        judgeExplanation: `Based on ${evalResult.provider} evaluation (partial - judge unavailable)`
+      };
+
+      const list = score.city === 'city1' ? city1Consensuses : score.city === 'city2' ? city2Consensuses : null;
+      if (list && !list.some(c => c.metricId === score.metricId)) list.push(consensus);
+    });
+  });
+
+  return {
+    city1Consensuses,
+    city2Consensuses,
+    overallAgreement: 50, // Unknown without judge
+    disagreementAreas: [],
+    judgeLatencyMs: 0
   };
 }

@@ -45,7 +45,7 @@ import type { EvaluatorResult } from './services/llmEvaluators';
 import { DEFAULT_ENHANCED_LLMS, LLM_CONFIGS, type LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult, LawLivedRatio } from './types/metrics';
-import type { EnhancedComparisonResult, LLMProvider, MetricConsensus } from './types/enhancedComparison';
+import type { EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveComparisonLocal, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
@@ -848,51 +848,15 @@ const AppContent: React.FC = () => {
                         effectiveJudgeResult: JudgeOutput | null,
                         isPartial: boolean = false
                       ) => {
-                        import('./services/opusJudge').then(({ buildEnhancedResultFromJudge }) => {
+                        import('./services/opusJudge').then(({ buildEnhancedResultFromJudge, partialJudgeOutput }) => {
                           try {
                             // If no judge result, create a minimal one from LLM data
                             let finalJudgeResult = effectiveJudgeResult;
 
                             if (!finalJudgeResult || !finalJudgeResult.city1Consensuses || !finalJudgeResult.city2Consensuses) {
                               console.warn('[App] Building fallback judge result from LLM data (partial results)');
-                              // Build minimal judge result from LLM scores
-                              const llmResultsArray = Array.from(llmResults.values());
-                              const city1Consensuses: MetricConsensus[] = [];
-                              const city2Consensuses: MetricConsensus[] = [];
-
-                              // Aggregate scores by metric
-                              llmResultsArray.forEach(evalResult => {
-                                if (!evalResult.success && (!evalResult.scores || evalResult.scores.length === 0)) return;
-
-                                evalResult.scores?.forEach((score: LLMMetricScore) => {
-                                  const consensus: MetricConsensus = {
-                                    metricId: score.metricId,
-                                    llmScores: [score],
-                                    consensusScore: score.normalizedScore,
-                                    legalScore: score.legalScore || score.normalizedScore,
-                                    enforcementScore: score.normalizedScore,
-                                    confidenceLevel: 'moderate' as const,
-                                    standardDeviation: 0,
-                                    judgeExplanation: `Based on ${evalResult.provider} evaluation (partial - judge unavailable)`
-                                  };
-
-                                  if (score.city === 'city1') {
-                                    const existing = city1Consensuses.find(c => c.metricId === score.metricId);
-                                    if (!existing) city1Consensuses.push(consensus);
-                                  } else if (score.city === 'city2') {
-                                    const existing = city2Consensuses.find(c => c.metricId === score.metricId);
-                                    if (!existing) city2Consensuses.push(consensus);
-                                  }
-                                });
-                              });
-
-                              finalJudgeResult = {
-                                city1Consensuses,
-                                city2Consensuses,
-                                overallAgreement: 50, // Unknown without judge
-                                disagreementAreas: [],
-                                judgeLatencyMs: 0
-                              };
+                              // Minimal judge result from the evaluators' own scores
+                              finalJudgeResult = partialJudgeOutput(Array.from(llmResults.values()));
                             }
 
                             const result = buildEnhancedResultFromJudge(
