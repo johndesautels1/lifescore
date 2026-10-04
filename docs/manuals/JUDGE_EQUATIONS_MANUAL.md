@@ -46,7 +46,7 @@ For each metric and each city, the evaluator chooses one **level** for the law a
 - A level the metric does not have, or `insufficient_data` / `transitional`, gives **no score** for that side.
 - The evaluator also gives a confidence (high, medium or low), its reasoning and its sources for each metric.
 
-**The setting behind this.** Level scoring is on when the server setting `USE_CATEGORY_SCORING` is `true`, as it is in production (logs, 4 October 2026). With it off, the evaluators are asked for numbers from 0 to 100 against five bands (90–100 fully legal / never enforced … 0–29 prohibited / strictly enforced), but they are asked to reply under names the reader does not take (`city1Legal`, read as a letter grade), so every score would be left out. **Do not turn the setting off** until that is fixed (section 9).
+**The setting behind this.** Level scoring is on when the server setting `USE_CATEGORY_SCORING` is `true`, as it is in production (logs, 4 October 2026). With it off, the evaluators are asked for numbers from 0 to 100 against five bands (90–100 fully legal / never enforced … 0–29 prohibited / strictly enforced); the reader takes those numbers, clamps them to 0–100 and leaves out any it cannot read (`tests/evaluateParse.test.ts`).
 
 ---
 
@@ -201,5 +201,5 @@ Found while writing this manual, read from the code. Each changes what users see
 3. ~~Enhanced mode ignores Law vs Lived and Worst-Case Mode~~ — **fixed 4 October 2026** (John: "use their settings"): the model buttons pass the user's settings to every evaluation.
 4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
 5. ~~Standard mode counts a missing category as 0~~ — **fixed 4 October 2026** (John: "same as Enhanced"): a missing category is left out, its weight shared, and it earns no bonus (`tests/standardScoring.test.ts`).
-6. **The numbers fallback cannot be read** (section 3).
+6. ~~The numbers fallback cannot be read~~ — **fixed 4 October 2026**: the reader takes the numbers the numbers prompt asks for (no change while the setting is on, as in production).
 7. **A second copy of the Standard-mode arithmetic** (`src/api/scoring.ts`) is used only by `tests/scoring.test.ts`, so that test does not check the code the app runs.

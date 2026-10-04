@@ -84,11 +84,11 @@ interface EvidenceSource {
 // Parsed LLM evaluation structure (supports both letter grades and numeric)
 interface ParsedEvaluation {
   metricId: string;
-  // Letter grade format (A/B/C/D/E) - preferred
-  city1Legal?: string;
-  city1Enforcement?: string;
-  city2Legal?: string;
-  city2Enforcement?: string;
+  // Letter grade (A/B/C/D/E, legacy) or, from the numbers prompt, a 0-100 score
+  city1Legal?: string | number;
+  city1Enforcement?: string | number;
+  city2Legal?: string | number;
+  city2Enforcement?: string | number;
   // Phase 2: Category-based format (legacy single category)
   city1Category?: string;
   city2Category?: string;
@@ -397,9 +397,12 @@ function buildPrompt(city1: string, city2: string, metrics: EvaluationRequest['m
   return buildBasePrompt(city1, city2, metrics);
 }
 
-// Parse LLM response to extract scores
-// Supports both A/B/C/D/E letter grades (preferred) and legacy numeric scores
-function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
+/**
+ * Read an evaluator's reply into scores: level choices (USE_CATEGORY_SCORING on),
+ * 0-100 numbers, or legacy letter grades. A half that cannot be read is null.
+ * Exported for tests/evaluateParse.test.ts.
+ */
+export function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
   try {
     // Log first 500 chars of raw response for debugging
     console.log(`[PARSE] ${provider} raw response (first 500):`, content.substring(0, 500));
@@ -418,19 +421,25 @@ function parseResponse(content: string, provider: LLMProvider): MetricScore[] {
     const parsed = JSON.parse(jsonStr) as { evaluations?: ParsedEvaluation[] };
 
     // Log what format was detected
-    const hasCategories = parsed.evaluations?.some(e => e.city1Category && e.city2Category);
-    const hasLetters = parsed.evaluations?.some(e => e.city1Legal || e.city2Legal);
-    const hasNumbers = parsed.evaluations?.some(e => typeof e.city1LegalScore === 'number');
+    const hasCategories = parsed.evaluations?.some(e => (e.city1Category && e.city2Category) || (e.city1LegalCategory && e.city2LegalCategory));
+    const hasLetters = parsed.evaluations?.some(e => typeof e.city1Legal === 'string' || typeof e.city2Legal === 'string');
+    const hasNumbers = parsed.evaluations?.some(e => typeof e.city1LegalScore === 'number' || typeof e.city1Legal === 'number');
     console.log(`[PARSE] ${provider} format: categories=${hasCategories}, letters=${hasLetters}, numbers=${hasNumbers}`);
     console.log(`[PARSE] ${provider} returned ${parsed.evaluations?.length || 0} evaluations`);
 
     // Helper: Convert letter grade to score, or clamp numeric score
     // FIX 2026-01-21: Handle string numbers (e.g., "75" instead of 75) safely
     // FIX 2026-01-25: Return null instead of 50 for missing/invalid data - prevents artificial convergence
-    const getScore = (letter: string | undefined, numeric: number | string | undefined): number | null => {
+    const getScore = (letter: string | number | undefined, numeric: number | string | undefined): number | null => {
       // Prefer letter grade if present (legacy support)
       if (letter && typeof letter === 'string' && /^[A-Ea-e]$/.test(letter.trim())) {
         return letterToScore(letter);
+      }
+      // The numbers prompt (buildBasePrompt) asks for "city1Legal": 75 — a number
+      // under the letter's name. Until 4 Oct 2026 that went unread and every score
+      // was dropped whenever USE_CATEGORY_SCORING was off (fault SC6).
+      if (numeric === undefined || numeric === null) {
+        numeric = typeof letter === 'number' || (typeof letter === 'string' && letter.trim() !== '') ? letter : undefined;
       }
       // Handle numeric scores - convert strings to numbers safely
       // FIXED: Return null for missing data instead of defaulting to 50

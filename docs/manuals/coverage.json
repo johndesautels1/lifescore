@@ -175,9 +175,9 @@
         "api/shared/metrics.ts",
         "api/evaluate.ts"
       ],
-      "hash": "19c1e700d9ffbdfb60e948e54c638a2253b3223e456e2b99bfd739cbe5b033ae",
+      "hash": "49a0759c7bca7f54755129a92344895b68367e5164d228f5f96630b1c252b61a",
       "reviewed": "2026-10-04",
-      "basis": "086f1622e101a1067cfd9130638dec5a3bd97145"
+      "basis": "f8c527aa2d9ad2b79e0eeb29b6ea7fcb309cde89"
     },
     "JUDGE_EQUATIONS_MANUAL.md#4-standard-mode-one-model": {
       "files": [
@@ -415,9 +415,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "f82bfbd03cf6701b372d7bac68d1775f3268fcb89c9dbe3f339bc573627c5d49",
+      "hash": "3f3710cd9ae7eb9612a19972eee41cab3cbd161859612f27ede563a34d2ff604",
       "reviewed": "2026-10-04",
-      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
+      "basis": "f8c527aa2d9ad2b79e0eeb29b6ea7fcb309cde89"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
