@@ -13,7 +13,7 @@ import type {
 } from '../types/enhancedComparison';
 import type { ComparisonResult, CategoryScore, MetricScore } from '../types/metrics';
 import { getAuthHeaders } from '../lib/supabase';
-import { AI_MODELS } from '../../api/shared/models';
+import { AI_MODELS, modelForSeat, type PanelSeat } from '../../api/shared/models';
 import type {
   VisualReportResponse,
   VisualReportState,
@@ -581,6 +581,37 @@ export function getStatusMessage(state: VisualReportState): string {
 const MAX_POLL_ATTEMPTS_ENHANCED = 180;  // 180 attempts * 5 sec = 15 minutes
 const PROMPT_LENGTH_WARNING = 95000;
 const PROMPT_LENGTH_MAX = 100000;
+
+/** How the report describes each evaluator seat, in panel order. */
+const EVALUATOR_PROMPT_INFO: ReadonlyArray<{
+  seat: Exclude<PanelSeat, 'claude-opus'>;
+  icon: string;
+  vendor: string;
+  role: string;
+  tableRole: string;
+  strength: string;
+}> = [
+  { seat: 'claude-sonnet', icon: '📝', vendor: 'Anthropic', role: 'Primary evaluator with web search', tableRole: 'Primary Evaluator', strength: 'Legal framework analysis' },
+  { seat: 'gpt-4o', icon: '🤖', vendor: 'OpenAI', role: 'Cross-validation with Tavily search', tableRole: 'Cross-validation', strength: 'Fact-checking' },
+  { seat: 'gemini-3-pro', icon: '💎', vendor: 'Google', role: 'Native Google Search grounding', tableRole: 'Data validation', strength: 'Google Search grounding' },
+  { seat: 'grok-4', icon: '𝕏', vendor: 'xAI', role: 'Real-time X/Twitter data integration', tableRole: 'Sentiment analysis', strength: 'X/Twitter integration' },
+  { seat: 'perplexity', icon: '🔮', vendor: 'Perplexity', role: 'Deep web research', tableRole: 'Deep research', strength: 'Source credibility' },
+];
+
+/**
+ * The evaluators that scored this comparison (result.llmsUsed), in panel order,
+ * with their current model names. John, 4 Oct 2026: the report names only the
+ * models that took part (fault GR2) — it used to list all five every time.
+ */
+function evaluatorsUsed(result: EnhancedComparisonResult) {
+  const used = new Set<string>(result.llmsUsed ?? []);
+  return EVALUATOR_PROMPT_INFO.filter(e => used.has(e.seat)).map(e => ({ ...e, name: modelForSeat(e.seat).name }));
+}
+
+/** "3 AI models" / "1 AI model". */
+function modelCount(n: number): string {
+  return `${n} AI model${n === 1 ? '' : 's'}`;
+}
 
 // Types for Judge Report integration
 interface JudgeReportData {
@@ -1155,7 +1186,7 @@ ${cat1.metrics.slice(0, 12).map(m => {
 
 **Legend:** Bar length = AI consensus strength | 95% Unanimous → 85% Strong → 70% Moderate → 50% Split
 
-**Models with divergent views:** ${result.disagreementSummary?.split('.')[0] || 'Generally aligned across all 5 LLMs'}
+**Models with divergent views:** ${result.disagreementSummary?.split('.')[0] || `Generally aligned across all ${modelCount(evaluatorsUsed(result).length)}`}
 
 `;
   });
@@ -1170,6 +1201,10 @@ function formatSection5LLMConsensus(
   result: EnhancedComparisonResult
 ): string {
   const confidence = result.overallConsensusConfidence;
+  const evaluators = evaluatorsUsed(result);
+  const n = evaluators.length;
+  // Law and lived scores for 100 metrics and 2 cities, from each evaluator
+  const dataPoints = 2 * 100 * 2 * n;
 
   // Calculate overall agreement
   let totalMetrics = 0;
@@ -1214,18 +1249,14 @@ function formatSection5LLMConsensus(
 
 | Model | Provider | Role | Strength |
 |-------|----------|------|----------|
-| 📝 ${AI_MODELS.claudeEvaluator.name} | Anthropic | Primary Evaluator | Legal framework analysis |
-| 🤖 ${AI_MODELS.gptEvaluator.name} | OpenAI | Cross-validation | Fact-checking |
-| 💎 ${AI_MODELS.geminiEvaluator.name} | Google | Data validation | Google Search grounding |
-| 𝕏 ${AI_MODELS.grokEvaluator.name} | xAI | Sentiment analysis | X/Twitter integration |
-| 🔮 ${AI_MODELS.perplexityEvaluator.name} | Perplexity | Deep research | Source credibility |
+${evaluators.map(e => `| ${e.icon} ${e.name} | ${e.vendor} | ${e.tableRole} | ${e.strength} |`).join('\n')}
 
 </table>
 
 **Final Judge:**
 <labels><label variant="solid" color="#7C3AED">🎭 ${AI_MODELS.judge.name} (Anthropic)</label></labels>
 
-Synthesizes all 5 evaluations into final scores and recommendation.
+Synthesizes the ${n} evaluation${n === 1 ? '' : 's'} into final scores and recommendation.
 
 ---
 
@@ -1237,16 +1268,16 @@ Synthesizes all 5 evaluations into final scores and recommendation.
 
 <smart-layout variant="semiCircle">
 <item label="Agreement Rate" value="${agreementPct}" max="100">${agreementPct}% of metrics with strong LLM consensus</item>
-<item label="Data Points" value="1200" max="1500">Dual scores across 100 metrics × 2 cities × 6 models</item>
+<item label="Data Points" value="${dataPoints}" max="${2 * 100 * 2 * EVALUATOR_PROMPT_INFO.length}">Law and lived scores × 100 metrics × 2 cities × ${modelCount(n)}</item>
 </smart-layout>
 
 | Metric | Value | Detail |
 |--------|-------|--------|
-| **Data Points Analyzed** | **1,200+** | Dual scores × 100 metrics × 2 cities × 6 models |
+| **Data Points Analyzed** | **${dataPoints.toLocaleString('en-US')}** | Law and lived scores × 100 metrics × 2 cities × ${modelCount(n)} |
 | **Unique Sources Cited** | **500+** | References gathered across all AI models |
-| **Strong Agreement Rate** | **${agreementPct}%** | Metrics where 5 LLMs reached consensus |
+| **Strong Agreement Rate** | **${agreementPct}%** | Metrics where the ${modelCount(n)} reached consensus |
 
-${confidence === 'high' ? 'All 5 LLMs showed strong alignment on the vast majority of metrics, indicating reliable conclusions.' :
+${confidence === 'high' ? `All ${modelCount(n)} showed strong alignment on the vast majority of metrics, indicating reliable conclusions.` :
   confidence === 'medium' ? 'Most metrics showed good agreement, with some expected divergence on subjective measures.' :
   'Some metrics showed significant disagreement between models, suggesting data limitations or genuinely contested assessments.'}
 
@@ -1296,12 +1327,12 @@ Different models weighed available evidence differently, leading to score varian
 Two cities entered for comparison
 </item>
 <item label="2. Parallel AI Research">
-5 LLMs simultaneously research 100 metrics:
-• ${AI_MODELS.claudeEvaluator.name} • ${AI_MODELS.gptEvaluator.name} • ${AI_MODELS.geminiEvaluator.name} • ${AI_MODELS.grokEvaluator.name} • ${AI_MODELS.perplexityEvaluator.name}
+${modelCount(n)} research the 100 metrics:
+${evaluators.map(e => `• ${e.name}`).join(' ')}
 </item>
 <item label="3. Dual Scoring">
 Each LLM provides Legal + Enforcement scores per metric
-= 1,200+ individual data points
+= ${dataPoints.toLocaleString('en-US')} individual scores
 </item>
 <item label="4. Consensus Calculation">
 Statistical analysis to identify agreement, outliers, confidence
@@ -2526,6 +2557,7 @@ export function formatEnhancedReportForGamma(
   const city1TotalScore = Math.round(result.city1.totalConsensusScore);
   const city2TotalScore = Math.round(result.city2.totalConsensusScore);
   const generatedAt = new Date(result.generatedAt).toLocaleDateString();
+  const evaluators = evaluatorsUsed(result);
 
   // Build all sections - NEW STRUCTURE with unique content
   const sectionExecutive = formatSection1ExecutiveSummary(result, judgeReport);
@@ -2564,14 +2596,10 @@ Report ID: ${result.comparisonId}
 CORRECT AI MODELS (CRITICAL - USE THESE EXACT NAMES):
 ================================================================================
 
-5 LLMs Used for Evaluation:
-📝 ${AI_MODELS.claudeEvaluator.name} (Anthropic) - Primary evaluator with web search
-🤖 ${AI_MODELS.gptEvaluator.name} (OpenAI) - Cross-validation with Tavily search
-💎 ${AI_MODELS.geminiEvaluator.name} (Google) - Native Google Search grounding
-𝕏 ${AI_MODELS.grokEvaluator.name} (xAI) - Real-time X/Twitter data integration
-🔮 ${AI_MODELS.perplexityEvaluator.name} (Perplexity) - Deep web research
+${modelCount(evaluators.length)} Used for Evaluation (only these took part):
+${evaluators.map(e => `${e.icon} ${e.name} (${e.vendor}) - ${e.role}`).join('\n')}
 
-Final Judge: 🎭 ${AI_MODELS.judge.name} (Anthropic) - Synthesizes all 5 evaluations
+Final Judge: 🎭 ${AI_MODELS.judge.name} (Anthropic) - Synthesizes the ${evaluators.length} evaluation${evaluators.length === 1 ? '' : 's'}
 
 ================================================================================
 VISUAL SPECIFICATIONS (USE DIVERSE VISUALS):

@@ -63,7 +63,7 @@ Read from the code while rewriting the Gamma Prompts Manual (its section 6). Eac
 | # | Where | Fault |
 |---|---|---|
 | GR1 | `src/services/gammaService.ts` | FIXED 4 Oct (John: "keep order, renumber") — the Enhanced prompt sent its sections out of order and misnumbered (Section 1, 4, 5, 6, 2, 3, …; pages 1–8, 43–52, 9–42, 53–82); now Sections 1–13, pages 1–82 in the order sent (`tests/gammaPrompt.test.ts`) |
-| GR2 | `src/services/gammaService.ts` | The Enhanced prompt names all five evaluators even when fewer took part |
+| GR2 | `src/services/gammaService.ts` | FIXED 4 Oct (John: "only those used") — the Enhanced prompt named all five evaluators (and "6 models", "1,200+ data points") whatever the comparison used; now the models in `llmsUsed` and the scores they gave (`tests/gammaModels.test.ts`) |
 | GR3 | `src/components/VisualsTab.tsx` | The Standard button says 35 pages; the prompt asks Gamma for 30 |
 | GR4 | `src/components/PromptsManager.tsx`, `api/prompts.ts` | FIXED 4 Oct (John: "say so, read-only") — the admin Prompts screen saved to `app_prompts`, which nothing reads; now marked reference copies, no editing, the server refuses edits (`tests/gammaPrompt.test.ts`) |
 

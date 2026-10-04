@@ -56,7 +56,7 @@ Written by `formatComparisonForGamma()`. It carries the two cities, the winner a
 ## 4. The Enhanced report prompt
 <!-- covers: src/services/gammaService.ts -->
 
-Written by `formatEnhancedReportForGamma()` from the Enhanced comparison, the Judge's Report when there is one, and the gun-rights comparison when ticked. It opens with the report details (cities, winner and loser with scores, difference, date, report id), names the AI models from `api/shared/models.ts` (the evaluators and the judge), gives Gamma its layout vocabulary and colours, then the sections, in this order:
+Written by `formatEnhancedReportForGamma()` from the Enhanced comparison, the Judge's Report when there is one, and the gun-rights comparison when ticked. It opens with the report details (cities, winner and loser with scores, difference, date, report id), names the evaluators that scored this comparison (`llmsUsed`, with their current model names from `api/shared/models.ts`) and the judge, gives Gamma its layout vocabulary and colours, then the sections, in this order:
 
 <!-- facts:gammasections -->
 <!-- /facts:gammasections -->
@@ -81,6 +81,6 @@ Written by `formatEnhancedReportForGamma()` from the Enhanced comparison, the Ju
 Read from the code while writing this manual; each changes what a report says, so each waits for a ruling (or says how it was ruled).
 
 1. ~~Sections sent out of order and misnumbered~~ — **fixed 4 October 2026** (John: "keep order, renumber"): sections 1–13 and pages 1–82 now run in the order sent (`tests/gammaPrompt.test.ts`).
-2. **The prompt always names all five evaluators**, even when fewer took part in the comparison.
+2. ~~The prompt always names all five evaluators~~ — **fixed 4 October 2026** (John: "only those used"): every list of models, and the count of scores, follows the models that took part (`tests/gammaModels.test.ts`).
 3. **The Standard button says 35 pages; the prompt asks for 30.**
 4. ~~The Prompts screen edits nothing~~ — **fixed 4 October 2026** (John: "say so, read-only"): it is marked as reference copies and editing is gone (`tests/gammaPrompt.test.ts`).
