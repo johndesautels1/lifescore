@@ -230,7 +230,7 @@ Run by CI on every push (`npx vitest run`). Most are anti-drift guards: they rea
 - **Secrets** stay on the server (Vercel); the browser bundle carries only public values. The browser console never shows an email, a user id or a profile (`tests/browserLogs.test.ts`).
 - **Webhooks** are verified: Stripe by signature (`constructEvent`; a failed database write answers 500 so Stripe retries), Replicate by its Standard Webhooks signature.
 - **Stripe return addresses** are checked against an allow-list (`isAllowedRedirectUrl`).
-- **Headers** — `X-Content-Type-Options`, `X-Frame-Options` and `Referrer-Policy` on every response; HSTS from Vercel. A Content-Security-Policy is not set yet (open item S14 in `docs/MASTER_BUG_AUDIT_20260220.md`).
+- **Headers** — `X-Content-Type-Options`, `X-Frame-Options` and `Referrer-Policy` on every response; HSTS from Vercel. A Content-Security-Policy is sent **report-only** (`Content-Security-Policy-Report-Only`): browsers block nothing and send what it would block to `/api/csp-report`, which logs one `[CSP]` line per report in Vercel's logs (blocked site and page path only). It is switched on once those reports show every vendor site is listed (open item S14 in `docs/MASTER_BUG_AUDIT_20260220.md`).
 - **Prompt input** — users' text goes only in the user turn of a model call; city names are validated before a comparison grant is signed.
 
 ---

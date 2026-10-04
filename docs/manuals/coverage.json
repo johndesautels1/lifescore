@@ -335,9 +335,9 @@
         "vite.config.ts",
         "src/main.tsx"
       ],
-      "hash": "f1e692c5cca9f01059b776c504088986db38a9497490ffce1171ea9552a0a7a2",
+      "hash": "eb84cfa195253b991dcdfb727d5600cbe3dc08b58f72ae7a543ecc34a01104d1",
       "reviewed": "2026-10-04",
-      "basis": "13a5fcbad598c3b4aae08f1efb066a5154d7f78c"
+      "basis": "d09bc9f26db285764c37b8d4d515501ba0cb2c9d"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#10-settings": {
       "files": [
@@ -410,9 +410,9 @@
         "api/shared/replicateWebhook.ts",
         "vercel.json"
       ],
-      "hash": "d1602872d0abd85305db3ced2f4227ac14c93cf73d3a17d56dd6e2a2f4d5dc53",
+      "hash": "9fe3d52f5517789d1d0c19cd3f1a502c75761b142d9c9ed466993303528dc242",
       "reviewed": "2026-10-04",
-      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
+      "basis": "d09bc9f26db285764c37b8d4d515501ba0cb2c9d"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#2-where-things-are": {
       "files": [

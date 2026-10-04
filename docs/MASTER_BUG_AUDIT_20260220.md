@@ -190,7 +190,7 @@ The individual items behind these counts were never written into this file, and 
 
 - Launch blocker #14 (server plan checks): FIXED 3 Oct 2026.
 - GDPR (G1/G2), retention and portability (B21/B22): FIXED — the privacy policy promises keeping data for the life of the account and deleting it at once on request, which is what the code does.
-- Open and real: S14 (a Content-Security-Policy header), the code-style clean-up (39 `as any`, 11 withTimeout copies, dead Phase 2 code), and the mobile/accessibility polish folded into the look-and-feel work.
+- Open and real: S14 (the Content-Security-Policy, report-only since 4 Oct), the code-style clean-up (2 `as any` left of 39 — the export's reasoning field and the shared-report view; 11 withTimeout copies; dead Phase 2 code), and the mobile/accessibility polish folded into the look-and-feel work.
 
 ---
 
@@ -293,7 +293,7 @@ The individual items behind these counts were never written into this file, and 
 | S11 | api/stripe/webhook.ts | 2 | LOW | Webhook secret not rotated | NOT A BUG — rotation is done in Stripe's dashboard, not in code |
 | S12 | api/user/delete.ts | 2 | LOW | No delete confirmation | FIXED — the user types DELETE MY ACCOUNT; the server checks it |
 | S13 | src/hooks/useVoiceRecognition.ts | 1 | LOW | Mic permission not graceful | FIXED — a plain message on not-allowed |
-| S14 | vercel.json | 1 | LOW | No Content-Security-Policy | OPEN — needs one careful policy across every vendor (Simli, LiveKit, HeyGen, D-ID, Stripe, Supabase, Gamma, video hosts) |
+| S14 | vercel.json | 1 | LOW | No Content-Security-Policy | OPEN — a report-only policy went live 4 Oct 2026: browsers block nothing and report what it would block to `/api/csp-report` (logged as `[CSP]` lines). It is switched on once those reports show every vendor site is listed |
 | S15 | api/evaluate.ts | 1 | LOW | Stack trace in error response | NOT A BUG — no stack in any response |
 | S16 | api/judge.ts | 1 | LOW | Same | NOT A BUG |
 | S17 | api/video/grok-generate.ts | 1 | LOW | Same | NOT A BUG |

@@ -120,7 +120,8 @@ const AUDIT: Record<string, { status: Status; check?: () => boolean }> = {
   S11: { status: 'NOT A BUG' },
   S12: { status: 'FIXED', check: () => has('src/components/SettingsModal.tsx', "'DELETE MY ACCOUNT'") },
   S13: { status: 'FIXED', check: () => has('src/hooks/useVoiceRecognition.ts', "case 'not-allowed'") },
-  S14: { status: 'OPEN', check: () => lacks('vercel.json', 'Content-Security-Policy') },
+  // Report-only since 4 Oct 2026; OPEN until the policy is switched on ("Content-Security-Policy" as its own header)
+  S14: { status: 'OPEN', check: () => has('vercel.json', '"Content-Security-Policy-Report-Only"') && lacks('vercel.json', '"Content-Security-Policy"') },
   S15: { status: 'NOT A BUG' },
   S16: { status: 'NOT A BUG' },
   S17: { status: 'NOT A BUG' },
