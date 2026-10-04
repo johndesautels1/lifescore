@@ -44,6 +44,7 @@ describe('3D icons', () => {
       'src/components/TabNavigation.tsx',
       'src/components/Footer.tsx',
       'src/components/HomeHero.tsx',
+      'src/components/Header.tsx',
       'src/components/icons3d/Icon3D.tsx',
     ]) {
       expect(readFileSync(file, 'utf8'), file).not.toMatch(EMOJI);

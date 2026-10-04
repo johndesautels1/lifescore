@@ -56,6 +56,14 @@ describe('the footer', () => {
     }
   });
 
+  it('the header carries none of the retired contacts either, and prints from the same file', () => {
+    const header = readFileSync('src/components/Header.tsx', 'utf8');
+    expect(header).toContain("from '../shared/companyContact'");
+    for (const retired of ['cluesnomads@gmail.com', 'brokerpinellas@gmail.com', 'cluesnomad.com']) {
+      expect(header).not.toContain(retired);
+    }
+  });
+
   it('keeps every legal door', () => {
     for (const label of [
       'Privacy',

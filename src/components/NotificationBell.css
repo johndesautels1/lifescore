@@ -218,8 +218,8 @@
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════ */
 /* Mobile: center dropdown horizontally on screen.
-   Header.css removes backdrop-filter from .user-account at 480px so that
-   position: fixed works relative to the viewport (not the filtered ancestor). */
+   Header.css keeps backdrop-filter, filter and transform off the header's
+   account row at every width, so position: fixed stays relative to the viewport. */
 @media (max-width: 480px) {
   .notification-dropdown {
     position: fixed;

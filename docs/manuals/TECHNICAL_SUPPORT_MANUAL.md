@@ -368,7 +368,7 @@ Group related styles with headers:
 |-----------|-------------|
 | `App.tsx` | Root component. Manages tabs, auth gate, lazy-loading of tab content. |
 | `LoginScreen.tsx` | Supabase auth — email/password login, signup, password reset. |
-| `Header.tsx` | Top navigation bar with logo, user menu, theme toggle. |
+| `Header.tsx` | Top of every page, two rows: the toolbar (theme, plan badge, notifications, Settings, user, sign out) and, beneath it, the brand and the LIFE SCORE title. The toolbar wraps onto a second line on narrow screens instead of covering the brand. |
 | `Footer.tsx` | Bottom of every page: brand, the three technologies as 3D tiles, contact details and social tiles (from `src/shared/companyContact.ts`), legal links, Pricing and copyright. |
 | `TabNavigation.tsx` | Main tab switcher (Compare, Results, Visuals, Judge, Olivia, etc.), with 3D icons. The tilt and lift follow a mouse only; on touch screens and under reduced motion the icons stay still. |
 | `HomeHero.tsx` | Top of the Compare tab: a turning 3D globe and the six categories. If the device has no WebGL the globe is left out and the words take the width (the browser console says "[HomeHero] globe could not start"). |
