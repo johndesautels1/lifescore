@@ -20,6 +20,7 @@ import type {
 } from '../types/metrics';
 import { ALL_METRICS, CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { grantHeaders } from '../lib/usageGrant';
+import { blendLawLived, isScore } from '../shared/lawLived';
 
 // ============================================================================
 // HELPERS
@@ -60,12 +61,13 @@ interface UseComparisonReturn {
   loadResult: (result: ComparisonResult) => void;
 }
 
+/** One metric from /api/evaluate; a half the evaluator could not rate is null. */
 interface APIEvaluationScore {
   metricId: string;
-  city1LegalScore: number;
-  city1EnforcementScore: number;
-  city2LegalScore: number;
-  city2EnforcementScore: number;
+  city1LegalScore: number | null;
+  city1EnforcementScore: number | null;
+  city2LegalScore: number | null;
+  city2EnforcementScore: number | null;
   confidence: string;
   reasoning?: string;
   sources?: string[];
@@ -99,6 +101,8 @@ function calculateCategoryScore(
   let totalLegalScore = 0;
   let totalLivedScore = 0;
   let totalWeight = 0;
+  let totalLegalWeight = 0;
+  let totalLivedWeight = 0;
   let verifiedCount = 0;
   let evaluatedCount = 0;
 
@@ -114,12 +118,14 @@ function calculateCategoryScore(
       totalWeight += metricDef.weight;
       evaluatedCount++;
 
-      // Track separate legal and lived averages
-      if (metricScore.legalScore !== null && metricScore.legalScore !== undefined) {
+      // Track separate legal and lived averages, each over the metrics that have that half
+      if (isScore(metricScore.legalScore)) {
         totalLegalScore += metricScore.legalScore * metricDef.weight;
+        totalLegalWeight += metricDef.weight;
       }
-      if (metricScore.livedScore !== null && metricScore.livedScore !== undefined) {
+      if (isScore(metricScore.livedScore)) {
         totalLivedScore += metricScore.livedScore * metricDef.weight;
+        totalLivedWeight += metricDef.weight;
       }
 
       if (metricScore.confidence !== 'unverified') {
@@ -143,8 +149,8 @@ function calculateCategoryScore(
 
   // Calculate averages only from evaluated metrics
   const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : null;
-  const averageLegalScore = totalWeight > 0 ? totalLegalScore / totalWeight : null;
-  const averageLivedScore = totalWeight > 0 ? totalLivedScore / totalWeight : null;
+  const averageLegalScore = totalLegalWeight > 0 ? totalLegalScore / totalLegalWeight : null;
+  const averageLivedScore = totalLivedWeight > 0 ? totalLivedScore / totalLivedWeight : null;
 
   // Get category weight for contribution to total
   // FIXED: Use customWeights from persona selection if provided, else default
@@ -356,45 +362,18 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
           // Parse and store the scores from API response
           if (apiResponse.success && apiResponse.scores) {
             for (const score of apiResponse.scores) {
-              // FIXED: Store Legal and Lived scores SEPARATELY
-              // Do not average here - let user preferences control the weighting
-              const city1Legal = score.city1LegalScore;
-              const city1Lived = score.city1EnforcementScore;
-              const city2Legal = score.city2LegalScore;
-              const city2Lived = score.city2EnforcementScore;
+              // Legal and Lived are stored SEPARATELY; the user's Law vs Lived
+              // split and Conservative mode combine them. A half the evaluator
+              // could not rate is left out, never counted as 0 (src/shared/lawLived.ts).
+              const city1Legal = isScore(score.city1LegalScore) ? score.city1LegalScore : null;
+              const city1Lived = isScore(score.city1EnforcementScore) ? score.city1EnforcementScore : null;
+              const city2Legal = isScore(score.city2LegalScore) ? score.city2LegalScore : null;
+              const city2Lived = isScore(score.city2EnforcementScore) ? score.city2EnforcementScore : null;
 
-              // Check if we have valid data (not undefined/null/NaN)
-              const city1HasData = typeof city1Legal === 'number' && !isNaN(city1Legal);
-              const city2HasData = typeof city2Legal === 'number' && !isNaN(city2Legal);
-
-              // Calculate normalized score using user's Law/Lived preference
-              // FIXED: Now uses user's lawLivedRatio and conservativeMode instead of hardcoded 50/50
-              let city1NormalizedScore: number | null = null;
-              let city2NormalizedScore: number | null = null;
-
-              if (city1HasData) {
-                if (conservativeMode) {
-                  // Worst-case mode: use the LOWER of law or lived
-                  city1NormalizedScore = Math.round(Math.min(city1Legal, city1Lived));
-                } else {
-                  // Normal mode: weighted combination based on user preference
-                  city1NormalizedScore = Math.round(
-                    (city1Legal * lawLivedRatio.law + city1Lived * lawLivedRatio.lived) / 100
-                  );
-                }
-              }
-
-              if (city2HasData) {
-                if (conservativeMode) {
-                  // Worst-case mode: use the LOWER of law or lived
-                  city2NormalizedScore = Math.round(Math.min(city2Legal, city2Lived));
-                } else {
-                  // Normal mode: weighted combination based on user preference
-                  city2NormalizedScore = Math.round(
-                    (city2Legal * lawLivedRatio.law + city2Lived * lawLivedRatio.lived) / 100
-                  );
-                }
-              }
+              const city1NormalizedScore = blendLawLived(city1Legal, city1Lived, lawLivedRatio, conservativeMode);
+              const city2NormalizedScore = blendLawLived(city2Legal, city2Lived, lawLivedRatio, conservativeMode);
+              const city1HasData = city1NormalizedScore !== null;
+              const city2HasData = city2NormalizedScore !== null;
 
               // Map confidence string to type
               let confidence: 'high' | 'medium' | 'low' | 'unverified' = 'medium';
@@ -418,7 +397,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
               // City 1 score - store Legal and Lived separately
               city1MetricScores.push({
                 metricId: score.metricId,
-                rawValue: score.city1LegalScore,
+                rawValue: city1Legal,
                 normalizedScore: city1NormalizedScore,
                 legalScore: city1Legal,      // NEW: Separate legal score
                 livedScore: city1Lived,      // NEW: Separate lived score
@@ -433,7 +412,7 @@ export function useComparison(_options: UseComparisonOptions = {}): UseCompariso
               // City 2 score - store Legal and Lived separately
               city2MetricScores.push({
                 metricId: score.metricId,
-                rawValue: score.city2LegalScore,
+                rawValue: city2Legal,
                 normalizedScore: city2NormalizedScore,
                 legalScore: city2Legal,      // NEW: Separate legal score
                 livedScore: city2Lived,      // NEW: Separate lived score

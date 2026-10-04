@@ -121,9 +121,9 @@
         "src/hooks/useGrokVideo.ts",
         "src/main.tsx"
       ],
-      "hash": "088108a0ca3603791ba6e56a9a53b33e07b9d07a3699822ea65fc5d0aac37d53",
+      "hash": "ae71a06d2f19dc35d443e1fdd89df798fbcc0cac3a916331a65070119b98b1e2",
       "reviewed": "2026-10-04",
-      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
     },
     "CUSTOMER_SERVICE_MANUAL.md#5-account-and-privacy-requests": {
       "files": [
@@ -183,9 +183,9 @@
       "files": [
         "src/hooks/useComparison.ts"
       ],
-      "hash": "59391c24290cf7ae1a11d744cf1b6619bce0ab7830d392d8a48386178cba697d",
+      "hash": "025550db3b8d994638df9d2c428cc3201ffebcb15ab5d3a07b21d2dc0d15189d",
       "reviewed": "2026-10-04",
-      "basis": "086f1622e101a1067cfd9130638dec5a3bd97145"
+      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
     },
     "JUDGE_EQUATIONS_MANUAL.md#5-enhanced-mode-several-models-and-the-judge": {
       "files": [
@@ -194,9 +194,9 @@
         "src/services/opusJudge.ts",
         "src/constants/scoringThresholds.ts"
       ],
-      "hash": "b43044ac94258404a910c76343a857142d9da11c7a6c0a9c16712227302c2b4c",
+      "hash": "86a93e5892beac3a9fba13336f9a9e9ca19816bba6b93e818eb49d96f6652698",
       "reviewed": "2026-10-04",
-      "basis": "086f1622e101a1067cfd9130638dec5a3bd97145"
+      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
     },
     "JUDGE_EQUATIONS_MANUAL.md#6-the-judge-s-verdict": {
       "files": [
@@ -415,9 +415,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "90644036dbad98077b79c89c457fa88f72777231d491df2e2cf2f4d6e1779bb9",
+      "hash": "524b365e83b20cf072a344f0179cf3dc955d277ee6ce39be7305fae5cc066495",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
@@ -558,9 +558,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/models.ts"
       ],
-      "hash": "986d3fa817e84aa785c4d0d28ab99670b83ff916a2b67b174cae177454aad560",
+      "hash": "58634478b1393dba64f3822713615c3e9ac321646eb4b8e1b44bd112d081fb0c",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
     },
     "USER_MANUAL.md#4-2-customize-priorities": {
       "files": [

@@ -13,6 +13,7 @@ import type { MetricDefinition, CategoryId } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { getAuthHeaders } from '../lib/supabase';
 import { grantHeaders } from '../lib/usageGrant';
+import { blendLawLived, isScore } from '../shared/lawLived';
 
 // ============================================================================
 // TIMEOUT CONSTANTS
@@ -63,12 +64,13 @@ export interface EvaluatorResult {
 }
 
 // API response score format (from /api/evaluate)
+/** One metric from /api/evaluate; a half the evaluator could not rate is null. */
 interface APIMetricScore {
   metricId: string;
-  city1LegalScore: number;
-  city1EnforcementScore: number;
-  city2LegalScore: number;
-  city2EnforcementScore: number;
+  city1LegalScore: number | null;
+  city1EnforcementScore: number | null;
+  city2LegalScore: number | null;
+  city2EnforcementScore: number | null;
   confidence: string;
   reasoning?: string;
   sources?: string[];
@@ -181,45 +183,57 @@ async function evaluateCategoryBatch(
     const apiScores: APIMetricScore[] = result.scores || [];
     const now = new Date().toISOString();
 
-    const city1Scores: LLMMetricScore[] = apiScores.map((s: APIMetricScore) => ({
-      metricId: s.metricId,
-      rawValue: null,
-      normalizedScore: Math.round((s.city1LegalScore + s.city1EnforcementScore) / 2),
-      confidence: parseConfidence(s.confidence),
-      llmProvider: provider,
-      legalScore: s.city1LegalScore,
-      enforcementScore: s.city1EnforcementScore,
-      explanation: s.reasoning,
-      sources: s.sources,
-      evidence: s.city1Evidence?.map(e => ({
-        city: city1,
-        title: e.title,
-        url: e.url,
-        snippet: e.snippet,
-        retrieved_at: now
-      })),
-      city: 'city1' as const
-    }));
+    const city1Scores: LLMMetricScore[] = apiScores.flatMap((s: APIMetricScore): LLMMetricScore[] => {
+      // Law and enforcement count equally; a half the model could not rate is left
+      // out, and a metric with neither is not this model's answer (src/shared/lawLived.ts).
+      const normalizedScore = blendLawLived(s.city1LegalScore, s.city1EnforcementScore);
+      if (normalizedScore === null) return [];
+      return [{
+        metricId: s.metricId,
+        rawValue: null,
+        normalizedScore,
+        confidence: parseConfidence(s.confidence),
+        llmProvider: provider,
+        legalScore: isScore(s.city1LegalScore) ? s.city1LegalScore : undefined,
+        enforcementScore: isScore(s.city1EnforcementScore) ? s.city1EnforcementScore : undefined,
+        explanation: s.reasoning,
+        sources: s.sources,
+        evidence: s.city1Evidence?.map(e => ({
+          city: city1,
+          title: e.title,
+          url: e.url,
+          snippet: e.snippet,
+          retrieved_at: now
+        })),
+        city: 'city1' as const
+      }];
+    });
 
-    const city2Scores: LLMMetricScore[] = apiScores.map((s: APIMetricScore) => ({
-      metricId: s.metricId,
-      rawValue: null,
-      normalizedScore: Math.round((s.city2LegalScore + s.city2EnforcementScore) / 2),
-      confidence: parseConfidence(s.confidence),
-      llmProvider: provider,
-      legalScore: s.city2LegalScore,
-      enforcementScore: s.city2EnforcementScore,
-      explanation: s.reasoning,
-      sources: s.sources,
-      evidence: s.city2Evidence?.map(e => ({
-        city: city2,
-        title: e.title,
-        url: e.url,
-        snippet: e.snippet,
-        retrieved_at: now
-      })),
-      city: 'city2' as const
-    }));
+    const city2Scores: LLMMetricScore[] = apiScores.flatMap((s: APIMetricScore): LLMMetricScore[] => {
+      // Law and enforcement count equally; a half the model could not rate is left
+      // out, and a metric with neither is not this model's answer (src/shared/lawLived.ts).
+      const normalizedScore = blendLawLived(s.city2LegalScore, s.city2EnforcementScore);
+      if (normalizedScore === null) return [];
+      return [{
+        metricId: s.metricId,
+        rawValue: null,
+        normalizedScore,
+        confidence: parseConfidence(s.confidence),
+        llmProvider: provider,
+        legalScore: isScore(s.city2LegalScore) ? s.city2LegalScore : undefined,
+        enforcementScore: isScore(s.city2EnforcementScore) ? s.city2EnforcementScore : undefined,
+        explanation: s.reasoning,
+        sources: s.sources,
+        evidence: s.city2Evidence?.map(e => ({
+          city: city2,
+          title: e.title,
+          url: e.url,
+          snippet: e.snippet,
+          retrieved_at: now
+        })),
+        city: 'city2' as const
+      }];
+    });
 
     const scores: LLMMetricScore[] = [...city1Scores, ...city2Scores];
 
@@ -339,10 +353,11 @@ export async function runSingleEvaluatorBatched(
     console.log(`[BATCH] ${provider}/${categoryId} done: success=${result.success}, scores=${result.scores.length}`);
 
     // Update progress to completed/failed with success count
-    // Note: result.scores contains entries for BOTH cities, so divide by 2 for metric count
+    // result.scores holds an entry per city per metric, and a city's entry is
+    // missing when neither half was rated, so count the metrics themselves
     if (idx >= 0) {
       progressState[idx].status = result.success ? 'completed' : 'failed';
-      progressState[idx].successCount = Math.floor(result.scores.length / 2);
+      progressState[idx].successCount = new Set(result.scores.map(s => s.metricId)).size;
       onCategoryProgress?.([...progressState]);
     }
 

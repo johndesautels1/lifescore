@@ -51,7 +51,7 @@ Read from the code while rewriting the Judge Equations Manual (its section 9 exp
 | SC1 | `api/judge.ts` | Marks disagreement at σ above 15; the shared limits (`src/constants/scoringThresholds.ts`) say 20 — two copies that disagree |
 | SC2 | `api/judge.ts` | The Judge is shown only the first 30 of 100 metrics |
 | SC3 | `src/services/llmEvaluators.ts` | Enhanced mode ignores Law vs Lived and Conservative mode (always (L + E) / 2) |
-| SC4 | `src/hooks/useComparison.ts`, `src/services/llmEvaluators.ts` | A side with no score counts as 0 (halves the metric); in Enhanced mode a metric with both sides missing scores 0 instead of being left out |
+| SC4 | `src/hooks/useComparison.ts`, `src/services/llmEvaluators.ts` | FIXED 4 Oct (John: "leave it out") — a side with no score counted as 0 (halving the metric; Enhanced scored a fully missing metric 0); now left out everywhere (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`) |
 | SC5 | `src/hooks/useComparison.ts` | Standard mode counts a category with no score as 0 in the city total and, when one city lacks it, in the category wins and largest gap |
 | SC6 | `api/evaluate.ts` | With `USE_CATEGORY_SCORING` off, replies use names the reader does not take, so every score would be dropped (the setting is on in production) |
 | SC7 | `src/api/scoring.ts` | A second copy of the Standard-mode arithmetic, used only by `tests/scoring.test.ts` — the test does not check the code the app runs |

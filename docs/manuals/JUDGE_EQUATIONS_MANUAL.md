@@ -62,7 +62,7 @@ metric = round( (L × law + E × lived) / 100 )
 metric = round( min(L, E) )                      when Conservative mode is on
 ```
 
-A metric counts as missing when *L* is missing.
+When the evaluator rated only one half, the metric takes that half (in either setting); when it rated neither, the metric is missing (`src/shared/lawLived.ts`).
 
 **Category score** — the weighted average of the metrics that have a score, by metric weight *wₘ*:
 
@@ -70,7 +70,7 @@ A metric counts as missing when *L* is missing.
 category = Σ(metric × wₘ) / Σ(wₘ)            over metrics with a score; none → no score
 ```
 
-The same averaging gives a category law score and lived score, shown beside it.
+The same averaging gives a category law score and lived score, shown beside it — each over the metrics that have that half.
 
 **City base score** — each category's share by its weight *w꜀* (default or the user's, adding up to 100):
 
@@ -107,6 +107,8 @@ Enhanced mode asks several models the same questions (Technical Support Manual, 
 model metric = round( (L + E) / 2 )
 ```
 
+With one half missing the model's score is the other half; with neither, the model gives no answer for that metric (the same rule as Standard mode, at an even split).
+
 **Consensus for a metric** (per city; one answer per model):
 
 ```
@@ -115,7 +117,7 @@ consensus     = Σ(score × weight) / Σ(weight)          rounded
 σ             = √( Σ(score − mean)² / n )               population standard deviation of the models' scores
 ```
 
-Law and enforcement consensus are weighted the same way. A metric no model answered is left out.
+Law and enforcement consensus are weighted the same way, each over the models that rated that half. A metric no model answered is left out.
 
 **Agreement level** from σ:
 
@@ -189,12 +191,12 @@ progress  = done + (100 − done) × fraction        held at 95 until both are r
 
 ## 9. Known faults in the scoring (4 October 2026)
 
-Found while writing this manual, read from the code. Each changes what users see, so each waits for a ruling; the bug list (`docs/MASTER_BUG_AUDIT_20260220.md`) carries them.
+Found while writing this manual, read from the code. Each changes what users see, so each waits for a ruling (or says how it was ruled); the bug list (`docs/MASTER_BUG_AUDIT_20260220.md`) carries them.
 
 1. **The disagreement mark differs** — the server marks σ above 15 (`api/judge.ts` keeps its own copy of the limits); the shared limits (`src/constants/scoringThresholds.ts`) say 20.
 2. **The Judge sees 30 of 100 metrics** — disagreements on the other 70 never reach it.
 3. **Enhanced mode ignores Law vs Lived and Conservative mode** — every model score is the plain average of law and enforcement.
-4. **A missing side counts as 0** — when a level gives no score for enforcement (or, in Enhanced mode, for either side), the code treats it as 0, so the metric's score drops by up to half instead of leaving that side out; in Enhanced mode a metric with both sides missing scores 0 instead of being left out.
+4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
 5. **Standard mode counts a missing category as 0** — in the city base score (the other weights are not shared out, as Enhanced mode does), and, when only one city lacks it, in the category wins and the largest gap.
 6. **The numbers fallback cannot be read** (section 3).
 7. **A second copy of the Standard-mode arithmetic** (`src/api/scoring.ts`) is used only by `tests/scoring.test.ts`, so that test does not check the code the app runs.

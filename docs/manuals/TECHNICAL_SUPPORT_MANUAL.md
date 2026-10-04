@@ -95,7 +95,7 @@ Models are chosen by job in one file; change a job's model there and every calle
 <!-- facts:models -->
 <!-- /facts:models -->
 
-- **Standard comparison** — the browser runs the six categories against `/api/evaluate` with Claude's evaluator seat. Each request researches the metrics (Tavily, section 6) and asks the model to score both cities, Law and Lived, per metric. Replies are parsed tolerantly: every score is checked, clamped to 0–100, and dropped when invalid.
+- **Standard comparison** — the browser runs the six categories against `/api/evaluate` with Claude's evaluator seat. Each request researches the metrics (Tavily, section 6) and asks the model to score both cities, Law and Lived, per metric. Replies are parsed tolerantly: every score is checked, clamped to 0–100, and dropped when invalid. A half (Law or Lived) the model could not rate is left out, never counted as 0 (`src/shared/lawLived.ts`).
 - **Enhanced comparison** — the user starts each of the five evaluator seats; `/api/judge` (the judge model) builds the consensus from the finished seats, weighting by confidence and arbitrating metrics where the seats disagree by more than 15 points.
 - **Judge's Report** — `/api/judge-report` writes Cristiano's verdict from a comparison.
 - **Calls** — every vendor has one client in `api/shared/` (`anthropic.ts`, `openai.ts`, `gemini.ts`, `xai.ts`, `perplexity.ts`); the Claude client retries overloads and network failures. Every server call to an outside service has a time limit (`tests/serverTimeouts.test.ts`).

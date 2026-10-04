@@ -192,25 +192,26 @@ function calculateWeightedConsensus(scores: LLMMetricScore[]): number {
 }
 
 /**
- * Calculate weighted consensus for legal/enforcement scores
+ * Calculate weighted consensus for legal/enforcement scores, over the models
+ * that rated that half (John, 4 Oct 2026: a half a model could not rate is
+ * left out — src/shared/lawLived.ts). Null when none did.
  */
 function calculateWeightedLegalLivedConsensus(
   scores: LLMMetricScore[],
   field: 'legalScore' | 'enforcementScore'
-): number {
-  if (scores.length === 0) return 0;
-
+): number | null {
   let weightedSum = 0;
   let totalWeight = 0;
 
   for (const score of scores) {
-    const value = score[field] ?? score.normalizedScore;
+    const value = score[field];
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue;
     const weight = confidenceToWeight(score.confidence);
     weightedSum += value * weight;
     totalWeight += weight;
   }
 
-  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+  return totalWeight > 0 ? weightedSum / totalWeight : null;
 }
 
 // ============================================================================
@@ -245,8 +246,10 @@ function buildMetricConsensus(
   const stdDev = calculateStdDev(normalizedScores);
 
   const consensusScore = Math.round(weightedConsensus);
-  const legalScore = Math.round(calculateWeightedLegalLivedConsensus(scores, 'legalScore'));
-  const enforcementScore = Math.round(calculateWeightedLegalLivedConsensus(scores, 'enforcementScore'));
+  const legalConsensus = calculateWeightedLegalLivedConsensus(scores, 'legalScore');
+  const enforcementConsensus = calculateWeightedLegalLivedConsensus(scores, 'enforcementScore');
+  const legalScore = legalConsensus === null ? null : Math.round(legalConsensus);
+  const enforcementScore = enforcementConsensus === null ? null : Math.round(enforcementConsensus);
 
   // Use centralized threshold constants
   const confidenceLevel: ConfidenceLevel = getConfidenceLevel(stdDev);
