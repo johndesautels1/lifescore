@@ -11,14 +11,33 @@ export default defineConfig({
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo-512.png'],
       manifest: false, // Use our custom manifest.json in public folder
       workbox: {
-        // Pre-cache only the app shell: index.html, core CSS, and critical vendor chunks,
+        // Pre-cache only the app shell's scripts and styles: core CSS and critical vendor chunks,
         // plus Rolldown's runtime (rolldown-runtime-*.js, which index.html preloads since Vite 8).
+        // NOT index.html: the start page comes from the network first (runtimeCaching below).
+        // A precached index.html kept serving the PREVIOUS release after a deploy; its screens
+        // asked for files that release had replaced, and the judge page crashed with "Failed
+        // to fetch dynamically imported module" (4 Oct 2026). Workbox also matches "/" to a
+        // precached index.html (directoryIndex), so it must leave the precache, not just the
+        // navigation fallback.
         // scripts/check-precache-shell.mjs fails CI if the built page loads a file at start
         // that these patterns miss.
         // Lazy-loaded tab chunks (Results, JudgeTab, AskOlivia, etc.) are cached on first
         // use via runtimeCaching below — NOT pre-cached on install.
-        globPatterns: ['**/*.html', '**/index-*.js', '**/index-*.css', '**/rolldown-runtime-*.js', '**/react-vendor-*.js', '**/supabase-*.js', '**/app-data-*.js', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
+        globPatterns: ['**/index-*.js', '**/index-*.css', '**/rolldown-runtime-*.js', '**/react-vendor-*.js', '**/supabase-*.js', '**/app-data-*.js', '**/logo-{192,512}.png', '**/maskable-*.png', '**/icon-*.png', '**/favicon*.png', '**/apple-touch-icon.png'],
+        // No stored page answers a navigation; the rule below does, network first.
+        navigateFallback: null,
         runtimeCaching: [
+          {
+            // The start page: always the current release when online; the last copy
+            // only when the network fails or takes longer than 4 seconds (offline use).
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 10 },
+            },
+          },
           {
             // Lazy-loaded JS/CSS chunks: cache on first use (StaleWhileRevalidate)
             // so second visit loads instantly, but first visit only fetches what's needed.

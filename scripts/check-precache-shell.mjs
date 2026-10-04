@@ -10,7 +10,9 @@
  * bundler change, fails here.
  *
  * It also checks the other way: every named bundle in globPatterns (app-data-*,
- * react-vendor-* …) still matches a precached file.
+ * react-vendor-* …) still matches a precached file. And it checks that the start
+ * page itself is NOT precached and that page loads go to the network first, so
+ * a release can never be shadowed by the previous one's start page.
  *
  * Run from the repository root after `vite build`:
  * `node scripts/check-precache-shell.mjs` (exit 1 on a gap).
@@ -64,6 +66,19 @@ if (stems.length === 0 || unmatched.length > 0) {
   process.exit(1);
 }
 
+// The start page itself must NOT be precached, and navigations must go to the
+// network first: a stored index.html outlives a release and asks for screen
+// files the new release replaced (the judge page crash of 4 Oct 2026).
+if (sw.includes('url:"index.html"')) {
+  console.error('index.html is precached: after a release the service worker would serve the old page.');
+  process.exit(1);
+}
+if (!/(mode\s*===?\s*["']navigate["']|["']navigate["']\s*===?\s*[\w$]+\.mode)[\s\S]{0,200}NetworkFirst/.test(sw)) {
+  console.error('No network-first rule for page navigations in dist/sw.js.');
+  process.exit(1);
+}
+
 console.log(`All ${startFiles.length} start-up files are precached:`);
 for (const file of startFiles) console.log(`  ${file}`);
 console.log(`Every named bundle pattern matches a precached file: ${stems.join(', ')}`);
+console.log('The start page is not precached; page navigations go to the network first.');
