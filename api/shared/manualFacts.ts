@@ -173,6 +173,11 @@ function factMetrics(): string {
   return `${ALL_METRICS.length} metrics in ${CATEGORIES.length} categories. Source: ${code('api/shared/metrics-data.ts')}.\n\n${parts.join('\n\n')}`;
 }
 
+function factCategories(): string {
+  const rows = CATEGORIES.map((c) => [c.name, `${c.weight}%`, String(ALL_METRICS.filter((m) => m.categoryId === c.id).length), c.description]);
+  return `${table(['Category', 'Default weight', 'Metrics', 'What it covers'], rows)}\n\nThe default weights add up to ${CATEGORIES.reduce((sum, c) => sum + c.weight, 0)}%. You can change them before a comparison (Customize Priorities).`;
+}
+
 function factTables(root: string): string {
   // Migrations in file order: a CREATE TABLE adds a table, a DROP TABLE removes it.
   const created = new Map<string, string>();
@@ -247,6 +252,7 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   plans: () => factPlans(),
   models: () => factModels(),
   metrics: () => factMetrics(),
+  categories: () => factCategories(),
   tables: factTables,
   jobs: factJobs,
   functions: factFunctions,

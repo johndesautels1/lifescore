@@ -1,4 +1,198 @@
 {
   "version": 1,
-  "sections": {}
+  "sections": {
+    "USER_MANUAL.md#1-what-life-score-is": {
+      "files": [
+        "src/components/Header.tsx",
+        "src/components/HomeHero.tsx",
+        "src/components/CitySelector.tsx"
+      ],
+      "hash": "272c390fcf4c283ef46096cc9e7d866c9d52496b1adaf076c121e83e50d5c2be",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#10-settings-and-your-data": {
+      "files": [
+        "src/components/SettingsModal.tsx",
+        "api/user/export.ts",
+        "api/user/delete.ts"
+      ],
+      "hash": "6e65337c836b011c7157f751cbb13de15f559b436e73745bcc0f607c522f73c6",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#11-plans": {
+      "files": [
+        "src/components/PricingModal.tsx",
+        "api/shared/plans.ts"
+      ],
+      "hash": "559edff45340091dd0ca8225a1df353e1306b33f511fa82d8933b538dcb5bbf0",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#12-help-and-emilia": {
+      "files": [
+        "src/components/HelpBubble.tsx",
+        "src/components/HelpModal.tsx",
+        "src/components/EmiliaChat.tsx",
+        "api/emilia/message.ts"
+      ],
+      "hash": "00909dece28250efdef8c234e220e1f36c5816e6d32397e9a2ed2ae85104dded",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#13-privacy-cookies-and-legal": {
+      "files": [
+        "src/components/CookieConsent.tsx",
+        "src/legal/legalContent.ts",
+        "src/components/Footer.tsx"
+      ],
+      "hash": "10100feb712e25ac0065d04a4b8124ac92de0932dd506bc57e4b8cbebc071241",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#14-on-a-phone": {
+      "files": [
+        "src/components/MobileWarningModal.tsx",
+        "src/components/TabNavigation.tsx"
+      ],
+      "hash": "939cead8a4340b0600de15a65a834cdd8eb11ff6187b5c66f451251473da87ed",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#15-when-something-goes-wrong": {
+      "files": [
+        "src/main.tsx",
+        "src/components/LoginScreen.tsx"
+      ],
+      "hash": "25c2f0812f0eda0ce8d39aca2d7ef7760d59474a54280a9975b14bbb3a1927a9",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#2-signing-in": {
+      "files": [
+        "src/components/LoginScreen.tsx",
+        "src/components/ResetPasswordScreen.tsx"
+      ],
+      "hash": "0301d9f9b680a2a8491c410a198b4569113db343dcdc01f9e7fe690ee94ae880",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#3-finding-your-way-around": {
+      "files": [
+        "src/components/Header.tsx",
+        "src/components/TabNavigation.tsx",
+        "src/components/Footer.tsx",
+        "src/components/HelpBubble.tsx",
+        "src/components/OliviaChatBubble.tsx"
+      ],
+      "hash": "e380b78545496d235bf19bc5f8658483ba3caa26acbbf7ebd0979497fad56dc0",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#4-1-standard-and-enhanced-comparisons": {
+      "files": [
+        "src/components/EnhancedComparison.tsx",
+        "src/hooks/useComparison.ts",
+        "api/shared/models.ts"
+      ],
+      "hash": "986d3fa817e84aa785c4d0d28ab99670b83ff916a2b67b174cae177454aad560",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#4-2-customize-priorities": {
+      "files": [
+        "src/components/WeightPresets.tsx"
+      ],
+      "hash": "0ece4cb6058e73b82dd8256bd9294ef22573b96c8e999635d05533fc50b995e8",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#4-3-dealbreakers": {
+      "files": [
+        "src/components/DealbreakersPanel.tsx"
+      ],
+      "hash": "227088fd9e083aea4f016f3a6bb1c639ff4ba894eb71533661478848200baeeb",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#4-running-a-comparison": {
+      "files": [
+        "src/components/CitySelector.tsx",
+        "src/components/NotifyMeModal.tsx",
+        "src/components/HomeHero.tsx"
+      ],
+      "hash": "ea55e117458ae0903b55d4399b2a2e2c4abca5f12405876e2dc148beceaef059",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#5-1-enhanced-results": {
+      "files": [
+        "src/components/EnhancedComparison.tsx"
+      ],
+      "hash": "d76128ec5c75dafcd081e5ba003e4faef705346612fdc88e0f3e03f49f48f459",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#5-reading-your-results": {
+      "files": [
+        "src/components/Results.tsx",
+        "src/components/ScoreMethodology.tsx",
+        "src/components/EvidencePanel.tsx"
+      ],
+      "hash": "e772e486c81fb0e3ff6551d93ee75cfcb7a1c53340763fd56c3419a3d0accf61",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#6-1-videos-in-the-judge-s-report": {
+      "files": [
+        "src/components/JudgeTab.tsx",
+        "src/components/CourtOrderVideo.tsx",
+        "src/components/GoToMyNewCity.tsx",
+        "src/components/MovieGenerator.tsx"
+      ],
+      "hash": "835a1c31db65d8b438763cc17fe3191d8743dea8a555420664c011420084c72f",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#6-the-judge-s-report": {
+      "files": [
+        "src/components/JudgeTab.tsx",
+        "api/shared/entitlements.ts"
+      ],
+      "hash": "8e66aadf525c24be58a08bea361d7dbdc482c846d45ed61a00aa4ba5d2c716d1",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#7-visuals": {
+      "files": [
+        "src/components/VisualsTab.tsx",
+        "src/components/ReportPresenter.tsx",
+        "src/components/GunComparisonModal.tsx",
+        "src/components/NewLifeVideos.tsx"
+      ],
+      "hash": "4049c6b4fdcd5b912299de6e1a39f9664af029ed73e4062b2a4853cc96b081e6",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#8-ask-olivia": {
+      "files": [
+        "src/components/AskOlivia.tsx",
+        "src/components/OliviaChatBubble.tsx",
+        "api/olivia/chat.ts",
+        "api/shared/plans.ts"
+      ],
+      "hash": "a8a82e4792cdb7db4ffcc4dec87b86b812b71f730e9a5e31de28e60e893547fe",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    },
+    "USER_MANUAL.md#9-saved": {
+      "files": [
+        "src/components/SavedComparisons.tsx"
+      ],
+      "hash": "7556b21ea35200f03871cc1a53aca109b2950b5075356cb392f40e3e183aa6d7",
+      "reviewed": "2026-10-04",
+      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+    }
+  }
 }

@@ -1,1235 +1,266 @@
-# LifeScore User Manual
+# LIFE SCORE User Manual
 
-**Version:** 4.2
-**Last Updated:** March 3, 2026
+**Last Reviewed:** 4 October 2026
 **Document ID:** LS-UM-001
 
----
-
-## Table of Contents
-
-1. [Welcome to LifeScore](#1-welcome-to-lifescore)
-2. [Getting Started](#2-getting-started)
-3. [Your Dashboard](#3-your-dashboard)
-4. [Running a Comparison](#4-running-a-comparison)
-5. [Understanding Your Results](#5-understanding-your-results)
-6. [Olivia AI Assistant](#6-olivia-ai-assistant)
-7. [Judge Evaluation](#7-judge-evaluation)
-8. [Visuals & Videos](#8-visuals--videos)
-9. [Reports & Exports](#9-reports--exports)
-10. [Account Settings](#10-account-settings)
-11. [Subscription Plans](#11-subscription-plans)
-12. [Troubleshooting](#12-troubleshooting)
-13. [Privacy & Data](#13-privacy--data)
-14. [Frequently Asked Questions](#14-frequently-asked-questions)
-15. [Cost Dashboard & Usage Monitoring](#15-cost-dashboard--usage-monitoring)
-16. [Emilia Help Assistant](#16-emilia-help-assistant)
-17. [Notifications](#17-notifications-added-2026-02-16)
+This manual describes LIFE SCORE as it is built today. Tables marked as coming from the app (plans, categories, metrics) are written in from the app's own code every time this manual is opened, so they are always current. Each written section names the screens it describes; when those screens change, the section is brought up to date automatically.
 
 ---
 
-## 1. Welcome to LifeScore
+## 1. What LIFE SCORE is
+<!-- covers: src/components/Header.tsx, src/components/HomeHero.tsx, src/components/CitySelector.tsx -->
 
-### What is LifeScore?
+LIFE SCORE (Legal Independence & Freedom Evaluation) compares legal and lived freedom between two cities across 100 metrics in six categories. For every metric it scores two things:
 
-LifeScore is an AI-powered platform that helps you compare cities based on personal freedom and quality of life metrics. Whether you're considering a move, evaluating retirement destinations, or simply curious about how cities stack up, LifeScore provides data-driven insights to inform your decision.
+- **Law** — what the written law permits or restricts.
+- **Lived** — how the rules are actually enforced day to day.
 
-### How It Works
+AI models research each metric with live web search, score both cities, and the scores roll up by category into each city's total LIFE SCORE. The city with the higher total wins.
 
-1. **Select two cities** you want to compare
-2. **Our AI analyzes** 100 freedom-focused metrics
-3. **Review detailed scores** across six life categories
-4. **Explore evidence** from authoritative sources
-5. **Get personalized insights** from Olivia, your AI assistant
+The six categories and their default weights:
 
-### The Freedom Score
-
-Each city receives a Freedom Score from 0-100, calculated across:
-
-| Category | Weight | What It Measures |
-|----------|--------|------------------|
-| Personal Autonomy | 20% | Drug laws, gambling, reproductive rights, LGBTQ+ protections |
-| Housing & Property | 20% | Zoning flexibility, HOA restrictions, property rights |
-| Business & Work | 20% | Business licensing, employment laws, tax burden |
-| Transportation | 15% | Vehicle regulations, transit access, parking laws |
-| Legal System | 15% | Police practices, incarceration rates, civil liberties |
-| Speech & Lifestyle | 10% | Expression freedom, privacy laws, lifestyle autonomy |
+<!-- facts:categories -->
+<!-- /facts:categories -->
 
 ---
 
-## 2. Getting Started
+## 2. Signing in
+<!-- covers: src/components/LoginScreen.tsx, src/components/ResetPasswordScreen.tsx -->
 
-### Creating Your Account
+You need an account to use LIFE SCORE; the app opens on the sign-in screen until you sign in.
 
-1. Visit **clueslifescore.com**
-2. Click the **Sign Up** tab
-3. Enter your information:
-   - **Full Name** (optional)
-   - **Email Address**
-   - **Password** (minimum 6 characters)
-   - **Confirm Password**
-4. Click **Create Account**
-5. Check your email (including spam folder) for the verification link
-6. Click the verification link to activate your account
+**Create an account** — choose **Sign Up**, enter your email, a password of at least 6 characters (twice), and optionally your full name, then **Create Account**. The app asks you to confirm your email address: check your inbox (and spam folder) for the verification link before signing in. You can also continue with **Google**.
 
-### Logging In
+**Sign in** — choose **Sign In**, enter your email and password, and **Sign In** (or use **Google**). Tick **Remember me** to have the email filled in next time; your browser's password manager can keep the password.
 
-1. Click the **Sign In** tab
-2. Enter your email and password
-3. Click **Sign In**
-4. Your browser will offer to **save your credentials** for faster future logins (password manager compatible)
-5. If you forgot your password, click "Forgot your password?" to receive a reset link
-
-### Forgot Password / Password Reset
-
-If you've forgotten your password, here's the complete step-by-step flow:
-
-**Step 1: Request a Reset Link**
-1. On the Sign In screen, click **"Forgot your password?"**
-2. The form switches to **Reset Password** mode
-3. Enter your email address
-4. Click **Send Reset Link**
-5. You'll see: *"Password reset link sent! Please check your email (including spam/junk folder). The link expires in 1 hour."*
-
-**Step 2: Check Your Email**
-1. Open your email inbox (check spam/junk if you don't see it)
-2. Look for an email from **noreply@mail.app.supabase.io** with subject "Reset Your Password"
-3. Click the reset link in the email
-4. The link redirects you back to LifeScore automatically
-
-**Step 3: Set Your New Password**
-1. LifeScore detects the password recovery link and shows the **Set New Password** screen
-2. Enter your new password (minimum 6 characters)
-3. Re-enter the password to confirm
-4. Use the eye icon to toggle password visibility
-5. Click **Update Password**
-6. You'll see: *"Password updated successfully! Redirecting..."*
-7. After 2 seconds, you're automatically signed into the app
-
-**Important Notes:**
-- The reset link expires after **1 hour** — request a new one if it expires
-- For security, you'll receive a success message even if the email doesn't exist in our system (this prevents email enumeration)
-- Your saved comparisons, reports, Judge verdicts, and all other data remain **completely untouched** during a password reset — only the password itself changes
-- If you don't want to reset after clicking the link, click **"Skip — go to app"** to enter the app without changing your password
-
-### Theme Selection
-
-Use the theme toggle button to switch between light and dark mode. Your preference is saved automatically.
+**Forgot your password** — on the sign-in screen choose **Forgot your password?**, enter your email and **Send Reset Link**. The app says: *"Password reset link sent! Please check your email (including spam/junk folder). The link expires in 1 hour."* Open the link from the email; LIFE SCORE opens on **Set New Password**. Enter the new password twice (at least 6 characters) and **Update Password**; after *"Password updated successfully! Redirecting..."* you are taken into the app. **Skip — go to app** leaves your password unchanged. Your comparisons, reports and settings are untouched by a reset.
 
 ---
 
-## 3. Your Dashboard
+## 3. Finding your way around
+<!-- covers: src/components/Header.tsx, src/components/TabNavigation.tsx, src/components/Footer.tsx, src/components/HelpBubble.tsx, src/components/OliviaChatBubble.tsx -->
 
-### Dashboard Overview
+**The top bar** — on the left, the light/dark theme switch. On the right: your plan badge (or **Upgrade** on the free plan), the notification bell, **Settings**, your name and the sign-out button. Beneath the bar: CLUES INTELLIGENCE LTD, the CLUES line, the phone number and the LIFE SCORE title.
 
-Your dashboard shows:
+**The tabs** — seven, each with its own 3D icon:
 
-| Section | Description |
-|---------|-------------|
-| **New Comparison** | Start a fresh city comparison |
-| **Recent Comparisons** | Your last 5 comparisons |
-| **Favorites** | Saved comparisons you've starred |
-| **Usage Stats** | How many features you've used this month |
+| Tab | What it is for |
+|---|---|
+| **Compare** | Choose two cities and run a comparison (section 4) |
+| **Results** | The scores of the comparison you are viewing (section 5) |
+| **Judges Report** | The Judge's written verdict and the videos (section 6) |
+| **Visuals** | Visual reports, the Olivia presenter and charts (section 7) |
+| **Ask Olivia** | Talk with Olivia, by text or video (section 8) |
+| **Saved** | Your saved comparisons and reports (section 9) |
+| **About** | About CLUES and the company |
 
-### Navigation
+Use the arrow keys, Home and End to move between tabs from the keyboard.
 
-| Tab | What You'll Find |
-|-----|------------------|
-| **Compare** | City selection and comparison results |
-| **Results** | Detailed breakdown after comparison |
-| **Judge** | AI judge verdict and analysis |
-| **Visuals** | Video comparisons and imagery |
-| **Reports** | PDF/PPTX report generation |
-| **Ask Olivia** | AI assistant for questions |
-| **History** | All past comparisons |
-| **Settings** | Account and preferences |
+**Always on screen** — the Olivia chat bubble (section 8) and the help button, *"Need help? Ask Emilia"* (section 12).
+
+**The footer** — company and contact details, the legal pages (Privacy, Terms, Cookies, Acceptable Use, Refunds, Do Not Sell or Share My Personal Information, US State Privacy Rights), **Cookie Settings**, **Plans and prices** and **About Clues Intelligence**.
 
 ---
 
-## 4. Running a Comparison
+## 4. Running a comparison
+<!-- covers: src/components/CitySelector.tsx, src/components/NotifyMeModal.tsx, src/components/HomeHero.tsx -->
 
-### Step 1: Select Your Cities
+1. Open **Compare**.
+2. Choose **City 1** and **City 2**. Type to search; the list holds 200 metropolitan areas in North America and Europe, each shown with its country's flag. Or pick one of the **Popular Comparisons**.
+3. Optionally set your priorities (4.2) and dealbreakers (4.3).
+4. Press **Compare LIFE SCORES**. While it runs the button reads *"Analyzing 100 Metrics..."*.
+5. The app may ask whether to **Wait Here** or **Notify Me & Go**. If you choose to be notified, you can leave; when the comparison is ready you get a notification in the app (the bell) and, if you chose it, an email.
 
-1. Click **New Comparison** or use the city selectors
-2. **City 1:** Search or browse to select your first city — cities show flag emojis and orange country badges for easy identification
-3. **City 2:** Select the city you want to compare against
-4. Currently available: **200 cities** (North America + Europe)
-5. Search highlighting helps you find cities as you type
+**Share Link** copies a link that opens LIFE SCORE with the same two cities chosen.
 
-### Step 2: Choose Comparison Mode
+### 4.1 Standard and Enhanced comparisons
+<!-- covers: src/components/EnhancedComparison.tsx, src/hooks/useComparison.ts, api/shared/models.ts -->
 
-**Standard Mode (Default):**
-- Uses one AI provider (Claude)
-- Results in 2-3 minutes
-- Included in all tiers
+- **Standard** — one AI model (Claude) researches and scores all 100 metrics. Included on every plan.
+- **Enhanced** — five AI models (Claude, GPT, Gemini, Grok and Perplexity) evaluate each metric, and Claude Opus acts as the final judge. Switch it on with the **Enhanced Mode** toggle above the city choice (SOVEREIGN plan). After you press Compare, the button reads *"Select AI Models Below to Begin"*: click one or more of the AI models to start them. Once two or more have finished, the Opus Judge builds the consensus, and it updates as more models finish.
 
-**Enhanced Mode:**
-- Uses multiple AI providers (up to 5)
-- Includes Judge consensus evaluation
-- Results in 5-8 minutes
-- Requires SOVEREIGN tier
-- Optional: Use your own API keys for additional control
+### 4.2 Customize Priorities
+<!-- covers: src/components/WeightPresets.tsx -->
 
-### Step 3: Adjust Settings (Optional)
+Open **Customize Priorities** to decide what matters to you. Everything you set here is saved and applies to every comparison you run.
 
-**Law vs. Lived Slider:**
-- Move left to weight *written laws* more heavily
-- Move right to weight *actual enforcement* more heavily
-- Default: 50/50 balance
-- The section **illuminates with a highlighted border** when you change it from the default, so you can see at a glance that you've customized it
+- **Presets** — Balanced, Digital Nomad, Entrepreneur, Family, Libertarian and Investor each set the six category weights (and their own Law/Lived balance).
+- **Fine-tune Weights** — a slider per category (0–50%); the total must come to 100%. **Lock** a category to keep its share while you move the others.
+- **Exclude** — untick a category to leave it out entirely; its weight is shared among the rest.
+- **Law vs Lived** — how much the written law counts against day-to-day enforcement (default 50/50).
+- **Worst-case mode** — use the lower of the Law and Lived scores for every metric.
 
-**Worst-Case Mode Toggle:**
-- When enabled, uses the **lower** of Law and Lived scores (worst-case scenario)
-- The toggle **glows/illuminates when active** to make the active state clearly visible
-- Overrides the Law vs Lived slider with MIN(law, lived) for each metric
+### 4.3 Dealbreakers
+<!-- covers: src/components/DealbreakersPanel.tsx -->
 
-**Category Weights (Persona Weights):**
-- Customize which categories matter most to you
-- Use preset personas or create custom weights
-- **Instructional Guide (Added 2026-03-03):** A styled instructions box above the preset buttons now explains all five customization options:
-  1. **Preset Personas** — Choose from predefined weight profiles (Digital Nomad, Entrepreneur, etc.)
-  2. **Custom Category Weights** — Adjust the 0-50% slider for each of the 6 freedom categories
-  3. **Exclude Categories** — Uncheck categories you don't care about
-  4. **Law vs Lived Reality** — Tune how much written law vs actual enforcement matters
-  5. **Worst-Case Mode** — Use the lower of Law and Lived scores for each metric
-
-**Dealbreakers Panel:**
-- Mark specific metrics as dealbreakers (must-haves)
-- Metrics are listed **alphabetically A-Z within each category** for easy scanning
-- Dealbreaker metrics are highlighted and weighted more heavily in the final score
-
-### Step 4: Run Comparison
-
-1. Click **Compare Cities** — on mobile, the Compare button is now **sticky at the bottom** of the screen so it's always visible while scrolling (Added 2026-03-03)
-2. Watch the progress indicator — on mobile, an inline loading indicator appears between the city inputs and Popular Comparisons (Added 2026-03-03)
-3. Results appear automatically when complete
-4. The page **auto-scrolls to the top** so you immediately see the score cards
+In **Dealbreakers**, mark the metrics you cannot live without, chosen by category (metrics are listed A–Z). Your dealbreakers are saved with your preferences and are checked against both cities in the results.
 
 ---
 
-## 5. Understanding Your Results
+## 5. Reading your results
+<!-- covers: src/components/Results.tsx, src/components/ScoreMethodology.tsx, src/components/EvidencePanel.tsx -->
 
-### The Score Card
+**The winner** — the top card names the winner and its **Total LIFE SCORE** (or *"It's a Tie!"*). **Explain This Winner** opens an explanation of where the winning city leads.
 
-After comparison, you'll see:
+**Category Breakdown** — both cities' scores in each of the six categories. Click a category to see its metrics; click a metric marked ▶ to see each AI model's analysis. Each result shows its confidence (High, Medium or Low).
 
-```
-┌─────────────────────────────────────────┐
-│     MIAMI, FL          vs      AUSTIN, TX
-│        72.4                      68.9
-│      WINNER
-└─────────────────────────────────────────┘
-```
+**How Your LIFE SCORE Is Calculated** — the explainer card describes the method:
+- every metric gets a Legal Score and an Enforcement Score (0–100), averaged into the metric's freedom score;
+- in Enhanced mode the models' scores are combined with confidence weights (High 1.0×, Medium 0.7×, Low 0.4×);
+- the Opus Judge looks at metrics where the models disagree by more than 15 points and may override those scores, with written reasoning;
+- metrics roll up into the six categories with your weights; a city earns points for each category it leads by more than 5 points, and half the largest category gap is added to the overall leader.
 
-### Explain the Winner (Added 2026-02-16)
+**Evidence & Citations** — the sources behind the scores, filterable by city: titles, links and quoted passages from the web searches the models ran.
 
-Below the score cards, a toggle labeled **"Explain the Winner"** lets you view a detailed AI-generated narrative explaining:
-- Why the winning city scored higher
-- The key categories and metrics that drove the difference
-- Notable strengths and weaknesses of each city
+### 5.1 Enhanced results
+<!-- covers: src/components/EnhancedComparison.tsx -->
 
-This feature is available in **Standard Mode** (not just Enhanced) and provides the same quality of explanation as the Judge verdict, but directly in the Results view.
-
-### Score Breakdown
-
-**Overall Score:** Combined weighted average (0-100)
-- 80-100: Excellent freedom environment
-- 60-79: Good freedom environment
-- 40-59: Moderate restrictions
-- 20-39: Significant restrictions
-- 0-19: Highly restrictive
-
-### Category Results
-
-Each category shows:
-- **Category Score:** Average of all metrics in that category
-- **Law Score:** Based on written legislation
-- **Lived Score:** Based on actual enforcement
-- **Trend:** Is this score improving or declining?
-
-### Individual Metrics
-
-Click any category to expand and see all metrics:
-
-| Metric | Description | Score |
-|--------|-------------|-------|
-| Cannabis Legal Status | Recreational/Medical/Decriminalized/Illegal | 85 |
-| HOA Prevalence | How common HOAs are | 45 |
-| Business License Burden | Ease of starting a business | 72 |
-
-### Evidence Panel
-
-For each metric, click **View Evidence** to see:
-- Source citations with links
-- Relevant quotes from sources
-- Date of information
-- Confidence level
-
-**Metric Names (Fixed 2026-02-27):** The Evidence Panel now shows proper human-readable metric names (e.g., "Cannabis Legality", "Property Tax Rate") instead of internal codes. This fix also applies to the Advanced Visuals charts, CSV/PDF exports, and the Judge disagreement summary.
-
-### Score Methodology (Added 2026-02-05)
-
-Click **"How is this scored?"** to see a glass-morphic explainer card showing the 5-stage scoring pipeline:
-
-1. **Tavily Research** — Web search gathers current legal data for both cities
-2. **LLM Evaluation** — AI providers independently score each metric (0-100)
-3. **Law vs Lived Split** — Scores separated into written law and actual enforcement
-4. **Category Weighting** — Your custom category weights are applied
-5. **Consensus (Enhanced only)** — The Judge resolves disagreements between providers
+An Enhanced comparison adds the **Consensus LIFE SCORE** and the **Freedom Delta**, and shows where the models agreed and disagreed: **Unanimous** (all within 3 points), **Strong** (within 8 points), the metrics with the widest disagreement, and the most reliable, high-agreement metrics.
 
 ---
 
-## 6. Olivia AI Assistant
+## 6. The Judge's Report
+<!-- covers: src/components/JudgeTab.tsx, api/shared/entitlements.ts -->
 
-### Who is Olivia?
+Open **Judges Report**, choose the comparison (from the one you just ran, or **Select a Saved Report**, Standard or Enhanced), and press **Generate Judge's Verdict**. Cristiano, the Judge, writes:
 
-Olivia is your AI assistant who can:
-- Answer questions about your comparison
-- Explain specific metrics
-- Provide personalized recommendations
-- Speak responses aloud (voice mode)
+- **The Judge's Verdict**, with its confidence;
+- a **Summary of Findings** and a **Detailed Category Analysis**;
+- an **Executive Summary**, the **Key Factors**, the **Future Outlook** and a personalized recommendation.
 
-### Accessing Olivia
+Alongside it: score confidence, how many metrics and models were used, overall agreement and the key disagreements. **Save Report** keeps it in your account, **Download PDF** saves it as a file, and **Share** copies a summary.
 
-1. Click the **Ask Olivia** tab
-2. Or click the Olivia icon in the corner
-3. **Instructional Guidance (Added 2026-03-03):** When no comparison data is loaded, a guidance message now appears above the control panel explaining that you can select a saved city comparison from the dropdown, or choose "General Chat" to talk with Olivia without comparison data
+You can generate the Judge's Report for any comparison you ran in the last 30 days; on a paid plan, for any comparison.
 
-### Using Olivia
+### 6.1 Videos in the Judge's Report
+<!-- covers: src/components/JudgeTab.tsx, src/components/CourtOrderVideo.tsx, src/components/GoToMyNewCity.tsx, src/components/MovieGenerator.tsx -->
 
-**Text Chat:**
-- Type your question in the chat box
-- Press Enter or click Send
-- Olivia responds with detailed answers
+- **Video Report by Cristiano** — **Generate Video Report** turns the verdict into a video of Cristiano presenting it. **Download Video** saves it.
+- **Freedom Video Clip** — a short cinematic clip of life in the winning city (**See Video Clip** / **Play Your Video**). You can save, download and share it.
+- **Freedom Journey Movie (Moving Movie)** — **Create My Moving Movie** writes a 12-scene screenplay and makes a film with InVideo AI. When InVideo cannot make it automatically, the screenplay is kept for you (**Open InVideo AI**) and the reason is shown.
+- **Go To My New City** — Cristiano's 7-scene cinematic Freedom Tour of your new city (**Watch Freedom Tour**). SOVEREIGN, one a month.
 
-**Voice Mode:**
-- Enable voice in settings
-- Olivia speaks her responses
-- Great for hands-free use
-
-### Voice Quality
-
-Olivia uses ElevenLabs for high-quality voice synthesis. During high-traffic periods or when quota limits are reached, the system automatically switches to OpenAI TTS (Nova voice), which may sound slightly different but maintains full functionality.
-
-### Sample Questions to Ask
-
-- "Why did Austin score lower on personal freedom?"
-- "Which city is better for starting a business?"
-- "Explain the housing regulations difference"
-- "What are the main factors in Miami's favor?"
-- "Should I consider other cities similar to Austin?"
-
-### Usage Limits
-
-| Tier | Monthly Olivia Time |
-|------|---------------------|
-| FREE | 0 min |
-| NAVIGATOR | 15 min |
-| SOVEREIGN | 60 min |
+Which videos your plan includes is in section 11. Videos are made by outside services and take a few minutes; the screen shows the progress and lets you cancel or retry.
 
 ---
 
-## 7. Judge Evaluation
+## 7. Visuals
+<!-- covers: src/components/VisualsTab.tsx, src/components/ReportPresenter.tsx, src/components/GunComparisonModal.tsx, src/components/NewLifeVideos.tsx -->
 
-### What is Judge Mode?
+**Generate a New Report** creates a visual report of a comparison with Gamma:
+- **Report Type** — **Standard (35 pages)** or **Enhanced (82 pages)** (Enhanced needs an Enhanced comparison);
+- **Include Gun Rights Comparison** adds 4 pages; gun rights are not scored — facts only, no winner;
+- **Export Format** — PDF or PowerPoint.
 
-When you run an Enhanced comparison, multiple AI providers evaluate your cities independently. The **Judge** (Claude Opus) reviews all evaluations and provides:
+When it is ready you can **Download PDF** or **Download PPTX**, or **Generate Another**. If you already have a report for that comparison the app says so.
 
-- Final consensus scores
-- Resolution of disagreements
-- Confidence assessment
-- Key deciding factors
+**View Existing Report** opens a saved report, three ways:
+- **Read** — the report itself, here or in a new tab;
+- **Live Presenter** — Olivia presents the report live, segment by segment (pause, back, next);
+- **Generate Video** — an HD 1080p MP4 of Olivia presenting the report, ready to download (a few minutes to render).
 
-### Accessing Judge Results
-
-1. Complete an Enhanced comparison
-2. Click the **Judge** tab
-3. View the verdict
-
-### Collapsible Panels (Updated 2026-02-14)
-
-The Judge page now uses **three collapsible panels** to reduce scroll clutter and help you focus on the information you need:
-
-| Panel | Default State | Contents | Header Summary |
-|-------|--------------|----------|----------------|
-| **Media Panel** | Open | Video Viewport + Action Buttons | Video playback status |
-| **Evidence Panel** | Collapsed | Summary of Findings + Category Analysis (all 6 categories) | Score highlights |
-| **Verdict Panel** | Collapsed | Executive Summary + Freedom Video Clip + Freedom Tour | Winner name |
-
-**How to use:**
-- Click any panel's header bar to expand or collapse it
-- Each panel header displays live summary stats so you can see key information without expanding
-- All panels remember their state during your session
-
-### Confidence Interval Hover Cards (Added 2026-02-16)
-
-The Judge tab score cards now feature **confidence interval hover cards**. When you hover over (or tap on mobile) any score card, a tooltip appears showing:
-- The confidence level (unanimous, strong, moderate, or split)
-- The score range across all AI providers
-- How much the providers agreed or disagreed
-
-This helps you understand how reliable each score is — a "unanimous" confidence means all AI providers agreed closely, while "split" means significant disagreement.
-
-### Understanding the Verdict
-
-```
-┌─────────────────────────────────────────┐
-│           JUDGE'S VERDICT               │
-│                                         │
-│   Recommendation: MIAMI, FL             │
-│   Confidence: HIGH                      │
-│   Score Difference: +3.5 points         │
-│                                         │
-│   Key Factors:                          │
-│   1. More permissive personal freedom   │
-│   2. Lower business regulation burden   │
-│   3. Better property rights protections │
-└─────────────────────────────────────────┘
-```
-
-### Phone Call Audio Warning (Added 2026-02-16)
-
-All video displays across the app (Judge Video, Freedom Video Clip, Freedom Tour, Olivia Presenter, Grok Videos, and Olivia Avatar) now include a **phone call audio warning**. If you are on an active phone call while viewing a video, a warning overlay appears reminding you that playing audio may interrupt your call. This applies to:
-- Judge verdict videos
-- Freedom Video Clip videos
-- Freedom Tour videos
-- Olivia presenter and avatar videos
-- Grok/Kling mood videos
-- Report presenter videos
-
-### Judge Video
-
-SOVEREIGN tier users can generate a video of the Judge explaining the verdict:
-1. Click **Generate Judge Video**
-2. Wait 90-180 seconds for generation
-3. Watch the animated verdict
-
-### Display Screen Buttons (Added 2026-02-16)
-
-At the bottom of the Judge tab, three **glassmorphic (frosted-glass) buttons** provide quick access to:
-- **[City] Advantages** — View the winning city's advantages summary
-- **Freedom Journey Movie** — Generate or view the Freedom Journey cinematic movie for the winning city
-- **[City] Cinematic Narrative Presentation** — Generate or view the Freedom Tour cinematic relocation video
-
-These buttons feature a modern glassmorphic design with blur effect and hover animations.
-
-### Freedom Video Clip (Added 2026-02-11, Renamed 2026-03-01)
-
-The Judge can generate a Freedom Video Clip for the winning city — a cinematic "perfect life" video:
-- Click **SEE VIDEO CLIP** in the Judge tab (or use the glassmorphic button at the bottom)
-- Video is generated by Kling AI (90-180 seconds)
-- Videos are saved to cloud storage for permanent access
-- SOVEREIGN tier only
-
-> **Note:** This was previously called "Court Order Video" and was renamed to "Freedom Video Clip" on 2026-03-01.
-
-### InVideo Moving Movie (Added 2026-02-27)
-
-Below the Freedom Video Clip, you'll find the **Freedom Journey** movie generator — a full 10-minute cinematic movie telling your complete freedom journey:
-
-- **Stage 1:** AI generates a 12-scene screenplay from your comparison data
-- **Stage 2:** InVideo renders a 4K cinematic movie with voiceover, stock footage, and music
-- The movie covers your story from struggling in the old city, discovering LIFE SCORE, getting the verdict, to moving to your new free life
-- Progress is tracked in real time through all stages (screenplay generation, submission, rendering)
-- If InVideo's rendering service is unavailable or turns the job down, the screenplay prompt is saved so you can paste it into InVideo manually, and the page shows why
-- Movies are cached by city pair — if someone already generated the same comparison, you'll get the cached version instantly
-- **Note:** Movie rendering can take up to 15 minutes. The system polls every 10 seconds for up to 30 minutes.
-
-### Freedom Tour Video (Added 2026-02-14, Renamed 2026-03-01)
-
-At the bottom of the Judge page (inside the Verdict panel), you'll find the **CLUES Narrative Cinematic Freedom Tour** — a personalized, multi-scene cinematic relocation video for the winning city. Access it via the **"[City] Cinematic Narrative Presentation"** button. This video features:
-
-- An intro scene with CLUES branding
-- Multiple storyboard scenes showcasing your winning city
-- A call-to-action directing you to Cluesnomads.com for next steps
-- Production takes approximately 10-15 minutes
-
-The Freedom Tour video only appears when a judge report is loaded. It provides an inspiring visual preview of life in the city the Judge recommends.
-
-> **Note:** This was previously called "Go To My New City" and was renamed on 2026-03-01. The button now shows the winning city name dynamically (e.g. "LONDON CINEMATIC NARRATIVE PRESENTATION").
-
-### Auto-Restore Videos on Tab Switch (Fixed 2026-02-14)
-
-Previously, videos on the Judge page would disappear if you switched to another tab and came back. This has been fixed:
-- Video URLs are now auto-restored from Supabase when you re-enter the Judge tab
-- No need to regenerate — your videos persist across tab switches
-
-### Judge Report Category Sections (Fixed 2026-02-14)
-
-When loading saved judge verdicts, all **6 freedom category sections** now appear correctly in the Evidence panel. Previously, only the executive summary loaded and the individual category analysis sections were missing.
-
-### Judge Dropdown Performance (Fixed 2026-02-14)
-
-The judge report dropdown selector now responds in approximately 50ms (previously 354ms). Expensive DOM re-renders on selection have been removed for a snappier experience.
-
-### Saving Judge Reports (Updated 2026-02-14)
-
-Judge reports are automatically saved to both your browser (localStorage) and the cloud (Supabase). This means:
-- Reports are available instantly on the same device (offline-capable)
-- Reports sync to the cloud for access on other devices
-- View all saved Judge reports in the **Visual Reports / Saved** tab
-- Tie results are now handled correctly — no more "winner is TIE" text
-- **Tie victory text fix (2026-02-26):** When two cities score within 1 point of each other, the report verdict now says "evenly matched" instead of showing blank winner text
-- **Supabase fallback (Added 2026-02-14):** If a Judge report is missing from localStorage (e.g., after clearing browser cache), the system automatically falls back to Supabase to retrieve it. Your reports survive browser cache clearing.
-
-### Saving Gamma Reports (Updated 2026-02-14)
-
-Gamma reports now reliably persist between sessions. Previously, reports could silently fail to save due to a database foreign key constraint. This has been fixed — all Gamma reports are now correctly saved to both localStorage and Supabase for cross-device access.
+**City Life Videos** — two contrasting clips, *Freedom* for the winning city and *Imprisonment* for the other (**See Your New Life!**). Enhanced comparisons only.
 
 ---
 
-## 8. Visuals & Videos
+## 8. Ask Olivia
+<!-- covers: src/components/AskOlivia.tsx, src/components/OliviaChatBubble.tsx, api/olivia/chat.ts, api/shared/plans.ts -->
 
-### The Visuals Tab
+Olivia is LIFE SCORE's AI advisor. She knows the comparison you are viewing and the whole app as it is today: its screens, features, prices and settings.
 
-The Visuals tab shows AI-generated content representing each city:
+**On the Ask Olivia tab** — choose a saved comparison from the drop-down, or **General Chat** to talk without one. Type and **Send**, or speak; **Start Video Chat** shows Olivia's live face. **Quick Briefing** gives instant analysis on a topic once a comparison is loaded. The transcript can be saved, downloaded, forwarded or cleared.
 
-**Freedom Video (Winner):**
-- Positive, optimistic imagery
-- Represents the "winning" city's freedom
+**The chat bubble** — on every tab: ask Olivia anything; save, share or print the conversation; stop her voice.
 
-**Imprisonment Video (Loser):**
-- Contrasting imagery
-- Represents restrictions of the "losing" city
-
-### Video Generation
-
-Videos are generated by **Kling 3** (through fal), our primary video generation provider, and come with their own sound:
-- Creates mood-based "Freedom" and "Imprisonment" videos
-- Generation takes 90-180 seconds
-- Videos are cached for instant replay on subsequent views
-
-### Video Controls
-
-- **Play/Pause:** Control playback (both videos play simultaneously)
-- **Download:** Save individual videos to your device
-- **Stop Video:** End current video
-- **Mute/Unmute:** Toggle audio
-
-**Video Reliability:** Videos are now served via secure blob URLs for reliable cross-origin playback. If a cached video has expired, the system automatically detects the failure and lets you regenerate with the "SEE YOUR NEW LIFE!" button.
-
-### Olivia Video Presenter (Added 2026-02-13)
-
-On the Visuals tab, after a Gamma report is generated or loaded from saved reports, you'll see a **Read / Listen to Presenter** toggle. This lets you choose how to consume your report:
-
-**Read Mode (Default):** View the full Gamma report in an embedded viewer.
-
-**Listen to Presenter Mode:** Olivia presents your report findings as an AI video avatar.
-
-#### Live Presenter
-- Olivia appears as a picture-in-picture avatar overlay on your report
-- She narrates the key findings: introduction, winner announcement, category breakdowns, key differences, and conclusion
-- **Controls:** Play/Pause, Next/Previous segment, Close
-- Available instantly — no generation wait time
-
-**Audio Fix (2026-02-27):** Fixed an issue where audio from one segment could overlap with the next segment if narration timing didn't align. Each segment now cleanly stops before the next begins.
-
-#### Generate Video
-- Creates a polished, downloadable MP4 video of Olivia presenting your full report
-- Click **Generate Video** and wait for processing (up to 10 minutes)
-- A progress bar shows generation status
-- Once complete, watch directly or download the MP4
-- Great for sharing with others or keeping a permanent video summary
-
-### AUDIO Badge & Voice Wave Indicator (Added 2026-02-14)
-
-The PIP (picture-in-picture) video player now features an improved audio experience:
-- The **AUDIO badge** has moved from the bottom to the **top-right** of the PIP video player for better visibility
-- A new **animated voice wave indicator** appears when audio is actively playing, giving you visual feedback that the presenter is speaking
-
-### Storyboard Progress Bar (Added 2026-02-14)
-
-When generating videos, a new **progress bar** now shows real-time status of the video generation process. This replaces the old spinner with a clear visual indication of how far along your video is. The system also validates storyboard QA word counts before rendering begins.
-
-### Cristiano Judge Video Improvements (Updated 2026-02-14)
-
-The Cristiano judge verdict video has been enhanced:
-- A **"Visit Cluesnomads.com"** call-to-action is now displayed during the verdict
-- A **poster image** and **logo overlay** appear on the video player for professional branding
-- Fixed a 422 alignment error between storyboard QA and render validation that could cause generation failures
-
-### Contrast Images
-
-Olivia can generate side-by-side images comparing specific aspects:
-- Click **Generate Contrast Images**
-- Choose a topic (housing, business, lifestyle)
-- View AI-generated comparison imagery
-
-### Video Availability
-
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|------|-----------|-----------|
-| Judge Videos | No | 1/month | 1/month |
-| Grok Videos | No | No | Yes |
+**Your allowance** — every message you send Olivia counts as one from your monthly Olivia allowance (section 11). The free plan does not include Olivia. When the allowance is used up, the bubble says so and offers **Upgrade**.
 
 ---
 
-## 9. Reports & Exports
+## 9. Saved
+<!-- covers: src/components/SavedComparisons.tsx -->
 
-### Gamma Reports
+**My Saved Comparisons** lists every comparison you saved (Standard or Enhanced) and your visual reports (Gamma and Judge). For each you can open it, add or edit a note, or delete it; for reports, view, download (PDF/PPTX) or watch the video.
 
-Generate professional presentation-style reports:
-
-1. Complete a comparison
-2. Click the **Reports** tab
-3. Click **Generate Report**
-4. Wait for generation (30-60 seconds)
-5. Download as PDF or PPTX
-
-### Report Contents
-
-- Executive summary with winner trophy designation
-- City overview with scores and category wins
-- Category-by-category breakdown
-- Visual charts and graphs
-- Source citations
-- Recommendations
-
-**Trophy Placement (Fixed 2026-02-14):** The 🏆 trophy in Gamma reports now correctly appears next to the **winning** city only. Previously, the trophy could appear next to the losing city due to a prompt formatting issue.
-
-**Permanent Downloads (Added 2026-02-17):** PDF and PPTX export files are now permanently stored. Previously, download links could expire after a few hours because they pointed to Gamma's temporary CDN. Now, export files are automatically saved to permanent storage when your report completes — download links will always work, even months later. If you see a broken download link on an older report, simply regenerate the report from the Visuals tab.
-
-**Expired Report Detection (Added 2026-02-17):** If a Gamma report embed can no longer load (e.g., the hosted document was removed), the app now shows a clear message instead of a broken page, with instructions to regenerate or use your saved PDF/PPTX exports.
-
-### Saving Comparisons
-
-1. Click the **Star** icon to favorite a comparison
-2. Add a nickname for easy reference
-3. Access favorites from your dashboard
-
-**Cloud Sync (Added 2026-02-05):** All saved data — comparisons, Gamma reports, Judge reports, Freedom Video Clips, weight presets, law/lived preferences, excluded categories, and dealbreakers — is now automatically saved to both your browser and the cloud. If you sign in on a different device, your data will be available. If cloud sync fails, your data is still safely stored locally.
-
-### Export Options
-
-| Format | Best For |
-|--------|----------|
-| PDF | Viewing, printing, sharing |
-| PPTX | Presentations, editing |
+Signed in, your saved items are kept in your account and synced to every device you sign in on. You can also:
+- **Export** your saved comparisons to a file, and **Import** them back;
+- **Clear All** removes the copies kept on this device (anything saved to your account returns at the next sync);
+- **Connect GitHub** to keep a backup copy in a private GitHub Gist (needs a personal access token with the *gist* scope).
 
 ---
 
-## 10. Account Settings
+## 10. Settings and your data
+<!-- covers: src/components/SettingsModal.tsx, api/user/export.ts, api/user/delete.ts -->
 
-### Accessing Settings
+Open **Settings** from the top bar.
 
-1. Click your avatar in the top right
-2. Select **Settings**
-
-### Profile Settings
-
-| Setting | Description |
-|---------|-------------|
-| Display Name | Your name shown in the app |
-| Avatar | Profile picture |
-| Email | Your login email |
-
-### Preferences
-
-| Setting | Options |
-|---------|---------|
-| Currency | USD, EUR, GBP, CAD, AUD, etc. |
-| Units | Imperial / Metric |
-| Theme | Light / Dark / Auto |
-| Notifications | Email on/off |
-
-### Olivia Settings
-
-| Setting | Description |
-|---------|-------------|
-| Voice Enabled | Olivia speaks responses |
-| Auto-Speak | Automatic voice responses |
-| Voice Selection | Choose Olivia's voice |
-
-### Dark Mode Improvements (Fixed 2026-02-14, Updated 2026-02-16)
-
-Dark mode now displays saved reports correctly:
-- **Saved report city names** are now clearly readable in dark mode (previously had poor contrast)
-- **Saved report dates** now use crisp white text in dark mode for easy reading
-- **"VS" text** between city names is now clearly visible in dark mode across all comparison views (AdvancedVisuals, ContrastDisplays, JudgeTab, JudgeVideo) — previously invisible against dark backgrounds (Fixed 2026-02-16)
-
-### API Keys (Advanced)
-
-For Enhanced mode with your own keys:
-1. Go to **Settings > API Keys**
-2. Enter your API keys for desired providers
-3. Keys are used only during your session
-4. We never store your API keys
+- **Profile** — your full name. To change your email address, contact support.
+- **Security** — change your password; see how you sign in.
+- **Subscription** — your current plan, **Upgrade Plan**, and Stripe's billing page to change plan, update your card, see invoices or cancel.
+- **Data** —
+  - how much of this browser's local storage LIFE SCORE uses, and **Clear Local Data** (removes saved items from this device only);
+  - **Download My Data** — everything your account holds, as a file;
+  - **Delete My Account** — type DELETE MY ACCOUNT to confirm. Your subscription is cancelled first, then your account and all its data are deleted at once.
 
 ---
 
-## 11. Subscription Plans
+## 11. Plans
+<!-- covers: src/components/PricingModal.tsx, api/shared/plans.ts -->
 
-### Pricing Overview
+Upgrade from **Upgrade** in the top bar, **Upgrade Plan** in Settings, or **Plans and prices** in the footer. Payment is handled by Stripe; you can cancel at any time from the billing page.
 
-| Tier | Monthly | Annual | Annual Savings |
-|------|---------|--------|----------------|
-| **FREE** | $0 | $0 | - |
-| **NAVIGATOR** | $29 | $249 | 28% ($99 saved) |
-| **SOVEREIGN** | $99 | $899 | 24% ($289 saved) |
+What each plan includes (from the app's own plan list):
 
----
+<!-- facts:plans -->
+<!-- /facts:plans -->
 
-### Core Comparison Features
-
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **Standard Comparisons** | 1/month | 1/month | 1/month |
-| **Enhanced Comparisons** | ❌ | ❌ | 1/month |
-| **LLM Providers Used** | 1 (Claude) | 1 (Claude) | 5 (All providers) |
-| **Enhanced Mode (5-LLM Consensus)** | ❌ | ❌ | ✅ |
-
-*LLM Providers in Enhanced Mode: Claude, GPT-4o, Gemini, Grok, Perplexity*
+`oliviaMinutesPerMonth` is the Olivia allowance; each message to Olivia counts as one. When a plan feature is not included, the app shows what it needs and offers the upgrade; you can dismiss it and carry on with what your plan includes.
 
 ---
 
-### AI Assistant Features
+## 12. Help and Emilia
+<!-- covers: src/components/HelpBubble.tsx, src/components/HelpModal.tsx, src/components/EmiliaChat.tsx, api/emilia/message.ts -->
 
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **Olivia AI Access** | ❌ | ✅ | ✅ |
-| **Olivia Minutes/Month** | 0 | 15 min | 60 min |
-| **Olivia Voice Responses** | ❌ | ✅ | ✅ |
-| **Emilia Help Widget** | ✅ | ✅ | ✅ |
+The help button (*"Need help? Ask Emilia"*) opens **Help**:
+- the **User Manual** and the **License** for everyone; the other manuals for administrators;
+- **Ask Emilia** — LIFE SCORE's help assistant. Ask how to do something, what a feature does or why something happened; she answers from the manuals and the app itself as it is today. You can download, print, email or clear the conversation.
 
 ---
 
-### Video & Visual Features
+## 13. Privacy, cookies and legal
+<!-- covers: src/components/CookieConsent.tsx, src/legal/legalContent.ts, src/components/Footer.tsx -->
 
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **Judge Verdict Videos** | ❌ | 1/month | 1/month |
-| **Grok/Kling Mood Videos** | ❌ | ❌ | 1/month |
-| **AI Contrast Images** | ❌ | ✅ | ✅ |
+On your first visit the cookie banner offers **Essential Only**, **Customize** or **Accept All**. Essential cookies (sign-in and core functions) are always on; functional and analytics cookies are your choice; marketing cookies are not used. Change your choice any time with **Cookie Settings** in the footer.
 
-*Mood videos show "Freedom" imagery for winner, "Imprisonment" for comparison*
+The legal pages in the footer are the full and current terms: Privacy, Terms, Cookies, Acceptable Use, Refunds, Do Not Sell or Share My Personal Information, and US State Privacy Rights. Your data rights are exercised in **Settings → Data** (download, delete) or by writing to the contact address on the Privacy page.
 
 ---
 
-### Report & Export Features
+## 14. On a phone
+<!-- covers: src/components/MobileWarningModal.tsx, src/components/TabNavigation.tsx -->
 
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **Gamma Reports** | ❌ | 1/month | 1/month |
-| **PDF Export** | ❌ | ✅ | ✅ |
-| **PPTX Export** | ❌ | ✅ | ✅ |
-| **Full Evidence Citations** | Basic | Full | Full |
+LIFE SCORE works on phones; a first-visit notice (*"Desktop Recommended"*) explains that some features are easier on a larger screen — **Got It — Continue on Mobile** closes it. On a narrow screen the tab bar scrolls sideways.
 
 ---
 
-### Data & Storage Features
+## 15. When something goes wrong
+<!-- covers: src/main.tsx, src/components/LoginScreen.tsx -->
 
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **Cloud Sync (Supabase)** | ❌ | ✅ | ✅ |
-| **Local Browser Storage** | ✅ | ✅ | ✅ |
-| **Dual-Storage (local + cloud)** | ❌ | ✅ | ✅ |
-| **Comparison History** | Local only | Cloud synced | Cloud synced |
-| **Saved Favorites** | Local only | Cloud synced | Cloud synced |
-
-*Dual-Storage saves all data to both your browser and the cloud simultaneously. If one fails, the other still works.*
+- **No internet connection** — the app says *"No internet connection — some features may not work"* and *"Back online"* when it returns.
+- **A screen fails right after an update** — the app reloads itself once to fetch the new version; if a screen still fails, reload the page.
+- **"Please verify your email before signing in"** — open the verification link from the sign-up email (check spam), then sign in.
+- **"This email is already registered"** — sign in instead, or reset your password.
+- **A video or report did not finish** — use **Retry** or **Try Again** on that screen.
+- Anything else — ask Emilia (section 12).
 
 ---
 
-### Technical & API Features
+## 16. The 100 metrics
 
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **API Access** | ❌ | ❌ | ✅ |
-| **Use Own API Keys** | ❌ | ❌ | ✅ |
-| **Custom Category Weights** | ✅ | ✅ | ✅ |
-| **Law vs Lived Slider** | ✅ | ✅ | ✅ |
+Every metric LIFE SCORE scores, by category (from the app's own metric list):
+
+<!-- facts:metrics -->
+<!-- /facts:metrics -->
 
 ---
 
-### Support Features
-
-| Feature | FREE | NAVIGATOR | SOVEREIGN |
-|---------|:----:|:---------:|:---------:|
-| **Help Center (Self-Service)** | ✅ | ✅ | ✅ |
-| **Email Support** | ❌ | ✅ | ✅ |
-| **Chat Support** | ❌ | ✅ | ✅ |
-| **Phone Support** | ❌ | ❌ | ✅ |
-| **Video Support (Screen Share)** | ❌ | ❌ | ✅ |
-| **Dedicated Tech Support** | 0 min | 0 min | 60 min/month |
-
----
-
-### Beta Tester Access (Added 2026-03-03)
-
-Invited beta testers receive special access that sits between FREE and paid tiers:
-- **1 Standard + 1 Enhanced comparison** (can purchase more)
-- **Unlimited Olivia AI** minutes
-- **Full Judge verdicts and Visuals** access
-- **Emilia customer service** help
-- No admin access; no API access
-- Beta access is tied to your email address and can be enabled/disabled by admins
-
-### Feature Gate Dismiss (Updated 2026-03-03)
-
-When a premium feature shows the **upgrade prompt overlay**, you can click **"Continue with free features"** to dismiss it. This dismiss is now **persistent** — the overlay will not reappear after a page reload. Your dismiss preference is saved per feature in your browser.
-
-### Upgrading Your Plan
-
-1. Go to **Settings > Subscription**
-2. Click **Upgrade**
-3. Select your new plan
-4. Enter payment information
-5. Upgrade takes effect immediately
-
-### Canceling Your Subscription
-
-1. Go to **Settings > Subscription**
-2. Click **Cancel Subscription**
-3. Confirm cancellation
-4. Access continues until billing period ends
-5. Account reverts to FREE tier
-
-### Billing
-
-- Monthly billing on your signup date
-- Annual billing available (save up to 28%)
-- Payment via credit/debit card (Stripe)
-- Receipts sent via email
-
----
-
-## 12. Troubleshooting
-
-### Comparison Won't Complete
-
-**Symptoms:** Progress bar stuck, timeout error
-
-**Solutions:**
-1. Wait up to 10 minutes for Enhanced mode
-2. Refresh the page and try again
-3. Try Standard mode instead
-4. Check your internet connection
-5. Contact support if persistent
-
-**Note:** The system now includes automatic retry for Gemini and Grok providers (up to 3 attempts with increasing delays). Tavily web search timeout has been reduced to 45 seconds for faster failure recovery.
-
-### Scores Seem Wrong
-
-**Symptoms:** Results don't match expectations
-
-**What to do:**
-1. Check the Evidence panel for sources
-2. Review Law vs. Lived distinction
-3. Adjust category weights if needed
-4. Note that enforcement varies locally
-5. Report specific concerns to support
-
-### Olivia Not Responding
-
-**Symptoms:** No response, error message
-
-**Solutions:**
-1. Check message limit (upgrade if exceeded)
-2. Refresh the page
-3. Try a simpler question
-4. Clear browser cache
-5. Try different browser
-
-### Video Won't Play
-
-**Symptoms:** Loading indefinitely, playback error, play button unresponsive
-
-**Solutions:**
-1. Wait up to 3 minutes for initial generation
-2. If the play button doesn't respond, the video URL may have expired — wait for automatic reset
-3. After 3 failed load attempts, the system auto-resets and shows "SEE YOUR NEW LIFE!" to regenerate
-4. Try downloading the video directly (download button works independently of playback)
-5. Check browser supports video; try different browser
-6. Ensure stable internet connection
-7. Disable ad blockers
-
-**How it works:** Videos use secure blob URLs for reliable playback. The system detects expired or broken video URLs automatically, tracks failures, and resets after 3 attempts so you can regenerate fresh videos.
-
-**Video URL Expiration (Updated 2026-02-14):** All video providers (Replicate, HeyGen, Kling) now have expiration-aware URL handling. The system performs a HEAD request to validate cached video URLs before displaying them. If a URL has expired, the video is automatically re-fetched or regenerated — no manual action needed. Additionally, localStorage quota crash protection has been added, so large video caches won't cause browser errors.
-
-**Smooth Playback (Updated 2026-02-27):** All video players now pre-buffer the full video before you press play, eliminating startup stutter. If the video pauses to buffer mid-playback, a spinner overlay appears so you know it's loading (not frozen). This applies to the Judge Video, Freedom Video Clip, Freedom Tour, and Olivia Video Presenter.
-
-### Olivia Presenter Not Working
-
-**Symptoms:** Presenter doesn't appear, video won't generate, avatar not speaking
-
-**Note:** The video presenter uses HeyGen (separate from Olivia's chat voice). A presenter issue does NOT mean the Ask Olivia chat or voice is broken.
-
-**Solutions:**
-1. Ensure a Gamma report is loaded first — the presenter needs report data
-2. For Live Presenter: check internet connection (avatar uses real-time HeyGen streaming)
-3. For Video Generation: allow up to 10 minutes for processing
-4. If generation fails, click **Retry** to try again
-5. Check browser supports video playback; try different browser
-6. Ensure ad blockers aren't blocking HeyGen API calls
-
-### Can't Log In
-
-**Symptoms:** Login fails, account locked
-
-**Solutions:**
-1. Use "Forgot Password"
-2. Check email for verification link
-3. Try social login instead
-4. Clear browser cookies
-5. Contact support for unlock
-
-### Mobile Warning Modal (Added 2026-02-16)
-
-When visiting LifeScore on a small screen (phone), a **warning modal** appears explaining that the app is optimized for desktop/tablet. The modal offers:
-- A brief explanation that some features work best on larger screens
-- A button to **continue anyway** on mobile
-- The warning only appears once per session
-
-### Mobile Display Issues
-
-**Symptoms:** Content cut off on the right side, buttons pushed off-screen, text overlapping on mobile phones
-
-**Fixed (2026-02-15):** Nine mobile display issues have been resolved. If you previously experienced any of the following on phones (screens ≤480px wide), these are now fixed:
-
-| Area | What Was Broken | Status |
-|------|----------------|--------|
-| Results page winner/loser cards | Score cards too wide for screen | Fixed |
-| Category breakdown % badges | Weight badges pushed off right edge | Fixed |
-| About > Services table | Table wider than screen | Fixed |
-| About > How It Works modules | Module chips cut off | Fixed |
-| Ask Olivia READY/STOP buttons | Buttons obscured Olivia's response area | Fixed |
-| Gamma Report viewer buttons | Read/Listen/Open/Close buttons overflowed | Fixed |
-| Judge doormat + retry button | Triangle icon and retry button too large | Fixed |
-| Judge verdict Sovereign badge | Badge and "THE JUDGE" text cut off | Fixed |
-| Account Settings CONNECTED button | Connected status pushed off-screen | Fixed |
-| Enhanced Mode +/- weight buttons | Buttons pushed off-screen on narrow phones | Fixed (2026-02-16) |
-| Enhanced Mode LLM provider badges | Badge pills overflowing container on mobile | Fixed (2026-02-16) |
-| City dropdown menus | Dropdown menus clipped/hidden on mobile | Fixed (2026-03-01) |
-| Judge header status/time | "VERDICT READY" overlapping time text on tablets | Fixed (2026-03-01) |
-| Cancel video button | Button too small to tap on mobile portrait | Fixed (2026-03-01) |
-| View toggle buttons | "Watch Video" text clipped/cut off | Fixed (2026-03-01) |
-| Notification dropdown | Dropdown off-center on mobile phones | Fixed (2026-03-01) |
-| Emilia chat text | Assistant message text color inconsistent | Fixed (2026-03-01) |
-| Display screen button labels | Long button labels overflowing on mobile | Fixed (2026-03-01) |
-| Court order divider text | "OR WATCH A MOVIE CLIP" text cut off | Fixed (2026-03-01) |
-| Header company name | Company name off-center on desktop | Fixed (2026-03-01) |
-| City dropdown buttons | Dropdown buttons overflowing card container on mobile | Fixed (2026-03-03) |
-| Region filter tabs | Region tabs (All/N.America/Europe) cramped on mobile portrait | Fixed (2026-03-03) |
-| City name truncation | Long city names truncated too aggressively on mobile | Fixed (2026-03-03) |
-| Compare button hidden | Compare button buried below scroll on mobile | Fixed (2026-03-03) |
-| Loading indicator on mobile | No loading feedback visible on mobile during comparison | Fixed (2026-03-03) |
-| Olivia chat bubble off-center | Olivia chat panel shifted off-center on mobile vertical | Fixed (2026-03-03) |
-
-**If you still see display issues on mobile:** Try a hard refresh (pull down on mobile, or Ctrl+Shift+R on desktop). If problems persist, contact support with a screenshot and your device/browser info.
-
----
-
-## 13. Privacy & Data
-
-### What Data We Collect
-
-| Data Type | Purpose | Retention |
-|-----------|---------|-----------|
-| Account info | Authentication | Until deletion |
-| Comparisons | History & favorites | Until deletion |
-| Chat history | Olivia context | Until deletion |
-| Usage data | Analytics | Anonymized after 90 days |
-
-### Your Rights (GDPR)
-
-- **Access:** Request copy of your data
-- **Portability:** Export in standard format
-- **Deletion:** Request complete removal
-- **Correction:** Update incorrect information
-
-### Your Rights — California Residents (CCPA/CPRA) (Added 2026-02-28)
-
-California residents have these additional rights:
-- **Right to Know:** What personal information we collect and how it's used
-- **Right to Delete:** Request deletion of your personal information
-- **Right to Correct:** Request correction of inaccurate information
-- **Right to Opt-Out:** Opt out of sale or sharing of personal information
-- **Right to Non-Discrimination:** We will not discriminate for exercising your rights
-
-**We do not sell your personal information.** To opt out of any sharing, click **"Do Not Sell or Share My Personal Information"** in the site footer.
-
-### Data Requests
-
-1. Go to **Settings > Privacy**
-2. Click **Request Data Export** or **Delete Account**
-3. Confirm via email
-4. GDPR requests processed within 30 days; CCPA requests within 45 days
-
-### Your Rights — Virginia, Colorado, Connecticut & Utah Residents (Added 2026-02-28)
-
-If you live in Virginia, Colorado, Connecticut, or Utah, your state privacy law gives you rights similar to California:
-- **Access, Delete, Portability:** Use Account Settings (same tools as above)
-- **Opt-Out:** Use the "Do Not Sell or Share My Personal Information" link in the footer
-- **Correct:** Edit your profile in Account Settings (Virginia, Colorado, Connecticut)
-- **Appeal:** If we deny a request, email cluesnomads@gmail.com with subject "VCDPA Appeal," "CPA Appeal," or "CTDPA Appeal" — we respond within 60 days
-
-For full details, click **"US State Privacy Rights"** in the site footer.
-
-**We do not sell your personal data or use it for targeted advertising.**
-
-### Do Not Sell or Share (CCPA/State Privacy Opt-Out)
-
-1. Scroll to the **site footer**
-2. Click **"Do Not Sell or Share My Personal Information"**
-3. Click the opt-out button to record your preference
-4. Your choice is saved immediately and logged for compliance
-5. This opt-out covers California, Virginia, Colorado, Connecticut, and Utah requirements
-
-### Security (Updated 2026-02-26)
-
-Your data is protected by multiple security layers:
-- **Authenticated APIs:** All 38+ API endpoints require you to be logged in — no anonymous access to any user data or functionality
-- **Row Level Security:** Database policies ensure you can only see your own comparisons, reports, and settings
-- **No data leaks:** Internal debug information has been removed from production (87 debug statements cleaned up)
-- **Input validation:** All user inputs are validated before processing to prevent injection attacks
-- **CORS protection:** The API only accepts requests from the official LIFE SCORE application
-
-### Third-Party Services
-
-We use:
-- **Supabase:** Database & authentication
-- **Stripe:** Payment processing
-- **AI Providers:** Analysis (data not stored)
-- **Vercel:** Hosting
-
-### Trademarks & Intellectual Property
-
-CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD. All content, scoring methodologies, AI personas (Olivia, Cristiano, Emilia), and software are the intellectual property of Clues Intelligence LTD. Unauthorized use, reproduction, or distribution of our trademarks or proprietary technology is prohibited. See the Terms of Service for full details.
-
----
-
-## 14. Frequently Asked Questions
-
-### General
-
-**Q: How current is the data?**
-A: Our AI searches for the most recent information, typically within 12-24 months. Check the Evidence panel for source dates.
-
-**Q: Can I compare more than two cities?**
-A: Currently, comparisons are between two cities. Run multiple comparisons to evaluate more options.
-
-**Q: Why aren't [City Name] available?**
-A: We currently support 200 cities in North America and Europe. International expansion is planned.
-
-### Scoring
-
-**Q: Why do Law and Lived scores differ?**
-A: Law scores reflect written legislation. Lived scores reflect actual enforcement, which may be stricter or more lenient.
-
-**Q: What if I disagree with a score?**
-A: Check the Evidence panel for sources. If you find errors, report them through the feedback form.
-
-**Q: How are category weights determined?**
-A: Default weights reflect general priorities. You can customize weights to match your personal priorities.
-
-**Q: Why did my video disappear after switching tabs?**
-A: This issue has been fixed as of February 2026. Videos on the Judge page now auto-restore when you return to the tab. The system retrieves video URLs from Supabase so you don't lose your generated content.
-
-**Q: Why are there collapsible panels on the Judge page?**
-A: The Judge page was redesigned with collapsible panels (Media, Evidence, Verdict) to reduce scroll clutter. Click any panel header to expand or collapse it. Each header shows summary stats so you can see key information at a glance.
-
-**Q: What is the Freedom Tour video?**
-A: This is a personalized cinematic relocation video for the winning city (the "CLUES Narrative Cinematic Freedom Tour"), accessible via the "[City] Cinematic Narrative Presentation" button at the bottom of the Judge Verdict panel. It features multiple scenes with CLUES branding and only appears when a judge report is loaded. Production takes approximately 10-15 minutes.
-
-**Q: The copyright or date shows the wrong year**
-A: Fixed as of February 2026. All year displays now update automatically. Refresh the page to see the current year.
-
-**Q: When cities tie, the report text looks blank or broken**
-A: Fixed as of February 2026. Tie results now show "evenly matched" with a balanced analysis of both cities, rather than blank winner text.
-
-### Technical
-
-**Q: Which browsers are supported?**
-A: Chrome, Firefox, Safari, Edge (latest versions). Mobile browsers supported.
-
-**Q: Is there a mobile app?**
-A: Currently web-only. The site is mobile-responsive.
-
-**Q: Can I use my own API keys?**
-A: Yes, in Enhanced mode (SOVEREIGN). Enter keys in Settings > API Keys.
-
-**Q: What is Enhanced Mode and how does it work?**
-A: Enhanced Mode uses up to 5 AI providers simultaneously (Claude Sonnet 4.6, GPT-4o, Gemini 3.1 Pro, Grok 4, Perplexity Sonar) to evaluate cities. Each provider scores independently, then Claude Opus 4.6 acts as "The Judge" to analyze disagreements and provide consensus scores. This delivers more reliable, balanced results. Requires SOVEREIGN tier.
-
-**Q: Why would I use Enhanced Mode over Standard Mode?**
-A: Enhanced Mode provides multi-LLM consensus scoring, which reduces individual AI bias and catches edge cases a single model might miss. The Judge feature highlights where AI providers disagree and explains the reasoning. Best for important relocation decisions.
-
-**Q: How long does Enhanced Mode take?**
-A: Enhanced Mode typically takes 5-8 minutes vs 2-3 minutes for Standard Mode. The extra time allows all 5 AI providers to complete their analysis and for the Judge to evaluate disagreements.
-
-### Billing
-
-**Q: Can I get a refund?**
-A: Within 7 days of first subscription. Contact support for refund requests.
-
-**Q: What happens if payment fails?**
-A: 7-day grace period, then account reverts to FREE.
-
-**Q: Is my payment information secure?**
-A: Yes, processed by Stripe. We never see your full card number.
-
----
-
-## 15. Cost Dashboard & Usage Monitoring
-
-### What is the Cost Dashboard?
-
-The Cost Dashboard shows real-time API usage across all providers. Access it by clicking the 💰 icon in the app header.
-
-### Cost Dashboard Accuracy (Fixed 2026-02-14)
-
-Previously, the Cost Dashboard could show $0.00 for Gamma, Olivia, TTS, Avatar, and Perplexity services. This occurred because database records were saved before post-comparison services finished running. The fix now performs a field-by-field merge, taking the higher value from either localStorage or the database, and auto-syncs corrected values back to the database. Perplexity API also now correctly returns token usage data.
-
-### Understanding Quota Colors
-
-| Color | Usage Level | Meaning |
-|-------|-------------|---------|
-| 🟢 Green | 0-49% | Normal - plenty of quota remaining |
-| 🟡 Yellow | 50-69% | Caution - over half used |
-| 🟠 Orange | 70-84% | Warning - approaching limit |
-| 🔴 Red | 85-99% | Critical - near limit |
-| ⚫ Exceeded | 100%+ | Limit reached - fallback active |
-
-### Quota Alerts
-
-When quotas reach warning levels, you'll receive email alerts at:
-- cluesnomads@gmail.com (your registered email)
-
-### Fallback Behavior
-
-When a provider exceeds its quota:
-- **TTS:** ElevenLabs → OpenAI TTS automatically
-- **Avatar:** Simli → D-ID → Replicate automatically
-- You may notice slight quality or voice differences during fallback
-
----
-
-## 16. Emilia Help Assistant
-
-### Who is Emilia?
-
-Emilia is a help widget assistant (different from Olivia). She appears as a floating help button and can:
-- Answer quick questions about using LifeScore
-- Guide you through features
-- Provide contextual help
-- Access 8 help tabs: User Manual, Customer Service, Tech Support, Legal, App Schema, Judge Equations, Prompts, APIs
-
-### Help Tabs
-
-The Emilia help system includes multiple tabs for different types of information:
-
-| Tab | Content |
-|-----|---------|
-| User Manual | This document — how to use LifeScore |
-| Customer Service | Support procedures and escalation |
-| Tech Support | Technical architecture and debugging |
-| Legal | Privacy, GDPR, and compliance |
-| App Schema | Database tables, API endpoints, components |
-| Judge Equations | Scoring formulas and algorithms |
-| Prompts | All 50 system prompts (admin view — shows how AI evaluations are configured) |
-| APIs | Environment variables and service configurations |
-
-### Emilia vs. Olivia
-
-| Feature | Emilia | Olivia |
-|---------|--------|--------|
-| Purpose | App help & guidance | Comparison analysis |
-| Location | Floating widget | Dedicated tab |
-| Voice | Shimmer (softer) | Nova (warm) |
-| Context | App navigation | Your comparison data |
-
----
-
-## 17. Notifications (Added 2026-02-16)
-
-### Notification Bell
-
-A notification bell icon appears in the app header. When you have unread notifications, a badge with the count appears on the bell. Click it to see your recent notifications in a dropdown.
-
-### "Notify Me" for Long-Running Tasks
-
-When you start a task that takes time (comparisons, Judge verdicts, video generation, Gamma reports), a modal appears offering two choices:
-
-| Option | What Happens |
-|--------|-------------|
-| **Wait Here** | Stay on the page and watch the progress bar |
-| **Notify Me & Go** | Navigate away freely — you'll get a notification when it's done |
-
-**"Remember My Preference" (Updated 2026-03-03):**
-- Check the **"Remember my preference"** checkbox to save your choice
-- When remembered, the modal will **not appear again** — your saved preference is automatically applied
-- Preference saves correctly on **both** "Wait Here" and "Notify Me & Go" paths
-- Your preference is stored locally and persists across page reloads
-- To change your preference, clear your browser's local storage for the site
-
-**Session Memory for "Wait Here" (Added 2026-03-03):**
-- If you choose "Wait Here" during a comparison, subsequent comparisons in the **same browser session** will skip the modal and go directly to wait mode
-- This session-level memory resets when you close the browser tab
-
-If you choose "Notify Me & Go":
-1. The task continues running in the background
-2. When complete, the bell icon updates with a new unread notification
-3. Click the bell to see the notification and jump to your results
-4. If you opted in to email notifications, you'll also receive an email from alerts@lifescore.app
-
-### Notification Types
-
-| Notification | Trigger |
-|-------------|---------|
-| Comparison complete | Standard or Enhanced comparison finishes |
-| Judge verdict ready | Judge analysis completes |
-| Video generated | Grok/Kling mood video finishes rendering |
-| Gamma report ready | Gamma report generation completes |
-| Freedom Video Clip ready | Freedom Video Clip finishes rendering |
-| Freedom Tour video ready | Freedom Tour video finishes rendering |
-
-### Managing Notifications
-
-- Click the **bell icon** to view all notifications
-- Unread notifications appear with a highlight
-- The unread count badge updates in real time (polled every 30 seconds)
-- Notifications include a timestamp showing when the task completed
-- When you have no notifications, the dropdown shows an orange "No notifications yet" message
-
----
-
-## Getting Help
-
-**Need assistance?**
-
-- **Help Center:** help.clueslifescore.com
-- **Email:** cluesnomads@gmail.com
-- **In-App:** Ask Olivia
-- **Feedback:** Report issues in Settings
-
----
-
-*Thank you for choosing LifeScore. We're committed to helping you find your ideal city.*
-
----
-
-## Document Control
-
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-01-28 | AI Assistant | Initial creation |
-| 2.0 | 2026-01-30 | Claude Opus 4.6 | Phase 1 fixes: domain names, password requirements, tier limits |
-| 2.1 | 2026-01-30 | Claude Opus 4.6 | Phase 2: Added Cost Dashboard (§15), Emilia Help Assistant (§16) |
-| 2.2 | 2026-01-30 | Claude Opus 4.6 | Phase 3: TTS fallback info, Kling AI docs, video timing fix, annual pricing |
-| 2.3 | 2026-02-02 | Claude Opus 4.6 | Fixed tier limits to match code: NAVIGATOR 1 comparison, SOVEREIGN 1 comparison/1 Gamma/1 Judge |
-| 2.4 | 2026-02-02 | Claude Opus 4.6 | Added comprehensive feature tables: 8 categories, 30+ features with detailed tier breakdown |
-| 2.5 | 2026-02-05 | Claude Opus 4.6 | Session 9: Score Methodology explainer (§5), Judge report cloud save (§7), dual-storage data sync (§9, §11), video auto-reset troubleshooting (§12), updated AI model names (§14), retry/timeout notes |
-| 3.0 | 2026-02-13 | Claude Opus 4.6 | Court Order videos (§7), blob URL video playback, video troubleshooting rewrite (§12), city selector with country badges (§4), Emilia help tabs detail (§16), Prompts tab documentation, Judge tie handling fix |
-| 3.1 | 2026-02-13 | Claude Opus 4.6 | Added Olivia Video Presenter (§8): Read/Listen toggle, Live PIP avatar presenter, pre-rendered HeyGen video with download. Presenter troubleshooting (§12). |
-| 3.2 | 2026-02-14 | Claude Opus 4.6 | 5 bug fixes: (1) Trophy 🏆 now correctly placed on winner not loser in Gamma reports (§9), (2) Gamma reports persistence fix — foreign key constraint resolved (§7, §9), (3) backdrop-filter blur removed from 8 CSS files for INP performance, (4) 247ms INP fix on login email input, (5) "Watch Presenter" renamed to "Listen to Presenter" (§8). |
-| 3.3 | 2026-02-14 | Claude Opus 4.6 | Major Judge page redesign: collapsible panels (§7), GoToMyNewCity multi-scene video (§7), auto-restore videos on tab switch (§7), missing 6 category sections fix (§7), Judge dropdown INP fix (§7). Video URL expiration handling for all providers (§12). Cost Dashboard $0.00 fix (§15). Cristiano video CTA + poster (§8). AUDIO badge + voice wave indicator (§8). Storyboard progress bar (§8). Dark mode fixes for saved reports (§10). Judge report Supabase fallback (§7). Expired video URL HEAD-request validation (§12). localStorage quota crash protection. |
-| 3.4 | 2026-02-15 | Claude Opus 4.6 | 9 mobile vertical overflow fixes (§12): Results score cards, category % badges, About services table, How It Works modules, Olivia READY/STOP buttons, Gamma viewer buttons, Judge doormat/retry, Sovereign badge, Settings CONNECTED button. All scoped to ≤480px viewports. New "Mobile Display Issues" troubleshooting section. |
-| 3.5 | 2026-02-17 | Claude Opus 4.6 | Full "Forgot Password" flow documented (§2): 3-step walkthrough covering reset request, email link, new password form, and data safety notes. Updated App Schema Manual with complete Authentication & Password Recovery architecture (§1.0). Updated CSM and Tech manuals with password reset troubleshooting and architecture. |
-| 3.6 | 2026-02-17 | Claude Opus 4.6 | 29-commit audit: Notifications system (§17) with bell icon, "Notify Me" modal, email alerts. Explain the Winner toggle (§5). Confidence interval hover cards (§7). Glassmorphic Judge buttons (§7). Phone call audio warning (§7). Mobile warning modal (§12). Law vs Lived / Worst-Case illumination (§4). Dealbreakers A-Z sort (§4). Auto-scroll to top (§4). VS text dark mode fix (§10). Mobile +/- buttons and LLM badges fix (§12). Visuals labeling fix. Gamma links fix. Login credential storage fix. Judge stale state fix. Password reset redirect fix. Admin signup email. |
-| 3.7 | 2026-02-17 | Claude Opus 4.6 | Gamma export URL expiration fix (§9): Permanent Downloads note — PDF/PPTX exports now permanently stored in Supabase Storage. Expired Report Detection note — iframe error handling shows fallback message. |
-| 3.8 | 2026-02-26 | Claude Opus 4.6 | Security audit session (47 fixes): New Security subsection in Privacy & Data (§13) documenting 38+ authenticated endpoints, CORS hardening, debug cleanup. Tie victory text fix in Judge reports (§7). New FAQs for wrong year display and tie case. All user-facing data now requires authentication. |
-| 3.9 | 2026-02-27 | Claude Opus 4.6 | Metric display name fix (§5): Evidence Panel, Advanced Visuals charts, CSV/PDF exports, and Judge disagreement summaries now show proper human-readable metric names (e.g., "Cannabis Legality") instead of internal codes (e.g., "pf_01_cannabis_legal"). Olivia presenter audio overlap fix (§8): segments no longer play over each other. |
-| 4.0 | 2026-03-01 | Claude Opus 4.6 | Major terminology rename: "Court Order" → "Freedom Video Clip", "Go To My New City" → "[City] Cinematic Narrative Presentation", "Your Future" button → "[City] Advantages", "Moving Movie" → "Freedom Journey". Freedom Tour poster rebranded to "CLUES Narrative Cinematic Freedom Tour". HeyGen branding removed from user-facing text. Freedom Tour wait time updated to 10-15 minutes. Download button opens in new tab (CORS fix). 15+ mobile portrait layout fixes. |
-| 4.1 | 2026-03-01 | Claude Opus 4.6 | 9 mobile/CSS fixes added to troubleshooting (§12): City dropdown menus clipped, Judge header overlap on tablets, cancel video button sizing, view toggle button text clipping, notification dropdown off-center, Emilia chat text color, display screen button label overflow, court order divider text overflow, header company name centering. |
-| 4.2 | 2026-03-03 | Claude Opus 4.6 | 8 commits: (1) Olivia chat bubble off-center on mobile fixed (§12). (2) 5 mobile CitySelector UX fixes — region tabs cramped, city name truncation, sticky compare button, inline loading indicator, NotifyMe session skip (§4, §12). (3) City dropdown button overflow fix (§12). (4) Persona Weights instructional guide added (§4). (5) Beta tester access program (§11). (6) FeatureGate dismiss persistence — upgrade gate stays dismissed across reloads (§11). (7) NotifyMeModal "Remember my preference" saves on both paths, all 5 parent components auto-apply saved preference (§17). (8) Ask Olivia instructional text when no comparison loaded (§6). |
+*© Clues Intelligence LTD. LIFE SCORE™, CLUES™ and SMART™ are trademarks of Clues Intelligence LTD.*
