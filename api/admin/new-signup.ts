@@ -16,7 +16,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { getAdminEmails } from '../shared/auth.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { sendEmail } from '../shared/resend.js';
 
 /** Time limit for Resend accepting the new-signup email. */
 const RESEND_TIMEOUT_MS = 15_000;
@@ -47,7 +47,6 @@ async function isFreshSignup(email: string): Promise<boolean> {
 }
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
 
 export default async function handler(
   req: VercelRequest,
@@ -147,33 +146,13 @@ export default async function handler(
 </html>
   `;
 
-  try {
-    const response = await fetchWithTimeout('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: RESEND_FROM,
-        to: getAdminEmails(),
-        subject,
-        html,
-      }),
-    }, RESEND_TIMEOUT_MS);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[NEW-SIGNUP] Resend error:', response.status, errorText);
-      // Still return 200 — we don't want signup UX to break because of an email failure
-      res.status(200).json({ success: false, note: 'email send failed' });
-      return;
-    }
-
-    console.log(`[NEW-SIGNUP] Admin alert sent for: ${email}`);
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error('[NEW-SIGNUP] Email error:', err);
-    res.status(200).json({ success: false, note: 'email error' });
+  const sent = await sendEmail({ to: getAdminEmails(), subject, html }, RESEND_TIMEOUT_MS);
+  if (!sent.ok) {
+    console.error('[NEW-SIGNUP] Email error:', sent.kind, sent.message);
+    // Still 200 — signup must not break because an email failed
+    res.status(200).json({ success: false, note: sent.kind === 'http' ? 'email send failed' : 'email error' });
+    return;
   }
+  console.log('[NEW-SIGNUP] Admin alert sent');
+  res.status(200).json({ success: true });
 }

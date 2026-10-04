@@ -14,7 +14,7 @@ import { getAdminEmails } from '../shared/auth.js';
 import { requireAdmin } from '../shared/entitlements.js';
 import { elevenLabsSubscription } from '../shared/elevenlabs.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
-import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+import { sendEmail } from '../shared/resend.js';
 
 /** Time limit for Resend accepting the quota-alert email. */
 const RESEND_TIMEOUT_MS = 15_000;
@@ -27,7 +27,6 @@ const ALERT_EMAILS = getAdminEmails();
 
 // Resend API for sending emails
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
 
 // ============================================================================
 // TYPES
@@ -162,33 +161,13 @@ async function sendAlertEmail(
 </html>
   `;
 
-  try {
-    const response = await fetchWithTimeout('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: RESEND_FROM,
-        to: ALERT_EMAILS,
-        subject,
-        html,
-      }),
-    }, RESEND_TIMEOUT_MS);
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('[QUOTA-ALERT] Failed to send email:', error);
-      return false;
-    }
-
-    console.log(`[QUOTA-ALERT] Alert email sent for ${provider.display_name} (${alertLevel})`);
-    return true;
-  } catch (error) {
-    console.error('[QUOTA-ALERT] Email send error:', error);
+  const sent = await sendEmail({ to: ALERT_EMAILS, subject, html }, RESEND_TIMEOUT_MS);
+  if (!sent.ok) {
+    console.error('[QUOTA-ALERT] Failed to send email:', sent.kind, sent.message);
     return false;
   }
+  console.log(`[QUOTA-ALERT] Alert email sent for ${provider.display_name} (${alertLevel})`);
+  return true;
 }
 
 function formatUsageValue(value: number, quotaType: string): string {
@@ -245,8 +224,8 @@ export default async function handler(
             };
           }
         }
-      } catch (e) {
-        console.warn('[QUOTA-CHECK] Could not fetch ElevenLabs usage');
+      } catch (err) {
+        console.warn('[QUOTA-CHECK] Could not fetch ElevenLabs usage:', err instanceof Error ? err.message : err);
       }
 
       res.status(200).json({
@@ -267,7 +246,7 @@ export default async function handler(
       }
 
       // Update usage
-      const { data: updated, error: updateError } = await supabase.rpc('update_provider_usage', {
+      const { error: updateError } = await supabase.rpc('update_provider_usage', {
         p_provider_key: provider_key,
         p_usage_delta: usage_delta,
       });

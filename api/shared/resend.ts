@@ -3,9 +3,9 @@
  *
  * POST https://api.resend.com/emails with RESEND_API_KEY; the sender is
  * RESEND_FROM_EMAIL. Never throws: a typed result the caller switches on.
- * Written 4 Oct 2026 for the weekly vendor check; the three routes that still
- * post to Resend themselves (notify, admin/new-signup, usage/check-quotas) move
- * here in the code tidy-up.
+ * Used by notify (results-ready emails), admin/new-signup and usage/check-quotas
+ * (admin alerts) and the weekly vendor check; tests/vendorClients.test.ts keeps
+ * Resend's address out of every other file.
  */
 
 import { fetchWithTimeout } from './fetchWithTimeout.js';

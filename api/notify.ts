@@ -16,15 +16,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serviceDb } from './shared/supabaseAdmin.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
-import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
 import { publicSiteUrl } from './shared/siteUrl.js';
+import { sendEmail } from './shared/resend.js';
 
 // Supabase admin client (service role for inserting notifications)
 const supabaseAdmin = serviceDb;
 
-// Resend API
-const RESEND_API_URL = 'https://api.resend.com/emails';
-const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'LIFE SCORE <alerts@lifescore.app>';
 
 // ============================================================================
 // TYPES
@@ -52,11 +49,6 @@ async function sendEmailViaResend(
   body: string,
   link?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    console.warn('[NOTIFY] RESEND_API_KEY not configured — skipping email');
-    return { success: false, error: 'Email service not configured' };
-  }
 
   const htmlBody = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0f172a; color: #e2e8f0; border-radius: 12px;">
@@ -79,34 +71,14 @@ async function sendEmailViaResend(
     </div>
   `;
 
-  try {
-    const response = await fetchWithTimeout(RESEND_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: RESEND_FROM,
-        to: [to],
-        subject: `LIFE SCORE: ${subject}`,
-        html: htmlBody,
-      }),
-    }, 15000);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[NOTIFY] Resend error:', response.status, errorText);
-      return { success: false, error: `Resend ${response.status}: ${errorText}` };
-    }
-
-    console.log('[NOTIFY] Email sent to:', to);
-    return { success: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[NOTIFY] Email send failed:', msg);
-    return { success: false, error: msg };
+  const sent = await sendEmail({ to: [to], subject: `LIFE SCORE: ${subject}`, html: htmlBody });
+  if (!sent.ok) {
+    if (sent.kind === 'not-configured') console.warn('[NOTIFY] RESEND_API_KEY not configured — skipping email');
+    else console.error('[NOTIFY] Email send failed:', sent.message);
+    return { success: false, error: sent.kind === 'not-configured' ? 'Email service not configured' : sent.message };
   }
+  console.log('[NOTIFY] Email sent');
+  return { success: true };
 }
 
 /**
