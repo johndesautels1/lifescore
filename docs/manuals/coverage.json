@@ -95,9 +95,9 @@
         "api/shared/plans.ts",
         "src/components/PricingModal.tsx"
       ],
-      "hash": "51892245b75c42c30e1a38b0ab600cd1a6b5b8cc5f2551bcb827bbbeb5ceb53e",
+      "hash": "4fbcc1eca23976de0d10cc6d591abf2e3ef8b4ca6d06fc4d1cf1354a883bd6bc",
       "reviewed": "2026-10-04",
-      "basis": "b2387e8dadebce28f3f1c8a52d68982ba0a060e9"
+      "basis": "3a0be7e4d273f3552a9d958beef7466cc01e64bf"
     },
     "CUSTOMER_SERVICE_MANUAL.md#3-what-customers-ask-and-the-answer": {
       "files": [
@@ -526,9 +526,9 @@
         "src/components/PricingModal.tsx",
         "api/shared/plans.ts"
       ],
-      "hash": "51892245b75c42c30e1a38b0ab600cd1a6b5b8cc5f2551bcb827bbbeb5ceb53e",
+      "hash": "4fbcc1eca23976de0d10cc6d591abf2e3ef8b4ca6d06fc4d1cf1354a883bd6bc",
       "reviewed": "2026-10-04",
-      "basis": "b2387e8dadebce28f3f1c8a52d68982ba0a060e9"
+      "basis": "3a0be7e4d273f3552a9d958beef7466cc01e64bf"
     },
     "USER_MANUAL.md#12-help-and-emilia": {
       "files": [

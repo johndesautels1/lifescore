@@ -32,4 +32,12 @@ describe('annual saving', () => {
       expect({ file, fixed: /Save (up to )?\d+%/.test(text) }).toEqual({ file, fixed: false });
     }
   });
+
+  it('both pricing screens take their prices from the one list (api/shared/plans.ts TIER_PRICING)', () => {
+    for (const file of ['src/components/PricingModal.tsx', 'src/components/PricingPage.tsx']) {
+      const text = readFileSync(file, 'utf8');
+      expect({ file, fixedPrices: /(monthly|annual)Price:\s*\d/.test(text) }).toEqual({ file, fixedPrices: false });
+      expect({ file, list: text.includes('TIER_PRICING.pro.annual') && text.includes('TIER_PRICING.enterprise.monthly') }).toEqual({ file, list: true });
+    }
+  });
 });

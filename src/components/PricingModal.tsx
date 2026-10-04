@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTierAccess } from '../hooks/useTierAccess';
+import { useTierAccess, TIER_PRICING } from '../hooks/useTierAccess';
 import type { UserTier } from '../types/database';
 import { toastError } from '../utils/toast';
 import { maxAnnualSavingPercent } from '../utils/annualSaving';
@@ -48,8 +48,8 @@ const PRICING_TIERS: PricingTier[] = [
     id: 'free',
     name: 'FREE',
     tagline: 'Start Your Journey',
-    monthlyPrice: 0,
-    annualPrice: 0,
+    monthlyPrice: TIER_PRICING.free.monthly,
+    annualPrice: TIER_PRICING.free.annual,
     features: [
       '1 comparison/month (1 LLM)',
       'Basic metric analysis',
@@ -60,8 +60,8 @@ const PRICING_TIERS: PricingTier[] = [
     id: 'pro',
     name: 'NAVIGATOR',
     tagline: 'Chart Your Course',
-    monthlyPrice: 29,
-    annualPrice: 249,
+    monthlyPrice: TIER_PRICING.pro.monthly,
+    annualPrice: TIER_PRICING.pro.annual,
     popular: true,
     features: [
       '1 comparison/month (1 LLM)',
@@ -76,8 +76,8 @@ const PRICING_TIERS: PricingTier[] = [
     id: 'enterprise',
     name: 'SOVEREIGN',
     tagline: 'Command Your Destiny',
-    monthlyPrice: 99,
-    annualPrice: 899,
+    monthlyPrice: TIER_PRICING.enterprise.monthly,
+    annualPrice: TIER_PRICING.enterprise.annual,
     features: [
       '1 comparison/month (5 LLMs)',
       '60 min Olivia AI/month',
