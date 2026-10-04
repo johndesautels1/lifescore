@@ -479,7 +479,7 @@ export default async function handler(
       }
 
       default:
-        res.status(400).json({ error: `Unknown action: ${(body as any).action}` });
+        res.status(400).json({ error: `Unknown action: ${String(asRecord(req.body).action)}` });
     }
   } catch (error) {
     console.error('[JUDGE-VIDEO] Error:', error);

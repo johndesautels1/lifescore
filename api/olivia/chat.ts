@@ -35,6 +35,7 @@ import { loadKnowledge } from '../shared/knowledge.js';
 import { getAdminEmails } from '../shared/auth.js';
 import { appKnowledgeGuide, appKnowledgeTools, isAppKnowledgeTool, runAppKnowledgeTool } from '../shared/appKnowledge.js';
 import { lookupFieldEvidence } from '../shared/fieldEvidence.js';
+import { readLifeScoreContext, type ContextMetric, type LifeScoreContext } from '../shared/oliviaContext.js';
 
 // ============================================================================
 // LIMITS
@@ -57,7 +58,7 @@ interface ChatRequest {
   threadId?: unknown;
   message?: unknown;
   history?: unknown;
-  context?: any; // LifeScoreContext, built by /api/olivia/context
+  context?: unknown; // LifeScoreContext, built by /api/olivia/context and read back with readLifeScoreContext
   textSummary?: unknown; // Pre-built text summary from the context API
 }
 
@@ -69,15 +70,14 @@ interface ChatRequest {
 /**
  * Build context message for Olivia with ALL 100 metrics
  */
-function buildContextMessage(context: any, textSummary?: string): string {
-  if (!context) return '';
-
+function buildContextMessage(context: LifeScoreContext | null, textSummary?: string): string {
   // If we have a pre-built text summary, use it (more comprehensive)
   if (textSummary) {
     return `\n\n---\n${textSummary}\n---\n\nUse all the data above to answer user questions about this comparison. You have access to ALL 100 METRICS - be specific with scores and reference any metric the user asks about.`;
   }
 
   // Fallback: build from context object
+  if (!context) return '';
   const { comparison, categories, topMetrics, consensus, evidence } = context;
 
   let contextStr = `\n\n---\n## CURRENT COMPARISON DATA\n\n`;
@@ -96,7 +96,7 @@ function buildContextMessage(context: any, textSummary?: string): string {
   contextStr += `### Category Breakdown\n`;
   contextStr += `| Category | ${comparison.city1.name} | ${comparison.city2.name} | Winner |\n`;
   contextStr += `|----------|----------|----------|--------|\n`;
-  categories.forEach((cat: any) => {
+  categories.forEach((cat) => {
     const winner = cat.winner === 'city1' ? comparison.city1.name :
                    cat.winner === 'city2' ? comparison.city2.name : 'Tie';
     contextStr += `| ${cat.name} | ${cat.city1Score} | ${cat.city2Score} | ${winner} |\n`;
@@ -108,8 +108,8 @@ function buildContextMessage(context: any, textSummary?: string): string {
     contextStr += `### All ${topMetrics.length} Metrics\n`;
 
     // Group by category
-    const metricsByCategory: Record<string, any[]> = {};
-    topMetrics.forEach((m: any) => {
+    const metricsByCategory: Record<string, ContextMetric[]> = {};
+    topMetrics.forEach((m) => {
       const cat = m.category || 'Other';
       if (!metricsByCategory[cat]) metricsByCategory[cat] = [];
       metricsByCategory[cat].push(m);
@@ -119,7 +119,7 @@ function buildContextMessage(context: any, textSummary?: string): string {
       contextStr += `\n#### ${catName}\n`;
       contextStr += `| Metric | ${comparison.city1.name} | ${comparison.city2.name} |\n`;
       contextStr += `|--------|---------|----------|\n`;
-      metrics.forEach((m: any) => {
+      metrics.forEach((m) => {
         contextStr += `| ${m.name} | ${m.city1Score} | ${m.city2Score} |\n`;
       });
     });
@@ -137,7 +137,7 @@ function buildContextMessage(context: any, textSummary?: string): string {
     }
     if (consensus.topDisagreements && consensus.topDisagreements.length > 0) {
       contextStr += `\n**Top Disagreements:**\n`;
-      consensus.topDisagreements.forEach((d: any) => {
+      consensus.topDisagreements.forEach((d) => {
         contextStr += `- ${d.metricName}: StdDev=${d.standardDeviation.toFixed(1)} - ${d.explanation}\n`;
       });
     }
@@ -148,8 +148,8 @@ function buildContextMessage(context: any, textSummary?: string): string {
   if (evidence && evidence.length > 0) {
     contextStr += `### Evidence Sources\n`;
     const uniqueSources = new Set<string>();
-    evidence.slice(0, 10).forEach((e: any) => {
-      e.sources.forEach((s: any) => {
+    evidence.slice(0, 10).forEach((e) => {
+      e.sources.forEach((s) => {
         if (!uniqueSources.has(s.url)) {
           uniqueSources.add(s.url);
           contextStr += `- [${e.metricName}] ${s.url}\n`;
@@ -235,7 +235,7 @@ export default async function handler(
 
   try {
     const threadId = typeof body.threadId === 'string' && body.threadId ? body.threadId.slice(0, 100) : randomUUID();
-    const context = body.context;
+    const context = readLifeScoreContext(body.context);
     const textSummary = typeof body.textSummary === 'string' ? body.textSummary : undefined;
 
     const panel = `\n\nMODELS IN USE TODAY\nThe judge is ${AI_MODELS.judge.name}. Claude's evaluator seat is ${AI_MODELS.claudeEvaluator.name}. You are ${AI_MODELS.writer.name}.`;
@@ -247,14 +247,13 @@ export default async function handler(
     ];
     // The comparison the user is viewing, when there is one (always sent, so a report
     // chosen after the chat started is seen too).
-    if (context) {
+    if (body.context) {
       const contextText = buildContextMessage(context, textSummary).slice(0, MAX_CONTEXT_CHARS);
       if (contextText.trim()) system.push({ type: 'text', text: contextText, cache_control: { type: 'ephemeral' } });
     }
 
     const messages: ClaudeMessage[] = [...cleanConversation(body.history, MAX_HISTORY_TURNS, MAX_TURN_CHARS), { role: 'user', content: message }];
-    const comparisonId: string | undefined =
-      typeof context?.comparison?.comparisonId === 'string' ? context.comparison.comparisonId : undefined;
+    const comparisonId: string | undefined = context?.comparison.comparisonId || undefined;
     const deadline = Date.now() + CHAT_TIMEOUT_MS;
     const usage = { inputTokens: 0, outputTokens: 0 };
     let responseText = '';

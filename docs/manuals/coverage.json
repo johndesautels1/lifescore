@@ -121,9 +121,9 @@
         "src/hooks/useGrokVideo.ts",
         "src/main.tsx"
       ],
-      "hash": "584a52ea3b016725de4cfa248167c6193713a9635dc9bf24548fdbaa6e2db50b",
+      "hash": "277a63c1c6aa031f1f87f2b1bb5bd7dcfea0c9b88e98a806c5ebbe210b60d518",
       "reviewed": "2026-10-04",
-      "basis": "13a5fcbad598c3b4aae08f1efb066a5154d7f78c"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "CUSTOMER_SERVICE_MANUAL.md#5-account-and-privacy-requests": {
       "files": [
@@ -236,9 +236,9 @@
       "files": [
         "api/judge-report.ts"
       ],
-      "hash": "e677aa275d930adca01a4b0d00d15edfc5e211cb7f8dc6b2a591fecc1e6149e1",
+      "hash": "0ffb674411953fbd1ddbf8f118538f5ba2524c6af0824d4d2d9ec40cb031f940",
       "reviewed": "2026-10-04",
-      "basis": "086f1622e101a1067cfd9130638dec5a3bd97145"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "JUDGE_EQUATIONS_MANUAL.md#8-video-progress-and-script-limits": {
       "files": [
@@ -453,9 +453,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "b2d1c63df21a550ec1ebf7a5c93e8b1f1e0834d8c8d2c1d2df28b0d2f118685a",
+      "hash": "fcab8ec763edcfec43f415ee42e6722efd18414aafca2d2b20f376ce87fc83bc",
       "reviewed": "2026-10-04",
-      "basis": "855ee90c13c0b8adad8be9184d25d5a53daeb382"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
@@ -475,9 +475,9 @@
         "src/hooks/useOliviaFace.ts",
         "api/olivia/avatar/live.ts"
       ],
-      "hash": "18e872d87fe8e0b78ebc5836d925707762386570bd8e982dae409c8f4f456ae2",
+      "hash": "0b4d176e076fb8e135cdcfd7dc6ba49bd4532f235ab2bea02b48adb574e34ae3",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#8-videos": {
       "files": [
@@ -682,9 +682,9 @@
         "api/olivia/chat.ts",
         "api/shared/plans.ts"
       ],
-      "hash": "8a76e2b6ea6e670cc6677359832c5e748fb8c62c5e2bd6cb1f6375186c2ac6e2",
+      "hash": "9d2c2b26202e9b93aec1e7d7904e3cb468d847b05ccca9b1da0e50241eda85ed",
       "reviewed": "2026-10-04",
-      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "USER_MANUAL.md#9-saved": {
       "files": [

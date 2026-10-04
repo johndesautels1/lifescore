@@ -20,6 +20,8 @@ import { AI_MODELS } from './shared/models.js';
 import { handleCors } from './shared/cors.js';
 import { CATEGORIES } from './shared/metrics.js';
 import { notifyJobComplete } from './shared/notifyJob.js';
+import { asRecord } from './shared/jsonRead.js';
+import { cityTotal, metricScore, readComparison, type InputComparison, type InputMetric } from './shared/comparisonInput.js';
 
 // Timeout constant for Opus API (240s - within Vercel Pro 300s limit)
 const OPUS_TIMEOUT_MS = 240000;
@@ -27,66 +29,6 @@ const OPUS_TIMEOUT_MS = 240000;
 // ============================================================================
 // TYPES
 // ============================================================================
-
-interface JudgeReportRequest {
-  comparisonResult: {
-    city1: CityConsensusScore;
-    city2: CityConsensusScore;
-    winner: 'city1' | 'city2' | 'tie';
-    scoreDifference: number;
-    llmsUsed: string[];
-    overallConsensusConfidence: 'high' | 'medium' | 'low';
-    disagreementSummary: string;
-    comparisonId: string;
-    generatedAt: string;
-  };
-  userId: string;
-}
-
-interface CityConsensusScore {
-  city: string;
-  country: string;
-  region?: string;
-  categories: CategoryConsensus[];
-  totalConsensusScore: number;
-  overallAgreement: number;
-}
-
-interface CategoryConsensus {
-  categoryId: string;
-  metrics: MetricConsensus[];
-  averageConsensusScore: number;
-  agreementLevel: number;
-}
-
-interface MetricConsensus {
-  metricId: string;
-  llmScores: LLMMetricScore[];
-  consensusScore: number;
-  legalScore: number;
-  enforcementScore: number;
-  confidenceLevel: 'unanimous' | 'strong' | 'moderate' | 'split';
-  standardDeviation: number;
-  judgeExplanation: string;
-}
-
-interface LLMMetricScore {
-  metricId: string;
-  normalizedScore: number;
-  legalScore?: number;
-  enforcementScore?: number;
-  llmProvider: string;
-  evidence?: EvidenceItem[];
-  sources?: string[];
-}
-
-interface EvidenceItem {
-  city: string;
-  title: string;
-  url: string;
-  snippet: string;
-  retrieved_at: string;
-}
 
 // Judge Report Output Types
 interface JudgeReport {
@@ -191,13 +133,13 @@ interface OpusJudgeResponse {
 function buildJudgePrompt(
   city1: string,
   city2: string,
-  comparisonResult: JudgeReportRequest['comparisonResult']
+  comparisonResult: InputComparison
 ): string {
   const { city1: c1Data, city2: c2Data, llmsUsed, overallConsensusConfidence, disagreementSummary } = comparisonResult;
 
   // Handle both enhanced (totalConsensusScore) and standard (totalScore) results
-  const c1Total = (c1Data as any).totalConsensusScore ?? (c1Data as any).totalScore ?? 0;
-  const c2Total = (c2Data as any).totalConsensusScore ?? (c2Data as any).totalScore ?? 0;
+  const c1Total = cityTotal(c1Data);
+  const c2Total = cityTotal(c2Data);
 
   // Build category summaries with metrics
   const categorySummaries: string[] = [];
@@ -209,10 +151,12 @@ function buildJudgePrompt(
     const categoryName = categoryDef?.name || cat1.categoryId;
     const categoryWeight = categoryDef?.weight || 0;
 
-    // Handle both enhanced (averageConsensusScore) and standard (averageScore) results
-    const getMetricScore = (m: any) => m.consensusScore ?? m.normalizedScore ?? 0;
-    const cat1Score = cat1.averageConsensusScore ?? (cat1 as any).averageScore ?? cat1.metrics?.reduce((sum: number, m: any) => sum + getMetricScore(m), 0) / (cat1.metrics?.length || 1);
-    const cat2Score = cat2?.averageConsensusScore ?? (cat2 as any)?.averageScore ?? cat2?.metrics?.reduce((sum: number, m: any) => sum + getMetricScore(m), 0) / (cat2?.metrics?.length || 1);
+    // Handle both enhanced (averageConsensusScore) and standard (averageScore) results;
+    // with neither, the mean of the category's metric scores
+    const metricMean = (metrics: InputMetric[]) =>
+      metrics.reduce((sum, m) => sum + metricScore(m), 0) / (metrics.length || 1);
+    const cat1Score = cat1.averageConsensusScore ?? cat1.averageScore ?? metricMean(cat1.metrics);
+    const cat2Score = cat2 ? cat2.averageConsensusScore ?? cat2.averageScore ?? metricMean(cat2.metrics) : undefined;
 
     let catSummary = `\n### ${categoryName} (Weight: ${categoryWeight}%)\n`;
     catSummary += `${city1}: ${(cat1Score ?? 0).toFixed(1)} | ${city2}: ${(cat2Score ?? 0).toFixed(1)}\n`;
@@ -223,27 +167,21 @@ function buildJudgePrompt(
     cat1.metrics.slice(0, 5).forEach(m => {
       const m2 = cat2?.metrics.find(x => x.metricId === m.metricId);
       const confidence = (m.confidenceLevel ?? 'moderate').toUpperCase();
-      const m1Score = getMetricScore(m);
-      const m2Score = m2 ? getMetricScore(m2) : 'N/A';
+      const m1Score = metricScore(m);
+      const m2Score = m2 ? metricScore(m2) : 'N/A';
       catSummary += `- ${m.metricId}: ${city1}=${m1Score} (Legal:${m.legalScore ?? 'N/A'}/Enf:${m.enforcementScore ?? 'N/A'}) | ${city2}=${m2Score} [${confidence}, σ=${m.standardDeviation ?? 0}]\n`;
 
       // Collect evidence (only exists in enhanced results)
-      if (m.llmScores) {
-        m.llmScores.forEach(score => {
-          if (score.evidence) {
-            score.evidence.forEach(e => {
-              if (e.snippet && e.snippet.length > 20) {
-                allEvidence.push(`[${e.city}] ${e.title}: "${e.snippet.slice(0, 200)}..." (${e.url})`);
-              }
-            });
-          }
-          if (score.sources) {
-            score.sources.forEach(src => {
-              allEvidence.push(`[Source] ${src}`);
-            });
+      m.llmScores.forEach(score => {
+        score.evidence.forEach(e => {
+          if (e.snippet && e.snippet.length > 20) {
+            allEvidence.push(`[${e.city}] ${e.title}: "${e.snippet.slice(0, 200)}..." (${e.url})`);
           }
         });
-      }
+        score.sources.forEach(src => {
+          allEvidence.push(`[Source] ${src.url}`);
+        });
+      });
     });
 
     categorySummaries.push(catSummary);
@@ -437,9 +375,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
 
   try {
-    const { comparisonResult } = req.body as JudgeReportRequest;
+    const comparisonResult = readComparison(asRecord(req.body).comparisonResult);
 
-    if (!comparisonResult?.city1?.city || !comparisonResult?.city2?.city) {
+    if (!comparisonResult) {
       return res.status(400).json({ error: 'Missing required field: comparisonResult' });
     }
 
@@ -523,8 +461,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     // Get scores - handle both enhanced (totalConsensusScore) and standard (totalScore) results
-    const city1Score = comparisonResult.city1.totalConsensusScore ?? (comparisonResult.city1 as any).totalScore ?? 0;
-    const city2Score = comparisonResult.city2.totalConsensusScore ?? (comparisonResult.city2 as any).totalScore ?? 0;
+    const city1Score = cityTotal(comparisonResult.city1);
+    const city2Score = cityTotal(comparisonResult.city2);
 
     // SAFEGUARD: Force-correct the recommendation based on computed scores.
     // The scores from multiple LLM evaluators are the ground truth.
@@ -591,19 +529,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // The LLM may interpret "winner" as per-metric winner instead of overall winner,
       // causing wrong city to be labeled as "leading" in a category.
       const winnerIsCity1 = correctedRecommendation !== 'city2';
-      const getMetricScoreFE = (m: any) => m.consensusScore ?? m.normalizedScore ?? 0;
 
       freedomEducation.categories.forEach(cat => {
-        const cat1 = comparisonResult.city1.categories.find((c: any) => c.categoryId === cat.categoryId);
-        const cat2 = comparisonResult.city2.categories.find((c: any) => c.categoryId === cat.categoryId);
+        const cat1 = comparisonResult.city1.categories.find((c) => c.categoryId === cat.categoryId);
+        const cat2 = comparisonResult.city2.categories.find((c) => c.categoryId === cat.categoryId);
 
         cat.winningMetrics = cat.winningMetrics.filter(m => {
-          const m1 = cat1?.metrics.find((x: any) => x.metricId === m.metricId);
-          const m2 = cat2?.metrics.find((x: any) => x.metricId === m.metricId);
+          const m1 = cat1?.metrics.find((x) => x.metricId === m.metricId);
+          const m2 = cat2?.metrics.find((x) => x.metricId === m.metricId);
           if (!m1 || !m2) return false;
 
-          const city1Score = getMetricScoreFE(m1);
-          const city2Score = getMetricScoreFE(m2);
+          const city1Score = metricScore(m1);
+          const city2Score = metricScore(m2);
 
           // Force correct: winnerScore = overall winner's actual score
           m.winnerScore = Math.round(winnerIsCity1 ? city1Score : city2Score);
@@ -624,7 +561,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       reportId,
       generatedAt: new Date().toISOString(),
       userId,
-      comparisonId: comparisonResult.comparisonId,
+      comparisonId: comparisonResult.comparisonId ?? '',
       city1,
       city2,
       city1Country: comparisonResult.city1.country || '',

@@ -11,6 +11,7 @@
  */
 
 import { getServiceClient } from './supabaseAdmin.js';
+import { readComparison, type InputComparison } from './comparisonInput.js';
 
 // ============================================================================
 // TYPES
@@ -156,98 +157,37 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
  * Extract evidence for a specific metric from comparison result
  */
 function extractMetricEvidence(
-  comparisonResult: any,
+  comparisonResult: InputComparison,
   metricId: string,
   cityFilter?: string
 ): { evidence: EvidenceItem[]; city1Score?: number; city2Score?: number } {
   const evidence: EvidenceItem[] = [];
-  let city1Score: number | undefined;
-  let city2Score: number | undefined;
+  const scores: Array<number | undefined> = [undefined, undefined];
 
-  // Check if enhanced (multi-LLM) or standard result
-  const isEnhanced = 'llmsUsed' in comparisonResult;
+  [comparisonResult.city1, comparisonResult.city2].forEach((cityData, side) => {
+    const cityName = cityData.city;
+    if (cityFilter && cityFilter.toLowerCase() !== cityName.toLowerCase()) return;
+    cityData.categories.forEach((cat) => {
+      cat.metrics.forEach((metric) => {
+        if (metric.metricId !== metricId) return;
+        // Score: the models' consensus (Enhanced) or the single score (Standard)
+        scores[side] = comparisonResult.enhanced ? metric.consensusScore : metric.normalizedScore;
 
-  // Extract from city1
-  const city1Name = comparisonResult.city1?.city;
-  if (!cityFilter || cityFilter.toLowerCase() === city1Name?.toLowerCase()) {
-    comparisonResult.city1?.categories?.forEach((cat: any) => {
-      cat.metrics?.forEach((metric: any) => {
-        if (metric.metricId === metricId) {
-          // Get score
-          city1Score = isEnhanced ? metric.consensusScore : metric.normalizedScore;
+        // Evidence from each model's citations (Enhanced)
+        metric.llmScores.forEach((llmScore) => {
+          llmScore.evidence.forEach((e) => {
+            evidence.push({ title: e.title || 'Source', url: e.url, snippet: e.snippet || '', city: cityName });
+          });
+        });
 
-          // Extract evidence from llmScores (enhanced mode)
-          if (metric.llmScores) {
-            metric.llmScores.forEach((llmScore: any) => {
-              if (llmScore.evidence) {
-                llmScore.evidence.forEach((e: any) => {
-                  evidence.push({
-                    title: e.title || 'Source',
-                    url: e.url,
-                    snippet: e.snippet || '',
-                    city: city1Name,
-                  });
-                });
-              }
-            });
-          }
-
-          // Extract from sources array (standard mode)
-          if (metric.sources) {
-            metric.sources.forEach((url: string) => {
-              evidence.push({
-                title: 'Source',
-                url: typeof url === 'string' ? url : (url as any).url,
-                snippet: typeof url === 'object' ? (url as any).snippet || '' : '',
-                city: city1Name,
-              });
-            });
-          }
-        }
+        // Links (Standard)
+        metric.sources.forEach((source) => {
+          evidence.push({ title: 'Source', url: source.url, snippet: source.snippet || '', city: cityName });
+        });
       });
     });
-  }
-
-  // Extract from city2
-  const city2Name = comparisonResult.city2?.city;
-  if (!cityFilter || cityFilter.toLowerCase() === city2Name?.toLowerCase()) {
-    comparisonResult.city2?.categories?.forEach((cat: any) => {
-      cat.metrics?.forEach((metric: any) => {
-        if (metric.metricId === metricId) {
-          // Get score
-          city2Score = isEnhanced ? metric.consensusScore : metric.normalizedScore;
-
-          // Extract evidence from llmScores (enhanced mode)
-          if (metric.llmScores) {
-            metric.llmScores.forEach((llmScore: any) => {
-              if (llmScore.evidence) {
-                llmScore.evidence.forEach((e: any) => {
-                  evidence.push({
-                    title: e.title || 'Source',
-                    url: e.url,
-                    snippet: e.snippet || '',
-                    city: city2Name,
-                  });
-                });
-              }
-            });
-          }
-
-          // Extract from sources array (standard mode)
-          if (metric.sources) {
-            metric.sources.forEach((url: string) => {
-              evidence.push({
-                title: 'Source',
-                url: typeof url === 'string' ? url : (url as any).url,
-                snippet: typeof url === 'object' ? (url as any).snippet || '' : '',
-                city: city2Name,
-              });
-            });
-          }
-        }
-      });
-    });
-  }
+  });
+  const [city1Score, city2Score] = scores;
 
   // Deduplicate by URL
   const seen = new Set<string>();
@@ -286,7 +226,7 @@ export async function lookupFieldEvidence(
     .maybeSingle();
 
   if (dbError || !comparison) return { ok: false, status: 404, error: 'Comparison not found' };
-  const comparisonResult = comparison.comparison_result;
+  const comparisonResult = readComparison(comparison.comparison_result);
   if (!comparisonResult) return { ok: false, status: 404, error: 'Comparison data not available' };
 
   const { evidence, city1Score, city2Score } = extractMetricEvidence(comparisonResult, metricId, city);
