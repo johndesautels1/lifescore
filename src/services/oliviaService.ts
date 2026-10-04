@@ -11,8 +11,6 @@ import type {
   LifeScoreContext,
   ContextBuildResponse,
   TTSResponse,
-  HeyGenSessionRequest,
-  HeyGenSessionResponse,
   DIDAgentRequest,
   DIDAgentResponse,
 } from '../types/olivia';
@@ -144,110 +142,6 @@ export async function generateTTS(
   }
 
   return response.json();
-}
-
-// ============================================================================
-// HEYGEN AVATAR API
-// ============================================================================
-
-/**
- * Create a HeyGen streaming avatar session
- */
-export async function createHeyGenSession(): Promise<HeyGenSessionResponse> {
-  const request: HeyGenSessionRequest = { action: 'create' };
-
-  const response = await fetchWithTimeout(
-    '/api/olivia/avatar/heygen',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify(request),
-    },
-    45000 // 45 second timeout for avatar session creation
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
-    throw new Error(error.error || `HeyGen session creation failed: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Make HeyGen avatar speak text
- */
-export async function heygenSpeak(
-  sessionId: string,
-  text: string
-): Promise<HeyGenSessionResponse> {
-  const request: HeyGenSessionRequest = {
-    action: 'speak',
-    sessionId,
-    text,
-  };
-
-  const response = await fetchWithTimeout(
-    '/api/olivia/avatar/heygen',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify(request),
-    },
-    60000 // 60 second timeout for avatar speech (TTS + streaming)
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
-    throw new Error(error.error || `HeyGen speak failed: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Interrupt HeyGen avatar speech
- */
-export async function heygenInterrupt(sessionId: string): Promise<HeyGenSessionResponse> {
-  const request: HeyGenSessionRequest = {
-    action: 'interrupt',
-    sessionId,
-  };
-
-  const response = await fetchWithTimeout(
-    '/api/olivia/avatar/heygen',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify(request),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch((e) => { console.warn('[OliviaService] Failed to parse error response:', e); return {}; });
-    throw new Error(error.error || `HeyGen interrupt failed: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Close HeyGen session
- */
-export async function closeHeyGenSession(sessionId: string): Promise<void> {
-  const request: HeyGenSessionRequest = {
-    action: 'close',
-    sessionId,
-  };
-
-  await fetchWithTimeout(
-    '/api/olivia/avatar/heygen',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify(request),
-    }
-  );
 }
 
 // ============================================================================

@@ -37,9 +37,6 @@
     "api/olivia/avatar/did.ts": {
       "maxDuration": 120
     },
-    "api/olivia/avatar/heygen.ts": {
-      "maxDuration": 120
-    },
     "api/avatar/generate-judge-video.ts": {
       "maxDuration": 120,
       "includeFiles": "api/shared/**"

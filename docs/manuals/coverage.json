@@ -335,9 +335,9 @@
         "vite.config.ts",
         "src/main.tsx"
       ],
-      "hash": "5d6af0d90c7a047c9bb8d0c76add386323f9832fc602ff5ca62c1ee6b8da72ec",
+      "hash": "4be834fd4884d775c78450ae7deda583f1d90aaabbd47df18bb56707165ade6c",
       "reviewed": "2026-10-04",
-      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
+      "basis": "dc231ffc7ba43ec3d82fad2a5f808038e4da8e20"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#10-settings": {
       "files": [
@@ -410,9 +410,9 @@
         "api/shared/replicateWebhook.ts",
         "vercel.json"
       ],
-      "hash": "9fe3d52f5517789d1d0c19cd3f1a502c75761b142d9c9ed466993303528dc242",
+      "hash": "50be466a472d7ae70e9fdf5fa4c6175208fdf211e3368eddc3ecaa71458e75ad",
       "reviewed": "2026-10-04",
-      "basis": "d09bc9f26db285764c37b8d4d515501ba0cb2c9d"
+      "basis": "dc231ffc7ba43ec3d82fad2a5f808038e4da8e20"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#2-where-things-are": {
       "files": [
@@ -475,9 +475,9 @@
         "src/hooks/useOliviaFace.ts",
         "api/olivia/avatar/live.ts"
       ],
-      "hash": "0b4d176e076fb8e135cdcfd7dc6ba49bd4532f235ab2bea02b48adb574e34ae3",
+      "hash": "d5ea07edb419672a485f357d2bc4ef45d612e176224f7c73d75eddfc79f08eee",
       "reviewed": "2026-10-04",
-      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
+      "basis": "dc231ffc7ba43ec3d82fad2a5f808038e4da8e20"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#8-videos": {
       "files": [
@@ -671,9 +671,9 @@
         "src/components/GunComparisonModal.tsx",
         "src/components/NewLifeVideos.tsx"
       ],
-      "hash": "41230ca64c2c2dcd399f5b5962f0713add1f0041c69fbf5ac6a77c071a358d17",
+      "hash": "7fca3ba881d8f587c1ffecc6c406f8f41be30fa4c7132d36e6d87824b1e99391",
       "reviewed": "2026-10-04",
-      "basis": "c41cc4d7eba022462a39ebd779f5aa90aa7efd39"
+      "basis": "dc231ffc7ba43ec3d82fad2a5f808038e4da8e20"
     },
     "USER_MANUAL.md#8-ask-olivia": {
       "files": [

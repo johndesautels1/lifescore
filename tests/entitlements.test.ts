@@ -174,7 +174,6 @@ describe('paid vendors are reached only behind a plan check', () => {
 
   it("Olivia's faces check her allowance and Cristiano's storyboard checks his films", () => {
     const expected: Record<string, string> = {
-      'api/olivia/avatar/heygen.ts': 'oliviaMinutesPerMonth',
       'api/olivia/avatar/heygen-video.ts': 'oliviaMinutesPerMonth',
       'api/olivia/avatar/streams.ts': 'oliviaMinutesPerMonth',
       'api/olivia/avatar/did.ts': 'oliviaMinutesPerMonth',

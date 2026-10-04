@@ -57,7 +57,8 @@ export interface UseAvatarProviderReturn {
   hasFallenBack: boolean;
 
   // Actions
-  connect: () => Promise<void>;
+  /** Resolves true when a face started (Simli, or D-ID after it), false when none did. */
+  connect: () => Promise<boolean>;
   speak: (text: string, options?: { emotion?: SimliSpeakRequest['emotion']; speed?: number }) => Promise<void>;
   disconnect: () => void;
   interrupt: () => void;
@@ -192,54 +193,54 @@ export function useAvatarProvider(options: UseAvatarProviderOptions = {}): UseAv
     // Wait a moment then connect to D-ID
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    // D-ID reports a failed start by returning false (it does not throw)
+    let connected = false;
     try {
-      await did.connect();
-      isFallingBack.current = false;
-      return true;
-    } catch (err) {
-      isFallingBack.current = false;
-      const message = err instanceof Error ? err.message : 'D-ID fallback failed';
+      connected = await did.connect();
+    } catch {
+      connected = false;
+    }
+    isFallingBack.current = false;
+    if (!connected) {
+      const message = 'D-ID could not start either';
       setFacadeError(message);
       setFacadeStatus('error');
       onErrorRef.current?.(message);
-      return false;
     }
+    return connected;
   }, [activeProvider, autoFallback, simli, did]);
 
   // ============================================================================
   // PUBLIC ACTIONS
   // ============================================================================
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (): Promise<boolean> => {
     setFacadeError(null);
 
     if (activeProvider === 'simli') {
+      // Simli reports a failed start by returning false (it does not throw), so the
+      // move to D-ID is decided here. John, 4 Oct 2026 ("Fix in both"): before, a
+      // Simli that could not start left an error and D-ID was never tried.
+      let started = false;
       try {
-        await simli.connect();
+        started = await simli.connect();
+      } catch {
+        started = false;
+      }
+      if (started) {
         simliErrorCount.current = 0; // Reset on success
-      } catch (err) {
-        simliErrorCount.current++;
-        const message = err instanceof Error ? err.message : 'Simli connection failed';
-        console.error('[useAvatarProvider] Simli connect error:', message);
+        return true;
+      }
+      console.error('[useAvatarProvider] Simli could not start');
+      if (autoFallback) return triggerFallback('Simli could not start');
+      return false;
+    }
 
-        if (simliErrorCount.current >= MAX_SIMLI_ERRORS_BEFORE_FALLBACK && autoFallback) {
-          await triggerFallback(`Simli failed ${simliErrorCount.current} times: ${message}`);
-        } else {
-          setFacadeError(message);
-          setFacadeStatus('error');
-          onErrorRef.current?.(message);
-        }
-      }
-    } else {
-      // Using D-ID directly
-      try {
-        await did.connect();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'D-ID connection failed';
-        setFacadeError(message);
-        setFacadeStatus('error');
-        onErrorRef.current?.(message);
-      }
+    // Using D-ID directly (its error shows through the status sync above)
+    try {
+      return await did.connect();
+    } catch {
+      return false;
     }
   }, [activeProvider, simli, did, autoFallback, triggerFallback]);
 

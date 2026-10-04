@@ -42,7 +42,6 @@ const NOT_YET_ONE_CLIENT: Record<string, string[]> = {
   'api.heygen.com': [
     'api/cristiano/render.ts',
     'api/olivia/avatar/heygen-video.ts',
-    'api/olivia/avatar/heygen.ts',
     'api/shared/heygen/heygenVideo.ts',
     'api/shared/heygen/videoAgentRequest.ts',
   ],

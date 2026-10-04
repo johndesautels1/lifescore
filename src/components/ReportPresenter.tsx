@@ -2,7 +2,7 @@
  * LIFE SCORE™ Report Presenter
  * Two modes for Olivia to present the Gamma report:
  *
- * 1. LIVE PRESENTER (existing) - Real-time streaming avatar overlay (HeyGen WebRTC / TTS)
+ * 1. LIVE PRESENTER (existing) - Olivia's live face over the report (useOliviaFace: LiveAvatar, Simli, D-ID; voice only if none starts)
  * 2. VIDEO REPORT  (new)       - Pre-rendered HeyGen video, polished & downloadable
  *
  * Architecture:
@@ -11,7 +11,7 @@
  *   - Playback controls: Play/Pause, Skip, Close (live); standard video controls (video)
  *
  * Integrations:
- *   - HeyGen Streaming API: /api/olivia/avatar/heygen (live presenter)
+ *   - Olivia's live face:   useOliviaFace (the same chain as her chat)
  *   - HeyGen Video API:     /api/olivia/avatar/heygen-video (pre-rendered video)
  *   - Olivia TTS:           /api/olivia/tts (audio-only fallback)
  *   - presenterService:     Generates narration script from comparison data
@@ -26,14 +26,8 @@ import type { AnyComparisonResult } from '../services/gammaService';
 import type { PresenterState, PresenterSegment, VideoGenerationState } from '../types/presenter';
 import { generatePresentationScript, getPresenterStatusLabel } from '../services/presenterService';
 import { generatePresenterVideo } from '../services/presenterVideoService';
-import {
-  createHeyGenSession,
-  heygenSpeak,
-  heygenInterrupt,
-  closeHeyGenSession,
-  generateTTS,
-} from '../services/oliviaService';
-import { useLiveAvatar } from '../hooks/useLiveAvatar';
+import { generateTTS } from '../services/oliviaService';
+import { useOliviaFace } from '../hooks/useOliviaFace';
 import GammaIframe from './GammaIframe';
 import VideoPhoneWarning from './VideoPhoneWarning';
 import './ReportPresenter.css';
@@ -85,21 +79,19 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     progress: 0,
   });
 
-  // ---- HeyGen session (live mode) ----
-  const heygenSessionRef = useRef<{ sessionId: string; token: string } | null>(null);
+  // ---- Live mode media elements ----
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
-  // ---- Olivia's live face: HeyGen LiveAvatar first (the engine's wiring, as in her
-  //      chat); this presenter's previous HeyGen streaming session is the back-up. ----
-  const {
-    connect: connectLive,
-    speak: speakLive,
-    disconnect: disconnectLive,
-    interrupt: interruptLive,
-  } = useLiveAvatar({ videoRef, audioRef });
-  const faceRef = useRef<'liveavatar' | 'heygen' | null>(null);
+  // ---- Olivia's live face: the same chain as her chat (useOliviaFace) - HeyGen
+  //      LiveAvatar, then Simli, then D-ID; voice only when none starts. John,
+  //      4 Oct 2026 ("Same order as chat"): the presenter's own HeyGen streaming
+  //      back-up, which HeyGen switches off on 1 Nov 2026, is gone. ----
+  const face = useOliviaFace({ videoRef, audioRef });
+  // The latest face: its back-up takes over during connect, so callbacks read it here
+  const faceLatestRef = useRef(face);
+  faceLatestRef.current = face;
+  const faceConnectedRef = useRef(false);
 
   // ---- TTS fallback ----
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -132,70 +124,27 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
       clearTimeout(segmentTimerRef.current);
       segmentTimerRef.current = null;
     }
-    if (faceRef.current === 'liveavatar') disconnectLive();
-    faceRef.current = null;
-    if (heygenSessionRef.current) {
-      closeHeyGenSession(heygenSessionRef.current.sessionId).catch(() => {});
-      heygenSessionRef.current = null;
-    }
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
-    }
+    if (faceConnectedRef.current) faceLatestRef.current.disconnect();
+    faceConnectedRef.current = false;
     if (ttsAudioRef.current) {
       ttsAudioRef.current.pause();
       ttsAudioRef.current = null;
     }
-  }, [disconnectLive]);
+  }, []);
 
-  /** Stop whatever the live face is saying (either provider). */
+  /** Stop whatever the live face is saying. */
   const interruptFace = useCallback(() => {
-    if (ttsOnlyRef.current) return;
-    if (faceRef.current === 'liveavatar') interruptLive();
-    else if (heygenSessionRef.current) heygenInterrupt(heygenSessionRef.current.sessionId).catch(() => {});
-  }, [interruptLive]);
+    if (ttsOnlyRef.current || !faceConnectedRef.current) return;
+    faceLatestRef.current.interrupt();
+  }, []);
 
-  const connectHeyGen = useCallback(async (): Promise<boolean> => {
-    // PRIMARY: LiveAvatar (LITE, her ElevenLabs voice)
-    if (await connectLive()) {
-      faceRef.current = 'liveavatar';
-      return true;
-    }
-    console.warn('[ReportPresenter] LiveAvatar could not start; using the HeyGen streaming back-up.');
-    // BACK-UP: the presenter's previous HeyGen streaming session, unchanged
-    try {
-      const response = await createHeyGenSession();
-      if (!response.sessionId) throw new Error('No session ID returned');
-
-      heygenSessionRef.current = {
-        sessionId: response.sessionId,
-        token: 'token' in response ? String(response.token) : '',
-      };
-
-      if (response.sdpOffer && response.iceServers) {
-        const pc = new RTCPeerConnection({ iceServers: response.iceServers });
-        peerConnectionRef.current = pc;
-
-        pc.ontrack = (event) => {
-          if (event.track.kind === 'video' && videoRef.current) {
-            videoRef.current.srcObject = new MediaStream([event.track]);
-          }
-          if (event.track.kind === 'audio' && audioRef.current) {
-            audioRef.current.srcObject = new MediaStream([event.track]);
-          }
-        };
-
-        await pc.setRemoteDescription(response.sdpOffer);
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-      }
-      faceRef.current = 'heygen';
-      return true;
-    } catch (err) {
-      console.warn('[ReportPresenter] HeyGen connection failed:', err);
-      return false;
-    }
-  }, [connectLive]);
+  /** Starts Olivia's live face; false when no face could start (voice only). */
+  const connectFace = useCallback(async (): Promise<boolean> => {
+    const connected = await faceLatestRef.current.connect();
+    faceConnectedRef.current = connected;
+    if (!connected) console.warn('[ReportPresenter] No live face could start; presenting by voice only.');
+    return connected;
+  }, []);
 
   // ============================================================================
   // SPEAKING (Live Mode)
@@ -220,19 +169,17 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
   }, []);
 
   const speakSegment = useCallback(async (segment: PresenterSegment) => {
-    if (faceRef.current === 'liveavatar' && !ttsOnlyRef.current) {
-      await speakLive(segment.narration);
-    } else if (heygenSessionRef.current && !ttsOnlyRef.current) {
+    if (faceConnectedRef.current && !ttsOnlyRef.current) {
       try {
-        await heygenSpeak(heygenSessionRef.current.sessionId, segment.narration);
+        await faceLatestRef.current.speak(segment.narration);
       } catch (err) {
-        console.warn('[ReportPresenter] HeyGen speak failed, falling back to TTS:', err);
+        console.warn('[ReportPresenter] The live face could not speak, falling back to TTS:', err);
         await speakTTSFallback(segment.narration);
       }
     } else {
       await speakTTSFallback(segment.narration);
     }
-  }, [speakTTSFallback, speakLive]);
+  }, [speakTTSFallback]);
 
   // ============================================================================
   // LIVE PLAYBACK CONTROLS
@@ -248,9 +195,10 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     if (!segment) return;
 
     // LiveAvatar's speak() returns once the segment's audio has been delivered at
-    // speaking pace, so only a short breath is left; the back-up providers return
+    // speaking pace, so only a short breath is left; Simli, D-ID and voice return
     // at once and need the segment's estimated length.
-    const delay = faceRef.current === 'liveavatar' && !ttsOnlyRef.current ? 800 : segment.durationEstimateMs + 1500;
+    const onLiveAvatar = faceConnectedRef.current && !ttsOnlyRef.current && faceLatestRef.current.activeProvider === 'liveavatar';
+    const delay = onLiveAvatar ? 800 : segment.durationEstimateMs + 1500;
     segmentTimerRef.current = setTimeout(() => {
       advanceToSegmentRef.current?.(currentIndex + 1);
     }, delay);
@@ -276,7 +224,7 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     if (segmentsRef.current.length === 0) return;
     setState((prev) => ({ ...prev, status: 'loading' }));
 
-    const avatarConnected = await connectHeyGen();
+    const avatarConnected = await connectFace();
     if (!mountedRef.current) return;
 
     setState((prev) => ({
@@ -292,7 +240,7 @@ const ReportPresenter: React.FC<ReportPresenterProps> = ({
     if (mountedRef.current) {
       scheduleNextSegmentRef.current?.(0);
     }
-  }, [connectHeyGen, speakSegment]);
+  }, [connectFace, speakSegment]);
 
   const handlePause = useCallback(() => {
     if (segmentTimerRef.current) { clearTimeout(segmentTimerRef.current); segmentTimerRef.current = null; }

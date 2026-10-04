@@ -67,7 +67,8 @@ interface UseDIDStreamReturn {
   isSpeaking: boolean;
   isRateLimited: boolean;
   retryCount: number;
-  connect: () => Promise<void>;
+  /** Resolves true once connected (or already connected), false when D-ID could not start. */
+  connect: () => Promise<boolean>;
   speak: (text: string) => Promise<void>;
   disconnect: () => Promise<void>;
   resetRetries: () => void;
@@ -140,17 +141,17 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
    * Create WebRTC connection and connect to D-ID stream
    * Implements rate limiting and exponential backoff to prevent API abuse
    */
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (): Promise<boolean> => {
     // Prevent concurrent connection attempts (mutex)
     if (isConnectingRef.current) {
       console.log('[useDIDStream] Connection already in progress, skipping');
-      return;
+      return false;
     }
 
     // Already connected - no need to reconnect
     if (state.status === 'connected' || state.status === 'speaking') {
       console.log('[useDIDStream] Already connected');
-      return;
+      return true;
     }
 
     // Check rate limiting: enforce minimum delay between attempts
@@ -158,7 +159,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
     const timeSinceLastAttempt = now - lastAttemptRef.current;
     if (lastAttemptRef.current > 0 && timeSinceLastAttempt < retryDelayRef.current) {
       console.log(`[useDIDStream] Rate limited - wait ${Math.ceil((retryDelayRef.current - timeSinceLastAttempt) / 1000)}s before retry`);
-      return;
+      return false;
     }
 
     // Check max retries
@@ -169,7 +170,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
         status: 'error',
         error: 'Connection failed after multiple attempts. Please refresh the page.',
       }));
-      return;
+      return false;
     }
 
     // Set mutex and update tracking
@@ -201,7 +202,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
           }));
           isConnectingRef.current = false;
           retryCountRef.current++;
-          return;
+          return false;
         }
 
         throw new Error(error.error || 'Failed to create stream');
@@ -295,6 +296,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
       // Release mutex on success
       isConnectingRef.current = false;
       console.log('[useDIDStream] Connected successfully');
+      return true;
 
     } catch (error) {
       // Release mutex on failure
@@ -313,6 +315,7 @@ export function useDIDStream(options: UseDIDStreamOptions): UseDIDStreamReturn {
 
       setState(prev => ({ ...prev, status: 'error', error: message }));
       onErrorRef.current?.(message);
+      return false;
     }
   }, [state.status, videoRef]);
 

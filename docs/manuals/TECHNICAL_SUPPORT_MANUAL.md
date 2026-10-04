@@ -126,10 +126,10 @@ Models are chosen by job in one file; change a job's model there and every calle
 | Video | Made by | Route |
 |---|---|---|
 | City clips (Freedom Video Clip, City Life Videos) | Kling 3 through fal (with sound); Replicate Minimax as the last back-up | `/api/video/grok-generate`, status `/api/video/grok-status` |
-| Judge video (Video Report by Cristiano) | Replicate Wav2Lip on a voiced script | `/api/avatar/generate-judge-video`, status `/api/avatar/video-status`, Replicate's signed webhook `/api/avatar/video-webhook` |
+| Judge video (Video Report by Cristiano) | HeyGen (Cristiano's look and voice); back-up: Replicate Wav2Lip on a voiced script, when HeyGen is not configured or refuses | `/api/avatar/generate-judge-video`, status `/api/avatar/video-status`, Replicate's signed webhook `/api/avatar/video-webhook` |
 | Go To My New City (Freedom Tour) | A 7-scene storyboard by Claude, rendered by HeyGen's video agent | `/api/cristiano/storyboard`, `/api/cristiano/render` |
 | Moving Movie | A 12-scene screenplay, rendered by InVideo through its MCP server; on a refusal the screenplay is kept with the reason | `/api/movie/screenplay`, `/api/movie/generate` |
-| Olivia presenter (Visuals tab) | Live: LiveAvatar, with HeyGen streaming behind it. Video: HeyGen | `/api/olivia/avatar/live`, `/api/olivia/avatar/heygen`, `/api/olivia/avatar/heygen-video` |
+| Olivia presenter (Visuals tab) | Live: Olivia's face chain, as in her chat (`useOliviaFace`): LiveAvatar, then Simli, then D-ID; voice only when none starts. Video: HeyGen | `/api/olivia/avatar/live`, `/api/simli-config`, `/api/avatar/simli-speak`, `/api/olivia/avatar/streams`, `/api/olivia/avatar/heygen-video` |
 
 Vendors' video links expire; finished videos are copied to Supabase Storage (`api/shared/persistVideo.ts`). The browser polls status with caps: city clips 6 minutes, judge videos 15 minutes or 10 failed checks in a row.
 

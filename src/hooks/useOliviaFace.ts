@@ -37,7 +37,8 @@ export interface UseOliviaFaceReturn {
   activeProvider: OliviaFaceProvider;
   /** True once anything other than the primary is in use. */
   hasFallenBack: boolean;
-  connect: () => Promise<void>;
+  /** Resolves true when a face started (LiveAvatar, or the back-up), false when none did. */
+  connect: () => Promise<boolean>;
   speak: (text: string) => Promise<void>;
   disconnect: () => void;
   interrupt: () => void;
@@ -51,13 +52,13 @@ export function useOliviaFace(options: UseOliviaFaceOptions = {}): UseOliviaFace
   const backup = useAvatarProvider({ videoRef, audioRef, autoFallback: true });
   const [onBackup, setOnBackup] = useState(false);
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (): Promise<boolean> => {
     if (!onBackup) {
-      if (await primary.connect()) return;
+      if (await primary.connect()) return true;
       console.warn('[useOliviaFace] LiveAvatar could not start; using the back-up face (Simli, then D-ID).');
       setOnBackup(true);
     }
-    await backup.connect();
+    return backup.connect();
   }, [onBackup, primary, backup]);
 
   if (onBackup) {

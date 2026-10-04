@@ -52,7 +52,8 @@ export interface UseSimliReturn {
   isConnected: boolean;
   isSpeaking: boolean;
   isPaused: boolean;
-  connect: () => Promise<void>;
+  /** Resolves true once connected (or already connecting), false when Simli could not start. */
+  connect: () => Promise<boolean>;
   disconnect: () => void;
   speak: (text: string, options?: Partial<SimliSpeakRequest>) => Promise<void>;
   interrupt: () => void;
@@ -110,10 +111,10 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
    * 2. Create SimliClient with token, video/audio elements, and ICE servers
    * 3. Call start() to establish WebRTC connection
    */
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (): Promise<boolean> => {
     if (simliClientRef.current) {
       console.log('[useSimli] Already connected or connecting');
-      return;
+      return true;
     }
 
     setStatus('connecting');
@@ -134,7 +135,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         setError(errorMsg);
         setStatus('error');
         onErrorRef.current?.(errorMsg);
-        return;
+        return false;
       }
 
       const { sessionToken, iceServers } = await configRes.json();
@@ -145,7 +146,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         setError(errorMsg);
         setStatus('error');
         onErrorRef.current?.(errorMsg);
-        return;
+        return false;
       }
 
       // Validate refs
@@ -155,7 +156,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         setError(errorMsg);
         setStatus('error');
         onErrorRef.current?.(errorMsg);
-        return;
+        return false;
       }
 
       if (!audioRef?.current) {
@@ -164,7 +165,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         setError(errorMsg);
         setStatus('error');
         onErrorRef.current?.(errorMsg);
-        return;
+        return false;
       }
 
       console.log('[useSimli] Creating SimliClient v3 with session token...');
@@ -197,6 +198,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
 
       setStatus('connected');
       onConnectedRef.current?.();
+      return true;
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Connection failed';
@@ -214,6 +216,7 @@ export function useSimli(options: UseSimliOptions = {}): UseSimliReturn {
         }
         simliClientRef.current = null;
       }
+      return false;
     }
   }, [videoRef, audioRef]);
 
