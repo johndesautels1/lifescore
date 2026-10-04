@@ -357,9 +357,9 @@
         "api/cron/vendor-check.ts",
         "api/shared/vendorCheck.ts"
       ],
-      "hash": "de3c99b2420d69ae08d888f773d5189f6e771071a36006c3b63aa4976d93cf48",
+      "hash": "e83ffa0b7eb69db7397ecd04886fcd19087e761ca03d85600550a7b6172d5c47",
       "reviewed": "2026-10-04",
-      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
+      "basis": "3aaa8c0402a5107b68750dd4ca1a9d331ddfb869"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#12-tests": {
       "files": [

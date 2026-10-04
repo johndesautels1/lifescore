@@ -7,7 +7,8 @@
  * - every AI model the app uses (api/shared/models.ts) is still served by its
  *   vendor — the commonest silent break, when a vendor retires a model id;
  * - Google sign-in still starts (on 4 Oct 2026 a stray space in Supabase's Site
- *   URL broke it with nothing to say so).
+ *   URL broke it with nothing to say so);
+ * - Google's city search (the city picker's "search everywhere") answers.
  * Perplexity is not checked: its Agent API takes a preset name ('low'), and it
  * has no endpoint that lists them.
  */
@@ -21,6 +22,7 @@ import type { ModelCheck } from './llm.js';
 import { fetchWithTimeout } from './fetchWithTimeout.js';
 import { PUBLIC_SITE } from './siteUrl.js';
 import { escapeHtml } from './resend.js';
+import { searchPlaceCities } from './googlePlaces.js';
 
 export interface CheckResult {
   name: string;
@@ -74,6 +76,16 @@ async function checkGoogleSignIn(): Promise<CheckResult> {
   }
 }
 
+/** Google's city search answers with a city (one Places Autocomplete request). */
+async function checkPlacesSearch(): Promise<CheckResult> {
+  const name = 'Google city search answers';
+  const result = await searchPlaceCities('London');
+  if (!result.ok) return { name, ok: false, detail: `${result.kind}${result.status ? ` (${result.status})` : ''}: ${result.message}` };
+  return result.cities.length > 0
+    ? { name, ok: true, detail: `${result.cities.length} cities for "London"` }
+    : { name, ok: false, detail: 'answered, but with no city for "London"' };
+}
+
 /** Run every check. */
 export async function runVendorChecks(): Promise<VendorReport> {
   const planned = plannedModelChecks();
@@ -86,7 +98,7 @@ export async function runVendorChecks(): Promise<VendorReport> {
       return { name, ok: false, detail: `${check.reason}${check.status ? ` (${check.status})` : ''}: ${why}` };
     })
   );
-  const results = [...modelResults, await checkGoogleSignIn()];
+  const results = [...modelResults, await checkGoogleSignIn(), await checkPlacesSearch()];
   return { checkedAt: new Date().toISOString(), results, failures: results.filter(r => !r.ok) };
 }
 
