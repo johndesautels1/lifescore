@@ -45,7 +45,7 @@ import type { EvaluatorResult } from './services/llmEvaluators';
 import { DEFAULT_ENHANCED_LLMS, LLM_CONFIGS, type LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult, LawLivedRatio } from './types/metrics';
-import type { EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
+import type { EnhancedComparisonResult, LLMProvider, MetricConsensus } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
 import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveComparisonLocal, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
@@ -255,6 +255,34 @@ function enhancedReducer(state: EnhancedState, action: EnhancedAction): Enhanced
 }
 
 // Main app content (requires auth)
+/**
+ * The result shown when the Enhanced result could not be built: both cities at
+ * 0, a tie, and the reason as the results page's warning.
+ */
+function emptyEnhancedResult(
+  city1: string,
+  city2: string,
+  llmsUsed: LLMProvider[],
+  disagreementSummary: string,
+  warning: string
+): EnhancedComparisonResult {
+  return {
+    city1: { city: city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
+    city2: { city: city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
+    winner: 'tie',
+    scoreDifference: 0,
+    categoryWinners: {} as EnhancedComparisonResult['categoryWinners'],
+    comparisonId: `LIFE-ERR-${Date.now()}`,
+    generatedAt: new Date().toISOString(),
+    llmsUsed,
+    judgeModel: 'claude-opus',
+    overallConsensusConfidence: 'low',
+    disagreementSummary,
+    processingStats: { totalTimeMs: 0, llmTimings: {} as Record<LLMProvider, number>, metricsEvaluated: 0 },
+    warning,
+  };
+}
+
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, isPasswordRecovery, updatePassword, clearPasswordRecovery, user, session, refreshProfile } = useAuth();
   const { state, compare, reset, loadResult } = useComparison();
@@ -829,15 +857,15 @@ const AppContent: React.FC = () => {
                               console.warn('[App] Building fallback judge result from LLM data (partial results)');
                               // Build minimal judge result from LLM scores
                               const llmResultsArray = Array.from(llmResults.values());
-                              const city1Consensuses: any[] = [];
-                              const city2Consensuses: any[] = [];
+                              const city1Consensuses: MetricConsensus[] = [];
+                              const city2Consensuses: MetricConsensus[] = [];
 
                               // Aggregate scores by metric
                               llmResultsArray.forEach(evalResult => {
                                 if (!evalResult.success && (!evalResult.scores || evalResult.scores.length === 0)) return;
 
                                 evalResult.scores?.forEach((score: LLMMetricScore) => {
-                                  const consensus = {
+                                  const consensus: MetricConsensus = {
                                     metricId: score.metricId,
                                     llmScores: [score],
                                     consensusScore: score.normalizedScore,
@@ -877,7 +905,7 @@ const AppContent: React.FC = () => {
 
                             // Add warning if partial results
                             if (isPartial) {
-                              (result as any).warning = 'Partial results: Some LLMs failed to return complete data. Showing available metrics.';
+                              result.warning = 'Partial results: Some LLMs failed to return complete data. Showing available metrics.';
                             }
 
                             console.log('[App] Enhanced result built successfully:', {
@@ -1011,41 +1039,25 @@ const AppContent: React.FC = () => {
                             console.error('[App] Error building enhanced result:', buildError);
                             toastError('Error building results — showing partial data');
                             // FIX: Still set a minimal result so results page shows
-                            dispatchEnhanced({ type: 'SET_RESULT', result: {
-                              city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
-                              city2: { city: pendingCities.city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
-                              winner: 'tie',
-                              scoreDifference: 0,
-                              categoryWinners: {} as any,
-                              comparisonId: `LIFE-ERR-${Date.now()}`,
-                              generatedAt: new Date().toISOString(),
-                              llmsUsed: Array.from(llmResults.keys()),
-                              judgeModel: 'claude-opus',
-                              overallConsensusConfidence: 'low',
-                              disagreementSummary: 'Error building results - partial data shown',
-                              processingStats: { totalTimeMs: 0, llmTimings: {} as any, metricsEvaluated: 0 },
-                              warning: `Error building results: ${buildError instanceof Error ? buildError.message : 'Unknown error'}`
-                            } as any });
+                            dispatchEnhanced({ type: 'SET_RESULT', result: emptyEnhancedResult(
+                              pendingCities.city1,
+                              pendingCities.city2,
+                              Array.from(llmResults.keys()),
+                              'Error building results - partial data shown',
+                              `Error building results: ${buildError instanceof Error ? buildError.message : 'Unknown error'}`
+                            ) });
                           }
                         }).catch(importError => {
                           console.error('Error importing opusJudge module:', importError);
                           toastError('Error loading result module — showing partial data');
                           // FIX: Set minimal result so results page shows
-                          dispatchEnhanced({ type: 'SET_RESULT', result: {
-                            city1: { city: pendingCities.city1.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
-                            city2: { city: pendingCities.city2.split(',')[0], country: 'Unknown', categories: [], totalConsensusScore: 0, overallAgreement: 0 },
-                            winner: 'tie',
-                            scoreDifference: 0,
-                            categoryWinners: {} as any,
-                            comparisonId: `LIFE-ERR-${Date.now()}`,
-                            generatedAt: new Date().toISOString(),
-                            llmsUsed: Array.from(llmResults.keys()),
-                            judgeModel: 'claude-opus',
-                            overallConsensusConfidence: 'low',
-                            disagreementSummary: 'Module import error - partial data shown',
-                            processingStats: { totalTimeMs: 0, llmTimings: {} as any, metricsEvaluated: 0 },
-                            warning: 'Error loading result builder module'
-                          } as any });
+                          dispatchEnhanced({ type: 'SET_RESULT', result: emptyEnhancedResult(
+                            pendingCities.city1,
+                            pendingCities.city2,
+                            Array.from(llmResults.keys()),
+                            'Module import error - partial data shown',
+                            'Error loading result builder module'
+                          ) });
                         });
                       };
 
