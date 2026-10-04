@@ -58,9 +58,9 @@
         "src/components/SettingsModal.tsx",
         "src/components/CookieConsent.tsx"
       ],
-      "hash": "b4316e990d766f01adc377e5277dfa1722373fff37e5d6012c35306cff5f994d",
+      "hash": "9c28535dfb97d3dda3290519cd549906c3f5608869ed3efa208bcca7c27f7e14",
       "reviewed": "2026-10-04",
-      "basis": "a470427172e87000641487315ff736c5360fbb9a"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "APP_SCHEMA_MANUAL.md#7-deleting-an-account-and-exporting-data": {
       "files": [
@@ -651,18 +651,18 @@
         "src/components/GoToMyNewCity.tsx",
         "src/components/MovieGenerator.tsx"
       ],
-      "hash": "d891d16560d4be5032b2d4d9f25a8611f39abca8be6e731e0fa161545b45bb1b",
+      "hash": "0cceab9a7134f119e38bc68c9edfc735e22bb44326af79282f3dcf401f005b11",
       "reviewed": "2026-10-04",
-      "basis": "a470427172e87000641487315ff736c5360fbb9a"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "USER_MANUAL.md#6-the-judge-s-report": {
       "files": [
         "src/components/JudgeTab.tsx",
         "api/shared/entitlements.ts"
       ],
-      "hash": "38a27cd9626edc47a5f112f18a9749fa323dff2e35c3f8d5a2bbb78b299b3fd9",
+      "hash": "9b3b712305c7dedbc827215a3a2e4b38abe0224fe29cebc56323e0fe96b28729",
       "reviewed": "2026-10-04",
-      "basis": "a470427172e87000641487315ff736c5360fbb9a"
+      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
     },
     "USER_MANUAL.md#7-visuals": {
       "files": [
