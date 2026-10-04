@@ -158,9 +158,9 @@
       "files": [
         "src/components/VisualsTab.tsx"
       ],
-      "hash": "64d9d798d3a52edae9770d155ad8fc78632fd3531a74e7ab0aca21fdff1e7a8a",
+      "hash": "f6fdbf76b0796d7bed8ffcda0b0435816b5f313f6736b73ccd0cc4d6534fe80f",
       "reviewed": "2026-10-04",
-      "basis": "3feb0f980e2b5beead7784f7c5ce3990f426afc5"
+      "basis": "c41cc4d7eba022462a39ebd779f5aa90aa7efd39"
     },
     "GAMMA_PROMPTS_MANUAL.md#2-what-is-sent-to-gamma": {
       "files": [
@@ -174,17 +174,17 @@
       "files": [
         "src/services/gammaService.ts"
       ],
-      "hash": "95ecaba2e65399c7934a8c7d24ef0018477badbcd97b188365b5dea095eba150",
+      "hash": "50dfdd1ea590ce782c23ef39e3ae69464ff5360f878b2014c4128f8df9652518",
       "reviewed": "2026-10-04",
-      "basis": "df1ce50ba48a9e8b0aeab784a2a22d65287cda92"
+      "basis": "c41cc4d7eba022462a39ebd779f5aa90aa7efd39"
     },
     "GAMMA_PROMPTS_MANUAL.md#4-the-enhanced-report-prompt": {
       "files": [
         "src/services/gammaService.ts"
       ],
-      "hash": "95ecaba2e65399c7934a8c7d24ef0018477badbcd97b188365b5dea095eba150",
+      "hash": "50dfdd1ea590ce782c23ef39e3ae69464ff5360f878b2014c4128f8df9652518",
       "reviewed": "2026-10-04",
-      "basis": "df1ce50ba48a9e8b0aeab784a2a22d65287cda92"
+      "basis": "c41cc4d7eba022462a39ebd779f5aa90aa7efd39"
     },
     "JUDGE_EQUATIONS_MANUAL.md#1-what-a-score-means": {
       "files": [
@@ -667,9 +667,9 @@
         "src/components/GunComparisonModal.tsx",
         "src/components/NewLifeVideos.tsx"
       ],
-      "hash": "4049c6b4fdcd5b912299de6e1a39f9664af029ed73e4062b2a4853cc96b081e6",
+      "hash": "41230ca64c2c2dcd399f5b5962f0713add1f0041c69fbf5ac6a77c071a358d17",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "c41cc4d7eba022462a39ebd779f5aa90aa7efd39"
     },
     "USER_MANUAL.md#8-ask-olivia": {
       "files": [

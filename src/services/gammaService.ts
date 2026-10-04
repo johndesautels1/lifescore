@@ -2536,7 +2536,7 @@ This is general guidance only. Consult qualified professionals (immigration atto
  * hidden costs analysis, future outlook, and relocation checklists.
  *
  * IMPORTANT: This is a NEW function. The existing formatComparisonForGamma()
- * remains completely untouched for standard 35-page reports.
+ * remains completely untouched for standard 30-page reports.
  *
  * @param result - EnhancedComparisonResult from multi-LLM evaluation
  * @param judgeReport - Optional JudgeReport with executive summary and analysis

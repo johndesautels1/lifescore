@@ -856,7 +856,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
                     onClick={() => setReportType('standard')}
                     aria-pressed={reportType === 'standard'}
                   >
-                    Standard (35 pages)
+                    Standard (30 pages)
                   </button>
                   <button
                     type="button"

@@ -43,6 +43,16 @@ describe('the Enhanced report prompt', () => {
   });
 });
 
+describe('the Standard report is the length the prompt asks for (GR3)', () => {
+  it('the button, the narration and the prompt give one page count', () => {
+    const gamma = readFileSync('src/services/gammaService.ts', 'utf8');
+    const asked = gamma.match(/Generate a COMPLETE (\d+)-page report/)?.[1];
+    expect(asked).toBe('30');
+    expect(readFileSync('src/components/VisualsTab.tsx', 'utf8').includes(`Standard (${asked} pages)`)).toBe(true);
+    expect(readFileSync('src/services/presenterService.ts', 'utf8').includes(`'${asked}-page standard'`)).toBe(true);
+  });
+});
+
 describe('the admin Prompts screen is read-only (GR4)', () => {
   it('the server refuses edits and writes nothing', () => {
     const route = readFileSync('api/prompts.ts', 'utf8');

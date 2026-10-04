@@ -249,7 +249,7 @@ function buildConclusionSegment(result: AnyComparisonResult): PresenterSegment {
   if (result.winner === 'tie') {
     narration = `To wrap up, ${result.city1.city} and ${result.city2.city} are remarkably similar in overall freedom. Your personal priorities will determine which city is the better fit. I recommend using the Ask Olivia chat to explore which metrics matter most to you. Thank you for using LIFE SCORE.`;
   } else {
-    narration = `To wrap up, ${winner} offers more measurable personal freedom than ${loser} based on our ${isEnhanced ? '82-page enhanced' : '35-page standard'} analysis. But remember, every person's priorities are different. Use the Ask Olivia chat to dig deeper into the metrics that matter most to you. Thank you for using LIFE SCORE.`;
+    narration = `To wrap up, ${winner} offers more measurable personal freedom than ${loser} based on our ${isEnhanced ? '82-page enhanced' : '30-page standard'} analysis. But remember, every person's priorities are different. Use the Ask Olivia chat to dig deeper into the metrics that matter most to you. Thank you for using LIFE SCORE.`;
   }
 
   return {

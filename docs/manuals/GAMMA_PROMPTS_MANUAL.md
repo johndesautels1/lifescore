@@ -13,7 +13,7 @@ How LIFE SCORE turns a comparison into a Gamma visual report: where users ask fo
 
 **Visuals** tab → **Generate a New Report** → choose a saved comparison →
 
-- **Report Type**: *Standard (35 pages)* for any comparison, or *Enhanced (82 pages)* for an Enhanced (multi-model) comparison; with Enhanced, **Include Gun Rights Comparison (adds 4 pages)**;
+- **Report Type**: *Standard (30 pages)* for any comparison, or *Enhanced (82 pages)* for an Enhanced (multi-model) comparison; with Enhanced, **Include Gun Rights Comparison (adds 4 pages)**;
 - **Export Format**: PDF or PowerPoint;
 - **Generate Visual Report**.
 
@@ -49,7 +49,6 @@ The browser builds the prompt and posts it to `/api/gamma`, which calls Gamma:
 Written by `formatComparisonForGamma()`. It carries the two cities, the winner and the score difference, a table of both cities' scores with the winner marked **🏆 WINNER**, every category with all of its metrics and both cities' scores, a short methodology and the company description, and asks Gamma for a **30-page** report with compact tables.
 
 - **Trophy rule** — the prompt tells Gamma the 🏆 goes only next to the winner (Gamma used to put it beside the loser).
-- The button says 35 pages; the prompt asks for 30.
 
 ---
 
@@ -82,5 +81,5 @@ Read from the code while writing this manual; each changes what a report says, s
 
 1. ~~Sections sent out of order and misnumbered~~ — **fixed 4 October 2026** (John: "keep order, renumber"): sections 1–13 and pages 1–82 now run in the order sent (`tests/gammaPrompt.test.ts`).
 2. ~~The prompt always names all five evaluators~~ — **fixed 4 October 2026** (John: "only those used"): every list of models, and the count of scores, follows the models that took part (`tests/gammaModels.test.ts`).
-3. **The Standard button says 35 pages; the prompt asks for 30.**
+3. ~~The Standard button says 35 pages; the prompt asks for 30~~ — **fixed 4 October 2026** (John: "30 pages"): the button and Olivia's report narration say 30 (`tests/gammaPrompt.test.ts`).
 4. ~~The Prompts screen edits nothing~~ — **fixed 4 October 2026** (John: "say so, read-only"): it is marked as reference copies and editing is gone (`tests/gammaPrompt.test.ts`).

@@ -148,7 +148,7 @@ Which videos your plan includes is in section 11. Videos are made by outside ser
 <!-- covers: src/components/VisualsTab.tsx, src/components/ReportPresenter.tsx, src/components/GunComparisonModal.tsx, src/components/NewLifeVideos.tsx -->
 
 **Generate a New Report** creates a visual report of a comparison with Gamma:
-- **Report Type** — **Standard (35 pages)** or **Enhanced (82 pages)** (Enhanced needs an Enhanced comparison);
+- **Report Type** — **Standard (30 pages)** or **Enhanced (82 pages)** (Enhanced needs an Enhanced comparison);
 - **Include Gun Rights Comparison** adds 4 pages; gun rights are not scored — facts only, no winner;
 - **Export Format** — PDF or PowerPoint.
 
