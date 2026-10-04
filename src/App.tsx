@@ -39,11 +39,10 @@ import {
   EnhancedModeToggle,
   EnhancedResults,
   LLMSelector,
-  EVALUATOR_LLMS,
   type LLMButtonState
 } from "./components/EnhancedComparison";
 import type { EvaluatorResult } from './services/llmEvaluators';
-import { LLM_CONFIGS, type LLMMetricScore } from './types/enhancedComparison';
+import { DEFAULT_ENHANCED_LLMS, LLM_CONFIGS, type LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult, LawLivedRatio } from './types/metrics';
 import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
@@ -275,7 +274,7 @@ const AppContent: React.FC = () => {
 
   // LIFTED STATE from LLMSelector (Map type doesn't work well in reducers)
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
-    new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }]))
+    new Map(DEFAULT_ENHANCED_LLMS.map(llm => [llm, { status: 'idle' }]))
   );
 
   // Scoring preferences (kept as useState — set independently by CitySelector)
@@ -651,7 +650,7 @@ const AppContent: React.FC = () => {
     reset();
     dispatchEnhanced({ type: 'FULL_RESET' });
     // Reset lifted LLM state (Map — kept as useState)
-    setLLMStates(new Map(EVALUATOR_LLMS.map(llm => [llm, { status: 'idle' }])));
+    setLLMStates(new Map(DEFAULT_ENHANCED_LLMS.map(llm => [llm, { status: 'idle' }])));
     resetOGMetaTags();
   }, [reset]);
 
@@ -1172,7 +1171,7 @@ const AppContent: React.FC = () => {
                         Run additional LLMs to strengthen consensus. Judge will auto-update.
                       </p>
                       <div className="llm-add-grid">
-                        {EVALUATOR_LLMS.map(llm => {
+                        {DEFAULT_ENHANCED_LLMS.map(llm => {
                           const config = LLM_CONFIGS[llm];
                           const llmState = llmStates.get(llm);
                           const isCompleted = llmState?.status === 'completed';
@@ -1204,7 +1203,7 @@ const AppContent: React.FC = () => {
                         })}
                       </div>
                       <p className="models-count">
-                        {Array.from(llmStates.values()).filter(s => s.status === 'completed').length} of {EVALUATOR_LLMS.length} models completed
+                        {Array.from(llmStates.values()).filter(s => s.status === 'completed').length} of {DEFAULT_ENHANCED_LLMS.length} models completed
                       </p>
                     </div>
                   )}

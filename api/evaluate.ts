@@ -140,95 +140,6 @@ function letterToScore(grade: string | undefined): number {
   return map[grade.trim()] ?? 50;
 }
 
-// Authoritative sources for LLM web search
-const AUTHORITATIVE_SOURCES = [
-  'norml.org (cannabis laws)',
-  'gunlaws.com (firearm regulations)',
-  'ncsl.org (state legislation)',
-  'ballotpedia.org (ballot measures)',
-  'findlaw.com (legal information)',
-  'justia.com (case law)',
-  'state legislature websites',
-  'city/county government websites'
-];
-
-// Build evaluation prompt with full scoring guidelines (0-100 scale)
-function buildEvaluationPromptWithScoring(
-  city1: string,
-  city2: string,
-  metrics: EvaluationRequest['metrics'],
-  includeSearchInstructions: boolean = false
-): string {
-  const sourcesList = AUTHORITATIVE_SOURCES.map(s => `  - ${s}`).join('\n');
-
-  const searchPreamble = includeSearchInstructions ? `
-IMPORTANT: Use your web search capabilities to find current, accurate data about these cities' laws and regulations.
-
-## PRIORITIZED DATA SOURCES
-Search these authoritative sources FIRST:
-${sourcesList}
-
-Also search official government websites for the specific cities/regions being compared.
-You MUST cite your sources in the "sources" field with actual URLs.
-
-` : '';
-
-  const metricsList = metrics.map(m => `
-- ${m.id}: ${m.name}
-  Category: ${m.categoryId}
-  Description: ${m.description}
-  Scoring: ${m.scoringDirection === 'higher_is_better' ? 'Higher = more freedom' : 'Lower = more freedom'}
-`).join('\n');
-
-  return `${searchPreamble}You are an expert legal analyst evaluating freedom metrics for city comparison.
-
-## TASK
-Evaluate the following metrics for two cities, providing DUAL scores:
-1. **Legal Score (0-100)**: What does the law technically say? Higher = more permissive law
-2. **Enforcement Score (0-100)**: How is the law actually enforced? Higher = more lenient enforcement
-
-## CITIES TO COMPARE
-- City 1: ${city1}
-- City 2: ${city2}
-
-## METRICS TO EVALUATE
-${metricsList}
-
-## OUTPUT FORMAT
-Return a JSON object with this exact structure:
-{
-  "evaluations": [
-    {
-      "metricId": "metric_id_here",
-      "city1LegalScore": 75,
-      "city1EnforcementScore": 70,
-      "city2LegalScore": 60,
-      "city2EnforcementScore": 55,
-      "confidence": "high",
-      "reasoning": "Brief explanation with specific legal references",
-      "sources": ["URL1", "URL2"]
-    }
-  ]
-}
-
-## SCORING GUIDELINES
-- 90-100: Extremely permissive, minimal restrictions (MOST FREE)
-- 70-89: Generally permissive with some limitations
-- 50-69: Moderate restrictions
-- 30-49: Significant restrictions
-- 0-29: Highly restrictive or prohibited (LEAST FREE)
-
-## IMPORTANT
-- Be specific about laws and regulations
-- Note differences between federal/national and local laws
-- Consider recent changes (last 2 years)
-- If uncertain, set confidence to "low" but still provide best estimate
-- Enforcement score may differ significantly from legal score (e.g., law exists but rarely enforced)
-- You MUST evaluate ALL ${metrics.length} metrics - do not skip any
-
-Return ONLY the JSON object, no other text.`;
-}
-
 // Token usage from LLM response
 interface TokenUsage {
   inputTokens: number;
@@ -336,7 +247,6 @@ Return a JSON object with this EXACT structure:
 7. Return EXACTLY ${metrics.length} evaluations - do not skip any metrics`;
 }
 
-
 // Phase 2: Build category-based prompt that asks LLM to return category VALUE KEYS
 function buildCategoryPrompt(city1: string, city2: string, metrics: MetricWithCriteria[]): string {
   const metricsList = metrics.map(m => {
@@ -390,11 +300,6 @@ Return a JSON object with this EXACT structure:
 3. Consider 2026 laws and current enforcement practices
 4. Return ONLY the JSON object, no other text
 5. MUST include sources - URLs to laws, government sites, news articles backing your evaluation`;
-}
-
-// Legacy function name for backward compatibility
-function buildPrompt(city1: string, city2: string, metrics: EvaluationRequest['metrics']): string {
-  return buildBasePrompt(city1, city2, metrics);
 }
 
 /**
@@ -1470,7 +1375,7 @@ You MUST evaluate ALL metrics provided. Return ONLY the JSON object.`,
 
       // Check for JSON in code blocks first
       const codeMatch = rawText.match(/```json([\s\S]*?)```/i) ?? rawText.match(/```([\s\S]*?)```/);
-      let candidate = codeMatch ? codeMatch[1].trim() : rawText;
+      const candidate = codeMatch ? codeMatch[1].trim() : rawText;
 
       // Extract JSON object - try multiple patterns
       let jsonMatch = candidate.match(/\{[\s\S]*\}/);

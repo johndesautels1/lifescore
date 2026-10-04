@@ -5,10 +5,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react';
 import { getAuthHeaders } from '../lib/supabase';
-import type { EnhancedComparisonResult, LLMProvider, LLMAPIKeys, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
+import type { EnhancedComparisonResult, LLMProvider, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
-import { getStoredAPIKeys, saveAPIKeys } from '../services/enhancedComparison';
+import { getStoredAPIKeys } from '../services/enhancedComparison';
 import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress, type ScoringPreferences } from '../services/llmEvaluators';
 import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
@@ -150,9 +150,6 @@ const getMetricIcon = (shortName: string): string => {
 // LLM SELECTOR - Progressive Evaluation
 // User selects one LLM at a time, results accumulate
 // ============================================================================
-
-// Evaluator LLMs (not including Opus which is judge-only)
-export const EVALUATOR_LLMS: LLMProvider[] = ['claude-sonnet', 'gpt-4o', 'gemini-3-pro', 'grok-4', 'perplexity'];
 
 interface LLMSelectorProps {
   city1: string;
@@ -407,7 +404,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       if (hasUsableData) currentResults.set(provider, result);
       onResultsUpdate(currentResults, judgeResult);
 
-    } catch (error) {
+    } catch {
       setCurrentLLMProgress(null);
       setLLMStates(prev => {
         const next = new Map(prev);
@@ -429,7 +426,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
       </div>
 
       <div className="llm-button-grid">
-        {EVALUATOR_LLMS.map(llm => {
+        {DEFAULT_ENHANCED_LLMS.map(llm => {
           const config = LLM_CONFIGS[llm];
           const state = llmStates.get(llm) || { status: 'idle' };
           const isRunning = state.status === 'running';
@@ -487,11 +484,11 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         <div className="progress-bar">
           <div
             className="progress-fill"
-            style={{ width: `${(completedCount / EVALUATOR_LLMS.length) * 100}%` }}
+            style={{ width: `${(completedCount / DEFAULT_ENHANCED_LLMS.length) * 100}%` }}
           />
         </div>
         <span className="progress-text" style={{ color: '#ffffff' }}>
-          {completedCount}/{EVALUATOR_LLMS.length} models completed
+          {completedCount}/{DEFAULT_ENHANCED_LLMS.length} models completed
           {hasEnoughForJudge && !judgeResult && !isJudging && ' • Ready for Opus Judge'}
           {isJudging && !judgeResult && ' • Opus Judge analyzing...'}
           {isJudging && judgeResult && ' • Updating consensus...'}
@@ -545,136 +542,6 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
           )}
         </div>
       )}
-    </div>
-  );
-};
-
-// ============================================================================
-// API KEY CONFIGURATION MODAL
-// ============================================================================
-
-interface APIKeyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (keys: LLMAPIKeys) => void;
-  initialKeys: LLMAPIKeys;
-}
-
-export const APIKeyModal: React.FC<APIKeyModalProps> = ({ isOpen, onClose, onSave, initialKeys }) => {
-  const [keys, setKeys] = useState<LLMAPIKeys>(initialKeys);
-
-  useEffect(() => {
-    setKeys(initialKeys);
-  }, [initialKeys]);
-
-  if (!isOpen) return null;
-
-  const handleSave = () => {
-    saveAPIKeys(keys);
-    onSave(keys);
-    onClose();
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Configure LLM API Keys">
-      <div className="api-key-modal" onClick={e => e.stopPropagation()}>
-        <h3>Configure LLM API Keys</h3>
-        <p className="modal-description">
-          Enter your API keys to enable enhanced multi-LLM comparison.
-          Keys are stored locally in your browser.
-        </p>
-
-        <div className="api-key-list">
-          <div className="api-key-group">
-            <label>
-              <span className="key-icon">🎭</span>
-              Anthropic (Claude)
-            </label>
-            <input
-              type="password"
-              value={keys.anthropic || ''}
-              onChange={e => setKeys({ ...keys, anthropic: e.target.value })}
-              placeholder="sk-ant-..."
-            />
-            <span className="key-models">{AI_MODELS.judge.name} (Judge), {AI_MODELS.claudeEvaluator.name}</span>
-          </div>
-
-          <div className="api-key-group">
-            <label>
-              <span className="key-icon">🤖</span>
-              OpenAI
-            </label>
-            <input
-              type="password"
-              value={keys.openai || ''}
-              onChange={e => setKeys({ ...keys, openai: e.target.value })}
-              placeholder="sk-..."
-            />
-            <span className="key-models">{AI_MODELS.gptEvaluator.name}</span>
-          </div>
-
-          <div className="api-key-group">
-            <label>
-              <span className="key-icon">💎</span>
-              Gemini
-            </label>
-            <input
-              type="password"
-              value={keys.gemini || ''}
-              onChange={e => setKeys({ ...keys, gemini: e.target.value })}
-              placeholder="AI..."
-            />
-            <span className="key-models">{AI_MODELS.geminiEvaluator.name}</span>
-          </div>
-
-          <div className="api-key-group">
-            <label>
-              <span className="key-icon">𝕏</span>
-              xAI
-            </label>
-            <input
-              type="password"
-              value={keys.xai || ''}
-              onChange={e => setKeys({ ...keys, xai: e.target.value })}
-              placeholder="xai-..."
-            />
-            <span className="key-models">{AI_MODELS.grokEvaluator.name}</span>
-          </div>
-
-          <div className="api-key-group">
-            <label>
-              <span className="key-icon">🔮</span>
-              Perplexity
-            </label>
-            <input
-              type="password"
-              value={keys.perplexity || ''}
-              onChange={e => setKeys({ ...keys, perplexity: e.target.value })}
-              placeholder="pplx-..."
-            />
-            <span className="key-models">{AI_MODELS.perplexityEvaluator.name}</span>
-          </div>
-
-          <div className="api-key-group optional">
-            <label>
-              <span className="key-icon">🔍</span>
-              Tavily (Optional)
-            </label>
-            <input
-              type="password"
-              value={keys.tavily || ''}
-              onChange={e => setKeys({ ...keys, tavily: e.target.value })}
-              placeholder="tvly-..."
-            />
-            <span className="key-models">Web search for Claude (enhances accuracy)</span>
-          </div>
-        </div>
-
-        <div className="modal-actions">
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSave}>Save Keys</button>
-        </div>
-      </div>
     </div>
   );
 };
@@ -1516,7 +1383,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           text: shareText,
           url: window.location.href
         });
-      } catch (err) {
+      } catch {
         // User cancelled or error
       }
     } else {
@@ -1549,7 +1416,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
       </div>
 
       {/* FIX: Show warning banner for partial LLM results */}
-      {(result as any).warning && (
+      {result.warning && (
         <div className="partial-results-warning" style={{
           background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
           border: '1px solid rgba(245, 158, 11, 0.4)',
@@ -1563,7 +1430,7 @@ export const EnhancedResults: React.FC<EnhancedResultsProps> = ({ result, dealbr
           color: '#f59e0b'
         }}>
           <span>⚠️</span>
-          <span>{(result as any).warning}</span>
+          <span>{result.warning}</span>
         </div>
       )}
 

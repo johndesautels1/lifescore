@@ -191,6 +191,8 @@ export interface EnhancedComparisonResult {
   judgeModel: LLMProvider;
   overallConsensusConfidence: 'high' | 'medium' | 'low';
   disagreementSummary: string;  // Where LLMs disagreed most
+  /** Shown above the results when some models' evaluations did not come back. */
+  warning?: string;
   processingStats: {
     totalTimeMs: number;
     llmTimings: Record<LLMProvider, number>;

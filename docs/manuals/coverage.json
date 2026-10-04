@@ -207,9 +207,9 @@
         "api/shared/metrics.ts",
         "api/evaluate.ts"
       ],
-      "hash": "49a0759c7bca7f54755129a92344895b68367e5164d228f5f96630b1c252b61a",
+      "hash": "684657af25e93a333570cb530fb28fc6143e8de59e0faee568911abefba774e2",
       "reviewed": "2026-10-04",
-      "basis": "f8c527aa2d9ad2b79e0eeb29b6ea7fcb309cde89"
+      "basis": "855ee90c13c0b8adad8be9184d25d5a53daeb382"
     },
     "JUDGE_EQUATIONS_MANUAL.md#4-standard-mode-one-model": {
       "files": [
@@ -419,9 +419,9 @@
         "src/App.tsx",
         "src/components/TabNavigation.tsx"
       ],
-      "hash": "ea702e73111aef53d9f9ea189a349e18e0aa9b0a5192ed8b67451aef7ff762d8",
+      "hash": "df1c48817aa4a975faa8ae525fa15acea50c53473108789a75bd03ecaa6562dd",
       "reviewed": "2026-10-04",
-      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
+      "basis": "855ee90c13c0b8adad8be9184d25d5a53daeb382"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#3-api-routes": {
       "files": [
@@ -453,9 +453,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "284271a0e7c5553ad619d31b703fab14494e025ef0b216131045db3d06d90f0f",
+      "hash": "b2d1c63df21a550ec1ebf7a5c93e8b1f1e0834d8c8d2c1d2df28b0d2f118685a",
       "reviewed": "2026-10-04",
-      "basis": "6a2ef59ea89024d4a402fcb384972ae68d7e45b6"
+      "basis": "855ee90c13c0b8adad8be9184d25d5a53daeb382"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
@@ -596,9 +596,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/models.ts"
       ],
-      "hash": "73036885437f55df3f7003453a997a0f17bb900fd41d3d3a2320b55bdee51007",
+      "hash": "7820a9e6f6193227fe6ad456cfeddcffa72618a72a8f7c7155317371f5213c3d",
       "reviewed": "2026-10-04",
-      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
+      "basis": "855ee90c13c0b8adad8be9184d25d5a53daeb382"
     },
     "USER_MANUAL.md#4-2-customize-priorities": {
       "files": [
@@ -630,9 +630,9 @@
       "files": [
         "src/components/EnhancedComparison.tsx"
       ],
-      "hash": "3fc71e7de9e3557beff7dd770161b414d74d401fb99bd3405281e9dae1481980",
+      "hash": "1eb2d6fdcdd9ecb67a2c4e6c3b61169c6c44807c10b9cabbb701497d4b9b6b16",
       "reviewed": "2026-10-04",
-      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
+      "basis": "855ee90c13c0b8adad8be9184d25d5a53daeb382"
     },
     "USER_MANUAL.md#5-reading-your-results": {
       "files": [
