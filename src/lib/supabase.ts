@@ -190,10 +190,10 @@ export type SupabaseQuery<T> = (() => PromiseLike<T>) | PromiseLike<T>;
 export function withQueryTimeout<T>(
   query: SupabaseQuery<T>,
   operationName = 'Supabase query',
-  ms: number = SUPABASE_TIMEOUT_MS
+  ms: number | undefined = SUPABASE_TIMEOUT_MS
 ): Promise<T> {
   const factory = typeof query === 'function' ? query : () => query;
-  return withRetry(factory, { timeoutMs: ms, operationName, maxRetries: 2 });
+  return withRetry(factory, { timeoutMs: ms ?? SUPABASE_TIMEOUT_MS, operationName, maxRetries: 2 });
 }
 
 /**

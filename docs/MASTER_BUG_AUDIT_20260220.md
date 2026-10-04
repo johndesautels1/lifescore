@@ -228,7 +228,7 @@ The individual items behind these counts were never written into this file, and 
 | T16 | src/components/HelpBubble.tsx | 1 | LOW | Unused CSS class | NOT A BUG |
 | T17 | api/stripe/webhook.ts | 2 | LOW | switch without default | FIXED — `default:` present |
 | T18 | api/user/preferences.ts | 2 | LOW | Preference key validation | N/A — file does not exist |
-| T19 | src/hooks/useTierAccess.ts | 2 | LOW | Retry without backoff | FIXED — `withRetry` (exponential backoff) |
+| T19 | src/hooks/useTierAccess.ts | 2 | LOW | Retry without backoff | FIXED — `withRetry` (exponential backoff), through the shared `withQueryTimeout` in `src/lib/supabase.ts` since 4 Oct 2026 |
 | T20 | src/components/LoadingState.tsx | 1 | LOW | Inline style objects | NOT A BUG — the dynamic width is intentional |
 | T21 | api/shared/rateLimit.ts | 2 | LOW | In-memory limiter resets on cold start | ACCEPTED — burst protection only; paid use is counted in the database |
 | T22 | api/emilia/manuals.ts | 1 | LOW | Error leaks internal path | FIXED — 500 answers `{ error: 'Failed to load manual' }` only |

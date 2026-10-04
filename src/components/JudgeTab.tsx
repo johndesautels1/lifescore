@@ -35,8 +35,8 @@ import { getFlagUrl } from '../utils/countryFlags';
 import { supabase, isSupabaseConfigured, getAuthHeaders, withQueryTimeout, type SupabaseQuery } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
-const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Judge tab query');
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs (same arguments as the old copy: query, time limit, name). */
+const withTimeout = <T,>(query: SupabaseQuery<T>, ms?: number, operationName = 'Judge tab query'): Promise<T> => withQueryTimeout(query, operationName, ms);
 import { toastSuccess, toastError, toastInfo } from '../utils/toast';
 import FeatureGate from './FeatureGate';
 import CourtOrderVideo from './CourtOrderVideo';

@@ -35,8 +35,8 @@ import {
 export { TIER_LIMITS, TIER_NAMES, TIER_PRICING } from '../../api/shared/plans';
 export type { FeatureKey, TierLimits } from '../../api/shared/plans';
 
-/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
-const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Tier access query');
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs (same arguments as the old copy: query, time limit, name). */
+const withTimeout = <T,>(query: SupabaseQuery<T>, ms?: number, operationName = 'Tier access query'): Promise<T> => withQueryTimeout(query, operationName, ms);
 
 // ============================================================================
 // BETA TESTER CONFIGURATION

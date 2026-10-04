@@ -27,8 +27,8 @@ import type {
   Profile,
 } from '../types/database';
 
-/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs. */
-const withTimeout = <T,>(query: SupabaseQuery<T>): Promise<T> => withQueryTimeout(query, 'Database query');
+/** This file's Supabase queries: time limit and retries from src/lib/supabase.ts, named in the logs (same arguments as the old copy: query, time limit, name). */
+const withTimeout = <T,>(query: SupabaseQuery<T>, ms?: number, operationName = 'Database query'): Promise<T> => withQueryTimeout(query, operationName, ms);
 
 // ============================================================================
 // HELPER: Check if database is available

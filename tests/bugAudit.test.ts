@@ -60,7 +60,8 @@ const AUDIT: Record<string, { status: Status; check?: () => boolean }> = {
   T16: { status: 'NOT A BUG' },
   T17: { status: 'FIXED', check: () => has('api/stripe/webhook.ts', 'default:') },
   T18: { status: 'N/A', check: () => gone('api/user/preferences.ts') },
-  T19: { status: 'FIXED', check: () => has('src/hooks/useTierAccess.ts', 'withRetry(') },
+  // Through the shared withQueryTimeout since 4 Oct 2026 (bug audit R5)
+  T19: { status: 'FIXED', check: () => has('src/hooks/useTierAccess.ts', 'withQueryTimeout(') && has('src/lib/supabase.ts', 'withRetry(factory') },
   T20: { status: 'NOT A BUG' },
   T21: { status: 'ACCEPTED' },
   T22: { status: 'FIXED', check: () => has('api/emilia/manuals.ts', "error: 'Failed to load manual'") },
