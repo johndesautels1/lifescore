@@ -260,15 +260,15 @@ export default async function handler(
         const persisted = await persistVideoToStorage(videoUrl, cached.comparison_id, supabaseAdmin);
         if (persisted) {
           videoUrl = persisted.publicUrl;
-          // Update DB in background (don't block the response)
-          supabaseAdmin
+          // Saved before answering: on Vercel, work left running after the reply
+          // can be frozen and never finish, which would leave the old address stored.
+          const { error: migErr } = await supabaseAdmin
             .from('avatar_videos')
             .update({ video_url: persisted.publicUrl, video_storage_path: persisted.storagePath })
             .eq('id', cached.id)
-            .then(({ error: migErr }) => {
-              if (migErr) console.warn('[JUDGE-VIDEO] Migration update failed:', migErr.message);
-              else console.log('[JUDGE-VIDEO] Migrated cached video to permanent storage');
-            });
+            .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS));
+          if (migErr) console.warn('[JUDGE-VIDEO] Migration update failed:', migErr.message);
+          else console.log('[JUDGE-VIDEO] Migrated cached video to permanent storage');
         } else {
           console.warn('[JUDGE-VIDEO] Migration failed (Replicate URL may have expired), returning stale URL');
         }

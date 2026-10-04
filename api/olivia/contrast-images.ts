@@ -16,6 +16,12 @@ import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { handleCors } from '../shared/cors.js';
 import { requireFeature } from '../shared/entitlements.js';
 import { readReplicatePrediction } from '../shared/videoReplies.js';
+import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+
+// Time limits for Replicate's calls (each image is polled for up to 30 s below).
+const CREATE_TIMEOUT_MS = 30_000;
+const POLL_TIMEOUT_MS = 10_000;
+const DOWNLOAD_TIMEOUT_MS = 30_000;
 
 // Replicate API configuration
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
@@ -71,7 +77,7 @@ function getStoragePublicUrl(supabaseUrl: string, storagePath: string): string {
 
 // Download an image from a URL and return as Buffer
 async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string }> {
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url, {}, DOWNLOAD_TIMEOUT_MS);
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.status}`);
   }
@@ -222,7 +228,7 @@ async function generateFluxImage(prompt: string): Promise<string> {
   }
 
   // Start the prediction
-  const createResponse = await fetch(`${REPLICATE_API_URL}/models/${FLUX_MODEL}/predictions`, {
+  const createResponse = await fetchWithTimeout(`${REPLICATE_API_URL}/models/${FLUX_MODEL}/predictions`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${replicateToken}`,
@@ -237,7 +243,7 @@ async function generateFluxImage(prompt: string): Promise<string> {
         output_quality: 80,
       },
     }),
-  });
+  }, CREATE_TIMEOUT_MS);
 
   if (!createResponse.ok) {
     const errorText = await createResponse.text();
@@ -255,11 +261,11 @@ async function generateFluxImage(prompt: string): Promise<string> {
   const maxAttempts = 30; // 30 seconds max
 
   while (attempts < maxAttempts) {
-    const statusResponse = await fetch(pollUrl, {
+    const statusResponse = await fetchWithTimeout(pollUrl, {
       headers: {
         'Authorization': `Bearer ${replicateToken}`,
       },
-    });
+    }, POLL_TIMEOUT_MS);
 
     if (!statusResponse.ok) {
       throw new Error(`Failed to check prediction status: ${statusResponse.status}`);
