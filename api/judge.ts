@@ -16,32 +16,16 @@ import { AI_MODELS } from './shared/models.js';
 import { handleCors } from './shared/cors.js';
 // Phase 3: Import shared metrics for category-based scoring context (standalone api/shared version)
 import { METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
+// The one copy of the agreement limits, shared with the browser
+import {
+  CONFIDENCE_THRESHOLDS,
+  getConfidenceLevel,
+  isDisagreementArea,
+  type ConfidenceLevel,
+} from './shared/scoringThresholds.js';
 
 // Phase 3: Environment variable toggle (matches api/evaluate.ts)
 const USE_CATEGORY_SCORING = process.env.USE_CATEGORY_SCORING === 'true';
-
-// INLINED from src/constants/scoringThresholds.ts to fix Vercel import error
-const CONFIDENCE_THRESHOLDS = {
-  UNANIMOUS: 5,
-  STRONG: 12,
-  MODERATE: 20,
-  DISAGREEMENT_FLAG: 15,
-  DEFAULT_AVG_STDDEV: 25
-} as const;
-
-type ConfidenceLevel = 'unanimous' | 'strong' | 'moderate' | 'split';
-
-function getConfidenceLevel(stdDev: number): ConfidenceLevel {
-  if (stdDev < CONFIDENCE_THRESHOLDS.UNANIMOUS) return 'unanimous';
-  if (stdDev < CONFIDENCE_THRESHOLDS.STRONG) return 'strong';
-  if (stdDev < CONFIDENCE_THRESHOLDS.MODERATE) return 'moderate';
-  return 'split';
-}
-
-/** A metric with no scores (stdDev null) is never a disagreement. */
-function isDisagreementArea(stdDev: number | null): boolean {
-  return stdDev !== null && stdDev > CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG;
-}
 
 // Timeout constant for Opus API (240s - within Vercel Pro 300s limit)
 const OPUS_TIMEOUT_MS = 240000;
@@ -396,7 +380,7 @@ function buildOpusPrompt(
 ${summaries.join('\n')}
 ${categorySection}
 ## TASK
-Review these evaluations and for metrics marked [HIGH DISAGREEMENT] (σ>15), provide your judgment.
+Review these evaluations and for metrics marked [HIGH DISAGREEMENT] (σ>${CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG}), provide your judgment.
 ${USE_CATEGORY_SCORING ? 'Use the scoring criteria above to determine the correct category and score.' : ''}
 Return JSON with ONLY metrics you want to override:
 {

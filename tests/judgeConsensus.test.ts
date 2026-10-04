@@ -22,4 +22,22 @@ describe("the judge's prompt", () => {
   it('skips only metrics no model answered for either city', () => {
     expect(prompt.includes('if (c1.llmScores.length === 0 && c2?.llmScores.length === 0) return;')).toBe(true);
   });
+
+  it('states the disagreement limit from the one copy, not a typed-in number', () => {
+    expect(prompt.includes('(σ>${CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG})')).toBe(true);
+  });
+});
+
+describe('the agreement limits (SC1)', () => {
+  it('the server reads the one copy and keeps none of its own', () => {
+    expect(judge.includes("from './shared/scoringThresholds.js'")).toBe(true);
+    expect(/const CONFIDENCE_THRESHOLDS\s*=/.test(judge)).toBe(false);
+    expect(/function (getConfidenceLevel|isDisagreementArea)\(/.test(judge)).toBe(false);
+  });
+
+  it('the browser re-exports the same copy', () => {
+    const browser = readFileSync('src/constants/scoringThresholds.ts', 'utf8');
+    expect(browser.includes("from '../../api/shared/scoringThresholds'")).toBe(true);
+    expect(/CONFIDENCE_THRESHOLDS\s*=/.test(browser)).toBe(false);
+  });
 });

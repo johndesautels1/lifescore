@@ -48,7 +48,7 @@ Read from the code while rewriting the Judge Equations Manual (its section 9 exp
 
 | # | Where | Fault |
 |---|---|---|
-| SC1 | `api/judge.ts` | Marks disagreement at σ above 15; the shared limits (`src/constants/scoringThresholds.ts`) say 20 — two copies that disagree |
+| SC1 | `api/judge.ts` | FIXED 4 Oct — two copies of the agreement limits disagreed (server 15, shared file 20, the 20 read only by tests); now one copy, `api/shared/scoringThresholds.ts`, at the 15 that ran — no change users see (`tests/judgeConsensus.test.ts`) |
 | SC2 | `api/judge.ts` | FIXED 4 Oct (John: "show all 100") — the Judge was shown only the first 30 of 100 metrics; now every metric any model answered (`tests/judgeConsensus.test.ts`) |
 | SC3 | `src/services/llmEvaluators.ts` | FIXED 4 Oct (John: "use their settings") — Enhanced mode ignored Law vs Lived and Worst-Case Mode (always (L + E) / 2); the model buttons now pass the user's settings (`tests/lawLived.test.ts`) |
 | SC4 | `src/hooks/useComparison.ts`, `src/services/llmEvaluators.ts` | FIXED 4 Oct (John: "leave it out") — a side with no score counted as 0 (halving the metric; Enhanced scored a fully missing metric 0); now left out everywhere (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`) |

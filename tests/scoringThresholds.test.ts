@@ -18,7 +18,8 @@ describe('CONFIDENCE_THRESHOLDS', () => {
     expect(CONFIDENCE_THRESHOLDS.UNANIMOUS).toBe(5);
     expect(CONFIDENCE_THRESHOLDS.STRONG).toBe(12);
     expect(CONFIDENCE_THRESHOLDS.MODERATE).toBe(20);
-    expect(CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG).toBe(20);
+    // 15: the value the server ran and the judge is told (SC1, 4 Oct 2026)
+    expect(CONFIDENCE_THRESHOLDS.DISAGREEMENT_FLAG).toBe(15);
     expect(CONFIDENCE_THRESHOLDS.DEFAULT_AVG_STDDEV).toBe(25);
   });
 });
@@ -67,16 +68,20 @@ describe('isDisagreementArea', () => {
   it('returns false for low stdDev', () => {
     expect(isDisagreementArea(0)).toBe(false);
     expect(isDisagreementArea(10)).toBe(false);
-    expect(isDisagreementArea(19)).toBe(false);
+    expect(isDisagreementArea(14.9)).toBe(false);
   });
 
   it('returns false at exactly the threshold (uses >)', () => {
-    expect(isDisagreementArea(20)).toBe(false);
+    expect(isDisagreementArea(15)).toBe(false);
   });
 
   it('returns true above threshold', () => {
-    expect(isDisagreementArea(20.01)).toBe(true);
+    expect(isDisagreementArea(15.01)).toBe(true);
     expect(isDisagreementArea(25)).toBe(true);
     expect(isDisagreementArea(50)).toBe(true);
+  });
+
+  it('never marks a metric with no scores', () => {
+    expect(isDisagreementArea(null)).toBe(false);
   });
 });

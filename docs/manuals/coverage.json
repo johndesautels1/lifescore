@@ -192,11 +192,11 @@
         "src/services/llmEvaluators.ts",
         "api/judge.ts",
         "src/services/opusJudge.ts",
-        "src/constants/scoringThresholds.ts"
+        "api/shared/scoringThresholds.ts"
       ],
-      "hash": "fcf52b97a9f902db90730620cf9785107328031e36e03afc97510d31c5b28be6",
+      "hash": "aa724cab0ed6171fbcfc955f73b63ac50e973780af60c1def1ee5e05911cdbe1",
       "reviewed": "2026-10-04",
-      "basis": "0a5fbdfd474a378ad18a42969e8eca6763676283"
+      "basis": "5c71ef119b489298b75cad682b4c3b411bb5de10"
     },
     "JUDGE_EQUATIONS_MANUAL.md#6-the-judge-s-verdict": {
       "files": [
@@ -415,9 +415,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "cef4743b5840846bfe0ea122b98ca4aa1bfa2f50939e3821080b04873ec6447a",
+      "hash": "e8f67f5dfeee92ed6fd05628c68e1a10d036c76b5827cd18b3380eb09ce326c3",
       "reviewed": "2026-10-04",
-      "basis": "0a5fbdfd474a378ad18a42969e8eca6763676283"
+      "basis": "5c71ef119b489298b75cad682b4c3b411bb5de10"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [

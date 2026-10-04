@@ -97,7 +97,7 @@ If a category's call fails, the comparison goes on without it and says how many 
 ---
 
 ## 5. Enhanced mode (several models and the Judge)
-<!-- covers: src/services/llmEvaluators.ts, api/judge.ts, src/services/opusJudge.ts, src/constants/scoringThresholds.ts -->
+<!-- covers: src/services/llmEvaluators.ts, api/judge.ts, src/services/opusJudge.ts, api/shared/scoringThresholds.ts -->
 
 Enhanced mode asks several models the same questions (Technical Support Manual, section 5), combines their answers on the server (`/api/judge`) and builds the result in the browser.
 
@@ -120,7 +120,7 @@ consensus     = Σ(score × weight) / Σ(weight)          rounded
 
 Law and enforcement consensus are weighted the same way, each over the models that rated that half. A metric no model answered is left out.
 
-**Agreement level** from σ:
+**Agreement level** from σ (the limits live once, in `api/shared/scoringThresholds.ts`):
 
 | σ | Level |
 |---|---|
@@ -194,7 +194,7 @@ progress  = done + (100 − done) × fraction        held at 95 until both are r
 
 Found while writing this manual, read from the code. Each changes what users see, so each waits for a ruling (or says how it was ruled); the bug list (`docs/MASTER_BUG_AUDIT_20260220.md`) carries them.
 
-1. **The disagreement mark differs** — the server marks σ above 15 (`api/judge.ts` keeps its own copy of the limits); the shared limits (`src/constants/scoringThresholds.ts`) say 20.
+1. ~~The disagreement mark differs~~ — **fixed 4 October 2026**: the server's own copy (15) and the shared file (20, read only by tests) are now one copy at 15, the value that ran and that the judge is told; nothing users see changed (`tests/judgeConsensus.test.ts`).
 2. ~~The Judge sees 30 of 100 metrics~~ — **fixed 4 October 2026** (John: "show all 100"; `tests/judgeConsensus.test.ts`).
 3. ~~Enhanced mode ignores Law vs Lived and Worst-Case Mode~~ — **fixed 4 October 2026** (John: "use their settings"): the model buttons pass the user's settings to every evaluation.
 4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
