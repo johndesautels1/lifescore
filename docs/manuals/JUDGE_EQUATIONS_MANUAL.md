@@ -129,7 +129,7 @@ Law and enforcement consensus are weighted the same way, each over the models th
 | below 20 | moderate |
 | 20 or more | split |
 
-**The Judge.** Metrics where σ is above **15** for either city are marked "high disagreement". The Judge model is shown the models' scores (the first 30 metrics) and may replace the consensus for a metric with its own scores and explanation; its scores are kept between 0 and 100. It never changes the agreement level, which always follows σ. It may also name the disagreement areas; the five first are shown.
+**The Judge.** Metrics where σ is above **15** for either city are marked "high disagreement". The Judge model is shown the models' scores for every metric any model answered and may replace the consensus for a metric with its own scores and explanation; its scores are kept between 0 and 100. It never changes the agreement level, which always follows σ. It may also name the disagreement areas; the five first are shown.
 
 **Overall agreement** — over metrics answered by at least two models:
 
@@ -195,7 +195,7 @@ progress  = done + (100 − done) × fraction        held at 95 until both are r
 Found while writing this manual, read from the code. Each changes what users see, so each waits for a ruling (or says how it was ruled); the bug list (`docs/MASTER_BUG_AUDIT_20260220.md`) carries them.
 
 1. **The disagreement mark differs** — the server marks σ above 15 (`api/judge.ts` keeps its own copy of the limits); the shared limits (`src/constants/scoringThresholds.ts`) say 20.
-2. **The Judge sees 30 of 100 metrics** — disagreements on the other 70 never reach it.
+2. ~~The Judge sees 30 of 100 metrics~~ — **fixed 4 October 2026** (John: "show all 100"; `tests/judgeConsensus.test.ts`).
 3. ~~Enhanced mode ignores Law vs Lived and Worst-Case Mode~~ — **fixed 4 October 2026** (John: "use their settings"): the model buttons pass the user's settings to every evaluation.
 4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
 5. **Standard mode counts a missing category as 0** — in the city base score (the other weights are not shared out, as Enhanced mode does), and, when only one city lacks it, in the category wins and the largest gap.

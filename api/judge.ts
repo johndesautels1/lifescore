@@ -350,7 +350,9 @@ function buildOpusPrompt(
   city2Consensuses: MetricConsensus[],
   disagreementMetrics: string[]
 ): string {
-  // Build summary of statistical consensuses for Opus to review
+  // Build summary of statistical consensuses for Opus to review — every metric
+  // (John, 4 Oct 2026: "Show all 100"; until then only the first 30 were sent,
+  // so disagreements on the other 70 were never reviewed)
   const summaries: string[] = [];
   // Phase 3: Build category context for disagreement metrics
   const categoryContext: string[] = [];
@@ -391,7 +393,7 @@ function buildOpusPrompt(
 - City 2: ${city2}
 
 ## LLM EVALUATIONS (format: LLM:score)
-${summaries.slice(0, 30).join('\n')}
+${summaries.join('\n')}
 ${categorySection}
 ## TASK
 Review these evaluations and for metrics marked [HIGH DISAGREEMENT] (σ>15), provide your judgment.

@@ -194,9 +194,9 @@
         "src/services/opusJudge.ts",
         "src/constants/scoringThresholds.ts"
       ],
-      "hash": "97c58302824101ddb36ca51f342b32ea48bae043076a7f5f9ea6cd691dbead66",
+      "hash": "fcf52b97a9f902db90730620cf9785107328031e36e03afc97510d31c5b28be6",
       "reviewed": "2026-10-04",
-      "basis": "23dd4d91fa46aec9a377471b19fcfd2bde5eb80b"
+      "basis": "0a5fbdfd474a378ad18a42969e8eca6763676283"
     },
     "JUDGE_EQUATIONS_MANUAL.md#6-the-judge-s-verdict": {
       "files": [
@@ -415,9 +415,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "524b365e83b20cf072a344f0179cf3dc955d277ee6ce39be7305fae5cc066495",
+      "hash": "cef4743b5840846bfe0ea122b98ca4aa1bfa2f50939e3821080b04873ec6447a",
       "reviewed": "2026-10-04",
-      "basis": "589fe8f5f6e088d5966219a624899cf0f34b8fe2"
+      "basis": "0a5fbdfd474a378ad18a42969e8eca6763676283"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
