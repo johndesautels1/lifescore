@@ -2,6 +2,9 @@
 # - install: `npm ci` fails if package.json and package-lock.json disagree — the drift that froze
 #   production from 9 Jul to 3 Oct 2026 (simli-client asked for ^3 while the lockfile said 2.0.0).
 # - typecheck: the same `tsc -b` the Vercel build runs, so a type error is caught before deploy.
+#   TypeScript 7 (the native compiler, package alias @typescript/native) does the checking;
+#   the `typescript` package is TypeScript 6 for the tools that need its programming interface
+#   (typescript-eslint), as Microsoft advises until TypeScript 7.1 ships one.
 # - server typecheck: api/ is compiled separately by Vercel and `tsc -b` does not cover it.
 #   Its first check (3 Oct 2026) found 145 errors, three of them live crashes; it now gates every push.
 # - test: the vitest suite, including the anti-drift guards.
@@ -36,10 +39,10 @@ jobs:
         run: npm ci
 
       - name: Type check (same as the Vercel build)
-        run: node node_modules/typescript/bin/tsc -b
+        run: node node_modules/@typescript/native/bin/tsc -b
 
       - name: Type check the server functions (api/)
-        run: node node_modules/typescript/bin/tsc -p tsconfig.api.json
+        run: node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json
 
       - name: Tests
         run: npx vitest run

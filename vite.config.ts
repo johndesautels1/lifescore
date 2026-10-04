@@ -45,41 +45,45 @@ export default defineConfig({
     }),
   ],
   build: {
-    // Performance: dynamic chunk splitting to reduce bundle warnings
-    // index.js was 708KB, AskOlivia.js was 541KB
-    rollupOptions: {
+    // Performance: split large dependencies and app modules into their own chunks
+    // (index.js was 708KB, AskOlivia.js was 541KB).
+    // Vite 8 bundles with Rolldown: `rollupOptions` became `rolldownOptions`, and the
+    // deprecated `manualChunks` function became `codeSplitting.groups` (vite.dev/guide/migration,
+    // 4 Oct 2026). Same chunk names, same order of precedence (higher priority wins), because
+    // the PWA precache `globPatterns` above match them (react-vendor-*, supabase-*, app-data-*).
+    // Each group also takes the modules its captured files import (Rolldown's default,
+    // includeDependenciesRecursively: true), which Rolldown says avoids circular chunks.
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          // Vendor chunks — split large external dependencies
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'react-vendor';
-          }
-          if (id.includes('node_modules/@supabase/')) {
-            return 'supabase';
-          }
-          if (id.includes('node_modules/simli-client/')) {
-            return 'simli';
-          }
-          if (id.includes('node_modules/stripe/')) {
-            return 'stripe';
-          }
-          // Shared Supabase utilities (withRetry, etc.) — own chunk so console
-          // errors don't misleadingly show as "gamma-service"
-          if (id.includes('/lib/supabase')) {
-            return 'supabase-lib';
-          }
-          // App chunks — split large internal modules
-          if (id.includes('/services/llmEvaluators') || id.includes('/services/opusJudge')) {
-            return 'llm-evaluators';
-          }
-          if (id.includes('/services/gammaService')) {
-            return 'gamma-service';
-          }
-          if (id.includes('/data/') || id.includes('/shared/metrics')) {
-            return 'app-data';
-          }
-        }
-      }
-    }
+        codeSplitting: {
+          groups: [
+            // Vendor chunks — split large external dependencies
+            {
+              name: 'react-vendor',
+              test: (id: string) => id.includes('node_modules/react/') || id.includes('node_modules/react-dom/'),
+              priority: 80,
+            },
+            { name: 'supabase', test: (id: string) => id.includes('node_modules/@supabase/'), priority: 70 },
+            { name: 'simli', test: (id: string) => id.includes('node_modules/simli-client/'), priority: 60 },
+            { name: 'stripe', test: (id: string) => id.includes('node_modules/stripe/'), priority: 50 },
+            // Shared Supabase utilities (withRetry, etc.) — own chunk so console
+            // errors don't misleadingly show as "gamma-service"
+            { name: 'supabase-lib', test: (id: string) => id.includes('/lib/supabase'), priority: 40 },
+            // App chunks — split large internal modules
+            {
+              name: 'llm-evaluators',
+              test: (id: string) => id.includes('/services/llmEvaluators') || id.includes('/services/opusJudge'),
+              priority: 30,
+            },
+            { name: 'gamma-service', test: (id: string) => id.includes('/services/gammaService'), priority: 20 },
+            {
+              name: 'app-data',
+              test: (id: string) => id.includes('/data/') || id.includes('/shared/metrics'),
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
   },
 })
