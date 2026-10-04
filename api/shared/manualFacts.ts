@@ -231,14 +231,118 @@ function factTableUsage(root: string): string {
     .split('\n')
     .map((line) => line.match(/^\| `([a-z_][a-z0-9_]*)` \|/)?.[1])
     .filter((name): name is string => Boolean(name));
-  const files = [...list(root, 'api', /\.ts$/, true), ...list(root, 'src', /\.(ts|tsx)$/, true)];
-  const texts = files.map((file) => ({ file, text: read(root, file) ?? '' }));
+  const texts = appCode(root);
   const rows = tables.map((name) => {
     const quoted = new RegExp(`['"\`]${name}['"\`]`);
     const users = texts.filter((t) => quoted.test(t.text)).map((t) => code(t.file));
     return [code(name), users.length ? users.join(', ') : '(not named in the code)'];
   });
   return table(['Table', 'Code that reads or writes it'], rows);
+}
+
+/** Code files of the app (api/ and src/), with their text — this file aside, whose examples are not uses. */
+function appCode(root: string): { file: string; text: string }[] {
+  return [...list(root, 'api', /\.ts$/, true), ...list(root, 'src', /\.(ts|tsx)$/, true)]
+    .filter((file) => file !== 'api/shared/manualFacts.ts')
+    .map((file) => ({ file, text: read(root, file) ?? '' }));
+}
+
+/** Storage buckets the code names (`…BUCKET = 'x'`, `storage.from('x')`), and where. */
+function factBuckets(root: string): string {
+  const used = new Map<string, Set<string>>();
+  for (const { file, text } of appCode(root)) {
+    for (const m of text.matchAll(/BUCKET\s*=\s*['"`]([^'"`]+)['"`]|storage\s*\.from\(\s*['"`]([^'"`]+)['"`]/g)) {
+      const name = m[1] ?? m[2];
+      used.set(name, (used.get(name) ?? new Set()).add(code(file)));
+    }
+  }
+  const rows = [...used.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([name, files]) => [code(name), [...files].join(', ')]);
+  return table(['Bucket', 'Code that uses it'], rows);
+}
+
+/** Database functions the code calls (`.rpc('name')`), and where. */
+function factRpc(root: string): string {
+  const used = new Map<string, Set<string>>();
+  for (const { file, text } of appCode(root)) {
+    for (const m of text.matchAll(/\.rpc\(\s*['"`]([a-z_][a-z0-9_]*)['"`]/g)) used.set(m[1], (used.get(m[1]) ?? new Set()).add(code(file)));
+  }
+  const rows = [...used.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([name, files]) => [code(name), [...files].join(', ')]);
+  return table(['Function', 'Called from'], rows);
+}
+
+/** Functions and triggers the migrations define (a later DROP FUNCTION removes one), with the file that last defines each. */
+function factDbFunctions(root: string): string {
+  const functions = new Map<string, string>();
+  const triggers = new Map<string, { table: string; fn: string; file: string }>();
+  for (const file of list(root, 'supabase/migrations', /\.sql$/, false)) {
+    const sql = (read(root, file) ?? '').replace(/--.*$/gm, '');
+    const name = file.replace('supabase/migrations/', '');
+    for (const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?"?([a-z_][a-z0-9_]*)"?|drop\s+function\s+(?:if\s+exists\s+)?(?:public\.)?"?([a-z_][a-z0-9_]*)"?/gi)) {
+      if (m[1]) functions.set(m[1].toLowerCase(), name);
+      else if (m[2]) functions.delete(m[2].toLowerCase());
+    }
+    for (const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?trigger\s+"?([a-z_][a-z0-9_]*)"?[\s\S]*?\son\s+(?:public\.)?"?((?:auth\.)?[a-z_][a-z0-9_]*)"?[\s\S]*?execute\s+(?:function|procedure)\s+(?:public\.)?([a-z_][a-z0-9_]*)/gi)) {
+      triggers.set(m[1].toLowerCase(), { table: m[2].toLowerCase(), fn: m[3].toLowerCase(), file: name });
+    }
+    for (const m of sql.matchAll(/drop\s+trigger\s+(?:if\s+exists\s+)?"?([a-z_][a-z0-9_]*)"?/gi)) {
+      const t = triggers.get(m[1].toLowerCase());
+      if (t && t.file !== name) triggers.delete(m[1].toLowerCase());
+    }
+  }
+  const fnRows = [...functions.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([fn, file]) => {
+    const firedBy = [...triggers.entries()].filter(([, t]) => t.fn === fn).map(([t, v]) => `${code(t)} on ${code(v.table)}`);
+    return [code(fn), firedBy.length ? firedBy.join(', ') : '—', code(file)];
+  });
+  return `${table(['Function', 'Run by trigger', 'Defined in'], fnRows)}\n\nFrom ${code('supabase/migrations/')}, applied in file order.`;
+}
+
+/** Keys the app keeps in the browser (`lifescore…` / `clues…` names in src/, class names aside), and where. */
+function factBrowserStorage(root: string): string {
+  const used = new Map<string, Set<string>>();
+  for (const { file, text } of appCode(root)) {
+    if (!file.startsWith('src/')) continue;
+    for (const m of text.matchAll(/(?<!className=)['"`]((?:lifescore|clues)[_-][a-z0-9_-]+)['"`]/g)) {
+      used.set(m[1], (used.get(m[1]) ?? new Set()).add(code(file)));
+    }
+  }
+  const rows = [...used.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, files]) => [code(key), [...files].join(', ')]);
+  return table(['Key', 'Code that uses it'], rows);
+}
+
+/**
+ * Row-level security policies the migrations leave on public tables:
+ * table -> policy name -> command (ALL when the policy names none).
+ */
+function migrationPolicies(root: string): Map<string, Map<string, string>> {
+  const tables = new Map<string, Map<string, string>>();
+  for (const file of list(root, 'supabase/migrations', /\.sql$/, false)) {
+    const sql = (read(root, file) ?? '').replace(/--.*$/gm, '');
+    for (const m of sql.matchAll(/(create|drop)\s+policy\s+(?:if\s+exists\s+)?(?:"([^"]+)"|([a-z_][a-z0-9_]*))\s+on\s+(?:public\.)?"?([a-z_][a-z0-9_]*)"?([^;]*)/gi)) {
+      const [, verb, quoted, bare, rawTable, rest] = m;
+      const table = rawTable.toLowerCase();
+      if (/^storage$/i.test(table) || /^\s*\.\s*objects/i.test(rest)) continue; // storage.objects: see the buckets
+      const policy = quoted ?? bare;
+      const policies = tables.get(table) ?? new Map<string, string>();
+      if (verb.toLowerCase() === 'drop') policies.delete(policy);
+      else policies.set(policy, (rest.match(/\bfor\s+(all|select|insert|update|delete)\b/i)?.[1] ?? 'all').toUpperCase());
+      tables.set(table, policies);
+    }
+  }
+  return tables;
+}
+
+function factPolicies(root: string): string {
+  const rows = [...migrationPolicies(root).entries()]
+    .filter(([, policies]) => policies.size > 0)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([name, policies]) => [
+      code(name),
+      [...policies.entries()]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([policy, cmd]) => `${policy} (${cmd})`)
+        .join('; '),
+    ]);
+  return `${table(['Table', 'Policies (command)'], rows)}\n\nFrom ${code('supabase/migrations/')}, applied in file order. The server's service-role key passes every policy.`;
 }
 
 function factJobs(root: string): string {
@@ -318,6 +422,11 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   tables: factTables,
   tableusage: factTableUsage,
   columns: factColumns,
+  buckets: factBuckets,
+  rpc: factRpc,
+  dbfunctions: factDbFunctions,
+  policies: factPolicies,
+  browserstorage: factBrowserStorage,
   jobs: factJobs,
   functions: factFunctions,
   components: (root) => factModules(root, 'src/components', /\.tsx$/),

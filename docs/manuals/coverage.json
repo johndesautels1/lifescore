@@ -1,6 +1,86 @@
 {
   "version": 1,
   "sections": {
+    "APP_SCHEMA_MANUAL.md#1-accounts-and-sign-in": {
+      "files": [
+        "src/contexts/AuthContext.tsx",
+        "src/components/LoginScreen.tsx",
+        "src/components/ResetPasswordScreen.tsx",
+        "src/lib/supabase.ts"
+      ],
+      "hash": "4c3285e59ffcf530f375bcd70e021cdafa1927beddc0b1a4b981c7fe38b3f367",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#2-tables": {
+      "files": [
+        "src/types/database.ts",
+        "api/shared/supabaseAdmin.ts"
+      ],
+      "hash": "bdf02011d343a47c51cb8bddf8c3fcc31dda25fd6b1efd63cb25d01a633c322f",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#3-who-may-read-what": {
+      "files": [
+        "supabase/migrations/20261004_record_live_policies.sql",
+        "supabase/migrations/20261003_entitlements_hardening.sql",
+        "api/shared/supabaseAdmin.ts"
+      ],
+      "hash": "680cb54bbdd458acdcded3f353ae12b3142c291d5a9bd3c593c0ea0e75a3df38",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#4-stored-files": {
+      "files": [
+        "api/shared/persistVideo.ts",
+        "src/services/reportStorageService.ts",
+        "src/services/videoStorageService.ts",
+        "api/olivia/contrast-images.ts"
+      ],
+      "hash": "764c96c02235f084f621a17feec10b4c0245d69d226557204f54d3da77085dff",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#5-database-functions": {
+      "files": [
+        "api/shared/entitlements.ts",
+        "supabase/migrations/20261003_entitlements_hardening.sql",
+        "supabase/migrations/20261004_reconcile_triggers.sql"
+      ],
+      "hash": "e0d0a8ca651ea693db1646fcae6a29f885a1865b1a2fb28d228d14c5269cf933",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#6-what-the-app-keeps-in-the-browser": {
+      "files": [
+        "src/services/savedComparisons.ts",
+        "src/components/SettingsModal.tsx",
+        "src/components/CookieConsent.tsx"
+      ],
+      "hash": "78b97e70ae2a7e24696458a4610c1ce808a619e69d91ffcc1e026c61a547edf1",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#7-deleting-an-account-and-exporting-data": {
+      "files": [
+        "api/user/delete.ts",
+        "api/user/export.ts",
+        "supabase/migrations/20261003_account_deletion_foreign_keys.sql"
+      ],
+      "hash": "55e3d7e47255bd69abc6cf8c28848a6a12bb8a5ce924bde611c2f8d35837518c",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
+    "APP_SCHEMA_MANUAL.md#8-changing-the-database": {
+      "files": [
+        "tests/schemaColumns.test.ts",
+        "tests/storageBuckets.test.ts"
+      ],
+      "hash": "093cdb6212909fbc54ab26837a12783db085daf844cc12bc48c07a66787e7097",
+      "reviewed": "2026-10-04",
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+    },
     "CUSTOMER_SERVICE_MANUAL.md#1-the-company-and-how-customers-reach-us": {
       "files": [
         "src/legal/legalFacts.ts",
@@ -129,9 +209,9 @@
         "scripts/manuals-autoupdate.ts",
         "tests/manuals.test.ts"
       ],
-      "hash": "5595d64bb53e85da6ab680172fb539b5c8734858b4c36a440e461c8e60662358",
+      "hash": "9aa43adff38d06028b8ee322a4a4fab4a2b44014538be4164772bcbc624788a9",
       "reviewed": "2026-10-04",
-      "basis": "dd0de1f3953f02bcf988a858dfb3a082b0dfea94"
+      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#15-admin-tools": {
       "files": [

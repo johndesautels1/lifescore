@@ -35,7 +35,7 @@ John, 4 Oct 2026: *"you must verify each one with the actual code not trusting t
 
 - Gamma reports had not saved to accounts since 15 Feb (the insert named `pdf_storage_path` / `pptx_storage_path`, missing live);
 - PDF and PowerPoint exports could not be kept (no `gamma-exports` bucket), so users got Gamma's expiring links;
-- the report library had never saved a report (0 rows, 0 files);
+- the report library had never saved a report (0 rows, 0 files) — though no screen saves to it or opens it, so no user saw this;
 - the Do Not Sell opt-out was not stored (`user_preferences.ccpa_dns_optout` missing).
 
 Account deletion now clears `reports/` (it named the empty `Reports`). The opt-out audit view runs with the caller's permissions. Held by `tests/storageBuckets.test.ts` and `tests/schemaColumns.test.ts`.
