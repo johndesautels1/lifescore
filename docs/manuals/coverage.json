@@ -107,9 +107,9 @@
         "api/shared/entitlements.ts",
         "src/components/SavedComparisons.tsx"
       ],
-      "hash": "68df7807346686c7a0b1343154a93b5f37f432f84e72af1354a8d4f7b02f1dce",
+      "hash": "bdcf334aa59a240b88dfda71e05f071c8ac52399bd9907732deb4c0206c5b639",
       "reviewed": "2026-10-04",
-      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     },
     "CUSTOMER_SERVICE_MANUAL.md#4-messages-customers-see-and-what-to-do": {
       "files": [
@@ -640,9 +640,9 @@
         "src/components/ScoreMethodology.tsx",
         "src/components/EvidencePanel.tsx"
       ],
-      "hash": "e772e486c81fb0e3ff6551d93ee75cfcb7a1c53340763fd56c3419a3d0accf61",
+      "hash": "9aaf61f6d2fbaee84a2dc87b3c15e62e135012a430520e6154f67cd41aa5c3f9",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     },
     "USER_MANUAL.md#6-1-videos-in-the-judge-s-report": {
       "files": [
@@ -651,18 +651,18 @@
         "src/components/GoToMyNewCity.tsx",
         "src/components/MovieGenerator.tsx"
       ],
-      "hash": "d7a801ef600c2ff77b3740ffcce73eafa8eed21929415463f79d516a6ff4e835",
+      "hash": "7d8e06674fdfc49422597a30815da4e61f32716162a166a9f5d685e308269716",
       "reviewed": "2026-10-04",
-      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     },
     "USER_MANUAL.md#6-the-judge-s-report": {
       "files": [
         "src/components/JudgeTab.tsx",
         "api/shared/entitlements.ts"
       ],
-      "hash": "0b0a55719fb6eb0e329995f3309d86ee61f4bfbf8a5ac023624d3c6e0dc742d3",
+      "hash": "9b3b712305c7dedbc827215a3a2e4b38abe0224fe29cebc56323e0fe96b28729",
       "reviewed": "2026-10-04",
-      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     },
     "USER_MANUAL.md#7-visuals": {
       "files": [
@@ -682,17 +682,17 @@
         "api/olivia/chat.ts",
         "api/shared/plans.ts"
       ],
-      "hash": "057ffa7e9d3e76fabded1374eeb3e4c3c55a48c484ca19cf82a87f5b05fab6b4",
+      "hash": "8a76e2b6ea6e670cc6677359832c5e748fb8c62c5e2bd6cb1f6375186c2ac6e2",
       "reviewed": "2026-10-04",
-      "basis": "c2b53373bcafc8d6d908dcf3fc3ae8a43a9e12eb"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     },
     "USER_MANUAL.md#9-saved": {
       "files": [
         "src/components/SavedComparisons.tsx"
       ],
-      "hash": "7556b21ea35200f03871cc1a53aca109b2950b5075356cb392f40e3e183aa6d7",
+      "hash": "ede1ace00980ed4036e6b71959b049241d5794032b72a6b4652b601bb71a599a",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     }
   }
 }

@@ -27,6 +27,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback, startTransiti
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import GlassHover from './hover/GlassHover';
 import type { ComparisonResult } from '../types/metrics';
+import { cityTotal, categoryAverages } from '../shared/comparisonView';
 import { CATEGORIES } from '../shared/metrics';
 import { ALL_METROS } from '../data/metros';
 import { AI_MODELS } from '../../api/shared/models';
@@ -1521,16 +1522,14 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
       ? judgeReport.summaryOfFindings.city1Score
       : judgeReport.summaryOfFindings.city2Score
     : 0;
-  const futureWinnerCategories = judgeReport?.executiveSummary.recommendation === 'city1'
-    ? (comparisonResult as any)?.city1?.categories
-    : judgeReport?.executiveSummary.recommendation === 'city2'
-    ? (comparisonResult as any)?.city2?.categories
-    : (comparisonResult as any)?.city1?.categories;
-  const futureLoserCategories = judgeReport?.executiveSummary.recommendation === 'city1'
-    ? (comparisonResult as any)?.city2?.categories
-    : judgeReport?.executiveSummary.recommendation === 'city2'
-    ? (comparisonResult as any)?.city1?.categories
-    : (comparisonResult as any)?.city2?.categories;
+  // The films want each category's average under one name; Enhanced results
+  // call it averageConsensusScore (src/shared/comparisonView.ts).
+  const futureWinnerCategories = categoryAverages(
+    judgeReport?.executiveSummary.recommendation === 'city2' ? comparisonResult?.city2 : comparisonResult?.city1
+  );
+  const futureLoserCategories = categoryAverages(
+    judgeReport?.executiveSummary.recommendation === 'city2' ? comparisonResult?.city1 : comparisonResult?.city2
+  );
 
   const futureCategoryData: CategoryFreedomData | null = freedomEducation?.categories
     ? getCategoryData(freedomEducation.categories, futureActiveCategory)
@@ -1970,7 +1969,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 onClick={() => setHoverCard(hoverCard === 'city1' ? null : 'city1')}
                 title="Tap for confidence details"
               >
-                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1?.city === city1Name ? ('totalConsensusScore' in comparisonResult.city1 ? comparisonResult.city1.totalConsensusScore : (comparisonResult.city1 as any).totalScore ?? 0) : 0)}
+                {judgeReport?.summaryOfFindings.city1Score ?? (comparisonResult?.city1?.city === city1Name ? cityTotal(comparisonResult.city1) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
               <span className="score-tap-hint">tap score for details</span>
@@ -2114,7 +2113,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 onClick={() => setHoverCard(hoverCard === 'city2' ? null : 'city2')}
                 title="Tap for confidence details"
               >
-                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2?.city === city2Name ? ('totalConsensusScore' in comparisonResult.city2 ? comparisonResult.city2.totalConsensusScore : (comparisonResult.city2 as any).totalScore ?? 0) : 0)}
+                {judgeReport?.summaryOfFindings.city2Score ?? (comparisonResult?.city2?.city === city2Name ? cityTotal(comparisonResult.city2) : 0)}
               </span>
               <span className="score-label">LIFE SCORE</span>
               <span className="score-tap-hint">tap score for details</span>
@@ -2425,7 +2424,7 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                 loserScore={futureLoserScore}
                 winnerCategories={futureWinnerCategories}
                 loserCategories={futureLoserCategories}
-                categoryWinners={(comparisonResult as any)?.categoryWinners}
+                categoryWinners={comparisonResult?.categoryWinners}
                 judgeSummary={judgeReport.executiveSummary.rationale}
                 judgeRecommendation={judgeReport.executiveSummary.recommendation}
                 userName={supabaseUser?.user_metadata?.full_name || supabaseUser?.email?.split('@')[0]}
@@ -2474,15 +2473,9 @@ const JudgeTab: React.FC<JudgeTabProps> = ({
                     ? judgeReport.summaryOfFindings.city2Score
                     : judgeReport.summaryOfFindings.city1Score
                 }
-                winnerCategories={
-                  judgeReport.executiveSummary.recommendation === 'city1'
-                    ? (comparisonResult as any)?.city1?.categories
-                    : judgeReport.executiveSummary.recommendation === 'city2'
-                    ? (comparisonResult as any)?.city2?.categories
-                    : (comparisonResult as any)?.city1?.categories
-                }
+                winnerCategories={futureWinnerCategories}
                 executiveSummary={judgeReport.executiveSummary}
-                categoryWinners={(comparisonResult as any)?.categoryWinners}
+                categoryWinners={comparisonResult?.categoryWinners}
                 comparisonId={judgeReport.comparisonId || comparisonResult?.comparisonId || ''}
               />
             </section>

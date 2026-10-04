@@ -19,6 +19,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, startTransition } from 'react';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { ComparisonResult } from '../types/metrics';
+import type { ComparedCity } from '../shared/comparisonView';
 import type { OliviaQuickAction } from '../types/olivia';
 import { DEFAULT_QUICK_ACTIONS } from '../types/olivia';
 import { useOliviaChat } from '../hooks/useOliviaChat';
@@ -371,8 +372,7 @@ const AskOlivia: React.FC<AskOliviaProps> = ({ comparisonResult: propComparisonR
   const city2 = comparisonResult?.city2?.city || 'City 2';
 
   // Helper to get score from either CityScore or CityConsensusScore
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getScore = (city: any): number | undefined => {
+  const getScore = (city: ComparedCity | null | undefined): number | undefined => {
     if (!city) return undefined;
     // CityScore has totalScore, CityConsensusScore has totalConsensusScore
     if ('totalScore' in city) return city.totalScore;

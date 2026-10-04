@@ -8,6 +8,7 @@ import type { ComparisonResult, CategoryScore, CategoryId } from '../types/metri
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { saveComparisonLocal, isComparisonSaved } from '../services/savedComparisons';
 import EvidencePanel from './EvidencePanel';
+import { cityTotal, comparisonConfidence } from '../shared/comparisonView';
 import './Results.css';
 
 // ============================================================================
@@ -26,9 +27,9 @@ export const WinnerHero: React.FC<WinnerHeroProps> = ({ result }) => {
 
   const isTie = result.winner === 'tie';
 
-  // Handle both standard (totalScore) and enhanced (totalConsensusScore) comparisons
-  const getScore = (city: any) => city.totalScore ?? city.totalConsensusScore ?? 0;
-  const confidence = (result.city1 as any).overallConfidence || (result as any).overallConsensusConfidence || 'medium';
+  // Standard (totalScore) and Enhanced (totalConsensusScore) read alike
+  const getScore = cityTotal;
+  const confidence = comparisonConfidence(result);
 
   // Generate explanation of why the winner won
   const generateExplanation = () => {
@@ -150,8 +151,8 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({ result }) => {
   const city1Wins = result.winner === 'city1';
   const city2Wins = result.winner === 'city2';
 
-  // Handle both standard (totalScore) and enhanced (totalConsensusScore) comparisons
-  const getScore = (city: any) => city.totalScore ?? city.totalConsensusScore ?? 0;
+  // Standard (totalScore) and Enhanced (totalConsensusScore) read alike
+  const getScore = cityTotal;
 
   return (
     <div className="score-grid card">
