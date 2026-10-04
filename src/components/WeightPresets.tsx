@@ -7,13 +7,15 @@ import React, { useState, useEffect } from 'react';
 import { CATEGORIES } from '../shared/metrics';
 import type { CategoryId, LawLivedRatio } from '../types/metrics';
 import { saveUserPreferenceToDb } from '../services/savedComparisons';
+import Icon3D from './icons3d/Icon3D';
+import { CATEGORY_ICON_3D, type Icon3DName } from './icons3d/icons3d';
 import './WeightPresets.css';
 
 // Weight presets for different user personas
 interface WeightPreset {
   id: string;
   name: string;
-  icon: string;
+  icon: Icon3DName;
   description: string;
   weights: Record<CategoryId, number>;
   lawLivedRatio: LawLivedRatio;  // NEW: Law vs Lived weighting per persona
@@ -23,7 +25,7 @@ const PRESETS: WeightPreset[] = [
   {
     id: 'balanced',
     name: 'Balanced',
-    icon: '⚖️',
+    icon: 'target',
     description: 'Equal weight to all categories',
     weights: {
       personal_freedom: 20,
@@ -38,7 +40,7 @@ const PRESETS: WeightPreset[] = [
   {
     id: 'digital_nomad',
     name: 'Digital Nomad',
-    icon: '💻',
+    icon: 'computer',
     description: 'Remote work, mobility, lifestyle freedom',
     weights: {
       personal_freedom: 25,
@@ -53,7 +55,7 @@ const PRESETS: WeightPreset[] = [
   {
     id: 'entrepreneur',
     name: 'Entrepreneur',
-    icon: '🚀',
+    icon: 'rocket',
     description: 'Business ease, taxes, regulations',
     weights: {
       personal_freedom: 10,
@@ -68,7 +70,7 @@ const PRESETS: WeightPreset[] = [
   {
     id: 'family',
     name: 'Family',
-    icon: '👨‍👩‍👧‍👦',
+    icon: 'heart',
     description: 'Safety, property, stability',
     weights: {
       personal_freedom: 10,
@@ -83,7 +85,7 @@ const PRESETS: WeightPreset[] = [
   {
     id: 'libertarian',
     name: 'Libertarian',
-    icon: '🗽',
+    icon: 'flag',
     description: 'Maximum personal & economic freedom',
     weights: {
       personal_freedom: 30,
@@ -98,7 +100,7 @@ const PRESETS: WeightPreset[] = [
   {
     id: 'investor',
     name: 'Investor',
-    icon: '📈',
+    icon: 'banknotes',
     description: 'Property rights, taxes, asset protection',
     weights: {
       personal_freedom: 5,
@@ -418,6 +420,8 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
 
   const totalWeight = Object.values(customWeights).reduce((a, b) => a + b, 0);
 
+  const activePreset = PRESETS.find(p => p.id === selectedPreset);
+
   return (
     <div className="weight-presets">
       <button
@@ -430,7 +434,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
           Customize Priorities
           {selectedPreset !== 'balanced' && !isCustom && (
             <span className="preset-badge">
-              {PRESETS.find(p => p.id === selectedPreset)?.icon} {PRESETS.find(p => p.id === selectedPreset)?.name}
+              {activePreset && <Icon3D name={activePreset.icon} size={20} className="preset-badge-icon" />} {activePreset?.name}
             </span>
           )}
           {isCustom && <span className="preset-badge">🎛️ Custom</span>}
@@ -467,7 +471,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
                 onClick={() => handlePresetSelect(preset)}
                 title={preset.description}
               >
-                <span className="preset-icon">{preset.icon}</span>
+                <Icon3D name={preset.icon} size={48} className="preset-icon" />
                 <span className="preset-name">{preset.name}</span>
               </button>
             ))}
@@ -500,7 +504,7 @@ export const WeightPresets: React.FC<WeightPresetsProps> = ({
                       />
                       <span className="exclusion-checkmark"></span>
                     </label>
-                    <span className={`slider-icon ${isExcluded ? 'excluded' : ''}`}>{category.icon}</span>
+                    <Icon3D name={CATEGORY_ICON_3D[category.id]} size={28} className={`slider-icon ${isExcluded ? 'excluded' : ''}`} />
                     <span className={`slider-name ${isExcluded ? 'excluded' : ''}`}>{category.name}</span>
                     {isExcluded && <span className="excluded-badge">Excluded</span>}
                   </div>

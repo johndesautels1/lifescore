@@ -1,0 +1,168 @@
+/**
+ * HomeHero Styles
+ *
+ * A night-blue stage in both themes (the metal icons are lit for it). useSpringTilt
+ * writes --rx / --ry / --h on each category tile. Motion stops under reduced motion.
+ */
+
+.home-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: center;
+  margin: 0 0 1.75rem;
+  padding: 2rem 2rem 2rem 2.25rem;
+  border-radius: 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 90% at 78% 50%, rgba(59, 108, 255, 0.28), transparent 70%),
+    radial-gradient(60% 60% at 10% 110%, rgba(244, 197, 90, 0.1), transparent 70%),
+    linear-gradient(165deg, #101c42 0%, #0a1230 50%, #060b1c 100%);
+  box-shadow:
+    0 40px 80px -36px rgba(0, 0, 0, 0.75),
+    0 14px 28px -16px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #f6f8fc;
+  font-family: var(--font-family);
+}
+
+.home-hero-copy {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.home-hero-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f4c55a;
+}
+
+.home-hero-title {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  background: linear-gradient(180deg, #ffffff 0%, #c9d0de 60%, #8e98ad 115%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.home-hero-cats {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.home-hero-cat {
+  --rx: 0deg;
+  --ry: 0deg;
+  --h: 0;
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem 0.8rem;
+  border-radius: 18px;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(165deg, #182550 0%, #0d1735 55%, #0a1129 100%) padding-box,
+    linear-gradient(145deg, #ffffff 0%, #7d879d 28%, #39425a 50%, #c9d0de 76%, #ffffff 100%) border-box;
+  box-shadow:
+    0 calc(16px + var(--h) * 10px) calc(30px + var(--h) * 14px) -16px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: perspective(600px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(calc(var(--h) * -4px));
+  will-change: transform;
+}
+
+.home-hero-cat-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.6));
+  transform: translateY(calc(var(--h) * -4px)) scale(calc(1 + var(--h) * 0.1));
+}
+
+.home-hero-cat-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+.home-hero-cat-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #dfe5f0;
+}
+
+.home-hero-stage {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+.home-hero-stage::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(59, 108, 255, 0.32), transparent 75%);
+  filter: blur(28px);
+}
+
+.home-hero-globe {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.home-hero-globe.is-ready {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.5rem 1.25rem;
+  }
+
+  .home-hero-stage {
+    max-width: 320px;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-hero-cats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-hero-stage {
+    max-width: 240px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-globe {
+    transition: none;
+  }
+}
+
+/* Where WebGL is missing the globe steps aside and the words take the width. */
+.home-hero:has(.home-hero-stage[hidden]) {
+  grid-template-columns: minmax(0, 1fr);
+}

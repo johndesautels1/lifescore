@@ -12,6 +12,7 @@ import LoginScreen from './components/LoginScreen';
 import ResetPasswordScreen from './components/ResetPasswordScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import HomeHero from './components/HomeHero';
 import PricingModal from './components/PricingModal';
 import LegalModal, { type LegalPage } from './components/LegalModal';
 import CookieConsent from './components/CookieConsent';
@@ -749,6 +750,9 @@ const AppContent: React.FC = () => {
               ============================================================ */}
           {activeTab === 'compare' && (
             <>
+              {/* The live globe and the six categories in 3D (John, 4 Oct 2026) */}
+              <HomeHero />
+
               {/* Standard Comparisons Usage Meter - Only show for standard mode */}
               {!enhancedMode && (
                 <div className="usage-meter-container">
@@ -1449,7 +1453,11 @@ const AppContent: React.FC = () => {
         </div>
       </main>
 
-      <Footer onOpenLegal={(page: LegalPage) => dispatchModal({ type: 'SET_LEGAL_PAGE', page })} />
+      <Footer
+        onOpenLegal={(page: LegalPage) => dispatchModal({ type: 'SET_LEGAL_PAGE', page })}
+        onOpenAbout={() => setActiveTab('about')}
+        onOpenPricing={() => dispatchModal({ type: 'OPEN_PRICING' })}
+      />
 
       {/* Legal Modal */}
       <LegalModal page={activeLegalPage} onClose={() => dispatchModal({ type: 'SET_LEGAL_PAGE', page: null })} />

@@ -83,6 +83,12 @@
   text-decoration: line-through;
 }
 
+/* The 3D icon of an excluded category goes grey and faint. */
+img.slider-icon.excluded {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
 .excluded-badge {
   font-size: 0.7rem;
   font-weight: 700;

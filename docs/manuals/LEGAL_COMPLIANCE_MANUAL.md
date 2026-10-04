@@ -346,7 +346,7 @@ London W1W 5PF
 
 ### 7B.1 Current Status
 
-All marks are currently used with the ™ symbol (unregistered common law rights). No marks have been formally registered with any trademark office. The site footer states: *"CLUES, SMART, and LIFE SCORE are trademarks of Clues Intelligence LTD."*
+All marks are currently used with the ™ symbol (unregistered common law rights). No marks have been formally registered with any trademark office. The site footer states (since 4 October 2026): *"CLUES™ (Comprehensive Location Utility & Evaluation System), SMART™ (Strategic Market Assessment & Rating Technology) and LIFE SCORE™ (Legal Independence & Freedom Evaluation) are trademarks of Clues Intelligence LTD, a company registered in England and Wales (Company No. 16966151). All other trademarks are the property of their respective owners."*
 
 **Full strategy document:** `docs/legal/TRADEMARK_STRATEGY.md`
 

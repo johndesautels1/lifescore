@@ -1002,7 +1002,7 @@ LIFE SCORE uses **Supabase (PostgreSQL)** with **24 tables** and **6 storage buc
 
 ## 3. Key Components (50 total)
 
-### Core: App, Header, Footer, LoginScreen, TabNavigation
+### Core: App, Header, Footer, LoginScreen, TabNavigation, HomeHero (3D globe + category tiles), Icon3D (3D icons)
 ### Comparison: CitySelector, EnhancedComparison, Results, SavedComparisons
 ### AI: AskOlivia, EmiliaChat, OliviaAvatar
 ### Judge: JudgeTab, JudgeVideo, CourtOrderVideo

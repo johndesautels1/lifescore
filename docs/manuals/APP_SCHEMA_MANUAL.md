@@ -923,8 +923,10 @@ All endpoints are Vercel serverless functions in `/api/`. **46 endpoints total.*
 | Component | Purpose |
 |-----------|---------|
 | `Header.tsx` | Navigation, user menu, theme toggle |
-| `Footer.tsx` | Legal links, copyright |
-| `TabNavigation.tsx` | Horizontal toolbar tabs for section switching |
+| `Footer.tsx` | Brand, the CLUES / SMART / LIFE SCORE 3D tiles, contact (both offices, phone, email, website and social tiles, from `src/shared/companyContact.ts`), the legal doors, Pricing, trademark line and copyright |
+| `TabNavigation.tsx` | Horizontal toolbar tabs for section switching, each with a 3D icon that tilts toward the pointer; a gold marker slides to the chosen tab |
+| `HomeHero.tsx` | Top of the Compare tab: a live 3D globe (COBE, loaded on demand) beside the six categories as 3D tiles |
+| `icons3d/Icon3D.tsx` | Draws one rendered 3D icon; the only list of icons is `icons3d/icons3d.ts` (files in `src/assets/icons3d/`, CC0) |
 | `LoginScreen.tsx` | Sign In, Sign Up, Password Reset with Remember Me |
 | `ErrorBoundary.tsx` | Catches and handles component errors |
 
