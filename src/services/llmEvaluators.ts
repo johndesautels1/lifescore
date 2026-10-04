@@ -8,7 +8,7 @@
  * - See "Dead Code" folder for archived functions if restoration needed
  */
 
-import type { LLMProvider, LLMAPIKeys, LLMMetricScore } from '../types/enhancedComparison';
+import type { LLMProvider, LLMMetricScore } from '../types/enhancedComparison';
 import type { MetricDefinition, CategoryId, LawLivedRatio } from '../types/metrics';
 import { CATEGORIES, getMetricsByCategory } from '../shared/metrics';
 import { getAuthHeaders } from '../lib/supabase';
@@ -295,7 +295,6 @@ export async function runSingleEvaluatorBatched(
   provider: LLMProvider,
   city1: string,
   city2: string,
-  _apiKeys: LLMAPIKeys & { tavily?: string }, // Keys are in Vercel env vars, not used client-side
   onCategoryProgress?: (progress: CategoryBatchProgress[]) => void,
   scoring: ScoringPreferences = DEFAULT_SCORING
 ): Promise<BatchedEvaluatorResult> {

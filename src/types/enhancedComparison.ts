@@ -204,28 +204,6 @@ export interface EnhancedComparisonResult {
 }
 
 // ============================================================================
-// API KEY MANAGEMENT
-// ============================================================================
-
-export interface LLMAPIKeys {
-  anthropic?: string;   // Claude Opus & Sonnet (Sonnet uses Tavily for web search)
-  openai?: string;      // GPT seat (AI_MODELS.gptEvaluator; Tavily for web search)
-  gemini?: string;      // Gemini seat (AI_MODELS.geminiEvaluator; Google Search grounding)
-  xai?: string;         // Grok seat (AI_MODELS.grokEvaluator; X search)
-  perplexity?: string;  // Perplexity seat (AI_MODELS.perplexityEvaluator; native web search)
-  tavily?: string;      // Tavily Search API (web search for the Claude and GPT seats)
-}
-
-export interface EnhancedComparisonConfig {
-  apiKeys: LLMAPIKeys;
-  llmsToUse: LLMProvider[];
-  judgeModel: LLMProvider;
-  parallelRequests: boolean;
-  maxRetries: number;
-  timeoutMs: number;
-}
-
-// ============================================================================
 // PROGRESS TRACKING
 // ============================================================================
 

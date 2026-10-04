@@ -767,12 +767,6 @@
   box-shadow: 0 4px 8px rgba(0, 71, 171, 0.2);
 }
 
-.llm-badge.unavailable {
-  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
-  color: var(--gray-400);
-  border: 1px solid var(--gray-200);
-}
-
 /* Opus Judge badge — distinct purple/gold style */
 .llm-badge.llm-badge-judge {
   background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);

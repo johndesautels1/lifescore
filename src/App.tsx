@@ -45,10 +45,9 @@ import type { EvaluatorResult } from './services/llmEvaluators';
 import { DEFAULT_ENHANCED_LLMS, LLM_CONFIGS, type LLMMetricScore } from './types/enhancedComparison';
 // EvidencePanel is now rendered inside EnhancedResults component
 import type { ComparisonResult, LawLivedRatio } from './types/metrics';
-import type { LLMAPIKeys, EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
+import type { EnhancedComparisonResult, LLMProvider } from './types/enhancedComparison';
 import type { JudgeOutput } from './services/opusJudge';
 import type { VisualReportState } from './types/gamma';
-import { getStoredAPIKeys, getAvailableLLMs } from './services/enhancedComparison';
 import { isEnhancedComparisonResult, isEnhancedComparisonSaved, saveComparisonLocal, saveEnhancedComparisonLocal, type SavedJudgeReport } from './services/savedComparisons';
 import { startJudgePregeneration } from './services/judgePregenService';
 import useComparison from './hooks/useComparison';
@@ -270,7 +269,6 @@ const AppContent: React.FC = () => {
   const [enhanced, dispatchEnhanced] = useReducer(enhancedReducer, enhancedInitialState);
 
   // API keys (read once from localStorage — keys now managed via Vercel env vars)
-  const [apiKeys] = useState<LLMAPIKeys>(getStoredAPIKeys);
 
   // LIFTED STATE from LLMSelector (Map type doesn't work well in reducers)
   const [llmStates, setLLMStates] = useState<Map<LLMProvider, LLMButtonState>>(
@@ -305,7 +303,6 @@ const AppContent: React.FC = () => {
     showAboutSection, activeAboutTab,
   } = modals;
 
-  const availableLLMs = getAvailableLLMs(apiKeys);
 
   // Check if we have results (enhanced mode)
   const hasEnhancedResults = enhancedStatus === 'complete' && enhancedResult !== null;
@@ -769,7 +766,6 @@ const AppContent: React.FC = () => {
                 <EnhancedModeToggle
                   enabled={enhancedMode}
                   onToggle={(enabled: boolean) => dispatchEnhanced({ type: 'SET_MODE', enabled })}
-                  availableLLMs={availableLLMs}
                 />
               </FeatureGate>
 

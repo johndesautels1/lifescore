@@ -20,6 +20,18 @@ initErrorTracking();
  * A reload within the last 30 seconds is not repeated, so a real outage shows
  * its error instead of looping; without session storage there is no reload.
  */
+/**
+ * Older releases could keep AI vendors' API keys in the browser
+ * ('lifescore_api_keys') with an Enhanced-mode config beside them. The keys live
+ * on the server; any copy left on this device is removed (4 Oct 2026).
+ */
+try {
+  localStorage.removeItem('lifescore_api_keys');
+  localStorage.removeItem('lifescore_enhanced_config');
+} catch {
+  // storage blocked: nothing stored either
+}
+
 const RELEASE_RELOAD_KEY = 'lifescore-release-reload-at';
 window.addEventListener('vite:preloadError', (event) => {
   try {

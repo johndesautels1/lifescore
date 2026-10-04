@@ -8,7 +8,6 @@ import { getAuthHeaders } from '../lib/supabase';
 import type { EnhancedComparisonResult, LLMProvider, EnhancedComparisonProgress, EvidenceItem, LLMMetricScore } from '../types/enhancedComparison';
 import { LLM_CONFIGS, DEFAULT_ENHANCED_LLMS } from '../types/enhancedComparison';
 import { CATEGORIES, getMetricsByCategory, ALL_METRICS } from '../shared/metrics';
-import { getStoredAPIKeys } from '../services/enhancedComparison';
 import { runSingleEvaluatorBatched, type EvaluatorResult, type CategoryBatchProgress, type ScoringPreferences } from '../services/llmEvaluators';
 import { type JudgeOutput } from '../services/opusJudge';
 import { saveEnhancedComparisonLocal, isEnhancedComparisonSaved } from '../services/savedComparisons';
@@ -261,7 +260,6 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   // Local UI state only (not lifted)
   const [isJudging, setIsJudging] = useState(false);
   const [currentLLMProgress, setCurrentLLMProgress] = useState<{ provider: LLMProvider; progress: CategoryBatchProgress[] } | null>(null);
-  const apiKeys = getStoredAPIKeys();
 
   // Count completed LLMs
   const completedCount = Array.from(llmStates.values()).filter(s => s.status === 'completed').length;
@@ -365,7 +363,6 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         provider,
         city1,
         city2,
-        apiKeys,
         (progress) => {
           setCurrentLLMProgress({ provider, progress });
           // Also update the LLM state with category progress
@@ -553,13 +550,11 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
 interface EnhancedModeToggleProps {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
-  availableLLMs: LLMProvider[];
 }
 
 export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
   enabled,
   onToggle,
-  availableLLMs
 }) => {
   return (
     <div className="enhanced-mode-toggle">
@@ -584,13 +579,9 @@ export const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
           <div className="available-llms">
             {DEFAULT_ENHANCED_LLMS.map(llm => {
               const config = LLM_CONFIGS[llm];
-              const isAvailable = availableLLMs.includes(llm);
+              // Every model is ready: the keys are on the server (John, 4 Oct 2026)
               return (
-                <span
-                  key={llm}
-                  className={`llm-badge ${isAvailable ? 'available' : 'unavailable'}`}
-                  title={isAvailable ? 'API key configured' : 'API key not configured'}
-                >
+                <span key={llm} className="llm-badge available" title={config.name}>
                   {config.icon} {config.shortName}
                 </span>
               );
