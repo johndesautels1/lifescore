@@ -33,8 +33,13 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Resolve the lockfile from package.json
-        run: npm install --package-lock-only --no-audit --no-fund
+      # Fresh: a major upgrade cannot keep the old tree (npm refuses, e.g. ESLint 9
+      # sub-packages locked beside ESLint 10), so the lockfile is resolved from
+      # package.json alone; every step below then proves the new tree.
+      - name: Resolve a fresh lockfile from package.json
+        run: |
+          rm -f package-lock.json
+          npm install --package-lock-only --no-audit --no-fund
 
       - name: Install exactly from it
         run: npm ci
