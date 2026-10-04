@@ -42,8 +42,10 @@ describe('every scoring path uses the rule', () => {
   it('Standard mode blends with the user split and leaves a missing half out of the category averages', () => {
     const source = readFileSync('src/hooks/useComparison.ts', 'utf8');
     expect(source.includes('blendLawLived(city1Legal, city1Lived, lawLivedRatio, conservativeMode)')).toBe(true);
-    expect(source.includes('totalLegalScore / totalLegalWeight')).toBe(true);
-    expect(source.includes('totalLivedScore / totalLivedWeight')).toBe(true);
+    // the category averages live in src/api/scoring.ts (tests/standardScoring.test.ts runs them)
+    const scoring = readFileSync('src/api/scoring.ts', 'utf8');
+    expect(scoring.includes('totalLegalScore / totalLegalWeight')).toBe(true);
+    expect(scoring.includes('totalLivedScore / totalLivedWeight')).toBe(true);
   });
 
   it("Enhanced mode blends by the user's settings and drops a model answer with neither half", () => {

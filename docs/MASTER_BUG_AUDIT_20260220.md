@@ -54,7 +54,7 @@ Read from the code while rewriting the Judge Equations Manual (its section 9 exp
 | SC4 | `src/hooks/useComparison.ts`, `src/services/llmEvaluators.ts` | FIXED 4 Oct (John: "leave it out") — a side with no score counted as 0 (halving the metric; Enhanced scored a fully missing metric 0); now left out everywhere (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`) |
 | SC5 | `src/hooks/useComparison.ts` | FIXED 4 Oct (John: "same as Enhanced") — Standard mode counted a category with no score as 0 in the city total and, when one city lacked it, in the category wins and largest gap; now left out with its weight shared (`tests/standardScoring.test.ts`) |
 | SC6 | `api/evaluate.ts` | FIXED 4 Oct — with `USE_CATEGORY_SCORING` off, the numbers prompt's replies ("city1Legal": 75) were read only as letter grades, so every score was dropped; now read as numbers. No change in production, where the setting is on (`tests/evaluateParse.test.ts`) |
-| SC7 | `src/api/scoring.ts` | A second copy of the Standard-mode arithmetic, used only by `tests/scoring.test.ts` — the test does not check the code the app runs |
+| SC7 | `src/api/scoring.ts` | FIXED 4 Oct — a second copy of the Standard-mode arithmetic was used only by `tests/scoring.test.ts`; the hook now uses it and keeps none of its own, so the tests run the real code (`tests/standardScoring.test.ts`) |
 
 ## PART 1: BUGS FIXED IN THE FEBRUARY SESSIONS (47 total)
 

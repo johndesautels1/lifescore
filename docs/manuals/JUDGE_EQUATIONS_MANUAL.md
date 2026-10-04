@@ -51,9 +51,9 @@ For each metric and each city, the evaluator chooses one **level** for the law a
 ---
 
 ## 4. Standard mode (one model)
-<!-- covers: src/hooks/useComparison.ts -->
+<!-- covers: src/hooks/useComparison.ts, src/api/scoring.ts, src/shared/lawLived.ts -->
 
-Standard mode asks one model (the `/api/evaluate` call with `claude-sonnet`), one category at a time, and does the arithmetic in the browser.
+Standard mode asks one model (the `/api/evaluate` call with `claude-sonnet`), one category at a time, and does the arithmetic in the browser (`src/api/scoring.ts`, run by `tests/standardScoring.test.ts`).
 
 **Metric score.** For each city, with law score *L*, enforcement score *E* and the user's **Law vs Lived** split (*law* % / *lived* %, default 50/50) and **Worst-Case Mode** (Conservative mode in the code):
 
@@ -202,4 +202,4 @@ Found while writing this manual, read from the code. Each changes what users see
 4. ~~A missing side counts as 0~~ — **fixed 4 October 2026** (John: "leave it out"): a half that was not rated is left out in both modes and in the server's consensus (`src/shared/lawLived.ts`, `tests/lawLived.test.ts`).
 5. ~~Standard mode counts a missing category as 0~~ — **fixed 4 October 2026** (John: "same as Enhanced"): a missing category is left out, its weight shared, and it earns no bonus (`tests/standardScoring.test.ts`).
 6. ~~The numbers fallback cannot be read~~ — **fixed 4 October 2026**: the reader takes the numbers the numbers prompt asks for (no change while the setting is on, as in production).
-7. **A second copy of the Standard-mode arithmetic** (`src/api/scoring.ts`) is used only by `tests/scoring.test.ts`, so that test does not check the code the app runs.
+7. ~~A second copy of the Standard-mode arithmetic~~ — **fixed 4 October 2026**: the comparison hook now uses `src/api/scoring.ts`, the copy the tests run; no change to scores.

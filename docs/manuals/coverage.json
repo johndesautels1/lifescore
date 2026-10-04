@@ -121,9 +121,9 @@
         "src/hooks/useGrokVideo.ts",
         "src/main.tsx"
       ],
-      "hash": "e8c51793404a51e2d6863dd76d9434baf12900be2e10470525749f76642e3dd9",
+      "hash": "5d0f3ff8b4d6452acc1c434ae06b9adf287b05c4b20557cd6f7b5d680a0f446c",
       "reviewed": "2026-10-04",
-      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
+      "basis": "b27179a0d405d57c3519322c89c04dc0b330f523"
     },
     "CUSTOMER_SERVICE_MANUAL.md#5-account-and-privacy-requests": {
       "files": [
@@ -181,11 +181,13 @@
     },
     "JUDGE_EQUATIONS_MANUAL.md#4-standard-mode-one-model": {
       "files": [
-        "src/hooks/useComparison.ts"
+        "src/hooks/useComparison.ts",
+        "src/api/scoring.ts",
+        "src/shared/lawLived.ts"
       ],
-      "hash": "a0a357f54cc62b8e94ab5a253239c98e91927cf1ab807e4095c71d97ac73265d",
+      "hash": "340df1c41bd6302e6b9168b9b3e27e1abb6881e227a50cc1c911698385c9d8d9",
       "reviewed": "2026-10-04",
-      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
+      "basis": "b27179a0d405d57c3519322c89c04dc0b330f523"
     },
     "JUDGE_EQUATIONS_MANUAL.md#5-enhanced-mode-several-models-and-the-judge": {
       "files": [
@@ -415,9 +417,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/anthropic.ts"
       ],
-      "hash": "3f3710cd9ae7eb9612a19972eee41cab3cbd161859612f27ede563a34d2ff604",
+      "hash": "adbf898338bc99811e5a5caa6e919b4f7a5122c0e6d8cb181de5fdd482200445",
       "reviewed": "2026-10-04",
-      "basis": "f8c527aa2d9ad2b79e0eeb29b6ea7fcb309cde89"
+      "basis": "b27179a0d405d57c3519322c89c04dc0b330f523"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
       "files": [
@@ -558,9 +560,9 @@
         "src/hooks/useComparison.ts",
         "api/shared/models.ts"
       ],
-      "hash": "9e77f7dd0b0b1e759b8d8f0d124e840d9faa7a900db62e7db52e7c814ddffa28",
+      "hash": "0d58533c86e833caa17f1b42d1c3846f7122089c64b277699293a7b3ae8baf1d",
       "reviewed": "2026-10-04",
-      "basis": "2323ae1237775cfb8d993f3ad84527947546a525"
+      "basis": "b27179a0d405d57c3519322c89c04dc0b330f523"
     },
     "USER_MANUAL.md#4-2-customize-priorities": {
       "files": [
