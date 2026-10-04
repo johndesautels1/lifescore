@@ -154,6 +154,38 @@
       "reviewed": "2026-10-04",
       "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
     },
+    "GAMMA_PROMPTS_MANUAL.md#1-where-users-make-a-report": {
+      "files": [
+        "src/components/VisualsTab.tsx"
+      ],
+      "hash": "64d9d798d3a52edae9770d155ad8fc78632fd3531a74e7ab0aca21fdff1e7a8a",
+      "reviewed": "2026-10-04",
+      "basis": "3feb0f980e2b5beead7784f7c5ce3990f426afc5"
+    },
+    "GAMMA_PROMPTS_MANUAL.md#2-what-is-sent-to-gamma": {
+      "files": [
+        "api/gamma.ts"
+      ],
+      "hash": "e049a482457010402ac46c8a1bf4a874cd72eb51db38219a273b979dac7ab499",
+      "reviewed": "2026-10-04",
+      "basis": "3feb0f980e2b5beead7784f7c5ce3990f426afc5"
+    },
+    "GAMMA_PROMPTS_MANUAL.md#3-the-standard-report-prompt": {
+      "files": [
+        "src/services/gammaService.ts"
+      ],
+      "hash": "3fad740a629b0e0b74ec3f9255acfadb6ec3c7ee54996e76e007912b8c341cb8",
+      "reviewed": "2026-10-04",
+      "basis": "3feb0f980e2b5beead7784f7c5ce3990f426afc5"
+    },
+    "GAMMA_PROMPTS_MANUAL.md#4-the-enhanced-report-prompt": {
+      "files": [
+        "src/services/gammaService.ts"
+      ],
+      "hash": "3fad740a629b0e0b74ec3f9255acfadb6ec3c7ee54996e76e007912b8c341cb8",
+      "reviewed": "2026-10-04",
+      "basis": "3feb0f980e2b5beead7784f7c5ce3990f426afc5"
+    },
     "JUDGE_EQUATIONS_MANUAL.md#1-what-a-score-means": {
       "files": [
         "api/shared/metrics.ts"
@@ -352,9 +384,9 @@
         "scripts/manuals-autoupdate.ts",
         "tests/manuals.test.ts"
       ],
-      "hash": "83ee3f5aec98b2e3707b37b9c853b8a39ab643df7e7c6ffb7ffdd592def27468",
+      "hash": "90b6f1f27c6bdd0b9909fd29f0c7593f7a855037c7ba80fe5ac859ef7a93ee85",
       "reviewed": "2026-10-04",
-      "basis": "086f1622e101a1067cfd9130638dec5a3bd97145"
+      "basis": "3feb0f980e2b5beead7784f7c5ce3990f426afc5"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#15-admin-tools": {
       "files": [

@@ -1,123 +1,86 @@
-# LIFE SCORE - GAMMA Prompt Templates
+# LIFE SCORE Gamma Prompts Manual
 
-**Version:** 4.1
-**Last Updated:** 2026-02-14
-**Access:** Admin Only
+**Last Reviewed:** 4 October 2026
+**Document ID:** LS-GPM-001
+**For:** administrators and developers (restricted in the admin panel)
 
----
-
-## Overview
-
-This manual documents the prompt templates used to generate LIFE SCORE Enhanced Freedom Relocation Guides via the Gamma AI platform. The system generates 82-page visual reports from comparison data.
+How LIFE SCORE turns a comparison into a Gamma visual report: where users ask for one, what is sent to Gamma, what the prompt contains, and how to change it. The Enhanced report's section list is written into this manual from the code each time it is opened. Each written section names the code it explains and is brought up to date automatically when that code changes (Technical Support Manual, section 14).
 
 ---
 
-## Prompt Architecture
+## 1. Where users make a report
+<!-- covers: src/components/VisualsTab.tsx -->
 
-### How It Works
+**Visuals** tab → **Generate a New Report** → choose a saved comparison →
 
-1. **User runs Enhanced comparison** (1-5 LLMs evaluate 100 metrics across 2 cities)
-2. **OPUS Judge synthesizes** consensus scores from all LLM evaluations
-3. **gammaService.ts** dynamically builds an 80,000-120,000 character prompt
-4. **Gamma API** receives the prompt and generates an 82-page visual report
-5. **Report is delivered** with interactive slides, charts, and data visualizations
+- **Report Type**: *Standard (35 pages)* for any comparison, or *Enhanced (82 pages)* for an Enhanced (multi-model) comparison; with Enhanced, **Include Gun Rights Comparison (adds 4 pages)**;
+- **Export Format**: PDF or PowerPoint;
+- **Generate Visual Report**.
 
-### Source of Truth
-
-The prompt is **dynamically generated** in:
-- **File:** `src/services/gammaService.ts`
-- **Function:** `formatEnhancedReportForGamma()`
-- **Template Reference:** `docs/GAMMA_PROMPT_TEMPLATE.md` (v4.0)
-
-The prompt is NOT stored in the database. It is constructed in-memory from the `EnhancedComparisonResult` and `JudgeReport` data each time a report is requested.
+The tab checks the month's Gamma allowance first (the server checks again and counts it). While Gamma works, the tab shows its progress; the finished report opens in the tab, with its PDF or PowerPoint, and is saved to the user's reports (browser and account). **View Existing Report** lists them.
 
 ---
 
-## Report Sections (82 Pages)
+## 2. What is sent to Gamma
+<!-- covers: api/gamma.ts -->
 
-| Section | Pages | Content |
-|---------|-------|---------|
-| Executive Summary | 1-4 | Winner, scores, key findings |
-| Law vs Reality | 5-14 | Legal scores vs enforcement scores |
-| Category Deep Dives | 15-42 | All 6 categories with 100 metrics |
-| Your Life In Each City | 43-46 | Day-in-the-life scenarios |
-| Personalized Recommendations | 47-49 | Based on user persona/weights |
-| Surprising Findings | 50-52 | Unexpected metric differences |
-| Hidden Costs | 53-55 | Financial freedom implications |
-| Future Outlook | 56-59 | Trend analysis (rising/stable/declining) |
-| Next Steps | 60-62 | Actionable recommendations |
-| LLM Consensus | 63-67 | How the 5 LLMs agreed/disagreed |
-| Gun Rights | 68-71 | Optional unscored comparison |
-| Methodology | 72-75 | Scoring system explanation |
-| Evidence & Closing | 76-82 | Sources and citations |
+The browser builds the prompt and posts it to `/api/gamma`, which calls Gamma:
 
----
+| | |
+|---|---|
+| Create | `POST https://public-api.gamma.app/v1.0/generations/from-template`, header `X-API-KEY` (`GAMMA_API_KEY`) |
+| Template | `gammaId` = `GAMMA_TEMPLATE_ID` (required) |
+| Theme, folder | `themeId` = `GAMMA_THEME_ID` (ignored if it looks like a key, `sk-…`); `folderIds` = `GAMMA_FOLDER_ID`, when set |
+| Prompt | the report text, at most 100,000 characters (the server refuses longer) |
+| Export | `exportAs` = `pdf` or `pptx` |
+| Sharing | workspace and external access: view |
+| Status | `GET …/generations/{id}`, asked by the browser through `/api/gamma?generationId=…` |
+| Time limits | 60 s per Gamma call; 30 s to copy an export |
 
-## 6 Category Breakdown
-
-| Category | Metrics | Weight | Icon |
-|----------|---------|--------|------|
-| Personal Freedom | 15 | 20% | :statue_of_liberty: |
-| Housing & Property | 20 | 20% | :house: |
-| Business & Work | 25 | 20% | :briefcase: |
-| Transportation | 15 | 15% | :train: |
-| Policing & Courts | 15 | 15% | :scales: |
-| Speech & Lifestyle | 10 | 10% | :performing_arts: |
+- **The allowance** — creating a report needs sign-in and counts one Gamma report against the month's allowance (`requireFeature(…, 'gammaReports', { consume: true })`); if Gamma refuses the request, the report is given back (`refundFeature`). Checking status counts nothing.
+- **Waiting** — the browser asks every 5 seconds: up to 5 minutes for a Standard report, 15 minutes for an Enhanced one (82 pages with images usually take 8–12).
+- **Keeping the files** — when a report is finished, the server copies its PDF and PowerPoint from Gamma's links (which expire) into the `gamma-exports` bucket and returns the lasting links; if the copy fails, Gamma's own link is used.
 
 ---
 
-## AI Models Used
+## 3. The Standard report prompt
+<!-- covers: src/services/gammaService.ts -->
 
-| Model | Role | Provider |
-|-------|------|----------|
-| Claude Sonnet 4.6 | Evaluator #1 | Anthropic |
-| GPT-4o | Evaluator #2 | OpenAI |
-| Gemini 3.1 Pro | Evaluator #3 | Google |
-| Grok 4 | Evaluator #4 | xAI |
-| Perplexity Sonar Pro | Evaluator #5 | Perplexity |
-| Claude Opus 4.6 | Final Judge | Anthropic |
+Written by `formatComparisonForGamma()`. It carries the two cities, the winner and the score difference, a table of both cities' scores with the winner marked **🏆 WINNER**, every category with all of its metrics and both cities' scores, a short methodology and the company description, and asks Gamma for a **30-page** report with compact tables.
+
+- **Trophy rule** — the prompt tells Gamma the 🏆 goes only next to the winner (Gamma used to put it beside the loser).
+- The button says 35 pages; the prompt asks for 30.
 
 ---
 
-## Visual Specifications
+## 4. The Enhanced report prompt
+<!-- covers: src/services/gammaService.ts -->
 
-The prompt includes Gamma-specific layout directives:
-- **semiCircle** - Radial gauge dials for headline metrics, cost severity, consensus stats
-- **barStats** - Horizontal progress bars for LLM agreement heat maps and comparisons
-- **processSteps** - Sequential analysis flows
-- **tables** - Structured data (metric scores, myth vs reality, cost comparisons)
-- **outlineBoxes** - Content boxes for decision drivers, opportunities
+Written by `formatEnhancedReportForGamma()` from the Enhanced comparison, the Judge's Report when there is one, and the gun-rights comparison when ticked. It opens with the report details (cities, winner and loser with scores, difference, date, report id), names the AI models from `api/shared/models.ts` (the evaluators and the judge), gives Gamma its layout vocabulary and colours, then the sections, in this order:
 
-### Color Stripping Fix (2026-02-17)
-Previous `solidBoxes` heat maps used `color="#HEX"` attributes for green/orange/red indicators. Gamma's AI rendering stripped these inline colors, producing colorless cards. Fix: replaced with `barStats` where bar LENGTH conveys the data (95%/85%/70%/50%), and `semiCircle` radial dials for cost severity. Tables used for myth vs reality (always render correctly).
+<!-- facts:gammasections -->
+<!-- /facts:gammasections -->
 
-### Color System
-- **Winner:** Gold (#FFD700) / Green (#10B981)
-- **Loser:** Blue (#1E90FF)
-- **Legal Scores:** Purple (#6B46C1)
-- **Enforcement Scores:** Teal (#14B8A6)
+- **Layout vocabulary** — Gamma's smart layouts: `semiCircle` gauges, `barStats` bars (used for the agreement heat maps, because Gamma drops colours set on `solidBoxes`), `processSteps`, `outlineBoxes`, `imagesText`, tables, `rings` / `venn` / `target` diagrams, labels, blockquotes and asides; images behind, left or right.
+- **Colours** — winner gold #FFD700 / green #10B981; loser blue #1E90FF; law purple #6B46C1; lived teal #14B8A6; agreement above 90 % dark green, 85–90 % green, 70–85 % yellow, below 70 % orange; warnings red/orange.
+- **Closing instructions** — all 82 pages, varied visuals, AI images for the lifestyle sections, no truncation, the model names as given, the colours throughout, gun rights unscored (facts only, no winner), citations from both cities.
+- **Size** — the browser warns above 95,000 characters and stops above 100,000, suggesting the gun-rights section be left out.
 
 ---
 
-## Trophy Placement Rule (Added 2026-02-14)
+## 5. Changing a prompt
 
-The Gamma AI was incorrectly placing the 🏆 trophy emoji next to the **losing** city instead of the winner in the Executive Summary page. This was fixed by adding three explicit safeguards to the standard report prompt (`formatComparisonForGamma()` in gammaService.ts):
-
-1. **TROPHY PLACEMENT RULE** — Added to the "CRITICAL INSTRUCTIONS FOR GAMMA AI" header section. Explicitly states: "The 🏆 trophy emoji MUST ONLY appear next to the WINNER city. NEVER place the 🏆 next to the loser."
-2. **Winner marker in data table** — The winner's row in the city scores table now includes `🏆 WINNER` text so Gamma can clearly see which city won.
-3. **Explicit Page 2 instruction** — The report structure instruction for Page 2 (Executive Summary) now names both the winner and loser with their scores and directs trophy placement.
-
-**Root cause:** The original prompt provided the data table without marking the winner, and the page structure instructions simply said "executive summary" without specifying trophy placement. Gamma AI was left to interpret on its own and often placed the trophy next to the wrong city.
+- **The prompts that run are in the code** — `src/services/gammaService.ts`. Change them there, push, and make a report to see what Gamma does with it.
+- **The admin panel's Prompts screen** (Gamma tab and the others) saves its texts to the `app_prompts` table, but nothing in the app reads that table: an edit there changes no report.
+- **`docs/GAMMA_PROMPT_TEMPLATE.md`** is a copy of the Enhanced prompt as it stood on 7 February 2026, written for Gamma's support team; it is not used by the app.
 
 ---
 
-## Editing the Prompt
+## 6. Known problems (4 October 2026)
 
-To modify the GAMMA report output:
+Read from the code while writing this manual; each changes what a report says, so each waits for a ruling.
 
-1. Edit `src/services/gammaService.ts` (the runtime source)
-2. Update `docs/GAMMA_PROMPT_TEMPLATE.md` (the reference doc)
-3. Test with a comparison to verify Gamma renders correctly
-4. Push to main and let Vercel deploy
-
-**Important:** The `.md` template file is documentation only. The actual prompt sent to Gamma is built dynamically by `formatEnhancedReportForGamma()` in gammaService.ts.
+1. **Sections are sent out of order and misnumbered** — the table in section 4 shows it: Gamma is told "generate in this order" while the headings run Section 1, 4, 5, 6, 2, 3, 7, 8, 9, 10, 6, 7 and the page labels jump from 8 to 43 and back to 9.
+2. **The prompt always names all five evaluators**, even when fewer took part in the comparison.
+3. **The Standard button says 35 pages; the prompt asks for 30.**
+4. **The Prompts screen edits nothing** (section 5).

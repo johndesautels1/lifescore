@@ -333,6 +333,33 @@ function factBrowserStorage(root: string): string {
   return table(['Key', 'Code that uses it'], rows);
 }
 
+/**
+ * The Enhanced report's sections in the order they are sent to Gamma
+ * (formatEnhancedReportForGamma in src/services/gammaService.ts): the function
+ * that writes each, its heading as written, and the page numbers it labels.
+ */
+function factGammaSections(root: string): string {
+  const text = (read(root, 'src/services/gammaService.ts') ?? '').replace(/\r\n/g, '\n');
+  const bodyOf = (fn: string): string => {
+    const start = text.indexOf(`function ${fn}(`);
+    if (start < 0) return '';
+    const end = text.indexOf('\n}\n', start);
+    return text.slice(start, end < 0 ? undefined : end);
+  };
+  const assembler = bodyOf('formatEnhancedReportForGamma');
+  const writers = new Map([...assembler.matchAll(/const (\w+) = (format\w+)\(/g)].map((m) => [m[1], m[2]]));
+  const order = [...assembler.matchAll(/^\$\{(\w+)\}$/gm)].map((m) => m[1]).filter((name) => writers.has(name));
+  const rows = order.map((name, i) => {
+    const fn = writers.get(name) ?? '';
+    const body = bodyOf(fn);
+    const heading = body.match(/^## (SECTION[^\n]*)$/m)?.[1]?.trim() ?? '—';
+    const pages = [...body.matchAll(/^### PAGE (\d+)\b/gm)].map((m) => Number(m[1]));
+    const labelled = pages.length === 0 ? 'numbered as it is written' : pages.length === 1 ? String(pages[0]) : `${Math.min(...pages)}–${Math.max(...pages)}`;
+    return [String(i + 1), code(fn), heading, labelled];
+  });
+  return `${table(['Sent', 'Written by', 'Heading in the prompt', 'Pages it labels'], rows)}\n\nFrom ${code('formatEnhancedReportForGamma')} in ${code('src/services/gammaService.ts')}.`;
+}
+
 /** A quoted string's value as written in source ('…' or "…", with \' or \" inside). */
 function unquote(literal: string): string {
   return literal.slice(1, -1).replace(/\\(['"\\])/g, '$1');
@@ -502,6 +529,7 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   legal: factLegal,
   legalpages: factLegalPages,
   subprocessors: factSubProcessors,
+  gammasections: factGammaSections,
   jobs: factJobs,
   functions: factFunctions,
   components: (root) => factModules(root, 'src/components', /\.tsx$/),

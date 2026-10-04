@@ -56,6 +56,17 @@ Read from the code while rewriting the Judge Equations Manual (its section 9 exp
 | SC6 | `api/evaluate.ts` | FIXED 4 Oct — with `USE_CATEGORY_SCORING` off, the numbers prompt's replies ("city1Legal": 75) were read only as letter grades, so every score was dropped; now read as numbers. No change in production, where the setting is on (`tests/evaluateParse.test.ts`) |
 | SC7 | `src/api/scoring.ts` | FIXED 4 Oct — a second copy of the Standard-mode arithmetic was used only by `tests/scoring.test.ts`; the hook now uses it and keeps none of its own, so the tests run the real code (`tests/standardScoring.test.ts`) |
 
+## GAMMA REPORT FAULTS FOUND 4 OCTOBER 2026 — OPEN, AWAITING RULINGS
+
+Read from the code while rewriting the Gamma Prompts Manual (its section 6). Each changes what a report says or what an admin screen does.
+
+| # | Where | Fault |
+|---|---|---|
+| GR1 | `src/services/gammaService.ts` | The Enhanced prompt sends its sections out of order and misnumbered: headings run Section 1, 4, 5, 6, 2, 3, 7, 8, 9, 10, 6, 7; page labels jump 1–8, 43–52, 9–42, 53–82 |
+| GR2 | `src/services/gammaService.ts` | The Enhanced prompt names all five evaluators even when fewer took part |
+| GR3 | `src/components/VisualsTab.tsx` | The Standard button says 35 pages; the prompt asks Gamma for 30 |
+| GR4 | `src/components/PromptsManager.tsx`, `api/prompts.ts` | The admin Prompts screen saves to `app_prompts`, which nothing in the app reads — an edit changes no prompt |
+
 ## PART 1: BUGS FIXED IN THE FEBRUARY SESSIONS (47 total)
 
 The February history, kept as it was recorded. The current state of each item is in the category tables below.

@@ -20,14 +20,26 @@ docs/
 
 ## Manuals (docs/manuals/)
 
-**Newest → Oldest**
+The eight manuals the admin panel serves (`api/emilia/manuals.ts`), rewritten from the code on 4 October 2026. Facts the code defines are written in as each is read, and each written section is kept to its code (`docs/manuals/coverage.json`, `tests/manuals.test.ts`).
+
+| File | For | What it covers |
+|------|-----|----------------|
+| `USER_MANUAL.md` | Everyone | Every screen and feature |
+| `LICENSE_MANUAL.md` | Everyone | What users may and may not do with LIFE SCORE |
+| `CUSTOMER_SERVICE_MANUAL.md` | Admins | Answers, messages customers see, account and billing requests |
+| `TECHNICAL_SUPPORT_MANUAL.md` | Admins | Architecture, routes, models, settings, jobs, tests, debugging |
+| `APP_SCHEMA_MANUAL.md` | Admins | Accounts, tables, columns, access rules, storage, database functions |
+| `LEGAL_COMPLIANCE_MANUAL.md` | Admins | Company facts, legal pages, suppliers, rights, consent, records |
+| `JUDGE_EQUATIONS_MANUAL.md` | Admins | Every scoring formula, Standard and Enhanced, and the Judge |
+| `GAMMA_PROMPTS_MANUAL.md` | Admins | Gamma reports: what is sent and the prompts |
+
+## History (docs/history/)
+
+Plans from January 2026, kept as written; not maintained and not served to the assistants as manuals.
 
 | Date | File | Description |
 |------|------|-------------|
 | 2026-01-28 | `EMILIA_HELP_WIDGET_PLAN.md` | Emilia AI help assistant implementation plan |
-| 2026-01-28 | `CUSTOMER_SERVICE_MANUAL.md` | Customer support procedures, FAQs, escalation |
-| 2026-01-28 | `TECHNICAL_SUPPORT_MANUAL.md` | Architecture, APIs, debugging, infrastructure |
-| 2026-01-28 | `USER_MANUAL.md` | End-user guide for all features |
 | 2026-01-28 | `CACHING_IMPLEMENTATION_GUIDE.md` | Phased city evaluation caching plan |
 | 2026-01-28 | `PERFORMANCE_FIX_GUIDE.md` | 15 performance issues with solutions |
 | 2026-01-28 | `FINAL_SCHEMA_REQUIREMENTS.md` | Pre-launch database schema checklist |
@@ -148,9 +160,10 @@ docs/
 | How to use the app | `manuals/USER_MANUAL.md` |
 | Support procedures | `manuals/CUSTOMER_SERVICE_MANUAL.md` |
 | Technical debugging | `manuals/TECHNICAL_SUPPORT_MANUAL.md` |
-| Emilia help widget | `manuals/EMILIA_HELP_WIDGET_PLAN.md` |
-| Performance fixes | `manuals/PERFORMANCE_FIX_GUIDE.md` |
-| Caching implementation | `manuals/CACHING_IMPLEMENTATION_GUIDE.md` |
-| Database schema | `manuals/FINAL_SCHEMA_REQUIREMENTS.md` |
+| Database schema | `manuals/APP_SCHEMA_MANUAL.md` |
+| Scoring formulas | `manuals/JUDGE_EQUATIONS_MANUAL.md` |
+| Emilia help widget (Jan plan) | `history/EMILIA_HELP_WIDGET_PLAN.md` |
+| Performance fixes (Jan plan) | `history/PERFORMANCE_FIX_GUIDE.md` |
+| Caching implementation (Jan plan) | `history/CACHING_IMPLEMENTATION_GUIDE.md` |
 | Latest session handoff | `handoffs/HANDOFF_20260127_VIDEO_PHASE3.md` |
 | Legal policies | `legal/COMPLIANCE_README.md` |
