@@ -34,13 +34,13 @@
     "APP_SCHEMA_MANUAL.md#4-stored-files": {
       "files": [
         "api/shared/persistVideo.ts",
-        "src/services/reportStorageService.ts",
         "src/services/videoStorageService.ts",
-        "api/olivia/contrast-images.ts"
+        "api/olivia/contrast-images.ts",
+        "api/user/delete.ts"
       ],
-      "hash": "764c96c02235f084f621a17feec10b4c0245d69d226557204f54d3da77085dff",
+      "hash": "ae61302c08818354451b8fe8a237b9ae9fe278836fa841ca5014087884c11a58",
       "reviewed": "2026-10-04",
-      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+      "basis": "853e305a90ed83bbc505430b4666efaaf11586b6"
     },
     "APP_SCHEMA_MANUAL.md#5-database-functions": {
       "files": [
@@ -77,9 +77,9 @@
         "tests/schemaColumns.test.ts",
         "tests/storageBuckets.test.ts"
       ],
-      "hash": "093cdb6212909fbc54ab26837a12783db085daf844cc12bc48c07a66787e7097",
+      "hash": "478b4a4389233f15e580e6c212cb3778f79e24ec7971a4670cc00697d83ed7f1",
       "reviewed": "2026-10-04",
-      "basis": "a1e375db23143ea3b630a9232546474afa14c74c"
+      "basis": "853e305a90ed83bbc505430b4666efaaf11586b6"
     },
     "CUSTOMER_SERVICE_MANUAL.md#1-the-company-and-how-customers-reach-us": {
       "files": [
@@ -174,17 +174,17 @@
       "files": [
         "src/services/gammaService.ts"
       ],
-      "hash": "4083793d349ee8d78505dba98d792bd2f951d275eb179c8bfce46c4a72f42e78",
+      "hash": "b4fcc0d9b26faba2d9eef35324ae3b08b5ab76ffdf3c32b6d1196d2df2316d97",
       "reviewed": "2026-10-04",
-      "basis": "e96a499da069bb85223a4a4da1dd89fc6db03fd7"
+      "basis": "853e305a90ed83bbc505430b4666efaaf11586b6"
     },
     "GAMMA_PROMPTS_MANUAL.md#4-the-enhanced-report-prompt": {
       "files": [
         "src/services/gammaService.ts"
       ],
-      "hash": "4083793d349ee8d78505dba98d792bd2f951d275eb179c8bfce46c4a72f42e78",
+      "hash": "b4fcc0d9b26faba2d9eef35324ae3b08b5ab76ffdf3c32b6d1196d2df2316d97",
       "reviewed": "2026-10-04",
-      "basis": "e96a499da069bb85223a4a4da1dd89fc6db03fd7"
+      "basis": "853e305a90ed83bbc505430b4666efaaf11586b6"
     },
     "JUDGE_EQUATIONS_MANUAL.md#1-what-a-score-means": {
       "files": [

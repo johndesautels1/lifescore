@@ -25,7 +25,7 @@ John, 4 Oct 2026: *"you must verify each one with the actual code not trusting t
 | T13 | No unused imports | `api/video/grok-generate.ts` computed a cache key it never used | Removed (0e8c900) |
 | B12, B34 | .env.example complete | Nine settings the code reads were missing (FAL_KEY, LIVEAVATAR_*, INVIDEO_*, PRODUCTION_URL, SUPABASE_ACCESS_TOKEN, two fallback names); four it lists were no longer read | Matched both ways; `tests/envExample.test.ts` |
 | #7 (errors) | No offline detection — OPEN | `src/main.tsx` already tells the user when the connection drops and returns | FIXED |
-| as any (11) | 11 places | 39 `as any` in src/ and api/ | OPEN (counted below) |
+| as any (11) | 11 places | 39 `as any` in src/ and api/ | OPEN (counted below); 0 left since 4 Oct 2026 |
 
 **Real faults fixed today:** A16 and six more server calls with no time limit · A17 · A21 · A26 · T4 · ML1 (a paid D-ID stream left open on exit) · ML6 (saved preferences overwritten by defaults on every visit — also in DealbreakersPanel) · ML13/ML14 · S7 · S8. New drift tests: `serverTimeouts`, `browserLogs`, `envExample`, `preferenceSaves`, `bugAudit`.
 
@@ -139,7 +139,7 @@ The February history, kept as it was recorded. The current state of each item is
 | P4 (PWA devOptions) | Dev config | NOT A BUG. |
 | SD3 (Gemini model) | Model name | FIXED — model names live in `api/shared/models.ts`. |
 | DC6 (async) | "Unnecessary async" | NOT A BUG. |
-| as any | Type escapes | OPEN — 39 `as any` in src/ and api/ (the February count of 11 was wrong). Code-style clean-up. |
+| as any | Type escapes | FIXED 4 Oct 2026 — the 39 `as any` in src/ and api/ (the February count of 11 was wrong) are gone: typed readers for comparisons and Olivia's context, typed props, unused code removed. `tests/noAsAny.test.ts` keeps them out. |
 
 ### Error handling
 
@@ -190,7 +190,7 @@ The individual items behind these counts were never written into this file, and 
 
 - Launch blocker #14 (server plan checks): FIXED 3 Oct 2026.
 - GDPR (G1/G2), retention and portability (B21/B22): FIXED — the privacy policy promises keeping data for the life of the account and deleting it at once on request, which is what the code does.
-- Open and real: S14 (the Content-Security-Policy, report-only since 4 Oct), the code-style clean-up (1 `as any` left of 39 — the shared-report view; 11 withTimeout copies; dead Phase 2 code), and the mobile/accessibility polish folded into the look-and-feel work.
+- Open and real: S14 (the Content-Security-Policy, report-only since 4 Oct), the code-style clean-up (11 withTimeout copies; dead Phase 2 code; the 39 `as any` are gone), and the mobile/accessibility polish folded into the look-and-feel work.
 
 ---
 

@@ -47,7 +47,6 @@ function bucketsInMigrations(): Set<string> {
 describe('storage buckets', () => {
   it('finds the buckets the code uses', () => {
     const used = [...bucketsInCode().keys()].sort();
-    expect(used.includes('reports')).toBe(true);
     expect(used.includes('gamma-exports')).toBe(true);
     expect(used.includes('user-videos')).toBe(true);
   });
@@ -60,10 +59,10 @@ describe('storage buckets', () => {
     expect(missing).toEqual([]);
   });
 
-  it('account deletion clears the bucket the report library writes to', () => {
-    const library = readFileSync('src/services/reportStorageService.ts', 'utf8').match(/STORAGE_BUCKET\s*=\s*'([^']+)'/)?.[1];
+  // The report library's code was removed 4 Oct 2026 (John: "Remove the code"); its
+  // bucket stays, so account deletion still clears a user's folder there.
+  it("account deletion clears the 'reports' bucket", () => {
     const folders = readFileSync('api/user/delete.ts', 'utf8').match(/USER_FOLDERS[^=]*=\s*\[([^\]]*)\]/)?.[1] ?? '';
-    expect(library).toBe('reports');
-    expect(folders.includes(`'${library}'`)).toBe(true);
+    expect(folders.includes("'reports'")).toBe(true);
   });
 });

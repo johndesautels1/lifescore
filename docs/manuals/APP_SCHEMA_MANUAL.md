@@ -55,9 +55,9 @@ The columns the code is written against, from its database types (`src/types/dat
 <!-- facts:columns -->
 <!-- /facts:columns -->
 
-- **Customer tables** hold one user's data, keyed by `user_id` (`profiles` by `id`): profiles, preferences, saved comparisons, Judge and Gamma reports, the report library and its share links, Olivia conversations and messages, court orders, jobs, notifications, subscriptions, usage and cost records.
+- **Customer tables** hold one user's data, keyed by `user_id` (`profiles` by `id`): profiles, preferences, saved comparisons, Judge and Gamma reports, Olivia conversations and messages, court orders, jobs, notifications, subscriptions, usage and cost records.
 - **Shared tables** hold no personal information and are reused across users: the global comparison cache, the web-research cache, finished Judge, city and movie videos, contrast images, prompts, video overrides and quota settings.
-- **Not used by any screen**: the report library — `reports`, its share links (`report_shares`, `report_access_logs`) and the `reports` bucket. The code is in `src/services/reportStorageService.ts`, but nothing in the app saves a report there or opens one (`generateAndSaveEnhancedReport` is never called).
+- **Not used by the app**: the tables of a report library that never had a screen — `reports`, its share links (`report_shares`, `report_access_logs`) — and the `reports` bucket. Its code was removed on 4 October 2026 (John: "Remove the code"); the tables and bucket stay, empty, and account deletion still clears a user's folder in the bucket.
 - **Admin tables**: `authorized_manual_access` (manual access) and `beta_testers` (invitations) are written only by the server; a beta tester can read their own invitation.
 
 ---
@@ -80,7 +80,7 @@ Row-level security is on for every public table. The policies, from the migratio
 ---
 
 ## 4. Stored files
-<!-- covers: api/shared/persistVideo.ts, src/services/reportStorageService.ts, src/services/videoStorageService.ts, api/olivia/contrast-images.ts -->
+<!-- covers: api/shared/persistVideo.ts, src/services/videoStorageService.ts, api/olivia/contrast-images.ts, api/user/delete.ts -->
 
 Supabase Storage keeps files that must outlive the vendors' temporary links. The buckets the code uses:
 
@@ -94,10 +94,10 @@ Supabase Storage keeps files that must outlive the vendors' temporary links. The
 | `user-videos` | Videos a user uploads for a court order, in `{userId}/` | yes | 100 MB |
 | `contrast-images` | Olivia's side-by-side city images, kept for reuse | yes | 5 MB |
 | `gamma-exports` | Gamma PDF and PowerPoint exports | yes | 50 MB |
-| `reports` | The report library's report pages, in `{userId}/` (no screen uses it; section 2) | no — each user reads only their own folder | 200 MB |
+| `reports` | Unused since its code was removed (section 2); account deletion still clears `{userId}/` | no — each user reads only their own folder | 200 MB |
 | `Avatars` | The Judge's narration audio, read by the video vendor | yes | none |
 
-Bucket names are case-sensitive. `tests/storageBuckets.test.ts` checks that every bucket the code names is created by a migration, and that account deletion clears the report library's bucket.
+Bucket names are case-sensitive. `tests/storageBuckets.test.ts` checks that every bucket the code names is created by a migration, and that account deletion clears the `reports` bucket.
 
 ---
 
@@ -154,6 +154,6 @@ Functions and triggers the migrations define:
 - **The code's types follow the tables** — a column added for the code goes in `src/types/database*.ts` with its migration; `tests/schemaColumns.test.ts` fails when a typed column has no migration that names its table.
 - **Buckets** — a new bucket is created by a migration (`INSERT INTO storage.buckets`), never by hand; `tests/storageBuckets.test.ts` holds this.
 
-**The 4 October 2026 reconciliation.** Comparing the migrations, the code and production found three migrations never applied, a bucket and policies made by hand, and columns production had that no migration made. In production that meant Gamma reports had not saved to accounts since 15 February, PDF and PowerPoint exports were not kept, and the Do Not Sell opt-out was not stored. (The report library could not save either, but no screen uses it.) Five migrations dated 20261004 put production right (adding only) and record what was made by hand, so a database built from the migrations now matches production: the same tables, policies and triggers. Two functions the migrations define were never created in production, and nothing calls them: `find_cached_grok_video` and `get_user_grok_video_count`.
+**The 4 October 2026 reconciliation.** Comparing the migrations, the code and production found three migrations never applied, a bucket and policies made by hand, and columns production had that no migration made. In production that meant Gamma reports had not saved to accounts since 15 February, PDF and PowerPoint exports were not kept, and the Do Not Sell opt-out was not stored. (The report library could not save either, but no screen used it; its code was removed later that day.) Five migrations dated 20261004 put production right (adding only) and record what was made by hand, so a database built from the migrations now matches production: the same tables, policies and triggers. Two functions the migrations define were never created in production, and nothing calls them: `find_cached_grok_video` and `get_user_grok_video_count`.
 
 Tests cannot see production. After applying a migration, compare production with the facts above (the Supabase dashboard, or `list_tables` and `pg_policies`).

@@ -24,31 +24,8 @@ import type {
   ConversationWithMessages,
   ApiCostRecord,
   ApiCostRecordInsert,
-  Report,
-  ReportWithHtml,
-  ReportShare,
-  ReportSummary,
   Profile,
 } from '../types/database';
-
-// Import report storage service functions
-import {
-  saveReport,
-  createPendingReport,
-  completeReport,
-  failReport,
-  getReport,
-  getReportWithHtml,
-  getUserReports,
-  getUserReportSummaries,
-  deleteReport,
-  shareReport,
-  getSharedReport,
-  getReportShares,
-  deleteShare,
-  logReportAccess,
-  getReportAnalytics,
-} from './reportStorageService';
 
 // ============================================================================
 // HELPER: Timeout wrapper with retry for Supabase queries
@@ -837,32 +814,6 @@ export async function deleteApiCostRecord(
 // EXPORTS
 // ============================================================================
 
-// ============================================================================
-// RE-EXPORT REPORT STORAGE FUNCTIONS
-// ============================================================================
-
-// Re-export all report storage functions for unified access
-export {
-  saveReport,
-  createPendingReport,
-  completeReport,
-  failReport,
-  getReport,
-  getReportWithHtml,
-  getUserReports,
-  getUserReportSummaries,
-  deleteReport,
-  shareReport,
-  getSharedReport,
-  getReportShares,
-  deleteShare,
-  logReportAccess,
-  getReportAnalytics,
-};
-
-// Re-export types
-export type { Report, ReportWithHtml, ReportShare, ReportSummary };
-
 export default {
   // Comparisons
   saveComparison,
@@ -882,27 +833,10 @@ export default {
   updateConversationTitle,
   archiveConversation,
 
-  // Gamma (legacy - use new reports system)
+  // Gamma reports
   saveGammaReport,
   getGammaReportsForComparison,
   getUserGammaReports,
-
-  // Reports (new storage system)
-  saveReport,
-  createPendingReport,
-  completeReport,
-  failReport,
-  getReport,
-  getReportWithHtml,
-  getUserReports,
-  getUserReportSummaries,
-  deleteReport,
-  shareReport,
-  getSharedReport,
-  getReportShares,
-  deleteShare,
-  logReportAccess,
-  getReportAnalytics,
 
   // API Costs
   saveApiCostRecord,
