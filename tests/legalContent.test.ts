@@ -70,6 +70,7 @@ describe('the supplier register names every supplier the code calls', () => {
     [/api\.anthropic\.com/, 'Anthropic'],
     [/api\.openai\.com/, 'OpenAI'],
     [/generativelanguage\.googleapis\.com/, 'Google'],
+    [/places\.googleapis\.com/, 'Google'],
     [/api\.x\.ai/, 'xAI'],
     [/api\.perplexity\.ai/, 'Perplexity'],
     [/api\.tavily\.com/, 'Tavily'],

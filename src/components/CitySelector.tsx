@@ -2,7 +2,11 @@
  * LIFE SCORE™ City Selector Component
  * Clues Intelligence LTD
  *
- * Searchable dropdown with 200 metropolitan areas (100 NA + 100 EU)
+ * Searchable dropdown: 200 popular metropolitan areas (100 NA + 100 EU) listed,
+ * and any city in the world by search - the built-in world list (GeoNames,
+ * 15,000+ people; src/data/worldCities.ts) and, on request, Google beyond it
+ * (src/services/placesSearch.ts). John, 4 Oct 2026: "compare any 2 cities in
+ * the world".
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -21,24 +25,24 @@ import { NotifyMeModal, getSavedNotifyPreference } from './NotifyMeModal';
 import { useJobTracker } from '../hooks/useJobTracker';
 import type { LawLivedRatio, CategoryId } from '../types/metrics';
 import type { NotifyChannel } from '../types/database';
-import { getFlagUrl } from '../utils/countryFlags';
+import { getFlagUrl, countryIso } from '../utils/countryFlags';
+import { loadWorldCities, searchWorldCities, type WorldCity } from '../data/worldCities';
+import { searchPlacesEverywhere } from '../services/placesSearch';
 import { toastInfo } from '../utils/toast';
 import './CitySelector.css';
 
-// Country → short code for badges
-const COUNTRY_CODES: Record<string, string> = {
-  'USA': 'US', 'Canada': 'CA',
-  'UK': 'UK', 'France': 'FR', 'Germany': 'DE', 'Italy': 'IT', 'Spain': 'ES',
-  'Netherlands': 'NL', 'Belgium': 'BE', 'Austria': 'AT', 'Switzerland': 'CH',
-  'Sweden': 'SE', 'Norway': 'NO', 'Denmark': 'DK', 'Finland': 'FI', 'Iceland': 'IS',
-  'Ireland': 'IE', 'Portugal': 'PT', 'Greece': 'GR', 'Poland': 'PL',
-  'Czech Republic': 'CZ', 'Hungary': 'HU', 'Romania': 'RO', 'Bulgaria': 'BG',
-  'Croatia': 'HR', 'Slovakia': 'SK', 'Slovenia': 'SI', 'Estonia': 'EE',
-  'Latvia': 'LV', 'Lithuania': 'LT', 'Luxembourg': 'LU', 'Malta': 'MT',
-  'Cyprus': 'CY', 'Monaco': 'MC',
+// Country → short code for badges (any country; the UK shows as "UK")
+const getCountryCode = (metro: Metro): string => {
+  const iso = countryIso(metro.country, metro.countryCode).toUpperCase();
+  return iso === 'GB' ? 'UK' : iso;
 };
 
-const getCountryCode = (country: string): string => COUNTRY_CODES[country] || country.slice(0, 2).toUpperCase();
+/** Same city: name and country code match (the popular list says "USA", the world list "United States"). */
+const sameCity = (a: Metro, b: Metro): boolean =>
+  a.city.toLowerCase() === b.city.toLowerCase() && countryIso(a.country, a.countryCode) === countryIso(b.country, b.countryCode);
+
+/** How many world-list cities a search shows at most. */
+const WORLD_RESULTS_LIMIT = 50;
 
 // Highlight matching text in search results
 const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query }) => {
@@ -54,11 +58,19 @@ const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query
   );
 };
 
-// Helper to find metro by formatted string (e.g., "Tampa, Florida, USA")
+// Helper to find metro by formatted string (e.g., "Tampa, Florida, USA"). A city
+// outside the popular list (world list or Google) is rebuilt from its parts.
 const findMetroByFormatted = (formatted: string): Metro | undefined => {
   if (!formatted) return undefined;
-  const cityPart = formatted.split(',')[0].trim().toLowerCase();
-  return ALL_METROS.find(m => m.city.toLowerCase() === cityPart);
+  const parts = formatted.split(',').map(part => part.trim()).filter(Boolean);
+  if (parts.length === 0 || parts.some(part => part.length > 100)) return undefined;
+  const rebuilt: Metro = parts.length >= 3
+    ? { city: parts[0], region: parts.slice(1, -1).join(', '), country: parts[parts.length - 1] }
+    : { city: parts[0], country: parts[1] ?? '' };
+  const known = ALL_METROS.find(m => m.city.toLowerCase() === parts[0].toLowerCase()
+    && (parts.length === 1 || sameCity(m, rebuilt)));
+  if (known) return known;
+  return rebuilt.country ? rebuilt : undefined;
 };
 
 interface CitySelectorProps {
@@ -113,6 +125,14 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'na' | 'eu'>('all');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  // The world list (fetched the first time the menu opens) and Google's answer
+  const [world, setWorld] = useState<WorldCity[] | null>(null);
+  const [worldFailed, setWorldFailed] = useState(false);
+  const [everywhere, setEverywhere] = useState<{
+    query: string;
+    status: 'loading' | 'done' | 'off' | 'error';
+    cities: Metro[];
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -128,6 +148,28 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Fetch the world list (about 0.5 MB) the first time someone types a search
+  const wantsWorld = isOpen && searchQuery.trim().length >= 2;
+  useEffect(() => {
+    if (!wantsWorld || world || worldFailed) return;
+    let cancelled = false;
+    loadWorldCities()
+      .then((cities) => { if (!cancelled) setWorld(cities); })
+      .catch(() => { if (!cancelled) setWorldFailed(true); });
+    return () => { cancelled = true; };
+  }, [wantsWorld, world, worldFailed]);
+
+  /** Ask Google for cities beyond the built-in list (only when the user asks). */
+  const searchEverywhere = async () => {
+    const query = searchQuery.trim();
+    if (query.length < 2) return;
+    setEverywhere({ query, status: 'loading', cities: [] });
+    const result = await searchPlacesEverywhere(query);
+    if (!result.ok) setEverywhere({ query, status: 'error', cities: [] });
+    else if (!result.configured) setEverywhere({ query, status: 'off', cities: [] });
+    else setEverywhere({ query, status: 'done', cities: result.cities });
+  };
+
   // Get filtered metros based on tab and search, sorted alphabetically
   const getFilteredMetros = (): Metro[] => {
     let metros: Metro[];
@@ -141,7 +183,18 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
       default:
         metros = [...ALL_METROS].sort((a, b) => a.city.localeCompare(b.city));
     }
-    return searchQuery ? searchMetros(searchQuery, metros) : metros;
+    if (!searchQuery) return metros;
+    const found = searchMetros(searchQuery, metros);
+    if (activeTab !== 'all') return found;
+    // Any city in the world: the world list, then Google's answer for this search
+    const more: Metro[] = [
+      ...(world ? searchWorldCities(world, searchQuery, WORLD_RESULTS_LIMIT) : []),
+      ...(everywhere?.status === 'done' && everywhere.query === searchQuery.trim() ? everywhere.cities : []),
+    ];
+    for (const city of more) {
+      if (!found.some(existing => sameCity(existing, city))) found.push(city);
+    }
+    return found;
   };
 
   const filteredMetros = getFilteredMetros();
@@ -186,6 +239,8 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < filteredMetros.length) {
           handleSelect(filteredMetros[highlightedIndex]);
+        } else if (filteredMetros.length === 0 && activeTab === 'all') {
+          void searchEverywhere();
         }
         break;
       case 'Escape':
@@ -225,8 +280,8 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
         <span className="metro-select-value">
           {value ? (
             <>
-              <img className="metro-flag-img" src={getFlagUrl(value.country)} alt={value.country} width={20} height={15} />
-              <span className="metro-country-badge">{getCountryCode(value.country)}</span>
+              <img className="metro-flag-img" src={getFlagUrl(value.country, value.countryCode)} alt={value.country} width={20} height={15} />
+              <span className="metro-country-badge">{getCountryCode(value)}</span>
               {' '}{formatMetro(value)}
             </>
           ) : 'Select a city...'}
@@ -240,7 +295,7 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search cities..."
+              placeholder="Search any city in the world..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -259,7 +314,7 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
               className={`metro-tab ${activeTab === 'all' ? 'active' : ''}`}
               onClick={() => setActiveTab('all')}
             >
-              🌎 All ({searchQuery ? filteredMetros.length : 200})
+              🌎 All{searchQuery ? ` (${filteredMetros.length})` : ''}
             </button>
             <button
               type="button"
@@ -285,7 +340,11 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
 
           <div className="metro-list" ref={listRef} role="listbox" id={`${id}-listbox`}>
             {filteredMetros.length === 0 ? (
-              <div className="metro-no-results">No cities match "{searchQuery}"</div>
+              <div className="metro-no-results">
+                {searchQuery.trim().length >= 2 && activeTab === 'all' && !world && !worldFailed
+                  ? 'Searching the world list…'
+                  : `No cities match "${searchQuery}"`}
+              </div>
             ) : (
               filteredMetros.map((metro, index) => (
                 <button
@@ -307,16 +366,45 @@ const MetroDropdown: React.FC<MetroDropdownProps> = ({ id, label, value, onChang
                   </div>
                   <img
                     className="metro-flag-img"
-                    src={getFlagUrl(metro.country)}
+                    src={getFlagUrl(metro.country, metro.countryCode)}
                     alt={metro.country}
                     width={20}
                     height={15}
                     loading="lazy"
                   />
-                  <span className="metro-country-badge">{getCountryCode(metro.country)}</span>
+                  <span className="metro-country-badge">{getCountryCode(metro)}</span>
                 </button>
               ))
             )}
+          </div>
+
+          {/* Beyond the built-in list: Google, only when the user asks */}
+          {activeTab === 'all' && searchQuery.trim().length >= 2 && (
+            <div className="metro-everywhere">
+              {everywhere?.query === searchQuery.trim() && everywhere.status !== 'loading' ? (
+                <span className="metro-everywhere-note" role="status">
+                  {everywhere.status === 'off' && 'Searching everywhere is not switched on yet - pick from the list.'}
+                  {everywhere.status === 'error' && 'Searching everywhere is unavailable right now.'}
+                  {everywhere.status === 'done' && (everywhere.cities.length === 0
+                    ? `Google found no city called "${everywhere.query}".`
+                    : 'More cities from Google are in the list above.')}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="metro-everywhere-btn"
+                  onClick={() => void searchEverywhere()}
+                  disabled={everywhere?.status === 'loading'}
+                >
+                  {everywhere?.status === 'loading' ? 'Searching everywhere…' : `🔍 Not listed? Search everywhere for "${searchQuery.trim()}"`}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="metro-credits">
+            City data: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> (CC BY 4.0)
+            {everywhere?.status === 'done' && everywhere.cities.length > 0 && ' · powered by Google'}
           </div>
         </div>
       )}
@@ -445,7 +533,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   return (
     <div className="city-selector-card card">
       <h2 className="section-title">Compare Legal &amp; Lived Freedom Between Any Two Cities</h2>
-      <p className="selector-subtitle">Choose from 200 major metropolitan areas across North America and Europe</p>
+      <p className="selector-subtitle">Pick from 200 popular cities, or type to search any city in the world</p>
 
       <form onSubmit={handleSubmit}>
         <div className="city-inputs">

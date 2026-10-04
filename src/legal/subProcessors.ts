@@ -52,9 +52,9 @@ export const SUB_PROCESSORS: readonly SubProcessor[] = [
     jurisdiction: 'OpenAI (United States)',
   },
   {
-    name: 'Google (Gemini)',
-    role: 'Evaluating cities',
-    data: 'City names and comparison data',
+    name: 'Google (Gemini, Places)',
+    role: 'Evaluating cities; finding a city not on our own list',
+    data: 'City names and comparison data; the city name you type when you choose to search beyond our list',
     jurisdiction: 'Google (United States)',
   },
   {

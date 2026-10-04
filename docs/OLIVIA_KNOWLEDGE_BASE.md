@@ -112,7 +112,7 @@ These often differ dramatically! A city might have strict laws on paper (low leg
 **Lower Score = LESS FREEDOM (more government/private control)**
 
 **Key Features:**
-- Compares 200 metropolitan areas (100 North America + 100 Europe)
+- Compares any two cities in the world: 200 popular metropolitan areas are listed, every city of 15,000+ people can be searched, and smaller places can be found with "Search everywhere" (Google)
 - Evaluates **100 distinct FREEDOM metrics** across **6 categories**
 - Measures BOTH legal status (what the law says) AND enforcement (how it's actually applied)
 - Uses 5 independent AI evaluators with live web search
@@ -1008,7 +1008,7 @@ A: LIFE SCORE measures legal and lived freedom comprehensively. We include metri
 A: Tell me more about what freedom means to you. Are you concerned about property rights, personal lifestyle choices, tax burden, mobility? Understanding your priorities helps me highlight the most relevant differences.
 
 **Q: Can I get a report for international cities?**
-A: Currently LIFE SCORE covers 200 metropolitan areas - 100 in North America and 100 in Europe. If your cities are in our coverage, I can help!
+A: Yes - LIFE SCORE compares any two cities in the world. Type a city's name in the city box on the Compare screen: the search covers every city of 15,000 people or more, and "Not listed? Search everywhere" finds smaller places.
 
 **Q: How do I use this for a real move decision?**
 A: LIFE SCORE is one input among many. Use it to understand legal and lived freedom differences, then factor in:
@@ -6123,7 +6123,7 @@ Users may receive email alerts at warning thresholds.
 - Answer questions about comparison results
 - Explain specific metrics and scores
 - Provide personalized recommendations based on user priorities
-- Speak with expertise about 200 cities and 100 freedom metrics
+- Speak with expertise about any city in the world and the 100 freedom metrics
 
 **If a user asks "Who is Emilia?" - explain the difference:**
 "Emilia is our app help assistant - she appears as a floating help button and can guide you through LifeScore's features. I'm Olivia, your Freedom Advisor. While Emilia helps you navigate the app, I help you understand your comparison results, explain what the scores mean, and give you insights about the cities you're considering. Think of Emilia as your app guide and me as your expert advisor."

@@ -266,6 +266,77 @@
   font-size: 0.875rem;
 }
 
+/* Any city in the world: "search everywhere" (Google) and the data credit */
+.metro-everywhere {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.metro-everywhere-btn {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  background: rgba(15, 76, 129, 0.06);
+  border: 1px dashed var(--sapphire);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sapphire);
+  text-align: left;
+}
+
+.metro-everywhere-btn:hover:not(:disabled),
+.metro-everywhere-btn:focus-visible {
+  background: rgba(15, 76, 129, 0.12);
+  outline: 2px solid var(--sapphire);
+  outline-offset: 2px;
+}
+
+.metro-everywhere-btn:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.metro-everywhere-note {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+}
+
+.metro-credits {
+  padding: 0.35rem 0.75rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.metro-credits a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .metro-everywhere {
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .metro-everywhere-btn {
+  background: rgba(15, 76, 129, 0.15);
+  border-color: var(--sapphire-light);
+  color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .metro-everywhere-btn:hover:not(:disabled),
+[data-theme="dark"] .metro-everywhere-btn:focus-visible {
+  background: rgba(15, 76, 129, 0.25);
+  outline-color: var(--sapphire-light);
+}
+
+[data-theme="dark"] .metro-everywhere-note,
+[data-theme="dark"] .metro-credits {
+  color: var(--gray-400);
+}
+
 /* Search highlight */
 .search-highlight {
   background: rgba(212, 175, 55, 0.3);

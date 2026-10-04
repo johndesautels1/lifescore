@@ -47,7 +47,7 @@ Points customers ask about:
 
 **"How long does a comparison take?"** — the app estimates about 90 seconds for a standard comparison; an enhanced one runs five models and takes longer. Customers can choose **Notify Me & Go** and get an in-app notification (and an email if they chose it) when it is ready.
 
-**"Can you add my city?"** — comparisons cover the 200 metropolitan areas in the city list (North America and Europe). New cities are added by the team; note the request and escalate it as a product request.
+**"Can you add my city?"** — any city in the world can be compared. Tell the customer to type its name in the city box: the search covers every city of 15,000 people or more, and **Not listed? Search everywhere** asks Google for smaller places. If Google's search says it is not switched on yet, pick the nearest listed city and note the request.
 
 **"How current is the data?"** — every comparison researches each metric with live web search at the time it runs. Results reflect what the sources said that day; the Evidence & Citations panel shows them.
 

@@ -2,13 +2,17 @@
  * 200 Major Metropolitan Areas
  * 100 North American + 100 European cities
  *
- * These are dropdown options - the LLM evaluates metrics using its knowledge
+ * The city picker's popular list, shown before anyone searches. Any other city
+ * in the world is found by search (src/data/worldCities.ts, and Google beyond
+ * it - src/services/placesSearch.ts); the evaluators take any city name.
  */
 
 export interface Metro {
   city: string;
   country: string;
   region?: string;
+  /** ISO 3166-1 alpha-2, when known (world list cities carry it) - for the flag. */
+  countryCode?: string;
 }
 
 // ============================================================================

@@ -48,7 +48,7 @@ These suppliers process information on our behalf, each only for the job named. 
 | Stripe | Payments and subscriptions | Your email address, the plan you buy, and the card details you type on Stripe’s own page (never sent to us) | Stripe, Inc. (United States); Stripe Payments Europe, Ltd. (Ireland) for European customers |
 | Anthropic (Claude) | Evaluating cities, the judge’s verdicts, Olivia and Emilia, films’ storyboards and screenplays | City names and comparison data; your messages to Olivia or Emilia with the conversation and comparison they need — never your name, email or account number | Anthropic PBC (United States) |
 | OpenAI (GPT) | Evaluating cities; back-up voice when ElevenLabs is unavailable | City names and comparison data; the words a voice is to speak | OpenAI (United States) |
-| Google (Gemini) | Evaluating cities | City names and comparison data | Google (United States) |
+| Google (Gemini, Places) | Evaluating cities; finding a city not on our own list | City names and comparison data; the city name you type when you choose to search beyond our list | Google (United States) |
 | xAI (Grok) | Evaluating cities; short city videos | City names, comparison data and video descriptions of cities | xAI Corp. (United States) |
 | Perplexity | Evaluating cities with web research | City names and comparison data | Perplexity AI, Inc. (United States) |
 | Tavily | Web search for the evaluators | Search queries built from city names and metrics | Tavily (United States) |

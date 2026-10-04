@@ -45,6 +45,7 @@ const ENV_VARS: EnvVarDef[] = [
   { name: 'ANTHROPIC_API_KEY', description: 'Anthropic — Claude Opus (Judge) + Sonnet', category: 'LLM Providers', side: 'server' },
   { name: 'OPENAI_API_KEY', description: 'OpenAI — GPT evaluator and voice fallback', category: 'LLM Providers', side: 'server' },
   { name: 'GEMINI_API_KEY', description: 'Google — Gemini 3.1 Pro evaluator', category: 'LLM Providers', side: 'server' },
+  { name: 'GOOGLE_PLACES_API_KEY', description: 'Google Maps Platform — Places API (New): city search beyond the built-in world list ("search everywhere" in the city picker)', category: 'Search', side: 'server' },
   { name: 'XAI_API_KEY', description: 'xAI — Grok evaluator (model in api/shared/models.ts)', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_KEY', description: 'Alias for XAI_API_KEY', category: 'LLM Providers', side: 'server' },
   { name: 'GROK_API_URL', description: 'Grok API base URL', category: 'LLM Providers', side: 'server' },

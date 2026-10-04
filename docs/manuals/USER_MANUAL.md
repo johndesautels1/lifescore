@@ -10,7 +10,7 @@ This manual describes LIFE SCORE as it is built today. Tables marked as coming f
 ## 1. What LIFE SCORE is
 <!-- covers: src/components/Header.tsx, src/components/HomeHero.tsx, src/components/CitySelector.tsx -->
 
-LIFE SCORE (Legal Independence & Freedom Evaluation) compares legal and lived freedom between two cities across 100 metrics in six categories. For every metric it scores two things:
+LIFE SCORE (Legal Independence & Freedom Evaluation) compares legal and lived freedom between any two cities in the world across 100 metrics in six categories. For every metric it scores two things:
 
 - **Law** — what the written law permits or restricts.
 - **Lived** — how the rules are actually enforced day to day.
@@ -68,7 +68,7 @@ Use the arrow keys, Home and End to move between tabs from the keyboard.
 <!-- covers: src/components/CitySelector.tsx, src/components/NotifyMeModal.tsx, src/components/HomeHero.tsx -->
 
 1. Open **Compare**.
-2. Choose **City 1** and **City 2**. Type to search; the list holds 200 metropolitan areas in North America and Europe, each shown with its country's flag. Or pick one of the **Popular Comparisons**.
+2. Choose **City 1** and **City 2** — any city in the world. The list opens on 200 popular metropolitan areas in North America and Europe; type to search every city of 15,000 people or more (city data: GeoNames). If yours is not listed, press **Not listed? Search everywhere** to ask Google. Each city shows its country's flag. Or pick one of the **Popular Comparisons**.
 3. Optionally set your priorities (4.2) and dealbreakers (4.3).
 4. Press **Compare LIFE SCORES**. While it runs the button reads *"Analyzing 100 Metrics..."*.
 5. The app may ask whether to **Wait Here** or **Notify Me & Go**. If you choose to be notified, you can leave; when the comparison is ready you get a notification in the app (the bell) and, if you chose it, an email.

@@ -22,10 +22,23 @@ describe('getFlagUrl', () => {
     expect(getFlagUrl('Switzerland')).toBe('https://flagcdn.com/w40/ch.png');
   });
 
-  it('falls back to first two chars for unknown countries', () => {
-    // Unknown country: takes first 2 chars, lowercased
+  it('knows every country by name, not just the first two letters', () => {
+    // 4 Oct 2026 (any city in the world): Mexico used to get "me", Montenegro's flag
     expect(getFlagUrl('Australia')).toBe('https://flagcdn.com/w40/au.png');
-    expect(getFlagUrl('Mexico')).toBe('https://flagcdn.com/w40/me.png');
+    expect(getFlagUrl('Mexico')).toBe('https://flagcdn.com/w40/mx.png');
+    expect(getFlagUrl('Japan')).toBe('https://flagcdn.com/w40/jp.png');
+    expect(getFlagUrl('United States')).toBe('https://flagcdn.com/w40/us.png');
+    expect(getFlagUrl('South Korea')).toBe('https://flagcdn.com/w40/kr.png');
+    expect(getFlagUrl('Türkiye')).toBe('https://flagcdn.com/w40/tr.png');
+  });
+
+  it("uses the city's own country code when it has one", () => {
+    expect(getFlagUrl('Georgia', 'GE')).toBe('https://flagcdn.com/w40/ge.png');
+    expect(getFlagUrl('Somewhere', 'BR')).toBe('https://flagcdn.com/w40/br.png');
+  });
+
+  it('falls back to the first two letters for a name it does not know', () => {
+    expect(getFlagUrl('Zzland')).toBe('https://flagcdn.com/w40/zz.png');
   });
 
   it('handles all mapped countries without errors', () => {
