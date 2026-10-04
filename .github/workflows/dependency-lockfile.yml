@@ -1,0 +1,77 @@
+# Resolves package-lock.json on GitHub's machines for a branch whose package.json
+# changed (never locally: the founder's machine has too little free memory to
+# resolve the dependency tree), proves the result, and pushes the lockfile back
+# to that branch. It refuses to run on main.
+#
+#   gh workflow run "Dependency lockfile" --ref <branch>
+#
+# Proof, in order: npm ci from the new lockfile; both type checks (the app and
+# the server functions) with TypeScript 7; the test suite; the production build;
+# the chunks the PWA precache names (vite.config.ts globPatterns) exist; the
+# security audit and the linter are printed for the record.
+name: Dependency lockfile
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-lockfile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lockfile:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Resolve the lockfile from package.json
+        run: npm install --package-lock-only --no-audit --no-fund
+
+      - name: Install exactly from it
+        run: npm ci
+
+      - name: Type check the app (TypeScript 7)
+        run: node node_modules/@typescript/native/bin/tsc -b
+
+      - name: Type check the server functions (TypeScript 7)
+        run: node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Production build
+        run: npx vite build
+
+      - name: The chunks the PWA precache names exist
+        run: |
+          ls dist/assets
+          for name in index react-vendor supabase app-data; do
+            ls dist/assets | grep -q "^${name}-" || { echo "missing chunk: ${name}-*"; exit 1; }
+          done
+
+      - name: Security audit (for the record)
+        run: npm audit --audit-level=low || true
+
+      - name: Lint (for the record)
+        run: npx eslint . || true
+
+      - name: Push the lockfile to this branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "The lockfile is already current."
+            exit 0
+          fi
+          git commit -m "chore(deps): lockfile for ${GITHUB_REF_NAME}" -m "Resolved by .github/workflows/dependency-lockfile.yml. npm ci, both TypeScript 7 type checks, vitest, vite build and the PWA chunk check passed on it."
+          git push origin "HEAD:${GITHUB_REF_NAME}"
