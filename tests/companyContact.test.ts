@@ -109,6 +109,11 @@ describe('emails, reports and About CLUES', () => {
       // Olivia's knowledge base (John, 4 Oct 2026: "Switch it")
       ['docs/OLIVIA_KNOWLEDGE_BASE.md', `**Email Support:** ${LEGAL_FACTS.contact}`],
     ];
+    // help.clueslifescore.com never existed (404); Olivia points to the help button instead
+    const knowledge = readFileSync('docs/OLIVIA_KNOWLEDGE_BASE.md', 'utf8');
+    expect(knowledge.includes('help.clueslifescore.com')).toBe(false);
+    expect(knowledge.includes('Need help? Ask Emilia')).toBe(true);
+    expect(readFileSync('src/components/HelpBubble.tsx', 'utf8').includes('title="Need help? Ask Emilia"')).toBe(true);
     for (const [file, source] of files) {
       const text = readFileSync(file, 'utf8');
       expect({ file, source: text.includes(source) }).toEqual({ file, source: true });

@@ -6158,7 +6158,7 @@ Users may receive email alerts at warning thresholds.
 ## 36.5 Support & Contact
 
 - **Email Support:** info@cluesintelligence.com
-- **Help Center:** help.clueslifescore.com
+- **Help:** the help button on every screen, *"Need help? Ask Emilia"* — it opens the User Manual and Emilia, LIFE SCORE's help assistant, who answers questions about using the app
 - **Website:** clueslifescore.com
 
 ## 36.6 Voice & Avatar Technology
