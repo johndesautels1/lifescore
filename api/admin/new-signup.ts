@@ -17,6 +17,7 @@ import { handleCors } from '../shared/cors.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { getAdminEmails } from '../shared/auth.js';
 import { sendEmail } from '../shared/resend.js';
+import { COMPANY_EMAIL_FOOTER_HTML } from '../shared/company.js';
 
 /** Time limit for Resend accepting the new-signup email. */
 const RESEND_TIMEOUT_MS = 15_000;
@@ -139,7 +140,7 @@ export default async function handler(
 
     <div class="footer">
       <p>This is an automated alert from LIFE SCORE.</p>
-      <p>Clues Intelligence LTD &bull; cluesnomad.com</p>
+      <p>${COMPANY_EMAIL_FOOTER_HTML}</p>
     </div>
   </div>
 </body>

@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { COMPANY_CONTACT } from '../src/shared/companyContact';
 import { LEGAL_FACTS } from '../src/legal/legalFacts';
+import { COMPANY_EMAIL, COMPANY_EMAIL_FOOTER_HTML, COMPANY_NAME, COMPANY_WEBSITE } from '../api/shared/company';
 
 const footer = readFileSync('src/components/Footer.tsx', 'utf8');
 
@@ -85,6 +86,33 @@ describe('the footer', () => {
       'Cookie Settings',
     ]) {
       expect(footer).toContain(label);
+    }
+  });
+});
+
+// John, 4 Oct 2026 ("Switch all four"): the two emails, the Gamma report and
+// About CLUES' "Explore CLUES" button still carried the retired contacts.
+describe('emails, reports and About CLUES', () => {
+  it("the server's company line equals the legal facts and the footer", () => {
+    expect(COMPANY_NAME).toBe(LEGAL_FACTS.company);
+    expect(COMPANY_EMAIL).toBe(LEGAL_FACTS.contact);
+    expect(COMPANY_WEBSITE).toBe(COMPANY_CONTACT.website.label);
+    expect(COMPANY_EMAIL_FOOTER_HTML).toBe('Clues Intelligence LTD &bull; cluesintelligence.com &bull; info@cluesintelligence.com');
+  });
+
+  it('carry none of the retired contacts and print from the one place', () => {
+    const files: Array<[string, string]> = [
+      ['api/notify.ts', 'COMPANY_EMAIL_FOOTER_HTML'],
+      ['api/admin/new-signup.ts', 'COMPANY_EMAIL_FOOTER_HTML'],
+      ['src/services/gammaService.ts', 'COMPANY_CONTACT.email'],
+      ['src/components/AboutClues.tsx', 'COMPANY_CONTACT.website.href'],
+    ];
+    for (const [file, source] of files) {
+      const text = readFileSync(file, 'utf8');
+      expect({ file, source: text.includes(source) }).toEqual({ file, source: true });
+      for (const retired of ['cluesnomads@gmail.com', 'cluesnomad.com']) {
+        expect({ file, retired, found: text.includes(retired) }).toEqual({ file, retired, found: false });
+      }
     }
   });
 });

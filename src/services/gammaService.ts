@@ -47,6 +47,7 @@ function isEnhancedResult(result: AnyComparisonResult): result is EnhancedCompar
 
 // Metric display names imported from shared utility (single source of truth)
 import { getMetricDisplayName } from '../shared/metricDisplayNames';
+import { COMPANY_CONTACT } from '../shared/companyContact';
 
 // Category display configuration
 const CATEGORY_CONFIG: Record<string, { name: string; icon: string; metricCount: number; weight: string }> = {
@@ -1726,7 +1727,7 @@ prompt="modern tech company office, data analytics, professional team, global fr
 
 **Contact:**
 - 🌐 Website: [clueslifescore.com](https://clueslifescore.com)
-- 📧 Email: [cluesnomads@gmail.com](mailto:cluesnomads@gmail.com)
+- 📧 Email: [${COMPANY_CONTACT.email}](mailto:${COMPANY_CONTACT.email})
 - 🐦 Twitter: [@CluesLifeScore](https://x.com/CluesLifeScore)
 
 ---
@@ -1804,7 +1805,7 @@ prompt="elegant minimalist design, world map silhouette, compass, premium qualit
 ---
 
 **Clues Intelligence LTD**
-🌐 [clueslifescore.com](https://clueslifescore.com) | 📧 [cluesnomads@gmail.com](mailto:cluesnomads@gmail.com)
+🌐 [clueslifescore.com](https://clueslifescore.com) | 📧 [${COMPANY_CONTACT.email}](mailto:${COMPANY_CONTACT.email})
 
 *© 2025-2026 All Rights Reserved*
 

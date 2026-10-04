@@ -18,6 +18,7 @@ import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 import { publicSiteUrl } from './shared/siteUrl.js';
 import { sendEmail } from './shared/resend.js';
+import { COMPANY_EMAIL_FOOTER_HTML } from './shared/company.js';
 
 // Supabase admin client (service role for inserting notifications)
 const supabaseAdmin = serviceDb;
@@ -66,7 +67,7 @@ async function sendEmailViaResend(
       </div>
       ` : ''}
       <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
-        <p style="color: #64748b; font-size: 11px; margin: 0;">Clues Intelligence LTD &bull; cluesnomad.com</p>
+        <p style="color: #64748b; font-size: 11px; margin: 0;">${COMPANY_EMAIL_FOOTER_HTML}</p>
       </div>
     </div>
   `;

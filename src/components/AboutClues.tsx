@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { COMPANY_CONTACT } from '../shared/companyContact';
 import './AboutClues.css';
 
 // ============================================================================
@@ -595,7 +596,7 @@ const AboutClues: React.FC = () => {
               the frontier of AI.
             </p>
             <div className="ac-cta-links">
-              <a href="https://cluesnomad.com" className="ac-cta-link primary" target="_blank" rel="noopener noreferrer">
+              <a href={COMPANY_CONTACT.website.href} className="ac-cta-link primary" target="_blank" rel="noopener noreferrer">
                 Explore CLUES &rarr;
               </a>
               <a href="https://clueslifescore.com" className="ac-cta-link secondary" target="_blank" rel="noopener noreferrer">
