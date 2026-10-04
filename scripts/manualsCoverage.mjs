@@ -26,7 +26,8 @@ export const MANUALS_DIR = 'docs/manuals';
 export const COVERAGE_FILE = 'docs/manuals/coverage.json';
 
 const HEADING = /^(#{1,4})\s+(.+?)\s*#*\s*$/;
-const COVERS = /<!--\s*covers:\s*([^>]*?)\s*-->/;
+/** A covers marker counts only on a line of its own (one quoted inside a sentence is just text). */
+const COVERS = /^\s*<!--\s*covers:\s*([^>]*?)\s*-->\s*$/;
 
 /** A heading as a stable key part: lower case, words joined by hyphens. */
 export function slug(text) {

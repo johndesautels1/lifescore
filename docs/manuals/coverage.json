@@ -74,6 +74,174 @@
       "reviewed": "2026-10-04",
       "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
     },
+    "TECHNICAL_SUPPORT_MANUAL.md#1-architecture": {
+      "files": [
+        "vercel.json",
+        "vite.config.ts",
+        "src/main.tsx"
+      ],
+      "hash": "b58624340893807cc43472acca4f7594ccbc6994b2823cefc646628dd32a13ea",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#10-settings": {
+      "files": [
+        ".env.example"
+      ],
+      "hash": "2ab647434122b877c18edc6a32944c8f5327463b507498ca580958b2c650ee44",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#11-functions-scheduled-jobs-and-deployment": {
+      "files": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/dependency-lockfile.yml",
+        ".github/workflows/dependency-security.yml"
+      ],
+      "hash": "242379db28f11ec3e56f1ff26cc6859a533761b3d45b256c28d8dc383ba6da66",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#12-tests": {
+      "files": [
+        "vitest.config.ts"
+      ],
+      "hash": "b3a4d0ee2d918b5bc145b2567818a5ed0c07b60510a9414176f53ec83281cf40",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#13-debugging": {
+      "files": [
+        "src/main.tsx",
+        "vite.config.ts",
+        "api/shared/entitlements.ts"
+      ],
+      "hash": "b3dab25f93c811cd4795e0d73646ff420a9e6e828c91aa871d257b096620d5bd",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#14-how-the-manuals-and-assistants-stay-current": {
+      "files": [
+        "api/shared/manualFacts.ts",
+        "api/emilia/manuals.ts",
+        "scripts/manualsCoverage.mjs",
+        "scripts/manuals-stamp.mjs",
+        "scripts/manuals-autoupdate.ts",
+        "tests/manuals.test.ts"
+      ],
+      "hash": "c0d88ce9d7fae8b81e7442c621f58387fb2cc48c67638def5047c1d37b3cbc1f",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#15-admin-tools": {
+      "files": [
+        "src/components/HelpModal.tsx",
+        "src/components/CostDashboard.tsx",
+        "api/admin/env-check.ts",
+        "src/components/PromptsManager.tsx",
+        "api/usage/check-quotas.ts"
+      ],
+      "hash": "f6672445ca1fff9e21166e3643413f99299dd9c65d20c49bdbf4769eaa150c51",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#16-security": {
+      "files": [
+        "api/stripe/webhook.ts",
+        "api/shared/replicateWebhook.ts",
+        "vercel.json"
+      ],
+      "hash": "78f718b11d76784e31bdbd2801127c887e574eecdfc910bdefea6856e5d37a93",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#2-where-things-are": {
+      "files": [
+        "src/App.tsx",
+        "src/components/TabNavigation.tsx"
+      ],
+      "hash": "b4013e9d83aacd341de22d49d5eef49243904f9d72162d8a2bc63ce76a446405",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#3-api-routes": {
+      "files": [
+        "api/shared/cors.ts",
+        "api/shared/rateLimit.ts"
+      ],
+      "hash": "1d9531dff2c39c781982b2a92df98db8de2dc48cda06c715c1168852ad6339b9",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#4-sign-in-plans-and-access": {
+      "files": [
+        "api/shared/auth.ts",
+        "api/shared/entitlements.ts",
+        "api/shared/plans.ts",
+        "api/usage/consume.ts",
+        "src/hooks/useTierAccess.ts"
+      ],
+      "hash": "18aa4188118a1927b2c305820f3b9f353fa383c7774c9749935dc8df987c3c03",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#5-ai-models-and-how-comparisons-run": {
+      "files": [
+        "api/shared/models.ts",
+        "api/evaluate.ts",
+        "api/judge.ts",
+        "api/judge-report.ts",
+        "src/hooks/useComparison.ts",
+        "api/shared/anthropic.ts"
+      ],
+      "hash": "90644036dbad98077b79c89c457fa88f72777231d491df2e2cf2f4d6e1779bb9",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#6-web-research-tavily": {
+      "files": [
+        "api/shared/tavily.ts",
+        "api/shared/tavilyCache.ts"
+      ],
+      "hash": "27dfb842eee3ab64a9a3b8cca83f84b284207b70429268bf6120c7e3e84f4918",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#7-olivia-and-emilia": {
+      "files": [
+        "api/olivia/chat.ts",
+        "api/emilia/message.ts",
+        "api/shared/knowledge.ts",
+        "api/shared/appKnowledge.ts",
+        "src/hooks/useOliviaFace.ts",
+        "api/olivia/avatar/live.ts"
+      ],
+      "hash": "18e872d87fe8e0b78ebc5836d925707762386570bd8e982dae409c8f4f456ae2",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#8-videos": {
+      "files": [
+        "api/video/grok-generate.ts",
+        "api/video/grok-status.ts",
+        "api/shared/falKling.ts",
+        "api/avatar/generate-judge-video.ts",
+        "api/cristiano/render.ts",
+        "api/movie/generate.ts",
+        "api/shared/persistVideo.ts"
+      ],
+      "hash": "24ce86e60a04a21817f8956de93fb130b49f79f85e745d3a5aa9c56b623ee473",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
+    "TECHNICAL_SUPPORT_MANUAL.md#9-database": {
+      "files": [
+        "api/shared/supabaseAdmin.ts"
+      ],
+      "hash": "def874aa5adb43a7b709e01dede5a5d14c9bcecc896766f2bafe495dae4847a8",
+      "reviewed": "2026-10-04",
+      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+    },
     "USER_MANUAL.md#1-what-life-score-is": {
       "files": [
         "src/components/Header.tsx",

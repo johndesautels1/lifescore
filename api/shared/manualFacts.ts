@@ -245,6 +245,23 @@ function factTests(root: string): string {
   return `${table(['Test', 'What it holds'], rows)}\n\nGitHub runs every one on every push (${code('.github/workflows/ci.yml')}).`;
 }
 
+/** The main libraries and the Node version, from package.json. */
+function factStack(root: string): string {
+  try {
+    const pkg = JSON.parse(read(root, 'package.json') ?? '{}') as {
+      engines?: { node?: string };
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const rows: string[][] = [['Node.js', pkg.engines?.node ?? 'not set', 'engines']];
+    for (const [name, version] of Object.entries(pkg.dependencies ?? {})) rows.push([code(name), version, 'app']);
+    for (const [name, version] of Object.entries(pkg.devDependencies ?? {})) rows.push([code(name), version, 'build and test']);
+    return `${table(['Package', 'Version range', 'Used for'], rows)}\n\nExact versions are pinned in ${code('package-lock.json')}; CI installs exactly those (${code('npm ci')}).`;
+  } catch {
+    return 'package.json could not be read.';
+  }
+}
+
 /** Every fact a manual may embed, by block name. */
 export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   routes: factRoutes,
@@ -259,11 +276,16 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   components: (root) => factModules(root, 'src/components', /\.tsx$/),
   hooks: (root) => factModules(root, 'src/hooks', /\.ts$/),
   services: (root) => factModules(root, 'src/services', /\.ts$/),
+  shared: (root) => factModules(root, 'api/shared', /\.ts$/),
+  stack: factStack,
   tests: factTests,
 };
 
-/** The block markers, with whatever stands between them. */
-const BLOCK = /<!-- facts:([a-z]+) -->[\s\S]*?<!-- \/facts:\1 -->/g;
+/**
+ * The block markers, each on a line of its own, with whatever stands between
+ * them. A marker quoted inside a sentence is left alone.
+ */
+const BLOCK = /^<!-- facts:([a-z]+) -->\r?$[\s\S]*?^<!-- \/facts:\1 -->\r?$/gm;
 
 /** Names of the fact blocks a manual uses. */
 export function factBlocksIn(markdown: string): string[] {
