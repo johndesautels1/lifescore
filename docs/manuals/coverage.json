@@ -52,9 +52,9 @@
         "api/user/delete.ts",
         "src/legal/legalContent.ts"
       ],
-      "hash": "dbed2f05c9808e3984aeba71a4c8af1f2243972551e2df98acc325ef0aa0bf51",
+      "hash": "d9839ee170a6793db8e5318ee290063848f461aa3d9ff776d5398e3a15a16c4f",
       "reviewed": "2026-10-04",
-      "basis": "534b5fb36d5beac13bcb4b0c9ccf96b260aa9782"
+      "basis": "dd0de1f3953f02bcf988a858dfb3a082b0dfea94"
     },
     "CUSTOMER_SERVICE_MANUAL.md#6-billing-and-refunds": {
       "files": [
@@ -129,9 +129,9 @@
         "scripts/manuals-autoupdate.ts",
         "tests/manuals.test.ts"
       ],
-      "hash": "c0d88ce9d7fae8b81e7442c621f58387fb2cc48c67638def5047c1d37b3cbc1f",
+      "hash": "5595d64bb53e85da6ab680172fb539b5c8734858b4c36a440e461c8e60662358",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "dd0de1f3953f02bcf988a858dfb3a082b0dfea94"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#15-admin-tools": {
       "files": [
@@ -258,9 +258,9 @@
         "api/user/export.ts",
         "api/user/delete.ts"
       ],
-      "hash": "6e65337c836b011c7157f751cbb13de15f559b436e73745bcc0f607c522f73c6",
+      "hash": "c184193a14f6b784d1098639073dab7efdd0cd05b5957e3dda8529e3f41e7053",
       "reviewed": "2026-10-04",
-      "basis": "d26cd8843408e25c65eb82d632a48756913b1905"
+      "basis": "dd0de1f3953f02bcf988a858dfb3a082b0dfea94"
     },
     "USER_MANUAL.md#11-plans": {
       "files": [

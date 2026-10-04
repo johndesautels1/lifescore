@@ -10,7 +10,7 @@
  *      keeps charging would leave a customer billed with no account to cancel
  *      from. Stripe keeps its own invoices (financial records, 7 years).
  *   2. Remove the user's own files — `user-videos/{userId}/` (uploaded court
- *      order videos) and `Reports/{userId}/` (saved report pages).
+ *      order videos) and `reports/{userId}/` (saved report pages).
  *   3. Remove the beta invitation (keyed by email, so it does not cascade),
  *      then delete the sign-in account. Every table holding the user's data is
  *      linked to it ON DELETE CASCADE — or SET NULL for shared city caches and
@@ -41,7 +41,7 @@ export const config = {
 const STEP_TIMEOUT_MS = 15_000;
 
 /** Storage folders that belong to one user, named `{userId}/…`. */
-const USER_FOLDERS: readonly string[] = ['user-videos', 'Reports'];
+const USER_FOLDERS: readonly string[] = ['user-videos', 'reports'];
 
 /** Stripe states that can still charge. */
 const BILLABLE_STATUSES: readonly string[] = ['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'];

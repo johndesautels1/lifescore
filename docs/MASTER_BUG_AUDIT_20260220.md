@@ -31,6 +31,15 @@ John, 4 Oct 2026: *"you must verify each one with the actual code not trusting t
 
 **Checked in the live database** (Supabase, 4 Oct 2026): every public table has row-level security; consent records and usage rows are readable only by their owner; `comparisons.user_id` is indexed and linked to `profiles`; `user_preferences` has no duplicate index; scores are stored as `numeric`. The table `api_usage_log` no longer exists (usage lives in `usage_tracking`, owner-only, linked to `profiles`).
 
+**Found in the live database and fixed** (4 Oct 2026, migration `20261004_reconcile_live_schema`, applied with John's approval). Three committed migrations had never been applied, and the report library's storage bucket had been made by hand as `Reports` while the code and its policies use `reports`:
+
+- Gamma reports had not saved to accounts since 15 Feb (the insert named `pdf_storage_path` / `pptx_storage_path`, missing live);
+- PDF and PowerPoint exports could not be kept (no `gamma-exports` bucket), so users got Gamma's expiring links;
+- the report library had never saved a report (0 rows, 0 files);
+- the Do Not Sell opt-out was not stored (`user_preferences.ccpa_dns_optout` missing).
+
+Account deletion now clears `reports/` (it named the empty `Reports`). The opt-out audit view runs with the caller's permissions. Held by `tests/storageBuckets.test.ts` and `tests/schemaColumns.test.ts`.
+
 ---
 
 ## PART 1: BUGS FIXED IN THE FEBRUARY SESSIONS (47 total)

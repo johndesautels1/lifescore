@@ -196,6 +196,51 @@ function factTables(root: string): string {
   return `${table(['Table', 'Created by migration'], rows)}\n\nFrom ${code('supabase/migrations/')}. Every public table has row-level security.`;
 }
 
+/**
+ * The columns the app's code is written against: for each table in the
+ * `Database` type (src/types/database.ts), the fields of its Row type, found in
+ * src/types/database*.ts. Columns the live database adds beyond these are not
+ * read by typed code; columns listed here that the live database lacks fail.
+ */
+export function typedColumns(root: string): Map<string, string[]> {
+  const files = list(root, 'src/types', /^database[^/]*\.ts$/, false);
+  const text = files.map((file) => read(root, file) ?? '').join('\n');
+  const bodies = new Map<string, string>();
+  for (const m of text.matchAll(/export\s+interface\s+([A-Za-z0-9_]+)\s*\{([\s\S]*?)\n\}/g)) bodies.set(m[1], m[2]);
+  const tables = new Map<string, string[]>();
+  for (const m of text.matchAll(/^\s+([a-z_][a-z0-9_]*):\s*\{\s*Row:\s*([A-Za-z0-9_]+);/gm)) {
+    const body = bodies.get(m[2]) ?? '';
+    tables.set(
+      m[1],
+      [...body.matchAll(/^\s{2}([a-z_][a-z0-9_]*)\??\s*:/gm)].map((f) => f[1]),
+    );
+  }
+  return tables;
+}
+
+function factColumns(root: string): string {
+  const rows = [...typedColumns(root).entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([name, columns]) => [code(name), columns.join(', ')]);
+  return `${table(['Table', 'Columns the code reads and writes'], rows)}\n\nFrom the ${code('Database')} type in ${code('src/types/database.ts')} and the row types in ${code('src/types/database-*.ts')}.`;
+}
+
+/** For each table the migrations leave, the code files that name it (as a quoted string). */
+function factTableUsage(root: string): string {
+  const tables = factTables(root)
+    .split('\n')
+    .map((line) => line.match(/^\| `([a-z_][a-z0-9_]*)` \|/)?.[1])
+    .filter((name): name is string => Boolean(name));
+  const files = [...list(root, 'api', /\.ts$/, true), ...list(root, 'src', /\.(ts|tsx)$/, true)];
+  const texts = files.map((file) => ({ file, text: read(root, file) ?? '' }));
+  const rows = tables.map((name) => {
+    const quoted = new RegExp(`['"\`]${name}['"\`]`);
+    const users = texts.filter((t) => quoted.test(t.text)).map((t) => code(t.file));
+    return [code(name), users.length ? users.join(', ') : '(not named in the code)'];
+  });
+  return table(['Table', 'Code that reads or writes it'], rows);
+}
+
 function factJobs(root: string): string {
   const rows: string[][] = [];
   try {
@@ -271,6 +316,8 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   metrics: () => factMetrics(),
   categories: () => factCategories(),
   tables: factTables,
+  tableusage: factTableUsage,
+  columns: factColumns,
   jobs: factJobs,
   functions: factFunctions,
   components: (root) => factModules(root, 'src/components', /\.tsx$/),
