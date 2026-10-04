@@ -8,6 +8,7 @@ import { loadPublicSupabaseSettings } from './lib/publicConfig.ts'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { initErrorTracking } from './lib/errorTracking.ts'
 import { toastError } from './utils/toast'
+import { moveStoredGitHubConfig } from './services/githubToken'
 
 // E10: Initialize global error tracking (internal buffer + reporting)
 initErrorTracking();
@@ -31,6 +32,8 @@ try {
 } catch {
   // storage blocked: nothing stored either
 }
+// A GitHub backup token an older release stored permanently (src/services/githubToken.ts)
+moveStoredGitHubConfig();
 
 const RELEASE_RELOAD_KEY = 'lifescore-release-reload-at';
 window.addEventListener('vite:preloadError', (event) => {

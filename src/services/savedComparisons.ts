@@ -9,6 +9,7 @@
 import type { ComparisonResult } from '../types/metrics';
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import type { FreedomEducationData } from '../types/freedomEducation';
+import { clearGitHubConfig, getGitHubConfig, saveGitHubConfig, storedGistId, type GitHubConfig } from './githubToken';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 import { supabase, isSupabaseConfigured, getCurrentUser, withRetry, SUPABASE_TIMEOUT_MS } from '../lib/supabase';
 
@@ -48,10 +49,9 @@ export interface SavedComparison {
   synced?: boolean; // True if synced to GitHub
 }
 
-export interface GitHubConfig {
-  accessToken: string;
-  gistId?: string; // Created on first sync
-}
+// The GitHub backup's settings live in ./githubToken.ts (token for this visit only)
+export type { GitHubConfig } from './githubToken';
+export { getGitHubConfig, saveGitHubConfig, clearGitHubConfig } from './githubToken';
 
 export interface StorageState {
   comparisons: SavedComparison[];
@@ -156,7 +156,6 @@ const ENHANCED_STORAGE_KEY = 'lifescore_saved_enhanced';
 const GAMMA_REPORTS_KEY = 'lifescore_saved_gamma_reports';
 const JUDGE_REPORTS_KEY = 'lifescore_judge_reports';
 const COURT_ORDERS_KEY = 'lifescore_court_orders';
-const GITHUB_CONFIG_KEY = 'lifescore_github_config';
 const GIST_FILENAME = 'lifescore_comparisons.json';
 const GIST_DESCRIPTION = 'LIFE SCORE™ Saved City Comparisons';
 const GITHUB_TIMEOUT_MS = 60000; // 60 seconds for GitHub API calls
@@ -409,37 +408,6 @@ function saveLocalComparisons(comparisons: SavedComparison[]): void {
   if (success) {
     console.log('[savedComparisons] Saved', trimmed.length, 'comparisons to localStorage');
   }
-}
-
-/**
- * Get GitHub config from localStorage
- */
-export function getGitHubConfig(): GitHubConfig | null {
-  try {
-    const stored = localStorage.getItem(GITHUB_CONFIG_KEY);
-    if (!stored) return null;
-    return JSON.parse(stored) as GitHubConfig;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Save GitHub config to localStorage
- */
-export function saveGitHubConfig(config: GitHubConfig): void {
-  try {
-    localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(config));
-  } catch (err) {
-    console.error('[savedComparisons] Failed to save GitHub config:', err);
-  }
-}
-
-/**
- * Clear GitHub config
- */
-export function clearGitHubConfig(): void {
-  localStorage.removeItem(GITHUB_CONFIG_KEY);
 }
 
 // ============================================================================
@@ -2028,8 +1996,17 @@ export async function connectGitHub(accessToken: string): Promise<{ success: boo
 
     const user = await response.json();
 
-    // Save config
-    const config: GitHubConfig = { accessToken };
+    // Keep the token for this visit; reuse the backup Gist from an earlier visit
+    // when it still exists, so reconnecting does not start a new one
+    let gistId = storedGistId();
+    if (gistId) {
+      try {
+        await fetchGist(accessToken, gistId);
+      } catch {
+        gistId = undefined;
+      }
+    }
+    const config: GitHubConfig = gistId ? { accessToken, gistId } : { accessToken };
     saveGitHubConfig(config);
 
     return { success: true, message: `Connected as ${user.login}`, username: user.login };

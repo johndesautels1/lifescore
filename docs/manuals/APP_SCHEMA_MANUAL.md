@@ -136,7 +136,7 @@ Functions and triggers the migrations define:
 - **Preferences** (weights, Law vs Lived, excluded categories, dealbreakers) are kept in the browser and saved to `user_preferences`.
 - **Settings → Data → Clear Local Data** removes saved items from this browser only; the account keeps its copy.
 - **Cookie and privacy choices** (`clues_cookie_consent`, `clues_ccpa_dns_optout`, with an anonymous id) are kept in the browser and logged in `consent_logs`.
-- **GitHub backup** — Saved Comparisons can also copy a user's saved comparisons to a private GitHub Gist with a token the user pastes in; the token is kept in this browser.
+- **GitHub backup** — Saved Comparisons can also copy a user's saved comparisons to a private GitHub Gist with a token the user pastes in. The token is kept for this visit only (`sessionStorage`, `lifescore_github_token`) and forgotten when the tab closes; the Gist's id (`lifescore_github_gist`, not a secret) stays so the next visit updates the same backup (`src/services/githubToken.ts`). A token an older release stored in `lifescore_github_config` is removed when the app starts.
 
 ---
 

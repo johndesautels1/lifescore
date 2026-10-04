@@ -186,7 +186,7 @@ Olivia is LIFE SCORE's AI advisor. She knows the comparison you are viewing and 
 Signed in, your saved items are kept in your account and synced to every device you sign in on. You can also:
 - **Export** your saved comparisons to a file, and **Import** them back;
 - **Clear All** removes the copies kept on this device (anything saved to your account returns at the next sync);
-- **Connect GitHub** to keep a backup copy in a private GitHub Gist (needs a personal access token with the *gist* scope).
+- **Connect GitHub** to keep a backup copy in a private GitHub Gist (needs a personal access token with the *gist* scope). The token is forgotten when you close the tab, so enter it again on your next visit; your backup carries on in the same Gist.
 
 ---
 

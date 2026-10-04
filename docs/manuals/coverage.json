@@ -58,9 +58,9 @@
         "src/components/SettingsModal.tsx",
         "src/components/CookieConsent.tsx"
       ],
-      "hash": "9c28535dfb97d3dda3290519cd549906c3f5608869ed3efa208bcca7c27f7e14",
+      "hash": "a6ba2296588ba33e6f83dc73174ec2b5d03258ebd4b1233d3aabdd2feba643be",
       "reviewed": "2026-10-04",
-      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
+      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
     },
     "APP_SCHEMA_MANUAL.md#7-deleting-an-account-and-exporting-data": {
       "files": [
@@ -121,9 +121,9 @@
         "src/hooks/useGrokVideo.ts",
         "src/main.tsx"
       ],
-      "hash": "277a63c1c6aa031f1f87f2b1bb5bd7dcfea0c9b88e98a806c5ebbe210b60d518",
+      "hash": "9ee49f73c734a760b7bf5027d2739137abf50b0a61ab828355e5f17dcaba37e7",
       "reviewed": "2026-10-04",
-      "basis": "6278248b9b9ec9d434f1296047731e3135591937"
+      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
     },
     "CUSTOMER_SERVICE_MANUAL.md#5-account-and-privacy-requests": {
       "files": [
@@ -335,9 +335,9 @@
         "vite.config.ts",
         "src/main.tsx"
       ],
-      "hash": "eb84cfa195253b991dcdfb727d5600cbe3dc08b58f72ae7a543ecc34a01104d1",
+      "hash": "5d6af0d90c7a047c9bb8d0c76add386323f9832fc602ff5ca62c1ee6b8da72ec",
       "reviewed": "2026-10-04",
-      "basis": "d09bc9f26db285764c37b8d4d515501ba0cb2c9d"
+      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#10-settings": {
       "files": [
@@ -375,9 +375,9 @@
         "vite.config.ts",
         "api/shared/entitlements.ts"
       ],
-      "hash": "a556913c1d079f593d3e44bca0c69f0d9eb94ed791407778b85bb831e9658d1e",
+      "hash": "5c59e9e57952a1a6850f0a1c0412b89254bbfe864dee5e11fe3b7fd21553f401",
       "reviewed": "2026-10-04",
-      "basis": "13a5fcbad598c3b4aae08f1efb066a5154d7f78c"
+      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#14-how-the-manuals-and-assistants-stay-current": {
       "files": [
@@ -565,9 +565,9 @@
         "src/main.tsx",
         "src/components/LoginScreen.tsx"
       ],
-      "hash": "43943f7e7899937ca69a1962fa9e8d72ec42be28afc140f3d0b0a2b226e7aeb3",
+      "hash": "44431c0e6cabb5ac0bc6566bdbe7e46fa72bd9b0d9ac249436eb3fe245d1ae9d",
       "reviewed": "2026-10-04",
-      "basis": "13a5fcbad598c3b4aae08f1efb066a5154d7f78c"
+      "basis": "722649c4e819cfbb8537c691b5c6fd903bf0cf63"
     },
     "USER_MANUAL.md#2-signing-in": {
       "files": [
