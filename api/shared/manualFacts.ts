@@ -29,6 +29,7 @@ import { join } from 'node:path';
 import { TIER_LIMITS, TIER_PRICING, USER_TIERS, type TierLimits } from './plans.js';
 import { AI_MODELS } from './models.js';
 import { ALL_METRICS, CATEGORIES } from './metrics-data.js';
+import { getCategoryOptionsForPrompt } from './metrics.js';
 
 // ============================================================================
 // FILE HELPERS
@@ -171,6 +172,29 @@ function factMetrics(): string {
     parts.push(table(['Id', 'Metric', 'What it measures'], metrics.map((m) => [code(m.id), m.name, m.description])));
   }
   return `${ALL_METRICS.length} metrics in ${CATEGORIES.length} categories. Source: ${code('api/shared/metrics-data.ts')}.\n\n${parts.join('\n\n')}`;
+}
+
+/**
+ * How each metric is scored: its weight in its category, which way is freer,
+ * and the levels an evaluator chooses from with the score each gives (the
+ * levels the evaluation prompt offers — api/shared/metrics.ts).
+ */
+function factScoring(): string {
+  const parts: string[] = [];
+  for (const category of CATEGORIES) {
+    const metrics = ALL_METRICS.filter((m) => m.categoryId === category.id);
+    const total = metrics.reduce((sum, m) => sum + m.weight, 0);
+    const rows = metrics.map((m) => [
+      code(m.id),
+      m.name,
+      String(m.weight),
+      m.scoringDirection === 'higher_is_better' ? 'higher' : 'lower',
+      getCategoryOptionsForPrompt(m.id).map((o) => `${o.label} = ${o.score}`).join('; '),
+    ]);
+    parts.push(`**${category.name}** — metric weights add up to ${total}`);
+    parts.push(table(['Id', 'Metric', 'Weight', 'More freedom when the measure is', 'Levels (score)'], rows));
+  }
+  return `From ${code('api/shared/metrics-data-*.ts')} via ${code('api/shared/metrics.ts')}. Every metric also accepts ${code('insufficient_data')} and ${code('transitional')}, which give no score (the metric is left out).\n\n${parts.join('\n\n')}`;
 }
 
 function factCategories(): string {
@@ -466,6 +490,7 @@ export const MANUAL_FACTS: Record<string, (root: string) => string> = {
   models: () => factModels(),
   metrics: () => factMetrics(),
   categories: () => factCategories(),
+  scoring: () => factScoring(),
   tables: factTables,
   tableusage: factTableUsage,
   columns: factColumns,
