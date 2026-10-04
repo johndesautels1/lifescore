@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetchingRef.current = userId;
-    console.log("[Auth] Fetching profile for user:", userId);
+    console.log("[Auth] Fetching profile"); // never the user id or email in the browser console (bug audit A34)
 
     try {
       // Fetch profile and preferences in parallel with reduced timeout/retries
@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const preferences = prefsResult.data;
 
       if (profile) {
-        console.log('[Auth] Profile loaded:', profile.email);
+        console.log('[Auth] Profile loaded');
         // Success — clear cooldown so future fetches work immediately
         _lastProfileFetchFailedAt = 0;
       } else {

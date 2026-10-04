@@ -18,6 +18,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from './shared/cors.js';
 import { requireFeature } from './shared/entitlements.js';
 import { asRecord, readIceServers, text, type IceServer } from './shared/jsonRead.js';
+import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
+
+/** Time limit for Simli issuing a session token. */
+const SIMLI_TOKEN_TIMEOUT_MS = 15_000;
+/** Time limit for Simli's ICE server list. */
+const SIMLI_ICE_TIMEOUT_MS = 10_000;
 
 export const config = {
   maxDuration: 30,
@@ -57,7 +63,7 @@ export default async function handler(
     console.log('[SIMLI-CONFIG] Generating session token for user:', auth.userId);
 
     // Generate session token via Simli API (v3 flow)
-    const tokenResponse = await fetch(`${SIMLI_API_URL}/compose/token`, {
+    const tokenResponse = await fetchWithTimeout(`${SIMLI_API_URL}/compose/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +75,7 @@ export default async function handler(
         maxSessionLength: 3600,
         maxIdleTime: 600,
       }),
-    });
+    }, SIMLI_TOKEN_TIMEOUT_MS);
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
@@ -90,13 +96,13 @@ export default async function handler(
     // Generate ICE servers via Simli API (v3 flow)
     let iceServers: IceServer[] = [{ urls: ['stun:stun.l.google.com:19302'] }];
     try {
-      const iceResponse = await fetch(`${SIMLI_API_URL}/compose/ice`, {
+      const iceResponse = await fetchWithTimeout(`${SIMLI_API_URL}/compose/ice`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'x-simli-api-key': apiKey,
         },
-      });
+      }, SIMLI_ICE_TIMEOUT_MS);
 
       if (iceResponse.ok) {
         const iceData = readIceServers(await iceResponse.json());

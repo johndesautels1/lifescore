@@ -167,7 +167,7 @@ const PricingModal: React.FC<PricingModalProps> = ({
   };
 
   const handleManageSubscription = async () => {
-    if (!profile?.id) { console.error("[PricingModal] Cannot manage subscription: profile.id missing", { profile }); toastError("Unable to manage subscription. Please refresh and try again."); return; }
+    if (!profile?.id) { console.error("[PricingModal] Cannot manage subscription: the profile has no id"); toastError("Unable to manage subscription. Please refresh and try again."); return; }
 
     setIsLoading('manage');
 

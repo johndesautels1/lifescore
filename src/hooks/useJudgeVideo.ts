@@ -22,6 +22,12 @@ import { getAuthHeaders } from '../lib/supabase';
 const API_BASE = '/api/avatar';
 const POLL_INTERVAL = 3000; // 3 seconds
 const API_TIMEOUT_MS = 60000; // 60 second timeout for API calls
+// Polling gives up instead of running for ever (bug audit A26): after 15 minutes
+// in all, or after 10 status checks in a row fail (30 seconds of errors, e.g. an
+// expired sign-in or a deleted video). One check waits at most 15 seconds.
+const MAX_POLL_MS = 15 * 60 * 1000;
+const MAX_CONSECUTIVE_POLL_ERRORS = 10;
+const STATUS_TIMEOUT_MS = 15000;
 
 export function useJudgeVideo(): UseJudgeVideoReturn {
   const [video, setVideo] = useState<JudgeVideo | null>(null);
@@ -29,6 +35,9 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
   const [error, setError] = useState<string | null>(null);
 
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // When this round of polling began (0 = not polling), and failed checks in a row.
+  const pollStartedAtRef = useRef(0);
+  const pollErrorsRef = useRef(0);
 
   // Use ref to avoid stale closure issues with polling
   // This ref always has the latest video data for checkStatus to use
@@ -50,6 +59,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       clearInterval(pollIntervalRef.current);
       pollIntervalRef.current = null;
     }
+    pollStartedAtRef.current = 0;
   }, []);
 
   // Cancel any pending generation and reset state
@@ -76,6 +86,13 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       return;
     }
 
+    if (pollStartedAtRef.current && Date.now() - pollStartedAtRef.current > MAX_POLL_MS) {
+      stopPolling();
+      setError('The video is taking too long. Please try again.');
+      setStatus('failed');
+      return;
+    }
+
     try {
       // Prefer predictionId for direct Replicate query (bypasses DB issues)
       const param = currentVideo.replicatePredictionId
@@ -88,6 +105,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
 
       const response = await fetch(`${API_BASE}/video-status?${param}`, {
         headers: await getAuthHeaders(),
+        signal: AbortSignal.timeout(STATUS_TIMEOUT_MS),
       });
 
       // Check if generation was cancelled while fetching
@@ -101,6 +119,7 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       }
 
       const data = await response.json();
+      pollErrorsRef.current = 0;
 
       // Double-check cancellation after parsing response
       if (generationIdRef.current !== myGenerationId) {
@@ -129,13 +148,22 @@ export function useJudgeVideo(): UseJudgeVideoReturn {
       }
     } catch (err) {
       console.error('[useJudgeVideo] Status check error:', err);
-      // Don't stop polling on transient errors
+      // A passing error keeps polling; a run of them stops it.
+      if (generationIdRef.current !== myGenerationId) return;
+      pollErrorsRef.current += 1;
+      if (pollErrorsRef.current >= MAX_CONSECUTIVE_POLL_ERRORS) {
+        stopPolling();
+        setError('Could not check on the video. Please try again.');
+        setStatus('failed');
+      }
     }
   }, [stopPolling]);
 
   // Start polling for status
   const startPolling = useCallback(() => {
     stopPolling();
+    pollStartedAtRef.current = Date.now();
+    pollErrorsRef.current = 0;
     pollIntervalRef.current = setInterval(checkStatus, POLL_INTERVAL);
   }, [checkStatus, stopPolling]);
 

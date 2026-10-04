@@ -14,6 +14,10 @@ import { getAdminEmails } from '../shared/auth.js';
 import { requireAdmin } from '../shared/entitlements.js';
 import { elevenLabsSubscription } from '../shared/elevenlabs.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
+import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+
+/** Time limit for Resend accepting the quota-alert email. */
+const RESEND_TIMEOUT_MS = 15_000;
 
 // ============================================================================
 // CONFIGURATION
@@ -159,7 +163,7 @@ async function sendAlertEmail(
   `;
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetchWithTimeout('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -171,7 +175,7 @@ async function sendAlertEmail(
         subject,
         html,
       }),
-    });
+    }, RESEND_TIMEOUT_MS);
 
     if (!response.ok) {
       const error = await response.text();

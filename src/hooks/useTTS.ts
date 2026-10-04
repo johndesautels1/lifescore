@@ -100,7 +100,7 @@ export function useTTS(
       setIsPlaying(false);
       onErrorRef.current?.(message);
     }
-  }, []);
+  }, [speed]); // speed is read at play time (bug audit ML13)
 
   /**
    * Generate and play TTS for text
@@ -112,8 +112,9 @@ export function useTTS(
     setError(null);
     setIsLoading(true);
 
-    // Helper to use browser speech synthesis
-    const useBrowserTTS = () => {
+    // Helper to use browser speech synthesis. A plain function, not a hook, so it is
+    // not named use…: the hook linter rejected the old name inside a callback.
+    const speakWithBrowser = () => {
       if ('speechSynthesis' in window) {
         // Cancel any ongoing speech first to prevent queue issues
         window.speechSynthesis.cancel();
@@ -171,7 +172,7 @@ export function useTTS(
         await playUrl(response.audioUrl);
       } else {
         // Fallback to browser speech synthesis
-        if (!useBrowserTTS()) {
+        if (!speakWithBrowser()) {
           throw new Error('No audio URL returned and browser TTS not supported');
         }
       }
@@ -179,13 +180,13 @@ export function useTTS(
       const message = err instanceof Error ? err.message : 'TTS generation failed';
       setError(message);
       // Fallback to browser speech synthesis on error
-      if (!useBrowserTTS()) {
+      if (!speakWithBrowser()) {
         onErrorRef.current?.(message);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [voiceId, playUrl]);
+  }, [voiceId, playUrl, speed]); // speed: the browser voice uses it too (bug audit ML14)
 
   /**
    * Stop playback

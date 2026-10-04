@@ -18,7 +18,10 @@ import { readReplicatePrediction } from '../shared/videoReplies.js';
 import { submitKlingClip } from '../shared/falKling.js';
 import { isExpiringClipUrl } from '../shared/clipHosts.js';
 import { notifyJobComplete } from '../shared/notifyJob.js';
-import crypto from 'crypto';
+import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+
+/** Time limit for Replicate accepting a Minimax clip (it may hold the reply up to 5 s: Prefer: wait=5). */
+const REPLICATE_CREATE_TIMEOUT_MS = 30_000;
 
 // Storage bucket for persisting court order / grok videos
 const COURT_ORDER_BUCKET = 'court-order-videos';
@@ -286,11 +289,6 @@ function detectCityType(cityName: string): CityType {
   return 'general';
 }
 
-function generateCacheKey(cityName: string, videoType: VideoType): string {
-  const data = `${cityName.toLowerCase()}-${videoType}`;
-  return crypto.createHash('md5').update(data).digest('hex');
-}
-
 // ============================================================================
 // VIDEO GENERATION - KLING 3 THROUGH FAL (primary; api/shared/falKling.ts)
 // ============================================================================
@@ -325,7 +323,7 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
 
   // Use Minimax Video-01 - high quality text-to-video model
   // API: POST /models/{model}/predictions
-  const response = await fetch(`${REPLICATE_API_URL}/models/${REPLICATE_VIDEO_MODEL}/predictions`, {
+  const response = await fetchWithTimeout(`${REPLICATE_API_URL}/models/${REPLICATE_VIDEO_MODEL}/predictions`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${replicateToken}`,
@@ -338,7 +336,7 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
         prompt_optimizer: true, // Let Minimax enhance the prompt
       },
     }),
-  });
+  }, REPLICATE_CREATE_TIMEOUT_MS);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -363,8 +361,6 @@ async function generateWithReplicate(prompt: string): Promise<{ predictionId: st
 // ============================================================================
 
 async function checkCache(cityName: string, videoType: VideoType): Promise<GrokVideoRecord | null> {
-  const cacheKey = generateCacheKey(cityName, videoType);
-
   try {
     const { data, error } = await supabaseAdmin
       .from('grok_videos')

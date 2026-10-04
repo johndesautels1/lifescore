@@ -18,7 +18,7 @@ import { AI_MODELS } from './shared/models.js';
 /** The one model a standard (single-model) comparison runs on — see src/hooks/useComparison.ts. */
 const STANDARD_COMPARISON_PROVIDER = 'claude-sonnet';
 // Phase 2: Import shared metrics for category-based scoring (standalone api/shared version)
-import { categoryToScore, METRICS_MAP, getCategoryOptionsForPrompt } from './shared/metrics.js';
+import { categoryToScore, getCategoryOptionsForPrompt } from './shared/metrics.js';
 import { checkResearchOnce, tavilyResearch, tavilySearch } from './shared/tavily.js';
 import {
   claimTavilyContext,
@@ -1555,8 +1555,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // A body that is not JSON is the caller's mistake: 400, not a 500 (bug audit A21).
+  // @vercel/node parses the body when it is first read and throws on bad JSON.
+  let body: EvaluationRequest;
   try {
-    const { provider, city1, city2, metrics } = req.body as EvaluationRequest;
+    body = req.body as EvaluationRequest;
+  } catch {
+    return res.status(400).json({ error: 'The request body is not valid JSON' });
+  }
+
+  try {
+    const { provider, city1, city2, metrics } = (body ?? {}) as EvaluationRequest;
 
     if (!provider || !city1 || !city2 || !metrics) {
       console.error('[EVALUATE] Missing required fields');

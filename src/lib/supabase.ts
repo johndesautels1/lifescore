@@ -279,7 +279,7 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 
 if (import.meta.env.DEV) {
   supabase.auth.onAuthStateChange((event, session) => {
-    console.log('[Supabase Auth]', event, session?.user?.email || 'no user');
+    console.log('[Supabase Auth]', event, session?.user ? 'signed in' : 'no user'); // never the email (bug audit A34)
   });
 }
 

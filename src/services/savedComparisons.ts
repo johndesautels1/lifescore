@@ -1116,7 +1116,7 @@ export function saveGammaReport(report: Omit<SavedGammaReport, 'id' | 'savedAt'>
           ).then(({ data, error }) => {
             if (error) {
               console.error('[savedComparisons] Gamma DB save failed:', error);
-              console.error('[savedComparisons] Save params:', { userId: user.id, comparisonId: report.comparisonId });
+              console.error('[savedComparisons] Save params:', { comparisonId: report.comparisonId });
             } else {
               console.log('[savedComparisons] ✓ Gamma report saved to Supabase database:', id, data);
             }

@@ -20,6 +20,10 @@ import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { describeHeyGenFailure, submitVideo, videoConfigured } from '../shared/heygen/heygenVideo.js';
 import { readReplicatePrediction } from '../shared/videoReplies.js';
 import crypto from 'crypto';
+import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+
+/** Time limit for Replicate accepting a judge-video prediction. */
+const REPLICATE_CREATE_TIMEOUT_MS = 30_000;
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 
@@ -434,14 +438,14 @@ export default async function handler(
     }
 
     // Submit to Replicate predictions API (no deployment needed - Wav2Lip is fast)
-    const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
+    const response = await fetchWithTimeout(`${REPLICATE_API_URL}/predictions`, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${replicateToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(replicateBody),
-    });
+    }, REPLICATE_CREATE_TIMEOUT_MS);
 
     if (!response.ok) {
       const errorText = await response.text();

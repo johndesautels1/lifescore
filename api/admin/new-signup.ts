@@ -16,6 +16,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../shared/cors.js';
 import { getServiceClient } from '../shared/supabaseAdmin.js';
 import { getAdminEmails } from '../shared/auth.js';
+import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+
+/** Time limit for Resend accepting the new-signup email. */
+const RESEND_TIMEOUT_MS = 15_000;
 
 /** A signup alert is sent only for an account created in the last few minutes. */
 const SIGNUP_WINDOW_MS = 15 * 60 * 1000;
@@ -144,7 +148,7 @@ export default async function handler(
   `;
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetchWithTimeout('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -156,7 +160,7 @@ export default async function handler(
         subject,
         html,
       }),
-    });
+    }, RESEND_TIMEOUT_MS);
 
     if (!response.ok) {
       const errorText = await response.text();

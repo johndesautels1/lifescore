@@ -706,19 +706,32 @@ export function buildContrastRequest(
   };
 }
 
+/** The browser stops waiting for the contrast images after two minutes (bug audit A17).
+    The server bounds each of its own calls (api/olivia/contrast-images.ts). */
+const CONTRAST_IMAGES_TIMEOUT_MS = 120_000;
+
 // Generate images via API
 export async function generateContrastImages(
   request: ContrastRequest
 ): Promise<ContrastImageResult> {
   const authHeaders = await getAuthHeaders();
-  const response = await fetch('/api/olivia/contrast-images', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-    },
-    body: JSON.stringify(request),
-  });
+  let response: Response;
+  try {
+    response = await fetch('/api/olivia/contrast-images', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+      body: JSON.stringify(request),
+      signal: AbortSignal.timeout(CONTRAST_IMAGES_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error('The images took too long. Please try again.');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const error = await response.json();

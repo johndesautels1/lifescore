@@ -209,13 +209,18 @@ const CourtOrderVideo: React.FC<CourtOrderVideoProps> = ({
       }
 
       const result = await response.json();
+      // A 200 without the saved row must say so, not crash the screen (bug audit T4).
+      const override = result?.override;
+      if (!override?.id || !override.video_url) {
+        throw new Error('The server did not return the saved video');
+      }
       setInvideoOverride({
-        id: result.override.id,
-        video_url: result.override.video_url,
-        video_title: result.override.video_title,
-        duration_seconds: result.override.duration_seconds,
-        thumbnail_url: result.override.thumbnail_url,
-        source: result.override.source,
+        id: override.id,
+        video_url: override.video_url,
+        video_title: override.video_title,
+        duration_seconds: override.duration_seconds,
+        thumbnail_url: override.thumbnail_url,
+        source: override.source,
       });
       setShowAdminUpload(false);
       setAdminVideoUrl('');

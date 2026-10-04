@@ -17,6 +17,10 @@ import { persistVideoToStorage } from '../shared/persistVideo.js';
 import { readReplicatePrediction } from '../shared/videoReplies.js';
 import { checkKlingClip } from '../shared/falKling.js';
 import { isExpiringClipUrl } from '../shared/clipHosts.js';
+import { fetchWithTimeout } from '../shared/fetchWithTimeout.js';
+
+/** Time limit for Replicate answering a clip's status. */
+const REPLICATE_STATUS_TIMEOUT_MS = 15_000;
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1';
 
@@ -46,13 +50,13 @@ async function checkReplicateStatus(predictionId: string): Promise<{
   }
 
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${REPLICATE_API_URL}/predictions/${predictionId}`,
       {
         headers: {
           'Authorization': `Token ${replicateToken}`,
         },
-      }
+      }, REPLICATE_STATUS_TIMEOUT_MS
     );
 
     if (!response.ok) {
