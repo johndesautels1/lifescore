@@ -65,11 +65,11 @@ jobs:
 
       - name: Type check (same as the Vercel build)
         if: steps.diff.outputs.changed == 'true'
-        run: node node_modules/typescript/bin/tsc -b
+        run: node node_modules/@typescript/native/bin/tsc -b
 
       - name: Type check the server functions (api/)
         if: steps.diff.outputs.changed == 'true'
-        run: node node_modules/typescript/bin/tsc -p tsconfig.api.json
+        run: node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json
 
       - name: Tests
         if: steps.diff.outputs.changed == 'true'

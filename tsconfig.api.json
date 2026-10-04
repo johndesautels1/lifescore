@@ -1,5 +1,5 @@
 {
-  "//": "Type check for the server functions in api/ (Vercel compiles them separately from the app, which tsconfig.app.json covers). Run: node node_modules/typescript/bin/tsc -p tsconfig.api.json",
+  "//": "Type check for the server functions in api/ (Vercel compiles them separately from the app, which tsconfig.app.json covers). Run: node node_modules/@typescript/native/bin/tsc -p tsconfig.api.json",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023"],
