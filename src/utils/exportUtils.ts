@@ -6,6 +6,7 @@
 import type { EnhancedComparisonResult } from '../types/enhancedComparison';
 import { CATEGORIES } from '../shared/metrics';
 import { getMetricDisplayName } from '../shared/metricDisplayNames';
+import { escapeHtml } from './escapeHtml';
 
 /**
  * Export comparison result to CSV format
@@ -321,9 +322,10 @@ export function exportToPDF(result: EnhancedComparisonResult): void {
                   const score2 = metric2.consensusScore ?? 0;
                   const diff = score1 - score2;
                   const diffStr = diff > 0 ? '+' + Math.round(diff) : Math.round(diff).toString();
-                  // Get reasoning from first LLM score if available
-                  const reasoning = (metric as any).llmScores?.[0]?.reasoning || '';
-                  const shortReasoning = reasoning.length > 150 ? reasoning.substring(0, 150) + '...' : reasoning;
+                  // The judge's reason for this metric's score, as on the results screen;
+                  // else the first model's (John, 4 Oct 2026). AI-written, so escaped.
+                  const reasoning = metric.judgeExplanation || metric.llmScores?.[0]?.explanation || '';
+                  const shortReasoning = escapeHtml(reasoning.length > 150 ? reasoning.substring(0, 150) + '...' : reasoning);
 
                   return `
                     <tr>

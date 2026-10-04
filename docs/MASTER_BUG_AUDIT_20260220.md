@@ -190,7 +190,7 @@ The individual items behind these counts were never written into this file, and 
 
 - Launch blocker #14 (server plan checks): FIXED 3 Oct 2026.
 - GDPR (G1/G2), retention and portability (B21/B22): FIXED — the privacy policy promises keeping data for the life of the account and deleting it at once on request, which is what the code does.
-- Open and real: S14 (the Content-Security-Policy, report-only since 4 Oct), the code-style clean-up (2 `as any` left of 39 — the export's reasoning field and the shared-report view; 11 withTimeout copies; dead Phase 2 code), and the mobile/accessibility polish folded into the look-and-feel work.
+- Open and real: S14 (the Content-Security-Policy, report-only since 4 Oct), the code-style clean-up (1 `as any` left of 39 — the shared-report view; 11 withTimeout copies; dead Phase 2 code), and the mobile/accessibility polish folded into the look-and-feel work.
 
 ---
 

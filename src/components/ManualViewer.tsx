@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ManualTabType } from './HelpModal';
 import { getAuthHeaders } from '../lib/supabase';
+import { escapeHtml } from '../utils/escapeHtml';
 import './ManualViewer.css';
 
 interface ManualViewerProps {
@@ -66,17 +67,13 @@ function sanitizeHtml(html: string): string {
 }
 
 /**
- * Every character HTML reads as markup, written as plain text (bug audit S8). The
- * manual's own words can then never become tags or attributes: the converter below
- * writes the only tags on the page, and sanitizeHtml stays as a second layer. Code
- * examples in the manuals (JSX with <div>…) now show as written instead of being
+ * Basic markdown to HTML converter. The manual is escaped first (escapeHtml, bug
+ * audit S8): every character HTML reads as markup is written as plain text, so the
+ * manual's own words can never become tags or attributes. This converter writes
+ * the only tags on the page, and sanitizeHtml stays as a second layer. Code
+ * examples in the manuals (JSX with <div>…) show as written instead of being
  * stripped.
  */
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// Basic markdown to HTML converter
 function markdownToHtml(markdown: string): string {
   let html = escapeHtml(markdown);
 
