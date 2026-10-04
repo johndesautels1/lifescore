@@ -7,6 +7,7 @@
  */
 
 import type { VercelResponse } from '@vercel/node';
+import { publicSiteUrl } from './siteUrl.js';
 
 // ============================================================================
 // TYPES
@@ -29,10 +30,10 @@ export interface CorsOptions {
  */
 function getAllowedOrigin(mode: CorsMode): string {
   if (mode === 'restricted' || mode === 'same-app') {
-    // Use Vercel's deployment URL if available, fallback to production domain
+    // Use Vercel's deployment URL if available, else the public site (siteUrl.ts)
     return process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : 'https://lifescore.vercel.app';
+      : publicSiteUrl();
   }
   return '*';
 }

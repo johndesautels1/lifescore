@@ -17,6 +17,7 @@ import { serviceDb } from './shared/supabaseAdmin.js';
 import { handleCors } from './shared/cors.js';
 import { requireAuth } from './shared/auth.js';
 import { fetchWithTimeout } from './shared/fetchWithTimeout.js';
+import { publicSiteUrl } from './shared/siteUrl.js';
 
 // Supabase admin client (service role for inserting notifications)
 const supabaseAdmin = serviceDb;
@@ -189,7 +190,7 @@ export default async function handler(
       const recipientEmail = email || await getUserEmail(userId);
       if (recipientEmail) {
         const fullLink = link
-          ? `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://lifescore.vercel.app'}${link}`
+          ? `${publicSiteUrl()}${link}`
           : undefined;
         results.email = await sendEmailViaResend(
           recipientEmail,

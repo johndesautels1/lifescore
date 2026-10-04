@@ -60,7 +60,7 @@ Components, hooks and services (each file's own header):
 ## 3. API routes
 <!-- covers: api/shared/cors.ts, api/shared/rateLimit.ts -->
 
-Every route answers CORS for the app's own origin only (`api/shared/cors.ts`; `/api/health` is open to any site), is rate-limited per caller (`api/shared/rateLimit.ts`, an in-memory burst limiter that sets `X-RateLimit-*` headers and resets when an instance restarts), and checks who is calling before it does anything paid (section 4).
+Every route answers CORS for the app's own origin only (`api/shared/cors.ts`; `/api/health` is open to any site), is rate-limited per caller (`api/shared/rateLimit.ts`, an in-memory burst limiter that sets `X-RateLimit-*` headers and resets when an instance restarts), and checks who is calling before it does anything paid (section 4). Links the server writes for users (emails) use the public site, `clueslifescore.com` (`api/shared/siteUrl.ts`); checkout returns only to the project's own addresses.
 
 <!-- facts:routes -->
 <!-- /facts:routes -->

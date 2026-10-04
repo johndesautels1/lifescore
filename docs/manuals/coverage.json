@@ -424,9 +424,9 @@
         "api/shared/cors.ts",
         "api/shared/rateLimit.ts"
       ],
-      "hash": "1d9531dff2c39c781982b2a92df98db8de2dc48cda06c715c1168852ad6339b9",
+      "hash": "0682b72da3f99ae7c3fca7fc206809a73c9bf3a72b06d9ad4227edc73ac03135",
       "reviewed": "2026-10-04",
-      "basis": "7a5b7ea1f91cf1dfa42683ca81d5f86767042469"
+      "basis": "dc3a0fcb3d09f031b334917a920db5a87025e63a"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#4-sign-in-plans-and-access": {
       "files": [

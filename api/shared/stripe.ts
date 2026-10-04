@@ -24,6 +24,7 @@
 
 import Stripe from 'stripe';
 import { USER_TIERS, type UserTier } from './plans.js';
+import { PROJECT_VERCEL_SITE, PUBLIC_SITE } from './siteUrl.js';
 
 // ============================================================================
 // CONNECTION
@@ -166,10 +167,13 @@ export function unixToIso(seconds: number | null | undefined): string | null {
 // REDIRECTS
 // ============================================================================
 
+// The project's own addresses only (api/shared/siteUrl.ts). Until 4 Oct 2026 this
+// list held https://lifescore.vercel.app, which is someone else's site, so a
+// checkout could be sent back there.
 const FIXED_ORIGINS: readonly string[] = [
-  'https://lifescore.vercel.app',
+  PROJECT_VERCEL_SITE,
   'https://www.clueslifescore.com',
-  'https://clueslifescore.com',
+  PUBLIC_SITE,
   'capacitor://localhost',
 ];
 
