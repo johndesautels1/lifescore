@@ -42,3 +42,18 @@ describe('the Enhanced report prompt', () => {
     expect(next - 1).toBe(82);
   });
 });
+
+describe('the admin Prompts screen is read-only (GR4)', () => {
+  it('the server refuses edits and writes nothing', () => {
+    const route = readFileSync('api/prompts.ts', 'utf8');
+    expect(/\.update\(|\.insert\(|\.upsert\(|\.delete\(/.test(route)).toBe(false);
+    expect(route.includes("if (req.method === 'PUT') {")).toBe(true);
+    expect(route.includes('read-only reference copies')).toBe(true);
+  });
+
+  it('the screen offers no editing and says the copies are not used', () => {
+    const screen = readFileSync('src/components/PromptsManager.tsx', 'utf8');
+    expect(/method: 'PUT'|<textarea|Edit prompt/.test(screen)).toBe(false);
+    expect(screen.includes('Reference copies — not used by the app.')).toBe(true);
+  });
+});

@@ -211,7 +211,7 @@ Run by CI on every push (`npx vitest run`). Most are anti-drift guards: they rea
 ## 15. Admin tools
 <!-- covers: src/components/HelpModal.tsx, src/components/CostDashboard.tsx, api/admin/env-check.ts, src/components/PromptsManager.tsx, api/usage/check-quotas.ts -->
 
-- **Help → admin tabs** — the restricted manuals; **Prompts** (`PromptsManager`, editing the prompts stored in `app_prompts`); **APIs** (`EnvConfigPanel`, which settings are present via `/api/admin/env-check`, values masked).
+- **Help → admin tabs** — the restricted manuals; **Prompts** (`PromptsManager`: read-only reference copies from `app_prompts`, which nothing in the app reads — the prompts that run are in the code; Gamma Prompts Manual, section 5); **APIs** (`EnvConfigPanel`, which settings are present via `/api/admin/env-check`, values masked).
 - **Cost Dashboard** — the gold coin button in the top bar for administrators: spending by service and by comparison, from costs recorded in this browser and in the database (`api_cost_records`), with each vendor's price per unit (`src/utils/costCalculator*.ts`).
 - **Quota alerts** — `/api/usage/check-quotas` compares vendor usage with the limits in `api_quota_settings` and emails the administrators (Resend) when a threshold is crossed.
 - **Beta testers** — rows in `beta_testers` (by email), with their comparison limits.

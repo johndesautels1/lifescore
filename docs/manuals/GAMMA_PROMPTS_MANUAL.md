@@ -71,7 +71,7 @@ Written by `formatEnhancedReportForGamma()` from the Enhanced comparison, the Ju
 ## 5. Changing a prompt
 
 - **The prompts that run are in the code** — `src/services/gammaService.ts`. Change them there, push, and make a report to see what Gamma does with it.
-- **The admin panel's Prompts screen** (Gamma tab and the others) saves its texts to the `app_prompts` table, but nothing in the app reads that table: an edit there changes no report.
+- **The admin panel's Prompts screen** (Gamma tab and the others) shows reference copies from the `app_prompts` table, last edited in March 2026. Nothing in the app reads them, so the screen says so and has no editing (John, 4 October 2026); the server refuses edits.
 - **`docs/GAMMA_PROMPT_TEMPLATE.md`** is a copy of the Enhanced prompt as it stood on 7 February 2026, written for Gamma's support team; it is not used by the app.
 
 ---
@@ -83,4 +83,4 @@ Read from the code while writing this manual; each changes what a report says, s
 1. ~~Sections sent out of order and misnumbered~~ — **fixed 4 October 2026** (John: "keep order, renumber"): sections 1–13 and pages 1–82 now run in the order sent (`tests/gammaPrompt.test.ts`).
 2. **The prompt always names all five evaluators**, even when fewer took part in the comparison.
 3. **The Standard button says 35 pages; the prompt asks for 30.**
-4. **The Prompts screen edits nothing** (section 5).
+4. ~~The Prompts screen edits nothing~~ — **fixed 4 October 2026** (John: "say so, read-only"): it is marked as reference copies and editing is gone (`tests/gammaPrompt.test.ts`).

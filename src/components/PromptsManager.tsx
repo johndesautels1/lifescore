@@ -1,16 +1,19 @@
 /**
  * LIFE SCORE™ Prompts Manager Component
  *
- * Admin-editable prompts viewer with sub-tab navigation.
- * Displayed in the Help Modal under the "Prompts" tab.
+ * Read-only viewer of the prompt copies in the app_prompts table, with
+ * sub-tab navigation. Displayed in the Help Modal under the "Prompts" tab.
  *
  * Sub-tabs: Evaluate | Judge | Olivia | Gamma | Video | InVideo
- * Admin can view and edit prompts inline.
+ *
+ * John, 4 Oct 2026 ("Say so, read-only"): nothing in the app reads app_prompts —
+ * the prompts that run are built in the code (fault GR4 in
+ * docs/MASTER_BUG_AUDIT_20260220.md) — so the screen says these are reference
+ * copies and no longer offers editing; api/prompts.ts refuses edits too.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTierAccess } from '../hooks/useTierAccess';
-import { supabase, getAuthHeaders } from '../lib/supabase';
+import { getAuthHeaders } from '../lib/supabase';
 import { toastSuccess, toastError } from '../utils/toast';
 import './PromptsManager.css';
 
@@ -45,20 +48,11 @@ const PROMPT_CATEGORIES: { id: string; label: string; icon: string }[] = [
 // ============================================================================
 
 const PromptsManager: React.FC = () => {
-  // The server's admin answer (useTierAccess), not a copied email list: the server
-  // still refuses prompt edits to anyone else (api/prompts.ts). Bug audit S5.
-  const { isAdmin } = useTierAccess();
-
   // State
   const [activeCategory, setActiveCategory] = useState('evaluate');
   const [prompts, setPrompts] = useState<AppPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Edit state
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
 
   // Copy state
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -89,67 +83,6 @@ const PromptsManager: React.FC = () => {
     fetchPrompts();
   }, [fetchPrompts]);
 
-  // Start editing a prompt
-  const handleStartEdit = (prompt: AppPrompt) => {
-    setEditingId(prompt.id);
-    setEditText(prompt.prompt_text);
-  };
-
-  // Cancel editing
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditText('');
-  };
-
-  // Save edited prompt
-  const handleSaveEdit = async (promptId: string) => {
-    if (!editText.trim()) return;
-
-    setIsSaving(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toastError('You must be logged in');
-        return;
-      }
-
-      const response = await fetch('/api/prompts', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          id: promptId,
-          prompt_text: editText,
-        }),
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to save');
-      }
-
-      const result = await response.json();
-
-      // Update local state
-      setPrompts(prev => prev.map(p =>
-        p.id === promptId
-          ? { ...p, prompt_text: result.prompt.prompt_text, version: result.prompt.version, last_edited_by: result.prompt.last_edited_by, updated_at: result.prompt.updated_at }
-          : p
-      ));
-
-      setEditingId(null);
-      setEditText('');
-      toastSuccess('Prompt saved successfully!');
-    } catch (err) {
-      console.error('[PromptsManager] Save error:', err);
-      toastError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   // Copy prompt to clipboard
   const handleCopy = async (prompt: AppPrompt) => {
     try {
@@ -172,13 +105,20 @@ const PromptsManager: React.FC = () => {
 
   return (
     <div className="prompts-manager">
+      {/* What these are */}
+      <div className="prompts-notice" role="note">
+        <strong>Reference copies — not used by the app.</strong>{' '}
+        The prompts that run are built in the code, so these copies can be out of date and cannot be edited here.
+        The Judge Equations, Gamma Prompts and Technical Support manuals describe the prompts in use.
+      </div>
+
       {/* Sub-tab navigation */}
       <div className="prompts-subtabs">
         {PROMPT_CATEGORIES.map(cat => (
           <button
             key={cat.id}
             className={`prompts-subtab ${activeCategory === cat.id ? 'active' : ''}`}
-            onClick={() => { setActiveCategory(cat.id); setEditingId(null); }}
+            onClick={() => setActiveCategory(cat.id)}
           >
             <span className="subtab-icon">{cat.icon}</span>
             <span className="subtab-label">{cat.label}</span>
@@ -237,46 +177,11 @@ const PromptsManager: React.FC = () => {
                     >
                       {copiedId === prompt.id ? '✓ Copied' : '📋 Copy'}
                     </button>
-                    {isAdmin && editingId !== prompt.id && (
-                      <button
-                        className="prompt-action-btn edit-btn"
-                        onClick={() => handleStartEdit(prompt)}
-                        title="Edit prompt"
-                      >
-                        ✏️ Edit
-                      </button>
-                    )}
                   </div>
                 </div>
 
-                {/* Prompt content / editor */}
-                {editingId === prompt.id ? (
-                  <div className="prompt-editor">
-                    <textarea
-                      className="prompt-editor-textarea"
-                      value={editText}
-                      onChange={e => setEditText(e.target.value)}
-                      rows={20}
-                    />
-                    <div className="prompt-editor-actions">
-                      <button
-                        className="prompt-editor-btn save-btn"
-                        onClick={() => handleSaveEdit(prompt.id)}
-                        disabled={isSaving || !editText.trim()}
-                      >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
-                      </button>
-                      <button
-                        className="prompt-editor-btn cancel-btn"
-                        onClick={handleCancelEdit}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <pre className="prompt-card-text">{prompt.prompt_text}</pre>
-                )}
+                {/* Prompt content */}
+                <pre className="prompt-card-text">{prompt.prompt_text}</pre>
               </div>
             ))}
           </div>

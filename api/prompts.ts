@@ -1,11 +1,14 @@
 /**
  * LIFE SCORE - App Prompts API
  *
- * Admin-editable prompt management.
+ * Read-only reference copies of prompts (the app_prompts table), for the
+ * admin panel's Prompts screen. Nothing in the app reads them: the prompts
+ * that run are built in the code. John, 4 Oct 2026 ("Say so, read-only") —
+ * editing was removed (fault GR4 in docs/MASTER_BUG_AUDIT_20260220.md).
+ *
  * GET  /api/prompts?category=invideo        — List prompts by category
  * GET  /api/prompts?category=invideo&key=X  — Get specific prompt
  * GET  /api/prompts?categories=true          — List all categories
- * PUT  /api/prompts                          — Update prompt (admin only)
  *
  * Clues Intelligence LTD
  * © 2025-2026 All Rights Reserved
@@ -14,25 +17,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serviceDb } from './shared/supabaseAdmin.js';
 import { handleCors } from './shared/cors.js';
-import { requireAuth, getAdminEmails } from './shared/auth.js';
+import { requireAuth } from './shared/auth.js';
 
 const supabaseAdmin = serviceDb;
 
-async function verifyAdmin(req: VercelRequest): Promise<{ email: string } | null> {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) return null;
-
-  const token = authHeader.slice(7);
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user?.email) return null;
-
-  const email = user.email.toLowerCase();
-  if (!getAdminEmails().includes(email)) return null;
-  return { email };
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (handleCors(req, res, 'restricted', { methods: 'GET, PUT, OPTIONS' })) return;
+  if (handleCors(req, res, 'restricted', { methods: 'GET, OPTIONS' })) return;
 
   try {
     // FIX AC4: Require authentication for all methods (prompts are internal IP)
@@ -98,40 +88,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'category parameter required' });
     }
 
-    // ── PUT: Update prompt (admin only) ───────────────────────────────
+    // ── Editing was removed: the copies are reference only (see the header) ──
     if (req.method === 'PUT') {
-      const admin = await verifyAdmin(req);
-      if (!admin) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-
-      const { id, prompt_text, display_name, description } = req.body;
-
-      if (!id || !prompt_text) {
-        return res.status(400).json({ error: 'id and prompt_text required' });
-      }
-
-      const updateData: Record<string, unknown> = {
-        prompt_text,
-        last_edited_by: admin.email,
-      };
-      if (display_name !== undefined) updateData.display_name = display_name;
-      if (description !== undefined) updateData.description = description;
-
-      const { data, error } = await supabaseAdmin
-        .from('app_prompts')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('[prompts] Update error:', error);
-        return res.status(500).json({ error: 'Failed to update prompt' });
-      }
-
-      console.log(`[prompts] Admin ${admin.email} updated prompt ${id} (v${data.version})`);
-      return res.status(200).json({ success: true, prompt: data });
+      return res.status(405).json({
+        error: 'Prompts are read-only reference copies; the prompts the app uses are in the code.',
+      });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

@@ -101,6 +101,25 @@
   to { transform: rotate(360deg); }
 }
 
+/* Notice: reference copies, not used by the app */
+.prompts-notice {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.prompts-notice strong {
+  color: #fbbf24;
+}
+
 /* Error */
 .prompts-error {
   display: flex;
@@ -236,15 +255,6 @@
   color: #4ade80;
 }
 
-.prompt-action-btn.edit-btn {
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #a78bfa;
-}
-
-.prompt-action-btn.edit-btn:hover {
-  background: rgba(139, 92, 246, 0.15);
-}
-
 /* ============================================================================
    PROMPT TEXT DISPLAY
    ============================================================================ */
@@ -274,82 +284,6 @@
 .prompt-card-text::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 3px;
-}
-
-/* ============================================================================
-   PROMPT EDITOR (Admin)
-   ============================================================================ */
-
-.prompt-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
-  background: rgba(139, 92, 246, 0.04);
-  border-top: 1px solid rgba(139, 92, 246, 0.15);
-}
-
-.prompt-editor-textarea {
-  width: 100%;
-  min-height: 300px;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  border-radius: 8px;
-  color: #e2e8f0;
-  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  resize: vertical;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.prompt-editor-textarea:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
-}
-
-.prompt-editor-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.prompt-editor-btn {
-  padding: 8px 18px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  border: none;
-}
-
-.prompt-editor-btn.save-btn {
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-  color: #fff;
-}
-
-.prompt-editor-btn.save-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-}
-
-.prompt-editor-btn.save-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.prompt-editor-btn.cancel-btn {
-  background: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.prompt-editor-btn.cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
 }
 
 /* ============================================================================
@@ -388,7 +322,4 @@
     max-height: 300px;
   }
 
-  .prompt-editor-textarea {
-    min-height: 200px;
-  }
 }
