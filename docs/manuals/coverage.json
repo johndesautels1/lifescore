@@ -419,9 +419,9 @@
         "src/App.tsx",
         "src/components/TabNavigation.tsx"
       ],
-      "hash": "80e04a4db945221a6812e722e19fbeacbc00a00ed29dda97ad2c57001d4e0bdc",
+      "hash": "77a017b8663bb62069fae05faae38cba0cfdc3208a775342ab1cbf532a9a5f28",
       "reviewed": "2026-10-04",
-      "basis": "13a5fcbad598c3b4aae08f1efb066a5154d7f78c"
+      "basis": "4f6147ad329b8d0c6531f2704a62388cab5f66ef"
     },
     "TECHNICAL_SUPPORT_MANUAL.md#3-api-routes": {
       "files": [
