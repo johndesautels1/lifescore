@@ -106,6 +106,8 @@ describe('emails, reports and About CLUES', () => {
       ['api/admin/new-signup.ts', 'COMPANY_EMAIL_FOOTER_HTML'],
       ['src/services/gammaService.ts', 'COMPANY_CONTACT.email'],
       ['src/components/AboutClues.tsx', 'COMPANY_CONTACT.website.href'],
+      // Olivia's knowledge base (John, 4 Oct 2026: "Switch it")
+      ['docs/OLIVIA_KNOWLEDGE_BASE.md', `**Email Support:** ${LEGAL_FACTS.contact}`],
     ];
     for (const [file, source] of files) {
       const text = readFileSync(file, 'utf8');
